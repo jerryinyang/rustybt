@@ -1,0 +1,25 @@
+
+
+---
+
+- Doc-wide Clarification: Rust optimization isn't only in decimal arithmetic. Depending on the profiling results, bottleneck sections including loops and subprocess would be clevery handed over to or rewritten in Rust for optimisation. 
+
+- Split the Epics into MVP and Out of MVP Scope to pass the category analysis table. Nonetheless, every epic would be treated equally and would be implemented incrementally
+
+- Epic 9 can be a very low on the priority list, but keep it, except its possible to achieve live trading + scheduled/triggered operations without it, then it can be removed
+
+- Keep CSV in Epic 3. Move Websockets, API and brokers to phase 2
+
+- Testing, Exmaple and Documentations creation and validations should be integral across all Epics, not in one EPic
+
+- Contigency for Rust overhead: Cython optimisation, then Pure RustBT in python if nothign helps
+
+- Remove epic durations from the documents (weeks, years)
+
+---
+
+-  "configurable precision" is great. No need for the arbitrary values. Differnet providers come with different precisions
+- for broker integration: for each integration, decide what is best, based on complexity vs flexibilty tradeoff. If existing library is native/official and more efficient (like ib-sync), select that. If custom code querying the API would be more efficient (for speed of execution), recommended that. 
+- FR7 should include "data API providers" as a core source to be adapted
+- FR12 should include typical methods for trading and investment instead, param sensitivity/stability analysis, walk forward optimisation, monte carlo simulation with data permutation and noise infusion
+- Some of the NFR performance benchmark values are arbitrary and need realistic revision, but can be kept as is for now

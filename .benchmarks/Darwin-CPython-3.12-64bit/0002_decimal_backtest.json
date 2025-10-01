@@ -1,0 +1,188 @@
+{
+    "machine_info": {
+        "node": "Mac",
+        "processor": "arm",
+        "machine": "arm64",
+        "python_compiler": "Clang 13.0.0 (clang-1300.0.29.30)",
+        "python_implementation": "CPython",
+        "python_implementation_version": "3.12.0",
+        "python_version": "3.12.0",
+        "python_build": [
+            "v3.12.0:0fb18b02c8",
+            "Oct  2 2023 09:45:56"
+        ],
+        "release": "25.0.0",
+        "system": "Darwin",
+        "cpu": {
+            "python_version": "3.12.0.final.0 (64 bit)",
+            "cpuinfo_version": [
+                9,
+                0,
+                0
+            ],
+            "cpuinfo_version_string": "9.0.0",
+            "arch": "ARM_8",
+            "bits": 64,
+            "count": 10,
+            "arch_string_raw": "arm64",
+            "brand_raw": "Apple M2 Pro"
+        }
+    },
+    "commit_info": {
+        "id": "e69aaebab58e1e8da9d4e35a06297e9f3195f067",
+        "time": "2025-10-01T12:51:44+01:00",
+        "author_time": "2025-10-01T12:51:44+01:00",
+        "dirty": true,
+        "project": "rustybt",
+        "branch": "main"
+    },
+    "benchmarks": [
+        {
+            "group": "portfolio",
+            "name": "test_decimal_portfolio_value_100_positions",
+            "fullname": "benchmarks/decimal_backtest.py::test_decimal_portfolio_value_100_positions",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 1.2707999303529505e-05,
+                "max": 0.000277957999969658,
+                "mean": 1.3498528285900489e-05,
+                "stddev": 4.510714949152672e-06,
+                "rounds": 14761,
+                "median": 1.2958000297658145e-05,
+                "iqr": 2.5000008463393897e-07,
+                "q1": 1.2874999811174348e-05,
+                "q3": 1.3124999895808287e-05,
+                "iqr_outliers": 960,
+                "stddev_outliers": 288,
+                "outliers": "288;960",
+                "ld15iqr": 1.2707999303529505e-05,
+                "hd15iqr": 1.3541000043915119e-05,
+                "ops": 74082.15020333158,
+                "total": 0.19925177602817712,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "portfolio",
+            "name": "test_decimal_portfolio_value_scalability",
+            "fullname": "benchmarks/decimal_backtest.py::test_decimal_portfolio_value_scalability",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.00012591699942277046,
+                "max": 0.0005744170002799365,
+                "mean": 0.00013183661408137177,
+                "stddev": 1.4642492842952983e-05,
+                "rounds": 7271,
+                "median": 0.00012829200022679288,
+                "iqr": 3.5410002965363674e-06,
+                "q1": 0.000127792000057525,
+                "q3": 0.00013133300035406137,
+                "iqr_outliers": 834,
+                "stddev_outliers": 297,
+                "outliers": "297;834",
+                "ld15iqr": 0.00012591699942277046,
+                "hd15iqr": 0.00013666700033354573,
+                "ops": 7585.14625825253,
+                "total": 0.9585840209856542,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "metrics",
+            "name": "test_decimal_sharpe_ratio",
+            "fullname": "benchmarks/decimal_backtest.py::test_decimal_sharpe_ratio",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.000366666000445548,
+                "max": 0.0006166660004964797,
+                "mean": 0.00038598322113410203,
+                "stddev": 2.260457419238046e-05,
+                "rounds": 710,
+                "median": 0.00037799999972776277,
+                "iqr": 1.4207999811333138e-05,
+                "q1": 0.00037441699987539323,
+                "q3": 0.00038862499968672637,
+                "iqr_outliers": 74,
+                "stddev_outliers": 76,
+                "outliers": "76;74",
+                "ld15iqr": 0.000366666000445548,
+                "hd15iqr": 0.0004100840005776263,
+                "ops": 2590.7861928862712,
+                "total": 0.27404808700521244,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "data",
+            "name": "test_decimal_data_aggregation",
+            "fullname": "benchmarks/decimal_backtest.py::test_decimal_data_aggregation",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.12318150000010064,
+                "max": 0.16386887499993463,
+                "mean": 0.13037748449994524,
+                "stddev": 0.013787933428215195,
+                "rounds": 8,
+                "median": 0.12466825050023544,
+                "iqr": 0.0045791259999532485,
+                "q1": 0.12436868699978731,
+                "q3": 0.12894781299974056,
+                "iqr_outliers": 1,
+                "stddev_outliers": 1,
+                "outliers": "1;1",
+                "ld15iqr": 0.12318150000010064,
+                "hd15iqr": 0.16386887499993463,
+                "ops": 7.670036002270162,
+                "total": 1.043019875999562,
+                "iterations": 1
+            }
+        }
+    ],
+    "datetime": "2025-10-01T12:04:46.581174+00:00",
+    "version": "5.1.0",
+    "rustybt_metadata": {
+        "version": "1.0",
+        "benchmark_type": "decimal_baseline",
+        "purpose": "Epic 7 Rust optimization baseline"
+    }
+}

@@ -1,0 +1,138 @@
+name: Property-Based Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run thorough tests weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+
+jobs:
+  property-tests:
+    name: Property Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.12', '3.13']
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Check property test coverage
+        run: |
+          uv run python scripts/property_test_coverage.py --report
+
+      - name: Enforce property test quality gates
+        run: |
+          uv run python scripts/property_test_coverage.py --enforce-gates
+
+      - name: Run property tests (CI profile - 500 examples)
+        env:
+          HYPOTHESIS_PROFILE: ci
+        run: |
+          uv run pytest tests/property_tests/ \
+            --hypothesis-show-statistics \
+            -v \
+            --tb=short \
+            --maxfail=10
+
+      - name: Run performance benchmarks
+        run: |
+          uv run pytest tests/property_tests/test_performance_benchmarks.py \
+            -v \
+            --benchmark-only \
+            --benchmark-autosave
+
+      - name: Archive benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-python-${{ matrix.python-version }}
+          path: .benchmarks/
+          retention-days: 90
+
+      - name: Archive shrunk examples on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hypothesis-examples-python-${{ matrix.python-version }}
+          path: tests/.hypothesis/examples/
+          retention-days: 30
+
+  property-tests-thorough:
+    name: Thorough Property Tests (Weekly)
+    runs-on: ubuntu-latest
+    # Only run on schedule (weekly) or manual trigger
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Run thorough property tests (1000 examples)
+        env:
+          HYPOTHESIS_PROFILE: thorough
+        run: |
+          uv run pytest tests/property_tests/ \
+            --hypothesis-show-statistics \
+            -v \
+            --tb=short \
+            --timeout=3600
+
+      - name: Archive shrunk examples on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hypothesis-examples-thorough
+          path: tests/.hypothesis/examples/
+          retention-days: 90
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Property-Based Tests Failed (Thorough Run)',
+              body: `Thorough property-based tests failed in scheduled run.
+
+              **Run**: ${context.runId}
+              **Workflow**: ${context.workflow}
+              **Commit**: ${context.sha}
+
+              Please investigate the failures and review the archived Hypothesis examples.`,
+              labels: ['bug', 'property-tests', 'automated']
+            })

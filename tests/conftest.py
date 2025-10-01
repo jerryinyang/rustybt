@@ -4,6 +4,34 @@ import os
 import pandas as pd
 import pytest
 
+# Hypothesis configuration for property-based testing
+from hypothesis import HealthCheck, Phase, Verbosity, settings
+
+# Configure Hypothesis profiles
+settings.register_profile("quick", max_examples=100, deadline=None)
+settings.register_profile(
+    "thorough",
+    max_examples=1000,
+    deadline=None,
+    suppress_health_check=[HealthCheck.too_slow],
+)
+settings.register_profile(
+    "ci",
+    max_examples=500,
+    deadline=None,
+    verbosity=Verbosity.verbose,
+    suppress_health_check=[HealthCheck.too_slow],
+)
+settings.register_profile(
+    "debug",
+    max_examples=10,
+    verbosity=Verbosity.debug,
+    phases=[Phase.generate, Phase.shrink],
+)
+
+# Load profile from environment (default: quick for local development)
+settings.load_profile(os.getenv("HYPOTHESIS_PROFILE", "quick"))
+
 # BACKWARDS COMPATIBILITY: Create module alias for unpickling old zipline data
 import rustybt
 sys.modules['zipline'] = rustybt

@@ -1,0 +1,31 @@
+Top 20 Hotspots (by cumulative time)
+================================================================================
+
+         50599 function calls (50339 primitive calls) in 0.032 seconds
+
+   Ordered by: cumulative time
+   List reduced from 516 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.006    0.006    0.032    0.032 /Users/jerryinyang/Code/bmad-dev/rustybt/benchmarks/profile_decimal_backtest.py:67(run_decimal_backtest)
+        1    0.000    0.000    0.009    0.009 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/series/series.py:274(__init__)
+        1    0.001    0.001    0.009    0.009 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/construction/series.py:75(sequence_to_pyseries)
+        1    0.000    0.000    0.007    0.007 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/finance/decimal/commission.py:86(__init__)
+       22    0.000    0.000    0.007    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/finance/decimal/config.py:108(get_instance)
+       22    0.000    0.000    0.007    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/finance/decimal/config.py:92(__init__)
+        1    0.000    0.000    0.006    0.006 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/finance/decimal/config.py:117(load_from_yaml)
+        1    0.000    0.000    0.006    0.006 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/yaml/__init__.py:117(safe_load)
+        1    0.000    0.000    0.006    0.006 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/yaml/__init__.py:74(load)
+        1    0.000    0.000    0.006    0.006 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/yaml/constructor.py:47(get_single_data)
+        1    0.000    0.000    0.005    0.005 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/yaml/composer.py:29(get_single_node)
+        1    0.000    0.000    0.005    0.005 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/yaml/composer.py:50(compose_document)
+     61/1    0.000    0.000    0.005    0.005 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/yaml/composer.py:63(compose_node)
+        1    0.000    0.000    0.005    0.005 /Users/jerryinyang/Code/bmad-dev/rustybt/benchmarks/profile_decimal_backtest.py:43(sharpe_ratio)
+      8/1    0.000    0.000    0.005    0.005 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/yaml/composer.py:117(compose_mapping_node)
+      178    0.000    0.000    0.005    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/yaml/parser.py:94(check_event)
+        1    0.000    0.000    0.004    0.004 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/series/series.py:5721(map_elements)
+      476    0.000    0.000    0.004    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/yaml/scanner.py:113(check_token)
+        1    0.004    0.004    0.004    0.004 {method 'cast' of 'builtins.PySeries' objects}
+       84    0.000    0.000    0.003    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/yaml/scanner.py:156(fetch_more_tokens)
+
+

@@ -1,0 +1,37 @@
+# Test configuration for DecimalConfig tests
+
+global_defaults:
+  precision: 18
+  rounding_mode: ROUND_HALF_EVEN
+  scale: 8
+
+asset_classes:
+  crypto:
+    precision: 18
+    rounding_mode: ROUND_DOWN
+    scale: 8
+    rationale: "Test crypto configuration"
+
+  equity:
+    precision: 18
+    rounding_mode: ROUND_HALF_UP
+    scale: 2
+    rationale: "Test equity configuration"
+
+  forex:
+    precision: 18
+    rounding_mode: ROUND_HALF_EVEN
+    scale: 5
+    rationale: "Test forex configuration"
+
+  future:
+    precision: 18
+    rounding_mode: ROUND_HALF_UP
+    scale: 2
+    rationale: "Test futures configuration"
+
+  test_custom:
+    precision: 10
+    rounding_mode: ROUND_UP
+    scale: 4
+    rationale: "Custom test asset class"

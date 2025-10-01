@@ -570,3 +570,12 @@ def _downgrade_v7(op):
             );
         """
     )
+
+
+@downgrades(8)
+def _downgrade_v8(op):
+    """
+    Downgrade assets db by removing bundle metadata and data quality tables.
+    """
+    op.drop_table("data_quality_metrics")
+    op.drop_table("bundle_metadata")

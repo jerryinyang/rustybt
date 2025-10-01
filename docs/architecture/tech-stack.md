@@ -5,6 +5,7 @@
 | Category | Technology | Version | Purpose | RustyBT Status |
 |----------|-----------|---------|---------|----------------|
 | **Language** | Python | 3.12+ | Primary development language | ✅ Keep (require 3.12+ for modern features) |
+| **Package Manager** | uv | 0.5.x+ | Fast Python package installer | ✅ Required (10-100x faster than pip) |
 | **Database** | SQLite | 3.x | Asset metadata, adjustments | ✅ Keep (add live trading tables) |
 | **ORM** | SQLAlchemy | >= 2.0 | Database abstraction | ✅ Keep (proven, well-tested) |
 | **Calendars** | exchange-calendars | >= 4.2.4 | Trading calendar data | ✅ Keep (extend for 24/7 crypto) |
@@ -45,6 +46,13 @@
 | **Rust Decimal** | rust-decimal | 1.37+ | Rust Decimal type | Performance-critical Decimal operations |
 
 ## Technology Stack Rationale
+
+### uv as Package Manager
+- **Speed**: 10-100x faster than pip for package installation and resolution
+- **Deterministic**: Lockfile-based dependency resolution for reproducible builds
+- **Modern**: Written in Rust, actively developed by Astral (creators of ruff)
+- **Developer Experience**: Single tool for virtual environment and package management
+- **CI/CD Performance**: Significantly reduces GitHub Actions build times
 
 ### Polars over Pandas
 - **Performance**: 5-10x faster for large datasets, lazy evaluation, parallel execution

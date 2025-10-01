@@ -18,7 +18,6 @@ from enum import IntEnum
 
 import rustybt.protocol as zp
 from rustybt.assets import Asset
-
 from rustybt.utils.input_validation import expect_types
 
 ORDER_STATUS = IntEnum(
@@ -29,6 +28,8 @@ ORDER_STATUS = IntEnum(
         "CANCELLED",
         "REJECTED",
         "HELD",
+        "TRIGGERED",
+        "PARTIALLY_FILLED",
     ],
     start=0,
 )
@@ -62,6 +63,14 @@ class Order:
         "direction",
         "type",
         "broker_order_id",
+        # Advanced order type fields
+        "trail_amount",
+        "trail_percent",
+        "linked_order_ids",
+        "parent_order_id",
+        "is_trailing_stop",
+        "trailing_highest_price",
+        "trailing_lowest_price",
     ]
 
     @expect_types(asset=Asset)
@@ -75,6 +84,10 @@ class Order:
         filled=0,
         commission=0,
         id=None,
+        trail_amount=None,
+        trail_percent=None,
+        linked_order_ids=None,
+        parent_order_id=None,
     ):
         """
         @dt - datetime.datetime that the order was placed
@@ -83,8 +96,11 @@ class Order:
                   a positive sign indicates a buy
                   a negative sign indicates a sell
         @filled - how many shares of the order have been filled so far
+        @trail_amount - absolute dollar amount for trailing stop
+        @trail_percent - percentage (decimal) for trailing stop
+        @linked_order_ids - list of order IDs linked in OCO relationship
+        @parent_order_id - parent order ID for bracket order children
         """
-
         # get a string representation of the uuid.
         self.id = self.make_id() if id is None else id
         self.dt = dt
@@ -102,6 +118,15 @@ class Order:
         self.direction = math.copysign(1, self.amount)
         self.type = zp.DATASOURCE_TYPE.ORDER
         self.broker_order_id = None
+
+        # Advanced order type fields
+        self.trail_amount = trail_amount
+        self.trail_percent = trail_percent
+        self.linked_order_ids = linked_order_ids if linked_order_ids else []
+        self.parent_order_id = parent_order_id
+        self.is_trailing_stop = trail_amount is not None or trail_percent is not None
+        self.trailing_highest_price = None
+        self.trailing_lowest_price = None
 
     @staticmethod
     def make_id():
@@ -134,11 +159,55 @@ class Order:
         obj = zp.Order(initial_values=pydict)
         return obj
 
+    def update_trailing_stop(self, current_price):
+        """
+        Update trailing stop price based on current market price.
+
+        Parameters
+        ----------
+        current_price : float
+            Current market price
+
+        Returns:
+        -------
+        float
+            Updated stop price
+        """
+        if not self.is_trailing_stop:
+            return self.stop
+
+        is_buy = self.amount > 0
+
+        if is_buy:
+            # For buy/cover orders (closing short), track lowest price
+            if self.trailing_lowest_price is None or current_price < self.trailing_lowest_price:
+                self.trailing_lowest_price = current_price
+
+            if self.trail_amount is not None:
+                self.stop = self.trailing_lowest_price + self.trail_amount
+            else:
+                self.stop = self.trailing_lowest_price * (1 + self.trail_percent)
+        else:
+            # For sell orders (closing long), track highest price
+            if self.trailing_highest_price is None or current_price > self.trailing_highest_price:
+                self.trailing_highest_price = current_price
+
+            if self.trail_amount is not None:
+                self.stop = self.trailing_highest_price - self.trail_amount
+            else:
+                self.stop = self.trailing_highest_price * (1 - self.trail_percent)
+
+        return self.stop
+
     def check_triggers(self, price, dt):
         """
         Update internal state based on price triggers and the
         trade event's price.
         """
+        # Update trailing stop price if applicable
+        if self.is_trailing_stop:
+            self.update_trailing_stop(price)
+
         (
             stop_reached,
             limit_reached,
@@ -156,7 +225,6 @@ class Order:
             self.stop = None
 
     # TODO: simplify
-    # flake8: noqa: C901
     def check_order_triggers(self, current_price):
         """
         Given an order and a trade event, return a tuple of
@@ -238,8 +306,17 @@ class Order:
     def status(self):
         if not self.open_amount:
             return ORDER_STATUS.FILLED
+        elif self.filled > 0 and self.open_amount > 0:
+            return ORDER_STATUS.PARTIALLY_FILLED
         elif self._status == ORDER_STATUS.HELD and self.filled:
             return ORDER_STATUS.OPEN
+        elif (
+            self.triggered
+            and self._status == ORDER_STATUS.OPEN
+            and (self.stop is not None or self.limit is not None)
+        ):
+            # Only show TRIGGERED for stop/limit orders that have been triggered but not filled
+            return ORDER_STATUS.TRIGGERED
         else:
             return self._status
 

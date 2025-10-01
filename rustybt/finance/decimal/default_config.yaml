@@ -1,0 +1,54 @@
+# Default Decimal Precision Configuration
+# This file defines precision settings for different asset classes in RustyBT
+
+# Global defaults applied when asset class is not specified
+global_defaults:
+  precision: 18  # Maximum precision (balance between accuracy and performance)
+  rounding_mode: ROUND_HALF_EVEN  # Banker's rounding (IEEE 754 standard, minimizes bias)
+  scale: 8  # Default decimal places for display
+
+# Asset class-specific configurations
+asset_classes:
+  # Cryptocurrency assets
+  crypto:
+    precision: 18  # Support Satoshi (8 decimals) + intermediate calculations
+    rounding_mode: ROUND_DOWN  # Crypto exchanges typically round down order quantities
+    scale: 8  # Bitcoin: 0.00000001 BTC (Satoshi precision)
+    rationale: "Cryptocurrencies require high precision for fractional shares (e.g., 0.00000001 BTC)"
+
+  # Equity assets (stocks)
+  equity:
+    precision: 18  # High precision for intermediate calculations with large positions
+    rounding_mode: ROUND_HALF_UP  # Standard rounding for equities
+    scale: 2  # US stocks: $42.50 (2 decimal places)
+    rationale: "Equities trade in cents, but require high precision for large position calculations"
+
+  # Foreign exchange (forex)
+  forex:
+    precision: 18  # High precision for pip calculations
+    rounding_mode: ROUND_HALF_EVEN  # Banker's rounding to minimize bias in forex
+    scale: 5  # Forex: 1.23456 (5 decimals for pip precision)
+    rationale: "Forex requires pip precision (0.00001 for most pairs, 0.001 for JPY pairs)"
+
+  # Futures contracts
+  future:
+    precision: 18  # High precision for futures calculations
+    rounding_mode: ROUND_HALF_UP  # Standard rounding
+    scale: 2  # Futures: contract-specific, typically 2 decimals
+    rationale: "Futures tick sizes vary by contract, 2 decimals covers most cases"
+
+  # Index values
+  index:
+    precision: 18  # High precision for index calculations
+    rounding_mode: ROUND_HALF_EVEN  # Banker's rounding for indices
+    scale: 2  # Index values: 4521.25
+    rationale: "Index values typically use 2 decimals for benchmark tracking"
+
+# Rounding mode reference:
+# - ROUND_HALF_EVEN: Banker's rounding (default, minimizes bias over many operations)
+# - ROUND_DOWN: Always round toward zero (used by crypto exchanges for quantities)
+# - ROUND_HALF_UP: Traditional rounding (0.5 rounds up)
+# - ROUND_UP: Always round away from zero (conservative for risk calculations)
+# - ROUND_CEILING: Always round toward positive infinity
+# - ROUND_FLOOR: Always round toward negative infinity
+# - ROUND_05UP: Round away from zero if last digit after rounding is 0 or 5

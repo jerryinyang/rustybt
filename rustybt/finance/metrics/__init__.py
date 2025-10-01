@@ -40,10 +40,106 @@ from .metric import (
     _ConstantCumulativeRiskMetric,
     _ClassicRiskMetrics,
 )
+from .advanced import (
+    VaRMetric,
+    CVaRMetric,
+    CalmarRatioMetric,
+    TradeStatisticsMetric,
+    calmar_ratio,
+    value_at_risk,
+    conditional_value_at_risk,
+    win_rate,
+    profit_factor,
+)
 from .tracker import MetricsTracker
 
+# Decimal precision metrics (Story 2.4)
+from .decimal_metrics import (
+    calculate_sharpe_ratio,
+    calculate_sortino_ratio,
+    calculate_max_drawdown,
+    calculate_calmar_ratio,
+    calculate_var,
+    calculate_cvar,
+    calculate_win_rate,
+    calculate_profit_factor,
+    calculate_excess_return,
+    calculate_information_ratio,
+    calculate_tracking_error,
+    MetricsError,
+    InsufficientDataError,
+    InvalidMetricError,
+)
+from .attribution import (
+    calculate_position_attribution,
+    calculate_sector_attribution,
+    calculate_alpha_beta,
+    calculate_time_period_attribution,
+)
+from .decimal_tracker import DecimalMetricsTracker
+from .formatting import (
+    format_percentage,
+    format_ratio,
+    format_currency,
+    format_basis_points,
+    create_metrics_summary_table,
+    metrics_to_json,
+    metrics_to_csv_row,
+    format_metrics_html,
+)
+from .empyrical_adapter import (
+    EmpyricalAdapter,
+    to_float_series,
+    from_float_value,
+    compare_metrics,
+    validate_decimal_against_empyrical,
+)
 
-__all__ = ["MetricsTracker", "unregister", "metrics_sets", "load"]
+
+__all__ = [
+    "MetricsTracker",
+    "unregister",
+    "metrics_sets",
+    "load",
+    # Decimal metrics
+    "calculate_sharpe_ratio",
+    "calculate_sortino_ratio",
+    "calculate_max_drawdown",
+    "calculate_calmar_ratio",
+    "calculate_var",
+    "calculate_cvar",
+    "calculate_win_rate",
+    "calculate_profit_factor",
+    "calculate_excess_return",
+    "calculate_information_ratio",
+    "calculate_tracking_error",
+    # Attribution
+    "calculate_position_attribution",
+    "calculate_sector_attribution",
+    "calculate_alpha_beta",
+    "calculate_time_period_attribution",
+    # Tracker
+    "DecimalMetricsTracker",
+    # Formatting
+    "format_percentage",
+    "format_ratio",
+    "format_currency",
+    "format_basis_points",
+    "create_metrics_summary_table",
+    "metrics_to_json",
+    "metrics_to_csv_row",
+    "format_metrics_html",
+    # Empyrical adapter
+    "EmpyricalAdapter",
+    "to_float_series",
+    "from_float_value",
+    "compare_metrics",
+    "validate_decimal_against_empyrical",
+    # Exceptions
+    "MetricsError",
+    "InsufficientDataError",
+    "InvalidMetricError",
+]
 
 
 register("none", set)
@@ -86,6 +182,11 @@ def default_metrics():
         ReturnsStatistic(empyrical.sortino_ratio, "sortino"),
         ReturnsStatistic(empyrical.max_drawdown),
         MaxLeverage(),
+        # Advanced metrics (Story 1.6)
+        CalmarRatioMetric(),
+        VaRMetric(),
+        CVaRMetric(),
+        TradeStatisticsMetric(),
         # Please kill these!
         _ConstantCumulativeRiskMetric("excess_return", 0.0),
         _ConstantCumulativeRiskMetric("treasury_period_return", 0.0),

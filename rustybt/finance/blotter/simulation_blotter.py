@@ -16,22 +16,28 @@ import logging
 from collections import defaultdict
 from copy import copy
 
-from rustybt.assets import Equity, Future, Asset
-from .blotter import Blotter
+from rustybt.assets import Asset, Equity, Future
 from rustybt.extensions import register
-from rustybt.finance.order import Order
-from rustybt.finance.slippage import (
-    DEFAULT_FUTURE_VOLUME_SLIPPAGE_BAR_LIMIT,
-    VolatilityVolumeShare,
-    FixedBasisPointsSlippage,
-)
 from rustybt.finance.commission import (
     DEFAULT_PER_CONTRACT_COST,
     FUTURE_EXCHANGE_FEES_BY_SYMBOL,
     PerContract,
     PerShare,
 )
+from rustybt.finance.execution import (
+    BracketOrder,
+    OCOOrder,
+    TrailingStopOrder,
+)
+from rustybt.finance.order import Order
+from rustybt.finance.slippage import (
+    DEFAULT_FUTURE_VOLUME_SLIPPAGE_BAR_LIMIT,
+    FixedBasisPointsSlippage,
+    VolatilityVolumeShare,
+)
 from rustybt.utils.input_validation import expect_types
+
+from .blotter import Blotter
 
 log = logging.getLogger("Blotter")
 warning_logger = logging.getLogger("AlgoWarning")
@@ -112,13 +118,13 @@ class SimulationBlotter(Blotter):
         order_id : str, optional
             The unique identifier for this order.
 
-        Returns
+        Returns:
         -------
         order_id : str or None
             The unique identifier for this order, or None if no order was
             placed.
 
-        Notes
+        Notes:
         -----
         amount > 0 :: Buy/Cover
         amount < 0 :: Sell/Short
@@ -141,14 +147,85 @@ class SimulationBlotter(Blotter):
             raise OverflowError("Can't order more than %d shares" % self.max_shares)
 
         is_buy = amount > 0
-        order = Order(
-            dt=self.current_dt,
-            asset=asset,
-            amount=amount,
-            stop=style.get_stop_price(is_buy),
-            limit=style.get_limit_price(is_buy),
-            id=order_id,
-        )
+
+        # Handle TrailingStopOrder
+        if isinstance(style, TrailingStopOrder):
+            order = Order(
+                dt=self.current_dt,
+                asset=asset,
+                amount=amount,
+                stop=style.get_stop_price(is_buy),
+                limit=style.get_limit_price(is_buy),
+                trail_amount=style.trail_amount,
+                trail_percent=style.trail_percent,
+                id=order_id,
+            )
+        # Handle OCOOrder - creates two linked orders
+        elif isinstance(style, OCOOrder):
+            # Create first order
+            order1 = Order(
+                dt=self.current_dt,
+                asset=asset,
+                amount=amount,
+                stop=style.order1_style.get_stop_price(is_buy),
+                limit=style.order1_style.get_limit_price(is_buy),
+                id=order_id,
+            )
+            # Create second order with new ID
+            order2 = Order(
+                dt=self.current_dt,
+                asset=asset,
+                amount=amount,
+                stop=style.order2_style.get_stop_price(is_buy),
+                limit=style.order2_style.get_limit_price(is_buy),
+            )
+            # Link the orders
+            order1.linked_order_ids = [order2.id]
+            order2.linked_order_ids = [order1.id]
+
+            # Add both orders
+            self.open_orders[order1.asset].append(order1)
+            self.open_orders[order2.asset].append(order2)
+            self.orders[order1.id] = order1
+            self.orders[order2.id] = order2
+            self.new_orders.append(order1)
+            self.new_orders.append(order2)
+
+            return order1.id  # Return first order ID as parent
+
+        # Handle BracketOrder - creates entry, stop-loss, and take-profit
+        elif isinstance(style, BracketOrder):
+            # Create entry order
+            entry_order = Order(
+                dt=self.current_dt,
+                asset=asset,
+                amount=amount,
+                stop=style.get_stop_price(is_buy),
+                limit=style.get_limit_price(is_buy),
+                id=order_id,
+            )
+
+            # Store bracket info in blotter for later processing
+            # (Child orders created after entry fills)
+            if not hasattr(self, "_bracket_orders"):
+                self._bracket_orders = {}
+            self._bracket_orders[entry_order.id] = {
+                "stop_loss_price": style.stop_loss_price,
+                "take_profit_price": style.take_profit_price,
+                "amount": -amount,  # Reverse direction for exit orders
+            }
+
+            order = entry_order
+        else:
+            # Standard order (Market, Limit, Stop, StopLimit)
+            order = Order(
+                dt=self.current_dt,
+                asset=asset,
+                amount=amount,
+                stop=style.get_stop_price(is_buy),
+                limit=style.get_limit_price(is_buy),
+                id=order_id,
+            )
 
         self.open_orders[order.asset].append(order)
         self.orders[order.id] = order
@@ -177,6 +254,83 @@ class SimulationBlotter(Blotter):
                 # along with newly placed orders.
                 self.new_orders.append(cur_order)
 
+    def cancel_linked_orders(self, filled_order_id):
+        """
+        Cancel all orders linked to a filled order (OCO behavior).
+
+        Parameters
+        ----------
+        filled_order_id : str
+            ID of the order that filled
+        """
+        if filled_order_id not in self.orders:
+            return
+
+        filled_order = self.orders[filled_order_id]
+
+        # Cancel all linked orders
+        for linked_id in filled_order.linked_order_ids:
+            if linked_id in self.orders:
+                log.info(
+                    f"Canceling linked order {linked_id} because "
+                    f"order {filled_order_id} filled (OCO)"
+                )
+                self.cancel(linked_id, relay_status=True)
+
+    def process_bracket_fill(self, entry_order_id):
+        """
+        Process bracket order entry fill by creating stop-loss and take-profit orders.
+
+        Parameters
+        ----------
+        entry_order_id : str
+            ID of the entry order that filled
+        """
+        if not hasattr(self, "_bracket_orders") or entry_order_id not in self._bracket_orders:
+            return
+
+        bracket_info = self._bracket_orders[entry_order_id]
+        entry_order = self.orders[entry_order_id]
+
+        # Create stop-loss order
+        stop_loss_order = Order(
+            dt=self.current_dt,
+            asset=entry_order.asset,
+            amount=bracket_info["amount"],
+            stop=bracket_info["stop_loss_price"],
+            parent_order_id=entry_order_id,
+        )
+
+        # Create take-profit order
+        take_profit_order = Order(
+            dt=self.current_dt,
+            asset=entry_order.asset,
+            amount=bracket_info["amount"],
+            limit=bracket_info["take_profit_price"],
+            parent_order_id=entry_order_id,
+        )
+
+        # Link as OCO pair
+        stop_loss_order.linked_order_ids = [take_profit_order.id]
+        take_profit_order.linked_order_ids = [stop_loss_order.id]
+
+        # Add child orders
+        self.open_orders[stop_loss_order.asset].append(stop_loss_order)
+        self.open_orders[take_profit_order.asset].append(take_profit_order)
+        self.orders[stop_loss_order.id] = stop_loss_order
+        self.orders[take_profit_order.id] = take_profit_order
+        self.new_orders.append(stop_loss_order)
+        self.new_orders.append(take_profit_order)
+
+        log.info(
+            f"Bracket order {entry_order_id} filled. "
+            f"Created stop-loss {stop_loss_order.id} and "
+            f"take-profit {take_profit_order.id}"
+        )
+
+        # Remove from pending brackets
+        del self._bracket_orders[entry_order_id]
+
     def cancel_all_orders_for_asset(self, asset, warn=False, relay_status=True):
         """
         Cancel all open orders for a given asset.
@@ -195,40 +349,27 @@ class SimulationBlotter(Blotter):
                 # been a partial fill or not.
                 if order.filled > 0:
                     warning_logger.warning(
-                        "Your order for {order_amt} shares of "
-                        "{order_sym} has been partially filled. "
-                        "{order_filled} shares were successfully "
-                        "purchased. {order_failed} shares were not "
+                        f"Your order for {order.amount} shares of "
+                        f"{order.asset.symbol} has been partially filled. "
+                        f"{order.filled} shares were successfully "
+                        f"purchased. {order.amount - order.filled} shares were not "
                         "filled by the end of day and "
-                        "were canceled.".format(
-                            order_amt=order.amount,
-                            order_sym=order.asset.symbol,
-                            order_filled=order.filled,
-                            order_failed=order.amount - order.filled,
-                        )
+                        "were canceled."
                     )
                 elif order.filled < 0:
                     warning_logger.warning(
-                        "Your order for {order_amt} shares of "
-                        "{order_sym} has been partially filled. "
-                        "{order_filled} shares were successfully "
-                        "sold. {order_failed} shares were not "
+                        f"Your order for {order.amount} shares of "
+                        f"{order.asset.symbol} has been partially filled. "
+                        f"{-1 * order.filled} shares were successfully "
+                        f"sold. {-1 * (order.amount - order.filled)} shares were not "
                         "filled by the end of day and "
-                        "were canceled.".format(
-                            order_amt=order.amount,
-                            order_sym=order.asset.symbol,
-                            order_filled=-1 * order.filled,
-                            order_failed=-1 * (order.amount - order.filled),
-                        )
+                        "were canceled."
                     )
                 else:
                     warning_logger.warning(
-                        "Your order for {order_amt} shares of "
-                        "{order_sym} failed to fill by the end of day "
-                        "and was canceled.".format(
-                            order_amt=order.amount,
-                            order_sym=order.asset.symbol,
-                        )
+                        f"Your order for {order.amount} shares of "
+                        f"{order.asset.symbol} failed to fill by the end of day "
+                        "and was canceled."
                     )
 
         assert not orders
@@ -246,40 +387,27 @@ class SimulationBlotter(Blotter):
                     if warn:
                         if order.filled > 0:
                             warning_logger.warn(
-                                "Your order for {order_amt} shares of "
-                                "{order_sym} has been partially filled. "
-                                "{order_filled} shares were successfully "
-                                "purchased. {order_failed} shares were not "
+                                f"Your order for {order.amount} shares of "
+                                f"{order.asset.symbol} has been partially filled. "
+                                f"{order.filled} shares were successfully "
+                                f"purchased. {order.amount - order.filled} shares were not "
                                 "filled by the end of day and "
-                                "were canceled.".format(
-                                    order_amt=order.amount,
-                                    order_sym=order.asset.symbol,
-                                    order_filled=order.filled,
-                                    order_failed=order.amount - order.filled,
-                                )
+                                "were canceled."
                             )
                         elif order.filled < 0:
                             warning_logger.warn(
-                                "Your order for {order_amt} shares of "
-                                "{order_sym} has been partially filled. "
-                                "{order_filled} shares were successfully "
-                                "sold. {order_failed} shares were not "
+                                f"Your order for {order.amount} shares of "
+                                f"{order.asset.symbol} has been partially filled. "
+                                f"{-1 * order.filled} shares were successfully "
+                                f"sold. {-1 * (order.amount - order.filled)} shares were not "
                                 "filled by the end of day and "
-                                "were canceled.".format(
-                                    order_amt=order.amount,
-                                    order_sym=order.asset.symbol,
-                                    order_filled=-1 * order.filled,
-                                    order_failed=-1 * (order.amount - order.filled),
-                                )
+                                "were canceled."
                             )
                         else:
                             warning_logger.warn(
-                                "Your order for {order_amt} shares of "
-                                "{order_sym} failed to fill by the end of day "
-                                "and was canceled.".format(
-                                    order_amt=order.amount,
-                                    order_sym=order.asset.symbol,
-                                )
+                                f"Your order for {order.amount} shares of "
+                                f"{order.asset.symbol} failed to fill by the end of day "
+                                "and was canceled."
                             )
 
     def execute_cancel_policy(self, event):
@@ -340,7 +468,7 @@ class SimulationBlotter(Blotter):
         splits: list
             A list of splits.  Each split is a tuple of (asset, ratio).
 
-        Returns
+        Returns:
         -------
         None
         """
@@ -361,12 +489,12 @@ class SimulationBlotter(Blotter):
         ----------
         bar_data: zipline._protocol.BarData
 
-        Notes
+        Notes:
         -----
         This method book-keeps the blotter's open_orders dictionary, so that
          it is accurate by the time we're done processing open orders.
 
-        Returns
+        Returns:
         -------
         transactions_list: List
             transactions_list: list of transactions resulting from the current
@@ -381,7 +509,6 @@ class SimulationBlotter(Blotter):
         closed_orders: List
             closed_orders: list of all the orders that have filled.
         """
-
         closed_orders = []
         transactions = []
         commissions = []
@@ -423,7 +550,7 @@ class SimulationBlotter(Blotter):
         ----------
         closed_orders: iterable of orders that are closed.
 
-        Returns
+        Returns:
         -------
         None
         """

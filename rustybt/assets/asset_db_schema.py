@@ -5,7 +5,7 @@ import sqlalchemy as sa
 # assets database
 # NOTE: When upgrading this remember to add a downgrade in:
 # .asset_db_migrations
-ASSET_DB_VERSION = 7
+ASSET_DB_VERSION = 8
 
 # A frozenset of the names of all tables in the assets db
 # NOTE: When modifying this schema, update the ASSET_DB_VERSION value
@@ -19,6 +19,8 @@ asset_db_table_names = frozenset(
         "exchanges",
         "futures_root_symbols",
         "version_info",
+        "bundle_metadata",
+        "data_quality_metrics",
     }
 )
 
@@ -194,3 +196,97 @@ version_info = sa.Table(
     # This constraint ensures a single entry in this table
     sa.CheckConstraint("id <= 1"),
 )
+
+bundle_metadata = sa.Table(
+    "bundle_metadata",
+    metadata,
+    sa.Column(
+        "id",
+        sa.Integer,
+        primary_key=True,
+        autoincrement=True,
+    ),
+    sa.Column(
+        "bundle_name",
+        sa.Text,
+        nullable=False,
+        unique=True,
+    ),
+    sa.Column(
+        "source_type",
+        sa.Text,
+        nullable=False,
+    ),
+    sa.Column("source_url", sa.Text),
+    sa.Column("api_version", sa.Text),
+    sa.Column(
+        "fetch_timestamp",
+        sa.Integer,
+        nullable=False,
+    ),
+    sa.Column("data_version", sa.Text),
+    sa.Column(
+        "checksum",
+        sa.Text,
+        nullable=False,
+    ),
+    sa.Column("timezone", sa.Text, default="UTC"),
+    sa.Column(
+        "created_at",
+        sa.Integer,
+        nullable=False,
+    ),
+    sa.Column(
+        "updated_at",
+        sa.Integer,
+        nullable=False,
+    ),
+)
+
+data_quality_metrics = sa.Table(
+    "data_quality_metrics",
+    metadata,
+    sa.Column(
+        "id",
+        sa.Integer,
+        primary_key=True,
+        autoincrement=True,
+    ),
+    sa.Column(
+        "bundle_name",
+        sa.Text,
+        sa.ForeignKey("bundle_metadata.bundle_name"),
+        nullable=False,
+    ),
+    sa.Column(
+        "row_count",
+        sa.Integer,
+        nullable=False,
+    ),
+    sa.Column(
+        "start_date",
+        sa.Integer,
+        nullable=False,
+    ),
+    sa.Column(
+        "end_date",
+        sa.Integer,
+        nullable=False,
+    ),
+    sa.Column("missing_days_count", sa.Integer, default=0),
+    sa.Column("missing_days_list", sa.Text),
+    sa.Column("outlier_count", sa.Integer, default=0),
+    sa.Column("ohlcv_violations", sa.Integer, default=0),
+    sa.Column(
+        "validation_timestamp",
+        sa.Integer,
+        nullable=False,
+    ),
+    sa.Column("validation_passed", sa.Boolean, default=True),
+)
+
+# Create indexes for bundle metadata and quality metrics tables
+sa.Index("idx_bundle_metadata_name", bundle_metadata.c.bundle_name)
+sa.Index("idx_bundle_metadata_fetch", bundle_metadata.c.fetch_timestamp)
+sa.Index("idx_quality_metrics_bundle", data_quality_metrics.c.bundle_name)
+sa.Index("idx_quality_metrics_validation", data_quality_metrics.c.validation_timestamp)

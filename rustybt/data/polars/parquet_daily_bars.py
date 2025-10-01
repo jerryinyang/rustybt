@@ -23,6 +23,7 @@ from typing import List, Optional
 
 from rustybt.data.polars.parquet_schema import DAILY_BARS_SCHEMA
 from rustybt.data.polars.validation import validate_ohlcv_relationships, DataError
+from rustybt.data.polars.metadata_catalog import ParquetMetadataCatalog
 
 logger = structlog.get_logger(__name__)
 
@@ -48,12 +49,18 @@ class PolarsParquetDailyReader:
         >>> assert df.schema["open"] == pl.Decimal(18, 8)
     """
 
-    def __init__(self, bundle_path: str, enable_cache: bool = True):
+    def __init__(
+        self,
+        bundle_path: str,
+        enable_cache: bool = True,
+        enable_metadata_catalog: bool = True,
+    ):
         """Initialize reader with bundle directory path.
 
         Args:
             bundle_path: Path to bundle directory (e.g., "data/bundles/quandl")
             enable_cache: Enable in-memory caching for hot data (default: True)
+            enable_metadata_catalog: Enable metadata catalog integration (default: True)
         """
         self.bundle_path = Path(bundle_path)
         self.daily_bars_path = self.bundle_path / "daily_bars"
@@ -61,11 +68,22 @@ class PolarsParquetDailyReader:
         self._cache: Optional[pl.DataFrame] = None
         self._cache_date_range: Optional[tuple[date, date]] = None
 
+        # Initialize metadata catalog
+        self.enable_metadata_catalog = enable_metadata_catalog
+        if enable_metadata_catalog:
+            metadata_db_path = self.bundle_path / "metadata.db"
+            self.metadata_catalog: Optional[ParquetMetadataCatalog] = (
+                ParquetMetadataCatalog(str(metadata_db_path))
+            )
+        else:
+            self.metadata_catalog = None
+
         logger.info(
             "daily_reader_initialized",
             bundle_path=str(bundle_path),
             daily_bars_path=str(self.daily_bars_path),
             enable_cache=enable_cache,
+            metadata_catalog_enabled=enable_metadata_catalog,
         )
 
     def load_daily_bars(

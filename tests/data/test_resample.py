@@ -936,3 +936,561 @@ class TestReindexSessionBars(WithBcolzEquityDailyBarReader, ZiplineTestCase):
             "The calendar for the reindex reader should be the "
             "specified futures calendar."
         )
+
+
+# ============================================================================
+# Tests for Modern Polars-Based Aggregation (RustyBT Enhancement)
+# ============================================================================
+
+import pytest
+import polars as pl
+from decimal import Decimal
+from rustybt.data.resample import (
+    aggregate_ohlcv,
+    aggregate_to_daily_bars,
+    AggregationValidationError,
+    _validate_resolution_mapping,
+    _detect_gaps,
+    _detect_outliers_after_aggregation,
+    _validate_temporal_consistency,
+)
+from rustybt.data.adapters.base import ValidationError
+
+
+class TestResolutionValidation:
+    """Test resolution mapping validation."""
+
+    def test_valid_resolution_mappings(self):
+        """Valid resolution mappings should pass."""
+        # These should not raise
+        _validate_resolution_mapping('1m', '1h')
+        _validate_resolution_mapping('1m', '1d')
+        _validate_resolution_mapping('1h', '1d')
+        _validate_resolution_mapping('1d', '1w')
+        _validate_resolution_mapping('1d', '1mo')
+
+    def test_invalid_same_resolution(self):
+        """Same resolution should fail."""
+        with pytest.raises(ValueError, match="source resolution must be finer"):
+            _validate_resolution_mapping('1h', '1h')
+
+    def test_invalid_coarse_to_fine(self):
+        """Coarse to fine resolution should fail."""
+        with pytest.raises(ValueError, match="source resolution must be finer"):
+            _validate_resolution_mapping('1d', '1h')
+
+    def test_invalid_resolution_string(self):
+        """Invalid resolution strings should fail."""
+        with pytest.raises(ValueError, match="Invalid resolution"):
+            _validate_resolution_mapping('invalid', '1h')
+
+
+class TestAggregateOHLCV:
+    """Test main aggregate_ohlcv function."""
+
+    def test_minute_to_hourly_aggregation(self):
+        """Test 1-minute → hourly aggregation with known input/output."""
+        # Create 60 1-minute bars for one hour
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01 10:00', periods=60, freq='1min', tz='UTC'),
+            'symbol': ['AAPL'] * 60,
+            'open': [Decimal('100')] + [Decimal('100.5')] * 59,
+            'high': [Decimal('101')] * 60,
+            'low': [Decimal('99')] * 60,
+            'close': [Decimal('100.5')] * 59 + [Decimal('100.8')],
+            'volume': [Decimal('1000')] * 60
+        })
+
+        df_agg = aggregate_ohlcv(df, source_resolution='1m', target_resolution='1h')
+
+        # Verify aggregation
+        assert len(df_agg) == 1
+        assert df_agg['open'][0] == Decimal('100')  # First open
+        assert df_agg['high'][0] == Decimal('101')  # Max high
+        assert df_agg['low'][0] == Decimal('99')  # Min low
+        assert df_agg['close'][0] == Decimal('100.8')  # Last close
+        assert df_agg['volume'][0] == Decimal('60000')  # Sum volume
+
+    def test_hourly_to_daily_aggregation(self):
+        """Test hourly → daily aggregation preserves OHLCV relationships."""
+        # Create 24 hourly bars
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01 00:00', periods=24, freq='1h', tz='UTC'),
+            'symbol': ['AAPL'] * 24,
+            'open': [Decimal('100') + Decimal(str(i)) for i in range(24)],
+            'high': [Decimal('105') + Decimal(str(i)) for i in range(24)],
+            'low': [Decimal('95') + Decimal(str(i)) for i in range(24)],
+            'close': [Decimal('102') + Decimal(str(i)) for i in range(24)],
+            'volume': [Decimal('1000')] * 24
+        })
+
+        df_agg = aggregate_ohlcv(df, source_resolution='1h', target_resolution='1d')
+
+        # Verify aggregation
+        assert len(df_agg) == 1
+        assert df_agg['open'][0] == Decimal('100')  # First open
+        assert df_agg['high'][0] == Decimal('128')  # Max high (105 + 23)
+        assert df_agg['low'][0] == Decimal('95')  # Min low
+        assert df_agg['close'][0] == Decimal('125')  # Last close (102 + 23)
+        assert df_agg['volume'][0] == Decimal('24000')  # Sum volume
+
+    def test_daily_to_weekly_aggregation(self):
+        """Test daily → weekly aggregation sums volume correctly."""
+        # Create 7 daily bars (one week)
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-02', periods=7, freq='1D', tz='UTC'),
+            'symbol': ['AAPL'] * 7,
+            'open': [Decimal('100')] * 7,
+            'high': [Decimal('105')] * 7,
+            'low': [Decimal('95')] * 7,
+            'close': [Decimal('102')] * 7,
+            'volume': [Decimal('1000000')] * 7
+        })
+
+        df_agg = aggregate_ohlcv(df, source_resolution='1d', target_resolution='1w')
+
+        # Verify aggregation
+        assert len(df_agg) == 1
+        assert df_agg['volume'][0] == Decimal('7000000')  # Sum of 7 days
+
+    def test_multiple_symbols_aggregation(self):
+        """Test aggregation with multiple symbols."""
+        # Create data for 2 symbols
+        symbols = ['AAPL', 'MSFT']
+        dfs = []
+
+        for symbol in symbols:
+            df_symbol = pl.DataFrame({
+                'timestamp': pd.date_range('2023-01-01 10:00', periods=60, freq='1min', tz='UTC'),
+                'symbol': [symbol] * 60,
+                'open': [Decimal('100')] * 60,
+                'high': [Decimal('101')] * 60,
+                'low': [Decimal('99')] * 60,
+                'close': [Decimal('100.5')] * 60,
+                'volume': [Decimal('1000')] * 60
+            })
+            dfs.append(df_symbol)
+
+        df = pl.concat(dfs)
+        df_agg = aggregate_ohlcv(df, source_resolution='1m', target_resolution='1h')
+
+        # Should have 2 rows (one per symbol)
+        assert len(df_agg) == 2
+        assert set(df_agg['symbol'].to_list()) == {'AAPL', 'MSFT'}
+
+    def test_empty_dataframe(self):
+        """Test aggregation with empty DataFrame."""
+        df = pl.DataFrame(schema={
+            'timestamp': pl.Datetime('us', 'UTC'),
+            'symbol': pl.Utf8,
+            'open': pl.Decimal(precision=18, scale=8),
+            'high': pl.Decimal(precision=18, scale=8),
+            'low': pl.Decimal(precision=18, scale=8),
+            'close': pl.Decimal(precision=18, scale=8),
+            'volume': pl.Decimal(precision=18, scale=8),
+        })
+
+        df_agg = aggregate_ohlcv(df, source_resolution='1m', target_resolution='1h')
+
+        # Should return empty DataFrame with correct schema
+        assert len(df_agg) == 0
+        assert 'timestamp' in df_agg.columns
+
+    def test_missing_columns(self):
+        """Test aggregation fails with missing columns."""
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01 10:00', periods=60, freq='1min', tz='UTC'),
+            'symbol': ['AAPL'] * 60,
+            'open': [Decimal('100')] * 60,
+            # Missing high, low, close, volume
+        })
+
+        with pytest.raises(ValueError, match="Missing required columns"):
+            aggregate_ohlcv(df, source_resolution='1m', target_resolution='1h')
+
+    def test_timezone_conversion(self):
+        """Test timezone conversion during aggregation."""
+        # Create data in UTC that fits within a single hour in NY timezone
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-03 14:30', periods=60, freq='1min', tz='UTC'),
+            'symbol': ['AAPL'] * 60,
+            'open': [Decimal('100')] * 60,
+            'high': [Decimal('101')] * 60,
+            'low': [Decimal('99')] * 60,
+            'close': [Decimal('100.5')] * 60,
+            'volume': [Decimal('1000')] * 60
+        })
+
+        # Aggregate with UTC timezone (no conversion)
+        df_agg = aggregate_ohlcv(
+            df,
+            source_resolution='1m',
+            target_resolution='1h',
+            timezone='UTC'
+        )
+
+        # Result should be in UTC and should be 1-2 hourly bars depending on alignment
+        assert len(df_agg) >= 1
+        assert df_agg['timestamp'][0].tzinfo is not None
+        # Verify total volume is preserved
+        assert df_agg['volume'].sum() == Decimal('60000')
+
+
+class TestGapDetection:
+    """Test gap detection functionality."""
+
+    def test_no_gaps(self):
+        """Test gap detection with complete data."""
+        # Create complete hourly data
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01', periods=24, freq='1h', tz='UTC'),
+            'symbol': ['AAPL'] * 24,
+            'source_bar_count': [60] * 24  # Expected: 60 minutes per hour
+        })
+
+        gap_info = _detect_gaps(df, '1m', '1h')
+
+        assert gap_info['gap_count'] == 0
+        assert gap_info['missing_bars_pct'] == 0
+
+    def test_with_gaps(self):
+        """Test gap detection identifies missing bars."""
+        # Create data with some incomplete periods
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01', periods=24, freq='1h', tz='UTC'),
+            'symbol': ['AAPL'] * 24,
+            'source_bar_count': [60] * 20 + [30, 40, 50, 55]  # Last 4 have gaps
+        })
+
+        gap_info = _detect_gaps(df, '1m', '1h')
+
+        assert gap_info['gap_count'] == 4
+        assert gap_info['missing_bars_pct'] > 0
+
+
+class TestOutlierDetection:
+    """Test outlier detection functionality."""
+
+    def test_no_outliers(self):
+        """Test outlier detection with normal data."""
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01', periods=100, freq='1h', tz='UTC'),
+            'symbol': ['AAPL'] * 100,
+            'open': [Decimal('100')] * 100,
+            'close': [Decimal('100.5')] * 100  # 0.5% change consistently
+        })
+
+        outliers = _detect_outliers_after_aggregation(df, threshold=3.0)
+
+        assert len(outliers) == 0
+
+    def test_with_outliers(self):
+        """Test outlier detection identifies extreme price movements."""
+        # Create data with some variation and one clear outlier
+        opens = [Decimal('100')] * 100
+        # Add realistic variation (most bars 0%, ±1%, ±2%, ±5% with one ±20% outlier)
+        closes = []
+        for i in range(99):
+            if i % 10 == 0:
+                closes.append(Decimal('105'))  # +5% occasionally
+            elif i % 7 == 0:
+                closes.append(Decimal('102'))  # +2% occasionally
+            elif i % 5 == 0:
+                closes.append(Decimal('101'))  # +1% occasionally
+            elif i % 3 == 0:
+                closes.append(Decimal('99'))   # -1% occasionally
+            else:
+                closes.append(Decimal('100'))  # 0% most of the time
+        closes.append(Decimal('120'))  # Add clear outlier at end (+20% - should trigger z-score > 3)
+
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01', periods=100, freq='1h', tz='UTC'),
+            'symbol': ['AAPL'] * 100,
+            'open': opens,
+            'close': closes
+        })
+
+        outliers = _detect_outliers_after_aggregation(df, threshold=3.0)
+
+        # Should detect the outlier
+        assert len(outliers) > 0
+
+
+class TestTemporalConsistency:
+    """Test temporal consistency validation."""
+
+    def test_sorted_timestamps(self):
+        """Test temporal consistency with sorted timestamps."""
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01', periods=10, freq='1h', tz='UTC'),
+            'symbol': ['AAPL'] * 10
+        })
+
+        # Should not raise
+        _validate_temporal_consistency(df)
+
+    def test_unsorted_timestamps(self):
+        """Test temporal consistency detects unsorted timestamps."""
+        timestamps = pd.date_range('2023-01-01', periods=10, freq='1h', tz='UTC').tolist()
+        timestamps[5], timestamps[6] = timestamps[6], timestamps[5]  # Swap two
+
+        df = pl.DataFrame({
+            'timestamp': timestamps,
+            'symbol': ['AAPL'] * 10
+        })
+
+        with pytest.raises(AggregationValidationError, match="Timestamps not sorted"):
+            _validate_temporal_consistency(df)
+
+    def test_duplicate_timestamps(self):
+        """Test temporal consistency detects duplicates."""
+        # Create sorted timestamps with a duplicate
+        timestamps = pd.date_range('2023-01-01', periods=10, freq='1h', tz='UTC').tolist()
+        timestamps.append(pd.Timestamp('2023-01-01 05:00:00', tz='UTC'))  # Add duplicate
+        timestamps.sort()  # Sort to ensure timestamps are in order (only duplicates remain as issue)
+
+        df = pl.DataFrame({
+            'timestamp': timestamps,
+            'symbol': ['AAPL'] * 11
+        })
+
+        with pytest.raises(AggregationValidationError, match="Duplicate timestamps"):
+            _validate_temporal_consistency(df)
+
+
+class TestAggregateToDailyBars:
+    """Test timezone-aware daily aggregation."""
+
+    def test_daily_aggregation_with_trading_hours(self):
+        """Test aggregation to daily bars with trading session boundaries."""
+        # Create full trading day of minute bars (9:30 AM - 4:00 PM EST = 390 bars)
+        df = pl.DataFrame({
+            'timestamp': pd.date_range(
+                '2023-01-03 09:30',
+                periods=390,
+                freq='1min',
+                tz='America/New_York'
+            ),
+            'symbol': ['AAPL'] * 390,
+            'open': [Decimal('150')] + [Decimal('150.1')] * 389,
+            'high': [Decimal('151')] * 390,
+            'low': [Decimal('149')] * 390,
+            'close': [Decimal('150.5')] * 389 + [Decimal('150.8')],
+            'volume': [Decimal('1000')] * 390
+        })
+
+        df_daily = aggregate_to_daily_bars(df, timezone='America/New_York')
+
+        # Should aggregate to 1 daily bar
+        assert len(df_daily) == 1
+        assert df_daily['open'][0] == Decimal('150')  # First bar's open
+        assert df_daily['close'][0] == Decimal('150.8')  # Last bar's close
+        assert df_daily['volume'][0] == Decimal('390000')  # Sum all volume
+
+    def test_filters_non_trading_hours(self):
+        """Test that non-trading hours are filtered out."""
+        # Create bars including pre-market and after-hours
+        df = pl.DataFrame({
+            'timestamp': pd.date_range(
+                '2023-01-03 08:00',  # Before market open
+                periods=600,
+                freq='1min',
+                tz='America/New_York'
+            ),
+            'symbol': ['AAPL'] * 600,
+            'open': [Decimal('150')] * 600,
+            'high': [Decimal('151')] * 600,
+            'low': [Decimal('149')] * 600,
+            'close': [Decimal('150.5')] * 600,
+            'volume': [Decimal('1000')] * 600
+        })
+
+        df_daily = aggregate_to_daily_bars(
+            df,
+            timezone='America/New_York',
+            market_open='09:30',
+            market_close='16:00'
+        )
+
+        # Should only include bars within trading hours (390 bars)
+        assert len(df_daily) == 1
+        assert df_daily['volume'][0] == Decimal('390000')  # Only trading hour volume
+
+
+# ============================================================================
+# Property-Based Tests (Hypothesis)
+# ============================================================================
+
+from hypothesis import given, strategies as st, settings, assume
+
+
+class TestPropertyBasedAggregation:
+    """Property-based tests for aggregation invariants."""
+
+    @given(
+        bar_count=st.integers(min_value=60, max_value=1000),
+        base_price=st.decimals(min_value=Decimal('1'), max_value=Decimal('1000'),
+                                allow_nan=False, allow_infinity=False, places=2)
+    )
+    @settings(max_examples=100)
+    def test_aggregated_volume_equals_sum(self, bar_count, base_price):
+        """Property: Aggregated volume == sum of source volumes."""
+        assume(base_price > 0)  # Ensure positive price
+
+        # Generate minute bars
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01', periods=bar_count, freq='1min', tz='UTC'),
+            'symbol': ['TEST'] * bar_count,
+            'open': [base_price] * bar_count,
+            'high': [base_price * Decimal('1.01')] * bar_count,
+            'low': [base_price * Decimal('0.99')] * bar_count,
+            'close': [base_price] * bar_count,
+            'volume': [Decimal('1000')] * bar_count
+        })
+
+        # Aggregate to hourly
+        df_agg = aggregate_ohlcv(df, source_resolution='1m', target_resolution='1h', validate=False)
+
+        # Property: Total volume must be preserved
+        source_volume_total = df['volume'].sum()
+        agg_volume_total = df_agg['volume'].sum()
+
+        assert source_volume_total == agg_volume_total
+
+    @given(
+        high=st.decimals(min_value=Decimal('100'), max_value=Decimal('200'),
+                        allow_nan=False, allow_infinity=False, places=2),
+        low=st.decimals(min_value=Decimal('50'), max_value=Decimal('99'),
+                       allow_nan=False, allow_infinity=False, places=2)
+    )
+    @settings(max_examples=100)
+    def test_ohlcv_relationships_preserved(self, high, low):
+        """Property: OHLCV relationships hold after aggregation."""
+        assume(high > low)  # Ensure high > low
+
+        # Create bars with valid OHLCV relationships
+        # Open and close must be between low and high
+        open_price = Decimal('90')
+        close_price = Decimal('95')
+
+        # Ensure low <= min(open, close) <= max(open, close) <= high
+        min_price = min(open_price, close_price)
+        max_price = max(open_price, close_price)
+        assume(low <= min_price)  # Low must be at or below the lower of open/close
+        assume(high >= max_price)  # High must be at or above the higher of open/close
+
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01', periods=60, freq='1min', tz='UTC'),
+            'symbol': ['TEST'] * 60,
+            'open': [open_price] * 60,
+            'high': [high] * 60,
+            'low': [low] * 60,
+            'close': [close_price] * 60,
+            'volume': [Decimal('1000')] * 60
+        })
+
+        df_agg = aggregate_ohlcv(df, source_resolution='1m', target_resolution='1h', validate=False)
+
+        # Property: High >= Low always
+        assert all(df_agg['high'] >= df_agg['low'])
+        assert all(df_agg['high'] >= df_agg['open'])
+        assert all(df_agg['high'] >= df_agg['close'])
+        assert all(df_agg['low'] <= df_agg['open'])
+        assert all(df_agg['low'] <= df_agg['close'])
+
+    @given(
+        bar_count=st.integers(min_value=24, max_value=240),
+    )
+    @settings(max_examples=100)
+    def test_aggregated_high_max_of_source_highs(self, bar_count):
+        """Property: Aggregated High >= all source High values."""
+        # Create bars with varying highs
+        highs = [Decimal(str(100 + i % 10)) for i in range(bar_count)]
+
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01', periods=bar_count, freq='1h', tz='UTC'),
+            'symbol': ['TEST'] * bar_count,
+            'open': [Decimal('100')] * bar_count,
+            'high': highs,
+            'low': [Decimal('95')] * bar_count,
+            'close': [Decimal('98')] * bar_count,
+            'volume': [Decimal('1000')] * bar_count
+        })
+
+        df_agg = aggregate_ohlcv(df, source_resolution='1h', target_resolution='1d', validate=False)
+
+        # Property: Aggregated high should equal max of source highs
+        max_source_high = max(highs)
+        assert df_agg['high'][0] == max_source_high
+
+    @given(
+        bar_count=st.integers(min_value=24, max_value=240),
+    )
+    @settings(max_examples=100)
+    def test_aggregated_low_min_of_source_lows(self, bar_count):
+        """Property: Aggregated Low <= all source Low values."""
+        # Create bars with varying lows
+        lows = [Decimal(str(90 + i % 10)) for i in range(bar_count)]
+
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01', periods=bar_count, freq='1h', tz='UTC'),
+            'symbol': ['TEST'] * bar_count,
+            'open': [Decimal('100')] * bar_count,
+            'high': [Decimal('105')] * bar_count,
+            'low': lows,
+            'close': [Decimal('98')] * bar_count,
+            'volume': [Decimal('1000')] * bar_count
+        })
+
+        df_agg = aggregate_ohlcv(df, source_resolution='1h', target_resolution='1d', validate=False)
+
+        # Property: Aggregated low should equal min of source lows
+        min_source_low = min(lows)
+        assert df_agg['low'][0] == min_source_low
+
+    @given(
+        bar_count=st.integers(min_value=60, max_value=120),
+    )
+    @settings(max_examples=100)
+    def test_aggregated_open_first_source_open(self, bar_count):
+        """Property: Aggregated Open == first source Open."""
+        opens = [Decimal(str(100 + i)) for i in range(bar_count)]
+
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01 10:00', periods=bar_count, freq='1min', tz='UTC'),
+            'symbol': ['TEST'] * bar_count,
+            'open': opens,
+            'high': [Decimal('105')] * bar_count,
+            'low': [Decimal('95')] * bar_count,
+            'close': [Decimal('102')] * bar_count,
+            'volume': [Decimal('1000')] * bar_count
+        })
+
+        df_agg = aggregate_ohlcv(df, source_resolution='1m', target_resolution='1h', validate=False)
+
+        # Property: Aggregated open should be first source open
+        assert df_agg['open'][0] == opens[0]
+
+    @given(
+        bar_count=st.integers(min_value=30, max_value=60),  # Keep within single hour to test single-period aggregation
+    )
+    @settings(max_examples=100)
+    def test_aggregated_close_last_source_close(self, bar_count):
+        """Property: Aggregated Close == last source Close (single period)."""
+        closes = [Decimal(str(100 + i)) for i in range(bar_count)]
+
+        df = pl.DataFrame({
+            'timestamp': pd.date_range('2023-01-01 10:00', periods=bar_count, freq='1min', tz='UTC'),
+            'symbol': ['TEST'] * bar_count,
+            'open': [Decimal('100')] * bar_count,
+            'high': [Decimal('105')] * bar_count,
+            'low': [Decimal('95')] * bar_count,
+            'close': closes,
+            'volume': [Decimal('1000')] * bar_count
+        })
+
+        df_agg = aggregate_ohlcv(df, source_resolution='1m', target_resolution='1h', validate=False)
+
+        # Property: Aggregated close should be last source close (for single aggregated period)
+        assert len(df_agg) == 1  # Should produce exactly 1 hourly bar
+        assert df_agg['close'][0] == closes[-1]

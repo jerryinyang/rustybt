@@ -1,0 +1,328 @@
+{
+    "machine_info": {
+        "node": "Mac",
+        "processor": "arm",
+        "machine": "arm64",
+        "python_compiler": "Clang 13.0.0 (clang-1300.0.29.30)",
+        "python_implementation": "CPython",
+        "python_implementation_version": "3.12.0",
+        "python_version": "3.12.0",
+        "python_build": [
+            "v3.12.0:0fb18b02c8",
+            "Oct  2 2023 09:45:56"
+        ],
+        "release": "25.0.0",
+        "system": "Darwin",
+        "cpu": {
+            "python_version": "3.12.0.final.0 (64 bit)",
+            "cpuinfo_version": [
+                9,
+                0,
+                0
+            ],
+            "cpuinfo_version_string": "9.0.0",
+            "arch": "ARM_8",
+            "bits": 64,
+            "count": 10,
+            "arch_string_raw": "arm64",
+            "brand_raw": "Apple M2 Pro"
+        }
+    },
+    "commit_info": {
+        "id": "e69aaebab58e1e8da9d4e35a06297e9f3195f067",
+        "time": "2025-10-01T12:51:44+01:00",
+        "author_time": "2025-10-01T12:51:44+01:00",
+        "dirty": true,
+        "project": "rustybt",
+        "branch": "main"
+    },
+    "benchmarks": [
+        {
+            "group": "portfolio",
+            "name": "test_float_portfolio_value_100_positions",
+            "fullname": "benchmarks/baseline_float_backtest.py::test_float_portfolio_value_100_positions",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 5.916999725741334e-06,
+                "max": 0.0003291670000180602,
+                "mean": 6.369476666996135e-06,
+                "stddev": 3.522661748076846e-06,
+                "rounds": 25779,
+                "median": 6.0840002333861776e-06,
+                "iqr": 1.249991328222677e-07,
+                "q1": 6.0420006775530055e-06,
+                "q3": 6.166999810375273e-06,
+                "iqr_outliers": 3120,
+                "stddev_outliers": 332,
+                "outliers": "332;3120",
+                "ld15iqr": 5.916999725741334e-06,
+                "hd15iqr": 6.374999429681338e-06,
+                "ops": 156998.7696448542,
+                "total": 0.16419873899849335,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "portfolio",
+            "name": "test_float_portfolio_value_scalability",
+            "fullname": "benchmarks/baseline_float_backtest.py::test_float_portfolio_value_scalability",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 5.7124999329971615e-05,
+                "max": 0.0011277500007054186,
+                "mean": 6.16152975507854e-05,
+                "stddev": 2.0050363158313425e-05,
+                "rounds": 16609,
+                "median": 5.795800007035723e-05,
+                "iqr": 2.4589999156887643e-06,
+                "q1": 5.758299994340632e-05,
+                "q3": 6.0041999859095085e-05,
+                "iqr_outliers": 1828,
+                "stddev_outliers": 489,
+                "outliers": "489;1828",
+                "ld15iqr": 5.7124999329971615e-05,
+                "hd15iqr": 6.37499997537816e-05,
+                "ops": 16229.735792085827,
+                "total": 1.0233684770209948,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "returns",
+            "name": "test_float_calculate_returns",
+            "fullname": "benchmarks/baseline_float_backtest.py::test_float_calculate_returns",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 2.1249998098937795e-06,
+                "max": 4.799999987881165e-05,
+                "mean": 2.3795882432870974e-06,
+                "stddev": 8.573031049694326e-07,
+                "rounds": 37736,
+                "median": 2.2920003175386228e-06,
+                "iqr": 4.3000000005122274e-08,
+                "q1": 2.2909998733666725e-06,
+                "q3": 2.333999873371795e-06,
+                "iqr_outliers": 5671,
+                "stddev_outliers": 283,
+                "outliers": "283;5671",
+                "ld15iqr": 2.249999852210749e-06,
+                "hd15iqr": 2.415999915683642e-06,
+                "ops": 420240.7718314441,
+                "total": 0.0897961419486819,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "orders",
+            "name": "test_float_order_processing_1000_orders",
+            "fullname": "benchmarks/baseline_float_backtest.py::test_float_order_processing_1000_orders",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.0004928339994876296,
+                "max": 0.0011023749993910315,
+                "mean": 0.0005119923927565097,
+                "stddev": 4.327698577038719e-05,
+                "rounds": 1352,
+                "median": 0.0005003330006729811,
+                "iqr": 1.2562500160129275e-05,
+                "q1": 0.0004972500000803848,
+                "q3": 0.0005098125002405141,
+                "iqr_outliers": 157,
+                "stddev_outliers": 66,
+                "outliers": "66;157",
+                "ld15iqr": 0.0004928339994876296,
+                "hd15iqr": 0.0005288330003168085,
+                "ops": 1953.154019762114,
+                "total": 0.6922137150068011,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "metrics",
+            "name": "test_float_sharpe_ratio",
+            "fullname": "benchmarks/baseline_float_backtest.py::test_float_sharpe_ratio",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 1.1207999705220573e-05,
+                "max": 9.245799992640968e-05,
+                "mean": 1.1831490175679264e-05,
+                "stddev": 3.1694514623288887e-06,
+                "rounds": 2446,
+                "median": 1.1500000255182385e-05,
+                "iqr": 2.0800052880076692e-07,
+                "q1": 1.1416999768698588e-05,
+                "q3": 1.1625000297499355e-05,
+                "iqr_outliers": 210,
+                "stddev_outliers": 34,
+                "outliers": "34;210",
+                "ld15iqr": 1.1207999705220573e-05,
+                "hd15iqr": 1.195799995912239e-05,
+                "ops": 84520.20710422375,
+                "total": 0.02893982496971148,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "metrics",
+            "name": "test_float_max_drawdown",
+            "fullname": "benchmarks/baseline_float_backtest.py::test_float_max_drawdown",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 4.208000063954387e-06,
+                "max": 8.04999999672873e-05,
+                "mean": 4.536233175057435e-06,
+                "stddev": 1.3044535515592678e-06,
+                "rounds": 38036,
+                "median": 4.457999239093624e-06,
+                "iqr": 8.400002116104588e-08,
+                "q1": 4.415999683260452e-06,
+                "q3": 4.499999704421498e-06,
+                "iqr_outliers": 1652,
+                "stddev_outliers": 267,
+                "outliers": "267;1652",
+                "ld15iqr": 4.2909996409434825e-06,
+                "hd15iqr": 4.665999767894391e-06,
+                "ops": 220447.22160635813,
+                "total": 0.17254016504648462,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "data",
+            "name": "test_float_data_aggregation",
+            "fullname": "benchmarks/baseline_float_backtest.py::test_float_data_aggregation",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.0006178749999889988,
+                "max": 0.0017008750000968575,
+                "mean": 0.0006425974097130732,
+                "stddev": 4.4935464316145546e-05,
+                "rounds": 1174,
+                "median": 0.0006292289999692002,
+                "iqr": 2.5291999918408692e-05,
+                "q1": 0.0006223749996934202,
+                "q3": 0.0006476669996118289,
+                "iqr_outliers": 107,
+                "stddev_outliers": 102,
+                "outliers": "102;107",
+                "ld15iqr": 0.0006178749999889988,
+                "hd15iqr": 0.0006856250001874287,
+                "ops": 1556.1842996636276,
+                "total": 0.754409359003148,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "end-to-end",
+            "name": "test_float_simplified_backtest",
+            "fullname": "benchmarks/baseline_float_backtest.py::test_float_simplified_backtest",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.0038115420002213796,
+                "max": 0.006799707999562088,
+                "mean": 0.003978158736441937,
+                "stddev": 0.0002580311499527369,
+                "rounds": 258,
+                "median": 0.003943416500078456,
+                "iqr": 0.00011541699950612383,
+                "q1": 0.0038849580005262396,
+                "q3": 0.0040003750000323635,
+                "iqr_outliers": 11,
+                "stddev_outliers": 8,
+                "outliers": "8;11",
+                "ld15iqr": 0.0038115420002213796,
+                "hd15iqr": 0.004185333999885188,
+                "ops": 251.372573658134,
+                "total": 1.0263649540020197,
+                "iterations": 1
+            }
+        }
+    ],
+    "datetime": "2025-10-01T11:58:29.930795+00:00",
+    "version": "5.1.0",
+    "rustybt_metadata": {
+        "version": "1.0",
+        "benchmark_type": "decimal_baseline",
+        "purpose": "Epic 7 Rust optimization baseline"
+    }
+}

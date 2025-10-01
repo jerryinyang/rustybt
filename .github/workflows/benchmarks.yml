@@ -1,0 +1,112 @@
+name: Performance Benchmarks
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'  # Weekly Monday 3am UTC
+
+jobs:
+  benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv sync
+
+      - name: Run float baseline benchmarks
+        run: |
+          uv run pytest benchmarks/baseline_float_backtest.py \
+            --benchmark-only \
+            --benchmark-autosave \
+            --benchmark-json=float_baseline.json
+
+      - name: Run Decimal benchmarks
+        run: |
+          uv run pytest benchmarks/decimal_backtest.py \
+            --benchmark-only \
+            --benchmark-autosave \
+            --benchmark-json=decimal_benchmarks.json
+
+      - name: Calculate overhead
+        run: |
+          uv run python benchmarks/calculate_overhead.py \
+            float_baseline.json \
+            decimal_benchmarks.json \
+            --output docs/performance/decimal-baseline.md
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            float_baseline.json
+            decimal_benchmarks.json
+            docs/performance/decimal-baseline.md
+
+      - name: Check performance regression
+        run: |
+          # Compare with previous baseline if it exists
+          if [ -f "benchmarks/results/decimal_backtest.json" ]; then
+            uv run python -c "
+import json
+import sys
+
+with open('decimal_benchmarks.json') as f:
+    current = json.load(f)
+
+with open('benchmarks/results/decimal_backtest.json') as f:
+    baseline = json.load(f)
+
+# Check if any benchmark regressed >10%
+regressed = False
+for benchmark in current['benchmarks']:
+    name = benchmark['name']
+    current_mean = benchmark['stats']['mean']
+
+    # Find matching baseline
+    baseline_bench = next((b for b in baseline['benchmarks'] if b['name'] == name), None)
+    if baseline_bench:
+        baseline_mean = baseline_bench['stats']['mean']
+        regression = ((current_mean / baseline_mean) - 1) * 100
+
+        if regression > 10:
+            print(f'REGRESSION: {name} regressed by {regression:.1f}%')
+            regressed = True
+
+if regressed:
+    sys.exit(1)
+else:
+    print('No significant regressions detected')
+            "
+          fi
+
+      - name: Comment PR with results (if PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('docs/performance/decimal-baseline.md')) {
+              const results = fs.readFileSync('docs/performance/decimal-baseline.md', 'utf8');
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 📊 Performance Benchmark Results\n\n${results}`
+              });
+            }

@@ -56,7 +56,7 @@ def main(ctx, extension, strict_extensions, default_extension, x):
         datefmt="%Y-%m-%dT%H:%M:%S%z",
     )
 
-    create_args(x, zipline.extension_args)
+    create_args(x, rustybt.extension_args)
     load_extensions(
         default_extension,
         extension,
@@ -329,7 +329,7 @@ def run(
     )
 
 
-def zipline_magic(line, cell=None):
+def rustybt_magic(line, cell=None):
     """The zipline IPython cell magic."""
     load_extensions(
         default=True,

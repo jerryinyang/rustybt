@@ -3,6 +3,11 @@ import sys
 import os
 import pandas as pd
 import pytest
+
+# BACKWARDS COMPATIBILITY: Create module alias for unpickling old zipline data
+import rustybt
+sys.modules['zipline'] = rustybt
+
 from rustybt.utils.calendar_utils import get_calendar
 import sqlalchemy as sa
 

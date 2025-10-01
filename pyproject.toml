@@ -64,12 +64,13 @@ dependencies = [
     #    'ta-lib >=0.4.09',
     'tables >=3.4.3',
     'toolz >=0.8.2',
-    'exchange-calendars >=4.2.4',
+    "exchange-calendars>=4.2.4",
     # RustyBT additions
     'polars >=1.0',
     'pyarrow >=18.0',
     'structlog',
     'pydantic >=2.0',
+    'pyyaml >=6.0',
 ]
 
 [project.urls]
@@ -169,12 +170,15 @@ addopts = [
     "--durations=20", # Show 20 slowest tests
     "--maxfail=50", # Stop after 50 failures to prevent endless reruns
     "--ff", # Run failed tests first
+    "--cov=rustybt",
+    "--cov-report=term-missing",
 ]
 # Add markers for better test organization
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
+    "benchmark: marks tests as benchmark tests",
 ]
 
 [tool.cibuildwheel]
@@ -268,6 +272,39 @@ line-ending = "auto"
     # The below are debateable
     "PLR2004", # Magic value used in comparison, ...
     "S311", # Standard pseudo-random generators are not suitable for cryptographic purposes
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+strict = true
+
+[tool.coverage.run]
+source = ["rustybt"]
+omit = ["*/tests/*", "*/testing/*"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
 ]
 
 [tool.tox]

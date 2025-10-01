@@ -1,0 +1,21 @@
+{
+  "global_defaults": {
+    "precision": 18,
+    "rounding_mode": "ROUND_HALF_EVEN",
+    "scale": 8
+  },
+  "asset_classes": {
+    "crypto": {
+      "precision": 18,
+      "rounding_mode": "ROUND_DOWN",
+      "scale": 8,
+      "rationale": "Test crypto configuration from JSON"
+    },
+    "equity": {
+      "precision": 18,
+      "rounding_mode": "ROUND_HALF_UP",
+      "scale": 2,
+      "rationale": "Test equity configuration from JSON"
+    }
+  }
+}

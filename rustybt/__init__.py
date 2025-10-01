@@ -62,7 +62,7 @@ extension_args = ext.Namespace()
 def load_ipython_extension(ipython):
     from .__main__ import rustybt_magic
 
-    ipython.register_magic_function(zipline_magic, "line_cell", "zipline")
+    ipython.register_magic_function(rustybt_magic, "line_cell", "zipline")
 
 
 if os.name == "nt":

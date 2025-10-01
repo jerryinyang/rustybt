@@ -71,6 +71,8 @@ dependencies = [
     'structlog',
     'pydantic >=2.0',
     'pyyaml >=6.0',
+    'ccxt >=4.0.0',
+    'yfinance >=0.2.0',
 ]
 
 [project.urls]
@@ -98,6 +100,7 @@ test = [
     'pytest-cov >=3.0.0',
     'pytest-xdist >=2.5.0',
     'pytest-timeout >=1.4.2',
+    'pytest-asyncio >=0.21.0',
     'parameterized >=0.6.1',
     'testfixtures >=4.1.2',
     'flake8 >=3.9.1',
@@ -166,6 +169,7 @@ local_scheme = 'dirty-tag'
 [tool.pytest.ini_options]
 pythonpath = ['.']
 testpaths = 'tests'
+asyncio_mode = "auto"
 filterwarnings = [
     'ignore::DeprecationWarning:pandas_datareader.compat',
 ]
@@ -175,6 +179,8 @@ markers = [
     "unit: marks tests as unit tests",
     "benchmark: marks tests as benchmark tests",
     "regression: regression tests from Hypothesis shrunk examples",
+    "asyncio: marks tests as async tests",
+    "live: marks tests requiring live API access (network dependent)",
 ]
 addopts = [
     "--strict-markers",

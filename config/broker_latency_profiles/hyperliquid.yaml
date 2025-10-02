@@ -1,0 +1,24 @@
+# Hyperliquid DEX Latency Profile
+# Based on typical latency characteristics for decentralized exchange perpetuals
+broker_name: "Hyperliquid"
+
+asset_classes:
+  perpetual:
+    # Network latency: Higher for DEX due to blockchain interaction (30-80ms)
+    network_latency_ms: [30.0, 80.0]
+    # Broker processing: DEX validation (5-15ms)
+    # Includes signature verification and nonce checks
+    broker_processing_ms: [5.0, 15.0]
+    # Exchange matching: On-chain matching is slower (2-10ms)
+    # L1 consensus adds latency
+    exchange_matching_ms: [2.0, 10.0]
+    distribution: "normal"
+    location: "DISTRIBUTED"
+
+  spot:
+    # Spot trading on DEX
+    network_latency_ms: [30.0, 80.0]
+    broker_processing_ms: [5.0, 15.0]
+    exchange_matching_ms: [2.0, 10.0]
+    distribution: "normal"
+    location: "DISTRIBUTED"

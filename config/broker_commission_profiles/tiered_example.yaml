@@ -1,0 +1,40 @@
+# Example Tiered Commission Profile
+# Demonstrates volume-based commission discounts
+#
+# This is a hypothetical broker with monthly volume tiers
+# Higher monthly volume → lower commission rates
+
+broker_name: "Example Tiered Broker"
+asset_class: "equities"
+commission_model: "TieredCommission"
+parameters:
+  tiers:
+    0: 0.001       # $0 - $100k: 0.10% (10 bps)
+    100000: 0.0005  # $100k - $1M: 0.05% (5 bps)
+    1000000: 0.0002  # $1M+: 0.02% (2 bps)
+  min_commission: 0.0  # No minimum commission
+
+notes: |
+  Example tiered commission structure based on monthly trading volume.
+
+  Tier breakdown:
+  - Base tier (0 - $100k): 0.10% per trade
+  - Tier 2 ($100k - $1M): 0.05% per trade (50% discount)
+  - Tier 3 ($1M+): 0.02% per trade (80% discount)
+
+  Examples:
+  Month start (base tier):
+  - Trade $10,000: Commission = $10,000 × 0.001 = $10.00
+  - Trade $50,000: Commission = $50,000 × 0.001 = $50.00
+  - Trade $50,000: Commission = $50,000 × 0.001 = $50.00
+  Total volume: $110,000 → Now at Tier 2
+
+  After reaching Tier 2:
+  - Trade $100,000: Commission = $100,000 × 0.0005 = $50.00
+  Total volume: $210,000
+
+  After reaching Tier 3 ($1M+ traded):
+  - Trade $500,000: Commission = $500,000 × 0.0002 = $100.00
+
+  Volume tracking resets monthly.
+  Tiers are applied based on accumulated volume at trade time.

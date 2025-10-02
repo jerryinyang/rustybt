@@ -1,0 +1,68 @@
+# Coinbase Advanced (formerly Coinbase Pro) Commission Profile
+# https://help.coinbase.com/en/exchange/trading-and-funding/exchange-fees
+#
+# Maker/Taker model with volume-based tiers
+# Volume calculated over trailing 30 days
+
+broker_name: "Coinbase Advanced"
+asset_class: "crypto"
+commission_model: "MakerTakerCommission"
+parameters:
+  # Default tier (< $10k 30-day volume)
+  maker_rate: 0.006  # 0.60% (60 bps)
+  taker_rate: 0.006  # 0.60% (60 bps)
+  min_commission: 0.0
+
+volume_tiers:
+  tier_0:  # < $10k
+    maker_rate: 0.006  # 0.60%
+    taker_rate: 0.006  # 0.60%
+  tier_1:  # $10k - $50k
+    maker_rate: 0.004  # 0.40%
+    taker_rate: 0.006  # 0.60%
+  tier_2:  # $50k - $100k
+    maker_rate: 0.0025  # 0.25%
+    taker_rate: 0.004   # 0.40%
+  tier_3:  # $100k - $1M
+    maker_rate: 0.0015  # 0.15%
+    taker_rate: 0.0035  # 0.35%
+  tier_4:  # $1M - $15M
+    maker_rate: 0.001   # 0.10%
+    taker_rate: 0.0025  # 0.25%
+  tier_5:  # $15M - $75M
+    maker_rate: 0.0008  # 0.08%
+    taker_rate: 0.002   # 0.20%
+  tier_6:  # $75M - $250M
+    maker_rate: 0.0006  # 0.06%
+    taker_rate: 0.0018  # 0.18%
+  tier_7:  # $250M - $400M
+    maker_rate: 0.0003  # 0.03%
+    taker_rate: 0.0016  # 0.16%
+  tier_8:  # $400M+
+    maker_rate: 0.0     # 0.00% (maker rebate possible)
+    taker_rate: 0.0012  # 0.12%
+
+notes: |
+  Coinbase Advanced Trading fees (formerly Coinbase Pro).
+
+  Key features:
+  - Maker/taker pricing model
+  - Volume tiers based on trailing 30-day volume
+  - Maker fees decrease faster than taker fees
+  - High-volume traders can get maker rebates
+
+  Examples (Tier 0 - < $10k volume):
+  - Market buy 0.5 BTC @ $30,000:
+    Trade value = $15,000
+    Commission = $15,000 × 0.006 = $90.00 (taker)
+
+  - Limit sell 10 ETH @ $2,000 (order rests):
+    Trade value = $20,000
+    Commission = $20,000 × 0.006 = $120.00 (maker)
+
+  Examples (Tier 4 - $1M+ volume):
+  - Market buy 1 BTC @ $30,000:
+    Commission = $30,000 × 0.0025 = $75.00 (taker)
+
+  - Limit buy 15 ETH @ $2,000 (order rests):
+    Commission = $30,000 × 0.001 = $30.00 (maker)

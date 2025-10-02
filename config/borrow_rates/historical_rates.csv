@@ -1,0 +1,8 @@
+symbol,date,annual_rate,notes
+GME,2021-01-01,0.05,Normal rate before squeeze
+GME,2021-01-15,0.80,During squeeze - extremely hard to borrow
+GME,2021-02-01,0.35,Post-squeeze - still elevated
+GME,2021-03-01,0.15,Normalizing
+AAPL,2021-01-01,0.003,Stable easy-to-borrow rate
+TSLA,2021-01-01,0.010,Moderate before volatility
+TSLA,2021-06-01,0.020,Increased due to volatility

@@ -1,0 +1,65 @@
+# Binance Spot Trading Commission Profile
+# https://www.binance.com/en/fee/schedule
+#
+# VIP 0 (Regular users) rates:
+# - Maker: 0.10% (10 bps)
+# - Taker: 0.10% (10 bps)
+#
+# Note: Binance uses maker/taker model
+# - Maker: orders that add liquidity (limit orders that rest in order book)
+# - Taker: orders that remove liquidity (market orders or limit orders that immediately fill)
+
+broker_name: "Binance"
+asset_class: "crypto"
+commission_model: "MakerTakerCommission"
+parameters:
+  maker_rate: 0.001  # 0.10% (10 bps)
+  taker_rate: 0.001  # 0.10% (10 bps)
+  min_commission: 0.0  # No minimum commission
+
+vip_levels:
+  VIP0:
+    maker_rate: 0.001  # 0.10%
+    taker_rate: 0.001  # 0.10%
+  VIP1:
+    maker_rate: 0.0009  # 0.09%
+    taker_rate: 0.001   # 0.10%
+  VIP2:
+    maker_rate: 0.0008  # 0.08%
+    taker_rate: 0.001   # 0.10%
+  VIP3:
+    maker_rate: 0.0007  # 0.07%
+    taker_rate: 0.0009  # 0.09%
+  VIP4:
+    maker_rate: 0.0007  # 0.07%
+    taker_rate: 0.0008  # 0.08%
+  VIP5:
+    maker_rate: 0.0006  # 0.06%
+    taker_rate: 0.0007  # 0.07%
+  VIP6:
+    maker_rate: 0.0005  # 0.05%
+    taker_rate: 0.0006  # 0.06%
+  VIP7:
+    maker_rate: 0.0004  # 0.04%
+    taker_rate: 0.0005  # 0.05%
+  VIP8:
+    maker_rate: 0.0003  # 0.03%
+    taker_rate: 0.0004  # 0.04%
+  VIP9:
+    maker_rate: 0.0002  # 0.02%
+    taker_rate: 0.0003  # 0.03%
+
+notes: |
+  Binance Spot Trading Commission (VIP 0 - Regular users).
+
+  Examples:
+  - Buy 0.1 BTC @ $30,000 (market order):
+    Trade value = $3,000
+    Commission = $3,000 × 0.001 = $3.00 (taker)
+
+  - Sell 1.0 ETH @ $2,000 (limit order that rests):
+    Trade value = $2,000
+    Commission = $2,000 × 0.001 = $2.00 (maker)
+
+  Using BNB for fees reduces commission by 25% (not modeled here).
+  VIP levels unlock with 30-day trading volume + BNB holdings.

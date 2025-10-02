@@ -1,0 +1,9 @@
+symbol,annual_rate,description
+AAPL,0.003,Easy to borrow - large cap tech
+MSFT,0.003,Easy to borrow - large cap tech
+GOOGL,0.003,Easy to borrow - large cap tech
+AMZN,0.004,Easy to borrow - large cap tech
+TSLA,0.015,Moderate - volatile stock
+GME,0.25,Hard to borrow - meme stock
+AMC,0.35,Hard to borrow - high short interest
+DWAC,0.50,Extremely hard to borrow - speculation

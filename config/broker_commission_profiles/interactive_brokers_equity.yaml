@@ -1,0 +1,25 @@
+# Interactive Brokers US Equity Commission Profile
+# https://www.interactivebrokers.com/en/pricing/commissions-stocks.php
+#
+# Tiered Pricing Structure (most common for retail):
+# - $0.005 per share
+# - $1.00 minimum per order
+# - $0.005 maximum (0.5% of trade value)
+
+broker_name: "Interactive Brokers"
+asset_class: "equities"
+commission_model: "PerShareCommission"
+parameters:
+  cost_per_share: 0.005  # $0.005 per share
+  min_commission: 1.00   # $1.00 minimum per order
+
+notes: |
+  Interactive Brokers Tiered Pricing for US stocks.
+
+  Examples:
+  - 100 shares @ $50: max($0.50, $1.00) = $1.00
+  - 1000 shares @ $50: max($5.00, $1.00) = $5.00
+  - 10000 shares @ $50: max($50.00, $1.00) = $50.00 (but capped at 0.5% = $250)
+
+  Note: This profile uses the simplified per-share model.
+  For more complex tiered volume discounts, use TieredCommission model.

@@ -109,49 +109,7 @@
 
 ---
 
-## Story 6.6: Implement Paper Trading Mode
-
-**As a** quantitative trader,
-**I want** paper trading mode simulating broker with real market data,
-**so that** I can validate live strategy behavior before risking real capital.
-
-### Acceptance Criteria
-
-1. PaperBroker implements BrokerAdapter interface mimicking real broker
-2. Real-time market data consumed (via WebSocket adapters from Story 6.8)
-3. Simulated order execution with realistic fills (market orders fill at current price)
-4. Latency simulation applied (same as backtest latency models)
-5. Partial fills simulated based on volume (same as backtest partial fill model)
-6. Commission and slippage applied (same models as backtest)
-7. Paper positions tracked separately (not sent to real broker)
-8. Paper account balance tracked (starting capital configurable)
-9. Tests validate paper trading produces expected results (matches backtest for same data)
-10. Example demonstrates backtest → paper trading comparison showing >99% correlation
-
----
-
-## Story 6.7: Implement Interactive Brokers Integration
-
-**As a** quantitative trader,
-**I want** Interactive Brokers integration for stocks/options/futures/forex trading,
-**so that** I can deploy strategies on a professional-grade broker with global market access.
-
-### Acceptance Criteria
-
-1. Decision made: use ib_async library (if most efficient) OR custom TWS API implementation (if faster)
-2. IBBrokerAdapter implements BrokerAdapter interface
-3. Authentication with TWS/IB Gateway (handle connection, login, session management)
-4. Order submission for all asset types (stocks, options, futures, forex)
-5. Order status tracking (submitted, filled, canceled, rejected)
-6. Position queries (fetch current positions)
-7. Account balance queries (fetch cash, buying power, margin)
-8. Real-time market data subscription (via ib_async or native API)
-9. Error handling (connection loss, order rejections, API errors)
-10. Integration test with IB paper trading account validates order submission and fills
-
----
-
-## Story 6.8: Implement WebSocket Data Adapter Foundation (Moved from Epic 3)
+## Story 6.6: Implement WebSocket Data Adapter Foundation (Moved from Epic 3)
 
 **As a** developer,
 **I want** WebSocket adapter base class for real-time streaming data,
@@ -169,6 +127,48 @@
 8. Example WebSocket adapter implemented for one exchange (e.g., Binance WebSocket)
 9. Tests validate connection lifecycle and message parsing (using mock WebSocket server)
 10. Documentation explains WebSocket adapter architecture for extension
+
+---
+
+## Story 6.7: Implement Paper Trading Mode
+
+**As a** quantitative trader,
+**I want** paper trading mode simulating broker with real market data,
+**so that** I can validate live strategy behavior before risking real capital.
+
+### Acceptance Criteria
+
+1. PaperBroker implements BrokerAdapter interface mimicking real broker
+2. Real-time market data consumed (via WebSocket adapters from Story 6.6)
+3. Simulated order execution with realistic fills (market orders fill at current price)
+4. Latency simulation applied (same as backtest latency models)
+5. Partial fills simulated based on volume (same as backtest partial fill model)
+6. Commission and slippage applied (same models as backtest)
+7. Paper positions tracked separately (not sent to real broker)
+8. Paper account balance tracked (starting capital configurable)
+9. Tests validate paper trading produces expected results (matches backtest for same data)
+10. Example demonstrates backtest → paper trading comparison showing >99% correlation
+
+---
+
+## Story 6.8: Implement Interactive Brokers Integration
+
+**As a** quantitative trader,
+**I want** Interactive Brokers integration for stocks/options/futures/forex trading,
+**so that** I can deploy strategies on a professional-grade broker with global market access.
+
+### Acceptance Criteria
+
+1. Decision made: use ib_async library (if most efficient) OR custom TWS API implementation (if faster)
+2. IBBrokerAdapter implements BrokerAdapter interface
+3. Authentication with TWS/IB Gateway (handle connection, login, session management)
+4. Order submission for all asset types (stocks, options, futures, forex)
+5. Order status tracking (submitted, filled, canceled, rejected)
+6. Position queries (fetch current positions)
+7. Account balance queries (fetch cash, buying power, margin)
+8. Real-time market data subscription (via ib_async or native API)
+9. Error handling (connection loss, order rejections, API errors)
+10. Integration test with IB paper trading account validates order submission and fills
 
 ---
 

@@ -39,6 +39,9 @@ class DecimalPosition:
         cost_basis: Volume-weighted average price paid per unit
         last_sale_price: Most recent market price
         last_sale_date: Timestamp of most recent price update
+        cash_used: Cash used to open position (for leverage calculation)
+        accumulated_borrow_cost: Total borrow cost accrued on short positions
+        accumulated_financing: Total financing cost accrued on leveraged positions
 
     Invariants:
         - market_value == amount * last_sale_price (exact equality)
@@ -64,6 +67,9 @@ class DecimalPosition:
     cost_basis: Decimal
     last_sale_price: Decimal
     last_sale_date: pd.Timestamp | None = None
+    cash_used: Decimal = Decimal("0")
+    accumulated_borrow_cost: Decimal = Decimal("0")
+    accumulated_financing: Decimal = Decimal("0")
 
     def __post_init__(self) -> None:
         """Validate position data after initialization."""
@@ -168,6 +174,78 @@ class DecimalPosition:
         """
         cost_value = self.cost_basis * self.amount
         return self.market_value - cost_value
+
+    @property
+    def is_short(self) -> bool:
+        """Check if position is short.
+
+        Returns:
+            True if position is short (amount < 0), False otherwise
+        """
+        return self.amount < Decimal("0")
+
+    @property
+    def is_leveraged(self) -> bool:
+        """Check if position uses leverage.
+
+        Returns:
+            True if position uses leverage (market_value > cash_used), False otherwise
+        """
+        return abs(self.market_value) > self.cash_used
+
+    @property
+    def leverage_ratio(self) -> Decimal:
+        """Calculate leverage ratio.
+
+        Returns:
+            Leverage ratio = market_value / cash_used (1.0 = no leverage)
+
+        Example:
+            >>> position.market_value
+            Decimal('100000.00')
+            >>> position.cash_used
+            Decimal('50000.00')
+            >>> position.leverage_ratio
+            Decimal('2.0')
+        """
+        if self.cash_used > Decimal("0"):
+            return abs(self.market_value) / self.cash_used
+        return Decimal("1")
+
+    @property
+    def leveraged_exposure(self) -> Decimal:
+        """Calculate leveraged exposure (amount financed).
+
+        Returns:
+            Leveraged exposure = abs(market_value) - cash_used
+
+        Example:
+            >>> position.market_value
+            Decimal('100000.00')
+            >>> position.cash_used
+            Decimal('50000.00')
+            >>> position.leveraged_exposure
+            Decimal('50000.00')
+        """
+        return max(abs(self.market_value) - self.cash_used, Decimal("0"))
+
+    @property
+    def total_costs(self) -> Decimal:
+        """Total accumulated costs (borrow + financing + commissions).
+
+        Returns:
+            Sum of all accumulated costs
+        """
+        return self.accumulated_borrow_cost + self.accumulated_financing
+
+    @property
+    def unrealized_pnl_net_of_costs(self) -> Decimal:
+        """Unrealized P&L after all costs.
+
+        Returns:
+            Unrealized P&L minus total accumulated costs
+        """
+        return self.unrealized_pnl - self.total_costs
 
     def update(
         self, transaction_amount: Decimal, transaction_price: Decimal, transaction_dt: pd.Timestamp
@@ -338,8 +416,16 @@ class DecimalPosition:
             "cost_basis": str(self.cost_basis),
             "last_sale_price": str(self.last_sale_price),
             "last_sale_date": self.last_sale_date,
+            "cash_used": str(self.cash_used),
             "market_value": str(self.market_value),
             "unrealized_pnl": str(self.unrealized_pnl),
+            "is_leveraged": self.is_leveraged,
+            "leverage_ratio": str(self.leverage_ratio),
+            "leveraged_exposure": str(self.leveraged_exposure),
+            "accumulated_borrow_cost": str(self.accumulated_borrow_cost),
+            "accumulated_financing": str(self.accumulated_financing),
+            "total_costs": str(self.total_costs),
+            "unrealized_pnl_net_of_costs": str(self.unrealized_pnl_net_of_costs),
         }
 
     def __repr__(self) -> str:

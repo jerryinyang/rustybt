@@ -1,0 +1,40 @@
+# Binance Latency Profile
+# Based on typical latency characteristics for crypto trading
+broker_name: "Binance"
+
+asset_classes:
+  crypto:
+    # Network latency: International routing to Binance servers (20-50ms typical)
+    # Higher variance due to geographic distribution
+    network_latency_ms: [20.0, 50.0]
+    # Broker processing: Fast validation for crypto (1-5ms)
+    broker_processing_ms: [1.0, 5.0]
+    # Exchange matching: Binance matching engine is very fast (0.1-2ms)
+    exchange_matching_ms: [0.1, 2.0]
+    # Uniform distribution for crypto latency variance
+    distribution: "uniform"
+    location: "ASIA"
+
+  spot:
+    # Spot trading (same as general crypto)
+    network_latency_ms: [20.0, 50.0]
+    broker_processing_ms: [1.0, 5.0]
+    exchange_matching_ms: [0.1, 2.0]
+    distribution: "uniform"
+    location: "ASIA"
+
+  futures:
+    # Futures matching is slightly slower
+    network_latency_ms: [20.0, 50.0]
+    broker_processing_ms: [1.0, 5.0]
+    exchange_matching_ms: [0.5, 3.0]
+    distribution: "uniform"
+    location: "ASIA"
+
+  margin:
+    # Margin trading has additional validation overhead
+    network_latency_ms: [20.0, 50.0]
+    broker_processing_ms: [2.0, 8.0]
+    exchange_matching_ms: [0.5, 3.0]
+    distribution: "uniform"
+    location: "ASIA"

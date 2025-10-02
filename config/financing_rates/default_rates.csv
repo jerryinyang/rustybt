@@ -1,0 +1,9 @@
+symbol,asset_class,long_rate,short_rate,description
+AAPL,equity,0.05,0.00,Standard margin interest for equities
+MSFT,equity,0.05,0.00,Standard margin interest for equities
+TSLA,equity,0.055,0.00,Higher margin rate for volatile stocks
+EUR/USD,forex,0.00,-0.005,Negative carry on EUR/USD short
+USD/JPY,forex,0.00,0.012,Positive carry on USD/JPY short (interest rate differential)
+GBP/USD,forex,0.00,-0.003,Negative carry on GBP/USD short
+BTC-USD,crypto,0.10,-0.02,Funding rate for BTC perpetuals
+ETH-USD,crypto,0.10,-0.01,Funding rate for ETH perpetuals

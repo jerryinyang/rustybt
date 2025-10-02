@@ -388,3 +388,484 @@ class PerDollar(EquityCommissionModel):
         """
         cost_per_share = transaction.price * self.cost_per_dollar
         return abs(transaction.amount) * cost_per_share
+
+
+# ============================================================================
+# Decimal-Based Commission Models (RustyBT)
+# ============================================================================
+
+from abc import ABC
+from dataclasses import dataclass, field
+from datetime import datetime
+from decimal import Decimal
+from typing import Any, Dict, Optional
+
+import pandas as pd
+import structlog
+
+logger = structlog.get_logger()
+
+
+# Exceptions
+class CommissionConfigurationError(Exception):
+    """Raised when commission model configuration is invalid."""
+
+    pass
+
+
+class CommissionCalculationError(Exception):
+    """Raised when commission calculation fails."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class CommissionResult:
+    """Result of commission calculation."""
+
+    commission: Decimal  # Total commission amount
+    model_name: str  # Name of commission model used
+    tier_applied: Optional[str] = None  # Tier name if applicable
+    maker_taker: Optional[str] = None  # "maker" or "taker" if applicable
+    metadata: Dict[str, Any] = field(default_factory=dict)  # Additional data
+
+
+class DecimalCommissionModel(ABC):
+    """Abstract base class for Decimal-based commission models.
+
+    This is the RustyBT version using Decimal for precision.
+    For legacy float-based models, see CommissionModel above.
+    """
+
+    def __init__(self, min_commission: Decimal = Decimal("0")):
+        """Initialize commission model.
+
+        Args:
+            min_commission: Minimum commission amount per order
+        """
+        self.min_commission = min_commission
+
+    @abstractmethod
+    def calculate_commission(
+        self,
+        order: Any,
+        fill_price: Decimal,
+        fill_quantity: Decimal,
+        current_time: pd.Timestamp,
+    ) -> CommissionResult:
+        """Calculate commission for an order fill.
+
+        Args:
+            order: Order being filled
+            fill_price: Price at which order was filled
+            fill_quantity: Quantity filled
+            current_time: Current simulation time
+
+        Returns:
+            CommissionResult with commission details
+        """
+        pass
+
+    def apply_minimum(self, commission: Decimal) -> tuple[Decimal, bool]:
+        """Apply minimum commission threshold.
+
+        Args:
+            commission: Calculated commission
+
+        Returns:
+            Tuple of (final commission, minimum_applied_flag)
+        """
+        if commission < self.min_commission:
+            logger.debug(
+                "minimum_commission_applied",
+                calculated=str(commission),
+                minimum=str(self.min_commission),
+            )
+            return self.min_commission, True
+        return commission, False
+
+
+class PerShareCommission(DecimalCommissionModel):
+    """Per-share commission model.
+
+    Formula: commission = shares × cost_per_share
+
+    Common for US equity brokers (e.g., Interactive Brokers: $0.005/share).
+    """
+
+    def __init__(
+        self, cost_per_share: Decimal, min_commission: Decimal = Decimal("1.00")
+    ):
+        """Initialize per-share commission model.
+
+        Args:
+            cost_per_share: Commission per share (e.g., $0.005)
+            min_commission: Minimum commission per order
+        """
+        super().__init__(min_commission)
+        self.cost_per_share = cost_per_share
+
+    def calculate_commission(
+        self,
+        order: Any,
+        fill_price: Decimal,
+        fill_quantity: Decimal,
+        current_time: pd.Timestamp,
+    ) -> CommissionResult:
+        """Calculate per-share commission."""
+        # Use absolute value for commission calculation
+        abs_quantity = abs(fill_quantity)
+
+        # Calculate base commission
+        commission = abs_quantity * self.cost_per_share
+
+        # Apply minimum
+        commission, min_applied = self.apply_minimum(commission)
+
+        metadata = {
+            "cost_per_share": str(self.cost_per_share),
+            "fill_quantity": str(fill_quantity),
+            "minimum_applied": min_applied,
+        }
+
+        logger.info(
+            "per_share_commission_calculated",
+            order_id=order.id,
+            asset=order.asset.symbol if hasattr(order.asset, "symbol") else str(order.asset),
+            commission=str(commission),
+            shares=str(abs_quantity),
+            rate=str(self.cost_per_share),
+        )
+
+        return CommissionResult(
+            commission=commission, model_name="PerShareCommission", metadata=metadata
+        )
+
+
+class PercentageCommission(DecimalCommissionModel):
+    """Percentage commission model.
+
+    Formula: commission = trade_value × percentage
+
+    Common for international brokers and small accounts.
+    """
+
+    def __init__(
+        self, percentage: Decimal, min_commission: Decimal = Decimal("0")  # As decimal (e.g., 0.001 = 0.1%)
+    ):
+        """Initialize percentage commission model.
+
+        Args:
+            percentage: Commission as decimal fraction (e.g., 0.001 = 0.1%)
+            min_commission: Minimum commission per order
+        """
+        super().__init__(min_commission)
+        self.percentage = percentage
+
+    def calculate_commission(
+        self,
+        order: Any,
+        fill_price: Decimal,
+        fill_quantity: Decimal,
+        current_time: pd.Timestamp,
+    ) -> CommissionResult:
+        """Calculate percentage commission."""
+        # Use absolute value for commission calculation
+        abs_quantity = abs(fill_quantity)
+
+        # Calculate trade value
+        trade_value = fill_price * abs_quantity
+
+        # Calculate base commission
+        commission = trade_value * self.percentage
+
+        # Apply minimum
+        commission, min_applied = self.apply_minimum(commission)
+
+        metadata = {
+            "percentage": str(self.percentage),
+            "percentage_bps": str(self.percentage * Decimal("10000")),
+            "trade_value": str(trade_value),
+            "minimum_applied": min_applied,
+        }
+
+        logger.info(
+            "percentage_commission_calculated",
+            order_id=order.id,
+            asset=order.asset.symbol if hasattr(order.asset, "symbol") else str(order.asset),
+            commission=str(commission),
+            trade_value=str(trade_value),
+            percentage=str(self.percentage * Decimal("100")),
+        )
+
+        return CommissionResult(
+            commission=commission, model_name="PercentageCommission", metadata=metadata
+        )
+
+
+class VolumeTracker:
+    """Tracks trading volume for tiered commissions."""
+
+    def __init__(self):
+        """Initialize volume tracker."""
+        self.monthly_volumes: Dict[str, Decimal] = {}
+        self.current_month: Optional[str] = None
+        self.logger = structlog.get_logger()
+
+    def get_monthly_volume(self, current_time: pd.Timestamp) -> Decimal:
+        """Get accumulated volume for current month.
+
+        Args:
+            current_time: Current simulation time
+
+        Returns:
+            Accumulated volume for current month
+        """
+        month_key = current_time.strftime("%Y-%m")
+
+        # Reset if new month
+        if self.current_month != month_key:
+            if self.current_month is not None:
+                self.logger.info(
+                    "volume_tracker_month_reset",
+                    old_month=self.current_month,
+                    new_month=month_key,
+                    old_volume=str(self.monthly_volumes.get(self.current_month, Decimal("0"))),
+                )
+            self.current_month = month_key
+
+        return self.monthly_volumes.get(month_key, Decimal("0"))
+
+    def add_volume(self, trade_value: Decimal, current_time: pd.Timestamp):
+        """Add trade volume to current month.
+
+        Args:
+            trade_value: Value of trade to add
+            current_time: Current simulation time
+        """
+        month_key = current_time.strftime("%Y-%m")
+
+        # Ensure current month is set
+        if self.current_month != month_key:
+            self.get_monthly_volume(current_time)
+
+        current = self.monthly_volumes.get(month_key, Decimal("0"))
+        self.monthly_volumes[month_key] = current + trade_value
+
+        self.logger.debug(
+            "volume_added_to_tracker",
+            month=month_key,
+            trade_value=str(trade_value),
+            total_volume=str(self.monthly_volumes[month_key]),
+        )
+
+
+class TieredCommission(DecimalCommissionModel):
+    """Tiered commission model with volume discounts.
+
+    Commission rate depends on cumulative monthly trading volume.
+    Higher volume → lower commission rates.
+
+    Example tiers (Interactive Brokers-style):
+    - $0 - $100k: 0.10% (10 bps)
+    - $100k - $1M: 0.05% (5 bps)
+    - $1M+: 0.02% (2 bps)
+    """
+
+    def __init__(
+        self,
+        tiers: Dict[Decimal, Decimal],  # {volume_threshold: commission_rate}
+        min_commission: Decimal = Decimal("0"),
+        volume_tracker: Optional[VolumeTracker] = None,
+    ):
+        """Initialize tiered commission model.
+
+        Args:
+            tiers: Dictionary mapping volume thresholds to commission rates
+                   e.g., {Decimal("0"): Decimal("0.001"), Decimal("100000"): Decimal("0.0005")}
+            min_commission: Minimum commission per order
+            volume_tracker: Volume tracker instance (created if None)
+        """
+        super().__init__(min_commission)
+
+        if not tiers:
+            raise CommissionConfigurationError("Tiers dictionary cannot be empty")
+
+        # Sort tiers by threshold (descending) for efficient lookup
+        self.tiers = sorted(tiers.items(), key=lambda x: x[0], reverse=True)
+
+        # Create or use provided volume tracker
+        self.volume_tracker = volume_tracker or VolumeTracker()
+
+    def calculate_commission(
+        self,
+        order: Any,
+        fill_price: Decimal,
+        fill_quantity: Decimal,
+        current_time: pd.Timestamp,
+    ) -> CommissionResult:
+        """Calculate tiered commission based on monthly volume."""
+        # Get current monthly volume
+        monthly_volume = self.volume_tracker.get_monthly_volume(current_time)
+
+        # Determine applicable tier
+        rate = self.tiers[-1][1]  # Default to lowest tier (highest rate)
+        tier_threshold = self.tiers[-1][0]
+        tier_name = "base"
+
+        for threshold, tier_rate in self.tiers:
+            if monthly_volume >= threshold:
+                rate = tier_rate
+                tier_threshold = threshold
+                tier_name = f"tier_{threshold}"
+                break
+
+        # Use absolute value for commission calculation
+        abs_quantity = abs(fill_quantity)
+
+        # Calculate trade value
+        trade_value = fill_price * abs_quantity
+
+        # Calculate commission
+        commission = trade_value * rate
+
+        # Apply minimum
+        commission, min_applied = self.apply_minimum(commission)
+
+        # Add this trade to volume tracker
+        self.volume_tracker.add_volume(trade_value, current_time)
+
+        metadata = {
+            "tier_name": tier_name,
+            "tier_threshold": str(tier_threshold),
+            "tier_rate": str(rate),
+            "monthly_volume_before": str(monthly_volume),
+            "monthly_volume_after": str(monthly_volume + trade_value),
+            "trade_value": str(trade_value),
+            "minimum_applied": min_applied,
+        }
+
+        logger.info(
+            "tiered_commission_calculated",
+            order_id=order.id,
+            asset=order.asset.symbol if hasattr(order.asset, "symbol") else str(order.asset),
+            commission=str(commission),
+            tier=tier_name,
+            monthly_volume=str(monthly_volume),
+            rate_bps=str(rate * Decimal("10000")),
+        )
+
+        return CommissionResult(
+            commission=commission,
+            model_name="TieredCommission",
+            tier_applied=tier_name,
+            metadata=metadata,
+        )
+
+
+class MakerTakerCommission(DecimalCommissionModel):
+    """Maker/taker commission model for crypto exchanges.
+
+    Maker orders (add liquidity): typically lower or rebated commission
+    Taker orders (remove liquidity): typically higher commission
+
+    Example (Binance):
+    - Maker: 0.02% (2 bps) or -0.01% (rebate)
+    - Taker: 0.04% (4 bps)
+    """
+
+    def __init__(
+        self,
+        maker_rate: Decimal,  # Can be negative for rebates
+        taker_rate: Decimal,
+        min_commission: Decimal = Decimal("0"),
+    ):
+        """Initialize maker/taker commission model.
+
+        Args:
+            maker_rate: Commission rate for maker orders (can be negative)
+            taker_rate: Commission rate for taker orders
+            min_commission: Minimum commission per order
+        """
+        super().__init__(min_commission)
+        self.maker_rate = maker_rate
+        self.taker_rate = taker_rate
+
+    def calculate_commission(
+        self,
+        order: Any,
+        fill_price: Decimal,
+        fill_quantity: Decimal,
+        current_time: pd.Timestamp,
+    ) -> CommissionResult:
+        """Calculate maker/taker commission."""
+        # Determine if maker or taker
+        is_maker = self._is_maker_order(order)
+
+        rate = self.maker_rate if is_maker else self.taker_rate
+        maker_taker = "maker" if is_maker else "taker"
+
+        # Use absolute value for commission calculation
+        abs_quantity = abs(fill_quantity)
+
+        # Calculate trade value
+        trade_value = fill_price * abs_quantity
+
+        # Calculate commission (can be negative for maker rebates)
+        commission = trade_value * rate
+
+        # Apply minimum (only for positive commissions)
+        if commission > Decimal("0"):
+            commission, min_applied = self.apply_minimum(commission)
+        else:
+            min_applied = False
+
+        metadata = {
+            "maker_taker": maker_taker,
+            "rate": str(rate),
+            "rate_bps": str(rate * Decimal("10000")),
+            "trade_value": str(trade_value),
+            "minimum_applied": min_applied,
+            "is_rebate": commission < Decimal("0"),
+        }
+
+        logger.info(
+            "maker_taker_commission_calculated",
+            order_id=order.id,
+            asset=order.asset.symbol if hasattr(order.asset, "symbol") else str(order.asset),
+            commission=str(commission),
+            maker_taker=maker_taker,
+            rate_bps=str(rate * Decimal("10000")),
+            is_rebate=commission < Decimal("0"),
+        )
+
+        return CommissionResult(
+            commission=commission,
+            model_name="MakerTakerCommission",
+            maker_taker=maker_taker,
+            metadata=metadata,
+        )
+
+    def _is_maker_order(self, order: Any) -> bool:
+        """Determine if order is maker or taker.
+
+        Args:
+            order: Order object
+
+        Returns:
+            True if maker order, False if taker
+        """
+        # Check order type
+        if hasattr(order, "order_type"):
+            if order.order_type == "market":
+                return False  # Market orders always take liquidity
+
+            if order.order_type == "limit":
+                # Check if order has immediate fill flag
+                if hasattr(order, "immediate_fill"):
+                    return not order.immediate_fill
+                # Default: limit orders are makers
+                return True
+
+        # Default to taker if uncertain
+        return False

@@ -1,0 +1,38 @@
+# Bybit Latency Profile
+# Based on typical latency characteristics for crypto derivatives trading
+broker_name: "Bybit"
+
+asset_classes:
+  perpetual:
+    # Network latency: Asia-Pacific routing (15-40ms)
+    network_latency_ms: [15.0, 40.0]
+    # Broker processing: Fast for perpetuals
+    broker_processing_ms: [1.0, 4.0]
+    # Exchange matching: Bybit's high-performance matching engine
+    exchange_matching_ms: [0.1, 1.5]
+    distribution: "uniform"
+    location: "ASIA"
+
+  futures:
+    # Futures contracts
+    network_latency_ms: [15.0, 40.0]
+    broker_processing_ms: [1.0, 5.0]
+    exchange_matching_ms: [0.2, 2.0]
+    distribution: "uniform"
+    location: "ASIA"
+
+  spot:
+    # Spot trading
+    network_latency_ms: [15.0, 40.0]
+    broker_processing_ms: [1.0, 5.0]
+    exchange_matching_ms: [0.1, 2.0]
+    distribution: "uniform"
+    location: "ASIA"
+
+  options:
+    # Options have more complex validation
+    network_latency_ms: [15.0, 40.0]
+    broker_processing_ms: [2.0, 8.0]
+    exchange_matching_ms: [0.5, 3.0]
+    distribution: "uniform"
+    location: "ASIA"

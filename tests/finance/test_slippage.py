@@ -1416,3 +1416,384 @@ class FixedBasisPointsSlippageTestCase(WithCreateBarData, ZiplineTestCase):
             )
         )
         assert 0 == len(orders_txns)
+
+
+# ============================================================================
+# Decimal-based Slippage Model Tests (Story 4.3)
+# ============================================================================
+
+from decimal import Decimal
+from dataclasses import dataclass as dc
+from typing import Any
+from hypothesis import given, strategies as st
+
+from rustybt.finance.slippage import (
+    OrderSide,
+    SlippageResult,
+    DecimalSlippageModel,
+    VolumeShareSlippageDecimal,
+    FixedBasisPointSlippageDecimal,
+    BidAskSpreadSlippageDecimal,
+)
+
+
+# ============================================================================
+# Test Fixtures and Mock Objects
+# ============================================================================
+
+
+@dc
+class MockAsset:
+    """Mock asset for testing."""
+    symbol: str
+
+
+@dc
+class MockOrder:
+    """Mock order for testing."""
+    id: str
+    asset: MockAsset
+    amount: Decimal  # Positive=buy, negative=sell
+
+
+# ============================================================================
+# VolumeShareSlippageDecimal Tests
+# ============================================================================
+
+
+class TestVolumeShareSlippageDecimal:
+    """Tests for VolumeShareSlippageDecimal model."""
+
+    def test_volume_share_slippage_calculation(self):
+        """VolumeShareSlippage calculates slippage based on volume ratio."""
+        model = VolumeShareSlippageDecimal(
+            volume_limit=Decimal("0.025"),  # 2.5%
+            price_impact=Decimal("0.10"),  # 10%
+            power_factor=Decimal("0.5")  # Square root
+        )
+
+        order = MockOrder(
+            id="order-1",
+            asset=MockAsset(symbol="AAPL"),
+            amount=Decimal("1000")  # Buy 1000 shares
+        )
+
+        bar_data = {
+            'close': 100.00,
+            'volume': 10000,  # Order is 10% of volume (4x volume_limit)
+            'volatility': 0.20  # 20% annual volatility
+        }
+
+        result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
+
+        # Expected calculation:
+        # volume_ratio = 1000 / 10000 = 0.10
+        # volume_ratio_normalized = 0.10 / 0.025 = 4.0
+        # volume_impact = 4.0^0.5 = 2.0
+        # slippage_fraction = 0.10 × 2.0 × 0.20 = 0.04 (4%)
+        # slippage_amount = 100 × 0.04 = 4.00
+        # slippage_bps = 0.04 × 10000 = 400 bps
+
+        assert result.slippage_amount == Decimal("4.00")
+        assert result.slippage_bps == Decimal("400")
+        assert result.model_name == "VolumeShareSlippageDecimal"
+        assert "volume_ratio" in result.metadata
+
+    def test_volume_share_slippage_with_zero_volume(self):
+        """VolumeShareSlippage uses default when volume is zero."""
+        model = VolumeShareSlippageDecimal()
+
+        order = MockOrder(
+            id="order-1",
+            asset=MockAsset(symbol="AAPL"),
+            amount=Decimal("1000")
+        )
+
+        bar_data = {
+            'close': 100.00,
+            'volume': 0,  # No volume
+            'volatility': 0.20
+        }
+
+        result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
+
+        # Should use default volume ratio of 0.10
+        assert result.slippage_amount > Decimal("0")
+        assert "volume_ratio" in result.metadata
+
+    def test_volume_share_slippage_uses_volatility_from_bar_data(self):
+        """VolumeShareSlippage uses volatility from bar_data if provided."""
+        model = VolumeShareSlippageDecimal()
+
+        order = MockOrder(
+            id="order-1",
+            asset=MockAsset(symbol="AAPL"),
+            amount=Decimal("1000")
+        )
+
+        bar_data_high_vol = {
+            'close': 100.00,
+            'volume': 10000,
+            'volatility': 0.30  # Higher volatility
+        }
+
+        bar_data_low_vol = {
+            'close': 100.00,
+            'volume': 10000,
+            'volatility': 0.10  # Lower volatility
+        }
+
+        result_high_vol = model.calculate_slippage(order, bar_data_high_vol, pd.Timestamp("2023-01-01"))
+        result_low_vol = model.calculate_slippage(order, bar_data_low_vol, pd.Timestamp("2023-01-01"))
+
+        # Higher volatility should result in higher slippage
+        assert result_high_vol.slippage_amount > result_low_vol.slippage_amount
+
+
+# ============================================================================
+# FixedBasisPointSlippageDecimal Tests
+# ============================================================================
+
+
+class TestFixedBasisPointSlippageDecimal:
+    """Tests for FixedBasisPointSlippageDecimal model."""
+
+    def test_fixed_bps_slippage_calculation(self):
+        """FixedBasisPointSlippage applies constant basis points."""
+        model = FixedBasisPointSlippageDecimal(
+            basis_points=Decimal("5.0"),  # 5 bps
+            min_slippage=Decimal("0.01")
+        )
+
+        order = MockOrder(
+            id="order-1",
+            asset=MockAsset(symbol="AAPL"),
+            amount=Decimal("100")
+        )
+
+        bar_data = {'close': 100.00}
+
+        result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
+
+        # Expected: 100 × (5 / 10000) = 0.05
+        assert result.slippage_amount == Decimal("0.05")
+        assert result.slippage_bps == Decimal("5.0")
+        assert result.model_name == "FixedBasisPointSlippageDecimal"
+
+    def test_fixed_bps_slippage_minimum_enforcement(self):
+        """FixedBasisPointSlippage enforces minimum slippage."""
+        model = FixedBasisPointSlippageDecimal(
+            basis_points=Decimal("1.0"),  # 1 bp (very small)
+            min_slippage=Decimal("0.10")  # Minimum $0.10
+        )
+
+        order = MockOrder(
+            id="order-1",
+            asset=MockAsset(symbol="AAPL"),
+            amount=Decimal("100")
+        )
+
+        bar_data = {'close': 100.00}
+
+        result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
+
+        # 100 × (1 / 10000) = 0.01, but minimum is 0.10
+        assert result.slippage_amount == Decimal("0.10")
+        assert result.metadata["min_slippage_applied"] is True
+
+
+# ============================================================================
+# BidAskSpreadSlippageDecimal Tests
+# ============================================================================
+
+
+class TestBidAskSpreadSlippageDecimal:
+    """Tests for BidAskSpreadSlippageDecimal model."""
+
+    def test_bid_ask_spread_slippage_with_real_quotes(self):
+        """BidAskSpreadSlippage uses real bid/ask when available."""
+        model = BidAskSpreadSlippageDecimal(spread_factor=Decimal("1.0"))
+
+        order = MockOrder(
+            id="order-1",
+            asset=MockAsset(symbol="AAPL"),
+            amount=Decimal("100")  # Buy order
+        )
+
+        bar_data = {
+            'bid': 99.90,
+            'ask': 100.10,
+            'close': 100.00
+        }
+
+        result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
+
+        # Spread = 100.10 - 99.90 = 0.20
+        # Slippage = 0.20 / 2 = 0.10
+        assert result.slippage_amount == Decimal("0.10")
+        assert result.metadata["spread_source"] == "real"
+
+    def test_bid_ask_spread_slippage_with_estimated_spread(self):
+        """BidAskSpreadSlippage estimates spread when bid/ask unavailable."""
+        model = BidAskSpreadSlippageDecimal(
+            spread_estimate=Decimal("0.001"),  # 0.1% = 10 bps
+            spread_factor=Decimal("1.0")
+        )
+
+        order = MockOrder(
+            id="order-1",
+            asset=MockAsset(symbol="AAPL"),
+            amount=Decimal("100")
+        )
+
+        bar_data = {'close': 100.00}  # No bid/ask
+
+        result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
+
+        # Estimated spread = 100 × 0.001 = 0.10
+        # Slippage = 0.10 / 2 = 0.05
+        assert result.slippage_amount == Decimal("0.05")
+        assert result.metadata["spread_source"] == "estimated"
+
+
+# ============================================================================
+# Directional Slippage Tests
+# ============================================================================
+
+
+class TestDirectionalSlippage:
+    """Tests for directional slippage application."""
+
+    def test_directional_slippage_buy_order(self):
+        """Buy orders slip upward (pay more)."""
+        model = FixedBasisPointSlippageDecimal(basis_points=Decimal("10.0"))
+
+        buy_order = MockOrder(
+            id="buy-1",
+            asset=MockAsset(symbol="AAPL"),
+            amount=Decimal("100")  # Positive = buy
+        )
+
+        bar_data = {'close': 100.00}
+        base_price = Decimal("100.00")
+
+        result = model.calculate_slippage(buy_order, bar_data, pd.Timestamp("2023-01-01"))
+        order_side = model._get_order_side(buy_order)
+        slipped_price = model._apply_directional_slippage(
+            base_price, result.slippage_amount, order_side
+        )
+
+        # Buy order: price increases
+        assert slipped_price > base_price
+        assert slipped_price == Decimal("100.10")  # 100.00 + 0.10
+
+    def test_directional_slippage_sell_order(self):
+        """Sell orders slip downward (receive less)."""
+        model = FixedBasisPointSlippageDecimal(basis_points=Decimal("10.0"))
+
+        sell_order = MockOrder(
+            id="sell-1",
+            asset=MockAsset(symbol="AAPL"),
+            amount=Decimal("-100")  # Negative = sell
+        )
+
+        bar_data = {'close': 100.00}
+        base_price = Decimal("100.00")
+
+        result = model.calculate_slippage(sell_order, bar_data, pd.Timestamp("2023-01-01"))
+        order_side = model._get_order_side(sell_order)
+        slipped_price = model._apply_directional_slippage(
+            base_price, result.slippage_amount, order_side
+        )
+
+        # Sell order: price decreases
+        assert slipped_price < base_price
+        assert slipped_price == Decimal("99.90")  # 100.00 - 0.10
+
+
+# ============================================================================
+# Property-Based Tests with Hypothesis
+# ============================================================================
+
+
+class TestSlippageProperties:
+    """Property-based tests for slippage models."""
+
+    @given(
+        order_size=st.decimals(min_value=Decimal("1"), max_value=Decimal("10000"), places=2),
+        bar_volume=st.decimals(min_value=Decimal("1000"), max_value=Decimal("100000"), places=2),
+        bar_price=st.decimals(min_value=Decimal("1"), max_value=Decimal("1000"), places=2)
+    )
+    def test_slippage_always_worsens_execution_buy(self, order_size, bar_volume, bar_price):
+        """Property: Slippage always worsens execution for buy orders."""
+        model = VolumeShareSlippageDecimal()
+
+        order = MockOrder(
+            id="test-order",
+            asset=MockAsset(symbol="TEST"),
+            amount=order_size  # Buy order (positive)
+        )
+
+        bar_data = {
+            'close': float(bar_price),
+            'volume': float(bar_volume),
+            'volatility': 0.20
+        }
+
+        result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
+        order_side = model._get_order_side(order)
+        slipped_price = model._apply_directional_slippage(
+            bar_price, result.slippage_amount, order_side
+        )
+
+        # Property: Buy order always pays more after slippage
+        assert slipped_price >= bar_price
+
+    @given(
+        order_size=st.decimals(min_value=Decimal("1"), max_value=Decimal("10000"), places=2),
+        bar_volume=st.decimals(min_value=Decimal("1000"), max_value=Decimal("100000"), places=2),
+        bar_price=st.decimals(min_value=Decimal("1"), max_value=Decimal("1000"), places=2)
+    )
+    def test_slippage_always_worsens_execution_sell(self, order_size, bar_volume, bar_price):
+        """Property: Slippage always worsens execution for sell orders."""
+        model = VolumeShareSlippageDecimal()
+
+        order = MockOrder(
+            id="test-order",
+            asset=MockAsset(symbol="TEST"),
+            amount=-order_size  # Sell order (negative)
+        )
+
+        bar_data = {
+            'close': float(bar_price),
+            'volume': float(bar_volume),
+            'volatility': 0.20
+        }
+
+        result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
+        order_side = model._get_order_side(order)
+        slipped_price = model._apply_directional_slippage(
+            bar_price, result.slippage_amount, order_side
+        )
+
+        # Property: Sell order always receives less after slippage
+        assert slipped_price <= bar_price
+
+    @given(basis_points=st.decimals(min_value=Decimal("0"), max_value=Decimal("100"), places=2))
+    def test_slippage_never_negative(self, basis_points):
+        """Property: Slippage amount is never negative."""
+        model = FixedBasisPointSlippageDecimal(basis_points=basis_points)
+
+        order = MockOrder(
+            id="test",
+            asset=MockAsset(symbol="TEST"),
+            amount=Decimal("100")
+        )
+
+        bar_data = {'close': 100.00}
+
+        result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
+
+        # Property: Slippage is always non-negative
+        assert result.slippage_amount >= Decimal("0")
+        assert result.slippage_bps >= Decimal("0")

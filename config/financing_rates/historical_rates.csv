@@ -1,0 +1,9 @@
+symbol,asset_class,date,long_rate,short_rate,notes
+EUR/USD,forex,2023-01-01,0.00,-0.005,ECB rate < Fed rate
+EUR/USD,forex,2023-06-01,0.00,0.003,ECB rate > Fed rate (positive carry)
+USD/JPY,forex,2023-01-01,0.00,0.015,Large interest rate differential
+USD/JPY,forex,2023-12-01,0.00,0.008,Narrowing differential
+AAPL,equity,2023-01-01,0.05,0.00,Standard broker margin rate
+AAPL,equity,2023-06-01,0.055,0.00,Rate hike impact
+BTC-USD,crypto,2023-01-01,0.10,-0.02,High funding rate period
+BTC-USD,crypto,2023-06-01,0.08,-0.01,Funding rate normalization

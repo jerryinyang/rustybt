@@ -291,6 +291,14 @@ line-ending = "auto"
     # The below are debateable
     "PLR2004", # Magic value used in comparison, ...
     "S311", # Standard pseudo-random generators are not suitable for cryptographic purposes
+    "D", # Missing docstrings in tests are acceptable
+    "ANN", # Type annotations in tests are optional
+    "RUF003", # Mathematical symbols in test comments
+]
+"rustybt/portfolio/risk.py" = [
+    "RUF002", # Greek mathematical symbols (ρ, σ, α, β) are standard notation
+    "RUF003", # Mathematical multiplication sign (×) is standard notation
+    "ANN401", # Any type for duck-typed portfolio parameter is acceptable
 ]
 
 [tool.ruff.lint.mccabe]

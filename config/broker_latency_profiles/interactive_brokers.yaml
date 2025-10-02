@@ -1,0 +1,40 @@
+# Interactive Brokers Latency Profile
+# Based on typical latency characteristics for US-based trading
+broker_name: "Interactive Brokers"
+
+asset_classes:
+  equities:
+    # Network latency: US East Coast to IB servers (typically 10-30ms)
+    network_latency_ms: [10.0, 30.0]
+    # Broker processing: Order validation and routing (2-8ms typical)
+    broker_processing_ms: [2.0, 8.0]
+    # Exchange matching: NASDAQ/NYSE matching engine (0.5-3ms)
+    exchange_matching_ms: [0.5, 3.0]
+    # Normal distribution models realistic variance
+    distribution: "normal"
+    location: "US_EAST"
+
+  futures:
+    # Futures typically have slightly lower latency
+    network_latency_ms: [10.0, 30.0]
+    broker_processing_ms: [1.0, 5.0]
+    # CME/CBOT matching engines are very fast
+    exchange_matching_ms: [0.1, 2.0]
+    distribution: "normal"
+    location: "US_EAST"
+
+  options:
+    # Options processing is slightly slower due to complexity
+    network_latency_ms: [10.0, 30.0]
+    broker_processing_ms: [3.0, 10.0]
+    exchange_matching_ms: [1.0, 4.0]
+    distribution: "normal"
+    location: "US_EAST"
+
+  forex:
+    # Forex trading is typically very fast
+    network_latency_ms: [10.0, 30.0]
+    broker_processing_ms: [1.0, 4.0]
+    exchange_matching_ms: [0.1, 1.0]
+    distribution: "normal"
+    location: "US_EAST"

@@ -130,6 +130,15 @@ benchmarks = [
     'matplotlib>=3.5.0',
 ]
 
+optimization = [
+    'scikit-optimize>=0.9.0',
+    'deap>=1.4.0',
+    'matplotlib>=3.5.0',
+    'tqdm>=4.0.0',
+    'psutil>=5.0.0',
+    'ray[default]>=2.0.0; extra == "ray"',
+]
+
 docs = [
     'Cython',
     'Sphinx >=1.3.2',

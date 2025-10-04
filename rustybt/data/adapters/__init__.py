@@ -16,6 +16,18 @@ from rustybt.data.adapters.csv_adapter import CSVAdapter, CSVConfig, SchemaMappi
 from rustybt.data.adapters.registry import AdapterRegistry
 from rustybt.data.adapters.yfinance_adapter import YFinanceAdapter
 
+# API provider adapters
+from rustybt.data.adapters.api_provider_base import (
+    BaseAPIProviderAdapter,
+    AuthenticationError,
+    SymbolNotFoundError,
+    QuotaExceededError,
+    DataParsingError,
+)
+from rustybt.data.adapters.polygon_adapter import PolygonAdapter
+from rustybt.data.adapters.alpaca_adapter import AlpacaAdapter
+from rustybt.data.adapters.alphavantage_adapter import AlphaVantageAdapter
+
 # Conditional import for CCXTAdapter (requires ccxt dependency)
 try:
     from rustybt.data.adapters.ccxt_adapter import CCXTAdapter
@@ -33,6 +45,14 @@ try:
         "RateLimitError",
         "ValidationError",
         "AdapterRegistry",
+        "BaseAPIProviderAdapter",
+        "AuthenticationError",
+        "SymbolNotFoundError",
+        "QuotaExceededError",
+        "DataParsingError",
+        "PolygonAdapter",
+        "AlpacaAdapter",
+        "AlphaVantageAdapter",
     ]
 except ImportError:
     # CCXTAdapter not available if ccxt not installed
@@ -48,4 +68,12 @@ except ImportError:
         "RateLimitError",
         "ValidationError",
         "AdapterRegistry",
+        "BaseAPIProviderAdapter",
+        "AuthenticationError",
+        "SymbolNotFoundError",
+        "QuotaExceededError",
+        "DataParsingError",
+        "PolygonAdapter",
+        "AlpacaAdapter",
+        "AlphaVantageAdapter",
     ]

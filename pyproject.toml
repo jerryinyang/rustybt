@@ -73,6 +73,14 @@ dependencies = [
     'pyyaml >=6.0',
     'ccxt >=4.0.0',
     'yfinance >=0.2.0',
+    'apscheduler >=3.0',
+    'ib-insync >=0.9.86',
+    'aiohttp >=3.9.0',
+    'websockets >=14.0',
+    'pybit >=5.0.0',
+    'hyperliquid-python-sdk >=0.1.0',
+    'cryptography >=41.0.0',
+    'eth-account >=0.10.0',
 ]
 
 [project.urls]
@@ -190,6 +198,8 @@ markers = [
     "regression: regression tests from Hypothesis shrunk examples",
     "asyncio: marks tests as async tests",
     "live: marks tests requiring live API access (network dependent)",
+    "validation: marks tests as validation tests (backtest vs paper correlation)",
+    "ib_integration: marks tests requiring IB paper account (skip by default)",
 ]
 addopts = [
     "--strict-markers",

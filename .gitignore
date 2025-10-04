@@ -146,3 +146,13 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# API Keys and Secrets (SECURITY)
+.env
+.env.*
+!.env.example
+api_keys.ini
+.rustybt/api_keys.ini
+**/api_keys.ini
+credentials.json
+secrets.json

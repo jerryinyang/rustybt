@@ -1,0 +1,278 @@
+"""Unit tests for AlignmentCircuitBreaker."""
+
+import pytest
+from datetime import datetime, timedelta
+from decimal import Decimal
+
+from rustybt.live.shadow.config import ShadowTradingConfig
+from rustybt.live.shadow.alignment_breaker import AlignmentCircuitBreaker
+from rustybt.live.shadow.models import AlignmentMetrics, ExecutionQualityMetrics, SignalAlignment
+
+
+class TestAlignmentCircuitBreaker:
+    """Test alignment circuit breaker functionality."""
+
+    @pytest.fixture
+    def config(self):
+        """Create test configuration."""
+        return ShadowTradingConfig(
+            enabled=True,
+            signal_match_rate_min=Decimal("0.95"),
+            slippage_error_bps_max=Decimal("50"),
+            fill_rate_error_pct_max=Decimal("20"),
+            commission_error_pct_max=Decimal("30"),
+            grace_period_seconds=300,  # 5 minutes
+        )
+
+    @pytest.fixture
+    def breaker(self, config):
+        """Create test breaker instance."""
+        return AlignmentCircuitBreaker(config)
+
+    @pytest.fixture
+    def good_metrics(self):
+        """Create alignment metrics that pass all thresholds."""
+        exec_quality = ExecutionQualityMetrics(
+            expected_slippage_bps=Decimal("5"),
+            actual_slippage_bps=Decimal("6"),
+            slippage_error_bps=Decimal("1"),  # Within threshold
+            fill_rate_expected=Decimal("1.0"),
+            fill_rate_actual=Decimal("0.99"),
+            fill_rate_error_pct=Decimal("1"),  # Within threshold
+            commission_expected=Decimal("1.0"),
+            commission_actual=Decimal("1.05"),
+            commission_error_pct=Decimal("5"),  # Within threshold
+            sample_count=10,
+        )
+
+        return AlignmentMetrics(
+            execution_quality=exec_quality,
+            backtest_signal_count=100,
+            live_signal_count=98,
+            signal_match_rate=Decimal("0.98"),  # Above threshold
+            divergence_breakdown={
+                SignalAlignment.EXACT_MATCH: 98,
+                SignalAlignment.MISSING_SIGNAL: 2,
+            },
+        )
+
+    @pytest.fixture
+    def bad_signal_match_metrics(self):
+        """Create metrics with poor signal match rate."""
+        exec_quality = ExecutionQualityMetrics(
+            expected_slippage_bps=Decimal("5"),
+            actual_slippage_bps=Decimal("6"),
+            slippage_error_bps=Decimal("1"),
+            fill_rate_expected=Decimal("1.0"),
+            fill_rate_actual=Decimal("0.99"),
+            fill_rate_error_pct=Decimal("1"),
+            commission_expected=Decimal("1.0"),
+            commission_actual=Decimal("1.05"),
+            commission_error_pct=Decimal("5"),
+            sample_count=10,
+        )
+
+        return AlignmentMetrics(
+            execution_quality=exec_quality,
+            backtest_signal_count=100,
+            live_signal_count=85,
+            signal_match_rate=Decimal("0.85"),  # Below 0.95 threshold
+            divergence_breakdown={
+                SignalAlignment.EXACT_MATCH: 85,
+                SignalAlignment.MISSING_SIGNAL: 15,
+            },
+        )
+
+    @pytest.fixture
+    def bad_slippage_metrics(self):
+        """Create metrics with excessive slippage error."""
+        exec_quality = ExecutionQualityMetrics(
+            expected_slippage_bps=Decimal("5"),
+            actual_slippage_bps=Decimal("60"),  # 55 bps error, exceeds threshold
+            slippage_error_bps=Decimal("55"),
+            fill_rate_expected=Decimal("1.0"),
+            fill_rate_actual=Decimal("0.99"),
+            fill_rate_error_pct=Decimal("1"),
+            commission_expected=Decimal("1.0"),
+            commission_actual=Decimal("1.05"),
+            commission_error_pct=Decimal("5"),
+            sample_count=10,
+        )
+
+        return AlignmentMetrics(
+            execution_quality=exec_quality,
+            backtest_signal_count=100,
+            live_signal_count=98,
+            signal_match_rate=Decimal("0.98"),
+            divergence_breakdown={
+                SignalAlignment.EXACT_MATCH: 98,
+                SignalAlignment.MISSING_SIGNAL: 2,
+            },
+        )
+
+    def test_initialization(self, breaker, config):
+        """Test breaker initializes correctly."""
+        assert breaker.config == config
+        assert not breaker.is_tripped()
+        assert breaker._first_breach_time is None
+
+    def test_good_alignment_passes(self, breaker, good_metrics):
+        """Test that good alignment metrics pass without tripping breaker."""
+        is_aligned = breaker.check_alignment(good_metrics)
+
+        assert is_aligned is True
+        assert not breaker.is_tripped()
+        assert breaker._first_breach_time is None
+
+    def test_bad_signal_match_trips_after_grace_period(self, breaker, bad_signal_match_metrics):
+        """Test breaker trips after grace period for poor signal match."""
+        now = datetime.utcnow()
+
+        # First check - starts grace period
+        breaker._current_time = now
+        is_aligned = breaker.check_alignment(bad_signal_match_metrics)
+        assert is_aligned is True  # Still in grace period
+        assert not breaker.is_tripped()
+        assert breaker._first_breach_time is not None
+
+        # Check after grace period expires (5 minutes + 1 second)
+        breaker._current_time = now + timedelta(seconds=301)
+        is_aligned = breaker.check_alignment(bad_signal_match_metrics)
+        assert is_aligned is False  # Grace period expired
+        assert breaker.is_tripped()
+
+    def test_bad_slippage_trips_after_grace_period(self, breaker, bad_slippage_metrics):
+        """Test breaker trips for excessive slippage after grace period."""
+        now = datetime.utcnow()
+
+        # First check - starts grace period
+        breaker._current_time = now
+        is_aligned = breaker.check_alignment(bad_slippage_metrics)
+        assert is_aligned is True
+        assert not breaker.is_tripped()
+
+        # After grace period
+        breaker._current_time = now + timedelta(seconds=301)
+        is_aligned = breaker.check_alignment(bad_slippage_metrics)
+        assert is_aligned is False
+        assert breaker.is_tripped()
+
+    def test_grace_period_resets_on_good_metrics(self, breaker, bad_signal_match_metrics, good_metrics):
+        """Test grace period resets when metrics return to good."""
+        now = datetime.utcnow()
+
+        # Start with bad metrics
+        breaker._current_time = now
+        breaker.check_alignment(bad_signal_match_metrics)
+        assert breaker._first_breach_time is not None
+        first_breach = breaker._first_breach_time
+
+        # Metrics improve before grace period expires
+        breaker._current_time = now + timedelta(seconds=60)
+        breaker.check_alignment(good_metrics)
+        assert breaker._first_breach_time is None  # Reset
+
+        # Bad metrics again - should start new grace period
+        breaker._current_time = now + timedelta(seconds=120)
+        breaker.check_alignment(bad_signal_match_metrics)
+        assert breaker._first_breach_time is not None
+        assert breaker._first_breach_time != first_breach  # New timestamp
+
+    def test_reset_clears_trip_state(self, breaker, bad_signal_match_metrics):
+        """Test reset clears tripped state."""
+        now = datetime.utcnow()
+
+        # Trip the breaker
+        breaker._current_time = now
+        breaker.check_alignment(bad_signal_match_metrics)
+        breaker._current_time = now + timedelta(seconds=301)
+        breaker.check_alignment(bad_signal_match_metrics)
+        assert breaker.is_tripped()
+
+        # Reset
+        breaker.reset()
+
+        assert not breaker.is_tripped()
+        assert breaker._first_breach_time is None
+
+    def test_get_breach_summary(self, breaker, bad_signal_match_metrics):
+        """Test breach summary generation."""
+        now = datetime.utcnow()
+        breaker._current_time = now
+        breaker.check_alignment(bad_signal_match_metrics)
+
+        summary = breaker.get_breach_summary()
+
+        assert "signal_match_rate" in summary
+        assert summary["signal_match_rate"]["breached"] is True
+        assert summary["signal_match_rate"]["threshold"] == Decimal("0.95")
+        assert summary["signal_match_rate"]["actual"] == Decimal("0.85")
+
+    def test_multiple_breach_types(self, breaker):
+        """Test breaker tracks multiple breach types simultaneously."""
+        exec_quality = ExecutionQualityMetrics(
+            expected_slippage_bps=Decimal("5"),
+            actual_slippage_bps=Decimal("60"),
+            slippage_error_bps=Decimal("55"),  # Breaches slippage threshold
+            fill_rate_expected=Decimal("1.0"),
+            fill_rate_actual=Decimal("0.70"),  # -30% error, breaches fill rate threshold
+            fill_rate_error_pct=Decimal("-30"),
+            commission_expected=Decimal("1.0"),
+            commission_actual=Decimal("1.05"),
+            commission_error_pct=Decimal("5"),
+            sample_count=10,
+        )
+
+        metrics = AlignmentMetrics(
+            execution_quality=exec_quality,
+            backtest_signal_count=100,
+            live_signal_count=85,
+            signal_match_rate=Decimal("0.85"),  # Also breaches
+            divergence_breakdown={SignalAlignment.EXACT_MATCH: 85},
+        )
+
+        now = datetime.utcnow()
+        breaker._current_time = now
+        breaker.check_alignment(metrics)
+
+        summary = breaker.get_breach_summary()
+
+        # Should report all three breaches
+        assert summary["signal_match_rate"]["breached"] is True
+        assert summary["slippage_error_bps"]["breached"] is True
+        assert summary["fill_rate_error_pct"]["breached"] is True
+
+    def test_zero_grace_period_trips_immediately(self):
+        """Test breaker with zero grace period trips immediately."""
+        config = ShadowTradingConfig(
+            enabled=True,
+            signal_match_rate_min=Decimal("0.95"),
+            grace_period_seconds=0,  # No grace period
+        )
+        breaker = AlignmentCircuitBreaker(config)
+
+        exec_quality = ExecutionQualityMetrics(
+            expected_slippage_bps=Decimal("5"),
+            actual_slippage_bps=Decimal("6"),
+            slippage_error_bps=Decimal("1"),
+            fill_rate_expected=Decimal("1.0"),
+            fill_rate_actual=Decimal("0.99"),
+            fill_rate_error_pct=Decimal("1"),
+            commission_expected=Decimal("1.0"),
+            commission_actual=Decimal("1.05"),
+            commission_error_pct=Decimal("5"),
+            sample_count=10,
+        )
+
+        bad_metrics = AlignmentMetrics(
+            execution_quality=exec_quality,
+            backtest_signal_count=100,
+            live_signal_count=85,
+            signal_match_rate=Decimal("0.85"),
+            divergence_breakdown={SignalAlignment.EXACT_MATCH: 85},
+        )
+
+        # Should trip immediately
+        is_aligned = breaker.check_alignment(bad_metrics)
+        assert is_aligned is False
+        assert breaker.is_tripped()

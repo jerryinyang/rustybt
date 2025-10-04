@@ -53,17 +53,64 @@ Core modules require substantial modification:
 
 ### API Integration
 
+**CRITICAL REQUIREMENT: Strategy Reusability**
+
+Strategies written for backtest mode **MUST** run in live/paper trading mode **without code changes**. The same `TradingAlgorithm` subclass instance must be usable in both modes:
+
+```python
+# Define strategy once
+class MomentumStrategy(TradingAlgorithm):
+    def initialize(self, context):
+        context.asset = self.symbol('SPY')
+        self.sma_fast = 10
+        self.sma_slow = 30
+
+    def handle_data(self, context, data):
+        prices = data.history(context.asset, 'close', self.sma_slow, '1d')
+        fast_mavg = prices[-self.sma_fast:].mean()
+        slow_mavg = prices.mean()
+
+        if fast_mavg > slow_mavg:
+            self.order_target_percent(context.asset, 1.0)
+        else:
+            self.order_target_percent(context.asset, 0.0)
+
+# Use in backtest
+result = run_algorithm(
+    strategy=MomentumStrategy(),
+    start='2023-01-01',
+    end='2023-12-31',
+    bundle='quandl'
+)
+
+# Use in paper trading (same code, no changes)
+engine = LiveTradingEngine(
+    strategy=MomentumStrategy(),  # ← Same strategy class
+    broker=PaperBroker()
+)
+asyncio.run(engine.run())
+
+# Use in live trading (same code, no changes)
+engine = LiveTradingEngine(
+    strategy=MomentumStrategy(),  # ← Same strategy class
+    broker=IBAdapter()
+)
+asyncio.run(engine.run())
+```
+
 **Preserve (Backtest API):**
 - `initialize(context)`: Strategy setup
 - `handle_data(context, data)`: Bar-by-bar processing
 - `before_trading_start(context, data)`: Pre-market calculations
 - `analyze(context, results)`: Post-backtest analysis
 
-**Extend (Live Trading Hooks):**
+**Extend (Live Trading Hooks - OPTIONAL):**
 - `on_order_fill(context, order, transaction)`: Real-time fill notifications
 - `on_order_cancel(context, order, reason)`: Cancellation handling
 - `on_order_reject(context, order, reason)`: Rejection handling
 - `on_broker_message(context, message)`: Custom broker events
+
+**Note:** Live trading hooks are **optional**. Strategies that don't implement them will still work in live mode, they just won't receive real-time event notifications. The core strategy logic (`initialize`, `handle_data`, `before_trading_start`) remains identical across all execution modes.
 
 **Add (External Integration - Epic 9):**
 - RESTful API for remote monitoring and control

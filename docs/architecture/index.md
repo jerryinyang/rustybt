@@ -1,5 +1,29 @@
 # RustyBT Brownfield Enhancement Architecture
 
+## 🚨 Critical Architecture Documents (Epic 6 - Live Trading)
+
+**MUST READ** before implementing any Epic 6 stories:
+
+1. **[Strategy Reusability Guarantee](./strategy-reusability-guarantee.md)** ⭐️ **MANDATORY**
+   - Confirms strategies written for backtest run in live/paper trading without code changes
+   - Defines the TradingAlgorithm API contract that must be preserved
+   - Shows code examples: same strategy in backtest, paper, and live modes
+   - **Referenced in:** Story 6.1 (AC10), Story 6.2 (AC8), Story 6.7 (AC9, AC10)
+
+2. **[Shadow Trading Validation Framework](./shadow-trading-summary.md)** ⭐️ **CRITICAL**
+   - Architecture overview for continuous backtest-live alignment monitoring
+   - Defines components: ShadowBacktestEngine, SignalAlignmentValidator, ExecutionQualityTracker, AlignmentCircuitBreaker
+   - Documents production deployment workflow and alignment metrics
+   - **Referenced in:** Story 6.1 (AC9), Story 6.12 (primary reference)
+
+3. **[Enhancement Scope - API Integration](./enhancement-scope-and-integration-strategy.md#L56-L113)** ⭐️ **IMPORTANT**
+   - Documents which APIs are preserved vs. extended for live trading
+   - Shows concrete code example of strategy reusability
+   - Explains optional live hooks vs. required backtest methods
+   - **Referenced in:** Story 6.1, Story 6.2
+
+---
+
 ## Table of Contents
 
 - [RustyBT Brownfield Enhancement Architecture](#table-of-contents)

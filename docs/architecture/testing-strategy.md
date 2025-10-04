@@ -147,6 +147,101 @@ def test_no_future_data_access():
     )
 ```
 
+## Shadow Trading Validation Tests
+
+**Purpose:** Validate backtest-live alignment framework catches divergence
+
+**Shadow Engine Tests:**
+- Unit test: ShadowBacktestEngine processes market events correctly
+- Unit test: Shadow engine maintains separate state from live engine
+- Integration test: Shadow engine consumes same data feed as live engine
+- Integration test: Shadow engine failure doesn't halt live trading
+
+**Signal Alignment Tests:**
+- Unit test: SignalAlignmentValidator matches identical signals (100% match rate)
+- Unit test: Validator classifies EXACT_MATCH, DIRECTION_MATCH, MAGNITUDE_MISMATCH correctly
+- Unit test: Validator detects MISSING_SIGNAL when signal only in one engine
+- Integration test: Simulated data delay (200ms) → signals flagged as divergent
+- Property test: If inputs identical, signal_match_rate = 1.0
+
+**Execution Quality Tests:**
+- Unit test: ExecutionQualityTracker calculates slippage_error_bps correctly
+- Unit test: Tracker calculates fill_rate_error_pct correctly
+- Unit test: Rolling metrics calculation over 100 fills
+- Integration test: Simulated slippage increase → quality degradation detected
+- Property test: If expected = actual, all error metrics = 0
+
+**Alignment Circuit Breaker Tests:**
+- Unit test: Circuit breaker trips when signal_match_rate < 0.95
+- Unit test: Circuit breaker trips when slippage_error > 50bps
+- Unit test: Circuit breaker trips when fill_rate_error > 20%
+- Unit test: Manual reset required (auto-reset fails)
+- Integration test: Alignment degradation → circuit breaker halts trading
+- Integration test: Circuit breaker trip emits critical alert
+
+**End-to-End Shadow Trading Tests:**
+```python
+def test_shadow_trading_perfect_alignment():
+    """Test shadow mode with perfect backtest-live alignment."""
+
+    # Setup
+    strategy = MomentumStrategy()
+    paper_broker = PaperBroker(use_realistic_fills=True)
+
+    engine = LiveTradingEngine(
+        strategy=strategy,
+        broker=paper_broker,
+        shadow_mode=True,
+        shadow_config=ShadowTradingConfig(
+            signal_match_rate_min=Decimal("0.99"),
+            slippage_error_bps_max=Decimal("10")
+        )
+    )
+
+    # Run for 1 hour of simulated trading
+    asyncio.run(engine.run(duration_hours=1))
+
+    # Verify alignment
+    alignment_metrics = engine.state_manager.get_alignment_metrics()
+    assert alignment_metrics['signal_match_rate'] >= Decimal("0.99")
+    assert abs(alignment_metrics['slippage_error_bps']) <= Decimal("10")
+    assert not engine.circuit_breakers['alignment'].is_tripped
+
+def test_shadow_trading_detects_divergence():
+    """Test shadow mode detects backtest-live divergence."""
+
+    # Setup with intentional divergence
+    strategy = MomentumStrategy()
+    paper_broker = PaperBroker(use_realistic_fills=True)
+
+    # Inject slippage increase in live fills
+    paper_broker.slippage_multiplier = 5.0  # 5x worse than backtest
+
+    engine = LiveTradingEngine(
+        strategy=strategy,
+        broker=paper_broker,
+        shadow_mode=True,
+        shadow_config=ShadowTradingConfig(
+            signal_match_rate_min=Decimal("0.95"),
+            slippage_error_bps_max=Decimal("50")
+        )
+    )
+
+    # Run until circuit breaker trips
+    with pytest.raises(CircuitBreakerTrippedError) as exc_info:
+        asyncio.run(engine.run(duration_hours=1))
+
+    # Verify correct trip reason
+    assert exc_info.value.reason == CircuitBreakerReason.EXECUTION_QUALITY_DEGRADED
+    assert engine.circuit_breakers['alignment'].is_tripped
+```
+
+**Performance Tests:**
+- Test: Shadow mode overhead <5% latency increase
+- Test: Shadow engine handles 1000+ events/second
+- Test: Alignment validation completes in <1ms per signal
+- Test: Memory usage bounded (shadow history buffer doesn't grow unbounded)
+
 ## Continuous Integration
 
 **CI Pipeline (GitHub Actions):**

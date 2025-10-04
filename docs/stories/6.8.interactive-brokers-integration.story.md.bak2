@@ -1,0 +1,245 @@
+# Story 6.8: Implement Interactive Brokers Integration
+
+## Status
+Approved
+
+## Story
+**As a** quantitative trader,
+**I want** Interactive Brokers integration for stocks/options/futures/forex trading,
+**so that** I can deploy strategies on a professional-grade broker with global market access.
+
+## Acceptance Criteria
+1. Decision: Use ib_async library for Pythonic async interface and ease of integration (custom TWS API would require significant additional development with marginal performance gains)
+2. IBBrokerAdapter implements BrokerAdapter interface
+3. Authentication with TWS/IB Gateway (handle connection, login, session management)
+4. Order submission for all asset types (stocks, options, futures, forex)
+5. Order status tracking (submitted, filled, canceled, rejected)
+6. Position queries (fetch current positions)
+7. Account balance queries (fetch cash, buying power, margin)
+8. Real-time market data subscription (via ib_async or native API)
+9. Error handling (connection loss, order rejections, API errors)
+10. Integration test with IB paper trading account validates order submission and fills
+
+## Tasks / Subtasks
+- [ ] Evaluate ib_async vs custom TWS API implementation (AC: 1)
+  - [ ] Research ib_async library features and performance characteristics
+  - [ ] Review TWS API documentation for custom implementation requirements
+  - [ ] Benchmark ib_async connection and order submission latency
+  - [ ] Assess ib_async async/await support and integration with LiveTradingEngine
+  - [ ] Document rationale for ib_async: Python async/await support, active maintenance, comprehensive documentation, proven in production
+  - [ ] Document decision rationale in architecture doc
+- [ ] Implement IBBrokerAdapter core (AC: 2, 3)
+  - [ ] Create IBBrokerAdapter class in rustybt/live/brokers/ib_adapter.py
+  - [ ] Implement __init__(host, port, client_id) with connection parameters
+  - [ ] Implement async connect(credentials) method using ib_async.IB.connectAsync()
+  - [ ] Handle connection to TWS (port 7497 live, 7496 paper) or IB Gateway (4001 live, 4002 paper)
+  - [ ] Implement session management (auto-reconnect on disconnect)
+  - [ ] Implement disconnect() and cleanup on shutdown
+  - [ ] Add connection health monitoring (heartbeat, ping/pong)
+- [ ] Implement order submission for all asset types (AC: 4)
+  - [ ] Create IB contract objects from RustyBT Asset types (Stock, Future, Option, Forex)
+  - [ ] Implement submit_order() for stocks (Stock contract with symbol, exchange, currency)
+  - [ ] Implement submit_order() for futures (Future contract with symbol, lastTradeDateOrContractMonth, exchange)
+  - [ ] Implement submit_order() for options (Option contract with symbol, lastTradeDateOrContractMonth, strike, right, exchange)
+  - [ ] Implement submit_order() for forex (Forex contract with symbol, exchange, currency)
+  - [ ] Support order types: Market, Limit, Stop, Stop-Limit, Trailing Stop
+  - [ ] Map RustyBT order types to IB Order objects
+  - [ ] Return broker_order_id from placeOrder() response
+- [ ] Implement order status tracking (AC: 5)
+  - [ ] Subscribe to IB order status events (ib.orderStatusEvent)
+  - [ ] Subscribe to IB execution events (ib.execDetailsEvent)
+  - [ ] Map IB order status to RustyBT order states (Submitted, PreSubmitted, Filled, Cancelled, Inactive)
+  - [ ] Generate OrderFillEvent on execution with fill details (price, quantity, commission, timestamp)
+  - [ ] Generate OrderRejectEvent on rejection with reason
+  - [ ] Update OrderManager with status changes
+  - [ ] Handle partial fills (cumulative quantity tracking)
+- [ ] Implement position queries (AC: 6)
+  - [ ] Implement get_positions() using ib.positions()
+  - [ ] Convert IB Position objects to RustyBT position format
+  - [ ] Map IB contract to RustyBT Asset (use AssetFinder for sid lookup)
+  - [ ] Return list of positions with asset, amount, cost_basis, last_price
+  - [ ] Handle multi-currency positions (convert to base currency)
+- [ ] Implement account balance queries (AC: 7)
+  - [ ] Implement get_account_info() using ib.accountSummary()
+  - [ ] Fetch TotalCashValue, NetLiquidation, BuyingPower, GrossPositionValue
+  - [ ] Convert to Decimal and return as dict
+  - [ ] Handle multi-currency accounts (use base currency or specific currency)
+  - [ ] Include margin information (initial_margin, maintenance_margin)
+- [ ] Implement real-time market data subscription (AC: 8)
+  - [ ] Implement subscribe_market_data(assets) using ib.reqMktData()
+  - [ ] Subscribe to tick-by-tick data or 5-second snapshots (configurable)
+  - [ ] Convert IB tickers to MarketDataEvent
+  - [ ] Handle bid/ask updates for quote data
+  - [ ] Handle trade updates for last price
+  - [ ] Unsubscribe on asset removal or shutdown
+- [ ] Implement error handling and retry logic (AC: 9)
+  - [ ] Handle connection errors with exponential backoff retry (1s, 2s, 4s, 8s, 16s max)
+  - [ ] Handle order rejections (parse error code, generate OrderRejectEvent with reason)
+  - [ ] Handle rate limiting (IB limit: 50 req/sec market data, 100 orders/sec)
+  - [ ] Handle API errors (error codes 502=connectivity, 103=duplicate order id, 201=order rejected)
+  - [ ] Implement reconnection on disconnect with state preservation
+  - [ ] Log all errors with context (order_id, contract, error_code, message)
+- [ ] Implement integration test with IB paper trading account (AC: 10)
+  - [ ] Create test that connects to IB paper trading account (requires TWS/Gateway running)
+  - [ ] Submit market order for stock (e.g., SPY)
+  - [ ] Verify order submitted and filled
+  - [ ] Fetch positions and verify SPY position exists
+  - [ ] Fetch account info and verify cash balance decreased
+  - [ ] Cancel pending limit order and verify cancellation
+  - [ ] Test requires IB paper trading credentials (document setup in README)
+- [ ] Create IB integration documentation
+  - [ ] Document IBBrokerAdapter configuration in docs/architecture/live-trading.md
+  - [ ] Explain TWS vs IB Gateway setup (ports, paper vs live)
+  - [ ] Provide setup guide for IB paper trading account
+  - [ ] Document supported asset types and order types
+  - [ ] Document error codes and troubleshooting
+  - [ ] Add connection configuration examples
+
+## Dev Notes
+
+### Previous Story Insights
+[From Story 6.1: Design Live Trading Engine Architecture]
+- IBAdapter design: Use ib_async for Pythonic async interface
+- Support stocks, futures, options, forex
+- Real-time market data via IB streaming
+- Order types: Market, Limit, Stop, Stop-Limit, Trailing Stop, Bracket
+
+[From Story 6.2: Implement Event-Driven Async Trading Engine Core]
+- BrokerAdapter async interface required
+- OrderFillEvent and OrderRejectEvent for status updates
+- Connection health monitoring for auto-reconnect
+
+### Architecture Context
+
+**IB Integration Design:**
+[Source: architecture/component-architecture.md#ibadapter]
+- Library: ib_async 1.x+ for Pythonic async interface
+- TWS/IB Gateway connection (localhost or remote)
+- Support stocks, futures, options, forex
+- Real-time market data via IB streaming
+- Order types: Market, Limit, Stop, Stop-Limit, Trailing Stop, Bracket
+- Auto-reconnection with state preservation
+
+**External API Integration:**
+[Source: architecture/external-api-integration.md#interactive-brokers-ibasync]
+- Authentication: host, port, client_id (no API key required for local connection)
+- Connection: TWS (7497 live, 7496 paper) or IB Gateway (4001 live, 4002 paper)
+- Order types: Market, Limit, Stop, Stop-Limit, Trailing Stop, Bracket, OCO
+- Rate limits: 50 req/sec market data, 100 orders/sec
+- Error handling: connection timeout 30s, exponential backoff retry
+
+**BrokerAdapter Interface:**
+[Source: architecture/component-architecture.md#brokeradapter-abstract-base]
+- Required methods: connect(), submit_order(), cancel_order(), get_positions(), get_account_info(), subscribe_market_data(), get_next_event()
+- Async interface using asyncio
+- Returns standardized data structures (positions, account_info)
+
+**Tech Stack:**
+[Source: architecture/tech-stack.md#new-technology-additions]
+- ib_async 1.x+ for Interactive Brokers integration
+- asyncio for async operations
+- Python Decimal for all financial values
+
+**Coding Standards:**
+[Source: architecture/coding-standards.md]
+- Type hints: mypy --strict compliance
+- Async/await for all broker operations
+- Structured logging for order events and errors
+- Error handling with specific exceptions (IBConnectionError, IBOrderRejectError)
+
+### File Locations
+[Source: architecture/source-tree.md]
+- IB adapter: `rustybt/live/brokers/ib_adapter.py`
+- IB models: `rustybt/live/brokers/ib_models.py` (if needed for IB-specific types)
+- Tests: `tests/live/brokers/test_ib_adapter.py`
+- Integration test: `tests/integration/live/test_ib_integration.py` (requires IB paper account)
+- Documentation: `docs/architecture/live-trading.md` (add IB integration section)
+
+### Integration Points
+- BrokerAdapter: Implements abstract interface
+- AssetFinder: Maps IB contracts to RustyBT Assets (sid lookup)
+  **AssetFinder Integration:** Map IB contracts to RustyBT Asset sids using AssetFinder (from Epic 1). IB contract.conId → lookup or create Asset in asset database. See rustybt/assets/asset_finder.py for sid resolution.
+- OrderManager: Receives order status updates
+- EventQueue: Receives OrderFillEvent and OrderRejectEvent
+- ib_async: Underlying IB API library
+
+### IB Asset Type Mapping
+- RustyBT Equity → IB Stock(symbol, exchange='SMART', currency='USD')
+- RustyBT Future → IB Future(symbol, lastTradeDateOrContractMonth, exchange)
+- RustyBT Option → IB Option(symbol, lastTradeDateOrContractMonth, strike, right, exchange)
+- RustyBT Forex → IB Forex(symbol='EURUSD', exchange='IDEALPRO', currency='USD')
+
+### IB Order Type Mapping
+- Market → IB Order(orderType='MKT')
+- Limit → IB Order(orderType='LMT', lmtPrice=price)
+- Stop → IB Order(orderType='STP', auxPrice=stop_price)
+- Stop-Limit → IB Order(orderType='STP LMT', lmtPrice=limit_price, auxPrice=stop_price)
+- Trailing Stop → IB Order(orderType='TRAIL', auxPrice=trailing_amount)
+
+### IB Error Codes
+- 502: Cannot connect to TWS (check TWS is running, port is correct)
+- 103: Duplicate order ID (use unique IDs)
+- 201: Order rejected (insufficient funds, contract not found, etc.)
+- 110: Price does not conform to minimum price variation (adjust limit price)
+- 162: Historical market data service error (subscription issue)
+
+### Testing
+[Source: architecture/testing-strategy.md]
+
+**Test Location:**
+- Unit tests: `tests/live/brokers/test_ib_adapter.py` (mock ib_async)
+- Integration tests: `tests/integration/live/test_ib_integration.py` (requires IB paper account)
+
+**Testing Standards:**
+- Unit tests: ≥90% coverage (mock ib_async IB object)
+- Integration tests: Require IB paper trading account and TWS/Gateway running
+- Mark integration tests with @pytest.mark.ib_integration (skip by default)
+- Document setup requirements for integration tests
+
+**Key Test Scenarios:**
+- Connection to TWS succeeds
+- Order submission returns broker_order_id
+- Order status events update order state correctly
+- Order fills generate OrderFillEvent
+- Order rejections generate OrderRejectEvent with reason
+- Position query returns correct positions
+- Account info query returns cash and buying power
+- Market data subscription receives price updates
+- Reconnection on disconnect preserves state
+- Error handling for various IB error codes
+
+**Test Fixtures:**
+- Mock ib_async IB object for unit tests
+- IB paper trading credentials for integration tests (document in .env.example)
+- Sample contracts for various asset types
+- Sample orders with different types
+
+**Integration Test Setup (IB Paper Trading):**
+1. Install TWS or IB Gateway
+2. Configure for paper trading mode
+3. Enable API connections in TWS settings
+4. Set socket port: 7496 (TWS paper) or 4002 (Gateway paper)
+5. Add client ID to allowed list
+6. Run integration tests with: `pytest --run-ib-integration`
+
+## Change Log
+| Date | Version | Description | Author |
+|------|---------|-------------|--------|
+| 2025-10-02 | 1.0 | Initial story creation | Bob (Scrum Master) |
+
+## Dev Agent Record
+
+### Agent Model Used
+Not yet implemented
+
+### Debug Log References
+Not yet implemented
+
+### Completion Notes List
+Not yet implemented
+
+### File List
+Not yet implemented
+
+## QA Results
+Not yet implemented

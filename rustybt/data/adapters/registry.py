@@ -130,7 +130,7 @@ class AdapterRegistry:
                 rustybt.data.adapters.__path__
             ):
                 # Skip base and registry modules
-                if module_name in ("base", "registry"):
+                if module_name in ("base", "registry", "api_provider_base"):
                     continue
 
                 try:

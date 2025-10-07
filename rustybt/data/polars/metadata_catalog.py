@@ -1,5 +1,8 @@
 """SQLite metadata catalog for Parquet storage layer.
 
+DEPRECATED: This module is deprecated and will be removed in v2.0.
+Use rustybt.data.bundles.metadata.BundleMetadata instead.
+
 This module provides a dedicated metadata catalog for managing Parquet-stored
 OHLCV data. Unlike the general-purpose DataCatalog, this catalog is specifically
 designed for Parquet file metadata tracking.
@@ -19,6 +22,7 @@ Example:
 
 import hashlib
 import time
+import warnings
 from datetime import date, datetime
 from pathlib import Path
 from typing import List, Optional, Dict, Any
@@ -33,6 +37,10 @@ logger = structlog.get_logger(__name__)
 
 class ParquetMetadataCatalog:
     """Metadata catalog for Parquet storage layer.
+
+    .. deprecated:: 1.0
+        Use :class:`rustybt.data.bundles.metadata.BundleMetadata` instead.
+        ParquetMetadataCatalog will be removed in v2.0.
 
     Manages dataset, symbol, date range, and checksum metadata for
     Parquet-stored OHLCV data.
@@ -51,12 +59,23 @@ class ParquetMetadataCatalog:
     def __init__(self, db_path: str):
         """Initialize metadata catalog.
 
+        .. deprecated:: 1.0
+            Use :class:`rustybt.data.bundles.metadata.BundleMetadata` instead.
+            ParquetMetadataCatalog will be removed in v2.0.
+
         Args:
             db_path: Path to SQLite database file. Will be created if doesn't exist.
 
         Example:
             >>> catalog = ParquetMetadataCatalog("data/bundles/quandl/metadata.db")
         """
+        warnings.warn(
+            "ParquetMetadataCatalog is deprecated and will be removed in v2.0. "
+            "Use BundleMetadata from rustybt.data.bundles.metadata instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -552,6 +571,65 @@ class ParquetMetadataCatalog:
                 )
 
             return is_valid
+
+
+    def get_all_symbols(self) -> List[Dict[str, Any]]:
+        """Get all symbols across all datasets.
+
+        Returns:
+            List of symbol metadata dictionaries
+
+        Example:
+            >>> symbols = catalog.get_all_symbols()
+            >>> assert len(symbols) > 0
+        """
+        with Session(self.engine) as session:
+            stmt = sa.select(self.symbols)
+            results = session.execute(stmt).fetchall()
+
+            return [
+                {
+                    "symbol_id": row.symbol_id,
+                    "dataset_id": row.dataset_id,
+                    "symbol": row.symbol,
+                    "asset_type": row.asset_type,
+                    "exchange": row.exchange,
+                }
+                for row in results
+            ]
+
+    def get_cache_entries(self) -> List[Dict[str, Any]]:
+        """Get all cache entries.
+
+        Returns:
+            List of cache entry dictionaries
+
+        Example:
+            >>> entries = catalog.get_cache_entries()
+        """
+        with Session(self.engine) as session:
+            stmt = sa.select(self.cache_entries)
+            results = session.execute(stmt).fetchall()
+
+            return [
+                {
+                    "cache_key": row.cache_key,
+                    "dataset_id": row.dataset_id,
+                    "parquet_path": row.parquet_path,
+                    "checksum": row.checksum,
+                    "created_at": row.created_at,
+                    "last_accessed": row.last_accessed,
+                    "access_count": row.access_count,
+                    "size_bytes": row.size_bytes,
+                }
+                for row in results
+            ]
+
+    def count_symbols(self) -> int:
+        """Count total symbols in catalog."""
+        with Session(self.engine) as session:
+            stmt = sa.select(sa.func.count()).select_from(self.symbols)
+            return session.execute(stmt).scalar() or 0
 
 
 def calculate_file_checksum(file_path: Path) -> str:

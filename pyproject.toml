@@ -81,6 +81,7 @@ dependencies = [
     'hyperliquid-python-sdk >=0.1.0',
     'cryptography >=41.0.0',
     'eth-account >=0.10.0',
+    "rich>=14.1.0",
 ]
 
 [project.urls]

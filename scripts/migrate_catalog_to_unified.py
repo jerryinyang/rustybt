@@ -294,11 +294,12 @@ def migrate_datacatalog(txn: MigrationTransaction, stats: MigrationStats):
     for bundle in bundles:
         try:
             # Migrate provenance
+            now = int(time.time())
             txn.execute(
                 """
                 INSERT OR REPLACE INTO bundle_metadata
-                (bundle_name, source_type, source_url, api_version, fetch_timestamp)
-                VALUES (?, ?, ?, ?, ?)
+                (bundle_name, source_type, source_url, api_version, fetch_timestamp, checksum, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     bundle["bundle_name"],
@@ -306,6 +307,9 @@ def migrate_datacatalog(txn: MigrationTransaction, stats: MigrationStats):
                     bundle.get("source_url"),
                     bundle.get("api_version"),
                     bundle.get("fetch_timestamp"),
+                    bundle.get("checksum", "migrated"),  # Default checksum for migrated data
+                    now,
+                    now,
                 ),
             )
 

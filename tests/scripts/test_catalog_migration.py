@@ -55,9 +55,9 @@ class TestMigrationTransaction:
 
             with MigrationTransaction(db_path) as txn:
                 txn.execute("""
-                    INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp)
-                    VALUES (?, ?, ?, ?)
-                """, ("test-bundle", "yfinance", "abc123", int(time.time())))
+                    INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, ("test-bundle", "yfinance", "abc123", int(time.time()), int(time.time()), int(time.time())))
 
             # Verify committed
             result = BundleMetadata.get("test-bundle")
@@ -75,9 +75,9 @@ class TestMigrationTransaction:
             try:
                 with MigrationTransaction(db_path) as txn:
                     txn.execute("""
-                        INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp)
-                        VALUES (?, ?, ?, ?)
-                    """, ("test-bundle", "yfinance", "abc123", int(time.time())))
+                        INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """, ("test-bundle", "yfinance", "abc123", int(time.time()), int(time.time()), int(time.time())))
 
                     # Simulate error
                     raise RuntimeError("Simulated error")
@@ -98,19 +98,20 @@ class TestMigrationTransaction:
 
             with MigrationTransaction(db_path) as txn:
                 # Insert first bundle
+                now = int(time.time())
                 txn.execute("""
-                    INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp)
-                    VALUES (?, ?, ?, ?)
-                """, ("bundle-1", "yfinance", "abc", int(time.time())))
+                    INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, ("bundle-1", "yfinance", "abc", now, now, now))
 
                 # Create savepoint
                 txn.savepoint("before_bundle2")
 
                 # Insert second bundle
                 txn.execute("""
-                    INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp)
-                    VALUES (?, ?, ?, ?)
-                """, ("bundle-2", "ccxt", "def", int(time.time())))
+                    INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, ("bundle-2", "ccxt", "def", now, now, now))
 
                 # Rollback to savepoint (removes bundle-2)
                 txn.rollback_to_savepoint("before_bundle2")
@@ -402,10 +403,11 @@ class TestZeroDataLoss:
             try:
                 with MigrationTransaction(db_path) as txn:
                     # Insert some data
+                    now = int(time.time())
                     txn.execute("""
-                        INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp)
-                        VALUES (?, ?, ?, ?)
-                    """, ("bundle-1", "yfinance", "abc", int(time.time())))
+                        INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """, ("bundle-1", "yfinance", "abc", now, now, now))
 
                     # Simulate error
                     raise RuntimeError("Migration error")

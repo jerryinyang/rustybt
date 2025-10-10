@@ -3,7 +3,9 @@
 Alpaca Market Data API v2 documentation: https://alpaca.markets/docs/api-references/market-data-api/
 """
 
+import asyncio
 from decimal import Decimal
+from pathlib import Path
 from typing import Dict
 
 import pandas as pd
@@ -16,11 +18,19 @@ from rustybt.data.adapters.api_provider_base import (
     SymbolNotFoundError,
 )
 from rustybt.data.adapters.base import validate_ohlcv_relationships
+from rustybt.data.adapters.utils import (
+    build_symbol_sid_map,
+    normalize_symbols,
+    prepare_ohlcv_frame,
+)
+from rustybt.data.polars.parquet_writer import ParquetWriter
+from rustybt.data.sources.base import DataSource, DataSourceMetadata
+from rustybt.utils.paths import data_path, ensure_directory
 
 logger = structlog.get_logger()
 
 
-class AlpacaAdapter(BaseAPIProviderAdapter):
+class AlpacaAdapter(BaseAPIProviderAdapter, DataSource):
     """Alpaca Market Data API v2 adapter.
 
     Supports:
@@ -30,6 +40,9 @@ class AlpacaAdapter(BaseAPIProviderAdapter):
 
     Rate limits:
     - Data API: 200 requests/minute (both paper and live)
+
+    Implements both BaseAPIProviderAdapter and DataSource interfaces for backwards
+    compatibility and unified data source access.
 
     Attributes:
         is_paper: Whether to use paper trading endpoint (default: True)
@@ -247,3 +260,153 @@ class AlpacaAdapter(BaseAPIProviderAdapter):
         df = df.sort("timestamp")
 
         return df.select(list(self.STANDARD_SCHEMA.keys()))
+
+    # ========================================================================
+    # DataSource Interface Implementation
+    # ========================================================================
+
+    def ingest_to_bundle(
+        self,
+        bundle_name: str,
+        symbols: list[str],
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        frequency: str,
+        **kwargs,
+    ) -> None:
+        """Ingest Alpaca data into bundle (Parquet + metadata).
+
+        Args:
+            bundle_name: Name of bundle to create/update
+            symbols: List of symbols to ingest
+            start: Start timestamp for data range
+            end: End timestamp for data range
+            frequency: Time resolution (e.g., "1d", "1h", "1m")
+            **kwargs: Additional parameters (ignored for Alpaca)
+
+        Raises:
+            NetworkError: If data fetch fails
+            ValidationError: If data validation fails
+            IOError: If bundle write fails
+        """
+        logger.info(
+            "alpaca_ingest_start",
+            bundle=bundle_name,
+            symbols=symbols[:5] if len(symbols) > 5 else symbols,
+            symbol_count=len(symbols),
+            start=start,
+            end=end,
+            frequency=frequency,
+            is_paper=self.is_paper,
+        )
+
+        normalized_symbols = normalize_symbols(symbols)
+
+        all_data = []
+        for symbol in normalized_symbols:
+            df_symbol = asyncio.run(self.fetch_ohlcv(symbol, start, end, frequency))
+            if not df_symbol.is_empty():
+                all_data.append(df_symbol)
+
+        if not all_data:
+            logger.warning(
+                "alpaca_no_data",
+                bundle=bundle_name,
+                symbols=normalized_symbols,
+                frequency=frequency,
+            )
+            return
+
+        combined_df = pl.concat(all_data)
+
+        symbol_map = build_symbol_sid_map(normalized_symbols)
+        df_prepared, frame_type = prepare_ohlcv_frame(combined_df, symbol_map, frequency)
+
+        bundle_dir = Path(data_path(["bundles", bundle_name]))
+        ensure_directory(str(bundle_dir))
+
+        writer = ParquetWriter(str(bundle_dir))
+
+        metadata = self.get_metadata()
+        source_metadata = {
+            "source_type": metadata.source_type,
+            "source_url": metadata.source_url,
+            "api_version": metadata.api_version,
+            "symbols": list(symbol_map.keys()),
+            "timezone": kwargs.get("timezone", "UTC"),
+        }
+
+        if frame_type == "daily":
+            writer.write_daily_bars(
+                df_prepared,
+                bundle_name=bundle_name,
+                source_metadata=source_metadata,
+            )
+        else:
+            writer.write_minute_bars(df_prepared)
+
+        logger.info(
+            "alpaca_ingest_complete",
+            bundle=bundle_name,
+            rows=len(df_prepared),
+            frame_type=frame_type,
+            bundle_path=str(bundle_dir),
+        )
+
+    def get_metadata(self) -> DataSourceMetadata:
+        """Get Alpaca source metadata.
+
+        Returns:
+            DataSourceMetadata with Alpaca API information
+        """
+        return DataSourceMetadata(
+            source_type="alpaca",
+            source_url="https://data.alpaca.markets",
+            api_version="v2",
+            supports_live=True,
+            rate_limit=200,  # 200 requests per minute
+            auth_required=True,
+            data_delay=0,  # Real-time data
+            supported_frequencies=list(self.TIMEFRAME_MAP.keys()),
+            additional_info={
+                "is_paper": self.is_paper,
+                "feed": "iex" if self.is_paper else "sip",
+                "websocket_available": True,
+            },
+        )
+
+    def supports_live(self) -> bool:
+        """Alpaca supports live streaming via WebSocket.
+
+        Returns:
+            True (real-time WebSocket streaming available)
+        """
+        return True
+
+    # Backwards compatibility alias
+    async def fetch(
+        self,
+        symbols: list[str],
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        frequency: str,
+    ) -> pl.DataFrame:
+        """Legacy method name for backwards compatibility.
+
+        Delegates to fetch_ohlcv() for each symbol and combines results.
+
+        Args:
+            symbols: List of symbols to fetch
+            start: Start timestamp
+            end: End timestamp
+            frequency: Time resolution
+
+        Returns:
+            Polars DataFrame with OHLCV data
+        """
+        all_data = []
+        for symbol in symbols:
+            df = await self.fetch_ohlcv(symbol, start, end, frequency)
+            all_data.append(df)
+
+        return pl.concat(all_data) if all_data else pl.DataFrame()

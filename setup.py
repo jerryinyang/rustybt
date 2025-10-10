@@ -15,8 +15,13 @@
 # limitations under the License.
 
 import numpy
+from pathlib import Path
 from Cython.Build import cythonize
 from setuptools import Extension, setup  # noqa: E402
+from setuptools_rust import Binding, RustExtension
+
+
+ROOT_DIR = Path(__file__).parent.resolve()
 
 
 def window_specialization(typename):
@@ -106,5 +111,14 @@ ext_modules = [
 setup(
     use_scm_version=True,
     ext_modules=cythonize(ext_modules, **ext_options),
+    rust_extensions=[
+        RustExtension(
+            "rustybt._rustybt",
+            path=str(ROOT_DIR / "rust" / "crates" / "rustybt" / "Cargo.toml"),
+            binding=Binding.PyO3,
+            debug=False,
+        )
+    ],
     include_dirs=[numpy.get_include()],
+    zip_safe=False,
 )

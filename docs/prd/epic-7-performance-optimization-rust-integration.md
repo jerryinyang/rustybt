@@ -2,9 +2,103 @@
 
 **Expanded Goal**: Profile Python implementation to identify bottlenecks consuming >5% of backtest time (not limited to Decimal arithmetic - includes loops, subprocesses, data processing, indicator calculations), then reimplement hot paths in Rust for performance. Target <30% overhead vs. float baseline (subject to profiling validation), validated through comprehensive benchmarking suite integrated into CI/CD. Testing, benchmarking, and documentation integrated throughout.
 
+**⚠️ CRITICAL DEPENDENCY**: **Epic X1: Unified Data Architecture) must complete before Epic 7 can begin**.
+- Epic 7 requires profiling bundles with realistic backtest data
+- Current adapter infrastructure cannot create bundles (Epic X1 Story X1.1 resolves this)
+- See [epic-X1-unified-data-architecture.md](epic-X1-unified-data-architecture.md) for details
+
+**Epic Sequence**: Epic 8 → Epic 7
+
+---
+
+## Epic 8 Dependency (BLOCKER)
+
+**Why Epic 7 is Blocked**:
+- Story 7.1 (Profiling) requires representative backtest datasets:
+  - Daily scenario: 50 stocks, 2 years
+  - Hourly scenario: 20 crypto, 6 months
+  - Minute scenario: 10 crypto, 1 month
+- Current state: Adapters (YFinance, CCXT) fetch data but **cannot create bundles**
+- No bundles = No profiling = Epic 7 cannot proceed
+
+**Epic 8 Resolves**:
+- Story X1.1 (1-2 days): Adapter-Bundle Bridge
+  - Creates 3 profiling bundles using existing adapters
+  - Unblocks Story 7.1 immediately
+- Stories 8.2-8.5 (3 weeks): Full unified architecture
+  - Optional for Epic 7, but improves long-term data management
+
+**Recommended Approach**:
+1. Complete Epic X1 Story X1.1 (Adapter-Bundle Bridge) - **1-2 days**
+2. Begin Epic 7 (Profiling) - unblocked
+3. Complete Epic X1 Stories X1.2-X1.5 in parallel or after Epic 7
+
+---
+
+## ~~Story 7.0: Unified Data Management Architecture~~
+
+**Moved to Epic X1**. See [epic-X1-unified-data-architecture.md](epic-X1-unified-data-architecture.md).
+
+Original Story 7.0 content has been restructured into Epic X1 Stories:
+- Story X1.1: Adapter-Bundle Bridge (unblocks Epic 7)
+- Story X1.2: Unified DataSource Abstraction
+- Story X1.3: Smart Caching Layer
+- Story X1.4: Unified Metadata Management
+- Story X1.5: Integration and Documentation
+
+---
+
+**As a** developer,
+**I want** unified data management architecture integrating Adapters, Bundles, and Catalog systems,
+**so that** data sourcing, storage, and retrieval is fluid, scalable, and optimized for both backtesting and live trading.
+
+### Acceptance Criteria
+
+**Phase 1: Adapter-Bundle Bridge (Story 7.1 Unblocking - 1-2 days)**
+1. Create adapter bridge module with helper functions for bundle creation from adapters
+2. Implement `yfinance_profiling_bundle()` using YFinanceAdapter (50 stocks, 2 years, daily)
+3. Implement `ccxt_hourly_profiling_bundle()` using CCXTAdapter (20 crypto, 6 months, hourly)
+4. Implement `ccxt_minute_profiling_bundle()` using CCXTAdapter (10 crypto, 1 month, minute)
+5. All profiling bundles automatically track metadata via `track_api_bundle_metadata()`
+6. CLI command `rustybt ingest yfinance-profiling` creates profiling bundle
+7. Integration tests validate end-to-end adapter → bundle → DataPortal flow
+8. Documentation explains bridge pattern and usage
+
+**Phase 2: Unified DataSource Abstraction (1 week)**
+9. Create `DataSource` ABC with interface: `fetch()`, `ingest_to_bundle()`, `get_metadata()`, `supports_live()`
+10. Refactor all 6 adapters to implement `DataSource` (backwards compatible)
+11. Create `DataSourceRegistry` for dynamic source discovery
+12. Unified CLI: `rustybt ingest <source> --bundle <name> [options]`
+13. Single code path for all bundle creation (eliminates duplication)
+
+**Phase 3: Smart Caching Layer (1 week)**
+14. Create `CachedDataSource` wrapper with automatic cache lookup
+15. Cache hit: read from Parquet (fast path), cache miss: fetch + write + catalog update
+16. Cache freshness policies: daily (market close), hourly (1h), minute (5m)
+17. LRU cache eviction with configurable max size (default 10GB)
+18. Async cache warming pre-fetches next day's data
+19. Cache statistics tracking (hit rate, latency)
+20. Cache invalidation on data quality failure
+
+**Phase 4: Unified Metadata Management (1 week)**
+21. Merge `DataCatalog` and `ParquetMetadataCatalog` into `UnifiedCatalog`
+22. Schema includes: datasets, symbols, date ranges, provenance, quality metrics, file metadata
+23. Migration script converts old catalogs to unified catalog
+24. CLI commands: `rustybt catalog list|info|validate`
+25. Backwards compatibility with deprecation warnings
+
+**Phase 5: Integration and Documentation (3 days)**
+26. Update `PolarsDataPortal` to use `CachedDataSource`
+27. Update `TradingAlgorithm` to accept `data_source` parameter
+28. Live trading uses adapters directly, backtest uses cached sources
+29. Architecture docs, user guides, migration guides, API reference
+30. Example scripts and deprecation plan
+
 ---
 
 ## Story 7.1: Profile Python Implementation to Identify Bottlenecks
+
+**Dependencies**: Story 7.0 Phase 1 must complete first (profiling bundles required)
 
 **As a** developer,
 **I want** comprehensive profiling of Python implementation,

@@ -1,0 +1,96 @@
+schema: 1
+story: "8.4"
+story_title: "Unified Metadata Management"
+gate: PASS
+status_reason: "All 20 acceptance criteria met with comprehensive test coverage (54/54 tests passing). Production-ready implementation of unified BundleMetadata system with migration safety, auto-population, and backwards compatibility."
+reviewer: "Quinn (Test Architect)"
+updated: "2025-10-08T12:00:00Z"
+
+waiver:
+  active: false
+
+top_issues: []
+
+quality_score: 100
+
+evidence:
+  tests_reviewed: 54
+  risks_identified: 0
+  trace:
+    ac_covered:
+      - "1.1"
+      - "1.2"
+      - "1.3"
+      - "1.4"
+      - "2.1"
+      - "2.2"
+      - "2.3"
+      - "2.4"
+      - "2.5"
+      - "2.6"
+      - "3.1"
+      - "3.2"
+      - "3.3"
+      - "4.1"
+      - "4.2"
+      - "4.3"
+      - "5.1"
+      - "5.2"
+      - "5.3"
+      - "5.4"
+    ac_gaps: []
+
+test_coverage:
+  phase_1_schema:
+    tests: 9
+    status: PASS
+    duration_seconds: 0.28
+    file: tests/data/bundles/test_bundle_metadata.py
+  phase_2_migration:
+    tests: 15
+    status: PASS
+    duration_seconds: 0.31
+    file: tests/scripts/test_catalog_migration.py
+  phase_3_auto_population:
+    tests: 9
+    status: PASS
+    duration_seconds: 0.52
+    file: tests/data/polars/test_parquet_auto_metadata.py
+  phase_4_deprecation:
+    tests: 15
+    status: PASS
+    duration_seconds: 0.31
+    file: tests/data/catalog/test_deprecated_apis.py
+  phase_5_cli:
+    tests: 6
+    status: PASS
+    duration_seconds: 0.22
+    file: tests/scripts/test_bundle_cli.py
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: "SQLAlchemy parameterized queries, SHA256 checksums, no credentials exposed, no injection vulnerabilities"
+  performance:
+    status: PASS
+    notes: "Proper indexes on bundle_name/fetch_timestamp/validation_timestamp, batch transactions, all test suites <0.6s"
+  reliability:
+    status: PASS
+    notes: "Transactional migration with rollback safety, zero data loss verification, comprehensive error handling"
+  maintainability:
+    status: PASS
+    notes: "Excellent code quality, comprehensive documentation, clear deprecation path (v1.x→v2.0), type hints throughout"
+
+implementation_highlights:
+  - "Unified BundleMetadata schema merges DataCatalog + ParquetMetadataCatalog functionality"
+  - "Transactional migration with dry-run, backup/rollback, and SHA256 verification"
+  - "Auto-population during ParquetWriter operations stores provenance, quality, and symbols"
+  - "Deprecated catalogs emit warnings and forward to unified system (v2.0 removal planned)"
+  - "CLI bundle commands (list/info/validate/migrate) with Rich formatting"
+
+recommendations:
+  immediate: []
+  future:
+    - action: "Consider extending auto-population to minute-bar writes for parity with daily ingestion"
+      refs: ["rustybt/data/polars/parquet_writer.py"]
+      suggested_owner: dev

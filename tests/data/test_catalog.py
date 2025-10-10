@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 import sqlalchemy as sa
 
-from rustybt.assets.asset_db_schema import bundle_metadata, data_quality_metrics, metadata
+from rustybt.assets.asset_db_schema import ASSET_DB_VERSION, metadata
 from rustybt.data.catalog import DataCatalog
 
 
@@ -42,7 +42,7 @@ class TestDataCatalog:
         """Test catalog initialization with default path."""
         catalog = DataCatalog()
         assert catalog.db_path is not None
-        assert "assets-8.db" in catalog.db_path
+        assert f"assets-{ASSET_DB_VERSION}.db" in catalog.db_path
 
 
 class TestMetadataStorage:
@@ -68,6 +68,8 @@ class TestMetadataStorage:
         assert retrieved["bundle_name"] == "test_bundle"
         assert retrieved["source_type"] == "csv"
         assert retrieved["checksum"] == "a" * 64
+        assert retrieved["file_checksum"] == "a" * 64
+        assert retrieved["timezone"] == "UTC"
 
     def test_store_metadata_missing_required_fields(self, temp_catalog_db):
         """Test error handling for missing required fields."""
@@ -75,12 +77,27 @@ class TestMetadataStorage:
 
         incomplete_metadata = {
             "bundle_name": "test_bundle",
-            "source_type": "csv",
-            # Missing checksum and fetch_timestamp
+            # Missing source_type
         }
 
         with pytest.raises(ValueError, match="Missing required metadata fields"):
             catalog.store_metadata(incomplete_metadata)
+
+    def test_store_metadata_without_optional_fields(self, temp_catalog_db):
+        """Ensure optional provenance fields are not required."""
+        catalog = DataCatalog(db_path=temp_catalog_db)
+
+        metadata_dict = {
+            "bundle_name": "minimal_bundle",
+            "source_type": "csv",
+        }
+
+        catalog.store_metadata(metadata_dict)
+
+        retrieved = catalog.get_bundle_metadata("minimal_bundle")
+        assert retrieved is not None
+        assert retrieved["source_type"] == "csv"
+        assert retrieved["fetch_timestamp"] is not None
 
     def test_store_metadata_update_existing(self, temp_catalog_db):
         """Test updating existing bundle metadata."""
@@ -103,13 +120,16 @@ class TestMetadataStorage:
             "source_url": "/data/test_updated.csv",
             "checksum": "b" * 64,
             "fetch_timestamp": int(time.time()),
+            "file_size_bytes": 1024,
         }
         catalog.store_metadata(updated_metadata)
 
         # Verify update
         retrieved = catalog.get_bundle_metadata("test_bundle")
         assert retrieved["checksum"] == "b" * 64
+        assert retrieved["file_checksum"] == "b" * 64
         assert retrieved["source_url"] == "/data/test_updated.csv"
+        assert retrieved["file_size_bytes"] == 1024
 
     def test_get_bundle_metadata_not_found(self, temp_catalog_db):
         """Test retrieving metadata for non-existent bundle."""
@@ -164,7 +184,7 @@ class TestQualityMetricsStorage:
             "start_date": int(pd.Timestamp("2023-01-01").timestamp()),
             "end_date": int(pd.Timestamp("2023-12-31").timestamp()),
             "missing_days_count": 5,
-            "missing_days_list": '["2023-01-05", "2023-01-10"]',
+            "missing_days_list": ["2023-01-05", "2023-01-10"],
             "outlier_count": 3,
             "ohlcv_violations": 0,
             "validation_timestamp": int(time.time()),
@@ -178,6 +198,7 @@ class TestQualityMetricsStorage:
         assert retrieved is not None
         assert retrieved["row_count"] == 1000
         assert retrieved["missing_days_count"] == 5
+        assert retrieved["missing_days_list"] == ["2023-01-05", "2023-01-10"]
         assert retrieved["validation_passed"] is True
 
     def test_store_quality_metrics_missing_required_fields(self, temp_catalog_db):
@@ -260,6 +281,7 @@ class TestListBundles:
 
         bundles = catalog.list_bundles()
         assert len(bundles) == 3
+        assert all("row_count" in bundle for bundle in bundles)
 
     def test_list_bundles_filter_by_source_type(self, temp_catalog_db):
         """Test filtering bundles by source type."""

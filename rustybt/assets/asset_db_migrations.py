@@ -579,3 +579,124 @@ def _downgrade_v8(op):
     """
     op.drop_table("data_quality_metrics")
     op.drop_table("bundle_metadata")
+
+
+@downgrades(9)
+def _downgrade_v9(op):
+    """Downgrade assets db by restoring legacy bundle metadata schema."""
+
+    # Backup unified quality fields prior to altering table structure
+    op.execute(
+        """
+        CREATE TABLE _bundle_quality_backup AS
+        SELECT
+            bundle_name,
+            row_count,
+            start_date,
+            end_date,
+            missing_days_count,
+            missing_days_list,
+            outlier_count,
+            ohlcv_violations,
+            validation_timestamp,
+            validation_passed
+        FROM bundle_metadata
+        """
+    )
+
+    # Drop unified validation index added in v9
+    op.drop_index("idx_bundle_metadata_validation", table_name="bundle_metadata")
+
+    # Legacy schema for bundle_metadata (version 8)
+    legacy_bundle_metadata = sa.Table(
+        "bundle_metadata_legacy",
+        sa.MetaData(),
+        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+        sa.Column("bundle_name", sa.Text, nullable=False, unique=True),
+        sa.Column("source_type", sa.Text, nullable=False),
+        sa.Column("source_url", sa.Text),
+        sa.Column("api_version", sa.Text),
+        sa.Column("fetch_timestamp", sa.Integer, nullable=False),
+        sa.Column("data_version", sa.Text),
+        sa.Column("checksum", sa.Text, nullable=False),
+        sa.Column("timezone", sa.Text, nullable=False, server_default="UTC"),
+        sa.Column("created_at", sa.Integer, nullable=False),
+        sa.Column("updated_at", sa.Integer, nullable=False),
+    )
+
+    selection = (
+        "id, bundle_name, source_type, source_url, api_version, "
+        "fetch_timestamp, data_version, "
+        "COALESCE(checksum, file_checksum, 'legacy-missing-checksum') AS checksum, "
+        "timezone, created_at, updated_at"
+    )
+
+    alter_columns(
+        op,
+        "bundle_metadata",
+        *legacy_bundle_metadata.c,
+        selection_string=selection,
+    )
+
+    # Recreate legacy indexes
+    op.create_index("idx_bundle_metadata_name", "bundle_metadata", ["bundle_name"], unique=False)
+    op.create_index("idx_bundle_metadata_fetch", "bundle_metadata", ["fetch_timestamp"], unique=False)
+
+    # Restore legacy data_quality_metrics table
+    op.create_table(
+        "data_quality_metrics",
+        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
+        sa.Column(
+            "bundle_name",
+            sa.Text,
+            sa.ForeignKey("bundle_metadata.bundle_name"),
+            nullable=False,
+        ),
+        sa.Column("row_count", sa.Integer, nullable=False),
+        sa.Column("start_date", sa.Integer, nullable=False),
+        sa.Column("end_date", sa.Integer, nullable=False),
+        sa.Column("missing_days_count", sa.Integer, nullable=False, server_default="0"),
+        sa.Column("missing_days_list", sa.Text),
+        sa.Column("outlier_count", sa.Integer, nullable=False, server_default="0"),
+        sa.Column("ohlcv_violations", sa.Integer, nullable=False, server_default="0"),
+        sa.Column("validation_timestamp", sa.Integer, nullable=False),
+        sa.Column("validation_passed", sa.Boolean, nullable=False, server_default=sa.sql.expression.true()),
+    )
+
+    # Populate legacy quality metrics table from backup (skip rows without row_count)
+    op.execute(
+        """
+        INSERT INTO data_quality_metrics (
+            bundle_name,
+            row_count,
+            start_date,
+            end_date,
+            missing_days_count,
+            missing_days_list,
+            outlier_count,
+            ohlcv_violations,
+            validation_timestamp,
+            validation_passed
+        )
+        SELECT
+            bundle_name,
+            row_count,
+            start_date,
+            end_date,
+            COALESCE(missing_days_count, 0),
+            missing_days_list,
+            COALESCE(outlier_count, 0),
+            COALESCE(ohlcv_violations, 0),
+            validation_timestamp,
+            COALESCE(validation_passed, 1)
+        FROM _bundle_quality_backup
+        WHERE row_count IS NOT NULL AND validation_timestamp IS NOT NULL
+        """
+    )
+
+    # Drop backup table
+    op.execute("DROP TABLE _bundle_quality_backup")
+
+    # Recreate legacy indexes for quality metrics
+    op.create_index("idx_quality_metrics_bundle", "data_quality_metrics", ["bundle_name"], unique=False)
+    op.create_index("idx_quality_metrics_validation", "data_quality_metrics", ["validation_timestamp"], unique=False)

@@ -1,0 +1,348 @@
+# DataSource API Reference
+
+## Overview
+
+The `DataSource` interface provides a unified abstraction for fetching market data from various sources (brokers, data vendors, files). All adapters implement this interface for consistent usage.
+
+## Base Interface
+
+### `DataSource` (Abstract Base Class)
+
+```python
+from rustybt.data.sources.base import DataSource, DataSourceMetadata
+import pandas as pd
+import polars as pl
+
+class DataSource(ABC):
+    """Abstract base class for data sources."""
+    
+    @abstractmethod
+    async def fetch(
+        self,
+        symbols: list[str],
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        frequency: str
+    ) -> pl.DataFrame:
+        """Fetch OHLCV data for symbols.
+        
+        Args:
+            symbols: List of ticker symbols
+            start: Start timestamp (inclusive)
+            end: End timestamp (inclusive)
+            frequency: Data frequency ("daily", "hourly", "minute")
+        
+        Returns:
+            Polars DataFrame with columns:
+            - symbol: str
+            - date: date (for daily) or timestamp: datetime (for intraday)
+            - open: Decimal
+            - high: Decimal
+            - low: Decimal
+            - close: Decimal
+            - volume: Decimal
+        """
+        pass
+    
+    @abstractmethod
+    def ingest_to_bundle(
+        self,
+        bundle_name: str,
+        symbols: list[str],
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        frequency: str,
+        **kwargs
+    ) -> Path:
+        """Ingest data and create bundle.
+        
+        Args:
+            bundle_name: Name for the bundle
+            symbols: Symbols to ingest
+            start: Start date
+            end: End date
+            frequency: Data frequency
+            **kwargs: Adapter-specific options
+        
+        Returns:
+            Path to created bundle directory
+        """
+        pass
+    
+    @abstractmethod
+    def get_metadata(self) -> DataSourceMetadata:
+        """Get data source metadata."""
+        pass
+    
+    @abstractmethod
+    def supports_live(self) -> bool:
+        """Whether this source supports live streaming."""
+        pass
+```
+
+### `DataSourceMetadata`
+
+```python
+@dataclass
+class DataSourceMetadata:
+    """Metadata about a data source."""
+    source_type: str  # "yfinance", "alpaca", "ccxt", etc.
+    source_url: str  # API endpoint
+    api_version: str  # API version
+    supports_live: bool  # Real-time streaming support
+    supported_frequencies: list[str]  # ["daily", "hourly", "minute"]
+    rate_limit: Optional[int] = None  # Requests per minute
+    requires_auth: bool = False
+```
+
+## Built-in Adapters
+
+### YFinanceDataSource
+
+Free historical data from Yahoo Finance (15-minute delayed).
+
+```python
+from rustybt.data.sources import YFinanceDataSource
+
+source = YFinanceDataSource()
+
+# Fetch data
+df = await source.fetch(
+    symbols=["AAPL", "MSFT"],
+    start=pd.Timestamp("2023-01-01"),
+    end=pd.Timestamp("2023-12-31"),
+    frequency="daily"
+)
+
+# Ingest to bundle
+bundle_path = source.ingest_to_bundle(
+    bundle_name="stocks-2023",
+    symbols=["AAPL", "MSFT", "GOOGL"],
+    start=pd.Timestamp("2023-01-01"),
+    end=pd.Timestamp("2023-12-31"),
+    frequency="daily"
+)
+```
+
+**Limitations**:
+- 15-minute delayed quotes
+- Rate limits: ~2000 requests/hour
+- No real-time streaming
+- Historical data only
+
+### AlpacaDataSource
+
+Real-time and historical stock data via Alpaca Markets API.
+
+```python
+from rustybt.data.sources import AlpacaDataSource
+
+source = AlpacaDataSource(
+    api_key="YOUR_API_KEY",
+    api_secret="YOUR_API_SECRET",
+    paper_trading=True  # Use paper trading endpoint
+)
+
+# Real-time data
+df = await source.fetch(
+    symbols=["AAPL"],
+    start=pd.Timestamp.now() - pd.Timedelta(hours=1),
+    end=pd.Timestamp.now(),
+    frequency="minute"
+)
+
+# Supports live streaming
+assert source.supports_live() == True
+```
+
+**Features**:
+- Real-time quotes (IEX feed)
+- WebSocket streaming
+- Paper trading mode
+- Free tier available
+
+### CCXTDataSource
+
+Cryptocurrency data via CCXT library (100+ exchanges).
+
+```python
+from rustybt.data.sources import CCXTDataSource
+
+source = CCXTDataSource(
+    exchange="binance",
+    api_key="YOUR_API_KEY",  # Optional
+    api_secret="YOUR_API_SECRET"  # Optional
+)
+
+# Fetch crypto data
+df = await source.fetch(
+    symbols=["BTC/USDT", "ETH/USDT"],
+    start=pd.Timestamp("2024-01-01"),
+    end=pd.Timestamp("2024-12-31"),
+    frequency="hourly"
+)
+```
+
+**Supported Exchanges**: binance, coinbase, kraken, bybit, okx, and 100+ more.
+
+### PolygonDataSource
+
+High-quality financial data from Polygon.io.
+
+```python
+from rustybt.data.sources import PolygonDataSource
+
+source = PolygonDataSource(
+    api_key="YOUR_API_KEY"
+)
+
+# Intraday data
+df = await source.fetch(
+    symbols=["AAPL"],
+    start=pd.Timestamp("2024-01-01"),
+    end=pd.Timestamp("2024-01-31"),
+    frequency="minute"
+)
+```
+
+**Features**:
+- Real-time and historical
+- Stocks, options, forex, crypto
+- Tick-level data available
+- Premium tiers for more data
+
+### CSVDataSource
+
+Load data from CSV files.
+
+```python
+from rustybt.data.sources import CSVDataSource
+
+source = CSVDataSource(
+    data_dir="/path/to/csv/files",
+    filename_pattern="{symbol}_{frequency}.csv"
+)
+
+# Files should be named: AAPL_daily.csv, MSFT_daily.csv, etc.
+df = await source.fetch(
+    symbols=["AAPL", "MSFT"],
+    start=pd.Timestamp("2023-01-01"),
+    end=pd.Timestamp("2023-12-31"),
+    frequency="daily"
+)
+```
+
+**CSV Format**:
+```csv
+date,open,high,low,close,volume
+2023-01-01,100.0,105.0,99.0,103.0,1000000
+2023-01-02,103.0,106.0,102.0,105.0,1200000
+```
+
+## Registry Pattern
+
+### DataSourceRegistry
+
+Centralized registry for managing data sources.
+
+```python
+from rustybt.data.sources import DataSourceRegistry
+
+# Register custom source
+DataSourceRegistry.register("my_source", MyCustomDataSource)
+
+# Get source by name
+source = DataSourceRegistry.get_source("yfinance")
+
+# Get source with config
+source = DataSourceRegistry.get_source(
+    "alpaca",
+    api_key="...",
+    api_secret="..."
+)
+
+# List available sources
+sources = DataSourceRegistry.list_sources()
+print(sources)  # ["yfinance", "alpaca", "ccxt", "polygon", "csv"]
+```
+
+## Creating Custom Adapters
+
+### Example: Custom REST API Adapter
+
+```python
+from rustybt.data.sources.base import DataSource, DataSourceMetadata
+from decimal import Decimal
+import httpx
+import polars as pl
+
+class MyCustomDataSource(DataSource):
+    """Custom data source adapter."""
+    
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.base_url = "https://api.example.com"
+    
+    async def fetch(
+        self,
+        symbols: list[str],
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        frequency: str
+    ) -> pl.DataFrame:
+        """Fetch data from custom API."""
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.base_url}/ohlcv",
+                params={
+                    "symbols": ",".join(symbols),
+                    "start": start.isoformat(),
+                    "end": end.isoformat(),
+                    "frequency": frequency
+                },
+                headers={"X-API-Key": self.api_key}
+            )
+            
+            data = response.json()
+            
+            # Convert to Polars DataFrame
+            return pl.DataFrame({
+                "symbol": data["symbols"],
+                "date": pl.Series("date", data["dates"], dtype=pl.Date),
+                "open": pl.Series("open", [Decimal(str(x)) for x in data["open"]], dtype=pl.Decimal(18, 8)),
+                "high": pl.Series("high", [Decimal(str(x)) for x in data["high"]], dtype=pl.Decimal(18, 8)),
+                "low": pl.Series("low", [Decimal(str(x)) for x in data["low"]], dtype=pl.Decimal(18, 8)),
+                "close": pl.Series("close", [Decimal(str(x)) for x in data["close"]], dtype=pl.Decimal(18, 8)),
+                "volume": pl.Series("volume", [Decimal(str(x)) for x in data["volume"]], dtype=pl.Decimal(18, 8)),
+            })
+    
+    def ingest_to_bundle(self, bundle_name: str, **kwargs) -> Path:
+        """Use default ingest implementation."""
+        from rustybt.data.bundles.adapter_bundles import ingest_from_datasource
+        return ingest_from_datasource(self, bundle_name, **kwargs)
+    
+    def get_metadata(self) -> DataSourceMetadata:
+        return DataSourceMetadata(
+            source_type="my_custom",
+            source_url=self.base_url,
+            api_version="v1",
+            supports_live=False,
+            supported_frequencies=["daily", "hourly"]
+        )
+    
+    def supports_live(self) -> bool:
+        return False
+
+# Register custom source
+DataSourceRegistry.register("my_custom", MyCustomDataSource)
+
+# Use it
+source = DataSourceRegistry.get_source("my_custom", api_key="...")
+```
+
+---
+
+**See Also**:
+- [Caching API Reference](caching-api.md)
+- [Data Ingestion Guide](../guides/data-ingestion.md)
+- [Live vs Backtest Data](../guides/live-vs-backtest-data.md)

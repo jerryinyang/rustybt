@@ -12,24 +12,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from collections import namedtuple, OrderedDict
+import logging
+from collections import OrderedDict, namedtuple
+from decimal import Decimal
 from functools import partial
 from math import isnan
 
-import logging
 import numpy as np
 import pandas as pd
 
+import rustybt.protocol as zp
 from rustybt.assets import Future
 from rustybt.finance.transaction import Transaction
-import rustybt.protocol as zp
 from rustybt.utils.sentinel import sentinel
-from .position import Position
+
 from ._finance_ext import (
     PositionStats,
     calculate_position_tracker_stats,
     update_position_last_sale_prices,
 )
+from .position import Position
 
 log = logging.getLogger("Performance")
 
@@ -388,7 +390,17 @@ class Ledger:
     def todays_returns(self):
         # compute today's returns in returns space instead of portfolio-value
         # space to work even when we have capital changes
-        return (self.portfolio.returns + 1) / (self._previous_total_returns + 1) - 1
+        returns = self.portfolio.returns
+        prev_returns = self._previous_total_returns
+        
+        # Handle Decimal/float mixing for backward compatibility
+        if isinstance(returns, Decimal) or isinstance(prev_returns, Decimal):
+            if not isinstance(returns, Decimal):
+                returns = Decimal(str(returns))
+            if not isinstance(prev_returns, Decimal):
+                prev_returns = Decimal(str(prev_returns))
+        
+        return (returns + 1) / (prev_returns + 1) - 1
 
     @property
     def _dirty_portfolio(self):
@@ -443,6 +455,12 @@ class Ledger:
     def _cash_flow(self, amount):
         self._dirty_portfolio = True
         p = self._portfolio
+        # Convert to Decimal if cash is Decimal, to support mixed float/Decimal usage
+        if isinstance(p.cash, Decimal):
+            if not isinstance(amount, Decimal):
+                amount = Decimal(str(amount))
+            if not isinstance(p.cash_flow, Decimal):
+                p.cash_flow = Decimal(str(p.cash_flow))
         p.cash_flow += amount
         p.cash += amount
 
@@ -681,13 +699,27 @@ class Ledger:
         start_value = portfolio.portfolio_value
 
         # update the new starting value
+        # Handle Decimal/float mixing if cash is Decimal
+        if isinstance(portfolio.cash, Decimal):
+            if not isinstance(position_value, Decimal):
+                position_value = Decimal(str(position_value))
+            if not isinstance(start_value, Decimal):
+                start_value = Decimal(str(start_value))
+
         portfolio.portfolio_value = end_value = portfolio.cash + position_value
 
         pnl = end_value - start_value
         if start_value != 0:
             returns = pnl / start_value
         else:
-            returns = 0.0
+            returns = 0.0 if not isinstance(start_value, Decimal) else Decimal("0.0")
+
+        # Convert pnl and returns to Decimal if needed
+        if isinstance(portfolio.cash, Decimal):
+            if not isinstance(portfolio.pnl, Decimal):
+                portfolio.pnl = Decimal(str(portfolio.pnl))
+            if not isinstance(portfolio.returns, Decimal):
+                portfolio.returns = Decimal(str(portfolio.returns))
 
         portfolio.pnl += pnl
         portfolio.returns = (1 + portfolio.returns) * (1 + returns) - 1
@@ -714,8 +746,18 @@ class Ledger:
         if portfolio_value == 0:
             gross_leverage = net_leverage = np.inf
         else:
-            gross_leverage = position_stats.gross_exposure / portfolio_value
-            net_leverage = position_stats.net_exposure / portfolio_value
+            # Handle Decimal/float mixing for backward compatibility
+            gross_exposure = position_stats.gross_exposure
+            net_exposure = position_stats.net_exposure
+            
+            if isinstance(portfolio_value, Decimal):
+                if not isinstance(gross_exposure, Decimal):
+                    gross_exposure = Decimal(str(gross_exposure))
+                if not isinstance(net_exposure, Decimal):
+                    net_exposure = Decimal(str(net_exposure))
+            
+            gross_leverage = gross_exposure / portfolio_value
+            net_leverage = net_exposure / portfolio_value
 
         return portfolio_value, gross_leverage, net_leverage
 

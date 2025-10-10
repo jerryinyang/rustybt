@@ -14,7 +14,7 @@ import sqlalchemy as sa
 # assets database
 # NOTE: When upgrading this remember to add a downgrade in:
 # .asset_db_migrations
-ASSET_DB_VERSION = 8
+ASSET_DB_VERSION = 9
 
 # A frozenset of the names of all tables in the assets db
 # NOTE: When modifying this schema, update the ASSET_DB_VERSION value
@@ -29,7 +29,6 @@ asset_db_table_names = frozenset(
         "futures_root_symbols",
         "version_info",
         "bundle_metadata",
-        "data_quality_metrics",
         "bundle_cache",
         "cache_statistics",
         "bundle_symbols",
@@ -231,18 +230,21 @@ bundle_metadata = sa.Table(
     ),
     sa.Column("source_url", sa.Text),
     sa.Column("api_version", sa.Text),
-    sa.Column(
-        "fetch_timestamp",
-        sa.Integer,
-        nullable=False,
-    ),
+    sa.Column("fetch_timestamp", sa.Integer, nullable=False),
     sa.Column("data_version", sa.Text),
-    sa.Column(
-        "checksum",
-        sa.Text,
-        nullable=False,
-    ),
-    sa.Column("timezone", sa.Text, default="UTC"),
+    sa.Column("timezone", sa.Text, nullable=False, server_default="UTC"),
+    sa.Column("row_count", sa.Integer, nullable=True),
+    sa.Column("start_date", sa.Integer, nullable=True),
+    sa.Column("end_date", sa.Integer, nullable=True),
+    sa.Column("missing_days_count", sa.Integer, nullable=False, server_default="0"),
+    sa.Column("missing_days_list", sa.Text, nullable=False, server_default="[]"),
+    sa.Column("outlier_count", sa.Integer, nullable=False, server_default="0"),
+    sa.Column("ohlcv_violations", sa.Integer, nullable=False, server_default="0"),
+    sa.Column("validation_passed", sa.Boolean, nullable=False, server_default=sa.sql.expression.true()),
+    sa.Column("validation_timestamp", sa.Integer, nullable=True),
+    sa.Column("file_checksum", sa.Text),
+    sa.Column("file_size_bytes", sa.Integer),
+    sa.Column("checksum", sa.Text),  # Legacy checksum (deprecated)
     sa.Column(
         "created_at",
         sa.Integer,
@@ -253,55 +255,13 @@ bundle_metadata = sa.Table(
         sa.Integer,
         nullable=False,
     ),
+# Close bundle_metadata table definition
 )
 
-data_quality_metrics = sa.Table(
-    "data_quality_metrics",
-    metadata,
-    sa.Column(
-        "id",
-        sa.Integer,
-        primary_key=True,
-        autoincrement=True,
-    ),
-    sa.Column(
-        "bundle_name",
-        sa.Text,
-        sa.ForeignKey("bundle_metadata.bundle_name"),
-        nullable=False,
-    ),
-    sa.Column(
-        "row_count",
-        sa.Integer,
-        nullable=False,
-    ),
-    sa.Column(
-        "start_date",
-        sa.Integer,
-        nullable=False,
-    ),
-    sa.Column(
-        "end_date",
-        sa.Integer,
-        nullable=False,
-    ),
-    sa.Column("missing_days_count", sa.Integer, default=0),
-    sa.Column("missing_days_list", sa.Text),
-    sa.Column("outlier_count", sa.Integer, default=0),
-    sa.Column("ohlcv_violations", sa.Integer, default=0),
-    sa.Column(
-        "validation_timestamp",
-        sa.Integer,
-        nullable=False,
-    ),
-    sa.Column("validation_passed", sa.Boolean, default=True),
-)
-
-# Create indexes for bundle metadata and quality metrics tables
+# Create indexes for bundle metadata table
 sa.Index("idx_bundle_metadata_name", bundle_metadata.c.bundle_name)
 sa.Index("idx_bundle_metadata_fetch", bundle_metadata.c.fetch_timestamp)
-sa.Index("idx_quality_metrics_bundle", data_quality_metrics.c.bundle_name)
-sa.Index("idx_quality_metrics_validation", data_quality_metrics.c.validation_timestamp)
+sa.Index("idx_bundle_metadata_validation", bundle_metadata.c.validation_timestamp)
 
 # Bundle cache table for Story 8.3 (smart caching layer)
 bundle_cache = sa.Table(

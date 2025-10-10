@@ -1,0 +1,21 @@
+[package]
+name = "rustybt"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+# "cdylib" is required for PyO3 Python extensions
+crate-type = ["cdylib"]
+
+[dependencies]
+# Use workspace dependency for PyO3
+pyo3 = { workspace = true }
+# ndarray for efficient array operations
+ndarray = "0.16"
+# num-traits for generic numeric operations
+num-traits = "0.2"
+# High-precision decimal support for financial calculations
+rust_decimal = "1.37"
+
+[dev-dependencies]
+approx = "0.5"  # For floating-point comparisons in tests

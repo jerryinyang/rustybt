@@ -82,6 +82,11 @@ dependencies = [
     'cryptography >=41.0.0',
     'eth-account >=0.10.0',
     "rich>=14.1.0",
+    # Jupyter notebook integration (Story 8.1)
+    'plotly >=5.0',
+    'tqdm >=4.65',
+    'ipywidgets >=8.0',
+    'nest-asyncio >=1.5',
 ]
 
 [project.urls]
@@ -93,6 +98,7 @@ documentation = 'https://zipline.ml4trading.io'
 requires = [
     'setuptools>=42.0.0',
     "setuptools_scm[toml]>=6.2",
+    'setuptools-rust>=1.5.0',
     'wheel>=0.36.0',
     'Cython>=0.29.21,<3.2.0',
     #    'Cython>=3',
@@ -196,11 +202,14 @@ markers = [
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
     "benchmark: marks tests as benchmark tests",
-    "regression: regression tests from Hypothesis shrunk examples",
+    "regression: marks tests as performance regression tests (CI/CD performance monitoring)",
+    "hypothesis_regression: regression tests from Hypothesis shrunk examples",
     "asyncio: marks tests as async tests",
     "live: marks tests requiring live API access (network dependent)",
     "validation: marks tests as validation tests (backtest vs paper correlation)",
     "ib_integration: marks tests requiring IB paper account (skip by default)",
+    "rust: marks tests requiring Rust extensions (skip if not built)",
+    "rust_equivalence: marks tests that validate Rust/Python equivalence (AC6)",
 ]
 addopts = [
     "--strict-markers",

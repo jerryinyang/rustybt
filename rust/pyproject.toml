@@ -1,0 +1,32 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "rustybt-rust"
+version = "0.1.0"
+description = "Rust performance extensions for RustyBT"
+requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+
+[tool.maturin]
+# Module name: rustybt._rustybt (private module, exposed via __init__.py)
+module-name = "rustybt._rustybt"
+# Manifest path for workspace member
+manifest-path = "crates/rustybt/Cargo.toml"
+# Python source directory (if we need to include additional Python files)
+python-source = "../"
+# Build options
+features = ["pyo3/extension-module"]
+# Strip symbols in release builds for smaller binaries
+strip = true
+# Cross-platform compatibility: abi3-py312 for Python 3.12+ (Linux, macOS, Windows)
+# Note: compatibility is auto-detected by maturin based on PyO3 features
+# Removing explicit "linux" to allow cross-platform builds

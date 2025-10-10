@@ -1,0 +1,66 @@
+# Cache Freshness Configuration (Story 8.3)
+#
+# Defines freshness policies for different data sources and frequencies.
+# Policies determine when cached data becomes stale and needs refresh.
+
+# Freshness policies by source and frequency
+freshness_policies:
+  # YFinance (Yahoo Finance) - Traditional equity market
+  yfinance:
+    daily: market_close        # Daily data stale after market close
+    hourly_ttl: 3600          # 1 hour TTL for hourly data
+    minute_ttl: 300           # 5 minutes TTL for minute data
+    calendar: NYSE            # Use NYSE calendar for market hours
+
+  # CCXT (Cryptocurrency exchanges) - 24/7 markets
+  ccxt:
+    daily_ttl: 86400          # 24 hours for daily data
+    hourly_ttl: 3600          # 1 hour for hourly data
+    minute_ttl: 300           # 5 minutes for minute data
+    calendar: 24/7            # No market hours (always open)
+
+  # Polygon.io - US equity market data
+  polygon:
+    daily: market_close
+    hourly_ttl: 3600
+    minute_ttl: 300
+    calendar: XNYS            # New York Stock Exchange
+
+  # Alpaca - US equity broker
+  alpaca:
+    daily: market_close
+    hourly_ttl: 3600
+    minute_ttl: 300
+    calendar: NYSE
+
+  # AlphaVantage - Global equity/forex data
+  alphavantage:
+    daily: market_close
+    hourly_ttl: 3600
+    minute_ttl: 300
+    calendar: NYSE            # Default to NYSE
+
+  # CSV files - Static data (never stale)
+  csv:
+    daily: never_stale
+    hourly: never_stale
+    minute: never_stale
+
+# Exchange calendars mapping
+calendars:
+  yfinance: NYSE
+  polygon: XNYS
+  alpaca: NYSE
+  alphavantage: NYSE
+  ccxt: 24/7
+  csv: null
+
+# Cache size limits
+cache:
+  max_size_bytes: 10737418240  # 10GB default
+  eviction_batch_size: 10       # Evict 10 entries at a time
+
+# Cache statistics
+statistics:
+  retention_days: 30             # Keep stats for 30 days
+  aggregate_by_day: true         # Daily aggregation

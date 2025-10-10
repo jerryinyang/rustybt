@@ -13,6 +13,60 @@ from rustybt.data.polars.data_portal import (
     NoDataAvailableError,
     LookaheadError,
 )
+from rustybt.data.sources.base import DataSource, DataSourceMetadata
+
+
+class DummyDataSource(DataSource):
+    """Minimal DataSource implementation for testing unified path."""
+
+    def __init__(self, close_map: dict[str, Decimal], supports_live: bool = False):
+        self._close_map = close_map
+        self._supports_live = supports_live
+
+    async def fetch(
+        self,
+        symbols: list[str],
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        frequency: str,
+    ) -> pl.DataFrame:
+        closes = [self._close_map.get(symbol, Decimal("0")) for symbol in symbols]
+        return pl.DataFrame(
+            {
+                "symbol": symbols,
+                "timestamp": [start] * len(symbols),
+                "date": pl.Series("date", [start.date()] * len(symbols), dtype=pl.Date),
+                "open": pl.Series("open", closes, dtype=pl.Decimal(18, 8)),
+                "high": pl.Series("high", closes, dtype=pl.Decimal(18, 8)),
+                "low": pl.Series("low", closes, dtype=pl.Decimal(18, 8)),
+                "close": pl.Series("close", closes, dtype=pl.Decimal(18, 8)),
+                "volume": pl.Series(
+                    "volume", [Decimal("1000000")] * len(symbols), dtype=pl.Decimal(18, 8)
+                ),
+            }
+        )
+
+    def ingest_to_bundle(
+        self,
+        bundle_name: str,
+        symbols: list[str],
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        frequency: str,
+        **kwargs,
+    ) -> None:
+        raise NotImplementedError
+
+    def get_metadata(self) -> DataSourceMetadata:
+        return DataSourceMetadata(
+            source_type="dummy",
+            source_url="https://example.com",
+            api_version="v1",
+            supports_live=self._supports_live,
+        )
+
+    def supports_live(self) -> bool:
+        return self._supports_live
 from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader
 from rustybt.assets import Equity
 from rustybt.assets.exchange_info import ExchangeInfo
@@ -71,7 +125,7 @@ class TestPolarsDataPortal:
 
     def test_init_requires_at_least_one_reader(self):
         """Test that initialization requires at least one reader."""
-        with pytest.raises(ValueError, match="At least one of daily_reader"):
+        with pytest.raises(ValueError, match="Must provide either data_source or legacy readers"):
             PolarsDataPortal()
 
     def test_init_with_daily_reader(self, temp_bundle_with_data):
@@ -305,3 +359,78 @@ class TestPolarsDataPortal:
             data_frequency="daily"
         )
         assert prices[0] == Decimal("102.50")
+
+    @pytest.mark.asyncio
+    async def test_async_get_spot_value_with_unified_source(self, test_assets):
+        """Unified data source exposes both async and sync spot value access."""
+        source = DummyDataSource({"AAPL": Decimal("123.45"), "GOOG": Decimal("67.89")})
+        portal = PolarsDataPortal(data_source=source)
+        dt = pd.Timestamp("2024-01-05")
+
+        async_series = await portal.async_get_spot_value(test_assets, "close", dt, "daily")
+        assert async_series.dtype == pl.Decimal(18, 8)
+        assert async_series.to_list() == [Decimal("123.45"), Decimal("67.89")]
+
+        sync_series = portal.get_spot_value(test_assets, "close", dt, "daily")
+        assert sync_series.to_list() == [Decimal("123.45"), Decimal("67.89")]
+
+    @pytest.mark.asyncio
+    async def test_async_get_history_window_with_unified_source(self, test_assets):
+        """Unified data source history window works for async and sync paths."""
+        source = DummyDataSource({"AAPL": Decimal("101.10"), "GOOG": Decimal("55.55")})
+        portal = PolarsDataPortal(data_source=source)
+        end_dt = pd.Timestamp("2024-01-05")
+
+        async_df = await portal.async_get_history_window(
+            test_assets,
+            end_dt=end_dt,
+            bar_count=1,
+            frequency="1d",
+            field="close",
+            data_frequency="daily",
+        )
+
+        assert not async_df.is_empty()
+        async_close = dict(zip(async_df["symbol"].to_list(), async_df["close"].to_list()))
+        assert async_close == {"AAPL": Decimal("101.10"), "GOOG": Decimal("55.55")}
+
+        sync_df = portal.get_history_window(
+            test_assets,
+            end_dt=end_dt,
+            bar_count=1,
+            frequency="1d",
+            field="close",
+            data_frequency="daily",
+        )
+        sync_close = dict(zip(sync_df["symbol"].to_list(), sync_df["close"].to_list()))
+        assert sync_close == {"AAPL": Decimal("101.10"), "GOOG": Decimal("55.55")}
+
+    def test_history_window_polars_path(self, temp_bundle_with_data, test_assets):
+        """History retrieval uses pure Polars (already Rust-optimized).
+        
+        Note: We intentionally use Polars for DataFrame operations because:
+        1. Polars is already Rust-backed and highly optimized
+        2. Python↔Rust conversion overhead outweighs computation time for simple ops
+        3. Benchmarks showed 25x slowdown when adding custom Rust layer
+        
+        This test verifies that history retrieval works correctly with pure Polars.
+        """
+        reader = PolarsParquetDailyReader(temp_bundle_with_data)
+        portal = PolarsDataPortal(daily_reader=reader)
+
+        df = portal.get_history_window(
+            assets=[test_assets[0]],
+            end_dt=pd.Timestamp("2023-01-03"),
+            bar_count=2,
+            frequency="1d",
+            field="close",
+            data_frequency="daily",
+        )
+
+        # Verify results
+        assert not df.is_empty()
+        assert len(df) <= 2  # Should return at most 2 bars
+        assert "close" in df.columns
+        assert "date" in df.columns
+        # Verify Decimal precision is preserved
+        assert df["close"].dtype == pl.Decimal(18, 8)

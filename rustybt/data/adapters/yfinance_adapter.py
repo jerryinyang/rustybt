@@ -1,12 +1,8 @@
-"""YFinance data adapter for fetching stock/ETF/forex OHLCV data.
-
-This module provides a data adapter for Yahoo Finance using the yfinance library.
-Supports stocks, ETFs, forex pairs, indices, and commodities with multiple time
-resolutions.
-"""
+"""YFinance data adapter for fetching stock/ETF/forex OHLCV data."""
 
 import asyncio
 import time
+from pathlib import Path
 from decimal import Decimal
 from typing import ClassVar
 
@@ -21,16 +17,27 @@ from rustybt.data.adapters.base import (
     NetworkError,
     validate_ohlcv_relationships,
 )
+from rustybt.data.adapters.utils import (
+    build_symbol_sid_map,
+    normalize_symbols,
+    prepare_ohlcv_frame,
+)
+from rustybt.data.polars.parquet_writer import ParquetWriter
+from rustybt.data.sources.base import DataSource, DataSourceMetadata
+from rustybt.utils.paths import data_path, ensure_directory
 
 logger = structlog.get_logger()
 
 
-class YFinanceAdapter(BaseDataAdapter):
+class YFinanceAdapter(BaseDataAdapter, DataSource):
     """YFinance adapter for fetching stock/ETF/forex OHLCV data.
 
     Provides access to Yahoo Finance data for stocks, ETFs, forex pairs, indices,
     and commodities. Supports multiple time resolutions from 1-minute intraday to
     monthly data.
+
+    Implements both BaseDataAdapter and DataSource interfaces for backwards
+    compatibility and unified data source access.
 
     Attributes:
         request_delay: Delay between requests in seconds
@@ -447,3 +454,140 @@ class YFinanceAdapter(BaseDataAdapter):
             start_date=str(start_date),
             end_date=str(end_date),
         )
+
+    # ========================================================================
+    # DataSource Interface Implementation
+    # ========================================================================
+
+    def ingest_to_bundle(
+        self,
+        bundle_name: str,
+        symbols: list[str],
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        frequency: str,
+        **kwargs,
+    ) -> None:
+        """Ingest YFinance data into bundle (Parquet + metadata).
+
+        Args:
+            bundle_name: Name of bundle to create/update
+            symbols: List of symbols to ingest
+            start: Start timestamp for data range
+            end: End timestamp for data range
+            frequency: Time resolution (e.g., "1d", "1h", "1m")
+            **kwargs: Additional parameters (ignored for YFinance)
+
+        Raises:
+            NetworkError: If data fetch fails
+            ValidationError: If data validation fails
+            IOError: If bundle write fails
+        """
+        logger.info(
+            "yfinance_ingest_start",
+            bundle=bundle_name,
+            symbols=symbols[:5] if len(symbols) > 5 else symbols,
+            symbol_count=len(symbols),
+            start=start,
+            end=end,
+            frequency=frequency,
+        )
+
+        normalized_symbols = normalize_symbols(symbols)
+
+        df = asyncio.run(self.fetch(normalized_symbols, start, end, frequency))
+        if df.is_empty():
+            logger.warning(
+                "yfinance_no_data",
+                bundle=bundle_name,
+                symbols=normalized_symbols,
+                frequency=frequency,
+            )
+            return
+
+        symbol_map = build_symbol_sid_map(normalized_symbols)
+        df_prepared, frame_type = prepare_ohlcv_frame(df, symbol_map, frequency)
+
+        bundle_dir = Path(data_path(["bundles", bundle_name]))
+        ensure_directory(str(bundle_dir))
+
+        writer = ParquetWriter(str(bundle_dir))
+
+        metadata = self.get_metadata()
+        source_metadata = {
+            "source_type": metadata.source_type,
+            "source_url": metadata.source_url,
+            "api_version": metadata.api_version,
+            "symbols": list(symbol_map.keys()),
+            "timezone": "UTC",
+        }
+
+        if frame_type == "daily":
+            writer.write_daily_bars(
+                df_prepared,
+                bundle_name=bundle_name,
+                source_metadata=source_metadata,
+            )
+        else:
+            writer.write_minute_bars(df_prepared)
+
+        logger.info(
+            "yfinance_ingest_complete",
+            bundle=bundle_name,
+            rows=len(df_prepared),
+            frame_type=frame_type,
+            bundle_path=str(bundle_dir),
+        )
+
+    def get_metadata(self) -> DataSourceMetadata:
+        """Get YFinance source metadata.
+
+        Returns:
+            DataSourceMetadata with YFinance API information
+        """
+        return DataSourceMetadata(
+            source_type="yfinance",
+            source_url="https://query2.finance.yahoo.com/v8/finance/chart",
+            api_version="v8",
+            supports_live=False,
+            rate_limit=2000,  # ~2000 requests per hour (conservative estimate)
+            auth_required=False,
+            data_delay=15,  # 15-minute delay for free tier
+            supported_frequencies=list(self.RESOLUTION_MAPPING.keys()),
+            additional_info={
+                "max_intraday_days": self.MAX_INTRADAY_DAYS,
+                "fetch_dividends": self.fetch_dividends_flag,
+                "fetch_splits": self.fetch_splits_flag,
+            },
+        )
+
+    def supports_live(self) -> bool:
+        """YFinance does not support live streaming.
+
+        Returns:
+            False (15-minute delayed data only)
+        """
+        return False
+
+    # Backwards compatibility alias
+    async def fetch_ohlcv(
+        self,
+        symbols: list[str],
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        frequency: str,
+    ) -> pl.DataFrame:
+        """Legacy method name for backwards compatibility.
+
+        Delegates to fetch() method.
+
+        Args:
+            symbols: List of symbols to fetch
+            start: Start timestamp
+            end: End timestamp
+            frequency: Time resolution
+
+        Returns:
+            Polars DataFrame with OHLCV data
+        """
+        return await self.fetch(symbols, start, end, frequency)

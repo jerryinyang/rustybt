@@ -295,11 +295,25 @@ def migrate_datacatalog(txn: MigrationTransaction, stats: MigrationStats):
         try:
             # Migrate provenance
             now = int(time.time())
+            checksum_value = bundle.get("checksum", "migrated")
             txn.execute(
                 """
                 INSERT OR REPLACE INTO bundle_metadata
-                (bundle_name, source_type, source_url, api_version, fetch_timestamp, checksum, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (
+                    bundle_name,
+                    source_type,
+                    source_url,
+                    api_version,
+                    fetch_timestamp,
+                    data_version,
+                    checksum,
+                    file_checksum,
+                    file_size_bytes,
+                    timezone,
+                    created_at,
+                    updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     bundle["bundle_name"],
@@ -307,7 +321,11 @@ def migrate_datacatalog(txn: MigrationTransaction, stats: MigrationStats):
                     bundle.get("source_url"),
                     bundle.get("api_version"),
                     bundle.get("fetch_timestamp"),
-                    bundle.get("checksum", "migrated"),  # Default checksum for migrated data
+                    bundle.get("data_version"),
+                    checksum_value,
+                    checksum_value,
+                    None,
+                    bundle.get("timezone", "UTC"),
                     now,
                     now,
                 ),
@@ -316,11 +334,37 @@ def migrate_datacatalog(txn: MigrationTransaction, stats: MigrationStats):
             # Migrate quality metrics
             quality = datacatalog.get_quality_metrics(bundle["bundle_name"])
             if quality:
+                missing_days_list = quality.get("missing_days_list")
+                if isinstance(missing_days_list, list):
+                    missing_days_list = json.dumps(missing_days_list)
+                if missing_days_list is None:
+                    missing_days_list = "[]"
+
+                missing_days_count = quality.get("missing_days_count")
+                if missing_days_count is None:
+                    missing_days_count = 0
+
+                outlier_count = quality.get("outlier_count")
+                if outlier_count is None:
+                    outlier_count = 0
+
+                ohlcv_violations = quality.get("ohlcv_violations")
+                if ohlcv_violations is None:
+                    ohlcv_violations = 0
+
+                validation_passed = quality.get("validation_passed")
+                if validation_passed is None:
+                    validation_passed = True
+
                 txn.execute(
                     """
                     UPDATE bundle_metadata
                     SET row_count = ?,
+                        start_date = ?,
+                        end_date = ?,
                         missing_days_count = ?,
+                        missing_days_list = ?,
+                        outlier_count = ?,
                         ohlcv_violations = ?,
                         validation_passed = ?,
                         validation_timestamp = ?
@@ -328,9 +372,13 @@ def migrate_datacatalog(txn: MigrationTransaction, stats: MigrationStats):
                 """,
                     (
                         quality.get("row_count"),
-                        quality.get("missing_days_count"),
-                        quality.get("ohlcv_violations"),
-                        quality.get("validation_passed"),
+                        quality.get("start_date"),
+                        quality.get("end_date"),
+                        missing_days_count,
+                        missing_days_list,
+                        outlier_count,
+                        ohlcv_violations,
+                        validation_passed,
                         quality.get("validation_timestamp"),
                         bundle["bundle_name"],
                     ),

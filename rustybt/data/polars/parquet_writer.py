@@ -1,41 +1,27 @@
-"""Parquet write operations with compression and partitioning.
+"""Parquet write operations with compression and unified metadata tracking."""
 
-This module handles writing OHLCV data to Parquet format with:
-- Decimal precision preservation
-- Compression (Snappy or ZSTD)
-- Hive-style partitioning (year/month/day)
-- Atomic write operations
-- Metadata catalog integration
-
-Example:
-    >>> from decimal import Decimal
-    >>> import polars as pl
-    >>> from datetime import date
-    >>>
-    >>> df = pl.DataFrame({
-    ...     "date": [date(2023, 1, 1)],
-    ...     "sid": [1],
-    ...     "open": [Decimal("100.12345678")],
-    ...     "close": [Decimal("101.50000000")],
-    ... })
-    >>>
-    >>> writer = ParquetWriter("data/bundles/quandl")
-    >>> writer.write_daily_bars(df, compression="zstd")
-"""
-
+import hashlib
 import tempfile
-from datetime import date, datetime
+import time
+from datetime import date, datetime, time as dtime, timezone, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Optional, Literal, Any
 
 import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
 import structlog
 
-from rustybt.data.polars.parquet_schema import DAILY_BARS_SCHEMA, MINUTE_BARS_SCHEMA, validate_schema
-from rustybt.data.polars.metadata_catalog import ParquetMetadataCatalog, calculate_file_checksum
+from rustybt.data.polars.parquet_schema import (
+    DAILY_BARS_SCHEMA,
+    MINUTE_BARS_SCHEMA,
+    validate_schema,
+)
+from rustybt.data.polars.metadata_catalog import (
+    ParquetMetadataCatalog,
+    calculate_file_checksum,
+)
 from rustybt.data.bundles.metadata import BundleMetadata
 
 logger = structlog.get_logger(__name__)
@@ -131,11 +117,13 @@ class ParquetWriter:
             >>> metadata = {"source_type": "yfinance", "source_url": "https://..."}
             >>> writer.write_daily_bars(df, compression="zstd", source_metadata=metadata, bundle_name="test-bundle")
         """
+        df_cast = df.cast(DAILY_BARS_SCHEMA, strict=False)
+
         # Validate schema
-        validate_schema(df, DAILY_BARS_SCHEMA)
+        validate_schema(df_cast, DAILY_BARS_SCHEMA)
 
         # Extract year/month for partitioning
-        df_with_partitions = df.with_columns([
+        df_with_partitions = df_cast.with_columns([
             pl.col("date").dt.year().alias("year"),
             pl.col("date").dt.month().alias("month"),
         ])
@@ -153,73 +141,22 @@ class ParquetWriter:
             self._update_metadata_catalog(
                 dataset_id=dataset_id,
                 parquet_path=output_path,
-                df=df,
+                df=df_cast,
             )
 
         # Auto-populate unified BundleMetadata (Story 8.4 Phase 3)
         if source_metadata and bundle_name:
-            import time
-            import hashlib
-
-            # Calculate file checksum
-            file_checksum = hashlib.sha256(output_path.read_bytes()).hexdigest()
-
-            # Update provenance metadata (Note: row_count is a quality field that requires start/end dates)
-            BundleMetadata.update(
+            self._auto_populate_metadata(
+                df=df_cast,
                 bundle_name=bundle_name,
-                source_type=source_metadata.get("source_type"),
-                source_url=source_metadata.get("source_url"),
-                api_version=source_metadata.get("api_version"),
-                fetch_timestamp=int(time.time()),
-                checksum=file_checksum,  # Note: Use 'checksum' not 'file_checksum'
+                output_path=output_path,
+                source_metadata=source_metadata,
             )
-
-            # Validate OHLCV data and record quality metrics
-            # Note: Quality metrics are stored in bundle_metadata row, not separate table
-            # The schema has data_quality_metrics table but it requires start_date/end_date
-            # For now, just track violations in the bundle_metadata update above
-            validation_result = self._validate_ohlcv(df)
-            logger.debug(
-                "ohlcv_validation_complete",
-                bundle_name=bundle_name,
-                violations=validation_result["violations"],
-                passed=validation_result["passed"],
-            )
-
-            # Auto-extract and populate symbols (if symbol column present)
-            # Note: Parquet schema uses sid (asset ID), not symbol
-            # Symbols are typically provided separately via source_metadata
-            symbols_list = source_metadata.get("symbols", [])
-            if symbols_list:
-                for symbol_data in symbols_list:
-                    if isinstance(symbol_data, str):
-                        # Simple string symbol
-                        symbol = symbol_data
-                        asset_type = self._infer_asset_type(symbol)
-                        exchange = source_metadata.get("exchange")
-                    else:
-                        # Dict with symbol metadata
-                        symbol = symbol_data.get("symbol")
-                        asset_type = symbol_data.get("asset_type") or self._infer_asset_type(symbol)
-                        exchange = symbol_data.get("exchange") or source_metadata.get("exchange")
-
-                    BundleMetadata.add_symbol(
-                        bundle_name=bundle_name,
-                        symbol=symbol,
-                        asset_type=asset_type,
-                        exchange=exchange,
-                    )
-
-                logger.debug(
-                    "symbols_auto_populated",
-                    bundle_name=bundle_name,
-                    symbol_count=len(symbols_list),
-                )
 
         logger.info(
             "daily_bars_written",
             output_path=str(output_path),
-            row_count=len(df),
+            row_count=len(df_cast),
             compression=compression,
         )
 
@@ -254,11 +191,13 @@ class ParquetWriter:
             ... }, schema=MINUTE_BARS_SCHEMA)
             >>> writer.write_minute_bars(df, compression="zstd")
         """
+        df_cast = df.cast(MINUTE_BARS_SCHEMA, strict=False)
+
         # Validate schema
-        validate_schema(df, MINUTE_BARS_SCHEMA)
+        validate_schema(df_cast, MINUTE_BARS_SCHEMA)
 
         # Extract year/month/day for partitioning
-        df_with_partitions = df.with_columns([
+        df_with_partitions = df_cast.with_columns([
             pl.col("timestamp").dt.year().alias("year"),
             pl.col("timestamp").dt.month().alias("month"),
             pl.col("timestamp").dt.day().alias("day"),
@@ -277,13 +216,13 @@ class ParquetWriter:
             self._update_metadata_catalog(
                 dataset_id=dataset_id,
                 parquet_path=output_path,
-                df=df,
+                df=df_cast,
             )
 
         logger.info(
             "minute_bars_written",
             output_path=str(output_path),
-            row_count=len(df),
+            row_count=len(df_cast),
             compression=compression,
         )
 
@@ -456,6 +395,172 @@ class ParquetWriter:
         )
 
         return paths
+
+    def _auto_populate_metadata(
+        self,
+        df: pl.DataFrame,
+        bundle_name: str,
+        output_path: Path,
+        source_metadata: dict[str, Any],
+    ) -> None:
+        """Populate unified metadata after successful write."""
+
+        current_time = int(time.time())
+
+        row_count = len(df)
+        file_size = output_path.stat().st_size
+        file_checksum = hashlib.sha256(output_path.read_bytes()).hexdigest()
+
+        start_timestamp: int | None = None
+        end_timestamp: int | None = None
+        missing_days_list: list[str] = []
+        missing_days_count = 0
+
+        if row_count > 0 and "date" in df.columns:
+            date_series = df["date"].unique().sort()
+            unique_values = date_series.to_list()
+
+            normalized_dates: list[date] = []
+            for value in unique_values:
+                if isinstance(value, datetime):
+                    normalized_dates.append(value.date())
+                elif isinstance(value, date):
+                    normalized_dates.append(value)
+
+            if normalized_dates:
+                normalized_dates.sort()
+                start_date = normalized_dates[0]
+                end_date = normalized_dates[-1]
+
+                start_dt = datetime.combine(start_date, dtime.min, tzinfo=timezone.utc)
+                end_dt = datetime.combine(end_date, dtime.min, tzinfo=timezone.utc)
+                start_timestamp = int(start_dt.timestamp())
+                end_timestamp = int(end_dt.timestamp())
+
+                expected_dates = {
+                    start_date + timedelta(days=offset)
+                    for offset in range((end_date - start_date).days + 1)
+                }
+                actual_dates = set(normalized_dates)
+                missing_dates = sorted(expected_dates - actual_dates)
+                missing_days_list = [d.isoformat() for d in missing_dates]
+                missing_days_count = len(missing_dates)
+
+        validation_result = self._validate_ohlcv(df)
+        violations = validation_result["violations"]
+        validation_passed = validation_result["passed"] and missing_days_count == 0
+
+        update_payload: dict[str, Any] = {
+            "source_type": source_metadata.get("source_type", "unknown"),
+            "fetch_timestamp": current_time,
+            "row_count": row_count,
+            "start_date": start_timestamp,
+            "end_date": end_timestamp,
+            "missing_days_count": missing_days_count,
+            "missing_days_list": missing_days_list,
+            "outlier_count": 0,
+            "ohlcv_violations": violations,
+            "validation_passed": validation_passed,
+            "validation_timestamp": current_time,
+            "file_checksum": file_checksum,
+            "file_size_bytes": file_size,
+        }
+
+        for field in ("source_url", "api_version", "data_version", "timezone"):
+            value = source_metadata.get(field)
+            if value is not None:
+                update_payload[field] = value
+
+        BundleMetadata.update(bundle_name=bundle_name, **update_payload)
+
+        symbol_entries = self._resolve_symbol_entries(df, source_metadata)
+        exchange_default = source_metadata.get("exchange")
+
+        added_symbols = 0
+        for entry in symbol_entries:
+            symbol = entry.get("symbol")
+            if not symbol:
+                continue
+
+            asset_type = entry.get("asset_type") or self._infer_asset_type(symbol)
+            exchange = entry.get("exchange") or exchange_default
+
+            BundleMetadata.add_symbol(
+                bundle_name=bundle_name,
+                symbol=symbol,
+                asset_type=asset_type,
+                exchange=exchange,
+            )
+            added_symbols += 1
+
+        logger.debug(
+            "bundle_metadata_autopopulated",
+            bundle_name=bundle_name,
+            row_count=row_count,
+            file_size=file_size,
+            validation_passed=validation_passed,
+            violations=violations,
+            missing_days=missing_days_count,
+            symbols_added=added_symbols,
+        )
+
+    def _resolve_symbol_entries(
+        self,
+        df: pl.DataFrame,
+        source_metadata: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        """Resolve symbol entries from DataFrame and metadata."""
+
+        entries: list[dict[str, Any]] = []
+        unique_symbols: list[Any] = []
+
+        if "symbol" in df.columns:
+            unique_symbols = df["symbol"].unique().to_list()
+            entries = [{"symbol": symbol} for symbol in unique_symbols]
+        else:
+            metadata_symbols = source_metadata.get("symbols") or []
+            if metadata_symbols:
+                for symbol_data in metadata_symbols:
+                    if isinstance(symbol_data, str):
+                        entries.append({"symbol": symbol_data})
+                    elif isinstance(symbol_data, dict):
+                        entries.append({
+                            "symbol": symbol_data.get("symbol"),
+                            "asset_type": symbol_data.get("asset_type"),
+                            "exchange": symbol_data.get("exchange"),
+                        })
+            else:
+                symbol_map = source_metadata.get("symbol_map")
+                if symbol_map and "sid" in df.columns:
+                    unique_sids = df["sid"].unique().to_list()
+                    for sid in unique_sids:
+                        mapping = symbol_map.get(sid)
+                        if mapping is None:
+                            continue
+                        if isinstance(mapping, str):
+                            entries.append({"symbol": mapping})
+                        elif isinstance(mapping, dict):
+                            entries.append({
+                                "symbol": mapping.get("symbol"),
+                                "asset_type": mapping.get("asset_type"),
+                                "exchange": mapping.get("exchange"),
+                            })
+
+        if not entries and "sid" in df.columns:
+            unique_sids = df["sid"].unique().to_list()
+            entries = [{"symbol": f"SID-{sid}"} for sid in unique_sids]
+
+        # Deduplicate while preserving order
+        seen = set()
+        deduped_entries: list[dict[str, Any]] = []
+        for entry in entries:
+            symbol = entry.get("symbol")
+            if not symbol or symbol in seen:
+                continue
+            seen.add(symbol)
+            deduped_entries.append(entry)
+
+        return deduped_entries
 
     def _validate_ohlcv(self, df: pl.DataFrame) -> dict:
         """Validate OHLCV relationships (High >= Low, Close in range).

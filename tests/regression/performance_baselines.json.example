@@ -1,0 +1,22 @@
+{
+  "_comment": "Example performance baselines file. Create actual baselines by running: pytest tests/regression/test_performance_regression.py::test_create_baselines -v -s",
+  "daily_backtest": {
+    "decimal_rust": 12.5,
+    "_comment": "Daily backtest with 10 symbols, 252 trading days, SMA crossover strategy"
+  },
+  "hourly_backtest": {
+    "decimal_rust": 6.2,
+    "_comment": "Hourly backtest with 5 symbols, 3 months, momentum strategy"
+  },
+  "minute_backtest": {
+    "decimal_rust": 2.5,
+    "_comment": "Minute backtest with 3 symbols, 1 month, mean reversion strategy"
+  },
+  "_thresholds": {
+    "warning_percent": 5,
+    "failure_percent": 20,
+    "description": "Tests warn at 5% degradation, fail at 20% degradation"
+  },
+  "_created": "2025-01-09",
+  "_story": "7.4 - Validate Performance Target Achievement"
+}

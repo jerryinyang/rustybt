@@ -1,0 +1,18 @@
+# Rust build artifacts
+/target/
+Cargo.lock
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python bytecode (if any Python files for testing)
+__pycache__/
+*.py[cod]
+
+# OS files
+.DS_Store
+Thumbs.db

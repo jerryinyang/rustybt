@@ -1,13 +1,6 @@
-"""Unified bundle metadata management.
+"""Unified bundle metadata management."""
 
-This module provides the BundleMetadata class that merges functionality from:
-- DataCatalog (provenance and quality metrics)
-- ParquetMetadataCatalog (symbols and cache entries)
-
-The unified metadata system provides a single source of truth for all bundle-related
-metadata, eliminating duplication and ensuring consistency.
-"""
-
+import json
 import time
 from pathlib import Path
 from typing import Any
@@ -18,12 +11,10 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from rustybt.assets.asset_db_schema import (
+    ASSET_DB_VERSION,
     bundle_cache,
     bundle_metadata,
     bundle_symbols,
-    data_quality_metrics,
-)
-from rustybt.assets.asset_db_schema import (
     metadata as schema_metadata,
 )
 
@@ -64,13 +55,48 @@ class BundleMetadata:
     _db_path: str | None = None
     _engine = None
 
+    _FIELD_NAMES = {
+        "source_type",
+        "source_url",
+        "api_version",
+        "fetch_timestamp",
+        "data_version",
+        "timezone",
+        "row_count",
+        "start_date",
+        "end_date",
+        "missing_days_count",
+        "missing_days_list",
+        "outlier_count",
+        "ohlcv_violations",
+        "validation_passed",
+        "validation_timestamp",
+        "file_checksum",
+        "file_size_bytes",
+        "checksum",
+    }
+
+    _INT_FIELDS = {
+        "fetch_timestamp",
+        "row_count",
+        "start_date",
+        "end_date",
+        "missing_days_count",
+        "outlier_count",
+        "ohlcv_violations",
+        "validation_timestamp",
+        "file_size_bytes",
+    }
+
+    _JSON_FIELDS = {"missing_days_list"}
+
     @classmethod
     def _get_engine(cls) -> sa.engine.Engine:
         """Get or create SQLAlchemy engine."""
         if cls._engine is None:
             if cls._db_path is None:
                 from rustybt.utils.paths import zipline_root
-                cls._db_path = str(Path(zipline_root()) / "assets-8.db")
+                cls._db_path = str(Path(zipline_root()) / f"assets-{ASSET_DB_VERSION}.db")
 
             cls._engine = create_engine(f"sqlite:///{cls._db_path}")
 
@@ -92,6 +118,42 @@ class BundleMetadata:
     # ========================================================================
     # Core Metadata Methods (merged from DataCatalog)
     # ========================================================================
+
+    @classmethod
+    def _normalize_metadata(cls, metadata: dict[str, Any]) -> dict[str, Any]:
+        """Normalize metadata payload for storage."""
+
+        normalized: dict[str, Any] = {}
+
+        for key, value in metadata.items():
+            if key not in cls._FIELD_NAMES:
+                continue
+
+            if value is None:
+                normalized[key] = None
+                continue
+
+            if key in cls._INT_FIELDS:
+                try:
+                    normalized[key] = int(value)
+                except (TypeError, ValueError) as exc:  # pragma: no cover - defensive
+                    raise ValueError(f"Field '{key}' must be an integer-compatible value") from exc
+            elif key in cls._JSON_FIELDS:
+                if isinstance(value, str):
+                    normalized[key] = value
+                else:
+                    normalized[key] = json.dumps(list(value))
+            elif key == "validation_passed":
+                normalized[key] = bool(value)
+            else:
+                normalized[key] = value
+
+        if "file_checksum" in normalized and "checksum" not in normalized:
+            normalized["checksum"] = normalized["file_checksum"]
+        if "checksum" in normalized and "file_checksum" not in normalized:
+            normalized["file_checksum"] = normalized["checksum"]
+
+        return normalized
 
     @classmethod
     def update(cls, bundle_name: str, **metadata: Any) -> None:
@@ -121,69 +183,63 @@ class BundleMetadata:
         engine = cls._get_engine()
         current_time = int(time.time())
 
-        # Extract bundle_metadata fields
-        bundle_fields = {}
-        quality_fields = {}
-
-        # Map metadata to appropriate tables
-        bundle_field_names = {
-            "source_type", "source_url", "api_version", "fetch_timestamp",
-            "data_version", "checksum", "timezone"
-        }
-
-        quality_field_names = {
-            "row_count", "start_date", "end_date", "missing_days_count",
-            "missing_days_list", "outlier_count", "ohlcv_violations",
-            "validation_timestamp", "validation_passed"
-        }
-
-        for key, value in metadata.items():
-            if key in bundle_field_names:
-                bundle_fields[key] = value
-            elif key in quality_field_names:
-                quality_fields[key] = value
+        normalized = cls._normalize_metadata(metadata)
 
         with Session(engine) as session:
-            # Update or insert bundle metadata
-            stmt = select(bundle_metadata).where(
-                bundle_metadata.c.bundle_name == bundle_name
+            stmt = (
+                select(bundle_metadata)
+                .where(bundle_metadata.c.bundle_name == bundle_name)
+                .limit(1)
             )
             existing = session.execute(stmt).fetchone()
 
             if existing:
-                # Update existing
-                if bundle_fields:
-                    update_stmt = (
+                update_values = {**normalized}
+                update_values["updated_at"] = current_time
+
+                if update_values:
+                    session.execute(
                         bundle_metadata.update()
                         .where(bundle_metadata.c.bundle_name == bundle_name)
-                        .values(updated_at=current_time, **bundle_fields)
+                        .values(**update_values)
                     )
-                    session.execute(update_stmt)
             else:
-                # Insert new
-                insert_stmt = bundle_metadata.insert().values(
-                    bundle_name=bundle_name,
-                    source_type=bundle_fields.get("source_type", "unknown"),
-                    fetch_timestamp=bundle_fields.get("fetch_timestamp", current_time),
-                    checksum=bundle_fields.get("checksum", ""),
-                    created_at=current_time,
-                    updated_at=current_time,
-                    **{k: v for k, v in bundle_fields.items()
-                       if k not in ["source_type", "fetch_timestamp", "checksum"]}
-                )
-                session.execute(insert_stmt)
+                if "source_type" not in normalized:
+                    raise ValueError("'source_type' is required when creating new bundle metadata entry")
 
-            # Update quality metrics if provided
-            if quality_fields:
-                # Ensure required fields
-                if "validation_timestamp" not in quality_fields:
-                    quality_fields["validation_timestamp"] = current_time
+                source_type = normalized.pop("source_type")
+                fetch_timestamp = normalized.pop("fetch_timestamp", current_time)
+                if fetch_timestamp is None:
+                    fetch_timestamp = current_time
 
-                insert_stmt = data_quality_metrics.insert().values(
-                    bundle_name=bundle_name,
-                    **quality_fields
-                )
-                session.execute(insert_stmt)
+                insert_values = {
+                    "bundle_name": bundle_name,
+                    "source_type": source_type,
+                    "fetch_timestamp": fetch_timestamp,
+                    "created_at": current_time,
+                    "updated_at": current_time,
+                }
+
+                # Default values for newly introduced quality fields
+                insert_defaults = {
+                    "timezone": "UTC",
+                    "missing_days_count": 0,
+                    "missing_days_list": "[]",
+                    "outlier_count": 0,
+                    "ohlcv_violations": 0,
+                    "validation_passed": True,
+                }
+
+                for key, value in insert_defaults.items():
+                    if key not in normalized or normalized[key] is None:
+                        insert_values[key] = value
+
+                # Merge remaining normalized values (excluding defaults already handled)
+                for key, value in normalized.items():
+                    if value is not None:
+                        insert_values[key] = value
+
+                session.execute(bundle_metadata.insert().values(**insert_values))
 
             session.commit()
 
@@ -216,58 +272,42 @@ class BundleMetadata:
 
         with Session(engine) as session:
             # Get bundle metadata
-            stmt = select(bundle_metadata).where(
-                bundle_metadata.c.bundle_name == bundle_name
-            )
-            bundle_row = session.execute(stmt).fetchone()
-
-            if bundle_row is None:
-                return None
-
-            # Get latest quality metrics
-            quality_stmt = (
-                select(data_quality_metrics)
-                .where(data_quality_metrics.c.bundle_name == bundle_name)
-                .order_by(data_quality_metrics.c.validation_timestamp.desc())
+            stmt = (
+                select(bundle_metadata)
+                .where(bundle_metadata.c.bundle_name == bundle_name)
                 .limit(1)
             )
-            quality_row = session.execute(quality_stmt).fetchone()
+            row = session.execute(stmt).mappings().fetchone()
 
-            # Merge results
-            result = {
-                "bundle_name": bundle_row.bundle_name,
-                "source_type": bundle_row.source_type,
-                "source_url": bundle_row.source_url,
-                "api_version": bundle_row.api_version,
-                "fetch_timestamp": bundle_row.fetch_timestamp,
-                "data_version": bundle_row.data_version,
-                "checksum": bundle_row.checksum,
-                "timezone": bundle_row.timezone,
-                "created_at": bundle_row.created_at,
-                "updated_at": bundle_row.updated_at,
-            }
+            if row is None:
+                return None
 
-            if quality_row:
-                result.update({
-                    "row_count": quality_row.row_count,
-                    "start_date": quality_row.start_date,
-                    "end_date": quality_row.end_date,
-                    "missing_days_count": quality_row.missing_days_count,
-                    "missing_days_list": quality_row.missing_days_list,
-                    "outlier_count": quality_row.outlier_count,
-                    "ohlcv_violations": quality_row.ohlcv_violations,
-                    "validation_timestamp": quality_row.validation_timestamp,
-                    "validation_passed": quality_row.validation_passed,
-                })
+            result = dict(row)
+            result.pop("id", None)
+
+            missing_days = result.get("missing_days_list")
+            if isinstance(missing_days, str) and missing_days:
+                try:
+                    result["missing_days_list"] = json.loads(missing_days)
+                except json.JSONDecodeError:
+                    # Leave as original string if decoding fails
+                    pass
 
             return result
 
     @classmethod
-    def list_bundles(cls, source_type: str | None = None) -> list[dict[str, Any]]:
+    def list_bundles(
+        cls,
+        source_type: str | None = None,
+        start_date: int | None = None,
+        end_date: int | None = None,
+    ) -> list[dict[str, Any]]:
         """List all bundles with optional filtering.
 
         Args:
             source_type: Optional filter by source type
+            start_date: Optional filter by minimum data start timestamp
+            end_date: Optional filter by maximum data end timestamp
 
         Returns:
             List of bundle metadata dictionaries
@@ -280,28 +320,28 @@ class BundleMetadata:
         engine = cls._get_engine()
 
         with Session(engine) as session:
-            stmt = (
-                select(
-                    bundle_metadata.c.bundle_name,
-                    bundle_metadata.c.source_type,
-                    bundle_metadata.c.source_url,
-                    bundle_metadata.c.fetch_timestamp,
-                    data_quality_metrics.c.row_count,
-                    data_quality_metrics.c.start_date,
-                    data_quality_metrics.c.end_date,
-                    data_quality_metrics.c.validation_passed,
-                )
-                .select_from(
-                    bundle_metadata.outerjoin(
-                        data_quality_metrics,
-                        bundle_metadata.c.bundle_name == data_quality_metrics.c.bundle_name
-                    )
-                )
-                .distinct()
+            stmt = select(
+                bundle_metadata.c.bundle_name,
+                bundle_metadata.c.source_type,
+                bundle_metadata.c.source_url,
+                bundle_metadata.c.fetch_timestamp,
+                bundle_metadata.c.checksum,
+                bundle_metadata.c.file_checksum,
+                bundle_metadata.c.file_size_bytes,
+                bundle_metadata.c.row_count,
+                bundle_metadata.c.start_date,
+                bundle_metadata.c.end_date,
+                bundle_metadata.c.validation_passed,
             )
 
             if source_type:
                 stmt = stmt.where(bundle_metadata.c.source_type == source_type)
+
+            if start_date is not None:
+                stmt = stmt.where(bundle_metadata.c.start_date >= start_date)
+
+            if end_date is not None:
+                stmt = stmt.where(bundle_metadata.c.end_date <= end_date)
 
             results = session.execute(stmt).fetchall()
 
@@ -311,6 +351,9 @@ class BundleMetadata:
                     "source_type": row.source_type,
                     "source_url": row.source_url,
                     "fetch_timestamp": row.fetch_timestamp,
+                    "checksum": row.checksum,
+                    "file_checksum": row.file_checksum,
+                    "file_size_bytes": row.file_size_bytes,
                     "row_count": row.row_count,
                     "start_date": row.start_date,
                     "end_date": row.end_date,
@@ -332,17 +375,17 @@ class BundleMetadata:
         engine = cls._get_engine()
 
         with Session(engine) as session:
-            # Delete quality metrics (foreign key)
-            delete_quality = data_quality_metrics.delete().where(
-                data_quality_metrics.c.bundle_name == bundle_name
-            )
-            session.execute(delete_quality)
-
             # Delete cache entries
             delete_cache = bundle_cache.delete().where(
                 bundle_cache.c.bundle_name == bundle_name
             )
             session.execute(delete_cache)
+
+            # Delete associated symbols
+            delete_symbols = bundle_symbols.delete().where(
+                bundle_symbols.c.bundle_name == bundle_name
+            )
+            session.execute(delete_symbols)
 
             # Delete bundle metadata
             delete_bundle = bundle_metadata.delete().where(
@@ -556,7 +599,11 @@ class BundleMetadata:
         engine = cls._get_engine()
 
         with Session(engine) as session:
-            stmt = select(sa.func.count()).select_from(data_quality_metrics)
+            stmt = (
+                select(sa.func.count())
+                .select_from(bundle_metadata)
+                .where(bundle_metadata.c.validation_timestamp.isnot(None))
+            )
             return session.execute(stmt).scalar() or 0
 
     @classmethod

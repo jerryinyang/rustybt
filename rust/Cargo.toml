@@ -1,0 +1,14 @@
+# Cargo Workspace for RustyBT Rust modules
+# This workspace allows multiple Rust crates to share dependencies
+# Future crates can be added here as needed (e.g., rustybt-indicators, rustybt-data)
+
+[workspace]
+members = ["crates/rustybt"]
+resolver = "2"
+
+[workspace.dependencies]
+# Shared dependencies across all workspace crates
+# PyO3 0.26+ for Python/Rust bridge (supports Python 3.12-3.14)
+# - extension-module: Required for building Python extensions
+# - abi3-py312: Stable ABI support for Python 3.12+ forward compatibility
+pyo3 = { version = "0.26", features = ["extension-module", "abi3-py312"] }

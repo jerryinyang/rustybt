@@ -1,0 +1,8 @@
+# Ignore generated fixture files (they're large and can be regenerated)
+*.parquet
+
+# Keep this file
+!.gitignore
+
+# Optional: Keep a sample small fixture for CI
+!sample_*.parquet

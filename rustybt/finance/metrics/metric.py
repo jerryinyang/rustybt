@@ -211,7 +211,8 @@ class PNL:
     def start_of_simulation(
         self, ledger, emission_rate, trading_calendar, sessions, benchmark_source
     ):
-        self._previous_pnl = 0.0
+        # Initialize with same type as ledger uses (Decimal or float)
+        self._previous_pnl = ledger.portfolio.pnl * 0
 
     def start_of_session(self, ledger, session, data_portal):
         self._previous_pnl = ledger.portfolio.pnl
@@ -239,15 +240,21 @@ class CashFlow:
     def start_of_simulation(
         self, ledger, emission_rate, trading_calendar, sessions, benchmark_source
     ):
-        self._previous_cash_flow = 0.0
+        # Initialize with same type as ledger uses (Decimal or float)
+        # Will be set to actual value at start of first session
+        self._previous_cash_flow = None
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
         cash_flow = ledger.portfolio.cash_flow
+        if self._previous_cash_flow is None:
+            self._previous_cash_flow = cash_flow * 0
         packet["minute_perf"]["capital_used"] = cash_flow - self._previous_cash_flow
         packet["cumulative_perf"]["capital_used"] = cash_flow
 
     def end_of_session(self, packet, ledger, session, session_ix, data_portal):
         cash_flow = ledger.portfolio.cash_flow
+        if self._previous_cash_flow is None:
+            self._previous_cash_flow = cash_flow * 0
         packet["daily_perf"]["capital_used"] = cash_flow - self._previous_cash_flow
         packet["cumulative_perf"]["capital_used"] = cash_flow
         self._previous_cash_flow = cash_flow
@@ -344,8 +351,9 @@ class AlphaBeta:
 class MaxLeverage:
     """Tracks the maximum account leverage."""
 
-    def start_of_simulation(self, *args):
-        self._max_leverage = 0.0
+    def start_of_simulation(self, ledger, *args):
+        # Initialize with same type as ledger uses (Decimal or float)
+        self._max_leverage = ledger.account.leverage * 0
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
         self._max_leverage = max(self._max_leverage, ledger.account.leverage)

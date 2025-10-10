@@ -1,0 +1,29 @@
+{
+  "daily_backtest": {
+    "decimal_rust": 1.1204455696667235,
+    "_comment": "Baseline from comprehensive benchmark run (all scenarios) - 2025-10-09"
+  },
+  "hourly_backtest": {
+    "decimal_rust": 17.720604541665427,
+    "_comment": "Baseline from comprehensive benchmark run (all scenarios) - 2025-10-09"
+  },
+  "minute_backtest": {
+    "decimal_rust": 3.853192124666142,
+    "_comment": "Baseline from comprehensive benchmark run (all scenarios) - 2025-10-09"
+  },
+  "_thresholds": {
+    "warning_percent": 5,
+    "failure_percent": 20,
+    "description": "Tests warn at 5% degradation, fail at 20% degradation"
+  },
+  "_created": "2025-10-09",
+  "_updated": "2025-10-09",
+  "_story": "7.4 - Validate Performance Target Achievement",
+  "_benchmark_results": {
+    "daily_overhead": "-2.3%",
+    "hourly_overhead": "4.1%",
+    "minute_overhead": "1.7%",
+    "average_overhead": "1.1%",
+    "target_met": true
+  }
+}

@@ -4,9 +4,12 @@ This module provides flexible CSV import capabilities with schema mapping,
 delimiter detection, date parsing, and missing data handling.
 """
 
+import asyncio
 import csv
+import hashlib
 from dataclasses import dataclass
 from decimal import getcontext
+from pathlib import Path
 
 import pandas as pd
 import polars as pl
@@ -18,6 +21,14 @@ from rustybt.data.adapters.base import (
     InvalidDataError,
     validate_ohlcv_relationships,
 )
+from rustybt.data.adapters.utils import (
+    build_symbol_sid_map,
+    normalize_symbols,
+    prepare_ohlcv_frame,
+)
+from rustybt.data.polars.parquet_writer import ParquetWriter
+from rustybt.data.sources.base import DataSource, DataSourceMetadata
+from rustybt.utils.paths import data_path, ensure_directory
 
 # Set decimal precision for financial calculations
 getcontext().prec = 28
@@ -87,7 +98,7 @@ class CSVConfig:
 # ============================================================================
 
 
-class CSVAdapter(BaseDataAdapter):
+class CSVAdapter(BaseDataAdapter, DataSource):
     """CSV adapter for importing custom data files.
 
     Provides flexible CSV import with:
@@ -97,6 +108,9 @@ class CSVAdapter(BaseDataAdapter):
     - Timezone handling (convert to UTC)
     - Missing data handling (skip, interpolate, fail)
     - Decimal conversion for financial precision
+
+    Implements both BaseDataAdapter and DataSource interfaces for backwards
+    compatibility and unified data source access.
 
     Example:
         >>> config = CSVConfig(
@@ -621,3 +635,167 @@ class CSVAdapter(BaseDataAdapter):
             Standardized DataFrame (no changes needed)
         """
         return df
+
+    def _compute_file_checksum(self) -> str:
+        """Compute SHA256 checksum of CSV file.
+
+        Returns:
+            Hexadecimal checksum string
+        """
+        sha256_hash = hashlib.sha256()
+        with open(self.config.file_path, "rb") as f:
+            # Read file in chunks for memory efficiency
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest()
+
+    # ========================================================================
+    # DataSource Interface Implementation
+    # ========================================================================
+
+    def ingest_to_bundle(
+        self,
+        bundle_name: str,
+        symbols: list[str],
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        frequency: str,
+        **kwargs,
+    ) -> None:
+        """Ingest CSV data into bundle (Parquet + metadata).
+
+        Args:
+            bundle_name: Name of bundle to create/update
+            symbols: List of symbols to filter (if symbol column exists)
+            start: Start timestamp for data range
+            end: End timestamp for data range
+            frequency: Time resolution (not used for CSV, data resolution from file)
+            **kwargs: Additional parameters (ignored for CSV)
+
+        Raises:
+            InvalidDataError: If CSV format is invalid
+            ValidationError: If data validation fails
+            IOError: If bundle write fails
+        """
+        logger.info(
+            "csv_ingest_start",
+            bundle=bundle_name,
+            file_path=self.config.file_path,
+            symbols=symbols[:5] if symbols and len(symbols) > 5 else symbols,
+            symbol_count=len(symbols) if symbols else "all",
+            start=start,
+            end=end,
+            frequency=frequency,
+        )
+
+        df = asyncio.run(self.fetch(symbols, start, end, frequency))
+        if df.is_empty():
+            logger.warning(
+                "csv_no_data",
+                bundle=bundle_name,
+                file_path=self.config.file_path,
+                frequency=frequency,
+            )
+            return
+
+        if symbols:
+            symbol_list = normalize_symbols(symbols)
+        else:
+            symbol_list = normalize_symbols(df["symbol"].unique().to_list())
+
+        symbol_map = build_symbol_sid_map(symbol_list)
+
+        effective_frequency = frequency or "1d"
+        if effective_frequency in {"N/A", "na", "none"}:
+            effective_frequency = "1d"
+
+        df_prepared, frame_type = prepare_ohlcv_frame(df, symbol_map, effective_frequency)
+
+        bundle_dir = Path(data_path(["bundles", bundle_name]))
+        ensure_directory(str(bundle_dir))
+
+        writer = ParquetWriter(str(bundle_dir))
+
+        metadata = self.get_metadata()
+        additional_info = metadata.additional_info or {}
+        source_metadata = {
+            "source_type": metadata.source_type,
+            "source_url": metadata.source_url,
+            "api_version": metadata.api_version,
+            "symbols": list(symbol_map.keys()),
+            "file_size_bytes": additional_info.get("file_size_bytes"),
+            "timezone": additional_info.get("timezone") or self.config.timezone or "UTC",
+        }
+
+        writer.write_daily_bars(
+            df_prepared,
+            bundle_name=bundle_name,
+            source_metadata=source_metadata,
+        )
+
+        logger.info(
+            "csv_ingest_complete",
+            bundle=bundle_name,
+            rows=len(df_prepared),
+            bundle_path=str(bundle_dir),
+        )
+
+    def get_metadata(self) -> DataSourceMetadata:
+        """Get CSV source metadata.
+
+        Returns:
+            DataSourceMetadata with CSV file information
+        """
+        file_path = Path(self.config.file_path)
+        file_size = file_path.stat().st_size if file_path.exists() else 0
+        checksum = self._compute_file_checksum() if file_path.exists() else "unknown"
+
+        return DataSourceMetadata(
+            source_type="csv",
+            source_url=str(file_path.absolute()),
+            api_version="N/A",
+            supports_live=False,
+            rate_limit=None,  # No rate limits for local files
+            auth_required=False,
+            data_delay=None,  # Static data, no delay concept
+            supported_frequencies=["N/A"],  # Resolution determined by file
+            additional_info={
+                "file_path": str(file_path.absolute()),
+                "file_size_bytes": file_size,
+                "checksum_sha256": checksum,
+                "delimiter": self.config.delimiter or "auto-detect",
+                "timezone": self.config.timezone,
+                "missing_data_strategy": self.config.missing_data_strategy,
+            },
+        )
+
+    def supports_live(self) -> bool:
+        """CSV does not support live streaming.
+
+        Returns:
+            False (static file data only)
+        """
+        return False
+
+    # Backwards compatibility - fetch_ohlcv is an alias to fetch
+    async def fetch_ohlcv(
+        self,
+        symbols: list[str],
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        frequency: str,
+    ) -> pl.DataFrame:
+        """Legacy method name for backwards compatibility.
+
+        Delegates to fetch() method.
+
+        Args:
+            symbols: List of symbols to filter
+            start: Start timestamp
+            end: End timestamp
+            frequency: Time resolution (not used for CSV)
+
+        Returns:
+            Polars DataFrame with OHLCV data
+        """
+        return await self.fetch(symbols, start, end, frequency)

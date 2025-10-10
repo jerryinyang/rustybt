@@ -125,6 +125,9 @@ from rustybt.sources.requests_csv import PandasRequestsCSV
 from rustybt.gens.sim_engine import MinuteSimulationClock
 from rustybt.sources.benchmark_source import BenchmarkSource
 from rustybt.zipline_warnings import ZiplineDeprecationWarning
+from rustybt.data.polars.data_portal import PolarsDataPortal
+from rustybt.data.data_portal import DataPortal as LegacyDataPortal
+from rustybt.data import bundles as bundle_loader
 
 log = logging.getLogger("ZiplineLog")
 
@@ -212,6 +215,9 @@ class TradingAlgorithm:
         sim_params,
         data_portal=None,
         asset_finder=None,
+        data_source=None,
+        bundle=None,
+        live_trading=False,
         # Algorithm API
         namespace=None,
         script=None,
@@ -246,28 +252,82 @@ class TradingAlgorithm:
         self._platform = platform
         self.logger = None
 
+        if data_portal is not None and (data_source is not None or bundle is not None):
+            raise ValueError(
+                "Cannot supply data_portal together with data_source or bundle"
+            )
+
+        self.live_trading = live_trading
+        self.data_source = data_source
+        self._bundle_data = None
+
         # XXX: This is kind of a mess.
         # We support passing a data_portal in `run`, but we need an asset
         # finder earlier than that to look up assets for things like
         # set_benchmark.
-        self.data_portal = data_portal
+        resolved_portal = data_portal
+        resolved_asset_finder = asset_finder
 
-        if self.data_portal is None:
-            if asset_finder is None:
-                raise ValueError(
-                    "Must pass either data_portal or asset_finder "
-                    "to TradingAlgorithm()"
+        if resolved_portal is None:
+            if self.data_source is not None:
+                resolved_asset_finder = (
+                    resolved_asset_finder or getattr(self.data_source, "asset_finder", None)
                 )
-            self.asset_finder = asset_finder
+                if resolved_asset_finder is None:
+                    raise ValueError(
+                        "asset_finder is required when initializing TradingAlgorithm with a data_source"
+                    )
+
+                supports_live = False
+                if hasattr(self.data_source, "supports_live"):
+                    try:
+                        supports_live = bool(self.data_source.supports_live())
+                    except Exception:  # pragma: no cover - defensive
+                        supports_live = False
+
+                if self.live_trading and not supports_live:
+                    warnings.warn(
+                        "Configured data_source does not support live streaming; falling back to cached access",
+                        stacklevel=2,
+                    )
+
+                if self.live_trading and supports_live:
+                    use_cache = False
+                else:
+                    use_cache = True
+
+                resolved_portal = PolarsDataPortal(
+                    data_source=self.data_source,
+                    use_cache=use_cache,
+                    asset_finder=resolved_asset_finder,
+                    calendar=sim_params.trading_calendar,
+                )
+            elif bundle is not None:
+                bundle_data = bundle_loader.load(bundle)
+                self._bundle_data = bundle_data
+                resolved_asset_finder = bundle_data.asset_finder
+                resolved_portal = LegacyDataPortal(
+                    asset_finder=bundle_data.asset_finder,
+                    trading_calendar=sim_params.trading_calendar,
+                    first_trading_day=sim_params.start_session,
+                    equity_daily_reader=bundle_data.equity_daily_bar_reader,
+                    equity_minute_reader=bundle_data.equity_minute_bar_reader,
+                    adjustment_reader=bundle_data.adjustment_reader,
+                )
+            elif resolved_asset_finder is None:
+                raise ValueError(
+                    "Must pass data_portal, data_source/bundle, or asset_finder to TradingAlgorithm()"
+                )
         else:
-            # Raise an error if we were passed two different asset finders.
-            # There's no world where that's a good idea.
             if (
-                asset_finder is not None
-                and asset_finder is not data_portal.asset_finder
+                resolved_asset_finder is not None
+                and resolved_asset_finder is not resolved_portal.asset_finder
             ):
                 raise ValueError("Inconsistent asset_finders in TradingAlgorithm()")
-            self.asset_finder = data_portal.asset_finder
+            resolved_asset_finder = resolved_portal.asset_finder
+
+        self.data_portal = resolved_portal
+        self.asset_finder = resolved_asset_finder
 
         self.benchmark_returns = benchmark_returns
 
@@ -636,6 +696,129 @@ class TradingAlgorithm:
             self.metrics_tracker = None
 
         return daily_stats
+
+    def to_polars(self, daily_stats: pd.DataFrame = None):
+        """Convert backtest results to Polars DataFrame.
+
+        Args:
+            daily_stats: Optional DataFrame from run(). If None, uses last run results.
+
+        Returns:
+            Polars DataFrame with backtest results
+
+        Example:
+            >>> results = algo.run()
+            >>> results_pl = algo.to_polars(results)
+
+        Note:
+            Decimal values are converted to float64 for Polars compatibility.
+            This may result in minor precision differences.
+        """
+        try:
+            import polars as pl
+        except ImportError:
+            raise ImportError(
+                "Polars is required for to_polars(). Install with: pip install polars"
+            )
+
+        if daily_stats is None:
+            raise ValueError("No backtest results available. Run the algorithm first.")
+
+        return pl.from_pandas(daily_stats)
+
+    def get_positions_df(self, as_polars: bool = False):
+        """Export current positions as DataFrame.
+
+        Args:
+            as_polars: If True, return Polars DataFrame; else pandas
+
+        Returns:
+            DataFrame with columns: asset, amount, cost_basis, last_sale_price,
+            market_value, pnl, pnl_pct
+
+        Example:
+            >>> positions = algo.get_positions_df()
+            >>> print(positions)
+        """
+        if not hasattr(self, 'portfolio') or self.portfolio is None:
+            raise ValueError("No portfolio available. Run the algorithm first.")
+
+        positions_data = []
+        for asset, position in self.portfolio.positions.items():
+            market_value = position.amount * position.last_sale_price
+            cost = position.amount * position.cost_basis
+            pnl = market_value - cost
+            pnl_pct = (pnl / abs(cost) * 100) if cost != 0 else 0
+
+            positions_data.append({
+                'asset': asset.symbol if hasattr(asset, 'symbol') else str(asset),
+                'amount': float(position.amount),
+                'cost_basis': float(position.cost_basis),
+                'last_sale_price': float(position.last_sale_price),
+                'market_value': float(market_value),
+                'pnl': float(pnl),
+                'pnl_pct': float(pnl_pct),
+            })
+
+        df = pd.DataFrame(positions_data)
+
+        if as_polars:
+            try:
+                import polars as pl
+                return pl.from_pandas(df)
+            except ImportError:
+                raise ImportError("Polars required. Install with: pip install polars")
+
+        return df
+
+    def get_transactions_df(self, as_polars: bool = False):
+        """Export transaction history as DataFrame.
+
+        Args:
+            as_polars: If True, return Polars DataFrame; else pandas
+
+        Returns:
+            DataFrame with transaction history
+
+        Example:
+            >>> transactions = algo.get_transactions_df()
+            >>> print(transactions.head())
+
+        Note:
+            This requires the blotter to track transaction history.
+            Returns empty DataFrame if no transactions recorded.
+        """
+        if not hasattr(self, 'blotter') or self.blotter is None:
+            return pd.DataFrame()
+
+        # Try to access transaction log from blotter
+        if hasattr(self.blotter, 'transactions'):
+            transactions_data = []
+            for dt, txns in self.blotter.transactions.items():
+                for txn in txns:
+                    transactions_data.append({
+                        'date': dt,
+                        'asset': txn.asset.symbol if hasattr(txn.asset, 'symbol') else str(txn.asset),
+                        'amount': float(txn.amount),
+                        'price': float(txn.price),
+                        'commission': float(txn.commission) if hasattr(txn, 'commission') else 0.0,
+                        'order_id': txn.order_id if hasattr(txn, 'order_id') else None,
+                    })
+
+            df = pd.DataFrame(transactions_data)
+            if len(df) > 0:
+                df = df.sort_values('date')
+
+            if as_polars:
+                try:
+                    import polars as pl
+                    return pl.from_pandas(df)
+                except ImportError:
+                    raise ImportError("Polars required. Install with: pip install polars")
+
+            return df
+        else:
+            return pd.DataFrame()
 
     def _create_daily_stats(self, perfs):
         # create daily and cumulative stats dataframe

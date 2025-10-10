@@ -214,3 +214,56 @@ last_sale_price: {last_sale_price}"
             "cost_basis": self.cost_basis,
             "last_sale_price": self.last_sale_price,
         }
+
+    def _repr_html_(self):
+        """Rich HTML representation for Jupyter notebooks.
+
+        Returns:
+            HTML string with formatted position information
+        """
+        # Calculate market value and P&L
+        market_value = self.amount * self.last_sale_price
+        cost = self.amount * self.cost_basis
+        pnl = market_value - cost
+        pnl_pct = (pnl / abs(cost) * 100) if cost != 0 else 0
+
+        # Determine position type
+        position_type = "LONG" if self.amount > 0 else "SHORT" if self.amount < 0 else "FLAT"
+
+        # Color code P&L
+        pnl_color = "#00c853" if pnl >= 0 else "#d32f2f"
+
+        html = f"""
+        <div style="padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin: 5px 0;">
+            <h4 style="margin: 0 0 10px 0;">Position: {self.asset.symbol if hasattr(self.asset, 'symbol') else self.asset}</h4>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 5px; font-weight: bold;">Type</td>
+                    <td style="padding: 5px;">{position_type}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 5px; font-weight: bold;">Quantity</td>
+                    <td style="padding: 5px;">{self.amount:,.0f}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 5px; font-weight: bold;">Cost Basis</td>
+                    <td style="padding: 5px;">${self.cost_basis:,.2f}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 5px; font-weight: bold;">Last Price</td>
+                    <td style="padding: 5px;">${self.last_sale_price:,.2f}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 5px; font-weight: bold;">Market Value</td>
+                    <td style="padding: 5px;">${market_value:,.2f}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 5px; font-weight: bold;">P&L</td>
+                    <td style="padding: 5px; color: {pnl_color}; font-weight: bold;">
+                        ${pnl:,.2f} ({pnl_pct:+.2f}%)
+                    </td>
+                </tr>
+            </table>
+        </div>
+        """
+        return html

@@ -7,6 +7,7 @@ limiting, and error handling.
 
 import asyncio
 from decimal import Decimal, getcontext
+from pathlib import Path
 from typing import ClassVar
 
 import ccxt
@@ -21,6 +22,14 @@ from rustybt.data.adapters.base import (
     RateLimitError,
     validate_ohlcv_relationships,
 )
+from rustybt.data.adapters.utils import (
+    build_symbol_sid_map,
+    normalize_symbols,
+    prepare_ohlcv_frame,
+)
+from rustybt.data.polars.parquet_writer import ParquetWriter
+from rustybt.data.sources.base import DataSource, DataSourceMetadata
+from rustybt.utils.paths import data_path, ensure_directory
 
 # Set decimal precision for financial calculations
 getcontext().prec = 28
@@ -28,12 +37,15 @@ getcontext().prec = 28
 logger = structlog.get_logger()
 
 
-class CCXTAdapter(BaseDataAdapter):
+class CCXTAdapter(BaseDataAdapter, DataSource):
     """CCXT adapter for fetching crypto OHLCV data from 100+ exchanges.
 
     Provides unified interface to fetch historical cryptocurrency data from
     exchanges supported by CCXT library including Binance, Coinbase, Kraken,
     and 100+ others.
+
+    Implements both BaseDataAdapter and DataSource interfaces for backwards
+    compatibility and unified data source access.
 
     Attributes:
         exchange_id: Exchange identifier (e.g., 'binance', 'coinbase')
@@ -411,3 +423,157 @@ class CCXTAdapter(BaseDataAdapter):
         """
         # Data already standardized in fetch() method
         return df
+
+    # ========================================================================
+    # DataSource Interface Implementation
+    # ========================================================================
+
+    def ingest_to_bundle(
+        self,
+        bundle_name: str,
+        symbols: list[str],
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        frequency: str,
+        **kwargs,
+    ) -> None:
+        """Ingest CCXT data into bundle (Parquet + metadata).
+
+        Args:
+            bundle_name: Name of bundle to create/update
+            symbols: List of symbols to ingest (e.g., ["BTC/USDT", "ETH/USDT"])
+            start: Start timestamp for data range
+            end: End timestamp for data range
+            frequency: Time resolution (e.g., "1d", "1h", "1m")
+            **kwargs: Additional parameters (ignored for CCXT)
+
+        Raises:
+            NetworkError: If data fetch fails
+            ValidationError: If data validation fails
+            IOError: If bundle write fails
+        """
+        logger.info(
+            "ccxt_ingest_start",
+            bundle=bundle_name,
+            exchange=self.exchange_id,
+            symbols=symbols[:5] if len(symbols) > 5 else symbols,
+            symbol_count=len(symbols),
+            start=start,
+            end=end,
+            frequency=frequency,
+        )
+
+        normalized_symbols = normalize_symbols(symbols)
+
+        df = asyncio.run(self.fetch(normalized_symbols, start, end, frequency))
+        if df.is_empty():
+            logger.warning(
+                "ccxt_no_data",
+                bundle=bundle_name,
+                exchange=self.exchange_id,
+                symbols=normalized_symbols,
+                frequency=frequency,
+            )
+            return
+
+        symbol_map = build_symbol_sid_map(normalized_symbols)
+        df_prepared, frame_type = prepare_ohlcv_frame(df, symbol_map, frequency)
+
+        bundle_dir = Path(data_path(["bundles", bundle_name]))
+        ensure_directory(str(bundle_dir))
+
+        writer = ParquetWriter(str(bundle_dir))
+
+        metadata = self.get_metadata()
+        source_metadata = {
+            "source_type": metadata.source_type,
+            "source_url": metadata.source_url,
+            "api_version": metadata.api_version,
+            "symbols": list(symbol_map.keys()),
+            "exchange": self.exchange_id,
+            "timezone": kwargs.get("timezone", "UTC"),
+        }
+
+        if frame_type == "daily":
+            writer.write_daily_bars(
+                df_prepared,
+                bundle_name=bundle_name,
+                source_metadata=source_metadata,
+            )
+        else:
+            writer.write_minute_bars(df_prepared)
+
+        logger.info(
+            "ccxt_ingest_complete",
+            bundle=bundle_name,
+            exchange=self.exchange_id,
+            rows=len(df_prepared),
+            frame_type=frame_type,
+            bundle_path=str(bundle_dir),
+        )
+
+    def get_metadata(self) -> DataSourceMetadata:
+        """Get CCXT source metadata.
+
+        Returns:
+            DataSourceMetadata with CCXT API information
+        """
+        # Determine source URL from exchange
+        if hasattr(self.exchange, "urls") and "www" in self.exchange.urls:
+            source_url = self.exchange.urls["www"]
+        else:
+            source_url = f"https://{self.exchange_id}.com/api"
+
+        # Get API version if available
+        api_version = getattr(self.exchange, "version", "unknown")
+
+        # Check if API credentials are configured
+        auth_required = bool(self.exchange.apiKey and self.exchange.secret)
+
+        return DataSourceMetadata(
+            source_type="ccxt",
+            source_url=source_url,
+            api_version=api_version,
+            supports_live=True,  # CCXT supports WebSocket streaming
+            rate_limit=int(1000 / self.exchange.rateLimit) if self.exchange.rateLimit > 0 else 10,
+            auth_required=auth_required,
+            data_delay=0,  # Real-time data (no delay for crypto exchanges)
+            supported_frequencies=list(self.RESOLUTION_MAPPING.keys()),
+            additional_info={
+                "exchange_id": self.exchange_id,
+                "testnet": self.testnet,
+                "markets_count": len(self.exchange.markets) if self.exchange.markets else 0,
+                "has_websocket": self.exchange.has.get("ws", False) if hasattr(self.exchange, "has") else False,
+            },
+        )
+
+    def supports_live(self) -> bool:
+        """CCXT supports live streaming via WebSocket.
+
+        Returns:
+            True (CCXT exchanges support WebSocket streaming)
+        """
+        return True
+
+    # Backwards compatibility alias
+    async def fetch_ohlcv(
+        self,
+        symbols: list[str],
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        frequency: str,
+    ) -> pl.DataFrame:
+        """Legacy method name for backwards compatibility.
+
+        Delegates to fetch() method.
+
+        Args:
+            symbols: List of symbols to fetch (e.g., ["BTC/USDT", "ETH/USDT"])
+            start: Start timestamp
+            end: End timestamp
+            frequency: Time resolution
+
+        Returns:
+            Polars DataFrame with OHLCV data
+        """
+        return await self.fetch(symbols, start, end, frequency)

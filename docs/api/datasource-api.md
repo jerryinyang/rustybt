@@ -97,31 +97,36 @@ class DataSourceMetadata:
 
 ## Built-in Adapters
 
-### YFinanceDataSource
+### YFinance (via DataSourceRegistry)
 
 Free historical data from Yahoo Finance (15-minute delayed).
 
 ```python
-from rustybt.data.sources import YFinanceDataSource
+from rustybt.data.sources import DataSourceRegistry
+import pandas as pd
+import asyncio
 
-source = YFinanceDataSource()
+async def main():
+    source = DataSourceRegistry.get_source("yfinance")
 
-# Fetch data
-df = await source.fetch(
-    symbols=["AAPL", "MSFT"],
-    start=pd.Timestamp("2023-01-01"),
-    end=pd.Timestamp("2023-12-31"),
-    frequency="daily"
-)
+    # Fetch data
+    df = await source.fetch(
+        symbols=["AAPL", "MSFT"],
+        start=pd.Timestamp("2023-01-01"),
+        end=pd.Timestamp("2023-12-31"),
+        frequency="1d"
+    )
 
-# Ingest to bundle
-bundle_path = source.ingest_to_bundle(
-    bundle_name="stocks-2023",
-    symbols=["AAPL", "MSFT", "GOOGL"],
-    start=pd.Timestamp("2023-01-01"),
-    end=pd.Timestamp("2023-12-31"),
-    frequency="daily"
-)
+    # Ingest to bundle
+    await source.ingest_to_bundle(
+        bundle_name="stocks-2023",
+        symbols=["AAPL", "MSFT", "GOOGL"],
+        start=pd.Timestamp("2023-01-01"),
+        end=pd.Timestamp("2023-12-31"),
+        frequency="1d"
+    )
+
+asyncio.run(main())
 ```
 
 **Limitations**:
@@ -130,29 +135,30 @@ bundle_path = source.ingest_to_bundle(
 - No real-time streaming
 - Historical data only
 
-### AlpacaDataSource
+### Alpaca (via DataSourceRegistry)
 
 Real-time and historical stock data via Alpaca Markets API.
 
 ```python
-from rustybt.data.sources import AlpacaDataSource
+from rustybt.data.sources import DataSourceRegistry
+import pandas as pd
+import asyncio
 
-source = AlpacaDataSource(
-    api_key="YOUR_API_KEY",
-    api_secret="YOUR_API_SECRET",
-    paper_trading=True  # Use paper trading endpoint
-)
+async def main():
+    source = DataSourceRegistry.get_source(
+        "alpaca",
+        api_key="YOUR_API_KEY",
+        api_secret="YOUR_API_SECRET",
+        paper_trading=True,
+    )
+    df = await source.fetch(
+        symbols=["AAPL"],
+        start=pd.Timestamp.now() - pd.Timedelta(hours=1),
+        end=pd.Timestamp.now(),
+        frequency="1m"
+    )
 
-# Real-time data
-df = await source.fetch(
-    symbols=["AAPL"],
-    start=pd.Timestamp.now() - pd.Timedelta(hours=1),
-    end=pd.Timestamp.now(),
-    frequency="minute"
-)
-
-# Supports live streaming
-assert source.supports_live() == True
+asyncio.run(main())
 ```
 
 **Features**:
@@ -161,48 +167,55 @@ assert source.supports_live() == True
 - Paper trading mode
 - Free tier available
 
-### CCXTDataSource
+### CCXT (via DataSourceRegistry)
 
 Cryptocurrency data via CCXT library (100+ exchanges).
 
 ```python
-from rustybt.data.sources import CCXTDataSource
+from rustybt.data.sources import DataSourceRegistry
+import pandas as pd
+import asyncio
 
-source = CCXTDataSource(
-    exchange="binance",
-    api_key="YOUR_API_KEY",  # Optional
-    api_secret="YOUR_API_SECRET"  # Optional
-)
+async def main():
+    source = DataSourceRegistry.get_source(
+        "ccxt",
+        exchange="binance",
+        # api_key / api_secret optional depending on endpoint
+    )
+    df = await source.fetch(
+        symbols=["BTC/USDT", "ETH/USDT"],
+        start=pd.Timestamp("2024-01-01"),
+        end=pd.Timestamp("2024-12-31"),
+        frequency="1h"
+    )
 
-# Fetch crypto data
-df = await source.fetch(
-    symbols=["BTC/USDT", "ETH/USDT"],
-    start=pd.Timestamp("2024-01-01"),
-    end=pd.Timestamp("2024-12-31"),
-    frequency="hourly"
-)
+asyncio.run(main())
 ```
 
 **Supported Exchanges**: binance, coinbase, kraken, bybit, okx, and 100+ more.
 
-### PolygonDataSource
+### Polygon (via DataSourceRegistry)
 
 High-quality financial data from Polygon.io.
 
 ```python
-from rustybt.data.sources import PolygonDataSource
+from rustybt.data.sources import DataSourceRegistry
+import pandas as pd
+import asyncio
 
-source = PolygonDataSource(
-    api_key="YOUR_API_KEY"
-)
+async def main():
+    source = DataSourceRegistry.get_source(
+        "polygon",
+        api_key="YOUR_API_KEY"
+    )
+    df = await source.fetch(
+        symbols=["AAPL"],
+        start=pd.Timestamp("2024-01-01"),
+        end=pd.Timestamp("2024-01-31"),
+        frequency="1m"
+    )
 
-# Intraday data
-df = await source.fetch(
-    symbols=["AAPL"],
-    start=pd.Timestamp("2024-01-01"),
-    end=pd.Timestamp("2024-01-31"),
-    frequency="minute"
-)
+asyncio.run(main())
 ```
 
 **Features**:
@@ -211,25 +224,28 @@ df = await source.fetch(
 - Tick-level data available
 - Premium tiers for more data
 
-### CSVDataSource
+### CSV (via DataSourceRegistry)
 
 Load data from CSV files.
 
 ```python
-from rustybt.data.sources import CSVDataSource
+from rustybt.data.sources import DataSourceRegistry
+import pandas as pd
+import asyncio
 
-source = CSVDataSource(
-    data_dir="/path/to/csv/files",
-    filename_pattern="{symbol}_{frequency}.csv"
-)
+async def main():
+    source = DataSourceRegistry.get_source(
+        "csv",
+        data_dir="/path/to/csv/files",
+    )
+    df = await source.fetch(
+        symbols=["AAPL", "MSFT"],
+        start=pd.Timestamp("2023-01-01"),
+        end=pd.Timestamp("2023-12-31"),
+        frequency="1d"
+    )
 
-# Files should be named: AAPL_daily.csv, MSFT_daily.csv, etc.
-df = await source.fetch(
-    symbols=["AAPL", "MSFT"],
-    start=pd.Timestamp("2023-01-01"),
-    end=pd.Timestamp("2023-12-31"),
-    frequency="daily"
-)
+asyncio.run(main())
 ```
 
 **CSV Format**:
@@ -248,9 +264,6 @@ Centralized registry for managing data sources.
 ```python
 from rustybt.data.sources import DataSourceRegistry
 
-# Register custom source
-DataSourceRegistry.register("my_source", MyCustomDataSource)
-
 # Get source by name
 source = DataSourceRegistry.get_source("yfinance")
 
@@ -263,12 +276,12 @@ source = DataSourceRegistry.get_source(
 
 # List available sources
 sources = DataSourceRegistry.list_sources()
-print(sources)  # ["yfinance", "alpaca", "ccxt", "polygon", "csv"]
+print(sources)  # ["alpaca", "alphavantage", "ccxt", "csv", "polygon", "yfinance"]
 ```
 
 ## Creating Custom Adapters
 
-### Example: Custom REST API Adapter
+### Example: Custom REST API Adapter (advanced)
 
 ```python
 from rustybt.data.sources.base import DataSource, DataSourceMetadata
@@ -333,11 +346,8 @@ class MyCustomDataSource(DataSource):
     def supports_live(self) -> bool:
         return False
 
-# Register custom source
-DataSourceRegistry.register("my_custom", MyCustomDataSource)
-
-# Use it
-source = DataSourceRegistry.get_source("my_custom", api_key="...")
+# Discovery is handled internally; ship adapter under rustybt.data.adapters and
+# ensure the registry imports it during discovery.
 ```
 
 ---

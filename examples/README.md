@@ -122,7 +122,10 @@ Yahoo Finance Data Ingestion Example
 - `ingest_ccxt.py` - Multi-exchange crypto data
 
 ### Advanced
-- Coming soon: Live trading, custom indicators, optimization
+- Optimization (grid/random/bayesian/genetic)
+- Live trading with PaperBroker/CCXT
+- Latency/slippage/borrow cost modeling
+- Parallel optimization and report generation
 
 ---
 
@@ -170,7 +173,42 @@ We welcome example contributions! Please:
 
 ## Additional Resources
 
-- [Data Ingestion Guide](../docs/guides/data-ingestion.md)
-- [Caching Guide](../docs/guides/caching-guide.md)
-- [API Reference](../docs/api/datasource-api.md)
-- [Migration Guide](../docs/guides/migrating-to-unified-data.md)
+### 📖 Quick Start
+- [Documentation Index](../docs/INDEX.md) - Complete documentation catalog with learning paths
+
+### 📚 User Guides
+
+**Data & Backtesting:**
+- [Data Ingestion Guide](../docs/guides/data-ingestion.md) - Fetching and storing market data
+- [Caching Guide](../docs/guides/caching-guide.md) - Optimizing backtest performance
+- [Data Validation Guide](../docs/guides/data-validation.md) - Quality checks and validation
+- [Migration Guide](../docs/guides/migrating-to-unified-data.md) - Upgrading from legacy data systems
+
+**Live Trading:**
+- [Broker Setup Guide](../docs/guides/broker-setup-guide.md) - Configuring brokers (Binance, Bybit, IB, etc.)
+- [WebSocket Streaming Guide](../docs/guides/websocket-streaming-guide.md) - Real-time market data
+- [Live vs Backtest Data](../docs/guides/live-vs-backtest-data.md) - Understanding data modes
+
+**Advanced Topics:**
+- [Pipeline API Guide](../docs/guides/pipeline-api-guide.md) - Factor-based strategies
+- [Exception Handling Guide](../docs/guides/exception-handling.md) - Error handling patterns
+- [Audit Logging Guide](../docs/guides/audit-logging.md) - Structured logging
+- [Type Hinting Guide](../docs/guides/type-hinting.md) - Type safety best practices
+
+### 🔧 API References
+
+**Data Layer:**
+- [DataSource API](../docs/api/datasource-api.md) - Data ingestion and bundles
+- [Caching API](../docs/api/caching-api.md) - Cache configuration and usage
+- [Bundle Metadata API](../docs/api/bundle-metadata-api.md) - Bundle information
+
+**Live Trading:**
+- [Live Trading API](../docs/api/live-trading-api.md) - LiveTradingEngine and broker adapters
+- [Order Types](../docs/api/order-types.md) - Available order types and parameters
+
+**Analytics:**
+- [Analytics API](../docs/api/analytics-api.md) - Performance analysis and reporting
+- [Finance API](../docs/api/finance-api.md) - Commission, slippage, and costs
+
+**Optimization:**
+- [Optimization API](../docs/api/optimization-api.md) - Parameter optimization algorithms

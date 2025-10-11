@@ -128,13 +128,16 @@ data = pl.read_parquet("ohlcv_data.parquet")
 
 ```python
 from rustybt.live import LiveTradingEngine
-from rustybt.live.brokers import CCXTAdapter
+from rustybt.live.brokers import CCXTBrokerAdapter
 
 # Connect to exchange for live trading
-engine = LiveTradingEngine(
-    strategy=my_strategy,
-    broker=CCXTAdapter(exchange='binance')
+broker = CCXTBrokerAdapter(
+    exchange_id='binance',
+    api_key='YOUR_API_KEY',
+    api_secret='YOUR_API_SECRET',
+    testnet=True,
 )
+engine = LiveTradingEngine(strategy=my_strategy, broker_adapter=broker)
 engine.run()
 ```
 
@@ -205,7 +208,7 @@ This project incorporates code from Zipline and Zipline-Reloaded, both licensed 
 
 ## Community
 
-- **Documentation**: Coming soon
+- **Documentation**: See docs/architecture/index.md
 - **Issues**: [GitHub Issues](https://github.com/your-org/rustybt/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/your-org/rustybt/discussions)
 

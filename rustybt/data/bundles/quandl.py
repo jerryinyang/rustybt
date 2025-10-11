@@ -248,7 +248,8 @@ def download_with_progress(url, chunk_size, **progress_kwargs):
     data : BytesIO
         A BytesIO containing the downloaded data.
     """
-    resp = requests.get(url, stream=True)
+    # SECURITY FIX (Story 8.10): Add timeout to prevent hanging connections
+    resp = requests.get(url, stream=True, timeout=30)
     resp.raise_for_status()
 
     total_size = int(resp.headers["content-length"])
@@ -276,7 +277,8 @@ def download_without_progress(url):
     data : BytesIO
         A BytesIO containing the downloaded data.
     """
-    resp = requests.get(url)
+    # SECURITY FIX (Story 8.10): Add timeout to prevent hanging connections
+    resp = requests.get(url, timeout=30)
     resp.raise_for_status()
     return BytesIO(resp.content)
 
@@ -310,6 +312,17 @@ def quantopian_quandl_bundle(
     with tarfile.open("r", fileobj=data) as tar:
         if show_progress:
             log.info("Writing data to %s.", output_dir)
+
+        # SECURITY FIX (Story 8.10): Prevent path traversal attacks
+        # Validate all members before extraction
+        output_path = pathlib.Path(output_dir).resolve()
+        for member in tar.getmembers():
+            member_path = (output_path / member.name).resolve()
+            if not str(member_path).startswith(str(output_path)):
+                raise ValueError(
+                    f"Attempted path traversal in tar file: {member.name}"
+                )
+
         tar.extractall(output_dir)
 
 

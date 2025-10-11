@@ -21,6 +21,7 @@ import numpy as np
 from rustybt.utils.calendar_utils import get_calendar
 
 from . import data
+from . import exceptions
 from . import finance
 from . import gens
 from . import utils
@@ -97,6 +98,7 @@ __all__ = [
     "TradingAlgorithm",
     "api",
     "data",
+    "exceptions",
     "finance",
     "get_calendar",
     "gens",

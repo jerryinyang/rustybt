@@ -18,6 +18,7 @@ from copy import copy
 import warnings
 from datetime import tzinfo, time, timezone
 import logging
+import structlog
 import pytz
 import pandas as pd
 import numpy as np
@@ -1443,6 +1444,22 @@ class TradingAlgorithm:
         amount, style = self._calculate_order(
             asset, amount, limit_price, stop_price, style
         )
+
+        # Strategy decision logging (AC: 3)
+        logger = structlog.get_logger()
+        signal_type = "buy" if amount > 0 else "sell" if amount < 0 else "hold"
+        logger.info(
+            "trading_decision",
+            event_type="trading_decision",
+            signal_type=signal_type,
+            asset=asset.symbol,
+            amount=str(amount),
+            limit_price=str(limit_price) if limit_price is not None else None,
+            stop_price=str(stop_price) if stop_price is not None else None,
+            strategy_class=self.__class__.__name__,
+            timestamp=pd.Timestamp.now(tz="UTC").isoformat(),
+        )
+
         return self.blotter.order(asset, amount, style)
 
     def _calculate_order(

@@ -452,38 +452,13 @@ cached_source = CachedDataSource(
 )
 ```
 
-### Multi-Level Caching
+### Multi-Level Caching (Planned)
 
-Combine memory and disk caching:
+Note: In-memory caching and multi-level (memory + disk) layers are planned. Today, use `CachedDataSource` (disk-backed) for robust performance.
 
-```python
-from rustybt.data.sources import MemoryCachedDataSource, CachedDataSource
+### Distributed Caching (Planned)
 
-# Level 1: Memory cache (fast, limited size)
-memory_cached = MemoryCachedDataSource(
-    adapter=yfinance_source,
-    max_size_mb=100
-)
-
-# Level 2: Disk cache (slower, large capacity)
-disk_cached = CachedDataSource(
-    adapter=memory_cached,
-    max_size_mb=10240
-)
-```
-
-### Distributed Caching
-
-Share cache across multiple machines:
-
-```python
-from rustybt.data.sources import RedisCachedDataSource
-
-cached_source = RedisCachedDataSource(
-    adapter=source,
-    redis_url="redis://localhost:6379/0"
-)
-```
+Note: Redis-backed distributed caching is not available yet. For now, share Parquet bundles through your artifact storage or shared filesystem.
 
 ---
 

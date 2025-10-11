@@ -11,11 +11,14 @@ import time
 from abc import ABC, abstractmethod
 from decimal import getcontext
 from functools import wraps
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 import pandas as pd
 import polars as pl
 import structlog
+
+if TYPE_CHECKING:
+    from rustybt.data.polars.validation import DataValidator
 
 # Set decimal precision for financial calculations
 getcontext().prec = 28
@@ -28,41 +31,32 @@ logger = structlog.get_logger()
 # ============================================================================
 
 
-class DataAdapterError(Exception):
-    """Base exception for data adapter errors."""
+# Import centralized exceptions
+from rustybt.exceptions import (
+    DataAdapterError,
+    DataValidationError,
+)
 
-    pass
 
-
+# Legacy aliases for backward compatibility
 class NetworkError(DataAdapterError):
-    """Network connectivity error."""
+    """Network connectivity error during data fetching."""
 
-    pass
+    def __init__(self, message: str, adapter: str | None = None):
+        super().__init__(message, adapter=adapter)
 
 
 class RateLimitError(DataAdapterError):
-    """API rate limit exceeded."""
+    """API rate limit exceeded during data fetching."""
 
-    pass
-
-
-class InvalidDataError(DataAdapterError):
-    """Received data is invalid or corrupted."""
-
-    pass
+    def __init__(self, message: str, adapter: str | None = None, reset_after: float | None = None):
+        context = {"reset_after": reset_after} if reset_after is not None else None
+        super().__init__(message, adapter=adapter, context=context)
 
 
-class ValidationError(DataAdapterError):
-    """Data validation failed.
-
-    Attributes:
-        message: Error message describing validation failure
-        invalid_rows: DataFrame containing rows that failed validation (optional)
-    """
-
-    def __init__(self, message: str, invalid_rows: Optional[pl.DataFrame] = None):
-        super().__init__(message)
-        self.invalid_rows = invalid_rows
+# Use centralized exceptions
+InvalidDataError = DataValidationError
+ValidationError = DataValidationError
 
 
 # ============================================================================
@@ -381,6 +375,7 @@ class BaseDataAdapter(ABC):
         max_retries: int = 3,
         initial_retry_delay: float = 1.0,
         backoff_factor: float = 2.0,
+        validator: Optional["DataValidator"] = None,
     ) -> None:
         """Initialize base data adapter.
 
@@ -390,12 +385,14 @@ class BaseDataAdapter(ABC):
             max_retries: Maximum retry attempts for transient errors
             initial_retry_delay: Initial delay before first retry (seconds)
             backoff_factor: Multiplier for exponential backoff
+            validator: Optional DataValidator for multi-layer data validation
         """
         self.name = name
         self.rate_limiter = RateLimiter(requests_per_second=rate_limit_per_second)
         self.max_retries = max_retries
         self.initial_retry_delay = initial_retry_delay
         self.backoff_factor = backoff_factor
+        self.validator = validator
 
     @abstractmethod
     async def fetch(
@@ -427,12 +424,12 @@ class BaseDataAdapter(ABC):
         """
         pass
 
-    @abstractmethod
     def validate(self, df: pl.DataFrame) -> bool:
         """Validate OHLCV data quality and relationships.
 
-        Must be implemented by subclasses. Should perform all necessary
-        validation checks for data quality.
+        If a DataValidator was provided at initialization, uses multi-layer
+        validation. Otherwise, uses basic validation (validate_ohlcv_relationships).
+        Subclasses can override this method for custom validation logic.
 
         Args:
             df: DataFrame to validate
@@ -443,7 +440,13 @@ class BaseDataAdapter(ABC):
         Raises:
             ValidationError: If data validation fails
         """
-        pass
+        if self.validator is not None:
+            # Use multi-layer validation
+            self.validator.validate_and_raise(df)
+            return True
+        else:
+            # Use basic validation (backward compatibility)
+            return validate_ohlcv_relationships(df)
 
     @abstractmethod
     def standardize(self, df: pl.DataFrame) -> pl.DataFrame:

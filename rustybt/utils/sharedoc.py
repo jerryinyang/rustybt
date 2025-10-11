@@ -3,9 +3,15 @@ Shared docstrings for parameters that should be documented identically
 across different functions.
 """
 
+from __future__ import annotations
+
 import re
 from textwrap import dedent
+from typing import Any, Callable, TypeVar
+
 from toolz import curry
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 PIPELINE_DOWNSAMPLING_FREQUENCY_DOC = dedent(
     """\
@@ -27,12 +33,12 @@ PIPELINE_ALIAS_NAME_DOC = dedent(
 )
 
 
-def pad_lines_after_first(prefix, s):
+def pad_lines_after_first(prefix: str, s: str) -> str:
     """Apply a prefix to each line in s after the first."""
     return ("\n" + prefix).join(s.splitlines())
 
 
-def format_docstring(owner_name, docstring, formatters):
+def format_docstring(owner_name: str, docstring: str, formatters: dict[str, str]) -> str:
     """
     Template ``formatters`` into ``docstring``.
 
@@ -80,7 +86,7 @@ def format_docstring(owner_name, docstring, formatters):
     return docstring.format(**format_params)
 
 
-def templated_docstring(**docs):
+def templated_docstring(**docs: str) -> Callable[[F], F]:
     """
     Decorator allowing the use of templated docstrings.
 
@@ -94,15 +100,16 @@ def templated_docstring(**docs):
     'bar'
     """
 
-    def decorator(f):
-        f.__doc__ = format_docstring(f.__name__, f.__doc__, docs)
+    def decorator(f: F) -> F:
+        if f.__doc__ is not None:
+            f.__doc__ = format_docstring(f.__name__, f.__doc__, docs)
         return f
 
     return decorator
 
 
-@curry
-def copydoc(from_, to):
+@curry  # type: ignore[misc]  # toolz.curry is untyped
+def copydoc(from_: Any, to: F) -> F:
     """Copies the docstring from one function to another.
     Parameters
     ----------

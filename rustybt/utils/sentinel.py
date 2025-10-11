@@ -4,8 +4,12 @@ Construction of sentinel objects.
 Sentinel objects are used when you only care to check for object identity.
 """
 
+from __future__ import annotations
+
 import sys
 from textwrap import dedent
+from types import FrameType
+from typing import Any
 
 
 class _Sentinel:
@@ -14,13 +18,14 @@ class _Sentinel:
     __slots__ = ("__weakref__",)
 
 
-def is_sentinel(obj):
+def is_sentinel(obj: Any) -> bool:
     return isinstance(obj, _Sentinel)
 
 
-def sentinel(name, doc=None):
+def sentinel(name: str, doc: str | None = None) -> type[_Sentinel]:
+    cache: dict[str, type[_Sentinel]] = getattr(sentinel, "_cache")
     try:
-        value = sentinel._cache[name]  # memoized
+        value = cache[name]  # memoized
     except KeyError:
         pass
     else:
@@ -40,14 +45,16 @@ def sentinel(name, doc=None):
             Resolve this conflict by changing the name of one of the sentinels.
             """,
             )
-            % (name, value.__doc__, doc, value._created_at)
+            % (name, value.__doc__, doc, getattr(value, "_created_at", "<unknown>"))
         )
 
+    frame: FrameType | None
     try:
         frame = sys._getframe(1)
     except ValueError:
         frame = None
 
+    created_at: str
     if frame is None:
         created_at = "<unknown>"
     else:
@@ -62,32 +69,33 @@ def sentinel(name, doc=None):
         # name violation
         _created_at = created_at
 
-        def __new__(cls):
+        def __new__(cls) -> None:  # type: ignore[misc]
             raise TypeError("cannot create %r instances" % name)
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return "sentinel(%r)" % name
 
-        def __reduce__(self):
+        def __reduce__(self) -> tuple[Any, tuple[str, str | None]]:
             return sentinel, (name, doc)
 
-        def __deepcopy__(self, _memo):
+        def __deepcopy__(self, _memo: Any) -> _Sentinel:
             return self
 
-        def __copy__(self):
+        def __copy__(self) -> _Sentinel:
             return self
 
     cls = type(Sentinel)
-    try:
-        cls.__module__ = frame.f_globals["__name__"]
-    except (AttributeError, KeyError):
-        # Couldn't get the name from the calling scope, just use None.
-        # AttributeError is when frame is None, KeyError is when f_globals
-        # doesn't hold '__name__'
-        cls.__module__ = None
+    module_name: str | None = None
+    if frame is not None:
+        try:
+            module_name = frame.f_globals["__name__"]
+        except KeyError:
+            # f_globals doesn't hold '__name__'
+            pass
+    cls.__module__ = module_name  # type: ignore[assignment]
 
-    sentinel._cache[name] = Sentinel  # cache result
+    cache[name] = Sentinel  # cache result
     return Sentinel
 
 
-sentinel._cache = {}
+sentinel._cache: dict[str, type[_Sentinel]] = {}  # type: ignore[attr-defined,misc]

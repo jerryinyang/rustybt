@@ -1,6 +1,7 @@
 """Bayesian optimization using Gaussian Process surrogate models."""
 
-import pickle
+# SECURITY FIX (Story 8.10): Use secure pickle with HMAC validation
+from rustybt.utils.secure_pickle import secure_dumps, secure_loads, SecurePickleError
 from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Union
@@ -323,8 +324,8 @@ class BayesianOptimizer(SearchAlgorithm):
         Returns:
             Dictionary containing all state needed to resume optimization
         """
-        # Pickle the skopt Optimizer for complete state preservation
-        optimizer_bytes = pickle.dumps(self._optimizer)
+        # SECURITY FIX (Story 8.10): Use secure_dumps with HMAC signing
+        optimizer_bytes = secure_dumps(self._optimizer)
 
         return {
             "n_iter": self.n_iter,
@@ -353,10 +354,12 @@ class BayesianOptimizer(SearchAlgorithm):
         Args:
             state: State dictionary from previous get_state() call
 
-        Warning:
-            This method uses pickle.loads() which can execute arbitrary code.
-            Only restore state from trusted sources (your own checkpoint files).
-            Never load state from untrusted or user-provided sources.
+        Raises:
+            SecurePickleError: If HMAC signature validation fails (tampered data)
+
+        Security:
+            This method uses secure_loads() with HMAC signature validation
+            to protect against malicious pickle payloads.
         """
         self.n_iter = state["n_iter"]
         self.acq_func = state["acq_func"]
@@ -378,8 +381,12 @@ class BayesianOptimizer(SearchAlgorithm):
         self._acq_values = state["acq_values"]
         self._param_names = state["param_names"]
 
-        # Restore skopt Optimizer from pickle
-        self._optimizer = pickle.loads(state["optimizer_pickle"])
+        # SECURITY FIX (Story 8.10): Use secure_loads with HMAC validation
+        try:
+            self._optimizer = secure_loads(state["optimizer_pickle"])
+        except SecurePickleError as e:
+            logger.error("pickle_signature_validation_failed", error=str(e))
+            raise
 
         logger.info(
             "optimizer_state_restored",

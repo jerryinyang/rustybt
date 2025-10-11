@@ -528,7 +528,9 @@ class PandasRequestsCSV(PandasCSV):
         # UnicodeEncodeError exception, so instead we'll use
         # pandas logic for decoding content
         try:
-            response = requests.get(url, **self.requests_kwargs)
+            # SECURITY FIX (Story 8.10): Ensure timeout is set
+            kwargs = {'timeout': 30, **self.requests_kwargs}
+            response = requests.get(url, **kwargs)
         except requests.exceptions.ConnectionError as exc:
             raise Exception("Could not connect to %s" % url) from exc
 
@@ -584,7 +586,8 @@ class PandasRequestsCSV(PandasCSV):
             # see if pandas can parse csv data
             frames = pd.read_csv(fd, **self.pandas_kwargs)
 
-            frames_hash = hashlib.md5(str(fd.getvalue()).encode("utf-8"))
+            # SECURITY FIX (Story 8.10): MD5 used for checksums, not cryptography
+            frames_hash = hashlib.md5(str(fd.getvalue()).encode("utf-8"), usedforsecurity=False)
             self.fetch_hash = frames_hash.hexdigest()
         except pd.parser.CParserError as exc:
             # could not parse the data, raise exception

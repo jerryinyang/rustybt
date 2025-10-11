@@ -1,6 +1,7 @@
 """Genetic algorithm optimization implementation using DEAP."""
 
-import pickle
+# SECURITY FIX (Story 8.10): Use secure pickle with HMAC validation
+from rustybt.utils.secure_pickle import secure_dumps, secure_loads, SecurePickleError
 import time
 import warnings
 from decimal import Decimal
@@ -702,8 +703,8 @@ class GeneticAlgorithm(SearchAlgorithm):
         Returns:
             Dictionary containing all state needed to resume optimization
         """
-        # Pickle DEAP population (toolbox cannot be pickled due to Lock)
-        population_bytes = pickle.dumps(self._population)
+        # SECURITY FIX (Story 8.10): Use secure_dumps with HMAC signing
+        population_bytes = secure_dumps(self._population)
 
         return {
             "iteration": self._iteration,
@@ -814,14 +815,13 @@ class GeneticAlgorithm(SearchAlgorithm):
         # Reinitialize DEAP toolbox (cannot be pickled)
         self._setup_deap()
 
-        # Unpickle population (SECURITY: state must be from trusted source - see docstring)
-        # Pre-validation above reduces risk of malicious state dictionaries
+        # SECURITY FIX (Story 8.10): Use secure_loads with HMAC validation
         try:
-            self._population = pickle.loads(state["population"])
-        except (pickle.UnpicklingError, EOFError, AttributeError, ImportError) as e:
+            self._population = secure_loads(state["population"])
+        except (SecurePickleError, EOFError, AttributeError, ImportError) as e:
             raise ValueError(
                 f"Failed to restore population from checkpoint: {e}. "
-                "Checkpoint may be corrupted or from incompatible version."
+                "Checkpoint may be corrupted, tampered with, or from incompatible version."
             ) from e
 
         # Post-unpickle validation: ensure population size matches

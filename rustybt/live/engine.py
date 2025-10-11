@@ -11,9 +11,11 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any, Optional
 
+import pandas as pd
 import structlog
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+from rustybt._version import __version__
 from rustybt.algorithm import TradingAlgorithm
 from rustybt.live.brokers.base import BrokerAdapter
 from rustybt.live.data_feed import DataFeed
@@ -209,7 +211,18 @@ class LiveTradingEngine:
         This is the main entry point that starts the async event loop.
         The engine runs until graceful_shutdown() is called.
         """
-        logger.info("engine_starting")
+        # Comprehensive system startup logging (AC: 4)
+        logger.info(
+            "system_startup",
+            event_type="system_startup",
+            version=__version__,
+            strategy_class=self._strategy.__class__.__name__,
+            broker=self._broker.__class__.__name__,
+            checkpoint_interval_seconds=self._checkpoint_interval_seconds,
+            reconciliation_strategy=self._reconciliation_strategy.value,
+            shadow_mode=self._shadow_mode,
+            timestamp=pd.Timestamp.now(tz="UTC").isoformat(),
+        )
         self._running = True
 
         try:
@@ -249,12 +262,26 @@ class LiveTradingEngine:
             await monitoring_task
 
         except Exception as e:
-            logger.error("engine_error", error=str(e), exc_info=True)
+            # Comprehensive error logging (AC: 4)
+            logger.error(
+                "system_error",
+                event_type="system_error",
+                exception_type=type(e).__name__,
+                error_message=str(e),
+                timestamp=pd.Timestamp.now(tz="UTC").isoformat(),
+                exc_info=True,
+            )
             await self.graceful_shutdown()
             raise
         finally:
             self._running = False
-            logger.info("engine_stopped")
+            # Comprehensive shutdown logging (AC: 4)
+            logger.info(
+                "system_shutdown",
+                event_type="system_shutdown",
+                reason="graceful" if not self._shutdown_requested else "requested",
+                timestamp=pd.Timestamp.now(tz="UTC").isoformat(),
+            )
 
     async def _event_loop(self) -> None:
         """Main event processing loop.
@@ -717,7 +744,13 @@ class LiveTradingEngine:
             logger.warning("shutdown_already_requested")
             return
 
-        logger.info("graceful_shutdown_initiated")
+        # Comprehensive shutdown logging (AC: 4)
+        logger.info(
+            "graceful_shutdown_initiated",
+            event_type="graceful_shutdown",
+            reason="user_requested",
+            timestamp=pd.Timestamp.now(tz="UTC").isoformat(),
+        )
         self._shutdown_requested = True
 
         # Stop accepting new events

@@ -24,9 +24,13 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies:
-          - types-all
-          - pandas-stubs
-          - sqlalchemy-stubs
+          - types-requests>=2.31.0
+          - types-pytz>=2024.1.0
+          - types-PyYAML>=6.0.12
+          - pandas-stubs>=2.0.0
+          - sqlalchemy-stubs>=0.4
+          - types-python-dateutil>=2.8.19
+          - types-networkx>=3.0
         args: [--strict, --ignore-missing-imports]
         exclude: ^(tests/|setup.py)
 

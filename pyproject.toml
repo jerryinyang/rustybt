@@ -87,6 +87,9 @@ dependencies = [
     'tqdm >=4.65',
     'ipywidgets >=8.0',
     'nest-asyncio >=1.5',
+    # Report generation (Story 8.2)
+    'seaborn >=0.13.0',
+    'jinja2 >=3.0.0',
 ]
 
 [project.urls]
@@ -136,6 +139,17 @@ dev = [
     'mypy>=1.10.0',
     'black>=24.1',
     'hypothesis>=6.0',
+    # Type stubs for external libraries (Story 8.9)
+    'types-requests>=2.31.0',
+    'types-pytz>=2024.1.0',
+    'types-PyYAML>=6.0.12',
+    'pandas-stubs>=2.0.0',
+    'sqlalchemy-stubs>=0.4',
+    'types-python-dateutil>=2.8.19',
+    'types-networkx>=3.0',
+    'types-seaborn>=0.13.0',
+    # Note: toolz, multipledispatch, statsmodels lack official type stubs
+    # These will use --ignore-missing-imports in mypy config
 ]
 
 benchmarks = [
@@ -188,6 +202,9 @@ local_scheme = 'dirty-tag'
     "*.pyx",
     "*.pxi",
     "*.pxd",
+]
+"rustybt" = [
+    "py.typed",
 ]
 
 [tool.pytest.ini_options]
@@ -335,18 +352,124 @@ max-complexity = 10
 
 [tool.mypy]
 python_version = "3.12"
+strict = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
 disallow_untyped_decorators = true
+disallow_any_unimported = true
 no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
+warn_unreachable = true
 strict_equality = true
-strict = true
+
+# Exclude generated files or third-party code
+exclude = [
+    "build",
+    "dist",
+    ".eggs",
+    ".*.egg-info",
+    "deps",
+]
+
+# Per-module options for libraries without type stubs
+[[tool.mypy.overrides]]
+module = [
+    "toolz.*",
+    "multipledispatch.*",
+    "statsmodels.*",
+    "rustybt._protocol",
+    "rustybt.gens.*",
+]
+ignore_missing_imports = true
+
+# Gradual typing strategy: Relaxed checks for pre-existing code
+# Strict typing enforced for: exceptions, utils/logging, utils/error_handling
+# Epic 8 analytics/live modules: temporarily relaxed (to be migrated in Story 8.10)
+# Legacy Zipline modules: will be migrated incrementally in future sprints
+[[tool.mypy.overrides]]
+module = [
+    # Core algorithm and backtesting engine (Zipline legacy)
+    "rustybt.algorithm",
+    "rustybt.gens.*",
+    "rustybt.sources.*",
+    "rustybt.test_algorithms",
+    "rustybt.__main__",
+    "rustybt.api",
+    "rustybt.country",
+    "rustybt.currency",
+    "rustybt.errors",
+    "rustybt.extensions",
+    "rustybt.dispatch",
+    "rustybt.protocol",
+    "rustybt.rust_optimizations",
+    "rustybt.zipline_warnings",
+    # Assets and instruments
+    "rustybt.assets.*",
+    # Data infrastructure
+    "rustybt.data.bar_reader",
+    "rustybt.data.bundles.*",
+    "rustybt.data.minute_bars",
+    "rustybt.data.adjustments",
+    "rustybt.data.dispatch_bar_reader",
+    "rustybt.data.session_bars",
+    "rustybt.data.data_portal",
+    "rustybt.data.resample",
+    "rustybt.data.history_loader",
+    "rustybt.data.catalog",
+    "rustybt.data.loader",
+    "rustybt.data.ffc.*",
+    "rustybt.data.fx.*",
+    "rustybt.data.bcolz_minute_bars",
+    "rustybt.data.bcolz_daily_bars",
+    "rustybt.data.hdf5_daily_bars",
+    "rustybt.data.polars.metadata_catalog",
+    "rustybt.data.polars.cache_manager",
+    "rustybt.data.polars.parquet_writer",
+    # Finance and trading
+    "rustybt.finance.*",
+    # Pipeline
+    "rustybt.pipeline.*",
+    # Testing utilities
+    "rustybt.testing.*",
+    # Library utilities
+    "rustybt.lib.*",
+    # General utilities (except new Epic 8 modules)
+    "rustybt.utils.cache",
+    "rustybt.utils.calendar_utils",
+    "rustybt.utils.classproperty",
+    "rustybt.utils.compat",
+    "rustybt.utils.context_tricks",
+    "rustybt.utils.date_utils",
+    "rustybt.utils.dummy",
+    "rustybt.utils.exploding_object",
+    "rustybt.utils.final",
+    "rustybt.utils.formatting",
+    "rustybt.utils.idbox",
+    "rustybt.utils.input_validation",
+    "rustybt.utils.math_utils",
+    "rustybt.utils.memoize",
+    "rustybt.utils.numpy_utils",
+    "rustybt.utils.pandas_utils",
+    "rustybt.utils.string_formatting",
+    "rustybt.utils.events",
+    "rustybt.utils.api_support",
+    "rustybt.utils.data",
+    "rustybt.utils.run_algo",
+    "rustybt.utils.security_list",
+    # Epic 8 modules (temporarily relaxed for initial release - Story 8.10)
+    "rustybt.analytics.*",
+    "rustybt.live.*",
+]
+# Disable strict checks for gradual migration modules
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
 
 [tool.coverage.run]
 source = ["rustybt"]

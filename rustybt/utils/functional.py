@@ -1,13 +1,20 @@
+from __future__ import annotations
+
+from collections.abc import Callable, Iterable, Iterator
 from functools import reduce
 from operator import itemgetter
 from pprint import pformat
+from typing import Any, TypeVar
+
 from toolz import curry, flip
 
 from .sentinel import sentinel
 
+T = TypeVar("T")
 
-@curry
-def apply(f, *args, **kwargs):
+
+@curry  # type: ignore[misc]  # toolz.curry is untyped
+def apply(f: Callable[..., T], *args: Any, **kwargs: Any) -> T:
     """Apply a function to arguments.
 
     Parameters
@@ -58,7 +65,7 @@ def apply(f, *args, **kwargs):
 instance = apply
 
 
-def mapall(funcs, seq):
+def mapall(funcs: Iterable[Callable[[T], Any]], seq: Iterable[T]) -> Iterator[Any]:
     """
     Parameters
     ----------
@@ -82,7 +89,7 @@ def mapall(funcs, seq):
             yield func(elem)
 
 
-def same(*values):
+def same(*values: Any) -> bool:
     """
     Check if all values in a sequence are equal.
 
@@ -103,11 +110,11 @@ def same(*values):
     return all(value == first for value in rest)
 
 
-def _format_unequal_keys(dicts):
+def _format_unequal_keys(dicts: Iterable[dict[Any, Any]]) -> str:
     return pformat([sorted(d.keys()) for d in dicts])
 
 
-def dzip_exact(*dicts):
+def dzip_exact(*dicts: dict[T, Any]) -> dict[T, tuple[Any, ...]]:
     """
     Parameters
     ----------

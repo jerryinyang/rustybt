@@ -30,8 +30,9 @@ def hash_args(*args, **kwargs):
     )
     combined = ":".join([arg_string, kwarg_string])
 
-    hasher = md5()
-    hasher.update(combined)
+    # SECURITY FIX (Story 8.10): MD5 used for checksums, not cryptography
+    hasher = md5(usedforsecurity=False)
+    hasher.update(combined.encode('utf-8'))
     return hasher.hexdigest()
 
 

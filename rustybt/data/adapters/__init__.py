@@ -6,11 +6,13 @@ for fetching market data from various sources (exchanges, APIs, files).
 
 from rustybt.data.adapters.base import (
     BaseDataAdapter,
+    NetworkError,  # Legacy data adapter specific
+    RateLimitError,  # Legacy data adapter specific
+)
+from rustybt.exceptions import (
     DataAdapterError,
-    InvalidDataError,
-    NetworkError,
-    RateLimitError,
-    ValidationError,
+    DataValidationError as InvalidDataError,  # Alias for backward compatibility
+    DataValidationError as ValidationError,  # Alias for backward compatibility
 )
 from rustybt.data.adapters.csv_adapter import CSVAdapter, CSVConfig, SchemaMapping
 from rustybt.data.adapters.registry import AdapterRegistry

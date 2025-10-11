@@ -17,28 +17,63 @@ Analytics and visualization tools for Jupyter notebook integration.
 
 This module provides:
 - Interactive visualization functions using Plotly
+- Report generation with PDF and HTML output
 - DataFrame export utilities for backtest results
 - Notebook-friendly repr methods for strategy objects
 - Async execution support for notebooks
 - Progress bars for long-running operations
 """
 
-from rustybt.analytics.visualization import (
-    plot_equity_curve,
-    plot_drawdown,
-    plot_returns_distribution,
-    plot_rolling_metrics,
+from rustybt.analytics.attribution import (
+    AttributionError,
+    InsufficientDataError,
+    PerformanceAttribution,
 )
 from rustybt.analytics.notebook import (
     async_backtest,
     setup_notebook,
 )
+from rustybt.analytics.reports import (
+    ReportConfig,
+    ReportGenerator,
+)
+from rustybt.analytics.risk import (
+    InsufficientDataError as RiskInsufficientDataError,
+)
+from rustybt.analytics.risk import (
+    RiskAnalytics,
+    RiskError,
+)
+from rustybt.analytics.trade_analysis import (
+    InsufficientTradeDataError,
+    Trade,
+    TradeAnalysisError,
+    TradeAnalyzer,
+)
+from rustybt.analytics.visualization import (
+    plot_drawdown,
+    plot_equity_curve,
+    plot_returns_distribution,
+    plot_rolling_metrics,
+)
 
 __all__ = [
-    "plot_equity_curve",
+    "AttributionError",
+    "InsufficientDataError",
+    "InsufficientTradeDataError",
+    "PerformanceAttribution",
+    "ReportConfig",
+    "ReportGenerator",
+    "RiskAnalytics",
+    "RiskError",
+    "RiskInsufficientDataError",
+    "Trade",
+    "TradeAnalysisError",
+    "TradeAnalyzer",
+    "async_backtest",
     "plot_drawdown",
+    "plot_equity_curve",
     "plot_returns_distribution",
     "plot_rolling_metrics",
-    "async_backtest",
     "setup_notebook",
 ]

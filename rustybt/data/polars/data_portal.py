@@ -20,6 +20,7 @@ from rustybt.data.polars.parquet_minute_bars import PolarsParquetMinuteReader
 
 if TYPE_CHECKING:
     from rustybt.data.sources.base import DataSource
+    from rustybt.data.polars.validation import DataValidator
 
 logger = structlog.get_logger(__name__)
 
@@ -67,6 +68,7 @@ class PolarsDataPortal:
         *,
         asset_finder: Optional[object] = None,
         calendar: Optional[object] = None,
+        validator: Optional["DataValidator"] = None,
     ):
         """Initialize PolarsDataPortal with readers or DataSource.
 
@@ -77,6 +79,9 @@ class PolarsDataPortal:
                 If None, lookahead checks are disabled (live trading mode).
             data_source: Unified DataSource for fetching data (NEW - preferred)
             use_cache: Whether to wrap data_source with caching (default: True)
+            asset_finder: Optional asset finder instance
+            calendar: Optional trading calendar instance
+            validator: Optional DataValidator for lightweight validation during strategy execution
 
         Raises:
             ValueError: If neither data_source nor readers provided
@@ -137,6 +142,7 @@ class PolarsDataPortal:
         self.use_cache = use_cache
         self.asset_finder = asset_finder
         self.calendar = calendar
+        self.validator = validator
 
         # Cache statistics (for new data_source path)
         self.cache_hit_count = 0

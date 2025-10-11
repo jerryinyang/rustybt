@@ -13,25 +13,32 @@ from decimal import Decimal
 import structlog
 
 from rustybt.assets import Asset
+from rustybt.exceptions import (
+    BrokerConnectionError,
+    BrokerError as BaseBrokerError,
+    DataNotFoundError,
+    InsufficientFundsError as BaseInsufficientFundsError,
+)
 from rustybt.finance.decimal.commission import DecimalCommissionModel, NoCommission
 from rustybt.finance.decimal.order import DecimalOrder
 from rustybt.finance.decimal.position import DecimalPosition
 from rustybt.finance.decimal.slippage import DecimalSlippageModel, NoSlippage
 from rustybt.finance.decimal.transaction import DecimalTransaction
 from rustybt.live.brokers.base import BrokerAdapter
+from rustybt.utils.error_handling import log_exception
 
 logger = structlog.get_logger(__name__)
 
 
-class PaperBrokerError(Exception):
+class PaperBrokerError(BaseBrokerError):
     """Base exception for PaperBroker errors."""
 
 
-class InsufficientFundsError(PaperBrokerError):
+class InsufficientFundsError(BaseInsufficientFundsError, PaperBrokerError):
     """Raised when insufficient funds for order execution."""
 
 
-class MarketDataUnavailableError(PaperBrokerError):
+class MarketDataUnavailableError(DataNotFoundError, PaperBrokerError):
     """Raised when market data is unavailable for asset."""
 
 
@@ -201,7 +208,9 @@ class PaperBroker(BrokerAdapter):
             estimated_cost = await self._estimate_order_cost(order)
             if estimated_cost > self.cash:
                 raise InsufficientFundsError(
-                    f"Insufficient cash: need {estimated_cost}, have {self.cash}"
+                    f"Insufficient cash: need {estimated_cost}, have {self.cash}",
+                    required=estimated_cost,
+                    available=self.cash,
                 )
 
         # Store order

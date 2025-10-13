@@ -53,7 +53,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --dev
+          uv sync --all-extras
 
       - name: Run unit tests with coverage (BLOCKING)
         run: |
@@ -81,7 +81,7 @@ jobs:
           verbose: true
 
       - name: Archive coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report-py${{ matrix.python-version }}
           path: htmlcov/
@@ -116,7 +116,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --dev
+          uv sync --all-extras
 
       - name: Run property-based tests (BLOCKING)
         run: |

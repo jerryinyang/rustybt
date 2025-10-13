@@ -26,13 +26,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install build dependencies
+      - name: Install dependencies with build support
         run: |
-          uv pip install "setuptools>=42.0.0" "setuptools_scm[toml]>=6.2" "setuptools-rust>=1.5.0" "wheel>=0.36.0" "Cython>=0.29.21,<3.2.0" "numpy>=1.26.0,<2.0" --system
-
-      - name: Build and install package
-        run: |
-          uv pip install -e . --system --no-build-isolation
+          python -m pip install --upgrade pip setuptools wheel
+          uv pip install -e . --system
 
       - name: Run smoke test
         run: |

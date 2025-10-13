@@ -118,36 +118,16 @@ ext_modules = [
 
 def build(setup_kwargs):
     """
-    This function is called by the build backend.
-    It adds extension modules to the build configuration.
+    Optional hook for some build frontends. Populates setup_kwargs in-place.
     """
-    setup_kwargs.update(
-        {
-            "ext_modules": cythonize(ext_modules, **ext_options),
-            "rust_extensions": [
-                RustExtension(
-                    "rustybt._rustybt",
-                    path=str(ROOT_DIR / "rust" / "crates" / "rustybt" / "Cargo.toml"),
-                    binding=Binding.PyO3,
-                    debug=False,
-                )
-            ],
-            "include_dirs": [numpy.get_include()],
-            "zip_safe": False,
-        }
-    )
+    setup_kwargs.update(default_setup_kwargs())
 
 
-# For compatibility with older build systems that might still call setup.py directly
-if __name__ == "__main__":
-    from setuptools import find_packages, setup
-
-    setup(
-        packages=find_packages(
-            where=".", include=["rustybt*"], exclude=["tests*", "deps*", "docs*", ".bmad-core*"]
-        ),
-        ext_modules=cythonize(ext_modules, **ext_options),
-        rust_extensions=[
+def default_setup_kwargs():
+    """Return the keyword arguments to pass to setuptools.setup()."""
+    return {
+        "ext_modules": cythonize(ext_modules, **ext_options),
+        "rust_extensions": [
             RustExtension(
                 "rustybt._rustybt",
                 path=str(ROOT_DIR / "rust" / "crates" / "rustybt" / "Cargo.toml"),
@@ -155,6 +135,17 @@ if __name__ == "__main__":
                 debug=False,
             )
         ],
-        include_dirs=[numpy.get_include()],
-        zip_safe=False,
-    )
+        "include_dirs": [numpy.get_include()],
+        "zip_safe": False,
+    }
+
+
+# Always provide setup() so PEP 517 backends (pip/build) pick up extension modules
+from setuptools import find_packages, setup
+
+setup(
+    packages=find_packages(
+        where=".", include=["rustybt*"], exclude=["tests*", "deps*", "docs*", ".bmad-core*"]
+    ),
+    **default_setup_kwargs(),
+)

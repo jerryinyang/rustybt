@@ -14,6 +14,9 @@ import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
+# Import the module we're testing so the coverage script can detect it
+from rustybt.data.polars import data_portal
+
 
 class TestPolarsDataPortalProperties:
     """Property tests for Polars data portal functionality."""

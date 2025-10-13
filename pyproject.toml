@@ -198,6 +198,7 @@ local_scheme = 'dirty-tag'
 
 [tool.setuptools.package-data]
 "*" = [
+    "*.py",      # Include Python files explicitly
     "*.pyi",
     "*.pyx",
     "*.pxi",

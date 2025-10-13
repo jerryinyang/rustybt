@@ -2,7 +2,7 @@
 
 **Complete documentation index for RustyBT framework**
 
-Last Updated: 2024-10-11
+Last Updated: 2025-10-13
 
 ---
 
@@ -274,6 +274,18 @@ Quality gates for each story (see [qa/gates/](qa/gates/)):
 
 ---
 
+## 📄 Pull Request Documentation
+
+Detailed documentation for significant pull requests:
+
+- **[PR Documentation Index](pr/README.md)** - Overview and naming conventions
+- **[2025-10-13-PR1: Test Suite Implementation](pr/2025-10-13-PR1-335f312-test-suite-implementation.md)** ⭐ NEW
+  - Comprehensive test suite for rustybt.lib Cython modules
+  - 112 tests covering 2,028 lines of code
+  - Issues identified and fixes implemented
+
+---
+
 ## 📊 Production Deployment
 
 Production readiness documentation:
@@ -360,7 +372,7 @@ Production readiness documentation:
 
 ---
 
-**Last Updated**: 2024-10-11
+**Last Updated**: 2025-10-13
 **Documentation Version**: 0.1.0
 **Framework Version**: 0.1.0-dev
 

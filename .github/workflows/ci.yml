@@ -33,16 +33,20 @@ jobs:
 
       - name: Verify package structure after installation
         run: |
+          cd /tmp
           echo "=== Checking installed package location ==="
           python -c "import rustybt, os; print(f'RustyBT location: {os.path.dirname(rustybt.__file__)}')"
 
-          echo -e "\n=== Checking for compiled extensions (.so/.pyd files) ==="
+          echo ""
+          echo "=== Checking for compiled extensions (.so/.pyd files) ==="
           python -c "import rustybt, os, glob; base = os.path.dirname(rustybt.__file__); so_files = glob.glob(os.path.join(base, '**/*.so'), recursive=True) + glob.glob(os.path.join(base, '**/*.pyd'), recursive=True); print(f'Found {len(so_files)} compiled extension(s):'); [print(f'  - {os.path.relpath(f, base)}') for f in sorted(so_files)[:10]]; print(f'  ... and {len(so_files) - 10} more' if len(so_files) > 10 else '')"
 
-          echo -e "\n=== Checking for gens package ==="
+          echo ""
+          echo "=== Checking for gens package ==="
           python -c "import os; import rustybt; gens_path = os.path.join(os.path.dirname(rustybt.__file__), 'gens'); print(f'gens directory exists: {os.path.exists(gens_path)}'); print(f'gens __init__.py exists: {os.path.exists(os.path.join(gens_path, \"__init__.py\"))}'); print(f'sim_engine.so exists: {any(f.startswith(\"sim_engine\") and (f.endswith(\".so\") or f.endswith(\".pyd\")) for f in os.listdir(gens_path) if os.path.exists(gens_path))}')"
 
-          echo -e "\n=== Attempting direct sim_engine import ==="
+          echo ""
+          echo "=== Attempting direct sim_engine import ==="
           python -c "from rustybt.gens import sim_engine; print(f'✅ sim_engine module: {sim_engine}'); print(f'✅ sim_engine location: {sim_engine.__file__}'); print(f'✅ SESSION_END available: {hasattr(sim_engine, \"SESSION_END\")}')"
 
       - name: Run smoke test (from different directory to avoid source import)

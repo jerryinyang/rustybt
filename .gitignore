@@ -12,6 +12,8 @@ eggs/
 .eggs/
 lib/
 lib64/
+# Exception: rustybt/lib contains Cython source files
+!rustybt/lib/
 parts/
 sdist/
 var/

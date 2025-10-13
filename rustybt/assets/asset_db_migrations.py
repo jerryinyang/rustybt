@@ -74,8 +74,9 @@ def alter_columns(op, name, *columns, **kwargs):
 
     op.create_table(name, *columns)
     # nosec B608 - table name validated, selection_string from internal column names
+    # Table and column names are from trusted internal framework preprocessing
     op.execute(
-        f"INSERT INTO {name} SELECT {selection_string} FROM {tmp_name}",
+        f"INSERT INTO {name} SELECT {selection_string} FROM {tmp_name}",  # nosec B608
     )
 
     if op.impl.dialect.name == "postgresql":
@@ -405,6 +406,8 @@ def _downgrade_v7(op):
         # add back exchange full column
         sa.Column("exchange_full", sa.Text),
     )
+    # nosec B608 - tmp_name is internally generated from trusted migration code
+    # Table name is not from user input - it's from internal migration framework
     op.execute(
         f"""
         insert into
@@ -426,7 +429,7 @@ def _downgrade_v7(op):
             eq.exchange = ex.exchange
         where
             ex.country_code in ('US', '??')
-        """,
+        """,  # nosec B608
     )
     # if op.impl.dialect.name == "postgresql":
     #     for table_name, col_name in [

@@ -1,1 +1,7 @@
 recursive-include rust *
+recursive-include rustybt *.pyx
+recursive-include rustybt *.pxd
+recursive-include rustybt *.pxi
+include rustybt/*/__init__.py
+include rustybt/*/*/__init__.py
+include rustybt/*/*/*/__init__.py

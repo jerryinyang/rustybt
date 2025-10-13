@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import importlib
 
 import numpy as np
 from packaging.version import Version
 
 from rustybt import extensions as ext
-from rustybt.finance.blotter import Blotter
 
 # This is *not* a place to dump arbitrary classes/modules for convenience,
 # it is a place to expose the public interfaces.
@@ -28,12 +28,8 @@ from rustybt.finance.blotter import Blotter
 from rustybt.utils.calendar_utils import get_calendar, global_calendar_dispatcher
 
 from . import api, data, exceptions, finance, gens, utils
-
-# These need to happen after the other imports.
-from .algorithm import TradingAlgorithm
 from .utils.numpy_utils import numpy_version
 from .utils.pandas_utils import new_pandas
-from .utils.run_algo import run_algorithm
 
 if global_calendar_dispatcher._calendars:
     import warnings
@@ -103,6 +99,24 @@ __all__ = [
     "rust_sum",
     "utils",
 ]
+
+
+def __getattr__(name):
+    # Lazy-import heavy modules to avoid import-time side effects and dependency chains
+    if name == "TradingAlgorithm":
+        from .algorithm import TradingAlgorithm as _TradingAlgorithm
+
+        return _TradingAlgorithm
+    if name == "Blotter":
+        from .finance.blotter import Blotter as _Blotter
+
+        return _Blotter
+    if name == "run_algorithm":
+        from .utils.run_algo import run_algorithm as _run_algorithm
+
+        return _run_algorithm
+    # Submodules are handled by regular import mechanics
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 def setup(

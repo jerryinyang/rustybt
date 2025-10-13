@@ -1,5 +1,50 @@
-# CI/CD Pipeline Failure Analysis & Fix Plan
+# CI/CD Failure Analysis and Remediation Plan
 
+## Executive Summary
+Multiple workflows (CI Smoke Test, Testing, Code Quality, Property-Based Tests) failed due to missing package modules at runtime and import-time side effects. Primary root causes:
+- .gitignore patterns inadvertently ignored `rustybt/lib/**`, so pure-Python modules (labelarray, adjusted_array, normalize, quantiles) were not committed and thus absent in CI.
+- `rustybt/__init__.py` imported pipeline components at import time, surfacing missing submodules during a simple `import rustybt` in the smoke step.
+
+We fixed the ignore rules, added the missing modules, and made top-level imports lazy.
+
+## Evidence
+- CI Smoke Test (Run 18472114171): `ModuleNotFoundError: No module named 'rustybt.lib.labelarray'` during `import rustybt` in the verification step.
+- Property-Based Tests (Run 18472114155/…): identical error raised from tests’ `import rustybt` in conftest.
+
+## Root Causes and Fixes
+1) .gitignore masking sources
+- Cause: `lib/` (duplicated) matched nested paths; `!rustybt/lib/` didn’t re-include contents.
+- Fix: Anchor ignores to `/lib/` and `/lib64/`, and explicitly unignore `!rustybt/lib/**`.
+  - Result: all `rustybt/lib/*.py` are now tracked.
+
+2) Import-time side effects
+- Cause: `rustybt/__init__.py` imported heavy modules (algorithm/pipeline) at import time, failing early when submodules missing.
+- Fix: Added module-level `__getattr__` to lazily resolve `TradingAlgorithm`, `Blotter`, and `run_algorithm`.
+
+3) Code quality gates
+- Fixed ruff findings in `labelarray.py` (no `assert`, avoid builtin shadowing).
+
+## Validation Plan
+- Local check: `import rustybt` and `from rustybt.lib.labelarray import LabelArray` succeed from source.
+- After merge:
+  - Smoke Test should pass package verification and proceed.
+  - Testing/Property-Based Tests should no longer fail on missing `rustybt.lib.*`.
+  - Code Quality should pass for touched files.
+
+## Notes on Local Debugging
+- act installed (via Homebrew). Examples:
+  - `act -l`
+  - `act -j smoke-test -W .github/workflows/ci.yml --container-architecture linux/amd64`
+  - Docker is available locally.
+
+## Outstanding Item
+- Local pre-commit hook `detect-mocks` calls `python` (not available). Either:
+  - Adjust hook to use `python3`, or
+  - Install `python` shim, or
+  - Temporarily commit with `--no-verify` (if approved).
+
+---
+Legacy plan (for reference):
 ## Executive Summary
 Following the commit `21d4978` ("fix: Import from specific module files for coverage detection"), 9 out of 10 CI/CD workflows are failing. The failures are primarily due to:
 1. A circular import issue in `rustybt.lib`

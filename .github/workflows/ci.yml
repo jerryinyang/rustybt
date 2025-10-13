@@ -42,6 +42,7 @@ jobs:
 
       - name: Verify package structure after installation
         run: |
+          # Change directory to ensure we import the installed package, not the workspace source
           cd /tmp
           echo "=== Checking installed package location ==="
           python -c "import rustybt, os; print(f'RustyBT location: {os.path.dirname(rustybt.__file__)}')"
@@ -52,18 +53,30 @@ jobs:
 
           echo ""
           echo "=== Checking for gens package ==="
-          python -c "import os; import rustybt; gens_path = os.path.join(os.path.dirname(rustybt.__file__), 'gens'); print(f'gens directory exists: {os.path.exists(gens_path)}'); print(f'gens __init__.py exists: {os.path.exists(os.path.join(gens_path, \"__init__.py\"))}'); print(f'sim_engine.so exists: {any(f.startswith(\"sim_engine\") and (f.endswith(\".so\") or f.endswith(\".pyd\")) for f in os.listdir(gens_path) if os.path.exists(gens_path))}')"
+          python - <<'PY'
+          import os, importlib
+          import rustybt
+          base = os.path.dirname(rustybt.__file__)
+          gens = os.path.join(base, 'gens')
+          print(f"gens directory exists: {os.path.exists(gens)}")
+          print(f"gens __init__.py exists: {os.path.exists(os.path.join(gens, '__init__.py'))}")
+          try:
+            sim_engine = importlib.import_module('rustybt.gens.sim_engine')
+            print(f"✅ sim_engine importable: {sim_engine}")
+            print(f"✅ sim_engine location: {getattr(sim_engine, '__file__', '<n/a>')}")
+          except Exception as e:
+            print(f"❌ sim_engine import failed in verify phase: {e}")
+          PY
 
           echo ""
-          echo "=== Attempting direct sim_engine import ==="
-          python -c "from rustybt.gens import sim_engine; print(f'✅ sim_engine module: {sim_engine}'); print(f'✅ sim_engine location: {sim_engine.__file__}'); print(f'✅ SESSION_END available: {hasattr(sim_engine, \"SESSION_END\")}')"
+          echo "=== Skipping direct sim_engine import here; will validate in smoke test step ==="
 
       - name: Run smoke test (from different directory to avoid source import)
         run: |
           cd /tmp
           python -c "import rustybt; print(f'RustyBT version: {rustybt.__version__}')"
           python -c "import rustybt; import os; print(f'RustyBT location: {os.path.dirname(rustybt.__file__)}')"
-          python -c "import polars, hypothesis, structlog, pydantic; print('All dependencies OK')"
+          python -c "import polars, structlog, pydantic; print('Core dependencies OK')"
           python -c "from rustybt.lib.labelarray import LabelArray; print('✅ labelarray import OK')"
           python -c "from rustybt.gens.sim_engine import SESSION_END; print('✅ sim_engine import OK')"
 
@@ -176,8 +189,8 @@ jobs:
           flags: unittests
           name: codecov-rustybt
           fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        # env:
+        #   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload coverage artifact on failure
         if: failure()

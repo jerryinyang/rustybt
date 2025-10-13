@@ -73,7 +73,7 @@ repos:
     hooks:
       - id: detect-mocks
         name: Detect Mock Patterns
-        entry: python scripts/detect_mocks.py --quick
+        entry: python3 scripts/detect_mocks.py --quick
         language: system
         types: [python]
         pass_filenames: false

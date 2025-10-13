@@ -26,10 +26,19 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install numpy Cython>=0.29.21 setuptools-rust
+
       - name: Install package (non-editable for proper module exposure)
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install .
+          python -m pip install . --verbose
 
       - name: Verify package structure after installation
         run: |

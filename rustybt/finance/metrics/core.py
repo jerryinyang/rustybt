@@ -7,7 +7,7 @@ def _make_metrics_set_core():
     """Create a family of metrics sets functions that read from the same
     metrics set mapping.
 
-    Returns
+    Returns:
     -------
     metrics_sets : mappingproxy
         The mapping of metrics sets to load functions.
@@ -36,11 +36,11 @@ def _make_metrics_set_core():
         function : callable
             The callable which produces the metrics set.
 
-        Notes
+        Notes:
         -----
         This may be used as a decorator if only ``name`` is passed.
 
-        See Also
+        See Also:
         --------
         zipline.finance.metrics.get_metrics_set
         zipline.finance.metrics.unregister_metrics_set
@@ -64,7 +64,7 @@ def _make_metrics_set_core():
         name : str
             The name of the metrics set
 
-        See Also
+        See Also:
         --------
         zipline.finance.metrics.register_metrics_set
         """
@@ -78,12 +78,12 @@ def _make_metrics_set_core():
     def load(name):
         """Return an instance of the metrics set registered with the given name.
 
-        Returns
+        Returns:
         -------
         metrics : set[Metric]
             A new instance of the metrics set.
 
-        Raises
+        Raises:
         ------
         ValueError
             Raised when no metrics set is registered to ``name``

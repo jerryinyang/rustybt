@@ -141,9 +141,7 @@ class Optimizer:
         """
         if self.current_trial >= self.max_trials:
             return True
-        if self.search_algorithm.is_complete():
-            return True
-        return False
+        return bool(self.search_algorithm.is_complete())
 
     def _should_checkpoint(self) -> bool:
         """Check if checkpoint should be saved.
@@ -214,14 +212,10 @@ class Optimizer:
         if not self.checkpoint_dir:
             return
 
-        checkpoint_file = (
-            self.checkpoint_dir / f"checkpoint_trial_{self.current_trial}.json"
-        )
+        checkpoint_file = self.checkpoint_dir / f"checkpoint_trial_{self.current_trial}.json"
 
         # Convert algorithm state to JSON-serializable format
-        algorithm_state = self._serialize_algorithm_state(
-            self.search_algorithm.get_state()
-        )
+        algorithm_state = self._serialize_algorithm_state(self.search_algorithm.get_state())
 
         state = {
             "current_trial": self.current_trial,
@@ -234,9 +228,7 @@ class Optimizer:
         with open(checkpoint_file, "w") as f:
             json.dump(state, f, indent=2)
 
-        logger.info(
-            "checkpoint_saved", file=str(checkpoint_file), trial=self.current_trial
-        )
+        logger.info("checkpoint_saved", file=str(checkpoint_file), trial=self.current_trial)
 
     def _serialize_algorithm_state(self, state: dict[str, Any]) -> dict[str, Any]:
         """Convert algorithm state to JSON-serializable format.
@@ -247,6 +239,7 @@ class Optimizer:
         Returns:
             JSON-serializable state dictionary
         """
+
         def convert_value(value):
             """Recursively convert Decimal to string."""
             if isinstance(value, Decimal):
@@ -259,6 +252,7 @@ class Optimizer:
                 return value
 
         import copy
+
         serialized = copy.deepcopy(state)
 
         # Recursively convert all Decimal values
@@ -273,6 +267,7 @@ class Optimizer:
         Returns:
             State dictionary with proper types
         """
+
         def convert_value(value):
             """Recursively convert numeric strings to Decimal where appropriate."""
             if isinstance(value, str):
@@ -292,6 +287,7 @@ class Optimizer:
                 return value
 
         import copy
+
         deserialized = copy.deepcopy(state)
 
         # Recursively convert numeric strings back to Decimal
@@ -313,9 +309,7 @@ class Optimizer:
         self.current_trial = state["current_trial"]
         self.results = [OptimizationResult.from_dict(r) for r in state["results"]]
         self.best_result = (
-            OptimizationResult.from_dict(state["best_result"])
-            if state["best_result"]
-            else None
+            OptimizationResult.from_dict(state["best_result"]) if state["best_result"] else None
         )
 
         # Deserialize algorithm state

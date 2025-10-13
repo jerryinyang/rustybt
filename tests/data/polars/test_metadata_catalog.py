@@ -8,11 +8,11 @@ Tests cover:
 - Metadata queries
 """
 
-import pytest
 import tempfile
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
-from decimal import Decimal
+
+import pytest
 
 from rustybt.data.polars.metadata_catalog import (
     ParquetMetadataCatalog,

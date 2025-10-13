@@ -3,7 +3,6 @@
 from decimal import Decimal
 
 import polars as pl
-import pytest
 from hypothesis import assume, example, given
 
 from rustybt.data.quality import _validate_ohlcv_relationships
@@ -80,19 +79,14 @@ def test_ohlcv_validation_function(bars: pl.DataFrame) -> None:
     # Validate using the quality module function
     is_valid = validate_ohlcv_relationships(bars)
 
-    assert is_valid, (
-        f"Valid OHLCV data rejected by validation function. "
-        f"Sample: {bars.head()}"
-    )
+    assert is_valid, f"Valid OHLCV data rejected by validation function. Sample: {bars.head()}"
 
 
 @given(
     open_price=decimal_prices(min_value=Decimal("10"), max_value=Decimal("100"), scale=2),
     high_offset=decimal_prices(min_value=Decimal("0"), max_value=Decimal("10"), scale=2),
     low_offset=decimal_prices(min_value=Decimal("0"), max_value=Decimal("10"), scale=2),
-    close_offset=decimal_prices(
-        min_value=Decimal("-10"), max_value=Decimal("10"), scale=2
-    ),
+    close_offset=decimal_prices(min_value=Decimal("-10"), max_value=Decimal("10"), scale=2),
 )
 @example(
     open_price=Decimal("50"),
@@ -141,9 +135,7 @@ def test_ohlcv_construction_from_offsets(
     ),
     split_ratio=Decimal("2"),
 )
-def test_split_adjustment_preserves_relationships(
-    bars: pl.DataFrame, split_ratio: Decimal
-) -> None:
+def test_split_adjustment_preserves_relationships(bars: pl.DataFrame, split_ratio: Decimal) -> None:
     """Test split adjustment preserves OHLCV relationships.
 
     Property:
@@ -187,9 +179,7 @@ def test_split_adjustment_preserves_relationships(
     ),
     dividend=Decimal("2.50"),
 )
-def test_dividend_adjustment_preserves_relationships(
-    bars: pl.DataFrame, dividend: Decimal
-) -> None:
+def test_dividend_adjustment_preserves_relationships(bars: pl.DataFrame, dividend: Decimal) -> None:
     """Test dividend adjustment preserves OHLCV relationships.
 
     Property:
@@ -215,9 +205,7 @@ def test_dividend_adjustment_preserves_relationships(
 
     # Verify relationships still hold
     assert (adjusted_bars["high"] >= adjusted_bars["open"]).all(), "High >= Open after dividend"
-    assert (
-        adjusted_bars["high"] >= adjusted_bars["close"]
-    ).all(), "High >= Close after dividend"
+    assert (adjusted_bars["high"] >= adjusted_bars["close"]).all(), "High >= Close after dividend"
     assert (adjusted_bars["low"] <= adjusted_bars["open"]).all(), "Low <= Open after dividend"
     assert (adjusted_bars["low"] <= adjusted_bars["close"]).all(), "Low <= Close after dividend"
     assert (adjusted_bars["high"] >= adjusted_bars["low"]).all(), "High >= Low after dividend"
@@ -243,7 +231,7 @@ def test_roundtrip_preserves_precision(bars: pl.DataFrame) -> None:
         original_vals = bars[col].to_list()
         reconstructed_vals = reconstructed[col].to_list()
 
-        for i, (orig, recon) in enumerate(zip(original_vals, reconstructed_vals)):
+        for i, (orig, recon) in enumerate(zip(original_vals, reconstructed_vals, strict=False)):
             diff = abs(orig - recon)
             assert diff < 1e-6, (
                 f"Roundtrip precision lost for {col}[{i}]: "

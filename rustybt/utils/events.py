@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from abc import ABCMeta, ABC, abstractmethod
-from collections import namedtuple
+import datetime
 import inspect
 import warnings
+from abc import ABC, ABCMeta, abstractmethod
+from collections import namedtuple
 
-import datetime
 import numpy as np
 import pandas as pd
 import pytz
@@ -71,13 +71,7 @@ def _out_of_range_error(a, b=None, var="offset"):
     else:
         start = a
         end = b - 1
-    return ValueError(
-        "{var} must be in between {start} and {end} inclusive".format(
-            var=var,
-            start=start,
-            end=end,
-        )
-    )
+    return ValueError(f"{var} must be in between {start} and {end} inclusive")
 
 
 def _td_check(td):
@@ -87,9 +81,7 @@ def _td_check(td):
     if 60 <= seconds <= 43200:
         return td
     else:
-        raise ValueError(
-            "offset must be in between 1 minute and 12 hours, " "inclusive."
-        )
+        raise ValueError("offset must be in between 1 minute and 12 hours, inclusive.")
 
 
 def _build_offset(offset, kwargs, default):
@@ -156,12 +148,8 @@ def lossless_float_to_int(funcname, func, argname, arg):
     arg_as_int = int(arg)
     if arg == arg_as_int:
         warnings.warn(
-            "{f} expected an int for argument {name!r}, but got float {arg}."
-            " Coercing to int.".format(
-                f=funcname,
-                name=argname,
-                arg=arg,
-            ),
+            f"{funcname} expected an int for argument {argname!r}, but got float {arg}."
+            " Coercing to int.",
         )
         return arg_as_int
 
@@ -366,7 +354,6 @@ class AfterOpen(StatelessRule):
 
     def calculate_dates(self, dt):
         """Given a date, find that day's open and period end (open + offset)."""
-
         period_start = self.cal.session_first_minute(self.cal.minute_to_session(dt))
         period_close = self.cal.session_close(self.cal.minute_to_session(dt))
 
@@ -606,7 +593,7 @@ class OncePerDay(StatefulRule):
 class date_rules:
     """Factories for date-based :func:`~zipline.api.schedule_function` rules.
 
-    See Also
+    See Also:
     --------
     :func:`~zipline.api.schedule_function`
     """
@@ -615,7 +602,7 @@ class date_rules:
     def every_day():
         """Create a rule that triggers every day.
 
-        Returns
+        Returns:
         -------
         rule : rustybt.utils.events.EventRule
         """
@@ -634,7 +621,7 @@ class date_rules:
             month. Default is 0, i.e., trigger on the first trading day of the
             month.
 
-        Returns
+        Returns:
         -------
         rule : rustybt.utils.events.EventRule
         """
@@ -652,7 +639,7 @@ class date_rules:
             Number of trading days prior to month end to trigger. Default is 0,
             i.e., trigger on the last day of the month.
 
-        Returns
+        Returns:
         -------
         rule : rustybt.utils.events.EventRule
         """
@@ -690,7 +677,7 @@ class date_rules:
 class time_rules:
     """Factories for time-based :func:`~zipline.api.schedule_function` rules.
 
-    See Also
+    See Also:
     --------
     :func:`~zipline.api.schedule_function`
     """
@@ -713,11 +700,11 @@ class time_rules:
         minutes : int, optional
             If passed, number of minutes to wait after market open.
 
-        Returns
+        Returns:
         -------
         rule : rustybt.utils.events.EventRule
 
-        Notes
+        Notes:
         -----
         If no arguments are passed, the default offset is one minute after
         market open.
@@ -746,11 +733,11 @@ class time_rules:
         minutes : int, optional
             If passed, number of minutes to wait before market close.
 
-        Returns
+        Returns:
         -------
         rule : rustybt.utils.events.EventRule
 
-        Notes
+        Notes:
         -----
         If no arguments are passed, the default offset is one minute before
         market close.
@@ -770,7 +757,7 @@ class calendars:
 
 
 def _invert(d):
-    return dict(zip(d.values(), d.keys()))
+    return dict(zip(d.values(), d.keys(), strict=False))
 
 
 _uncalled_rules = _invert(vars(date_rules))

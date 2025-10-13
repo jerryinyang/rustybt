@@ -1,10 +1,9 @@
 """Multi-threading tests for DecimalConfig thread safety."""
 
-from decimal import Decimal, getcontext
-from pathlib import Path
 import threading
 import time
-import pytest
+from decimal import Decimal, getcontext
+from pathlib import Path
 
 from rustybt.finance.decimal import DecimalConfig
 
@@ -121,7 +120,7 @@ class TestDecimalConfigThreadSafety:
 
         def calculate_crypto(thread_id: int):
             """Calculate crypto value with ROUND_DOWN."""
-            with config.with_precision("crypto") as ctx:
+            with config.with_precision("crypto"):
                 # Crypto uses ROUND_DOWN
                 value = Decimal("1.999999999")
                 # Round to 8 decimal places
@@ -130,7 +129,7 @@ class TestDecimalConfigThreadSafety:
 
         def calculate_equity(thread_id: int):
             """Calculate equity value with ROUND_HALF_UP."""
-            with config.with_precision("equity") as ctx:
+            with config.with_precision("equity"):
                 # Equity uses ROUND_HALF_UP
                 value = Decimal("1.999999999")
                 # Round to 2 decimal places

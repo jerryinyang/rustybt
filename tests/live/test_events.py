@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 
 from rustybt.live.events import (
-    Event,
     EventPriority,
     MarketDataEvent,
     OrderFillEvent,

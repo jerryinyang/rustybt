@@ -76,7 +76,7 @@ def preprocess(*_unused, **processors):
         `argname` is the name of the argument we're processing.
         `argvalue` is the value of the argument we're processing.
 
-    Examples
+    Examples:
     --------
     >>> def _ensure_tuple(func, argname, arg):
     ...     if isinstance(arg, tuple):
@@ -112,7 +112,7 @@ def preprocess(*_unused, **processors):
         if defaults is None:
             defaults = ()
         no_defaults = (NO_DEFAULT,) * (len(args) - len(defaults))
-        args_defaults = list(zip(args, no_defaults + defaults))
+        args_defaults = list(zip(args, no_defaults + defaults, strict=False))
         if varargs:
             args_defaults.append((varargs, NO_DEFAULT))
         if varkw:
@@ -122,9 +122,7 @@ def preprocess(*_unused, **processors):
 
         # Arguments can be declared as tuples in Python 2.
         if not all(isinstance(arg, str) for arg in args):
-            raise TypeError(
-                "Can't validate functions using tuple unpacking: %s" % (argspec,)
-            )
+            raise TypeError("Can't validate functions using tuple unpacking: %s" % (argspec,))
 
         # Ensure that all processors map to valid names.
         bad_names = processors.keys() - argset
@@ -154,7 +152,7 @@ def call(f):
     f : function
         Function accepting a single argument and returning a replacement.
 
-    Examples
+    Examples:
     --------
     >>> @preprocess(x=call(lambda x: x + 1))
     ... def foo(x):
@@ -243,8 +241,21 @@ def _build_preprocessed_function(func, processors, args_defaults, varargs, varkw
         mode="exec",
     )
 
+    # SECURITY: exec() used for internal function preprocessing
+    # THREAT MODEL:
+    # - Input source: Decorated functions within RustyBT codebase
+    # - Trust level: Trusted (internal framework code only)
+    # - Use case: Preprocess decorator transforms function signatures
+    # GUARDRAILS:
+    # - Only operates on already-defined Python functions
+    # - Source code is extracted from function objects, not external input
+    # - Isolated namespace with controlled globals
+    # - This is metaprogramming for framework internals, not user code execution
+    # VALIDATION:
+    # - Function source must be valid Python (already compiled before this point)
+    # - Namespace is explicitly controlled via exec_globals
     exec_locals = {}
-    exec(compiled, exec_globals, exec_locals)
+    exec(compiled, exec_globals, exec_locals)  # nosec B102 - internal framework preprocessing
     new_func = exec_locals[func.__name__]
 
     code = new_func.__code__

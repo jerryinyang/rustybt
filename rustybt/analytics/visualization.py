@@ -22,16 +22,13 @@ All visualization functions support:
 - Both pandas and polars DataFrames as input
 """
 
-from typing import Optional, Union
-from decimal import Decimal
-
 import pandas as pd
-import polars as pl
 import plotly.graph_objects as go
+import polars as pl
 from plotly.subplots import make_subplots
 
 
-def _ensure_pandas(data: Union[pd.DataFrame, pl.DataFrame]) -> pd.DataFrame:
+def _ensure_pandas(data: pd.DataFrame | pl.DataFrame) -> pd.DataFrame:
     """Convert Polars DataFrame to pandas if needed.
 
     Args:
@@ -77,7 +74,7 @@ def _get_theme_colors(theme: str = "light") -> dict:
 
 
 def plot_equity_curve(
-    backtest_result: Union[pd.DataFrame, pl.DataFrame],
+    backtest_result: pd.DataFrame | pl.DataFrame,
     title: str = "Portfolio Equity Curve",
     theme: str = "light",
     show_drawdown: bool = True,
@@ -103,27 +100,28 @@ def plot_equity_curve(
     colors = _get_theme_colors(theme)
 
     # Handle both index and column named datetime/date
-    if df.index.name in ['date', 'period_close'] or isinstance(df.index, pd.DatetimeIndex):
+    if df.index.name in ["date", "period_close"] or isinstance(df.index, pd.DatetimeIndex):
         dates = df.index
-    elif 'date' in df.columns:
-        dates = df['date']
-    elif 'timestamp' in df.columns:
-        dates = df['timestamp']
+    elif "date" in df.columns:
+        dates = df["date"]
+    elif "timestamp" in df.columns:
+        dates = df["timestamp"]
     else:
         dates = df.index
 
     # Get portfolio value column
-    if 'portfolio_value' in df.columns:
-        values = df['portfolio_value']
-    elif 'ending_value' in df.columns:
-        values = df['ending_value']
+    if "portfolio_value" in df.columns:
+        values = df["portfolio_value"]
+    elif "ending_value" in df.columns:
+        values = df["ending_value"]
     else:
         raise ValueError("DataFrame must have 'portfolio_value' or 'ending_value' column")
 
     # Create figure with optional drawdown subplot
     if show_drawdown:
         fig = make_subplots(
-            rows=2, cols=1,
+            rows=2,
+            cols=1,
             shared_xaxes=True,
             vertical_spacing=0.05,
             row_heights=[0.7, 0.3],
@@ -139,12 +137,13 @@ def plot_equity_curve(
         go.Scatter(
             x=dates,
             y=values,
-            mode='lines',
-            name='Portfolio Value',
-            line=dict(color=colors["primary"], width=2),
-            hovertemplate='Date: %{x}<br>Value: $%{y:,.2f}<extra></extra>',
+            mode="lines",
+            name="Portfolio Value",
+            line={"color": colors["primary"], "width": 2},
+            hovertemplate="Date: %{x}<br>Value: $%{y:,.2f}<extra></extra>",
         ),
-        row=row_equity, col=1 if show_drawdown else None
+        row=row_equity,
+        col=1 if show_drawdown else None,
     )
 
     # Calculate and plot drawdown if requested
@@ -156,25 +155,26 @@ def plot_equity_curve(
             go.Scatter(
                 x=dates,
                 y=drawdown * 100,
-                mode='lines',
-                name='Drawdown',
-                line=dict(color=colors["negative"], width=1.5),
-                fill='tozeroy',
-                fillcolor=f'rgba(211, 47, 47, 0.2)',
-                hovertemplate='Date: %{x}<br>Drawdown: %{y:.2f}%<extra></extra>',
+                mode="lines",
+                name="Drawdown",
+                line={"color": colors["negative"], "width": 1.5},
+                fill="tozeroy",
+                fillcolor="rgba(211, 47, 47, 0.2)",
+                hovertemplate="Date: %{x}<br>Drawdown: %{y:.2f}%<extra></extra>",
             ),
-            row=2, col=1
+            row=2,
+            col=1,
         )
 
     # Update layout
     fig.update_layout(
         template="plotly_dark" if theme == "dark" else "plotly_white",
-        hovermode='x unified',
+        hovermode="x unified",
         showlegend=True,
         height=600 if show_drawdown else 400,
         plot_bgcolor=colors["background"],
         paper_bgcolor=colors["paper"],
-        font=dict(color=colors["text"]),
+        font={"color": colors["text"]},
     )
 
     # Update axes
@@ -190,7 +190,7 @@ def plot_equity_curve(
 
 
 def plot_drawdown(
-    backtest_result: Union[pd.DataFrame, pl.DataFrame],
+    backtest_result: pd.DataFrame | pl.DataFrame,
     title: str = "Portfolio Drawdown",
     theme: str = "light",
 ) -> go.Figure:
@@ -212,19 +212,19 @@ def plot_drawdown(
     colors = _get_theme_colors(theme)
 
     # Get dates and values
-    if df.index.name in ['date', 'period_close'] or isinstance(df.index, pd.DatetimeIndex):
+    if df.index.name in ["date", "period_close"] or isinstance(df.index, pd.DatetimeIndex):
         dates = df.index
-    elif 'date' in df.columns:
-        dates = df['date']
-    elif 'timestamp' in df.columns:
-        dates = df['timestamp']
+    elif "date" in df.columns:
+        dates = df["date"]
+    elif "timestamp" in df.columns:
+        dates = df["timestamp"]
     else:
         dates = df.index
 
-    if 'portfolio_value' in df.columns:
-        values = df['portfolio_value']
-    elif 'ending_value' in df.columns:
-        values = df['ending_value']
+    if "portfolio_value" in df.columns:
+        values = df["portfolio_value"]
+    elif "ending_value" in df.columns:
+        values = df["ending_value"]
     else:
         raise ValueError("DataFrame must have 'portfolio_value' or 'ending_value' column")
 
@@ -240,12 +240,12 @@ def plot_drawdown(
         go.Scatter(
             x=dates,
             y=drawdown * 100,
-            mode='lines',
-            name='Drawdown',
-            line=dict(color=colors["negative"], width=2),
-            fill='tozeroy',
-            fillcolor=f'rgba(211, 47, 47, 0.2)',
-            hovertemplate='Date: %{x}<br>Drawdown: %{y:.2f}%<extra></extra>',
+            mode="lines",
+            name="Drawdown",
+            line={"color": colors["negative"], "width": 2},
+            fill="tozeroy",
+            fillcolor="rgba(211, 47, 47, 0.2)",
+            hovertemplate="Date: %{x}<br>Drawdown: %{y:.2f}%<extra></extra>",
         )
     )
 
@@ -254,7 +254,7 @@ def plot_drawdown(
         y=max_drawdown * 100,
         line_dash="dash",
         line_color=colors["text"],
-        annotation_text=f"Max Drawdown: {max_drawdown*100:.2f}%",
+        annotation_text=f"Max Drawdown: {max_drawdown * 100:.2f}%",
         annotation_position="right",
     )
 
@@ -262,12 +262,12 @@ def plot_drawdown(
     fig.update_layout(
         title=title,
         template="plotly_dark" if theme == "dark" else "plotly_white",
-        hovermode='x unified',
+        hovermode="x unified",
         showlegend=False,
         height=400,
         plot_bgcolor=colors["background"],
         paper_bgcolor=colors["paper"],
-        font=dict(color=colors["text"]),
+        font={"color": colors["text"]},
     )
 
     fig.update_xaxes(title_text="Date", gridcolor=colors["grid"])
@@ -277,7 +277,7 @@ def plot_drawdown(
 
 
 def plot_returns_distribution(
-    backtest_result: Union[pd.DataFrame, pl.DataFrame],
+    backtest_result: pd.DataFrame | pl.DataFrame,
     title: str = "Returns Distribution",
     theme: str = "light",
     bins: int = 50,
@@ -301,12 +301,12 @@ def plot_returns_distribution(
     colors = _get_theme_colors(theme)
 
     # Get or calculate returns
-    if 'returns' in df.columns:
-        returns = df['returns'].dropna()
-    elif 'portfolio_value' in df.columns:
-        returns = df['portfolio_value'].pct_change().dropna()
-    elif 'ending_value' in df.columns:
-        returns = df['ending_value'].pct_change().dropna()
+    if "returns" in df.columns:
+        returns = df["returns"].dropna()
+    elif "portfolio_value" in df.columns:
+        returns = df["portfolio_value"].pct_change().dropna()
+    elif "ending_value" in df.columns:
+        returns = df["ending_value"].pct_change().dropna()
     else:
         raise ValueError("DataFrame must have 'returns' or 'portfolio_value' column")
 
@@ -324,10 +324,10 @@ def plot_returns_distribution(
         go.Histogram(
             x=returns * 100,  # Convert to percentage
             nbinsx=bins,
-            name='Returns',
+            name="Returns",
             marker_color=colors["primary"],
             opacity=0.7,
-            hovertemplate='Return: %{x:.2f}%<br>Count: %{y}<extra></extra>',
+            hovertemplate="Return: %{x:.2f}%<br>Count: %{y}<extra></extra>",
         )
     )
 
@@ -336,15 +336,15 @@ def plot_returns_distribution(
         x=mean_return * 100,
         line_dash="dash",
         line_color=colors["positive"],
-        annotation_text=f"Mean: {mean_return*100:.3f}%",
+        annotation_text=f"Mean: {mean_return * 100:.3f}%",
         annotation_position="top",
     )
 
     # Add statistics annotation
     stats_text = (
         f"<b>Statistics:</b><br>"
-        f"Mean: {mean_return*100:.3f}%<br>"
-        f"Std Dev: {std_return*100:.3f}%<br>"
+        f"Mean: {mean_return * 100:.3f}%<br>"
+        f"Std Dev: {std_return * 100:.3f}%<br>"
         f"Skewness: {skew:.3f}<br>"
         f"Kurtosis: {kurtosis:.3f}"
     )
@@ -360,19 +360,19 @@ def plot_returns_distribution(
         bgcolor=colors["paper"],
         bordercolor=colors["grid"],
         borderwidth=1,
-        font=dict(size=10, color=colors["text"]),
+        font={"size": 10, "color": colors["text"]},
     )
 
     # Update layout
     fig.update_layout(
         title=title,
         template="plotly_dark" if theme == "dark" else "plotly_white",
-        hovermode='closest',
+        hovermode="closest",
         showlegend=False,
         height=400,
         plot_bgcolor=colors["background"],
         paper_bgcolor=colors["paper"],
-        font=dict(color=colors["text"]),
+        font={"color": colors["text"]},
     )
 
     fig.update_xaxes(title_text="Returns (%)", gridcolor=colors["grid"])
@@ -382,7 +382,7 @@ def plot_returns_distribution(
 
 
 def plot_rolling_metrics(
-    backtest_result: Union[pd.DataFrame, pl.DataFrame],
+    backtest_result: pd.DataFrame | pl.DataFrame,
     window: int = 30,
     title: str = "Rolling Performance Metrics",
     theme: str = "light",
@@ -406,33 +406,34 @@ def plot_rolling_metrics(
     colors = _get_theme_colors(theme)
 
     # Get dates
-    if df.index.name in ['date', 'period_close'] or isinstance(df.index, pd.DatetimeIndex):
+    if df.index.name in ["date", "period_close"] or isinstance(df.index, pd.DatetimeIndex):
         dates = df.index
-    elif 'date' in df.columns:
-        dates = df['date']
-    elif 'timestamp' in df.columns:
-        dates = df['timestamp']
+    elif "date" in df.columns:
+        dates = df["date"]
+    elif "timestamp" in df.columns:
+        dates = df["timestamp"]
     else:
         dates = df.index
 
     # Get or calculate returns
-    if 'returns' in df.columns:
-        returns = df['returns']
-    elif 'portfolio_value' in df.columns:
-        returns = df['portfolio_value'].pct_change()
-    elif 'ending_value' in df.columns:
-        returns = df['ending_value'].pct_change()
+    if "returns" in df.columns:
+        returns = df["returns"]
+    elif "portfolio_value" in df.columns:
+        returns = df["portfolio_value"].pct_change()
+    elif "ending_value" in df.columns:
+        returns = df["ending_value"].pct_change()
     else:
         raise ValueError("DataFrame must have 'returns' or 'portfolio_value' column")
 
     # Calculate rolling metrics (annualized)
     rolling_mean = returns.rolling(window=window).mean() * 252  # Annualized return
-    rolling_std = returns.rolling(window=window).std() * (252 ** 0.5)  # Annualized volatility
+    rolling_std = returns.rolling(window=window).std() * (252**0.5)  # Annualized volatility
     rolling_sharpe = rolling_mean / rolling_std
 
     # Create subplots
     fig = make_subplots(
-        rows=2, cols=1,
+        rows=2,
+        cols=1,
         shared_xaxes=True,
         vertical_spacing=0.08,
         subplot_titles=(f"Rolling Sharpe Ratio ({window}d)", f"Rolling Volatility ({window}d)"),
@@ -443,12 +444,13 @@ def plot_rolling_metrics(
         go.Scatter(
             x=dates,
             y=rolling_sharpe,
-            mode='lines',
-            name='Sharpe Ratio',
-            line=dict(color=colors["primary"], width=2),
-            hovertemplate='Date: %{x}<br>Sharpe: %{y:.2f}<extra></extra>',
+            mode="lines",
+            name="Sharpe Ratio",
+            line={"color": colors["primary"], "width": 2},
+            hovertemplate="Date: %{x}<br>Sharpe: %{y:.2f}<extra></extra>",
         ),
-        row=1, col=1
+        row=1,
+        col=1,
     )
 
     # Add zero line for Sharpe
@@ -459,24 +461,25 @@ def plot_rolling_metrics(
         go.Scatter(
             x=dates,
             y=rolling_std * 100,  # Convert to percentage
-            mode='lines',
-            name='Volatility',
-            line=dict(color=colors["negative"], width=2),
-            hovertemplate='Date: %{x}<br>Vol: %{y:.2f}%<extra></extra>',
+            mode="lines",
+            name="Volatility",
+            line={"color": colors["negative"], "width": 2},
+            hovertemplate="Date: %{x}<br>Vol: %{y:.2f}%<extra></extra>",
         ),
-        row=2, col=1
+        row=2,
+        col=1,
     )
 
     # Update layout
     fig.update_layout(
         title=title,
         template="plotly_dark" if theme == "dark" else "plotly_white",
-        hovermode='x unified',
+        hovermode="x unified",
         showlegend=False,
         height=600,
         plot_bgcolor=colors["background"],
         paper_bgcolor=colors["paper"],
-        font=dict(color=colors["text"]),
+        font={"color": colors["text"]},
     )
 
     # Update axes

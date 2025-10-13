@@ -1,16 +1,16 @@
 """Property-based tests for DecimalConfig using Hypothesis."""
 
 from decimal import Decimal
-from pathlib import Path
+
 import pytest
-from hypothesis import given, strategies as st, assume
+from hypothesis import given
+from hypothesis import strategies as st
 
 from rustybt.finance.decimal import (
     DecimalConfig,
     InvalidPrecisionError,
     InvalidRoundingModeError,
 )
-
 
 # Valid rounding modes for Hypothesis
 VALID_ROUNDING_MODES = [
@@ -171,7 +171,7 @@ class TestDecimalConfigPropertyBased:
         config.set_precision("test_prop", precision, "ROUND_HALF_EVEN")
 
         # Perform calculation with context
-        with config.with_precision("test_prop") as ctx:
+        with config.with_precision("test_prop"):
             # Unary plus applies current context
             result = +value
 

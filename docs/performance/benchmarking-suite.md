@@ -196,7 +196,7 @@ Graphs are automatically generated after each CI/CD run.
 
 Workflow: `.github/workflows/nightly-benchmarks.yml`
 
-**Schedule**: Daily at 2 AM UTC  
+**Schedule**: Daily at 2 AM UTC
 **Manual trigger**: Workflow dispatch button in GitHub Actions
 
 **Steps**:
@@ -226,7 +226,7 @@ Output: Markdown table showing delta per scenario.
 ### Example Output
 
 ```
-Scenario                       Run 1 (s)    Run 2 (s)    Delta      Change    
+Scenario                       Run 1 (s)    Run 2 (s)    Delta      Change
 ----------------------------------------------------------------------------------
 daily_simple_50_rust           28.5         30.2         +1.7       +6.0% 🔴
 hourly_medium_50_rust          58.3         56.1         -2.2       -3.8% 🟢
@@ -277,14 +277,14 @@ def test_daily_new_strategy_50_assets_rust(benchmark):
     """Benchmark new strategy with 50 assets."""
     initialize_fn = create_new_strategy_init(n_assets=50)
     handle_data_fn = create_new_strategy_handle()
-    
+
     result = benchmark(
         run_backtest_benchmark,
         initialize_fn=initialize_fn,
         handle_data_fn=handle_data_fn,
         fixture_filename='daily_50_assets.parquet',
     )
-    
+
     assert result['completed']
 ```
 
@@ -402,7 +402,7 @@ For issues or questions:
 
 ---
 
-**Last Updated**: 2025-01-09  
-**Story**: 7.5 - Implement Comprehensive Benchmarking Suite  
-**Author**: James (Full Stack Developer)  
+**Last Updated**: 2025-01-09
+**Story**: 7.5 - Implement Comprehensive Benchmarking Suite
+**Author**: James (Full Stack Developer)
 **Status**: Complete

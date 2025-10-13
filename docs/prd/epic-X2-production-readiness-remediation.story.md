@@ -36,31 +36,31 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
 - Fix High-severity security vulnerabilities (tarfile extraction, exec/eval, SQL injection, request timeouts)
 - Restore functional test suite (add missing pytest markers, achieve ≥90% coverage)
 - File discovery (Task 0: identify SQL/requests sites before remediation)
-- **Property-based testing moved to X2.1B** (scope management)
+- **Property-based testing moved to X2.2** (scope management)
 
-**Story X2.1B (P0): Property-Based Testing**
+**Story X2.2 (P0): Property-Based Testing**
 - Add hypothesis framework for property-based testing
 - Implement Decimal arithmetic validation (1000+ examples per test)
 - Configure hypothesis for CI integration
 - Achieve ≥95% coverage of Decimal arithmetic code paths
 - **NEW STORY** - Split from X2.1 to maintain P0 focus on security
 
-**Story X2.2A (P1): Code Quality Baseline**
+**Story X2.3 (P1): Code Quality Baseline**
 - Establish clean ruff/black/mypy baseline with enforced complexity limits (McCabe ≤10)
 - Auto-fix 1000+ ruff violations, reformat 173 files with black
 - Configure pre-commit hooks (ruff, black, mypy)
 - Scoped mypy strict enforcement on Epic 8 modules
 - **NEW STORY** - Split from X2.2 (foundation for other X2.2 stories)
 
-**Story X2.2B (P1): Zero-Mock Enforcement**
+**Story X2.4 (P1): Zero-Mock Enforcement**
 - **Implement Zero-Mock Enforcement** (mandatory RustyBT policy)
 - Create 4 detection scripts (mock patterns, hardcoded values, validations, unique results)
 - Configure pre-commit hooks for zero-mock detection
 - Document policy in CONTRIBUTING.md with examples
-- Prepare CI workflow for X2.2C integration
+- Prepare CI workflow for X2.5 integration
 - **NEW STORY** - Split from X2.2 (critical quality cornerstone)
 
-**Story X2.2C (P1): CI/CD Pipeline**
+**Story X2.5 (P1): CI/CD Pipeline**
 - Configure comprehensive CI/CD pipeline with all quality gates
 - Create 6 CI workflow files (code-quality, zero-mock, security, testing, dependency-security, performance)
 - Configure branch protection rules (all checks required)
@@ -68,7 +68,7 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
 - Document CI/CD pipeline in docs/development/ci-cd-pipeline.md
 - **NEW STORY** - Split from X2.2 (substantial infrastructure work)
 
-**Story X2.2D (P1): Dependency Hygiene**
+**Story X2.6 (P1): Dependency Hygiene**
 - Split prod/dev dependency extras (move jupyter, torch, stubs to dev)
 - Remediate 44 vulnerabilities (0 High/Critical in production)
 - Create license compliance check script (no GPL dependencies)
@@ -76,7 +76,7 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
 - Document vulnerability tracking in docs/security-audit.md
 - **NEW STORY** - Split from X2.2 (independent security workstream)
 
-**Story X2.3 (P2): Production Validation & Documentation**
+**Story X2.7 (P2): Production Validation & Documentation**
 - Execute operational validations (broker connections, data providers, benchmarks)
 - Conduct 30-day paper trading validation (target: ≥99.9% uptime)
 - CLI command verification (Task 0: verify all commands exist)
@@ -87,11 +87,11 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
 
 **Phased Approach:**
 - P0 Phase 1 (X2.1): Unblock testing and fix critical security issues FIRST
-- P0 Phase 2 (X2.1B): Add property-based testing (can run parallel with P1 after X2.1)
-- P1 Foundation (X2.2A): Establish code quality baseline
-- P1 Parallel (X2.2B + X2.2D): Zero-mock + dependency hygiene (independent workstreams)
-- P1 Integration (X2.2C): CI/CD pipeline (requires X2.2A, X2.2B complete)
-- P2 Validation (X2.3): Operational validation (requires all P1 complete)
+- P0 Phase 2 (X2.2): Add property-based testing (can run parallel with P1 after X2.1)
+- P1 Foundation (X2.3): Establish code quality baseline
+- P1 Parallel (X2.4 + X2.6): Zero-mock + dependency hygiene (independent workstreams)
+- P1 Integration (X2.5): CI/CD pipeline (requires X2.3, X2.4 complete)
+- P2 Validation (X2.7): Operational validation (requires all P1 complete)
 
 **No Breaking Changes:**
 - Security fixes maintain existing functionality
@@ -100,8 +100,8 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
 - Documentation updates clarify existing behavior
 
 **Parallelization Opportunities:**
-- X2.1B can start after X2.1 completes (parallel with X2.2A)
-- X2.2B and X2.2D can run in parallel after X2.2A completes
+- X2.2 can start after X2.1 completes (parallel with X2.3)
+- X2.4 and X2.6 can run in parallel after X2.3 completes
 - This maintains overall timeline despite story split
 
 ---
@@ -123,7 +123,7 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
 - Explicit request timeouts
 - pytest markers: `memory`, `api_integration`
 - Test coverage ≥90% (core), ≥95% (financial modules)
-- **Property-based testing moved to Story X2.1B**
+- **Property-based testing moved to Story X2.2**
 
 **Success Criteria:**
 - bandit: 0 High severity issues
@@ -131,14 +131,14 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
 - Coverage measurement operational
 - File discovery complete
 
-**Changes from Original:** Added Task 0 for file discovery, moved property-based testing to X2.1B
+**Changes from Original:** Added Task 0 for file discovery, moved property-based testing to X2.2
 
 ---
 
-### Story X2.1B: P0 Property-Based Testing (NEW - Split from X2.1)
-**Priority:** P0 (Depends on X2.1 - Can run parallel with X2.2A)
+### Story X2.2: P0 Property-Based Testing (NEW - Split from X2.1)
+**Priority:** P0 (Depends on X2.1 - Can run parallel with X2.3)
 **Estimated Effort:** 0.5-1 development day
-**File:** `docs/stories/X2.1B.p0-property-based-testing.story.md`
+**File:** `docs/stories/X2.2.p0-property-based-testing.story.md`
 
 **Goal:** Implement comprehensive property-based testing for Decimal arithmetic validation.
 
@@ -158,10 +158,10 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
 
 ---
 
-### Story X2.2A: P1 Code Quality Baseline (NEW - Split from X2.2)
-**Priority:** P1 (Depends on X2.1 - BLOCKS X2.2B, X2.2C, X2.2D)
+### Story X2.3: P1 Code Quality Baseline (NEW - Split from X2.2)
+**Priority:** P1 (Depends on X2.1 - BLOCKS X2.4, X2.5, X2.6)
 **Estimated Effort:** 1-2 development days
-**File:** `docs/stories/X2.2A.p1-code-quality-baseline.story.md`
+**File:** `docs/stories/X2.3.p1-code-quality-baseline.story.md`
 
 **Goal:** Establish clean ruff/black/mypy baseline with pre-commit hooks.
 
@@ -182,10 +182,10 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
 
 ---
 
-### Story X2.2B: P1 Zero-Mock Enforcement (NEW - Split from X2.2)
-**Priority:** P1 (Depends on X2.2A - BLOCKS X2.2C)
+### Story X2.4: P1 Zero-Mock Enforcement (NEW - Split from X2.2)
+**Priority:** P1 (Depends on X2.3 - BLOCKS X2.5)
 **Estimated Effort:** 1 development day
-**File:** `docs/stories/X2.2B.p1-zero-mock-enforcement.story.md`
+**File:** `docs/stories/X2.4.p1-zero-mock-enforcement.story.md`
 
 **Goal:** Implement mandatory zero-mock detection and enforcement.
 
@@ -197,29 +197,29 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
   - `test_unique_results.py` - Result uniqueness verification
 - Configure pre-commit hooks for zero-mock detection
 - Document policy in CONTRIBUTING.md with examples
-- Prepare CI workflow for X2.2C integration
+- Prepare CI workflow for X2.5 integration
 
 **Success Criteria:**
 - Zero-mock detection: 0 violations in codebase
 - Pre-commit hooks block mock commits
-- CI workflow prepared (activated in X2.2C)
+- CI workflow prepared (activated in X2.5)
 - Policy documented with forbidden/allowed patterns
 
 **⚠️ CRITICAL:** Zero-Mock Enforcement is the cornerstone of RustyBT's quality policy. This is **MANDATORY** - not optional.
 
 ---
 
-### Story X2.2C: P1 CI/CD Pipeline (NEW - Split from X2.2)
-**Priority:** P1 (Depends on X2.2A, X2.2B - BLOCKS X2.3)
+### Story X2.5: P1 CI/CD Pipeline (NEW - Split from X2.2)
+**Priority:** P1 (Depends on X2.3, X2.4 - BLOCKS X2.7)
 **Estimated Effort:** 2-3 development days
-**File:** `docs/stories/X2.2C.p1-cicd-pipeline.story.md`
+**File:** `docs/stories/X2.5.p1-cicd-pipeline.story.md`
 
 **Goal:** Configure comprehensive CI/CD pipeline with all quality gates.
 
 **Key Deliverables:**
 - Create 6 CI workflow files:
   1. `code-quality.yml` - ruff, black, mypy, complexity
-  2. `zero-mock-enforcement.yml` - activate from X2.2B
+  2. `zero-mock-enforcement.yml` - activate from X2.4
   3. `security.yml` - bandit, truffleHog, detect-secrets
   4. `testing.yml` - unit, property, coverage
   5. `dependency-security.yml` - safety, pip-audit, GPL check (weekly)
@@ -234,14 +234,14 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
 - CI performance: < 12 minutes total (parallel execution)
 - Documentation complete
 
-**Rationale for Split:** Substantial infrastructure work requiring dedicated focus; depends on tools from X2.2A and scripts from X2.2B.
+**Rationale for Split:** Substantial infrastructure work requiring dedicated focus; depends on tools from X2.3 and scripts from X2.4.
 
 ---
 
-### Story X2.2D: P1 Dependency Hygiene (NEW - Split from X2.2)
-**Priority:** P1 (Depends on X2.2A - Can run parallel with X2.2B)
+### Story X2.6: P1 Dependency Hygiene (NEW - Split from X2.2)
+**Priority:** P1 (Depends on X2.3 - Can run parallel with X2.4)
 **Estimated Effort:** 1-2 development days
-**File:** `docs/stories/X2.2D.p1-dependency-hygiene.story.md`
+**File:** `docs/stories/X2.6.p1-dependency-hygiene.story.md`
 
 **Goal:** Clean production/dev dependency split with vulnerability remediation and license compliance.
 
@@ -249,7 +249,7 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
 - Split prod/dev dependencies (move jupyter, torch, stubs to dev extra)
 - Remediate 44 vulnerabilities (0 High/Critical in production)
 - Create `scripts/check_licenses.py` (GPL detection)
-- Integrate weekly security scans in CI (from X2.2C)
+- Integrate weekly security scans in CI (from X2.5)
 - Document vulnerability tracking in docs/security-audit.md
 
 **Success Criteria:**
@@ -258,14 +258,14 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
 - GPL dependencies: verified 0 (CI-enforced)
 - Weekly security scan operational
 
-**Rationale for Split:** Independent security workstream; can run parallel with X2.2B to save time.
+**Rationale for Split:** Independent security workstream; can run parallel with X2.4 to save time.
 
 ---
 
-### Story X2.3: P2 Production Validation & Documentation
+### Story X2.7: P2 Production Validation & Documentation
 **Priority:** P2 (Depends on ALL P1 stories)
 **Estimated Effort:** 2-3 days active + 30-day monitoring
-**File:** `docs/stories/X2.3.p2-production-validation-docs.story.md`
+**File:** `docs/stories/X2.7.p2-production-validation-docs.story.md`
 
 **Goal:** Validate production-critical operational flows and ensure documentation accuracy for deployment readiness.
 
@@ -297,13 +297,13 @@ Epic X2 addresses **7 critical categories** of blockers through **7 prioritized 
 ```
 X2.1 (P0 - Security & Testing)
   ↓ BLOCKS
-  ├─→ X2.1B (P0 - Property Testing) ──┐
-  └─→ X2.2A (P1 - Code Quality) ─────┤
+  ├─→ X2.2 (P0 - Property Testing) ──┐
+  └─→ X2.3 (P1 - Code Quality) ─────┤
        ↓ BLOCKS                       │
-       ├─→ X2.2B (P1 - Zero-Mock) ────┤
-       └─→ X2.2D (P1 - Dependencies) ─┤
-            ↓ (X2.2B BLOCKS)          │
-            X2.2C (P1 - CI/CD) ───────┘
+       ├─→ X2.4 (P1 - Zero-Mock) ────┤
+       └─→ X2.6 (P1 - Dependencies) ─┤
+            ↓ (X2.4 BLOCKS)          │
+            X2.5 (P1 - CI/CD) ───────┘
               ↓ BLOCKS
               X2.3 (P2 - Validation)
                 ↓ ENABLES
@@ -314,21 +314,21 @@ X2.1 (P0 - Security & Testing)
 
 **P0 Phase (Security & Testing):**
 1. **X2.1** - Security fixes + test infrastructure (MUST be first)
-2. **X2.1B** - Property-based testing (starts after X2.1, can run parallel with X2.2A)
+2. **X2.2** - Property-based testing (starts after X2.1, can run parallel with X2.3)
 
 **P1 Phase (Code Quality & CI/CD):**
-3. **X2.2A** - Code quality baseline (MUST complete before X2.2B/C/D start)
+3. **X2.3** - Code quality baseline (MUST complete before X2.4/C/D start)
 4. **Parallel Track:**
-   - **X2.2B** - Zero-mock enforcement (depends on X2.2A)
-   - **X2.2D** - Dependency hygiene (depends on X2.2A, parallel with X2.2B)
-5. **X2.2C** - CI/CD pipeline (depends on X2.2A + X2.2B complete)
+   - **X2.4** - Zero-mock enforcement (depends on X2.3)
+   - **X2.6** - Dependency hygiene (depends on X2.3, parallel with X2.4)
+5. **X2.5** - CI/CD pipeline (depends on X2.3 + X2.4 complete)
 
 **P2 Phase (Validation):**
-6. **X2.3** - Production validation (depends on ALL P1 stories complete)
+6. **X2.7** - Production validation (depends on ALL P1 stories complete)
 
 **Parallelization Opportunities:**
-- X2.1B || X2.2A (after X2.1)
-- X2.2B || X2.2D (after X2.2A)
+- X2.2 || X2.3 (after X2.1)
+- X2.4 || X2.6 (after X2.3)
 - Maintains overall timeline despite 7 stories vs. original 3
 
 ---
@@ -338,14 +338,14 @@ X2.1 (P0 - Security & Testing)
 ### Why Stories Were Split
 
 **Original Epic Structure:** 3 stories (X2.1, X2.2, X2.3)
-**Revised Epic Structure:** 7 stories (X2.1, X2.1B, X2.2A, X2.2B, X2.2C, X2.2D, X2.3)
+**Revised Epic Structure:** 7 stories (X2.1, X2.2, X2.3, X2.4, X2.5, X2.6, X2.3)
 
 **Validation Findings (2025-10-11):**
 
 **Issue 1: Scope Expansion in X2.1**
 - **Problem:** Property-based testing (30+ lines of AC) added to P0 security story
 - **Impact:** Delays critical security fixes with non-critical testing enhancements
-- **Solution:** Split to **X2.1B** - allows security fixes to proceed immediately
+- **Solution:** Split to **X2.2** - allows security fixes to proceed immediately
 
 **Issue 2: Severe Scope Overload in X2.2**
 - **Problem:** X2.2 attempted 3-4 stories worth of work:
@@ -355,7 +355,7 @@ X2.1 (P0 - Security & Testing)
   - Dependency hygiene (1-2 days)
   - Total: 5-8 days vs. estimated 2-3 days
 - **Impact:** High risk of incomplete implementation, difficult review, rollback complexity
-- **Solution:** Split to **X2.2A** (baseline), **X2.2B** (zero-mock), **X2.2C** (CI/CD), **X2.2D** (dependencies)
+- **Solution:** Split to **X2.3** (baseline), **X2.4** (zero-mock), **X2.5** (CI/CD), **X2.6** (dependencies)
 
 **Issue 3: Timeline Management**
 - **Original:** Sequential execution → 5-8 days minimum
@@ -365,7 +365,7 @@ X2.1 (P0 - Security & Testing)
 
 1. **Clearer Scope:** Each story has focused, achievable goal
 2. **Better Estimation:** Effort estimates more accurate per story
-3. **Parallelization:** X2.1B||X2.2A, X2.2B||X2.2D save time
+3. **Parallelization:** X2.2||X2.3, X2.4||X2.6 save time
 4. **Easier Review:** Smaller PRs easier to review thoroughly
 5. **Rollback Granularity:** Can rollback specific story without impacting others
 6. **Progress Tracking:** More granular visibility into epic completion
@@ -377,10 +377,10 @@ X2.1 (P0 - Security & Testing)
 
 **Breakdown:**
 - X2.1: 1-2 days (critical path)
-- X2.1B || X2.2A: 1-2 days (parallel) = 2 days max
-- X2.2B || X2.2D: 2 days (parallel) = 2 days max
-- X2.2C: 2-3 days (critical path)
-- X2.3: 2-3 days active + 30-day monitoring
+- X2.2 || X2.7: 1-2 days (parallel) = 2 days max
+- X2.4 || X2.6: 2 days (parallel) = 2 days max
+- X2.5: 2-3 days (critical path)
+- X2.7: 2-3 days active + 30-day monitoring
 
 **Total Critical Path:** ~8-10 days (vs. original 5-8 days, but with higher confidence)
 
@@ -420,14 +420,14 @@ X2.1 (P0 - Security & Testing)
 - GPL dependencies: ⚠️ Unknown → **✅ Verified none**
 - License compliance: ⚠️ Unchecked → **✅ CI-enforced**
 
-### Operations (X2.3)
+### Operations (X2.7)
 - Broker tests: ❌ Not validated → **≥2 validated** ✅
 - Data provider tests: ❌ Not validated → **≥2 validated** ✅
 - Benchmark execution: ❌ Not run → **✅ Completed with results**
 - Paper trading uptime: ⚠️ Unknown → **≥99.9% over 30 days** ✅
 - Performance regression: ❌ Not measured → **✅ Baseline + checks**
 
-### Documentation (X2.3)
+### Documentation (X2.7)
 - CLI reference errors: ~5+ → **0** ✅
 - Command examples tested: 0% → **100%** ✅
 - Production checklist: ⚠️ Unvalidated → **✅ Validated workflows**
@@ -453,7 +453,7 @@ X2.1 (P0 - Security & Testing)
 3. **Incremental commits:** Separate ruff, black, deps for granular rollback
 4. **Communication:** Update CONTRIBUTING.md, notify team of pre-commit hooks
 
-### Tertiary Risk: 30-day paper trading validation (X2.3) extends beyond timeline
+### Tertiary Risk: 30-day paper trading validation (X2.7) extends beyond timeline
 
 **Mitigation:**
 1. **Interim results acceptable:** 3-7 days minimum stability demonstration
@@ -495,7 +495,7 @@ git revert <ruff-fix-commit-hash>
 **Risk:** Medium (large-scale reformatting complicates reverts)
 **Mitigation:** Feature branch, merge only after validation
 
-### Story X2.3 (Validation & Docs)
+### Story X2.7 (Validation & Docs)
 ```bash
 # Rollback documentation
 git revert <X2.3-doc-commit-range>
@@ -510,12 +510,12 @@ Epic X2 is complete when:
 
 ### All Stories Complete:
 - [x] Story X2.1 (P0): Security & Testing - DONE per DoD
-- [x] Story X2.1B (P0): Property-Based Testing - DONE per DoD
-- [x] Story X2.2A (P1): Code Quality Baseline - DONE per DoD
-- [x] Story X2.2B (P1): Zero-Mock Enforcement - DONE per DoD
-- [x] Story X2.2C (P1): CI/CD Pipeline - DONE per DoD
-- [x] Story X2.2D (P1): Dependency Hygiene - DONE per DoD
-- [x] Story X2.3 (P2): Validation & Docs - DONE per DoD
+- [x] Story X2.2 (P0): Property-Based Testing - DONE per DoD
+- [x] Story X2.3 (P1): Code Quality Baseline - DONE per DoD
+- [x] Story X2.4 (P1): Zero-Mock Enforcement - DONE per DoD
+- [x] Story X2.5 (P1): CI/CD Pipeline - DONE per DoD
+- [x] Story X2.6 (P1): Dependency Hygiene - DONE per DoD
+- [x] Story X2.7 (P2): Validation & Docs - DONE per DoD
 
 ### Security Posture:
 - [x] bandit: 0 High severity issues
@@ -601,7 +601,7 @@ Epic X2 is complete when:
 This epic addresses a **comprehensive production readiness gap analysis** spanning 7 major categories.
 
 **Original Structure:** 3 prioritized stories (X2.1, X2.2, X2.3)
-**Revised Structure:** 7 focused stories (X2.1, X2.1B, X2.2A, X2.2B, X2.2C, X2.2D, X2.3)
+**Revised Structure:** 7 focused stories (X2.1, X2.2, X2.3, X2.4, X2.5, X2.6, X2.3)
 
 **Reason for Split:** Product Owner validation (2025-10-11) identified:
 - **Scope expansion in X2.1:** Property-based testing added to critical security story
@@ -650,18 +650,18 @@ This epic addresses a **comprehensive production readiness gap analysis** spanni
 
 **Critical Path:**
 1. **X2.1** (P0) - MUST be first (security + test infrastructure)
-2. **X2.2A** (P1) - MUST complete before X2.2B/C/D start (clean baseline)
-3. **X2.2C** (P1) - Requires X2.2A + X2.2B complete (CI needs tools + scripts)
+2. **X2.3** (P1) - MUST complete before X2.4/C/D start (clean baseline)
+3. **X2.5** (P1) - Requires X2.3 + X2.4 complete (CI needs tools + scripts)
 4. **X2.3** (P2) - Requires ALL P1 stories complete (validation needs clean codebase)
 
 **Parallel Opportunities:**
-- **X2.1B || X2.2A** (after X2.1 completes)
-- **X2.2B || X2.2D** (after X2.2A completes)
+- **X2.2 || X2.3** (after X2.1 completes)
+- **X2.4 || X2.6** (after X2.3 completes)
 
 **Why it matters:**
 - X2.1 unblocks all other stories (working tests required)
-- X2.2A provides foundation for other P1 stories (clean baseline)
-- X2.2C needs scripts from X2.2B (CI integrates detection)
+- X2.3 provides foundation for other P1 stories (clean baseline)
+- X2.5 needs scripts from X2.4 (CI integrates detection)
 - X2.3 needs full P1 complete (operational validation on clean codebase)
 - Breaking the order causes validation failures or blocking dependencies
 
@@ -689,12 +689,12 @@ This epic addresses a **comprehensive production readiness gap analysis** spanni
 
 **Story Files:**
 - `docs/stories/X2.1.p0-security-test-infrastructure.story.md` (updated with Task 0)
-- `docs/stories/X2.1B.p0-property-based-testing.story.md` (NEW - split from X2.1)
-- `docs/stories/X2.2A.p1-code-quality-baseline.story.md` (NEW - split from X2.2)
-- `docs/stories/X2.2B.p1-zero-mock-enforcement.story.md` (NEW - split from X2.2)
-- `docs/stories/X2.2C.p1-cicd-pipeline.story.md` (NEW - split from X2.2)
-- `docs/stories/X2.2D.p1-dependency-hygiene.story.md` (NEW - split from X2.2)
-- `docs/stories/X2.3.p2-production-validation-docs.story.md` (updated with Task 0)
+- `docs/stories/X2.2.p0-property-based-testing.story.md` (NEW - split from X2.1)
+- `docs/stories/X2.3.p1-code-quality-baseline.story.md` (NEW - split from X2.2)
+- `docs/stories/X2.4.p1-zero-mock-enforcement.story.md` (NEW - split from X2.2)
+- `docs/stories/X2.5.p1-cicd-pipeline.story.md` (NEW - split from X2.2)
+- `docs/stories/X2.6.p1-dependency-hygiene.story.md` (NEW - split from X2.2)
+- `docs/stories/X2.7.p2-production-validation-docs.story.md` (updated with Task 0)
 
 **Architectural Standards:**
 - `docs/architecture/coding-standards.md` - Python standards, zero-mock policy

@@ -36,7 +36,7 @@ def handle_data(context, data):
         prices = data.history(asset, 'close', 63, '1d')
         returns = prices.pct_change()
         momentum = (1 + returns).prod() - 1
-        
+
         if momentum > 0.10:  # 10% threshold
             context.buy_candidates.append(asset)
 ```
@@ -53,7 +53,7 @@ def handle_data(context, data):
 def make_pipeline():
     returns = Returns(window_length=63)
     high_momentum = returns > 0.10
-    
+
     return Pipeline(
         columns={'momentum': returns},
         screen=high_momentum
@@ -268,13 +268,13 @@ from rustybt.pipeline.data import USEquityPricing
 
 class MeanReversion(CustomFactor):
     """Z-score of price vs N-day mean."""
-    
+
     inputs = [USEquityPricing.close]
     window_length = 20
-    
+
     def compute(self, today, assets, out, close):
         """Compute z-score.
-        
+
         Args:
             today: Current date
             assets: Asset universe
@@ -284,11 +284,11 @@ class MeanReversion(CustomFactor):
         # Calculate mean and std for each asset
         mean = close.mean(axis=0)
         std = close.std(axis=0)
-        
+
         # Calculate z-score
         current_price = close[-1]
         z_score = (current_price - mean) / (std + 1e-9)  # Avoid division by zero
-        
+
         out[:] = -z_score  # Negative: oversold is positive signal
 
 # Use in pipeline
@@ -301,22 +301,22 @@ oversold = mean_reversion > 1.5  # Z-score > 1.5 standard deviations
 ```python
 class TrendStrength(CustomFactor):
     """Measure trend strength using linear regression R-squared."""
-    
+
     inputs = [USEquityPricing.close]
     window_length = 50
-    
+
     def compute(self, today, assets, out, close):
         import numpy as np
         from scipy import stats
-        
+
         # For each asset
         for i, asset in enumerate(assets):
             prices = close[:, i]
-            
+
             # Linear regression
             x = np.arange(len(prices))
             slope, intercept, r_value, p_value, std_err = stats.linregress(x, prices)
-            
+
             # R-squared indicates trend strength
             out[i] = r_value ** 2
 
@@ -397,38 +397,38 @@ class MomentumStrategy(TradingAlgorithm):
     def initialize(self):
         # Create pipeline
         pipe = self.make_pipeline()
-        
+
         # Attach to algorithm
         self.attach_pipeline(pipe, 'momentum_screen')
-        
+
         # Schedule rebalance
         self.schedule_function(
             self.rebalance,
             date_rule=self.date_rules.week_start(),
             time_rule=self.time_rules.market_open()
         )
-    
+
     def make_pipeline(self):
         momentum = Returns(window_length=63)
         top_momentum = momentum.top(50)
-        
+
         return Pipeline(
             columns={'momentum': momentum},
             screen=top_momentum
         )
-    
+
     def rebalance(self, context, data):
         # Get pipeline output
         pipeline_output = self.pipeline_output('momentum_screen')
-        
+
         # pipeline_output is a DataFrame with assets as index
         target_assets = set(pipeline_output.index)
-        
+
         # Close positions not in screen
         for asset in context.portfolio.positions:
             if asset not in target_assets:
                 self.order_target_percent(asset, 0)
-        
+
         # Equal weight new positions
         weight = 1.0 / len(target_assets) if target_assets else 0
         for asset in target_assets:
@@ -442,7 +442,7 @@ def initialize(self):
     # Long pipeline (high momentum)
     long_pipe = self.make_long_pipeline()
     self.attach_pipeline(long_pipe, 'long')
-    
+
     # Short pipeline (low momentum)
     short_pipe = self.make_short_pipeline()
     self.attach_pipeline(short_pipe, 'short')
@@ -451,11 +451,11 @@ def rebalance(self, context, data):
     # Get both outputs
     long_output = self.pipeline_output('long')
     short_output = self.pipeline_output('short')
-    
+
     # Long/short portfolio
     for asset in long_output.index:
         self.order_target_percent(asset, 0.5 / len(long_output))
-    
+
     for asset in short_output.index:
         self.order_target_percent(asset, -0.5 / len(short_output))
 ```
@@ -550,7 +550,7 @@ momentum = Returns(window_length=63, mask=tradable)
 ```python
 class MyCustomFactor(CustomFactor):
     """Short description.
-    
+
     Detailed explanation of:
     - What the factor measures
     - Why it's predictive
@@ -570,7 +570,7 @@ class MyCustomFactor(CustomFactor):
 def make_pipeline():
     momentum = Returns(window_length=126)
     top_momentum = momentum.top(50)
-    
+
     return Pipeline(
         columns={'momentum': momentum},
         screen=top_momentum
@@ -586,7 +586,7 @@ def make_pipeline():
         window_length=252
     )
     low_vol = volatility.bottom(50)
-    
+
     return Pipeline(
         columns={'volatility': volatility},
         screen=low_vol
@@ -602,13 +602,13 @@ def make_pipeline():
         inputs=[USEquityPricing.close],
         window_length=252
     )
-    
+
     # Quality = low volatility
     quality = volatility.bottom(200)
-    
+
     # Momentum within quality stocks
     top_momentum = momentum.top(50, mask=quality)
-    
+
     return Pipeline(
         columns={
             'momentum': momentum,
@@ -624,10 +624,10 @@ def make_pipeline():
 def make_pipeline():
     momentum = Returns(window_length=126)
     sector = Sector()  # Requires sector data
-    
+
     # Top 3 momentum stocks per sector
     top_per_sector = momentum.top(3, groupby=sector)
-    
+
     return Pipeline(
         columns={
             'momentum': momentum,

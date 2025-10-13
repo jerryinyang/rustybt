@@ -6,32 +6,34 @@ This test suite verifies that Decimal precision is preserved through the entire
 data pipeline, from ingestion to final calculations.
 """
 
-import pytest
-import polars as pl
 import tempfile
-from pathlib import Path
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+from pathlib import Path
+
 import pandas as pd
+import polars as pl
+import pytest
 
 from rustybt.data.bundles.csvdir import convert_csv_to_decimal_parquet
-from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader
-from rustybt.data.polars.data_portal import PolarsDataPortal, LookaheadError
 from rustybt.data.decimal_adjustments import (
-    apply_split_adjustment,
     apply_dividend_adjustment,
+    apply_split_adjustment,
 )
+from rustybt.data.polars.data_portal import LookaheadError, PolarsDataPortal
+from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader
 from rustybt.pipeline.factors.decimal_factors import (
-    DecimalLatestPrice,
-    DecimalSimpleMovingAverage,
-    DecimalReturns,
     DecimalAverageDollarVolume,
+    DecimalLatestPrice,
+    DecimalReturns,
+    DecimalSimpleMovingAverage,
 )
 
 
 # Simple mock Asset class for testing
 class MockAsset:
     """Mock Asset for testing without full Zipline dependencies."""
+
     def __init__(self, sid, symbol="TEST"):
         self.sid = sid
         self.symbol = symbol
@@ -75,7 +77,7 @@ def test_bundle_dir(sample_csv_data):
         convert_csv_to_decimal_parquet(
             str(csv_path),
             str(parquet_path),
-            asset_class="crypto"  # crypto has 8 decimal places
+            asset_class="crypto",  # crypto has 8 decimal places
         )
 
         yield bundle_path
@@ -131,10 +133,7 @@ class TestDataPortalIntegration:
 
         # Get spot value
         prices = portal.get_spot_value(
-            assets=[asset1],
-            field="close",
-            dt=pd.Timestamp("2023-01-01"),
-            data_frequency="daily"
+            assets=[asset1], field="close", dt=pd.Timestamp("2023-01-01"), data_frequency="daily"
         )
 
         # Verify Decimal precision preserved
@@ -154,7 +153,7 @@ class TestDataPortalIntegration:
             bar_count=3,
             frequency="1d",
             field="close",
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Verify Decimal dtype
@@ -170,8 +169,7 @@ class TestDataPortalIntegration:
         """Test that DataPortal prevents lookahead bias."""
         reader = PolarsParquetDailyReader(str(test_bundle_dir))
         portal = PolarsDataPortal(
-            daily_reader=reader,
-            current_simulation_time=pd.Timestamp("2023-01-02")
+            daily_reader=reader, current_simulation_time=pd.Timestamp("2023-01-02")
         )
 
         asset1 = MockAsset(sid=1, symbol="TEST1")
@@ -182,7 +180,7 @@ class TestDataPortalIntegration:
                 assets=[asset1],
                 field="close",
                 dt=pd.Timestamp("2023-01-05"),
-                data_frequency="daily"
+                data_frequency="daily",
             )
 
     def test_data_portal_multiple_assets(self, test_bundle_dir):
@@ -198,7 +196,7 @@ class TestDataPortalIntegration:
             assets=[asset1, asset2],
             field="close",
             dt=pd.Timestamp("2023-01-01"),
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Verify both prices with Decimal precision
@@ -223,14 +221,11 @@ class TestAdjustmentIntegration:
             bar_count=5,
             frequency="1d",
             field="close",
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Apply 2-for-1 split adjustment
-        adjusted_prices = apply_split_adjustment(
-            history["close"],
-            Decimal("2.0")
-        )
+        adjusted_prices = apply_split_adjustment(history["close"], Decimal("2.0"))
 
         # Verify prices are halved
         assert adjusted_prices[0] == Decimal("50.12500000")
@@ -250,14 +245,11 @@ class TestAdjustmentIntegration:
             bar_count=5,
             frequency="1d",
             field="close",
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Apply $2.50 dividend adjustment
-        adjusted_prices = apply_dividend_adjustment(
-            history["close"],
-            Decimal("2.50")
-        )
+        adjusted_prices = apply_dividend_adjustment(history["close"], Decimal("2.50"))
 
         # Verify dividend subtracted
         assert adjusted_prices[0] == Decimal("97.75000000")
@@ -281,7 +273,7 @@ class TestPipelineFactorIntegration:
             bar_count=1,
             frequency="1d",
             field="close",
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Compute factor
@@ -305,7 +297,7 @@ class TestPipelineFactorIntegration:
             bar_count=5,
             frequency="1d",
             field="close",
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Compute 3-day SMA
@@ -331,7 +323,7 @@ class TestPipelineFactorIntegration:
             bar_count=5,
             frequency="1d",
             field="close",
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Compute 1-day returns
@@ -356,7 +348,7 @@ class TestPipelineFactorIntegration:
             bar_count=5,
             frequency="1d",
             field="close",
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Get volume separately and add to history
@@ -366,7 +358,7 @@ class TestPipelineFactorIntegration:
             bar_count=5,
             frequency="1d",
             field="volume",
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Combine close and volume
@@ -397,7 +389,7 @@ class TestEndToEndPrecision:
             bar_count=1,
             frequency="1d",
             field="open",
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Verify exact precision from original CSV
@@ -416,7 +408,7 @@ class TestEndToEndPrecision:
             bar_count=3,
             frequency="1d",
             field="close",
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Apply split adjustment
@@ -442,7 +434,7 @@ class TestEndToEndPrecision:
             assets=[asset1, asset2],
             field="open",
             dt=pd.Timestamp("2023-01-01"),
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Verify exact precision for both assets
@@ -462,12 +454,13 @@ class TestEdgeCases:
 
         # Try to access data outside available range
         from rustybt.data.polars.data_portal import NoDataAvailableError
+
         with pytest.raises(NoDataAvailableError):
             portal.get_spot_value(
                 assets=[asset1],
                 field="close",
                 dt=pd.Timestamp("2024-01-01"),  # Future date
-                data_frequency="daily"
+                data_frequency="daily",
             )
 
     def test_invalid_field_handling(self, test_bundle_dir):
@@ -483,5 +476,5 @@ class TestEdgeCases:
                 assets=[asset1],
                 field="invalid_field",
                 dt=pd.Timestamp("2023-01-01"),
-                data_frequency="daily"
+                data_frequency="daily",
             )

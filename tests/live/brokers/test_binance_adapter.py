@@ -2,11 +2,11 @@
 
 import asyncio
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from rustybt.assets import Asset, Equity
+from rustybt.assets import Equity
 from rustybt.live.brokers.binance_adapter import (
     BinanceBrokerAdapter,
     BinanceConnectionError,
@@ -446,8 +446,8 @@ class TestBinanceAdvancedOrderTypes:
                 "orderListId": 123,
                 "orders": [
                     {"orderId": 456789, "type": "STOP_LOSS_LIMIT"},
-                    {"orderId": 456790, "type": "LIMIT_MAKER"}
-                ]
+                    {"orderId": 456790, "type": "LIMIT_MAKER"},
+                ],
             }
         )
 
@@ -459,8 +459,8 @@ class TestBinanceAdvancedOrderTypes:
             limit_price=Decimal("52000"),  # Take profit
             oco_params={
                 "stop_price": Decimal("48000"),  # Stop loss trigger
-                "stop_limit_price": Decimal("47500")  # Stop loss limit
-            }
+                "stop_limit_price": Decimal("47500"),  # Stop loss limit
+            },
         )
 
         # Verify OCO order was submitted
@@ -485,7 +485,7 @@ class TestBinanceAdvancedOrderTypes:
             return_value={
                 "orderId": 789123,
                 "type": "LIMIT",
-                "icebergQty": "0.01"  # Visible quantity
+                "icebergQty": "0.01",  # Visible quantity
             }
         )
 
@@ -495,7 +495,7 @@ class TestBinanceAdvancedOrderTypes:
             amount=Decimal("0.1"),  # Total quantity
             order_type="limit",
             limit_price=Decimal("50000"),
-            iceberg_qty=Decimal("0.01")  # Show only 0.01 at a time
+            iceberg_qty=Decimal("0.01"),  # Show only 0.01 at a time
         )
 
         # Verify Iceberg order was submitted with correct params

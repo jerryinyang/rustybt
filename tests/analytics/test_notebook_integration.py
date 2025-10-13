@@ -22,27 +22,25 @@ Tests coverage:
 - Progress bars and async support
 """
 
-import pytest
-import pandas as pd
+from unittest.mock import MagicMock, patch
+
 import numpy as np
-from decimal import Decimal
-from datetime import datetime, timedelta
-from unittest.mock import Mock, MagicMock, patch
-
+import pandas as pd
 import plotly.graph_objects as go
+import pytest
 
+from rustybt.analytics.notebook import (
+    ProgressCallback,
+    async_backtest,
+    create_progress_iterator,
+    setup_notebook,
+    with_progress,
+)
 from rustybt.analytics.visualization import (
-    plot_equity_curve,
     plot_drawdown,
+    plot_equity_curve,
     plot_returns_distribution,
     plot_rolling_metrics,
-)
-from rustybt.analytics.notebook import (
-    create_progress_iterator,
-    ProgressCallback,
-    setup_notebook,
-    async_backtest,
-    with_progress,
 )
 
 
@@ -50,18 +48,21 @@ from rustybt.analytics.notebook import (
 @pytest.fixture
 def sample_backtest_results():
     """Create sample backtest results DataFrame."""
-    dates = pd.date_range(start='2024-01-01', end='2024-12-31', freq='D')
+    dates = pd.date_range(start="2024-01-01", end="2024-12-31", freq="D")
     np.random.seed(42)
 
     # Generate realistic portfolio values with trend and volatility
     returns = np.random.normal(0.0005, 0.02, len(dates))
     portfolio_values = 100000 * np.exp(np.cumsum(returns))
 
-    df = pd.DataFrame({
-        'portfolio_value': portfolio_values,
-        'returns': returns,
-        'ending_value': portfolio_values,
-    }, index=dates)
+    df = pd.DataFrame(
+        {
+            "portfolio_value": portfolio_values,
+            "returns": returns,
+            "ending_value": portfolio_values,
+        },
+        index=dates,
+    )
 
     return df
 
@@ -71,17 +72,19 @@ def sample_backtest_polars():
     """Create sample backtest results in Polars format."""
     import polars as pl
 
-    dates = pd.date_range(start='2024-01-01', end='2024-12-31', freq='D')
+    dates = pd.date_range(start="2024-01-01", end="2024-12-31", freq="D")
     np.random.seed(42)
 
     returns = np.random.normal(0.0005, 0.02, len(dates))
     portfolio_values = 100000 * np.exp(np.cumsum(returns))
 
-    df_pl = pl.DataFrame({
-        'timestamp': dates,
-        'portfolio_value': portfolio_values,
-        'returns': returns,
-    })
+    df_pl = pl.DataFrame(
+        {
+            "timestamp": dates,
+            "portfolio_value": portfolio_values,
+            "returns": returns,
+        }
+    )
 
     return df_pl
 
@@ -96,7 +99,7 @@ class TestVisualization:
 
         assert isinstance(fig, go.Figure)
         assert len(fig.data) > 0
-        assert fig.data[0].name == 'Portfolio Value'
+        assert fig.data[0].name == "Portfolio Value"
 
     def test_plot_equity_curve_with_drawdown(self, sample_backtest_results):
         """Test equity curve with drawdown subplot."""
@@ -115,12 +118,12 @@ class TestVisualization:
 
     def test_plot_equity_curve_dark_theme(self, sample_backtest_results):
         """Test equity curve with dark theme."""
-        fig = plot_equity_curve(sample_backtest_results, theme='dark')
+        fig = plot_equity_curve(sample_backtest_results, theme="dark")
 
         assert isinstance(fig, go.Figure)
         # Check that dark theme colors are applied
-        assert fig.layout.paper_bgcolor == '#2d2d2d'
-        assert fig.layout.plot_bgcolor == '#1e1e1e'
+        assert fig.layout.paper_bgcolor == "#2d2d2d"
+        assert fig.layout.plot_bgcolor == "#1e1e1e"
 
     def test_plot_drawdown(self, sample_backtest_results):
         """Test drawdown plotting."""
@@ -129,7 +132,7 @@ class TestVisualization:
         assert isinstance(fig, go.Figure)
         assert len(fig.data) > 0
         # Should have drawdown line and max drawdown annotation
-        assert any('Drawdown' in str(trace.name) for trace in fig.data)
+        assert any("Drawdown" in str(trace.name) for trace in fig.data)
 
     def test_plot_returns_distribution(self, sample_backtest_results):
         """Test returns distribution plotting."""
@@ -142,7 +145,7 @@ class TestVisualization:
 
     def test_plot_returns_distribution_calculated(self, sample_backtest_results):
         """Test returns distribution when returns need to be calculated."""
-        df = sample_backtest_results.drop(columns=['returns'])
+        df = sample_backtest_results.drop(columns=["returns"])
         fig = plot_returns_distribution(df)
 
         assert isinstance(fig, go.Figure)
@@ -162,11 +165,11 @@ class TestVisualization:
 
         assert isinstance(fig, go.Figure)
         # Check that title reflects window size
-        assert '60' in fig.layout.annotations[0].text
+        assert "60" in fig.layout.annotations[0].text
 
     def test_visualization_with_missing_columns(self):
         """Test visualizations handle missing columns gracefully."""
-        df = pd.DataFrame({'other_column': [1, 2, 3]})
+        df = pd.DataFrame({"other_column": [1, 2, 3]})
 
         with pytest.raises(ValueError, match="must have"):
             plot_equity_curve(df)
@@ -178,7 +181,7 @@ class TestVisualization:
         """Test equity curve with 'timestamp' column instead of 'date'."""
         df = sample_backtest_results.copy()
         # Add timestamp column (alternative to using index)
-        df['timestamp'] = df.index
+        df["timestamp"] = df.index
         df.index = range(len(df))  # Remove datetime index
 
         fig = plot_equity_curve(df, show_drawdown=False)
@@ -191,8 +194,8 @@ class TestVisualization:
         """Test equity curve with 'ending_value' column instead of 'portfolio_value'."""
         df = sample_backtest_results.copy()
         # Rename portfolio_value to ending_value
-        df['ending_value'] = df['portfolio_value']
-        df = df.drop(columns=['portfolio_value'])
+        df["ending_value"] = df["portfolio_value"]
+        df = df.drop(columns=["portfolio_value"])
 
         fig = plot_equity_curve(df, show_drawdown=False)
 
@@ -202,9 +205,7 @@ class TestVisualization:
     def test_plot_returns_distribution_empty_returns(self):
         """Test returns distribution handles empty/insufficient data."""
         # Create minimal dataset
-        df = pd.DataFrame({
-            'portfolio_value': [100.0, 100.0]  # No change = zero returns
-        })
+        df = pd.DataFrame({"portfolio_value": [100.0, 100.0]})  # No change = zero returns
 
         fig = plot_returns_distribution(df, bins=10)
 
@@ -214,11 +215,14 @@ class TestVisualization:
     def test_plot_rolling_metrics_insufficient_data(self):
         """Test rolling metrics with data less than window size."""
         # Create small dataset (less than typical window)
-        dates = pd.date_range(start='2024-01-01', periods=20, freq='D')
-        df = pd.DataFrame({
-            'portfolio_value': np.linspace(100, 110, 20),
-            'returns': np.random.normal(0.001, 0.01, 20)
-        }, index=dates)
+        dates = pd.date_range(start="2024-01-01", periods=20, freq="D")
+        df = pd.DataFrame(
+            {
+                "portfolio_value": np.linspace(100, 110, 20),
+                "returns": np.random.normal(0.001, 0.01, 20),
+            },
+            index=dates,
+        )
 
         # Use window size larger than data (should handle gracefully)
         fig = plot_rolling_metrics(df, window=30)
@@ -228,11 +232,8 @@ class TestVisualization:
 
     def test_plot_drawdown_alternative_columns(self):
         """Test drawdown with timestamp and ending_value columns."""
-        dates = pd.date_range(start='2024-01-01', periods=100, freq='D')
-        df = pd.DataFrame({
-            'timestamp': dates,
-            'ending_value': np.linspace(100, 120, 100)
-        })
+        dates = pd.date_range(start="2024-01-01", periods=100, freq="D")
+        df = pd.DataFrame({"timestamp": dates, "ending_value": np.linspace(100, 120, 100)})
 
         fig = plot_drawdown(df)
 
@@ -241,10 +242,11 @@ class TestVisualization:
 
     def test_plot_returns_distribution_from_ending_value(self):
         """Test returns distribution calculating from ending_value column."""
-        dates = pd.date_range(start='2024-01-01', periods=100, freq='D')
-        df = pd.DataFrame({
-            'ending_value': 100 * np.exp(np.cumsum(np.random.normal(0.001, 0.01, 100)))
-        }, index=dates)
+        dates = pd.date_range(start="2024-01-01", periods=100, freq="D")
+        df = pd.DataFrame(
+            {"ending_value": 100 * np.exp(np.cumsum(np.random.normal(0.001, 0.01, 100)))},
+            index=dates,
+        )
         # No 'returns' or 'portfolio_value' columns - should use ending_value
 
         fig = plot_returns_distribution(df)
@@ -317,10 +319,10 @@ class TestSetupNotebook:
                     calls = mock_pd.set_option.call_args_list
                     option_names = [call[0][0] for call in calls]
 
-                    assert 'display.max_columns' in option_names
-                    assert 'display.max_rows' in option_names
-                    assert 'display.width' in option_names
-                    assert 'display.float_format' in option_names
+                    assert "display.max_columns" in option_names
+                    assert "display.max_rows" in option_names
+                    assert "display.width" in option_names
+                    assert "display.float_format" in option_names
 
 
 # Async execution tests
@@ -334,7 +336,7 @@ class TestAsyncExecution:
 
         # Create mock algorithm
         mock_algo = MagicMock()
-        mock_result = pd.DataFrame({'value': [100, 110, 120]})
+        mock_result = pd.DataFrame({"value": [100, 110, 120]})
         mock_algo.run.return_value = mock_result
 
         with patch("rustybt.analytics.notebook.nest_asyncio"):
@@ -348,7 +350,7 @@ class TestAsyncExecution:
                 # Verify result is returned
                 assert isinstance(result, pd.DataFrame)
                 assert len(result) == 3
-                assert list(result['value']) == [100, 110, 120]
+                assert list(result["value"]) == [100, 110, 120]
 
                 # Verify progress bar was updated
                 assert mock_pbar.update.call_count == 2  # Initial 10% + final 90%
@@ -360,7 +362,7 @@ class TestAsyncExecution:
 
         # Create mock algorithm
         mock_algo = MagicMock()
-        mock_result = pd.DataFrame({'value': [100, 110, 120]})
+        mock_result = pd.DataFrame({"value": [100, 110, 120]})
         mock_algo.run.return_value = mock_result
 
         with patch("rustybt.analytics.notebook.nest_asyncio"):
@@ -377,14 +379,12 @@ class TestAsyncExecution:
 
         mock_algo = MagicMock()
         mock_data_portal = MagicMock()
-        mock_result = pd.DataFrame({'value': [100, 110]})
+        mock_result = pd.DataFrame({"value": [100, 110]})
         mock_algo.run.return_value = mock_result
 
         with patch("rustybt.analytics.notebook.nest_asyncio"):
             result = await async_backtest(
-                mock_algo,
-                data_portal=mock_data_portal,
-                show_progress=False
+                mock_algo, data_portal=mock_data_portal, show_progress=False
             )
 
             # Verify algorithm.run was called with data_portal
@@ -450,6 +450,7 @@ class TestProgressDecorator:
 
     def test_with_progress_iterable(self):
         """Test decorator with iterable function."""
+
         @with_progress(desc="Processing", total=10)
         def generate_items():
             for i in range(10):
@@ -465,6 +466,7 @@ class TestProgressDecorator:
 
     def test_with_progress_non_iterable(self):
         """Test decorator with non-iterable function returns as-is."""
+
         @with_progress(desc="Calculating")
         def calculate_sum(a, b):
             return a + b
@@ -476,10 +478,11 @@ class TestProgressDecorator:
 
     def test_with_progress_custom_params(self):
         """Test decorator with custom parameters."""
+
         @with_progress(desc="Custom Task", total=5, unit="items")
         def custom_generator():
             for i in range(5):
-                yield i ** 2  # Squares: 0, 1, 4, 9, 16
+                yield i**2  # Squares: 0, 1, 4, 9, 16
 
         results = list(custom_generator())
 
@@ -501,19 +504,24 @@ class TestDataFrameExport:
         """
         # Expected columns for positions export
         expected_columns = [
-            'asset', 'amount', 'cost_basis', 'last_sale_price',
-            'market_value', 'pnl', 'pnl_pct'
+            "asset",
+            "amount",
+            "cost_basis",
+            "last_sale_price",
+            "market_value",
+            "pnl",
+            "pnl_pct",
         ]
 
         # Create mock position data
         position_data = {
-            'asset': ['AAPL', 'GOOGL'],
-            'amount': [100.0, 50.0],
-            'cost_basis': [150.0, 2800.0],
-            'last_sale_price': [175.0, 2900.0],
-            'market_value': [17500.0, 145000.0],
-            'pnl': [2500.0, 5000.0],
-            'pnl_pct': [16.67, 3.57],
+            "asset": ["AAPL", "GOOGL"],
+            "amount": [100.0, 50.0],
+            "cost_basis": [150.0, 2800.0],
+            "last_sale_price": [175.0, 2900.0],
+            "market_value": [17500.0, 145000.0],
+            "pnl": [2500.0, 5000.0],
+            "pnl_pct": [16.67, 3.57],
         }
 
         df = pd.DataFrame(position_data)
@@ -521,22 +529,20 @@ class TestDataFrameExport:
         # Verify structure
         assert all(col in df.columns for col in expected_columns)
         assert len(df) == 2
-        assert df['pnl'].sum() > 0  # Real calculation, not mock
+        assert df["pnl"].sum() > 0  # Real calculation, not mock
 
     def test_transactions_export_structure(self):
         """Test that transactions DataFrame has correct structure."""
-        expected_columns = [
-            'date', 'asset', 'amount', 'price', 'commission', 'order_id'
-        ]
+        expected_columns = ["date", "asset", "amount", "price", "commission", "order_id"]
 
         # Create mock transaction data
         transaction_data = {
-            'date': pd.date_range('2024-01-01', periods=3),
-            'asset': ['AAPL', 'AAPL', 'GOOGL'],
-            'amount': [100.0, -50.0, 25.0],
-            'price': [150.0, 155.0, 2800.0],
-            'commission': [1.0, 0.5, 1.5],
-            'order_id': ['order-1', 'order-2', 'order-3'],
+            "date": pd.date_range("2024-01-01", periods=3),
+            "asset": ["AAPL", "AAPL", "GOOGL"],
+            "amount": [100.0, -50.0, 25.0],
+            "price": [150.0, 155.0, 2800.0],
+            "commission": [1.0, 0.5, 1.5],
+            "order_id": ["order-1", "order-2", "order-3"],
         }
 
         df = pd.DataFrame(transaction_data)
@@ -544,7 +550,7 @@ class TestDataFrameExport:
         # Verify structure
         assert all(col in df.columns for col in expected_columns)
         assert len(df) == 3
-        assert df['commission'].sum() == 3.0  # Real sum, not mock
+        assert df["commission"].sum() == 3.0  # Real sum, not mock
 
 
 # Rich repr tests
@@ -569,10 +575,10 @@ class TestRichRepr:
         """
 
         # Verify HTML contains key elements
-        assert '<div' in html_output
-        assert '<table' in html_output
-        assert 'Position:' in html_output
-        assert 'P&L' in html_output
+        assert "<div" in html_output
+        assert "<table" in html_output
+        assert "Position:" in html_output
+        assert "P&L" in html_output
         # Real HTML formatting, not mock
 
     def test_repr_html_shows_calculated_values(self):
@@ -607,6 +613,7 @@ class TestNotebookIntegration:
 
         # 3. Polars conversion
         import polars as pl
+
         df_pl = pl.from_pandas(sample_backtest_results)
         assert isinstance(df_pl, pl.DataFrame)
 
@@ -617,9 +624,9 @@ class TestNotebookIntegration:
     def test_returns_calculation_consistency(self, sample_backtest_results):
         """Test that returns calculations are consistent."""
         # Calculate returns from portfolio values
-        portfolio_values = sample_backtest_results['portfolio_value']
+        portfolio_values = sample_backtest_results["portfolio_value"]
         calculated_returns = portfolio_values.pct_change().dropna()
-        provided_returns = sample_backtest_results['returns'].dropna()
+        provided_returns = sample_backtest_results["returns"].dropna()
 
         # Should be similar (allowing for initial value difference)
         assert len(calculated_returns) > 0
@@ -627,5 +634,5 @@ class TestNotebookIntegration:
         # Real calculation verification, not mock
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

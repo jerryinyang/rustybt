@@ -207,7 +207,9 @@ class TestWinRate:
 
     def test_win_rate_mixed_trades(self):
         """Test win rate with mixed winning and losing trades."""
-        transactions = pd.DataFrame({"pnl": [100, -50, 75, -25, 150, 200, -100]})  # 4 wins, 3 losses
+        transactions = pd.DataFrame(
+            {"pnl": [100, -50, 75, -25, 150, 200, -100]}
+        )  # 4 wins, 3 losses
 
         wr = win_rate(transactions)
 

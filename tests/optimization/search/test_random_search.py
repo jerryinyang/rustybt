@@ -1,13 +1,13 @@
 """Tests for random search algorithm."""
 
 import concurrent.futures
-import math
 import warnings
 from decimal import Decimal
 
 import numpy as np
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from rustybt.optimization.parameter_space import (
     CategoricalParameter,
@@ -628,7 +628,7 @@ class TestRandomSearchAlgorithm:
         # Run 20 trials in parallel with 4 workers
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             futures = [executor.submit(run_trial) for _ in range(20)]
-            results = [f.result() for f in concurrent.futures.as_completed(futures)]
+            [f.result() for f in concurrent.futures.as_completed(futures)]
 
         # Should have completed exactly 20 trials
         assert search_alg.iteration == 20
@@ -779,9 +779,7 @@ class TestRandomSearchPropertyBased:
 
         param_space = ParameterSpace(
             parameters=[
-                ContinuousParameter(
-                    name="x", min_value=min_val, max_value=max_val, prior="uniform"
-                )
+                ContinuousParameter(name="x", min_value=min_val, max_value=max_val, prior="uniform")
             ]
         )
 

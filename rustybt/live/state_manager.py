@@ -8,7 +8,6 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import structlog
 
@@ -38,7 +37,7 @@ class StateManager:
 
     def __init__(
         self,
-        checkpoint_dir: Optional[Path] = None,
+        checkpoint_dir: Path | None = None,
         staleness_threshold_seconds: int = 3600,
     ):
         """Initialize StateManager.
@@ -139,7 +138,7 @@ class StateManager:
             )
             raise StateError(f"Failed to save checkpoint for {strategy_name}: {e}") from e
 
-    def load_checkpoint(self, strategy_name: str) -> Optional[StateCheckpoint]:
+    def load_checkpoint(self, strategy_name: str) -> StateCheckpoint | None:
         """Load state checkpoint from disk.
 
         Args:
@@ -162,7 +161,7 @@ class StateManager:
             return None
 
         try:
-            with open(checkpoint_path, "r") as f:
+            with open(checkpoint_path) as f:
                 json_data = f.read()
 
             # Parse and validate using Pydantic
@@ -210,9 +209,7 @@ class StateManager:
                 error=str(e),
                 exc_info=True,
             )
-            raise CheckpointCorrupted(
-                f"Failed to load checkpoint for {strategy_name}: {e}"
-            ) from e
+            raise CheckpointCorrupted(f"Failed to load checkpoint for {strategy_name}: {e}") from e
 
     def delete_checkpoint(self, strategy_name: str) -> bool:
         """Delete checkpoint file for strategy.
@@ -251,7 +248,7 @@ class StateManager:
 
         return sorted(checkpoints)
 
-    def get_checkpoint_info(self, strategy_name: str) -> Optional[dict]:
+    def get_checkpoint_info(self, strategy_name: str) -> dict | None:
         """Get checkpoint metadata without loading full state.
 
         Args:
@@ -269,7 +266,7 @@ class StateManager:
             stat = checkpoint_path.stat()
 
             # Quick JSON parse for timestamp only
-            with open(checkpoint_path, "r") as f:
+            with open(checkpoint_path) as f:
                 data = json.load(f)
 
             return {
@@ -293,8 +290,8 @@ class StateManager:
     def get_alignment_history(
         self,
         strategy_name: str,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
     ) -> list:
         """Get historical alignment metrics from checkpoints.
 
@@ -331,8 +328,8 @@ class StateManager:
         self,
         strategy_name: str,
         filepath: str,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
     ) -> None:
         """Export alignment history to CSV file.
 

@@ -26,7 +26,7 @@ pub fn rust_window_slice(values: Vec<f64>, start: usize, end: usize) -> PyResult
             format!("Invalid window bounds: start={}, end={}, len={}", start, end, values.len())
         ));
     }
-    
+
     Ok(values[start..end].to_vec())
 }
 
@@ -85,7 +85,7 @@ pub fn rust_create_columns(columns: Vec<Vec<f64>>) -> PyResult<(Vec<f64>, usize,
 #[pyfunction]
 pub fn rust_index_select(values: Vec<f64>, indices: Vec<usize>) -> PyResult<Vec<f64>> {
     let mut result = Vec::with_capacity(indices.len());
-    
+
     for &idx in &indices {
         if idx >= values.len() {
             return Err(PyErr::new::<pyo3::exceptions::PyIndexError, _>(
@@ -94,7 +94,7 @@ pub fn rust_index_select(values: Vec<f64>, indices: Vec<usize>) -> PyResult<Vec<
         }
         result.push(values[idx]);
     }
-    
+
     Ok(result)
 }
 
@@ -175,7 +175,7 @@ mod tests {
         let col1 = vec![1.0, 2.0, 3.0];
         let col2 = vec![4.0, 5.0, 6.0];
         let (result, rows, cols) = rust_create_columns(vec![col1, col2]).unwrap();
-        
+
         assert_eq!(rows, 3);
         assert_eq!(cols, 2);
         assert_eq!(result, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);

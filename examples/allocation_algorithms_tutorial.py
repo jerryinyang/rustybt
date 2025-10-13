@@ -13,21 +13,21 @@ Covered algorithms:
 """
 
 from decimal import Decimal
+
 import numpy as np
 import pandas as pd
 
 from rustybt.portfolio.allocation import (
     AllocationConstraints,
     AllocationRebalancer,
-    DynamicAllocation,
     DrawdownBasedAllocation,
+    DynamicAllocation,
     FixedAllocation,
     KellyCriterionAllocation,
     RebalancingFrequency,
     RiskParityAllocation,
 )
 from rustybt.portfolio.allocator import StrategyPerformance
-
 
 # ============================================================================
 # Helper: Create Synthetic Strategy Performance
@@ -143,7 +143,8 @@ def example_dynamic_allocation():
 
     # Create dynamic allocator (60-day lookback)
     dynamic_alloc = DynamicAllocation(
-        lookback_window=60, min_allocation=Decimal("0.05")  # 60 days  # 5% minimum
+        lookback_window=60,
+        min_allocation=Decimal("0.05"),  # 60 days  # 5% minimum
     )
 
     # Calculate allocations
@@ -177,9 +178,7 @@ def example_risk_parity_allocation():
 
     # Create strategies with different volatility profiles
     strategies = {
-        "low_vol": create_synthetic_strategy(
-            "Low Vol Strategy", 0.0005, 0.008
-        ),  # Low volatility
+        "low_vol": create_synthetic_strategy("Low Vol Strategy", 0.0005, 0.008),  # Low volatility
         "medium_vol": create_synthetic_strategy(
             "Medium Vol Strategy", 0.0007, 0.015
         ),  # Medium volatility
@@ -206,9 +205,7 @@ def example_risk_parity_allocation():
         )
 
     print(f"\nTotal Allocation: {float(sum(allocations.values())):.1%}")
-    print(
-        "\nNote: Lower volatility strategies get higher allocation (inverse weighting)"
-    )
+    print("\nNote: Lower volatility strategies get higher allocation (inverse weighting)")
 
 
 # ============================================================================
@@ -232,9 +229,7 @@ def example_kelly_criterion_allocation():
         "medium_sharpe": create_synthetic_strategy(
             "Medium Sharpe Strategy", 0.0008, 0.015
         ),  # Medium
-        "low_sharpe": create_synthetic_strategy(
-            "Low Sharpe Strategy", 0.0005, 0.02
-        ),  # Low
+        "low_sharpe": create_synthetic_strategy("Low Sharpe Strategy", 0.0005, 0.02),  # Low
     }
 
     # Create Kelly allocator (half-Kelly for conservative approach)
@@ -322,9 +317,7 @@ def example_drawdown_based_allocation():
         )
 
     print(f"\nTotal Allocation: {float(sum(allocations.values())):.1%}")
-    print(
-        "\nNote: Strategies in drawdown get reduced allocation, recovered get bonus"
-    )
+    print("\nNote: Strategies in drawdown get reduced allocation, recovered get bonus")
 
 
 # ============================================================================
@@ -351,9 +344,7 @@ def example_allocation_constraints():
     constraints = AllocationConstraints(
         default_min=Decimal("0.10"),  # 10% minimum
         default_max=Decimal("0.50"),  # 50% maximum
-        strategy_min={
-            "strategy1": Decimal("0.05")
-        },  # Override: allow strategy1 down to 5%
+        strategy_min={"strategy1": Decimal("0.05")},  # Override: allow strategy1 down to 5%
         strategy_max={"strategy3": Decimal("0.40")},  # Override: limit strategy3 to 40%
     )
 
@@ -368,10 +359,7 @@ def example_allocation_constraints():
     for strategy_id in strategies:
         unconstrained = allocations_unconstrained[strategy_id]
         constrained = allocations_constrained[strategy_id]
-        print(
-            f"  {strategy_id:12s}: {float(unconstrained):6.1%} → "
-            f"{float(constrained):6.1%}"
-        )
+        print(f"  {strategy_id:12s}: {float(unconstrained):6.1%} → {float(constrained):6.1%}")
 
     print(f"\nTotal Allocation: {float(sum(allocations_constrained.values())):.1%}")
 
@@ -417,7 +405,7 @@ def example_automated_rebalancing():
     if should_rebalance:
         new_allocations = rebalancer.rebalance(strategies, day0)
         print(
-            f"  Rebalanced: "
+            "  Rebalanced: "
             + ", ".join([f"{k}={float(v):.1%}" for k, v in new_allocations.items()])
         )
 
@@ -438,7 +426,7 @@ def example_automated_rebalancing():
     if should_rebalance:
         new_allocations = rebalancer.rebalance(strategies, day9)
         print(
-            f"  Rebalanced: "
+            "  Rebalanced: "
             + ", ".join([f"{k}={float(v):.1%}" for k, v in new_allocations.items()])
         )
 
@@ -475,9 +463,7 @@ def example_algorithm_comparison():
     ).calculate_allocations(strategies)
 
     # 2. Dynamic (momentum-based)
-    results["Dynamic"] = DynamicAllocation(lookback_window=60).calculate_allocations(
-        strategies
-    )
+    results["Dynamic"] = DynamicAllocation(lookback_window=60).calculate_allocations(strategies)
 
     # 3. Risk Parity
     results["Risk Parity"] = RiskParityAllocation(lookback_window=252).calculate_allocations(
@@ -497,7 +483,9 @@ def example_algorithm_comparison():
 
     # Print comparison table
     print("\nAllocation Comparison Table:")
-    print(f"\n{'Algorithm':<20s} | {'High R/V':>12s} | {'Med R/Low V':>12s} | {'Low R/Med V':>12s} |")
+    print(
+        f"\n{'Algorithm':<20s} | {'High R/V':>12s} | {'Med R/Low V':>12s} | {'Low R/Med V':>12s} |"
+    )
     print("-" * 70)
 
     for algo_name, allocations in results.items():
@@ -539,9 +527,7 @@ def main():
     print("\n" + "=" * 70)
     print("Tutorial Complete!")
     print("=" * 70)
-    print(
-        "\nFor more information, see documentation:"
-    )
+    print("\nFor more information, see documentation:")
     print("  - rustybt/portfolio/allocation.py")
     print("  - tests/portfolio/test_allocation.py")
     print("=" * 70 + "\n")

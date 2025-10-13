@@ -18,23 +18,23 @@ These tests verify mathematical invariants and properties that must hold
 for all valid inputs.
 """
 
-import pytest
-import polars as pl
 from decimal import Decimal
-from hypothesis import given, strategies as st, assume, settings, HealthCheck
+
+import polars as pl
+from hypothesis import HealthCheck, assume, given, settings
+from hypothesis import strategies as st
 
 from rustybt.finance.metrics import (
+    calculate_calmar_ratio,
+    calculate_cvar,
+    calculate_excess_return,
+    calculate_max_drawdown,
+    calculate_profit_factor,
     calculate_sharpe_ratio,
     calculate_sortino_ratio,
-    calculate_max_drawdown,
-    calculate_calmar_ratio,
     calculate_var,
-    calculate_cvar,
     calculate_win_rate,
-    calculate_profit_factor,
-    calculate_excess_return,
 )
-
 
 # Hypothesis strategies for generating test data
 decimal_returns = st.lists(
@@ -71,7 +71,10 @@ class TestSharpeRatioProperties:
 
         assert sharpe == expected_sharpe
 
-    @given(returns=decimal_returns, rf_rate=st.decimals(min_value=Decimal("0"), max_value=Decimal("0.1"), places=4))
+    @given(
+        returns=decimal_returns,
+        rf_rate=st.decimals(min_value=Decimal("0"), max_value=Decimal("0.1"), places=4),
+    )
     @settings(max_examples=500, suppress_health_check=[HealthCheck.filter_too_much])
     def test_sharpe_ratio_increases_with_rf_decrease(self, returns, rf_rate):
         """For positive mean returns, Sharpe should increase as rf decreases."""
@@ -84,7 +87,9 @@ class TestSharpeRatioProperties:
         assume(mean > rf_rate)  # Mean return above risk-free rate
 
         sharpe_high_rf = calculate_sharpe_ratio(returns_series, risk_free_rate=rf_rate)
-        sharpe_low_rf = calculate_sharpe_ratio(returns_series, risk_free_rate=rf_rate / Decimal("2"))
+        sharpe_low_rf = calculate_sharpe_ratio(
+            returns_series, risk_free_rate=rf_rate / Decimal("2")
+        )
 
         # Lower rf should give higher Sharpe
         assert sharpe_low_rf >= sharpe_high_rf
@@ -115,7 +120,13 @@ class TestSortinoRatioProperties:
         # Sortino should be >= Sharpe when downside exists
         assert sortino >= sharpe
 
-    @given(returns=st.lists(st.decimals(min_value=Decimal("0.001"), max_value=Decimal("0.1"), places=4), min_size=10, max_size=50))
+    @given(
+        returns=st.lists(
+            st.decimals(min_value=Decimal("0.001"), max_value=Decimal("0.1"), places=4),
+            min_size=10,
+            max_size=50,
+        )
+    )
     @settings(max_examples=500)
     def test_sortino_infinite_with_all_positive(self, returns):
         """If all returns positive, Sortino = inf."""
@@ -146,7 +157,13 @@ class TestMaxDrawdownProperties:
         assert max_dd <= Decimal("0"), "Drawdown must be non-positive"
         assert max_dd >= Decimal("-1"), "Drawdown cannot exceed -100%"
 
-    @given(returns=st.lists(st.decimals(min_value=Decimal("0"), max_value=Decimal("0.05"), places=4), min_size=10, max_size=50))
+    @given(
+        returns=st.lists(
+            st.decimals(min_value=Decimal("0"), max_value=Decimal("0.05"), places=4),
+            min_size=10,
+            max_size=50,
+        )
+    )
     @settings(max_examples=500)
     def test_max_drawdown_zero_with_rising_values(self, returns):
         """With all positive returns, max drawdown should be zero."""
@@ -197,7 +214,7 @@ class TestVaRAndCVaRProperties:
 
     @given(
         returns=decimal_returns,
-        confidence_level=st.decimals(min_value=Decimal("0.01"), max_value=Decimal("0.1"), places=2)
+        confidence_level=st.decimals(min_value=Decimal("0.01"), max_value=Decimal("0.1"), places=2),
     )
     @settings(max_examples=1000)
     def test_cvar_leq_var(self, returns, confidence_level):
@@ -238,7 +255,13 @@ class TestWinRateProperties:
 
         assert Decimal("0") <= win_rate <= Decimal("1")
 
-    @given(trade_returns=st.lists(st.decimals(min_value=Decimal("0.01"), max_value=Decimal("100"), places=2), min_size=5, max_size=20))
+    @given(
+        trade_returns=st.lists(
+            st.decimals(min_value=Decimal("0.01"), max_value=Decimal("100"), places=2),
+            min_size=5,
+            max_size=20,
+        )
+    )
     @settings(max_examples=500)
     def test_win_rate_one_with_all_winners(self, trade_returns):
         """Win rate = 1.0 when all trades are winners."""
@@ -248,7 +271,13 @@ class TestWinRateProperties:
 
         assert win_rate == Decimal("1")
 
-    @given(trade_returns=st.lists(st.decimals(min_value=Decimal("-100"), max_value=Decimal("-0.01"), places=2), min_size=5, max_size=20))
+    @given(
+        trade_returns=st.lists(
+            st.decimals(min_value=Decimal("-100"), max_value=Decimal("-0.01"), places=2),
+            min_size=5,
+            max_size=20,
+        )
+    )
     @settings(max_examples=500)
     def test_win_rate_zero_with_all_losers(self, trade_returns):
         """Win rate = 0.0 when all trades are losers."""
@@ -262,10 +291,7 @@ class TestWinRateProperties:
 class TestProfitFactorProperties:
     """Property-based tests for profit factor."""
 
-    @given(
-        winning_trades=positive_decimals,
-        losing_trades=positive_decimals
-    )
+    @given(winning_trades=positive_decimals, losing_trades=positive_decimals)
     @settings(max_examples=1000)
     def test_profit_factor_definition(self, winning_trades, losing_trades):
         """Profit factor must equal gross_profit / gross_loss."""
@@ -275,7 +301,13 @@ class TestProfitFactorProperties:
         expected_pf = winning_trades / losing_trades
         assert profit_factor == expected_pf
 
-    @given(trade_returns=st.lists(st.decimals(min_value=Decimal("0.01"), max_value=Decimal("100"), places=2), min_size=3, max_size=20))
+    @given(
+        trade_returns=st.lists(
+            st.decimals(min_value=Decimal("0.01"), max_value=Decimal("100"), places=2),
+            min_size=3,
+            max_size=20,
+        )
+    )
     @settings(max_examples=500)
     def test_profit_factor_infinite_with_no_losses(self, trade_returns):
         """Profit factor = inf when there are no losses."""
@@ -285,10 +317,7 @@ class TestProfitFactorProperties:
 
         assert pf == Decimal("inf")
 
-    @given(
-        gross_profit=positive_decimals,
-        gross_loss=positive_decimals
-    )
+    @given(gross_profit=positive_decimals, gross_loss=positive_decimals)
     @settings(max_examples=500)
     def test_profit_factor_above_one_is_profitable(self, gross_profit, gross_loss):
         """Profit factor > 1 means profitable strategy."""
@@ -305,7 +334,9 @@ class TestExcessReturnProperties:
 
     @given(
         strategy_returns=decimal_returns,
-        benchmark_offset=st.decimals(min_value=Decimal("-0.05"), max_value=Decimal("0.05"), places=4)
+        benchmark_offset=st.decimals(
+            min_value=Decimal("-0.05"), max_value=Decimal("0.05"), places=4
+        ),
     )
     @settings(max_examples=1000)
     def test_excess_return_definition(self, strategy_returns, benchmark_offset):
@@ -341,13 +372,13 @@ class TestAttributionProperties:
         position_returns=st.lists(
             st.decimals(min_value=Decimal("-0.1"), max_value=Decimal("0.1"), places=4),
             min_size=3,
-            max_size=10
+            max_size=10,
         ),
         position_weights=st.lists(
             st.decimals(min_value=Decimal("0.01"), max_value=Decimal("1"), places=4),
             min_size=3,
-            max_size=10
-        )
+            max_size=10,
+        ),
     )
     @settings(max_examples=1000)
     def test_attribution_sums_to_total(self, position_returns, position_weights):
@@ -361,10 +392,12 @@ class TestAttributionProperties:
         normalized_weights = [w / total_weight for w in position_weights]
 
         # Calculate portfolio return
-        portfolio_return = sum(r * w for r, w in zip(position_returns, normalized_weights))
+        portfolio_return = sum(
+            r * w for r, w in zip(position_returns, normalized_weights, strict=False)
+        )
 
         # Calculate attribution
-        attributions = [r * w for r, w in zip(position_returns, normalized_weights)]
+        attributions = [r * w for r, w in zip(position_returns, normalized_weights, strict=False)]
         total_attribution = sum(attributions)
 
         # Should sum to portfolio return (exact equality with Decimal)

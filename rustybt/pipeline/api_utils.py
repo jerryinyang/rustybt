@@ -23,7 +23,7 @@ def restrict_to_dtype(dtype, message_template):
         `message_template.format` will be called with keyword arguments
         `method_name`, `expected_dtype`, and `received_dtype`.
 
-    Examples
+    Examples:
     --------
     @restrict_to_dtype(
         dtype=float64_dtype,

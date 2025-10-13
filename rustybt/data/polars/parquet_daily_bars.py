@@ -14,16 +14,14 @@ Parquet Structure:
         └── ...
 """
 
+from datetime import date
+from pathlib import Path
+
 import polars as pl
 import structlog
-from datetime import date
-from decimal import Decimal
-from pathlib import Path
-from typing import List, Optional
 
-from rustybt.data.polars.parquet_schema import DAILY_BARS_SCHEMA
-from rustybt.data.polars.validation import validate_ohlcv_relationships, DataError
 from rustybt.data.polars.metadata_catalog import ParquetMetadataCatalog
+from rustybt.data.polars.validation import DataError, validate_ohlcv_relationships
 
 logger = structlog.get_logger(__name__)
 
@@ -65,15 +63,15 @@ class PolarsParquetDailyReader:
         self.bundle_path = Path(bundle_path)
         self.daily_bars_path = self.bundle_path / "daily_bars"
         self.enable_cache = enable_cache
-        self._cache: Optional[pl.DataFrame] = None
-        self._cache_date_range: Optional[tuple[date, date]] = None
+        self._cache: pl.DataFrame | None = None
+        self._cache_date_range: tuple[date, date] | None = None
 
         # Initialize metadata catalog
         self.enable_metadata_catalog = enable_metadata_catalog
         if enable_metadata_catalog:
             metadata_db_path = self.bundle_path / "metadata.db"
-            self.metadata_catalog: Optional[ParquetMetadataCatalog] = (
-                ParquetMetadataCatalog(str(metadata_db_path))
+            self.metadata_catalog: ParquetMetadataCatalog | None = ParquetMetadataCatalog(
+                str(metadata_db_path)
             )
         else:
             self.metadata_catalog = None
@@ -88,10 +86,10 @@ class PolarsParquetDailyReader:
 
     def load_daily_bars(
         self,
-        sids: List[int],
+        sids: list[int],
         start_date: date,
         end_date: date,
-        fields: Optional[List[str]] = None,
+        fields: list[str] | None = None,
     ) -> pl.DataFrame:
         """Load daily bars for assets in date range.
 
@@ -134,9 +132,7 @@ class PolarsParquetDailyReader:
 
         # Check if data exists
         if not self.daily_bars_path.exists():
-            raise FileNotFoundError(
-                f"Daily bars directory not found: {self.daily_bars_path}"
-            )
+            raise FileNotFoundError(f"Daily bars directory not found: {self.daily_bars_path}")
 
         # Check cache
         if self._use_cache(start_date, end_date):
@@ -159,14 +155,11 @@ class PolarsParquetDailyReader:
                 .collect()
             )
         except Exception as e:
-            raise DataError(
-                f"Failed to load daily bars from {self.daily_bars_path}: {e}"
-            ) from e
+            raise DataError(f"Failed to load daily bars from {self.daily_bars_path}: {e}") from e
 
         if len(df) == 0:
             raise DataError(
-                f"No data found for {len(sids)} assets "
-                f"between {start_date} and {end_date}"
+                f"No data found for {len(sids)} assets between {start_date} and {end_date}"
             )
 
         # Validate OHLCV relationships
@@ -186,7 +179,7 @@ class PolarsParquetDailyReader:
 
         return df
 
-    def get_last_available_date(self, sid: int) -> Optional[date]:
+    def get_last_available_date(self, sid: int) -> date | None:
         """Get the last available trading date for an asset.
 
         Args:
@@ -216,7 +209,7 @@ class PolarsParquetDailyReader:
             logger.error("get_last_date_failed", sid=sid, error=str(e))
             return None
 
-    def get_first_available_date(self, sid: int) -> Optional[date]:
+    def get_first_available_date(self, sid: int) -> date | None:
         """Get the first available trading date for an asset.
 
         Args:
@@ -248,7 +241,7 @@ class PolarsParquetDailyReader:
 
     def load_spot_value(
         self,
-        sids: List[int],
+        sids: list[int],
         target_date: date,
         field: str = "close",
     ) -> pl.DataFrame:
@@ -297,10 +290,10 @@ class PolarsParquetDailyReader:
 
     def _filter_cached_data(
         self,
-        sids: List[int],
+        sids: list[int],
         start_date: date,
         end_date: date,
-        fields: List[str],
+        fields: list[str],
     ) -> pl.DataFrame:
         """Filter cached data for query.
 

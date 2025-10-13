@@ -6,7 +6,6 @@ Polygon.io API documentation: https://polygon.io/docs
 import asyncio
 from decimal import Decimal
 from pathlib import Path
-from typing import Dict
 
 import pandas as pd
 import polars as pl
@@ -94,8 +93,7 @@ class PolygonAdapter(BaseAPIProviderAdapter, DataSource):
 
         if asset_type not in ("stocks", "options", "forex", "crypto"):
             raise ValueError(
-                f"Invalid asset_type '{asset_type}'. "
-                "Must be one of: stocks, options, forex, crypto"
+                f"Invalid asset_type '{asset_type}'. Must be one of: stocks, options, forex, crypto"
             )
 
         self.tier = tier
@@ -110,7 +108,7 @@ class PolygonAdapter(BaseAPIProviderAdapter, DataSource):
             base_url="https://api.polygon.io",
         )
 
-    def _get_auth_headers(self) -> Dict[str, str]:
+    def _get_auth_headers(self) -> dict[str, str]:
         """Get authentication headers.
 
         Polygon supports both query param and Authorization header.
@@ -121,7 +119,7 @@ class PolygonAdapter(BaseAPIProviderAdapter, DataSource):
         """
         return {"Authorization": f"Bearer {self.api_key}"}
 
-    def _get_auth_params(self) -> Dict[str, str]:
+    def _get_auth_params(self) -> dict[str, str]:
         """Get authentication query parameters.
 
         Returns:
@@ -213,9 +211,7 @@ class PolygonAdapter(BaseAPIProviderAdapter, DataSource):
             # Parse aggregates response
             return self._parse_aggregates_response(data, symbol)
 
-    def _parse_aggregates_response(
-        self, data: Dict, symbol: str
-    ) -> pl.DataFrame:
+    def _parse_aggregates_response(self, data: dict, symbol: str) -> pl.DataFrame:
         """Parse Polygon aggregates API response.
 
         Args:
@@ -229,9 +225,7 @@ class PolygonAdapter(BaseAPIProviderAdapter, DataSource):
             DataParsingError: If response format is invalid
         """
         if "results" not in data or not data["results"]:
-            raise DataParsingError(
-                f"No results found in Polygon response for {symbol}"
-            )
+            raise DataParsingError(f"No results found in Polygon response for {symbol}")
 
         results = data["results"]
 
@@ -249,9 +243,7 @@ class PolygonAdapter(BaseAPIProviderAdapter, DataSource):
         # }
         df = pl.DataFrame(
             {
-                "timestamp": [
-                    pd.Timestamp(r["t"], unit="ms", tz="UTC") for r in results
-                ],
+                "timestamp": [pd.Timestamp(r["t"], unit="ms", tz="UTC") for r in results],
                 "symbol": [symbol] * len(results),
                 "open": [Decimal(str(r["o"])) for r in results],
                 "high": [Decimal(str(r["h"])) for r in results],
@@ -265,7 +257,7 @@ class PolygonAdapter(BaseAPIProviderAdapter, DataSource):
 
     def _parse_options_response(
         self,
-        data: Dict,
+        data: dict,
         symbol: str,
         start_date: pd.Timestamp,
         end_date: pd.Timestamp,
@@ -288,9 +280,7 @@ class PolygonAdapter(BaseAPIProviderAdapter, DataSource):
             DataParsingError: If response format is invalid
         """
         if "results" not in data or not data["results"]:
-            raise DataParsingError(
-                f"No results found in Polygon options snapshot for {symbol}"
-            )
+            raise DataParsingError(f"No results found in Polygon options snapshot for {symbol}")
 
         results = data["results"]
 
@@ -313,9 +303,7 @@ class PolygonAdapter(BaseAPIProviderAdapter, DataSource):
             rows.append(row)
 
         if not rows:
-            raise DataParsingError(
-                f"Failed to parse options data for {symbol}"
-            )
+            raise DataParsingError(f"Failed to parse options data for {symbol}")
 
         df = pl.DataFrame(rows)
         return self.standardize(df)
@@ -347,13 +335,9 @@ class PolygonAdapter(BaseAPIProviderAdapter, DataSource):
         if df["timestamp"].dtype != pl.Datetime("us"):
             # Handle string timestamps
             if df["timestamp"].dtype == pl.Utf8:
-                df = df.with_columns(
-                    pl.col("timestamp").str.to_datetime("%Y-%m-%d")
-                )
+                df = df.with_columns(pl.col("timestamp").str.to_datetime("%Y-%m-%d"))
             # Then cast to microsecond precision
-            df = df.with_columns(
-                pl.col("timestamp").cast(pl.Datetime("us"))
-            )
+            df = df.with_columns(pl.col("timestamp").cast(pl.Datetime("us")))
 
         # Ensure Decimal types for price/volume columns
         decimal_cols = ["open", "high", "low", "close", "volume"]

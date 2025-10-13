@@ -1,16 +1,15 @@
 """Integration tests for end-to-end WebSocket market data flow (AC 5, 10)."""
 
-import asyncio
+from datetime import UTC, datetime
 from decimal import Decimal
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from rustybt.assets import Equity
 from rustybt.live.brokers.bybit_adapter import BybitBrokerAdapter
-from rustybt.live.streaming.models import TickData, TickSide
 from rustybt.live.streaming.bar_buffer import OHLCVBar
+from rustybt.live.streaming.models import TickData, TickSide
 
 
 @pytest.fixture
@@ -42,10 +41,7 @@ class TestWebSocketIntegrationEndToEnd:
         # Create broker adapter with mocked WebSocket
         with patch("rustybt.live.brokers.bybit_adapter.HTTP"):
             adapter = BybitBrokerAdapter(
-                api_key="test_key",
-                api_secret="test_secret",
-                market_type="linear",
-                testnet=True
+                api_key="test_key", api_secret="test_secret", market_type="linear", testnet=True
             )
             adapter.client = MagicMock()
             adapter.client.get_server_time.return_value = {
@@ -57,17 +53,17 @@ class TestWebSocketIntegrationEndToEnd:
             await adapter.connect()
 
             # Create mock BarBuffer that immediately calls bar callback
-            mock_bar_callback = MagicMock()
+            MagicMock()
             adapter._bar_buffer = MagicMock()
             adapter._bar_buffer.add_tick = MagicMock()
 
             # Simulate tick arrival from WebSocket
             tick = TickData(
                 symbol="BTCUSDT",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 price=Decimal("50000.50"),
                 volume=Decimal("0.1"),
-                side=TickSide.BUY
+                side=TickSide.BUY,
             )
 
             # Call tick handler (simulates WebSocket → BarBuffer flow)
@@ -79,12 +75,12 @@ class TestWebSocketIntegrationEndToEnd:
             # Simulate bar completion (BarBuffer → MarketDataEvent flow)
             bar = OHLCVBar(
                 symbol="BTCUSDT",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 open=Decimal("50000"),
                 high=Decimal("50100"),
                 low=Decimal("49900"),
                 close=Decimal("50050"),
-                volume=Decimal("10.5")
+                volume=Decimal("10.5"),
             )
 
             # Call bar complete handler (simulates BarBuffer → Event Queue flow)
@@ -115,10 +111,7 @@ class TestWebSocketIntegrationEndToEnd:
         # Create broker adapter with mocked WebSocket
         with patch("rustybt.live.brokers.bybit_adapter.HTTP"):
             adapter = BybitBrokerAdapter(
-                api_key="test_key",
-                api_secret="test_secret",
-                market_type="linear",
-                testnet=True
+                api_key="test_key", api_secret="test_secret", market_type="linear", testnet=True
             )
             adapter.client = MagicMock()
             adapter.client.get_server_time.return_value = {
@@ -137,26 +130,23 @@ class TestWebSocketIntegrationEndToEnd:
             adapter._ws_adapter = mock_ws
 
             await adapter.subscribe_market_data([test_asset])
-            mock_ws.subscribe.assert_called_once_with(
-                symbols=["BTCUSDT"],
-                channels=["publicTrade"]
-            )
+            mock_ws.subscribe.assert_called_once_with(symbols=["BTCUSDT"], channels=["publicTrade"])
 
             # Step 3: Receive ticks (simulate WebSocket data flow)
             ticks = [
                 TickData(
                     symbol="BTCUSDT",
-                    timestamp=datetime.now(timezone.utc),
+                    timestamp=datetime.now(UTC),
                     price=Decimal("50000"),
                     volume=Decimal("0.1"),
-                    side=TickSide.BUY
+                    side=TickSide.BUY,
                 ),
                 TickData(
                     symbol="BTCUSDT",
-                    timestamp=datetime.now(timezone.utc),
+                    timestamp=datetime.now(UTC),
                     price=Decimal("50100"),
                     volume=Decimal("0.2"),
-                    side=TickSide.SELL
+                    side=TickSide.SELL,
                 ),
             ]
 

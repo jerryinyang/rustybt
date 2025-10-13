@@ -4,7 +4,6 @@ Configures benchmark parameters, fixtures, and result storage for
 performance baseline measurements.
 """
 
-import json
 from pathlib import Path
 from typing import Any
 

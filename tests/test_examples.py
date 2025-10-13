@@ -12,16 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pytest
+import tarfile
 import warnings
 from functools import partial
 from itertools import combinations
 from operator import itemgetter
-import tarfile
 from os import listdir
 from os.path import dirname, join, realpath
+
 import matplotlib
 import pandas as pd
+import pytest
+
 from rustybt import examples
 from rustybt.data.bundles import register, unregister
 from rustybt.testing.fixtures import read_checked_in_benchmark_data
@@ -29,7 +31,8 @@ from rustybt.testing.predicates import assert_equal
 from rustybt.utils.cache import dataframe_cache
 
 TEST_RESOURCE_PATH = join(
-    dirname(realpath(__file__)), "resources"  # zipline_repo/tests
+    dirname(realpath(__file__)),
+    "resources",  # zipline_repo/tests
 )
 
 PANDAS_VERSION = pd.__version__.replace(".", "-")
@@ -53,9 +56,7 @@ def _no_benchmark_expectations_applied(expected_perf):
 def _stored_pd_data(skip_vers=["0-18-1", "0-19-2", "0-22-0", "1-1-3", "1-2-3"]):
     with tarfile.open(join(TEST_RESOURCE_PATH, "example_data.tar.gz")) as tar:
         pd_versions = {
-            n.split("/")[2]
-            for n in tar.getnames()
-            if "example_data/expected_perf/" in n
+            n.split("/")[2] for n in tar.getnames() if "example_data/expected_perf/" in n
         }
         pd_versions = list(pd_versions)
     return sorted(list(filter(lambda x: x not in skip_vers, pd_versions)))
@@ -111,13 +112,10 @@ def _df_cache(_setup_class, request):
 
 @pytest.mark.usefixtures("_setup_class", "_df_cache")
 class TestsExamplesTests:
-
     # some columns contain values with unique ids that will not be the same
 
     @pytest.mark.filterwarnings("ignore: Matplotlib is currently using agg")
-    @pytest.mark.parametrize(
-        "benchmark_returns", [read_checked_in_benchmark_data(), None]
-    )
+    @pytest.mark.parametrize("benchmark_returns", [read_checked_in_benchmark_data(), None])
     @pytest.mark.parametrize("example_name", sorted(EXAMPLE_MODULES))
     @pytest.mark.parametrize("_df_cache", STORED_DATA_VERSIONS, indirect=True)
     def test_example(self, example_name, benchmark_returns):
@@ -138,9 +136,7 @@ class TestsExamplesTests:
 
         # Exclude positions column as the positions do not always have the
         # same order
-        columns = [
-            column for column in examples._cols_to_check if column != "positions"
-        ]
+        columns = [column for column in examples._cols_to_check if column != "positions"]
         assert_equal(
             actual_perf[columns],
             expected_perf[columns],
@@ -168,35 +164,26 @@ class TestsStoredDataCheck:
             serialization="pickle",
         )
 
-    @pytest.mark.parametrize(
-        "benchmark_returns", [read_checked_in_benchmark_data(), None]
-    )
+    @pytest.mark.parametrize("benchmark_returns", [read_checked_in_benchmark_data(), None])
     @pytest.mark.parametrize("example_name", sorted(EXAMPLE_MODULES))
     @pytest.mark.parametrize("pd_versions", COMBINED_DATA_VERSIONS, ids=str)
     def test_compare_stored_data(self, example_name, benchmark_returns, pd_versions):
-
         if benchmark_returns is not None:
             expected_perf_a = self.expected_perf(pd_versions[0])[example_name]
             expected_perf_b = self.expected_perf(pd_versions[1])[example_name]
         else:
             expected_perf_a = {
                 example_name: _no_benchmark_expectations_applied(expected_perf.copy())
-                for example_name, expected_perf in self.expected_perf(
-                    pd_versions[0]
-                ).items()
+                for example_name, expected_perf in self.expected_perf(pd_versions[0]).items()
             }[example_name]
             expected_perf_b = {
                 example_name: _no_benchmark_expectations_applied(expected_perf.copy())
-                for example_name, expected_perf in self.expected_perf(
-                    pd_versions[1]
-                ).items()
+                for example_name, expected_perf in self.expected_perf(pd_versions[1]).items()
             }[example_name]
 
         # Exclude positions column as the positions do not always have the
         # same order
-        columns = [
-            column for column in examples._cols_to_check if column != "positions"
-        ]
+        columns = [column for column in examples._cols_to_check if column != "positions"]
 
         assert_equal(
             expected_perf_a[columns],

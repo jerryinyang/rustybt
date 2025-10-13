@@ -2,8 +2,8 @@
 
 import asyncio
 import time
-from pathlib import Path
 from decimal import Decimal
+from pathlib import Path
 from typing import ClassVar
 
 import pandas as pd
@@ -145,9 +145,7 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
         try:
             if len(symbols) == 1:
                 ticker = yf.Ticker(symbols[0])
-                df_pandas = ticker.history(
-                    start=start_date, end=end_date, interval=yf_interval
-                )
+                df_pandas = ticker.history(start=start_date, end=end_date, interval=yf_interval)
 
                 # Add symbol column
                 if not df_pandas.empty:
@@ -173,8 +171,7 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
         # Check if data is empty (invalid symbol or delisted)
         if df_pandas.empty:
             raise InvalidDataError(
-                f"No data returned for symbols {symbols}. "
-                f"Symbols may be invalid or delisted."
+                f"No data returned for symbols {symbols}. Symbols may be invalid or delisted."
             )
 
         # Convert to Polars and standardize
@@ -345,9 +342,7 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
         """
         return symbol.upper().strip()
 
-    def _reshape_multi_ticker(
-        self, df: pd.DataFrame, symbols: list[str]
-    ) -> pd.DataFrame:
+    def _reshape_multi_ticker(self, df: pd.DataFrame, symbols: list[str]) -> pd.DataFrame:
         """Reshape multi-ticker DataFrame with multi-index columns.
 
         YFinance returns multi-ticker data with a multi-index column structure

@@ -68,7 +68,7 @@ def example_1_basic_borrow_cost_calculation():
         "AAPL", aapl_position_value, pd.Timestamp("2023-01-01")
     )
 
-    print(f"\nAAPL (Easy-to-borrow):")
+    print("\nAAPL (Easy-to-borrow):")
     print(f"  Position Value: ${aapl_position_value:,.2f}")
     print(f"  Annual Rate: {aapl_rate * 100:.2f}%")
     print(f"  Daily Cost: ${aapl_cost:.2f}")
@@ -80,13 +80,13 @@ def example_1_basic_borrow_cost_calculation():
         "GME", gme_position_value, pd.Timestamp("2021-01-15")
     )
 
-    print(f"\nGME (Hard-to-borrow during squeeze):")
+    print("\nGME (Hard-to-borrow during squeeze):")
     print(f"  Position Value: ${gme_position_value:,.2f}")
     print(f"  Annual Rate: {gme_rate * 100:.2f}%")
     print(f"  Daily Cost: ${gme_cost:.2f}")
     print(f"  Annual Cost (365 days): ${gme_cost * 365:.2f}")
 
-    print(f"\nCost Comparison:")
+    print("\nCost Comparison:")
     print(f"  GME costs {gme_cost / aapl_cost:.1f}x more than AAPL per day")
 
 
@@ -113,13 +113,13 @@ def example_2_cost_accumulation_over_time():
     )
     ledger.positions[tsla_asset] = position
 
-    print(f"\nInitial Position:")
-    print(f"  Symbol: TSLA")
+    print("\nInitial Position:")
+    print("  Symbol: TSLA")
     print(f"  Amount: {position.amount} (short)")
     print(f"  Price: ${position.last_sale_price}")
     print(f"  Position Value: ${abs(position.market_value):,.2f}")
     print(f"  Starting Cash: ${ledger.cash:,.2f}")
-    print(f"  Annual Borrow Rate: 1.5%")
+    print("  Annual Borrow Rate: 1.5%")
 
     # Simulate 30 days
     start_date = pd.Timestamp("2023-01-01")
@@ -133,7 +133,7 @@ def example_2_cost_accumulation_over_time():
     # Results
     total_cost = sum(daily_costs, Decimal("0"))
 
-    print(f"\n30-Day Results:")
+    print("\n30-Day Results:")
     print(f"  Total Borrow Cost: ${total_cost:.2f}")
     print(f"  Average Daily Cost: ${total_cost / 30:.2f}")
     print(f"  Final Cash: ${ledger.cash:,.2f}")
@@ -141,8 +141,8 @@ def example_2_cost_accumulation_over_time():
     print(f"  Accumulated in Position: ${position.accumulated_borrow_cost:.2f}")
 
     # Impact on profitability
-    print(f"\nImpact on Profitability:")
-    print(f"  If TSLA drops 5% to $237.50:")
+    print("\nImpact on Profitability:")
+    print("  If TSLA drops 5% to $237.50:")
     profit = (Decimal("250.00") - Decimal("237.50")) * 100
     net_profit = profit - total_cost
     print(f"    Gross Profit: ${profit:.2f}")
@@ -183,14 +183,12 @@ def example_3_using_csv_rate_provider():
     print("-" * 60)
 
     for symbol in test_symbols:
-        cost, rate = model.calculate_daily_cost(
-            symbol, position_value, pd.Timestamp("2023-01-01")
-        )
+        cost, rate = model.calculate_daily_cost(symbol, position_value, pd.Timestamp("2023-01-01"))
 
         if rate is not None:
             annual_cost = cost * Decimal("365")
             print(
-                f"{symbol:<8} {float(rate)*100:>6.2f}%        "
+                f"{symbol:<8} {float(rate) * 100:>6.2f}%        "
                 f"${float(cost):>8.2f}        ${float(annual_cost):>8.2f}"
             )
 
@@ -237,7 +235,7 @@ def example_4_time_varying_rates():
 
         monthly_cost = cost * Decimal("30")
         print(
-            f"{str(date.date()):<15} {float(rate)*100:>6.2f}%        "
+            f"{date.date()!s:<15} {float(rate) * 100:>6.2f}%        "
             f"${float(cost):>8.2f}        ${float(monthly_cost):>8.2f}"
         )
 
@@ -268,11 +266,11 @@ def example_5_short_strategy_profitability():
     )
     ledger.positions[gme_asset] = position
 
-    print(f"\nStrategy Setup:")
+    print("\nStrategy Setup:")
     print(f"  Entry: Short 100 shares of GME at ${entry_price}")
     print(f"  Position Value: ${abs(position.market_value):,.2f}")
-    print(f"  Borrow Rate: 25% annually")
-    print(f"  Holding Period: 30 days")
+    print("  Borrow Rate: 25% annually")
+    print("  Holding Period: 30 days")
 
     # Simulate 30 days
     start_date = pd.Timestamp("2021-01-15")
@@ -291,14 +289,14 @@ def example_5_short_strategy_profitability():
         ("Loss", Decimal("350.00"), "17% rise"),
     ]
 
-    print(f"\nProfitability Scenarios (after 30 days):")
+    print("\nProfitability Scenarios (after 30 days):")
     print(
         f"{'Scenario':<12} {'Exit Price':<12} {'Gross P&L':<12} "
         f"{'Borrow Cost':<12} {'Net P&L':<12} {'Return %':<12}"
     )
     print("-" * 80)
 
-    for scenario_name, exit_price, move in scenarios:
+    for scenario_name, exit_price, _move in scenarios:
         gross_pnl = (entry_price - exit_price) * abs(shares)
         net_pnl = gross_pnl - total_borrow_cost
         return_pct = (net_pnl / abs(position.market_value)) * 100
@@ -309,11 +307,13 @@ def example_5_short_strategy_profitability():
             f"${float(net_pnl):>10.2f}  {float(return_pct):>10.2f}%"
         )
 
-    print(f"\nKey Insights:")
+    print("\nKey Insights:")
     print(f"  • Borrow costs: ${total_borrow_cost:.2f} over 30 days")
-    print(f"  • Break-even price: ~$293.84 (factoring in costs)")
-    print(f"  • Cost impact: {(total_borrow_cost / abs(position.market_value) * 100):.2f}% of position value")
-    print(f"  • High borrow rates significantly reduce profitability")
+    print("  • Break-even price: ~$293.84 (factoring in costs)")
+    print(
+        f"  • Cost impact: {(total_borrow_cost / abs(position.market_value) * 100):.2f}% of position value"
+    )
+    print("  • High borrow rates significantly reduce profitability")
 
 
 def main():

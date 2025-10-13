@@ -52,9 +52,7 @@ def with_defaults(**default_funcs):
 with_default_shape = with_defaults(shape=lambda self: self.default_shape)
 
 
-class BaseUSEquityPipelineTestCase(
-    WithTradingSessions, WithAssetFinder, ZiplineTestCase
-):
+class BaseUSEquityPipelineTestCase(WithTradingSessions, WithAssetFinder, ZiplineTestCase):
     START_DATE = pd.Timestamp("2014")
     END_DATE = pd.Timestamp("2014-12-31")
     ASSET_FINDER_EQUITY_SIDS = list(range(20))

@@ -15,12 +15,10 @@ Logic: Weighted scoring system combining all indicators
 This strategy is deterministic and designed for benchmarking performance.
 """
 
-from typing import Any
-
 
 class MultiIndicatorStrategy:
     """Multi-indicator strategy for benchmarking.
-    
+
     Attributes:
         sma_windows: List of SMA windows (default: [10, 20, 50, 200])
         ema_windows: List of EMA windows (default: [12, 26])
@@ -33,7 +31,7 @@ class MultiIndicatorStrategy:
         atr_window: ATR window (default: 14)
         volume_window: Volume MA window (default: 20)
     """
-    
+
     def __init__(
         self,
         sma_windows: list = None,
@@ -48,7 +46,7 @@ class MultiIndicatorStrategy:
         volume_window: int = 20,
     ):
         """Initialize strategy parameters.
-        
+
         Args:
             sma_windows: List of SMA windows
             ema_windows: List of EMA windows
@@ -87,7 +85,7 @@ def create_initialize_fn(
     volume_window: int = 20,
 ):
     """Create initialize function for run_algorithm.
-    
+
     Args:
         n_assets: Number of assets to trade
         sma_windows: List of SMA windows
@@ -100,14 +98,15 @@ def create_initialize_fn(
         bb_std: Bollinger Bands standard deviations
         atr_window: ATR window
         volume_window: Volume MA window
-        
+
     Returns:
         Initialize function compatible with run_algorithm
     """
+
     def initialize(context):
         # Import here to avoid circular dependency
         from rustybt.api import symbol
-        
+
         # Use SYM prefix to match profiling bundles
         context.assets = [symbol(f"SYM{i:03d}") for i in range(n_assets)]
         context.sma_windows = sma_windows or [10, 20, 50, 200]
@@ -121,7 +120,7 @@ def create_initialize_fn(
         context.atr_window = atr_window
         context.volume_window = volume_window
         context.positions = {}
-    
+
     return initialize
 
 
@@ -138,7 +137,7 @@ def create_handle_data_fn(
     volume_window: int = 20,
 ):
     """Create handle_data function for run_algorithm.
-    
+
     Args:
         sma_windows: List of SMA windows
         ema_windows: List of EMA windows
@@ -150,17 +149,17 @@ def create_handle_data_fn(
         bb_std: Bollinger Bands standard deviations
         atr_window: ATR window
         volume_window: Volume MA window
-        
+
     Returns:
         Handle data function compatible with run_algorithm
     """
     sma_windows = sma_windows or [10, 20, 50, 200]
     ema_windows = ema_windows or [12, 26]
-    
+
     def handle_data(context, data):
         # Import here to avoid circular dependency
         from rustybt.api import order_target_percent, record
-        
+
         for asset in context.assets:
             # Determine max window size
             max_window = max(
@@ -170,23 +169,23 @@ def create_handle_data_fn(
                 rsi_window,
                 bb_window,
                 atr_window,
-                volume_window
+                volume_window,
             )
-            
+
             # Get price and volume history
-            prices = data.history(asset, 'close', max_window + 1, '1d')
-            highs = data.history(asset, 'high', max_window + 1, '1d')
-            lows = data.history(asset, 'low', max_window + 1, '1d')
-            volumes = data.history(asset, 'volume', max_window + 1, '1d')
-            
+            prices = data.history(asset, "close", max_window + 1, "1d")
+            highs = data.history(asset, "high", max_window + 1, "1d")
+            lows = data.history(asset, "low", max_window + 1, "1d")
+            volumes = data.history(asset, "volume", max_window + 1, "1d")
+
             # Check if we have enough data
             if len(prices) < max_window + 1:
                 continue
-            
+
             current_price = float(prices.iloc[-1])
             score = 0.0
             max_score = 0.0
-            
+
             # 1. SMA Indicators (weight: 2 per SMA)
             sma_scores = []
             for window in sma_windows:
@@ -195,7 +194,7 @@ def create_handle_data_fn(
                     sma_scores.append(1.0 if current_price > sma else -1.0)
                     max_score += 2.0
             score += sum(sma_scores) * 2.0
-            
+
             # 2. EMA Indicators (weight: 3 per EMA)
             ema_scores = []
             for window in ema_windows:
@@ -204,7 +203,7 @@ def create_handle_data_fn(
                     ema_scores.append(1.0 if current_price > ema else -1.0)
                     max_score += 3.0
             score += sum(ema_scores) * 3.0
-            
+
             # 3. MACD Indicator (weight: 4)
             if len(prices) >= macd_slow + macd_signal:
                 ema_fast = prices.ewm(span=macd_fast, adjust=False).mean()
@@ -216,7 +215,7 @@ def create_handle_data_fn(
                 macd_score = 1.0 if macd_value > signal_value else -1.0
                 score += macd_score * 4.0
                 max_score += 4.0
-            
+
             # 4. RSI Indicator (weight: 3)
             if len(prices) >= rsi_window + 1:
                 deltas = prices.diff()
@@ -224,54 +223,50 @@ def create_handle_data_fn(
                 losses = -deltas.where(deltas < 0, 0.0)
                 avg_gain = float(gains.rolling(window=rsi_window).mean().iloc[-1])
                 avg_loss = float(losses.rolling(window=rsi_window).mean().iloc[-1])
-                
+
                 if avg_loss == 0:
                     rsi = 100.0
                 else:
                     rs = avg_gain / avg_loss
                     rsi = 100.0 - (100.0 / (1.0 + rs))
-                
+
                 if rsi < 30:
                     rsi_score = 1.0  # Oversold, buy
                 elif rsi > 70:
                     rsi_score = -1.0  # Overbought, sell
                 else:
                     rsi_score = 0.0  # Neutral
-                
+
                 score += rsi_score * 3.0
                 max_score += 3.0
-            
+
             # 5. Bollinger Bands (weight: 2)
             if len(prices) >= bb_window:
                 bb_ma = float(prices.rolling(window=bb_window).mean().iloc[-1])
                 bb_std_val = float(prices.rolling(window=bb_window).std().iloc[-1])
                 bb_upper = bb_ma + (bb_std * bb_std_val)
                 bb_lower = bb_ma - (bb_std * bb_std_val)
-                
+
                 if current_price < bb_lower:
                     bb_score = 1.0  # Below lower band, buy
                 elif current_price > bb_upper:
                     bb_score = -1.0  # Above upper band, sell
                 else:
                     bb_score = 0.0  # Within bands, neutral
-                
+
                 score += bb_score * 2.0
                 max_score += 2.0
-            
+
             # 6. ATR (volatility, weight: 1)
             if len(highs) >= atr_window and len(lows) >= atr_window:
                 tr = []
                 for i in range(1, len(prices)):
                     high = float(highs.iloc[i])
                     low = float(lows.iloc[i])
-                    prev_close = float(prices.iloc[i-1])
-                    tr_value = max(
-                        high - low,
-                        abs(high - prev_close),
-                        abs(low - prev_close)
-                    )
+                    prev_close = float(prices.iloc[i - 1])
+                    tr_value = max(high - low, abs(high - prev_close), abs(low - prev_close))
                     tr.append(tr_value)
-                
+
                 if len(tr) >= atr_window:
                     atr = sum(tr[-atr_window:]) / atr_window
                     # High volatility favors holding cash (negative score)
@@ -282,29 +277,29 @@ def create_handle_data_fn(
                         atr_score = -0.5  # High volatility
                     else:
                         atr_score = 0.5  # Low volatility
-                    
+
                     score += atr_score * 1.0
                     max_score += 1.0
-            
+
             # 7. Volume Indicator (weight: 2)
             if len(volumes) >= volume_window:
                 volume_ma = float(volumes.rolling(window=volume_window).mean().iloc[-1])
                 current_volume = float(volumes.iloc[-1])
                 volume_ratio = current_volume / volume_ma if volume_ma > 0 else 1.0
-                
+
                 if volume_ratio > 1.5:
                     volume_score = 1.0  # High volume confirms trend
                 elif volume_ratio < 0.5:
                     volume_score = -1.0  # Low volume, weak trend
                 else:
                     volume_score = 0.0  # Normal volume
-                
+
                 score += volume_score * 2.0
                 max_score += 2.0
-            
+
             # Normalize score to [-1, 1]
             normalized_score = score / max_score if max_score > 0 else 0.0
-            
+
             # Generate signals based on normalized score
             if normalized_score > 0.3:
                 # Strong buy signal
@@ -314,7 +309,7 @@ def create_handle_data_fn(
                 # Strong sell signal
                 order_target_percent(asset, 0.0)
             # else: hold position (do nothing)
-            
+
             # Record indicators for analysis
             record(
                 **{
@@ -322,5 +317,5 @@ def create_handle_data_fn(
                     f"{asset.symbol}_raw_score": score,
                 }
             )
-    
+
     return handle_data

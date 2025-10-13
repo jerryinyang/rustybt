@@ -8,7 +8,7 @@ performance tracking.
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -44,7 +44,7 @@ class StrategyAllocation:
     ledger: Any  # DecimalLedger instance
     performance: "StrategyPerformance"
     state: StrategyState = field(default=StrategyState.INITIALIZING)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: pd.Timestamp = field(default_factory=pd.Timestamp.now)
 
     @property
@@ -87,7 +87,9 @@ class StrategyPerformance:
     """
 
     def __init__(
-        self, strategy_id: str, lookback_window: int = 252  # Trading days for rolling metrics
+        self,
+        strategy_id: str,
+        lookback_window: int = 252,  # Trading days for rolling metrics
     ):
         """Initialize performance tracker.
 
@@ -99,9 +101,9 @@ class StrategyPerformance:
         self.lookback_window = lookback_window
 
         # Time series data
-        self.timestamps: List[pd.Timestamp] = []
-        self.portfolio_values: List[Decimal] = []
-        self.returns: List[Decimal] = []
+        self.timestamps: list[pd.Timestamp] = []
+        self.portfolio_values: list[Decimal] = []
+        self.returns: list[Decimal] = []
 
         # Cumulative metrics
         self.peak_value = Decimal("0")
@@ -259,7 +261,7 @@ class StrategyPerformance:
 
         return self.total_profit / self.total_loss
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get all performance metrics as dictionary.
 
         Returns:
@@ -342,25 +344,23 @@ class PortfolioAllocator:
         """
         self.total_capital = total_capital
         self.name = name
-        self.strategies: Dict[str, StrategyAllocation] = {}
+        self.strategies: dict[str, StrategyAllocation] = {}
 
         # Track allocated capital to prevent over-allocation
         self.allocated_capital = Decimal("0")
 
         # Portfolio-level tracking
-        self.current_timestamp: Optional[pd.Timestamp] = None
+        self.current_timestamp: pd.Timestamp | None = None
         self.execution_count = 0
 
-        logger.info(
-            "portfolio_allocator_initialized", name=name, total_capital=str(total_capital)
-        )
+        logger.info("portfolio_allocator_initialized", name=name, total_capital=str(total_capital))
 
     def add_strategy(
         self,
         strategy_id: str,
         strategy: Any,  # TradingAlgorithm
         allocation_pct: Decimal,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> StrategyAllocation:
         """Add strategy to portfolio with capital allocation.
 
@@ -511,7 +511,7 @@ class PortfolioAllocator:
 
         logger.info("strategy_resumed", portfolio=self.name, strategy_id=strategy_id)
 
-    def execute_bar(self, timestamp: pd.Timestamp, data: Dict[str, Any]):
+    def execute_bar(self, timestamp: pd.Timestamp, data: dict[str, Any]):
         """Execute all active strategies for current bar (synchronized).
 
         All strategies process the same bar simultaneously (sequentially in code,
@@ -581,7 +581,7 @@ class PortfolioAllocator:
             **portfolio_metrics,
         )
 
-    def rebalance(self, new_allocations: Dict[str, Decimal], reason: str = "Manual rebalancing"):
+    def rebalance(self, new_allocations: dict[str, Decimal], reason: str = "Manual rebalancing"):
         """Rebalance capital between strategies.
 
         Capital Transfer Logic:
@@ -609,7 +609,7 @@ class PortfolioAllocator:
         )
 
         # Track capital movements
-        capital_changes: Dict[str, Decimal] = {}
+        capital_changes: dict[str, Decimal] = {}
 
         for strategy_id, new_pct in new_allocations.items():
             if strategy_id not in self.strategies:
@@ -666,7 +666,7 @@ class PortfolioAllocator:
             capital_changes={k: str(v) for k, v in capital_changes.items()},
         )
 
-    def get_portfolio_metrics(self) -> Dict[str, Any]:
+    def get_portfolio_metrics(self) -> dict[str, Any]:
         """Calculate portfolio-level performance metrics.
 
         Aggregates across all strategies to compute:
@@ -715,7 +715,7 @@ class PortfolioAllocator:
             "weighted_avg_sharpe": f"{float(total_sharpe_weighted):.2f}",
         }
 
-    def get_strategy_metrics(self) -> Dict[str, Dict[str, Any]]:
+    def get_strategy_metrics(self) -> dict[str, dict[str, Any]]:
         """Get metrics for all strategies.
 
         Returns:
@@ -732,7 +732,7 @@ class PortfolioAllocator:
             for strategy_id, allocation in self.strategies.items()
         }
 
-    def get_correlation_matrix(self) -> Optional[pd.DataFrame]:
+    def get_correlation_matrix(self) -> pd.DataFrame | None:
         """Calculate correlation matrix between strategies.
 
         Returns:

@@ -6,8 +6,9 @@ across different functions.
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from textwrap import dedent
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from toolz import curry
 
@@ -65,16 +66,16 @@ def format_docstring(owner_name: str, docstring: str, formatters: dict[str, str]
         matches = regex.findall(docstring)
         if not matches:
             raise ValueError(
-                "Couldn't find template for parameter {!r} in docstring "
-                "for {}."
+                f"Couldn't find template for parameter {target!r} in docstring "
+                f"for {owner_name}."
                 "\nParameter name must be alone on a line surrounded by "
-                "braces.".format(target, owner_name),
+                "braces.",
             )
         elif len(matches) > 1:
             raise ValueError(
-                "Couldn't found multiple templates for parameter {!r}"
-                "in docstring for {}."
-                "\nParameter should only appear once.".format(target, owner_name)
+                f"Couldn't found multiple templates for parameter {target!r}"
+                f"in docstring for {owner_name}."
+                "\nParameter should only appear once."
             )
 
         (leading_whitespace, _) = matches[0]
@@ -90,7 +91,7 @@ def templated_docstring(**docs: str) -> Callable[[F], F]:
     """
     Decorator allowing the use of templated docstrings.
 
-    Examples
+    Examples:
     --------
     >>> @templated_docstring(foo='bar')
     ... def my_func(self, foo):
@@ -117,7 +118,8 @@ def copydoc(from_: Any, to: F) -> F:
         The object to copy the docstring from.
     to : any
         The object to copy the docstring to.
-    Returns
+
+    Returns:
     -------
     to : any
         ``to`` with the docstring from ``from_``

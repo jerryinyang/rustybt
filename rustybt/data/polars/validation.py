@@ -11,13 +11,14 @@ All validations use Decimal comparison for exact arithmetic.
 
 from __future__ import annotations
 
-import polars as pl
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Any
+
+import polars as pl
+import structlog
 from pydantic import BaseModel, Field, field_validator
 
 # Import centralized exceptions
@@ -445,9 +446,9 @@ def validate_ohlcv_relationships_v2(df: pl.DataFrame) -> list[ValidationViolatio
                 message=f"High < Low in {len(invalid_hl)} rows",
                 details={
                     "invalid_row_count": len(invalid_hl),
-                    "sample_rows": invalid_hl.select(
-                        ["timestamp", "high", "low"]
-                    ).head(5).to_dicts(),
+                    "sample_rows": invalid_hl.select(["timestamp", "high", "low"])
+                    .head(5)
+                    .to_dicts(),
                 },
             )
         )
@@ -462,9 +463,9 @@ def validate_ohlcv_relationships_v2(df: pl.DataFrame) -> list[ValidationViolatio
                 message=f"High < Open in {len(invalid_ho)} rows",
                 details={
                     "invalid_row_count": len(invalid_ho),
-                    "sample_rows": invalid_ho.select(
-                        ["timestamp", "high", "open"]
-                    ).head(5).to_dicts(),
+                    "sample_rows": invalid_ho.select(["timestamp", "high", "open"])
+                    .head(5)
+                    .to_dicts(),
                 },
             )
         )
@@ -479,9 +480,9 @@ def validate_ohlcv_relationships_v2(df: pl.DataFrame) -> list[ValidationViolatio
                 message=f"High < Close in {len(invalid_hc)} rows",
                 details={
                     "invalid_row_count": len(invalid_hc),
-                    "sample_rows": invalid_hc.select(
-                        ["timestamp", "high", "close"]
-                    ).head(5).to_dicts(),
+                    "sample_rows": invalid_hc.select(["timestamp", "high", "close"])
+                    .head(5)
+                    .to_dicts(),
                 },
             )
         )
@@ -496,9 +497,9 @@ def validate_ohlcv_relationships_v2(df: pl.DataFrame) -> list[ValidationViolatio
                 message=f"Low > Open in {len(invalid_lo)} rows",
                 details={
                     "invalid_row_count": len(invalid_lo),
-                    "sample_rows": invalid_lo.select(
-                        ["timestamp", "low", "open"]
-                    ).head(5).to_dicts(),
+                    "sample_rows": invalid_lo.select(["timestamp", "low", "open"])
+                    .head(5)
+                    .to_dicts(),
                 },
             )
         )
@@ -513,9 +514,9 @@ def validate_ohlcv_relationships_v2(df: pl.DataFrame) -> list[ValidationViolatio
                 message=f"Low > Close in {len(invalid_lc)} rows",
                 details={
                     "invalid_row_count": len(invalid_lc),
-                    "sample_rows": invalid_lc.select(
-                        ["timestamp", "low", "close"]
-                    ).head(5).to_dicts(),
+                    "sample_rows": invalid_lc.select(["timestamp", "low", "close"])
+                    .head(5)
+                    .to_dicts(),
                 },
             )
         )
@@ -654,9 +655,7 @@ def validate_ohlcv_relationships(df: pl.DataFrame) -> bool:
     return True
 
 
-def detect_price_outliers(
-    df: pl.DataFrame, threshold_std: float = 3.0
-) -> pl.DataFrame:
+def detect_price_outliers(df: pl.DataFrame, threshold_std: float = 3.0) -> pl.DataFrame:
     """Detect price outliers using Decimal statistics.
 
     Identifies bars where price deviates significantly from mean.
@@ -682,7 +681,10 @@ def detect_price_outliers(
 
     # Calculate mean and std for close prices
     stats = df.select(
-        [pl.col("close").cast(pl.Float64).mean().alias("mean_close"), pl.col("close").cast(pl.Float64).std().alias("std_close")]
+        [
+            pl.col("close").cast(pl.Float64).mean().alias("mean_close"),
+            pl.col("close").cast(pl.Float64).std().alias("std_close"),
+        ]
     )
 
     mean_close = stats["mean_close"][0]
@@ -696,9 +698,9 @@ def detect_price_outliers(
     threshold = Decimal(str(threshold_std * std_close))
     mean_decimal = Decimal(str(mean_close))
 
-    outliers = df.with_columns(
-        ((pl.col("close") - mean_decimal).abs()).alias("deviation")
-    ).filter(pl.col("deviation") > threshold)
+    outliers = df.with_columns(((pl.col("close") - mean_decimal).abs()).alias("deviation")).filter(
+        pl.col("deviation") > threshold
+    )
 
     if len(outliers) > 0:
         logger.warning(
@@ -712,9 +714,7 @@ def detect_price_outliers(
     return outliers.drop("deviation")
 
 
-def detect_large_gaps(
-    df: pl.DataFrame, expected_interval: str = "1d"
-) -> pl.DataFrame:
+def detect_large_gaps(df: pl.DataFrame, expected_interval: str = "1d") -> pl.DataFrame:
     """Detect large gaps in time series data.
 
     Identifies missing data by finding timestamp differences exceeding
@@ -747,9 +747,7 @@ def detect_large_gaps(
     df_sorted = df.sort([time_col, "sid"])
 
     # Calculate time differences
-    df_with_diff = df_sorted.with_columns(
-        pl.col(time_col).diff().alias("time_diff")
-    )
+    df_with_diff = df_sorted.with_columns(pl.col(time_col).diff().alias("time_diff"))
 
     # Parse expected interval
     if expected_interval == "1d":
@@ -775,9 +773,7 @@ def detect_large_gaps(
     return gaps
 
 
-def detect_volume_spikes(
-    df: pl.DataFrame, threshold_std: float = 5.0
-) -> pl.DataFrame:
+def detect_volume_spikes(df: pl.DataFrame, threshold_std: float = 5.0) -> pl.DataFrame:
     """Detect volume spikes using Decimal volume data.
 
     Identifies bars where volume exceeds mean + threshold_std × std.
@@ -802,7 +798,10 @@ def detect_volume_spikes(
 
     # Calculate volume statistics
     stats = df.select(
-        [pl.col("volume").cast(pl.Float64).mean().alias("mean_volume"), pl.col("volume").cast(pl.Float64).std().alias("std_volume")]
+        [
+            pl.col("volume").cast(pl.Float64).mean().alias("mean_volume"),
+            pl.col("volume").cast(pl.Float64).std().alias("std_volume"),
+        ]
     )
 
     mean_volume = stats["mean_volume"][0]
@@ -909,9 +908,7 @@ def generate_data_quality_report(df: pl.DataFrame) -> Dict[str, any]:
 # ============================================================================
 
 
-def detect_outliers_v2(
-    df: pl.DataFrame, config: "ValidationConfig"
-) -> list["ValidationViolation"]:
+def detect_outliers_v2(df: pl.DataFrame, config: ValidationConfig) -> list[ValidationViolation]:
     """Detect price and volume outliers with configurable thresholds.
 
     Args:
@@ -931,7 +928,7 @@ def detect_outliers_v2(
         >>> violations = detect_outliers_v2(df, config)
         >>> assert any(v.message.startswith("Price outliers") for v in violations)
     """
-    violations: list["ValidationViolation"] = []
+    violations: list[ValidationViolation] = []
 
     if len(df) < 2:
         logger.debug("outlier_detection_skipped", reason="insufficient_data", rows=len(df))
@@ -993,8 +990,8 @@ def detect_outliers_v2(
 
 
 def validate_temporal_consistency(
-    df: pl.DataFrame, config: "ValidationConfig"
-) -> list["ValidationViolation"]:
+    df: pl.DataFrame, config: ValidationConfig
+) -> list[ValidationViolation]:
     """Validate temporal consistency of data.
 
     Checks:
@@ -1019,7 +1016,7 @@ def validate_temporal_consistency(
         >>> violations = validate_temporal_consistency(df, config)
         >>> assert any("not sorted" in v.message for v in violations)
     """
-    violations: list["ValidationViolation"] = []
+    violations: list[ValidationViolation] = []
 
     if len(df) < 2:
         logger.debug("temporal_validation_skipped", reason="insufficient_data", rows=len(df))
@@ -1068,11 +1065,10 @@ def validate_temporal_consistency(
 
     # Check for future data
     import pandas as pd
+
     now = pd.Timestamp.now(tz="UTC")
     # Ensure timestamps are timezone-aware for comparison
-    df_with_tz = df.select([
-        pl.col("timestamp").dt.replace_time_zone("UTC").alias("timestamp")
-    ])
+    df_with_tz = df.select([pl.col("timestamp").dt.replace_time_zone("UTC").alias("timestamp")])
     future_data = df_with_tz.filter(pl.col("timestamp") > now)
     if len(future_data) > 0:
         violations.append(
@@ -1093,7 +1089,9 @@ def validate_temporal_consistency(
         try:
             gaps = detect_large_gaps(df, config.expected_frequency)
             if len(gaps) > 0:
-                severity = ValidationSeverity.WARNING if config.allow_gaps else ValidationSeverity.ERROR
+                severity = (
+                    ValidationSeverity.WARNING if config.allow_gaps else ValidationSeverity.ERROR
+                )
                 violations.append(
                     ValidationViolation(
                         layer=4,
@@ -1144,7 +1142,7 @@ class DataValidator:
         ...     print(f"Validation failed: {result.get_errors()}")
     """
 
-    def __init__(self, config: "ValidationConfig | None" = None):
+    def __init__(self, config: ValidationConfig | None = None):
         """Initialize DataValidator.
 
         Args:
@@ -1155,8 +1153,8 @@ class DataValidator:
     def validate(
         self,
         df: pl.DataFrame,
-        layers: "list[int] | str" = "all",
-    ) -> "ValidationResult":
+        layers: list[int] | str = "all",
+    ) -> ValidationResult:
         """Validate OHLCV data using specified layers.
 
         Args:
@@ -1176,7 +1174,7 @@ class DataValidator:
         elif not isinstance(layers, list):
             raise ValueError(f"layers must be 'all' or list of ints, got {type(layers)}")
 
-        violations: list["ValidationViolation"] = []
+        violations: list[ValidationViolation] = []
 
         # Layer 1: Schema validation
         if 1 in layers and self.config.enforce_schema:
@@ -1198,7 +1196,7 @@ class DataValidator:
                     ValidationViolation(
                         layer=1,
                         severity=ValidationSeverity.ERROR,
-                        message=f"Schema validation failed with exception: {str(e)}",
+                        message=f"Schema validation failed with exception: {e!s}",
                         details={"exception": str(e)},
                     )
                 )
@@ -1214,7 +1212,7 @@ class DataValidator:
                     ValidationViolation(
                         layer=2,
                         severity=ValidationSeverity.ERROR,
-                        message=f"OHLCV validation failed with exception: {str(e)}",
+                        message=f"OHLCV validation failed with exception: {e!s}",
                         details={"exception": str(e)},
                     )
                 )
@@ -1230,7 +1228,7 @@ class DataValidator:
                     ValidationViolation(
                         layer=3,
                         severity=ValidationSeverity.WARNING,
-                        message=f"Outlier detection failed with exception: {str(e)}",
+                        message=f"Outlier detection failed with exception: {e!s}",
                         details={"exception": str(e)},
                     )
                 )
@@ -1246,7 +1244,7 @@ class DataValidator:
                     ValidationViolation(
                         layer=4,
                         severity=ValidationSeverity.ERROR,
-                        message=f"Temporal validation failed with exception: {str(e)}",
+                        message=f"Temporal validation failed with exception: {e!s}",
                         details={"exception": str(e)},
                     )
                 )
@@ -1261,8 +1259,12 @@ class DataValidator:
             row_count=len(df),
             metadata={
                 "layers_validated": layers,
-                "error_count": len([v for v in violations if v.severity == ValidationSeverity.ERROR]),
-                "warning_count": len([v for v in violations if v.severity == ValidationSeverity.WARNING]),
+                "error_count": len(
+                    [v for v in violations if v.severity == ValidationSeverity.ERROR]
+                ),
+                "warning_count": len(
+                    [v for v in violations if v.severity == ValidationSeverity.WARNING]
+                ),
             },
         )
 
@@ -1288,7 +1290,7 @@ class DataValidator:
     def validate_and_raise(
         self,
         df: pl.DataFrame,
-        layers: "list[int] | str" = "all",
+        layers: list[int] | str = "all",
     ) -> None:
         """Validate data and raise DataValidationError if any ERROR-level violations found.
 

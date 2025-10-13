@@ -12,7 +12,6 @@ from decimal import Decimal
 import pandas as pd
 
 from rustybt.finance.execution import (
-    BrokerLatencyProfile,
     BrokerProcessingLatency,
     CompositeLatencyModel,
     ExchangeMatchingLatency,
@@ -69,7 +68,7 @@ def example_2_random_latency():
             current_time=pd.Timestamp("2024-01-01 10:00:00"),
             broker_name="test",
         )
-        print(f"  Sample {i+1}: Total = {latency.total_ms}ms")
+        print(f"  Sample {i + 1}: Total = {latency.total_ms}ms")
     print()
 
 
@@ -95,7 +94,7 @@ def example_3_normal_distribution():
         )
         latencies.append(float(latency.total_ms))
 
-    print(f"Average latency over 100 samples: {sum(latencies)/len(latencies):.2f}ms")
+    print(f"Average latency over 100 samples: {sum(latencies) / len(latencies):.2f}ms")
     print(f"Min latency: {min(latencies):.2f}ms")
     print(f"Max latency: {max(latencies):.2f}ms")
     print()
@@ -274,9 +273,7 @@ def example_7_profile_registry():
     print(f"  Distribution: {equities_profile.distribution}")
 
     futures_profile = registry.get_profile("Interactive Brokers", "futures")
-    print(
-        f"\nRetrieved profile: {futures_profile.broker_name} - {futures_profile.asset_class}"
-    )
+    print(f"\nRetrieved profile: {futures_profile.broker_name} - {futures_profile.asset_class}")
     print(f"  Network range: {futures_profile.network_latency_ms}")
     print()
 

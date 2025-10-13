@@ -11,24 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from collections import OrderedDict
 from abc import ABC, abstractmethod
+from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
 
 from rustybt.data._resample import (
-    _minute_to_session_open,
+    _minute_to_session_close,
     _minute_to_session_high,
     _minute_to_session_low,
-    _minute_to_session_close,
+    _minute_to_session_open,
     _minute_to_session_volume,
 )
 from rustybt.data.bar_reader import NoDataOnDate
 from rustybt.data.bcolz_minute_bars import MinuteBarReader
 from rustybt.data.session_bars import SessionBarReader
-from rustybt.utils.memoize import lazyval
 from rustybt.utils.math_utils import nanmax, nanmin
+from rustybt.utils.memoize import lazyval
 
 _MINUTE_TO_SESSION_OHCLV_HOW = OrderedDict(
     (
@@ -54,15 +54,13 @@ def minute_frame_to_session_frame(minute_frame, calendar):
         A TradingCalendar on which session labels to resample from minute
         to session.
 
-    Return
+    Return:
     ------
     session_frame : pd.DataFrame
         A DataFrame with the columns `open`, `high`, `low`, `close`, `volume`,
         and `day` (datetime-like).
     """
-    how = OrderedDict(
-        (c, _MINUTE_TO_SESSION_OHCLV_HOW[c]) for c in minute_frame.columns
-    )
+    how = OrderedDict((c, _MINUTE_TO_SESSION_OHCLV_HOW[c]) for c in minute_frame.columns)
     labels = calendar.minutes_to_sessions(minute_frame.index)
     return minute_frame.groupby(labels).agg(how)
 
@@ -170,7 +168,7 @@ class DailyHistoryAggregator:
         Once the first non-nan open is seen, that value remains constant per
         asset for the remainder of the day.
 
-        Returns
+        Returns:
         -------
         np.array with dtype=float64, in order of assets parameter.
         """
@@ -200,9 +198,7 @@ class DailyHistoryAggregator:
                         entries[asset] = (dt_value, first_open)
                         continue
                     else:
-                        after_last = pd.Timestamp(
-                            last_visited_dt + self._one_min, tz="UTC"
-                        )
+                        after_last = pd.Timestamp(last_visited_dt + self._one_min, tz="UTC")
                         window = self._minute_reader.load_raw_arrays(
                             ["open"],
                             after_last,
@@ -239,7 +235,7 @@ class DailyHistoryAggregator:
         the market open and the current dt.
         If there has been no data on or before the `dt` the high is `nan`.
 
-        Returns
+        Returns:
         -------
         np.array with dtype=float64, in order of assets parameter.
         """
@@ -276,9 +272,7 @@ class DailyHistoryAggregator:
                         highs.append(val)
                         continue
                     else:
-                        after_last = pd.Timestamp(
-                            last_visited_dt + self._one_min, tz="UTC"
-                        )
+                        after_last = pd.Timestamp(last_visited_dt + self._one_min, tz="UTC")
                         window = self._minute_reader.load_raw_arrays(
                             ["high"],
                             after_last,
@@ -307,7 +301,7 @@ class DailyHistoryAggregator:
         the market open and the current dt.
         If there has been no data on or before the `dt` the low is `nan`.
 
-        Returns
+        Returns:
         -------
         np.array with dtype=float64, in order of assets parameter.
         """
@@ -339,9 +333,7 @@ class DailyHistoryAggregator:
                         lows.append(val)
                         continue
                     else:
-                        after_last = pd.Timestamp(
-                            last_visited_dt + self._one_min, tz="UTC"
-                        )
+                        after_last = pd.Timestamp(last_visited_dt + self._one_min, tz="UTC")
                         window = self._minute_reader.load_raw_arrays(
                             ["low"],
                             after_last,
@@ -372,7 +364,7 @@ class DailyHistoryAggregator:
         `close` is used.
         If there has been no data on or before the `dt` the close is `nan`.
 
-        Returns
+        Returns:
         -------
         np.array with dtype=float64, in order of assets parameter.
         """
@@ -442,7 +434,7 @@ class DailyHistoryAggregator:
         between the market open and the `dt`
         If there has been no data on or before the `dt` the volume is 0.
 
-        Returns
+        Returns:
         -------
         np.array with dtype=int64, in order of assets parameter.
         """
@@ -474,9 +466,7 @@ class DailyHistoryAggregator:
                         volumes.append(val)
                         continue
                     else:
-                        after_last = pd.Timestamp(
-                            last_visited_dt + self._one_min, tz="UTC"
-                        )
+                        after_last = pd.Timestamp(last_visited_dt + self._one_min, tz="UTC")
                         window = self._minute_reader.load_raw_arrays(
                             ["volume"],
                             after_last,
@@ -571,9 +561,7 @@ class MinuteResampleSessionBarReader(SessionBarReader):
 
     @lazyval
     def last_available_dt(self):
-        return self.trading_calendar.minute_to_session(
-            self._minute_bar_reader.last_available_dt
-        )
+        return self.trading_calendar.minute_to_session(self._minute_bar_reader.last_available_dt)
 
     @property
     def first_trading_day(self):
@@ -678,9 +666,7 @@ class ReindexBarReader(ABC):
         outer_results = []
 
         if len(inner_dts) > 0:
-            inner_results = self._reader.load_raw_arrays(
-                fields, inner_dts[0], inner_dts[-1], sids
-            )
+            inner_results = self._reader.load_raw_arrays(fields, inner_dts[0], inner_dts[-1], sids)
         else:
             inner_results = None
 
@@ -722,17 +708,18 @@ class ReindexSessionBarReader(ReindexBarReader, SessionBarReader):
 # Modern Polars-Based Aggregation (RustyBT Enhancement)
 # ============================================================================
 
+from typing import Any
+
 import polars as pl
 import pytz
 import structlog
-from decimal import Decimal
-from typing import Dict, Any, Optional
 
 logger_polars = structlog.get_logger(__name__)
 
 
 class AggregationValidationError(Exception):
     """Raised when aggregated data fails validation."""
+
     pass
 
 
@@ -747,15 +734,15 @@ def _validate_resolution_mapping(source: str, target: str) -> None:
         ValueError: If resolution mapping is invalid
     """
     resolution_hierarchy = {
-        '1m': 1,
-        '5m': 5,
-        '15m': 15,
-        '30m': 30,
-        '1h': 60,
-        '4h': 240,
-        '1d': 1440,
-        '1w': 10080,
-        '1mo': 43200  # Approximate
+        "1m": 1,
+        "5m": 5,
+        "15m": 15,
+        "30m": 30,
+        "1h": 60,
+        "4h": 240,
+        "1d": 1440,
+        "1w": 10080,
+        "1mo": 43200,  # Approximate
     }
 
     if source not in resolution_hierarchy or target not in resolution_hierarchy:
@@ -784,15 +771,15 @@ def _get_aggregation_offset(resolution: str) -> str:
         ValueError: If resolution is not supported
     """
     mapping = {
-        '1m': '1m',
-        '5m': '5m',
-        '15m': '15m',
-        '30m': '30m',
-        '1h': '1h',
-        '4h': '4h',
-        '1d': '1d',
-        '1w': '1w',
-        '1mo': '1mo'
+        "1m": "1m",
+        "5m": "5m",
+        "15m": "15m",
+        "30m": "30m",
+        "1h": "1h",
+        "4h": "4h",
+        "1d": "1d",
+        "1w": "1w",
+        "1mo": "1mo",
     }
 
     if resolution not in mapping:
@@ -802,10 +789,8 @@ def _get_aggregation_offset(resolution: str) -> str:
 
 
 def _detect_gaps(
-    df: pl.DataFrame,
-    source_resolution: str,
-    target_resolution: str
-) -> Dict[str, Any]:
+    df: pl.DataFrame, source_resolution: str, target_resolution: str
+) -> dict[str, Any]:
     """Detect missing bars in aggregated data.
 
     Args:
@@ -817,35 +802,29 @@ def _detect_gaps(
         Dictionary with gap statistics
     """
     # Calculate expected bars per aggregation period
-    resolution_minutes = {
-        '1m': 1, '5m': 5, '15m': 15, '30m': 30,
-        '1h': 60, '4h': 240, '1d': 1440
-    }
+    resolution_minutes = {"1m": 1, "5m": 5, "15m": 15, "30m": 30, "1h": 60, "4h": 240, "1d": 1440}
 
     source_mins = resolution_minutes.get(source_resolution, 1)
     target_mins = resolution_minutes.get(target_resolution, 60)
     expected_bars_per_period = target_mins / source_mins
 
     # Check source_bar_count against expected
-    gaps = df.filter(pl.col('source_bar_count') < expected_bars_per_period)
+    gaps = df.filter(pl.col("source_bar_count") < expected_bars_per_period)
     total_bars = len(df)
     missing_bars = len(gaps)
     missing_pct = (missing_bars / total_bars * 100) if total_bars > 0 else 0
 
     gap_info = {
-        'gap_count': missing_bars,
-        'total_bars': total_bars,
-        'missing_bars_pct': missing_pct,
-        'expected_bars_per_period': expected_bars_per_period
+        "gap_count": missing_bars,
+        "total_bars": total_bars,
+        "missing_bars_pct": missing_pct,
+        "expected_bars_per_period": expected_bars_per_period,
     }
 
     return gap_info
 
 
-def _detect_outliers_after_aggregation(
-    df: pl.DataFrame,
-    threshold: float = 3.0
-) -> pl.DataFrame:
+def _detect_outliers_after_aggregation(df: pl.DataFrame, threshold: float = 3.0) -> pl.DataFrame:
     """Detect outliers in aggregated data using z-score.
 
     Args:
@@ -859,23 +838,34 @@ def _detect_outliers_after_aggregation(
         return df
 
     # Calculate price changes (cast to Float64 for statistical calculations)
-    df_with_changes = df.with_columns([
-        (((pl.col('close').cast(pl.Float64) - pl.col('open').cast(pl.Float64)) /
-          pl.col('open').cast(pl.Float64)) * 100).alias('pct_change')
-    ])
+    df_with_changes = df.with_columns(
+        [
+            (
+                (
+                    (pl.col("close").cast(pl.Float64) - pl.col("open").cast(pl.Float64))
+                    / pl.col("open").cast(pl.Float64)
+                )
+                * 100
+            ).alias("pct_change")
+        ]
+    )
 
     # Calculate z-score per symbol
-    df_with_zscore = df_with_changes.with_columns([
-        ((pl.col('pct_change') - pl.col('pct_change').mean().over('symbol')) /
-         pl.col('pct_change').std().over('symbol')).alias('zscore')
-    ])
+    df_with_zscore = df_with_changes.with_columns(
+        [
+            (
+                (pl.col("pct_change") - pl.col("pct_change").mean().over("symbol"))
+                / pl.col("pct_change").std().over("symbol")
+            ).alias("zscore")
+        ]
+    )
 
     # Flag outliers (|z-score| > threshold)
     # Filter out null and NaN z-scores (can happen with constant values or single data points per symbol)
     outliers = df_with_zscore.filter(
-        (pl.col('zscore').is_not_null()) &
-        (~pl.col('zscore').is_nan()) &
-        (pl.col('zscore').abs() > threshold)
+        (pl.col("zscore").is_not_null())
+        & (~pl.col("zscore").is_nan())
+        & (pl.col("zscore").abs() > threshold)
     )
 
     return outliers
@@ -891,40 +881,35 @@ def _validate_temporal_consistency(df: pl.DataFrame) -> None:
         AggregationValidationError: If temporal consistency checks fail
     """
     # Check timestamps are sorted per symbol
-    for symbol in df['symbol'].unique():
-        symbol_df = df.filter(pl.col('symbol') == symbol)
-        timestamps = symbol_df['timestamp'].to_list()
+    for symbol in df["symbol"].unique():
+        symbol_df = df.filter(pl.col("symbol") == symbol)
+        timestamps = symbol_df["timestamp"].to_list()
 
         if timestamps != sorted(timestamps):
-            raise AggregationValidationError(
-                f"Timestamps not sorted for symbol {symbol}"
-            )
+            raise AggregationValidationError(f"Timestamps not sorted for symbol {symbol}")
 
     # Check for duplicates
-    duplicates = df.group_by(['symbol', 'timestamp']).agg(pl.count()).filter(pl.col('count') > 1)
+    duplicates = df.group_by(["symbol", "timestamp"]).agg(pl.count()).filter(pl.col("count") > 1)
     if len(duplicates) > 0:
-        raise AggregationValidationError(
-            f"Duplicate timestamps found: {len(duplicates)} cases"
-        )
+        raise AggregationValidationError(f"Duplicate timestamps found: {len(duplicates)} cases")
 
     # Check no future timestamps
     # Get timezone from first timestamp if available
     if len(df) > 0:
-        first_ts = df['timestamp'][0]
-        if hasattr(first_ts, 'tzinfo') and first_ts.tzinfo is not None:
+        first_ts = df["timestamp"][0]
+        if hasattr(first_ts, "tzinfo") and first_ts.tzinfo is not None:
             # Timestamps have timezone, use it for current time comparison
             tz_str = str(first_ts.tzinfo)
             import pytz
-            tz = pytz.timezone(tz_str) if tz_str != 'UTC' else pytz.UTC
+
+            tz = pytz.timezone(tz_str) if tz_str != "UTC" else pytz.UTC
             current_time = pd.Timestamp.now(tz=tz)
         else:
-            current_time = pd.Timestamp.now(tz='UTC')
+            current_time = pd.Timestamp.now(tz="UTC")
 
-        future_bars = df.filter(pl.col('timestamp') > current_time)
+        future_bars = df.filter(pl.col("timestamp") > current_time)
         if len(future_bars) > 0:
-            raise AggregationValidationError(
-                f"Future timestamps detected: {len(future_bars)} bars"
-            )
+            raise AggregationValidationError(f"Future timestamps detected: {len(future_bars)} bars")
 
 
 def aggregate_ohlcv(
@@ -934,7 +919,7 @@ def aggregate_ohlcv(
     timezone: str = "UTC",
     validate: bool = True,
     detect_outliers: bool = True,
-    outlier_threshold: float = 3.0
+    outlier_threshold: float = 3.0,
 ) -> pl.DataFrame:
     """Aggregate OHLCV data from high to low resolution with Polars.
 
@@ -990,29 +975,31 @@ def aggregate_ohlcv(
     _validate_resolution_mapping(source_resolution, target_resolution)
 
     # Check required columns
-    required_cols = ['timestamp', 'symbol', 'open', 'high', 'low', 'close', 'volume']
+    required_cols = ["timestamp", "symbol", "open", "high", "low", "close", "volume"]
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
         raise ValueError(f"Missing required columns: {missing_cols}")
 
     if len(df) == 0:
         logger_polars.warning("aggregate_ohlcv_skipped", reason="empty_dataframe")
-        return pl.DataFrame(schema={
-            'timestamp': pl.Datetime('us', 'UTC'),
-            'symbol': pl.Utf8,
-            'open': pl.Decimal(precision=18, scale=8),
-            'high': pl.Decimal(precision=18, scale=8),
-            'low': pl.Decimal(precision=18, scale=8),
-            'close': pl.Decimal(precision=18, scale=8),
-            'volume': pl.Decimal(precision=18, scale=8),
-        })
+        return pl.DataFrame(
+            schema={
+                "timestamp": pl.Datetime("us", "UTC"),
+                "symbol": pl.Utf8,
+                "open": pl.Decimal(precision=18, scale=8),
+                "high": pl.Decimal(precision=18, scale=8),
+                "low": pl.Decimal(precision=18, scale=8),
+                "close": pl.Decimal(precision=18, scale=8),
+                "volume": pl.Decimal(precision=18, scale=8),
+            }
+        )
 
     # Convert timezone if needed
     if timezone != "UTC":
-        tz = pytz.timezone(timezone)
-        df = df.with_columns([
-            pl.col('timestamp').dt.convert_time_zone(timezone).alias('timestamp')
-        ])
+        pytz.timezone(timezone)
+        df = df.with_columns(
+            [pl.col("timestamp").dt.convert_time_zone(timezone).alias("timestamp")]
+        )
 
     # Calculate aggregation period
     agg_offset = _get_aggregation_offset(target_resolution)
@@ -1020,38 +1007,35 @@ def aggregate_ohlcv(
     # Perform aggregation using Polars lazy evaluation
     df_agg = (
         df.lazy()
-        .sort(['symbol', 'timestamp'])
-        .group_by_dynamic(
-            'timestamp',
-            every=agg_offset,
-            period=agg_offset,
-            by='symbol'
+        .sort(["symbol", "timestamp"])
+        .group_by_dynamic("timestamp", every=agg_offset, period=agg_offset, by="symbol")
+        .agg(
+            [
+                pl.col("open").first().alias("open"),
+                pl.col("high").max().alias("high"),
+                pl.col("low").min().alias("low"),
+                pl.col("close").last().alias("close"),
+                pl.col("volume").sum().alias("volume"),
+                pl.count().alias("source_bar_count"),
+            ]
         )
-        .agg([
-            pl.col('open').first().alias('open'),
-            pl.col('high').max().alias('high'),
-            pl.col('low').min().alias('low'),
-            pl.col('close').last().alias('close'),
-            pl.col('volume').sum().alias('volume'),
-            pl.count().alias('source_bar_count')
-        ])
         .collect()
     )
 
     # Detect gaps
     gap_info = _detect_gaps(df_agg, source_resolution, target_resolution)
-    if gap_info['missing_bars_pct'] > 5.0:
+    if gap_info["missing_bars_pct"] > 5.0:
         logger_polars.warning(
             "aggregation_gaps_detected",
-            missing_bars_pct=gap_info['missing_bars_pct'],
-            total_gaps=gap_info['gap_count'],
-            recommendation="Review source data quality"
+            missing_bars_pct=gap_info["missing_bars_pct"],
+            total_gaps=gap_info["gap_count"],
+            recommendation="Review source data quality",
         )
 
     # Validate OHLCV relationships
     if validate:
         # Import validation function from base adapter
-        from rustybt.data.adapters.base import validate_ohlcv_relationships, ValidationError
+        from rustybt.data.adapters.base import ValidationError, validate_ohlcv_relationships
 
         try:
             validate_ohlcv_relationships(df_agg)
@@ -1060,7 +1044,7 @@ def aggregate_ohlcv(
                 "aggregation_validation_failed",
                 error=str(e),
                 source_resolution=source_resolution,
-                target_resolution=target_resolution
+                target_resolution=target_resolution,
             )
             raise AggregationValidationError(str(e)) from e
 
@@ -1071,26 +1055,28 @@ def aggregate_ohlcv(
             logger_polars.warning(
                 "aggregation_outliers_detected",
                 outlier_count=len(outliers),
-                symbols=outliers['symbol'].unique().to_list(),
-                recommendation="Review outliers before using data"
+                symbols=outliers["symbol"].unique().to_list(),
+                recommendation="Review outliers before using data",
             )
 
             # Add outlier flag column
-            df_agg = df_agg.with_columns([
-                pl.when(pl.col('timestamp').is_in(outliers['timestamp']))
-                .then(True)
-                .otherwise(False)
-                .alias('is_outlier')
-            ])
+            df_agg = df_agg.with_columns(
+                [
+                    pl.when(pl.col("timestamp").is_in(outliers["timestamp"]))
+                    .then(True)
+                    .otherwise(False)
+                    .alias("is_outlier")
+                ]
+            )
 
     # Validate temporal consistency
     _validate_temporal_consistency(df_agg)
 
     # Convert back to UTC
     if timezone != "UTC":
-        df_agg = df_agg.with_columns([
-            pl.col('timestamp').dt.convert_time_zone('UTC').alias('timestamp')
-        ])
+        df_agg = df_agg.with_columns(
+            [pl.col("timestamp").dt.convert_time_zone("UTC").alias("timestamp")]
+        )
 
     logger_polars.info(
         "aggregation_complete",
@@ -1098,7 +1084,7 @@ def aggregate_ohlcv(
         target_resolution=target_resolution,
         source_bars=len(df),
         aggregated_bars=len(df_agg),
-        compression_ratio=len(df) / len(df_agg) if len(df_agg) > 0 else 0
+        compression_ratio=len(df) / len(df_agg) if len(df_agg) > 0 else 0,
     )
 
     return df_agg
@@ -1109,7 +1095,7 @@ def aggregate_to_daily_bars(
     timezone: str = "America/New_York",
     market_open: str = "09:30",
     market_close: str = "16:00",
-    validate: bool = True
+    validate: bool = True,
 ) -> pl.DataFrame:
     """Aggregate intraday data to daily bars aligned to trading session.
 
@@ -1153,76 +1139,77 @@ def aggregate_to_daily_bars(
         >>> assert len(df_daily) == 1  # One trading day
     """
     # Check required columns
-    required_cols = ['timestamp', 'symbol', 'open', 'high', 'low', 'close', 'volume']
+    required_cols = ["timestamp", "symbol", "open", "high", "low", "close", "volume"]
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
         raise ValueError(f"Missing required columns: {missing_cols}")
 
     if len(df) == 0:
         logger_polars.warning("aggregate_to_daily_bars_skipped", reason="empty_dataframe")
-        return pl.DataFrame(schema={
-            'timestamp': pl.Datetime('us', 'UTC'),
-            'symbol': pl.Utf8,
-            'open': pl.Decimal(precision=18, scale=8),
-            'high': pl.Decimal(precision=18, scale=8),
-            'low': pl.Decimal(precision=18, scale=8),
-            'close': pl.Decimal(precision=18, scale=8),
-            'volume': pl.Decimal(precision=18, scale=8),
-        })
+        return pl.DataFrame(
+            schema={
+                "timestamp": pl.Datetime("us", "UTC"),
+                "symbol": pl.Utf8,
+                "open": pl.Decimal(precision=18, scale=8),
+                "high": pl.Decimal(precision=18, scale=8),
+                "low": pl.Decimal(precision=18, scale=8),
+                "close": pl.Decimal(precision=18, scale=8),
+                "volume": pl.Decimal(precision=18, scale=8),
+            }
+        )
 
     # Convert to market timezone
-    tz = pytz.timezone(timezone)
-    df = df.with_columns([
-        pl.col('timestamp').dt.convert_time_zone(timezone).alias('timestamp')
-    ])
+    pytz.timezone(timezone)
+    df = df.with_columns([pl.col("timestamp").dt.convert_time_zone(timezone).alias("timestamp")])
 
     # Parse market hours
-    open_hour, open_min = map(int, market_open.split(':'))
-    close_hour, close_min = map(int, market_close.split(':'))
+    open_hour, open_min = map(int, market_open.split(":"))
+    close_hour, close_min = map(int, market_close.split(":"))
 
     # Create time objects for comparison
-    open_time = pd.Timestamp('2000-01-01 ' + market_open).time()
-    close_time = pd.Timestamp('2000-01-01 ' + market_close).time()
+    open_time = pd.Timestamp("2000-01-01 " + market_open).time()
+    close_time = pd.Timestamp("2000-01-01 " + market_close).time()
 
     # Filter to trading hours
     # Note: Market close time is exclusive (bars before close time, not at close time)
     # E.g., 16:00 close means last bar is 15:59
-    df = df.with_columns([
-        pl.col('timestamp').dt.time().alias('time')
-    ]).filter(
-        (pl.col('time') >= open_time) &
-        (pl.col('time') < close_time)
-    ).drop('time')
+    df = (
+        df.with_columns([pl.col("timestamp").dt.time().alias("time")])
+        .filter((pl.col("time") >= open_time) & (pl.col("time") < close_time))
+        .drop("time")
+    )
 
     # Aggregate by trading day
     df_daily = (
         df.lazy()
-        .sort(['symbol', 'timestamp'])
+        .sort(["symbol", "timestamp"])
         .group_by_dynamic(
-            'timestamp',
-            every='1d',
-            period='1d',
-            offset='0h',  # Align to midnight in market timezone
-            by='symbol'
+            "timestamp",
+            every="1d",
+            period="1d",
+            offset="0h",  # Align to midnight in market timezone
+            by="symbol",
         )
-        .agg([
-            pl.col('open').first().alias('open'),
-            pl.col('high').max().alias('high'),
-            pl.col('low').min().alias('low'),
-            pl.col('close').last().alias('close'),
-            pl.col('volume').sum().alias('volume')
-        ])
+        .agg(
+            [
+                pl.col("open").first().alias("open"),
+                pl.col("high").max().alias("high"),
+                pl.col("low").min().alias("low"),
+                pl.col("close").last().alias("close"),
+                pl.col("volume").sum().alias("volume"),
+            ]
+        )
         .collect()
     )
 
     # Convert back to UTC
-    df_daily = df_daily.with_columns([
-        pl.col('timestamp').dt.convert_time_zone('UTC').alias('timestamp')
-    ])
+    df_daily = df_daily.with_columns(
+        [pl.col("timestamp").dt.convert_time_zone("UTC").alias("timestamp")]
+    )
 
     # Validate OHLCV relationships if requested
     if validate:
-        from rustybt.data.adapters.base import validate_ohlcv_relationships, ValidationError
+        from rustybt.data.adapters.base import ValidationError, validate_ohlcv_relationships
 
         try:
             validate_ohlcv_relationships(df_daily)
@@ -1235,7 +1222,7 @@ def aggregate_to_daily_bars(
         timezone=timezone,
         market_hours=f"{market_open}-{market_close}",
         source_bars=len(df),
-        daily_bars=len(df_daily)
+        daily_bars=len(df_daily),
     )
 
     return df_daily

@@ -22,12 +22,11 @@ from lru import LRU
 from pandas import isnull
 from toolz import sliding_window
 
-
 from rustybt.assets import Equity, Future
 from rustybt.assets.continuous_futures import ContinuousFuture
-from rustybt.lib._int64window import AdjustedArrayWindow as Int64Window
 from rustybt.lib._float64window import AdjustedArrayWindow as Float64Window
-from rustybt.lib.adjustment import Float64Multiply, Float64Add
+from rustybt.lib._int64window import AdjustedArrayWindow as Int64Window
+from rustybt.lib.adjustment import Float64Add, Float64Multiply
 from rustybt.utils.cache import ExpiringCache
 from rustybt.utils.math_utils import number_of_decimal_places
 from rustybt.utils.memoize import lazyval
@@ -45,7 +44,7 @@ class HistoryCompatibleUSEquityAdjustmentReader:
     def load_pricing_adjustments(self, columns, dts, assets):
         """
 
-        Returns
+        Returns:
         -------
         adjustments : list[dict[int -> Adjustment]]
             A list, where each element corresponds to the `columns`, of
@@ -82,7 +81,7 @@ class HistoryCompatibleUSEquityAdjustmentReader:
         field : str
             OHLCV field for which to get the adjustments.
 
-        Returns
+        Returns:
         -------
         out : dict[loc -> Float64Multiply]
             The adjustments as a dict of loc -> Float64Multiply
@@ -154,7 +153,7 @@ class ContinuousFutureAdjustmentReader:
     def load_pricing_adjustments(self, columns, dts, assets):
         """
 
-        Returns
+        Returns:
         -------
         adjustments : list[dict[int -> Adjustment]]
             A list, where each element corresponds to the `columns`, of
@@ -244,7 +243,7 @@ class SlidingWindow:
 
     def get(self, end_ix):
         """
-        Returns
+        Returns:
         -------
         out : A np.ndarray of the equity pricing up to end_ix after adjustments
               and rounding have been applied.
@@ -289,22 +288,18 @@ class HistoryLoader(ABC):
         self._reader = reader
         self._adjustment_readers = {}
         if equity_adjustment_reader is not None:
-            self._adjustment_readers[Equity] = (
-                HistoryCompatibleUSEquityAdjustmentReader(equity_adjustment_reader)
+            self._adjustment_readers[Equity] = HistoryCompatibleUSEquityAdjustmentReader(
+                equity_adjustment_reader
             )
         if roll_finders:
-            self._adjustment_readers[ContinuousFuture] = (
-                ContinuousFutureAdjustmentReader(
-                    trading_calendar,
-                    asset_finder,
-                    reader,
-                    roll_finders,
-                    self._frequency,
-                )
+            self._adjustment_readers[ContinuousFuture] = ContinuousFutureAdjustmentReader(
+                trading_calendar,
+                asset_finder,
+                reader,
+                roll_finders,
+                self._frequency,
             )
-        self._window_blocks = {
-            field: ExpiringCache(LRU(sid_cache_size)) for field in self.FIELDS
-        }
+        self._window_blocks = {field: ExpiringCache(LRU(sid_cache_size)) for field in self.FIELDS}
         self._prefetch_length = prefetch_length
 
     @property
@@ -358,7 +353,7 @@ class HistoryLoader(ABC):
         is_perspective_after : bool
             see: `PricingHistoryLoader.history`
 
-        Returns
+        Returns:
         -------
         out : list of Float64Window with sufficient data so that each asset's
         window can provide `get` for the index corresponding with the last
@@ -375,9 +370,7 @@ class HistoryLoader(ABC):
 
         for asset in assets:
             try:
-                window = self._window_blocks[field].get(
-                    (asset, size, is_perspective_after), end
-                )
+                window = self._window_blocks[field].get((asset, size, is_perspective_after), end)
             except KeyError:
                 needed_assets.append(asset)
             else:
@@ -420,9 +413,7 @@ class HistoryLoader(ABC):
                 except KeyError:
                     adj_reader = None
                 if adj_reader is not None:
-                    adjs = adj_reader.load_pricing_adjustments(
-                        [field], adj_dts, [asset]
-                    )[0]
+                    adjs = adj_reader.load_pricing_adjustments([field], adj_dts, [asset])[0]
                 else:
                     adjs = {}
                 window = window_type(
@@ -514,7 +505,7 @@ class HistoryLoader(ABC):
             Adjustments are applied 05-23 through 05-26 but not to the last dt,
             05-27
 
-        Returns
+        Returns:
         -------
         out : np.ndarray with shape(len(days between start, end), len(assets))
         """
@@ -555,9 +546,7 @@ class MinuteHistoryLoader(HistoryLoader):
         mm = self.trading_calendar.minutes
         start = mm.searchsorted(self._reader.first_trading_day.tz_localize("UTC"))
         if self._reader.last_available_dt.tzinfo is None:
-            end = mm.searchsorted(
-                self._reader.last_available_dt.tz_localize("UTC"), side="right"
-            )
+            end = mm.searchsorted(self._reader.last_available_dt.tz_localize("UTC"), side="right")
         else:
             end = mm.searchsorted(self._reader.last_available_dt, side="right")
         return mm[start:end]

@@ -6,8 +6,8 @@ from rustybt.optimization.search.grid_search import GridSearchAlgorithm
 from rustybt.optimization.search.random_search import RandomSearchAlgorithm
 
 __all__ = [
-    "GridSearchAlgorithm",
-    "RandomSearchAlgorithm",
     "BayesianOptimizer",
     "GeneticAlgorithm",
+    "GridSearchAlgorithm",
+    "RandomSearchAlgorithm",
 ]

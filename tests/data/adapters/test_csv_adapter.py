@@ -6,16 +6,13 @@ decimal conversion, timezone handling, and missing data strategies.
 
 import asyncio
 import tempfile
-from decimal import Decimal
-from pathlib import Path
 
 import pandas as pd
 import polars as pl
 import pytest
 
-from rustybt.data.adapters.csv_adapter import CSVAdapter, CSVConfig, SchemaMapping
 from rustybt.data.adapters.base import InvalidDataError, ValidationError
-
+from rustybt.data.adapters.csv_adapter import CSVAdapter, CSVConfig, SchemaMapping
 
 # ============================================================================
 # Unit Tests - Schema Mapping
@@ -204,9 +201,7 @@ def test_date_parsing_iso8601():
         f.write("2023-01-01,100.5,101.0,100.0,100.8,1000\n")
         f.flush()
 
-        config = CSVConfig(
-            file_path=f.name, schema_mapping=SchemaMapping(), date_format="%Y-%m-%d"
-        )
+        config = CSVConfig(file_path=f.name, schema_mapping=SchemaMapping(), date_format="%Y-%m-%d")
 
         adapter = CSVAdapter(config)
         df = asyncio.run(
@@ -255,9 +250,7 @@ def test_date_parsing_us_format():
         f.write("01/15/2023,100.5,101.0,100.0,100.8,1000\n")
         f.flush()
 
-        config = CSVConfig(
-            file_path=f.name, schema_mapping=SchemaMapping(), date_format="%m/%d/%Y"
-        )
+        config = CSVConfig(file_path=f.name, schema_mapping=SchemaMapping(), date_format="%m/%d/%Y")
 
         adapter = CSVAdapter(config)
         df = asyncio.run(
@@ -282,7 +275,9 @@ def test_date_parsing_epoch_seconds():
         f.flush()
 
         config = CSVConfig(
-            file_path=f.name, schema_mapping=SchemaMapping(), date_format=None  # Auto-detect
+            file_path=f.name,
+            schema_mapping=SchemaMapping(),
+            date_format=None,  # Auto-detect
         )
 
         adapter = CSVAdapter(config)
@@ -307,7 +302,9 @@ def test_date_parsing_auto_detect_iso():
         f.flush()
 
         config = CSVConfig(
-            file_path=f.name, schema_mapping=SchemaMapping(), date_format=None  # Auto-detect
+            file_path=f.name,
+            schema_mapping=SchemaMapping(),
+            date_format=None,  # Auto-detect
         )
 
         adapter = CSVAdapter(config)
@@ -336,7 +333,9 @@ def test_delimiter_detection_comma():
         f.flush()
 
         config = CSVConfig(
-            file_path=f.name, schema_mapping=SchemaMapping(), delimiter=None  # Auto-detect
+            file_path=f.name,
+            schema_mapping=SchemaMapping(),
+            delimiter=None,  # Auto-detect
         )
         adapter = CSVAdapter(config)
         detected = adapter._detect_delimiter()
@@ -352,7 +351,9 @@ def test_delimiter_detection_tab():
         f.flush()
 
         config = CSVConfig(
-            file_path=f.name, schema_mapping=SchemaMapping(), delimiter=None  # Auto-detect
+            file_path=f.name,
+            schema_mapping=SchemaMapping(),
+            delimiter=None,  # Auto-detect
         )
         adapter = CSVAdapter(config)
         detected = adapter._detect_delimiter()
@@ -368,7 +369,9 @@ def test_delimiter_detection_pipe():
         f.flush()
 
         config = CSVConfig(
-            file_path=f.name, schema_mapping=SchemaMapping(), delimiter=None  # Auto-detect
+            file_path=f.name,
+            schema_mapping=SchemaMapping(),
+            delimiter=None,  # Auto-detect
         )
         adapter = CSVAdapter(config)
         detected = adapter._detect_delimiter()
@@ -384,7 +387,9 @@ def test_delimiter_explicit():
         f.flush()
 
         config = CSVConfig(
-            file_path=f.name, schema_mapping=SchemaMapping(), delimiter=";"  # Explicit
+            file_path=f.name,
+            schema_mapping=SchemaMapping(),
+            delimiter=";",  # Explicit
         )
 
         adapter = CSVAdapter(config)

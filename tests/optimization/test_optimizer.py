@@ -1,16 +1,16 @@
 """Tests for optimizer orchestrator."""
 
 import json
-import pytest
 import tempfile
-from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 
+import pytest
+
 from rustybt.optimization import (
+    CategoricalParameter,
     ContinuousParameter,
     DiscreteParameter,
-    CategoricalParameter,
     ObjectiveFunction,
     Optimizer,
     ParameterSpace,

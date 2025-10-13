@@ -1,6 +1,7 @@
 import pandas as pd
-from rustybt.utils.cache import CachedObject, Expired, ExpiringCache
 import pytest
+
+from rustybt.utils.cache import CachedObject, Expired, ExpiringCache
 
 
 class TestCachedObject:

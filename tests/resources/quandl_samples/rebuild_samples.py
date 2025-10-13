@@ -1,21 +1,25 @@
 """
 Script for rebuilding the samples for the Quandl tests.
 """
+
 import os
+from io import BytesIO
 from os.path import (
     dirname,
     join,
     realpath,
 )
-import requests
-from io import BytesIO
-from zipfile import ZipFile, ZIP_DEFLATED
 from urllib.parse import urlencode
-from rustybt.testing import write_compressed
+from zipfile import ZIP_DEFLATED, ZipFile
+
+import requests
+
 from rustybt.data.bundles.quandl import QUANDL_DATA_URL
+from rustybt.testing import write_compressed
 
 TEST_RESOURCE_PATH = join(
-    dirname(dirname(dirname(realpath(__file__)))), "resources"  # zipline_repo/tests
+    dirname(dirname(dirname(realpath(__file__)))),
+    "resources",  # zipline_repo/tests
 )
 
 

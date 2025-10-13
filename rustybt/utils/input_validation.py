@@ -15,11 +15,11 @@ from datetime import tzinfo
 from functools import partial
 from operator import attrgetter
 
-from numpy import dtype
 import pandas as pd
-from pytz import timezone
-from toolz import valmap, complement, compose
 import toolz.curried.operator as op
+from numpy import dtype
+from pytz import timezone
+from toolz import complement, compose, valmap
 
 from rustybt.utils.compat import wraps
 from rustybt.utils.functional import getattrs
@@ -37,12 +37,12 @@ def verify_indices_all_unique(obj):
     obj : pd.Series / pd.DataFrame / pd.Panel
         The object to validate.
 
-    Returns
+    Returns:
     -------
     obj : pd.Series / pd.DataFrame / pd.Panel
         The validated object, unchanged.
 
-    Raises
+    Raises:
     ------
     ValueError
         If any axis has duplicate entries.
@@ -55,16 +55,12 @@ def verify_indices_all_unique(obj):
         obj.ndim - 1
     ]  # ndim = 1 should go to entry 0,
 
-    for axis_name, index in zip(axis_names, obj.axes):
+    for axis_name, index in zip(axis_names, obj.axes, strict=False):
         if index.is_unique:
             continue
 
         raise ValueError(
-            "Duplicate entries in {type}.{axis}: {dupes}.".format(
-                type=type(obj).__name__,
-                axis=axis_name,
-                dupes=sorted(index[index.duplicated()]),
-            )
+            f"Duplicate entries in {type(obj).__name__}.{axis_name}: {sorted(index[index.duplicated()])}."
         )
     return obj
 
@@ -77,12 +73,12 @@ def optionally(preprocessor):
     preprocessor : callable[callable, str, any -> any]
         A preprocessor to delegate to when `arg is not None`.
 
-    Returns
+    Returns:
     -------
     optional_preprocessor : callable[callable, str, any -> any]
         A preprocessor that delegates to `preprocessor` when `arg is not None`.
 
-    Examples
+    Examples:
     --------
     >>> def preprocessor(func, argname, arg):
     ...     if not isinstance(arg, int):
@@ -115,12 +111,8 @@ def ensure_upper_case(func, argname, arg):
         return arg.upper()
     else:
         raise TypeError(
-            "{0}() expected argument '{1}' to"
-            " be a string, but got {2} instead.".format(
-                func.__name__,
-                argname,
-                arg,
-            ),
+            f"{func.__name__}() expected argument '{argname}' to"
+            f" be a string, but got {arg} instead.",
         )
 
 
@@ -128,7 +120,7 @@ def ensure_dtype(func, argname, arg):
     """
     Argument preprocessor that converts the input into a numpy dtype.
 
-    Examples
+    Examples:
     --------
     >>> import numpy as np
     >>> from rustybt.utils.preprocess import preprocess
@@ -143,19 +135,15 @@ def ensure_dtype(func, argname, arg):
         return dtype(arg)
     except TypeError as exc:
         raise TypeError(
-            "{func}() couldn't convert argument "
-            "{argname}={arg!r} to a numpy dtype.".format(
-                func=_qualified_name(func),
-                argname=argname,
-                arg=arg,
-            ),
+            f"{_qualified_name(func)}() couldn't convert argument "
+            f"{argname}={arg!r} to a numpy dtype.",
         ) from exc
 
 
 def ensure_timezone(func, argname, arg):
     """Argument preprocessor that converts the input into a tzinfo object.
 
-    Examples
+    Examples:
     --------
     >>> from rustybt.utils.preprocess import preprocess
     >>> @preprocess(tz=ensure_timezone)
@@ -170,12 +158,7 @@ def ensure_timezone(func, argname, arg):
         return timezone(arg)
 
     raise TypeError(
-        "{func}() couldn't convert argument "
-        "{argname}={arg!r} to a timezone.".format(
-            func=_qualified_name(func),
-            argname=argname,
-            arg=arg,
-        ),
+        f"{_qualified_name(func)}() couldn't convert argument {argname}={arg!r} to a timezone.",
     )
 
 
@@ -183,7 +166,7 @@ def ensure_timestamp(func, argname, arg):
     """Argument preprocessor that converts the input into a pandas Timestamp
     object.
 
-    Examples
+    Examples:
     --------
     >>> from rustybt.utils.preprocess import preprocess
     >>> @preprocess(ts=ensure_timestamp)
@@ -196,15 +179,9 @@ def ensure_timestamp(func, argname, arg):
         return pd.Timestamp(arg)
     except ValueError as exc:
         raise TypeError(
-            "{func}() couldn't convert argument "
-            "{argname}={arg!r} to a pandas Timestamp.\n"
-            "Original error was: {t}: {e}".format(
-                func=_qualified_name(func),
-                argname=argname,
-                arg=arg,
-                t=_qualified_name(type(exc)),
-                e=exc,
-            ),
+            f"{_qualified_name(func)}() couldn't convert argument "
+            f"{argname}={arg!r} to a pandas Timestamp.\n"
+            f"Original error was: {_qualified_name(type(exc))}: {exc}",
         ) from exc
 
 
@@ -212,7 +189,7 @@ def expect_dtypes(__funcname=_qualified_name, **named):
     """
     Preprocessing decorator that verifies inputs have expected numpy dtypes.
 
-    Examples
+    Examples:
     --------
     >>> from numpy import dtype, arange, int8, float64
     >>> @expect_dtypes(x=dtype(int8))
@@ -232,10 +209,7 @@ def expect_dtypes(__funcname=_qualified_name, **named):
         if not isinstance(type_, (dtype, tuple)):
             raise TypeError(
                 "expect_dtypes() expected a numpy dtype or tuple of dtypes"
-                " for argument {name!r}, but got {dtype} instead.".format(
-                    name=name,
-                    dtype=dtype,
-                )
+                f" for argument {name!r}, but got {dtype} instead."
             )
 
     if isinstance(__funcname, str):
@@ -284,7 +258,7 @@ def expect_kinds(**named):
     """
     Preprocessing decorator that verifies inputs have expected dtype kinds.
 
-    Examples
+    Examples:
     --------
     >>> from numpy import int64, int32, float32
     >>> @expect_kinds(x='i')
@@ -305,10 +279,7 @@ def expect_kinds(**named):
         if not isinstance(kind, (str, tuple)):
             raise TypeError(
                 "expect_dtype_kinds() expected a string or tuple of strings"
-                " for argument {name!r}, but got {kind} instead.".format(
-                    name=name,
-                    kind=dtype,
-                )
+                f" for argument {name!r}, but got {dtype} instead."
             )
 
     @preprocess(kinds=call(lambda x: x if isinstance(x, tuple) else (x,)))
@@ -349,7 +320,7 @@ def expect_types(__funcname=_qualified_name, **named):
     """
     Preprocessing decorator that verifies inputs have expected types.
 
-    Examples
+    Examples:
     --------
     >>> @expect_types(x=int, y=str)
     ... def foo(x, y):
@@ -363,7 +334,7 @@ def expect_types(__funcname=_qualified_name, **named):
     TypeError: ...foo() expected a value of type int for argument 'x',
     but got float instead.
 
-    Notes
+    Notes:
     -----
     A special argument, __funcname, can be provided as a string to override the
     function name shown in error messages.  This is most often used on __init__
@@ -374,10 +345,7 @@ def expect_types(__funcname=_qualified_name, **named):
         if not isinstance(type_, (type, tuple)):
             raise TypeError(
                 "expect_types() expected a type or tuple of types for "
-                "argument '{name}', but got {type_} instead.".format(
-                    name=name,
-                    type_=type_,
-                )
+                f"argument '{name}', but got {type_} instead."
             )
 
     def _expect_type(type_):
@@ -387,9 +355,7 @@ def expect_types(__funcname=_qualified_name, **named):
             "for argument '%(argname)s', but got %(actual)s instead."
         )
         if isinstance(type_, tuple):
-            template = _template.format(
-                type_or_types=" or ".join(map(_qualified_name, type_))
-            )
+            template = _template.format(type_or_types=" or ".join(map(_qualified_name, type_)))
         else:
             template = _template.format(type_or_types=_qualified_name(type_))
 
@@ -464,7 +430,7 @@ def optional(type_):
     type_ : type
        Type for which to produce an option.
 
-    Examples
+    Examples:
     --------
     >>> isinstance({}, optional(dict))
     True
@@ -481,7 +447,7 @@ def expect_element(__funcname=_qualified_name, **named):
     Preprocessing decorator that verifies inputs are elements of some
     expected collection.
 
-    Examples
+    Examples:
     --------
     >>> @expect_element(x=('a', 'b'))
     ... def foo(x):
@@ -497,7 +463,7 @@ def expect_element(__funcname=_qualified_name, **named):
     ValueError: ...foo() expected a value in ('a', 'b') for argument 'x',
     but got 'c' instead.
 
-    Notes
+    Notes:
     -----
     A special argument, __funcname, can be provided as a string to override the
     function name shown in error messages.  This is most often used on __init__
@@ -518,9 +484,9 @@ def expect_element(__funcname=_qualified_name, **named):
             collection_for_error_message = collection
 
         template = (
-            "%(funcname)s() expected a value in {collection} "
+            f"%(funcname)s() expected a value in {collection_for_error_message} "
             "for argument '%(argname)s', but got %(actual)s instead."
-        ).format(collection=collection_for_error_message)
+        )
         return make_check(
             ValueError,
             template,
@@ -542,7 +508,7 @@ def expect_bounded(__funcname=_qualified_name, **named):
     ``None`` may be passed as ``min_value`` or ``max_value`` to signify that
     the input is only bounded above or below.
 
-    Examples
+    Examples:
     --------
     >>> @expect_bounded(x=(1, 5))
     ... def foo(x):
@@ -603,9 +569,9 @@ def expect_bounded(__funcname=_qualified_name, **named):
             predicate_descr = "inclusively between %s and %s" % bounds
 
         template = (
-            "%(funcname)s() expected a value {predicate}"
+            f"%(funcname)s() expected a value {predicate_descr}"
             " for argument '%(argname)s', but got %(actual)s instead."
-        ).format(predicate=predicate_descr)
+        )
 
         return make_check(
             exc_type=ValueError,
@@ -628,7 +594,7 @@ def expect_strictly_bounded(__funcname=_qualified_name, **named):
     ``None`` may be passed as ``min_value`` or ``max_value`` to signify that
     the input is only bounded above or below.
 
-    Examples
+    Examples:
     --------
     >>> @expect_strictly_bounded(x=(1, 5))
     ... def foo(x):
@@ -689,9 +655,9 @@ def expect_strictly_bounded(__funcname=_qualified_name, **named):
             predicate_descr = "exclusively between %s and %s" % bounds
 
         template = (
-            "%(funcname)s() expected a value {predicate}"
+            f"%(funcname)s() expected a value {predicate_descr}"
             " for argument '%(argname)s', but got %(actual)s instead."
-        ).format(predicate=predicate_descr)
+        )
 
         return make_check(
             exc_type=ValueError,
@@ -712,10 +678,7 @@ def _expect_bounded(make_bounded_check, __funcname, **named):
         if not valid_bounds(bounds):
             raise TypeError(
                 "expect_bounded() expected a tuple of bounds for"
-                " argument '{name}', but got {bounds} instead.".format(
-                    name=name,
-                    bounds=bounds,
-                )
+                f" argument '{name}', but got {bounds} instead."
             )
 
     return preprocess(**valmap(make_bounded_check, named))
@@ -726,7 +689,7 @@ def expect_dimensions(__funcname=_qualified_name, **dimensions):
     Preprocessing decorator that verifies inputs are numpy arrays with a
     specific dimensionality.
 
-    Examples
+    Examples:
     --------
     >>> from numpy import array
     >>> @expect_dimensions(x=1, y=2)
@@ -759,14 +722,9 @@ def expect_dimensions(__funcname=_qualified_name, **dimensions):
                 else:
                     actual_repr = "%d-D array" % actual_ndim
                 raise ValueError(
-                    "{func}() expected a {expected:d}-D array"
-                    " for argument {argname!r}, but got a {actual}"
-                    " instead.".format(
-                        func=get_funcname(func),
-                        expected=expected_ndim,
-                        argname=argname,
-                        actual=actual_repr,
-                    )
+                    f"{get_funcname(func)}() expected a {expected_ndim:d}-D array"
+                    f" for argument {argname!r}, but got a {actual_repr}"
+                    " instead."
                 )
             return argvalue
 
@@ -789,7 +747,7 @@ def coerce(from_, to, **to_kwargs):
     **to_kwargs
         Additional keywords to forward to every call to ``to``.
 
-    Examples
+    Examples:
     --------
     >>> @preprocess(x=coerce(float, int), y=coerce(float, int))
     ... def floordiff(x, y):
@@ -824,7 +782,7 @@ def coerce_types(**kwargs):
          Keyword arguments mapping function parameter names to pairs of
          (from_type, to_type).
 
-    Examples
+    Examples:
     --------
     >>> @coerce_types(x=(float, int), y=(int, str))
     ... def func(x, y):
@@ -866,23 +824,15 @@ def validate_keys(dict_, expected, funcname):
     missing = expected - received
     if missing:
         raise ValueError(
-            "Missing keys in {}:\n"
-            "Expected Keys: {}\n"
-            "Received Keys: {}".format(
-                funcname,
-                sorted(expected),
-                sorted(received),
-            )
+            f"Missing keys in {funcname}:\n"
+            f"Expected Keys: {sorted(expected)}\n"
+            f"Received Keys: {sorted(received)}"
         )
 
     unexpected = received - expected
     if unexpected:
         raise ValueError(
-            "Unexpected keys in {}:\n"
-            "Expected Keys: {}\n"
-            "Received Keys: {}".format(
-                funcname,
-                sorted(expected),
-                sorted(received),
-            )
+            f"Unexpected keys in {funcname}:\n"
+            f"Expected Keys: {sorted(expected)}\n"
+            f"Received Keys: {sorted(received)}"
         )

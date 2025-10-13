@@ -6,7 +6,6 @@ Alpha Vantage API documentation: https://www.alphavantage.co/documentation/
 import asyncio
 from decimal import Decimal
 from pathlib import Path
-from typing import Dict
 
 import pandas as pd
 import polars as pl
@@ -88,8 +87,7 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
 
         if asset_type not in ("stocks", "forex", "crypto"):
             raise ValueError(
-                f"Invalid asset_type '{asset_type}'. "
-                "Must be one of: stocks, forex, crypto"
+                f"Invalid asset_type '{asset_type}'. Must be one of: stocks, forex, crypto"
             )
 
         self.tier = tier
@@ -105,7 +103,7 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
             base_url="https://www.alphavantage.co/query",
         )
 
-    def _get_auth_headers(self) -> Dict[str, str]:
+    def _get_auth_headers(self) -> dict[str, str]:
         """Get authentication headers.
 
         Returns:
@@ -113,7 +111,7 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
         """
         return {}
 
-    def _get_auth_params(self) -> Dict[str, str]:
+    def _get_auth_params(self) -> dict[str, str]:
         """Get authentication query parameters.
 
         Alpha Vantage uses apikey query parameter for authentication.
@@ -139,9 +137,7 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
         elif self.asset_type == "forex":
             return "FX_INTRADAY" if is_intraday else "FX_DAILY"
         elif self.asset_type == "crypto":
-            return (
-                "CRYPTO_INTRADAY" if is_intraday else "DIGITAL_CURRENCY_DAILY"
-            )
+            return "CRYPTO_INTRADAY" if is_intraday else "DIGITAL_CURRENCY_DAILY"
         else:
             raise ValueError(f"Unknown asset type: {self.asset_type}")
 
@@ -181,9 +177,7 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
         elif self.asset_type == "forex":
             # Split forex pair (e.g., "EUR/USD" -> from=EUR, to=USD)
             if "/" not in symbol:
-                raise ValueError(
-                    f"Forex symbol must be in format 'XXX/YYY', got '{symbol}'"
-                )
+                raise ValueError(f"Forex symbol must be in format 'XXX/YYY', got '{symbol}'")
             from_currency, to_currency = symbol.upper().split("/")
             params["from_symbol"] = from_currency
             params["to_symbol"] = to_currency
@@ -215,18 +209,14 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
         if "Note" in data:
             note = data["Note"]
             if "API call frequency" in note or "premium" in note.lower():
-                raise QuotaExceededError(
-                    f"Alpha Vantage rate limit exceeded: {note}"
-                )
+                raise QuotaExceededError(f"Alpha Vantage rate limit exceeded: {note}")
 
         # Parse time series data
-        return self._parse_time_series_response(
-            data, symbol, start_date, end_date, timeframe
-        )
+        return self._parse_time_series_response(data, symbol, start_date, end_date, timeframe)
 
     def _parse_time_series_response(
         self,
-        data: Dict,
+        data: dict,
         symbol: str,
         start_date: pd.Timestamp,
         end_date: pd.Timestamp,
@@ -249,7 +239,7 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
         """
         # Find time series key in response
         time_series_key = None
-        for key in data.keys():
+        for key in data:
             if "Time Series" in key or "Digital Currency" in key or "FX" in key:
                 time_series_key = key
                 break
@@ -353,13 +343,9 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
         if df["timestamp"].dtype != pl.Datetime("us"):
             # Handle string timestamps
             if df["timestamp"].dtype == pl.Utf8:
-                df = df.with_columns(
-                    pl.col("timestamp").str.to_datetime("%Y-%m-%d")
-                )
+                df = df.with_columns(pl.col("timestamp").str.to_datetime("%Y-%m-%d"))
             # Then cast to microsecond precision
-            df = df.with_columns(
-                pl.col("timestamp").cast(pl.Datetime("us"))
-            )
+            df = df.with_columns(pl.col("timestamp").cast(pl.Datetime("us")))
 
         # Ensure Decimal types for price/volume columns
         decimal_cols = ["open", "high", "low", "close", "volume"]

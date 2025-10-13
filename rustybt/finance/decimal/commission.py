@@ -6,7 +6,6 @@ for accurate cost tracking in order execution.
 
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import Optional
 
 import structlog
 
@@ -24,9 +23,7 @@ class DecimalCommissionModel(ABC):
     """
 
     @abstractmethod
-    def calculate(
-        self, order: DecimalOrder, fill_price: Decimal, fill_amount: Decimal
-    ) -> Decimal:
+    def calculate(self, order: DecimalOrder, fill_price: Decimal, fill_amount: Decimal) -> Decimal:
         """Calculate commission for order fill.
 
         Args:
@@ -50,9 +47,7 @@ class NoCommission(DecimalCommissionModel):
     strategies without transaction costs.
     """
 
-    def calculate(
-        self, order: DecimalOrder, fill_price: Decimal, fill_amount: Decimal
-    ) -> Decimal:
+    def calculate(self, order: DecimalOrder, fill_price: Decimal, fill_amount: Decimal) -> Decimal:
         """Calculate zero commission.
 
         Args:
@@ -87,7 +82,7 @@ class PerShareCommission(DecimalCommissionModel):
         self,
         rate: Decimal,
         minimum: Decimal = Decimal("0"),
-        config: Optional[DecimalConfig] = None,
+        config: DecimalConfig | None = None,
     ) -> None:
         """Initialize per-share commission model.
 
@@ -115,9 +110,7 @@ class PerShareCommission(DecimalCommissionModel):
             minimum=str(minimum),
         )
 
-    def calculate(
-        self, order: DecimalOrder, fill_price: Decimal, fill_amount: Decimal
-    ) -> Decimal:
+    def calculate(self, order: DecimalOrder, fill_price: Decimal, fill_amount: Decimal) -> Decimal:
         """Calculate commission: max(shares × rate, minimum).
 
         Args:
@@ -178,7 +171,7 @@ class PerTradeCommission(DecimalCommissionModel):
         Decimal('5.00')  # Flat $5 per trade
     """
 
-    def __init__(self, cost: Decimal, config: Optional[DecimalConfig] = None) -> None:
+    def __init__(self, cost: Decimal, config: DecimalConfig | None = None) -> None:
         """Initialize per-trade commission model.
 
         Args:
@@ -196,9 +189,7 @@ class PerTradeCommission(DecimalCommissionModel):
 
         logger.info("per_trade_commission_initialized", cost=str(cost))
 
-    def calculate(
-        self, order: DecimalOrder, fill_price: Decimal, fill_amount: Decimal
-    ) -> Decimal:
+    def calculate(self, order: DecimalOrder, fill_price: Decimal, fill_amount: Decimal) -> Decimal:
         """Calculate flat commission (charged once on first fill).
 
         Args:
@@ -239,7 +230,7 @@ class PerDollarCommission(DecimalCommissionModel):
         Decimal('15.00')  # 10000 × 0.0015 = 15.00
     """
 
-    def __init__(self, rate: Decimal, config: Optional[DecimalConfig] = None) -> None:
+    def __init__(self, rate: Decimal, config: DecimalConfig | None = None) -> None:
         """Initialize per-dollar commission model.
 
         Args:
@@ -257,9 +248,7 @@ class PerDollarCommission(DecimalCommissionModel):
 
         logger.info("per_dollar_commission_initialized", rate=str(rate))
 
-    def calculate(
-        self, order: DecimalOrder, fill_price: Decimal, fill_amount: Decimal
-    ) -> Decimal:
+    def calculate(self, order: DecimalOrder, fill_price: Decimal, fill_amount: Decimal) -> Decimal:
         """Calculate commission: order_value × rate.
 
         Args:
@@ -311,7 +300,7 @@ class CryptoCommission(DecimalCommissionModel):
         self,
         maker_rate: Decimal,
         taker_rate: Decimal,
-        config: Optional[DecimalConfig] = None,
+        config: DecimalConfig | None = None,
     ) -> None:
         """Initialize crypto commission model.
 
@@ -339,9 +328,7 @@ class CryptoCommission(DecimalCommissionModel):
             taker_rate=str(taker_rate),
         )
 
-    def calculate(
-        self, order: DecimalOrder, fill_price: Decimal, fill_amount: Decimal
-    ) -> Decimal:
+    def calculate(self, order: DecimalOrder, fill_price: Decimal, fill_amount: Decimal) -> Decimal:
         """Calculate commission based on order type (maker vs taker).
 
         Args:
@@ -378,6 +365,4 @@ class CryptoCommission(DecimalCommissionModel):
         return commission
 
     def __repr__(self) -> str:
-        return (
-            f"CryptoCommission(maker_rate={self.maker_rate}, taker_rate={self.taker_rate})"
-        )
+        return f"CryptoCommission(maker_rate={self.maker_rate}, taker_rate={self.taker_rate})"

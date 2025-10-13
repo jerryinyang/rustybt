@@ -12,16 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import partial
-from unittest import TestCase
 from datetime import timedelta
+from unittest import TestCase
+
 import pandas as pd
 from parameterized import parameterized
 
-from rustybt.utils.events import NDaysBeforeLastTradingDayOfWeek, AfterOpen, BeforeClose
-from rustybt.utils.events import NthTradingDayOfWeek
+from rustybt.utils.events import (
+    AfterOpen,
+    BeforeClose,
+    NDaysBeforeLastTradingDayOfWeek,
+    NthTradingDayOfWeek,
+)
 
-from .test_events import StatelessRulesTests, StatefulRulesTests, minutes_for_days
+from .test_events import StatefulRulesTests, StatelessRulesTests, minutes_for_days
 
 
 class TestStatelessRulesNYSE(StatelessRulesTests, TestCase):
@@ -81,10 +85,7 @@ class TestStatelessRulesNYSE(StatelessRulesTests, TestCase):
             "2014-01-22": False,
         }
 
-        results = {
-            x: rule.should_trigger(self.cal.session_first_minute(x))
-            for x in expected.keys()
-        }
+        results = {x: rule.should_trigger(self.cal.session_first_minute(x)) for x in expected}
 
         assert expected == results
 
@@ -108,8 +109,7 @@ class TestStatelessRulesNYSE(StatelessRulesTests, TestCase):
         }
 
         results = {
-            x: rule.should_trigger(self.cal.session_first_minute(x))
-            for x in expected.keys()
+            x: rule.should_trigger(self.cal.session_first_minute(x)) for x in expected.keys()
         }
 
         assert expected == results
@@ -133,8 +133,7 @@ class TestStatelessRulesNYSE(StatelessRulesTests, TestCase):
         }
 
         results = {
-            x: rule.should_trigger(self.cal.session_first_minute(x))
-            for x in expected.keys()
+            x: rule.should_trigger(self.cal.session_first_minute(x)) for x in expected.keys()
         }
 
         assert expected == results

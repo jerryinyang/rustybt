@@ -110,21 +110,21 @@ Custom chart functions receive the backtest DataFrame and return base64-encoded 
 ```python
 def custom_chart(data: pd.DataFrame) -> str:
     fig, ax = plt.subplots(figsize=(10, 6))
-    
+
     # Create your chart
     ax.plot(data.index, data['portfolio_value'])
     ax.set_title('Custom Chart')
-    
+
     # Convert to base64
     from io import BytesIO
     import base64
-    
+
     buf = BytesIO()
     fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
     buf.seek(0)
     img_base64 = base64.b64encode(buf.read()).decode('utf-8')
     plt.close(fig)
-    
+
     return f'data:image/png;base64,{img_base64}'
 
 config = ReportConfig(custom_charts=[custom_chart])

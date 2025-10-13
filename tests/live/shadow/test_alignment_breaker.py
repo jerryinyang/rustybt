@@ -1,11 +1,12 @@
 """Unit tests for AlignmentCircuitBreaker."""
 
-import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from rustybt.live.shadow.config import ShadowTradingConfig
+import pytest
+
 from rustybt.live.shadow.alignment_breaker import AlignmentCircuitBreaker
+from rustybt.live.shadow.config import ShadowTradingConfig
 from rustybt.live.shadow.models import AlignmentMetrics, ExecutionQualityMetrics, SignalAlignment
 
 
@@ -157,7 +158,9 @@ class TestAlignmentCircuitBreaker:
         assert is_aligned is False
         assert breaker.is_tripped
 
-    def test_grace_period_resets_on_good_metrics(self, breaker, bad_signal_match_metrics, good_metrics):
+    def test_grace_period_resets_on_good_metrics(
+        self, breaker, bad_signal_match_metrics, good_metrics
+    ):
         """Test grace period resets when metrics return to good."""
         now = datetime.utcnow()
 

@@ -89,9 +89,11 @@ class PropertyTestCoverageAnalyzer:
                     # Check if it's a property test (has @given decorator)
                     has_given = any(
                         (isinstance(dec, ast.Name) and dec.id == "given")
-                        or (isinstance(dec, ast.Call)
-                        and isinstance(dec.func, ast.Name)
-                        and dec.func.id == "given")
+                        or (
+                            isinstance(dec, ast.Call)
+                            and isinstance(dec.func, ast.Name)
+                            and dec.func.id == "given"
+                        )
                         for dec in node.decorator_list
                     )
 
@@ -101,9 +103,7 @@ class PropertyTestCoverageAnalyzer:
                         for module in tested_modules:
                             if module not in module_tests:
                                 module_tests[module] = []
-                            module_tests[module].append(
-                                f"{test_file.stem}::{node.name}"
-                            )
+                            module_tests[module].append(f"{test_file.stem}::{node.name}")
 
         return module_tests
 
@@ -113,7 +113,9 @@ class PropertyTestCoverageAnalyzer:
 
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom):
-                if (node.module and node.module.startswith("rustybt.finance")) or (node.module and node.module.startswith("rustybt.data")):
+                if (node.module and node.module.startswith("rustybt.finance")) or (
+                    node.module and node.module.startswith("rustybt.data")
+                ):
                     modules.add(node.module)
 
         return modules
@@ -132,9 +134,11 @@ class PropertyTestCoverageAnalyzer:
                 if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
                     has_given = any(
                         (isinstance(dec, ast.Name) and dec.id == "given")
-                        or (isinstance(dec, ast.Call)
-                        and isinstance(dec.func, ast.Name)
-                        and dec.func.id == "given")
+                        or (
+                            isinstance(dec, ast.Call)
+                            and isinstance(dec.func, ast.Name)
+                            and dec.func.id == "given"
+                        )
                         for dec in node.decorator_list
                     )
                     if has_given:
@@ -153,9 +157,7 @@ class PropertyTestCoverageAnalyzer:
 
         count = 0
         for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and node.name.startswith(
-                "test_regression_"
-            ):
+            if isinstance(node, ast.FunctionDef) and node.name.startswith("test_regression_"):
                 count += 1
 
         return count
@@ -188,9 +190,7 @@ class PropertyTestCoverageAnalyzer:
             [m for m in self.CRITICAL_MODULES if m in module_tests and len(module_tests[m]) > 0]
         )
         coverage_percentage = (
-            (covered_modules / len(self.CRITICAL_MODULES)) * 100
-            if self.CRITICAL_MODULES
-            else 0
+            (covered_modules / len(self.CRITICAL_MODULES)) * 100 if self.CRITICAL_MODULES else 0
         )
 
         passed = len(missing_coverage) == 0 and len(insufficient_coverage) == 0
@@ -319,20 +319,14 @@ class PropertyTestCoverageAnalyzer:
             )
             # Not a hard failure
         else:
-            print(
-                f"✅ Gate 4 PASSED: Regression tests ({results['regression_tests']}) >= 5"
-            )
+            print(f"✅ Gate 4 PASSED: Regression tests ({results['regression_tests']}) >= 5")
 
         # Gate 5: Coverage percentage
         if results["coverage_percentage"] < 90.0:
-            print(
-                f"❌ Gate 5 FAILED: Coverage ({results['coverage_percentage']:.1f}%) < 90%"
-            )
+            print(f"❌ Gate 5 FAILED: Coverage ({results['coverage_percentage']:.1f}%) < 90%")
             gates_passed = False
         else:
-            print(
-                f"✅ Gate 5 PASSED: Coverage ({results['coverage_percentage']:.1f}%) >= 90%"
-            )
+            print(f"✅ Gate 5 PASSED: Coverage ({results['coverage_percentage']:.1f}%) >= 90%")
 
         return gates_passed
 
@@ -341,20 +335,14 @@ def main():
     parser = argparse.ArgumentParser(
         description="Analyze property test coverage and enforce quality gates"
     )
-    parser.add_argument(
-        "--check", action="store_true", help="Check coverage and print summary"
-    )
-    parser.add_argument(
-        "--report", action="store_true", help="Generate detailed coverage report"
-    )
+    parser.add_argument("--check", action="store_true", help="Check coverage and print summary")
+    parser.add_argument("--report", action="store_true", help="Generate detailed coverage report")
     parser.add_argument(
         "--enforce-gates",
         action="store_true",
         help="Enforce quality gates (exits with code 1 if failed)",
     )
-    parser.add_argument(
-        "--json", action="store_true", help="Output results as JSON"
-    )
+    parser.add_argument("--json", action="store_true", help="Output results as JSON")
 
     args = parser.parse_args()
 

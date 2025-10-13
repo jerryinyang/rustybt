@@ -1,6 +1,5 @@
 """Tests for genetic algorithm optimization."""
 
-import pickle
 import time
 from decimal import Decimal
 
@@ -53,7 +52,9 @@ def rastrigin_function(params: dict[str, Decimal]) -> Decimal:
     x = float(params["x"])
     y = float(params["y"])
     A = 10
-    return Decimal(str(-(2 * A + (x**2 - A * np.cos(2 * np.pi * x)) + (y**2 - A * np.cos(2 * np.pi * y)))))
+    return Decimal(
+        str(-(2 * A + (x**2 - A * np.cos(2 * np.pi * x)) + (y**2 - A * np.cos(2 * np.pi * y))))
+    )
 
 
 class TestGeneticAlgorithmInitialization:
@@ -195,7 +196,7 @@ class TestGeneticAlgorithmUpdate:
     ) -> None:
         """Test that update with wrong params raises error."""
         ga = GeneticAlgorithm(parameter_space=simple_param_space, seed=42)
-        params = ga.suggest()
+        ga.suggest()
 
         # Try to update with different params
         wrong_params = {"x": Decimal("1.0"), "y": Decimal("2.0")}
@@ -219,9 +220,7 @@ class TestGeneticAlgorithmSelectionOperators:
     """Test selection operators."""
 
     @pytest.mark.parametrize("selection", ["tournament", "roulette", "rank"])
-    def test_selection_operators(
-        self, simple_param_space: ParameterSpace, selection: str
-    ) -> None:
+    def test_selection_operators(self, simple_param_space: ParameterSpace, selection: str) -> None:
         """Test different selection operators complete successfully."""
         ga = GeneticAlgorithm(
             parameter_space=simple_param_space,
@@ -283,7 +282,9 @@ class TestGeneticAlgorithmCrossover:
         # Second generation should be different (due to crossover/mutation)
         # At least some individuals should differ
         differences = sum(
-            1 for p0, p1 in zip(gen0_params, gen1_params) if p0["x"] != p1["x"] or p0["y"] != p1["y"]
+            1
+            for p0, p1 in zip(gen0_params, gen1_params, strict=False)
+            if p0["x"] != p1["x"] or p0["y"] != p1["y"]
         )
         assert differences > 0
 
@@ -566,9 +567,7 @@ class TestGeneticAlgorithmStateManagement:
 
         assert ga2.is_complete()
 
-    def test_set_state_validates_missing_keys(
-        self, simple_param_space: ParameterSpace
-    ) -> None:
+    def test_set_state_validates_missing_keys(self, simple_param_space: ParameterSpace) -> None:
         """Test set_state rejects state with missing keys."""
         ga = GeneticAlgorithm(parameter_space=simple_param_space)
 
@@ -582,9 +581,7 @@ class TestGeneticAlgorithmStateManagement:
         with pytest.raises(ValueError, match="missing required keys"):
             ga.set_state(incomplete_state)
 
-    def test_set_state_validates_parameter_ranges(
-        self, simple_param_space: ParameterSpace
-    ) -> None:
+    def test_set_state_validates_parameter_ranges(self, simple_param_space: ParameterSpace) -> None:
         """Test set_state rejects invalid parameter values."""
         ga1 = GeneticAlgorithm(parameter_space=simple_param_space)
 

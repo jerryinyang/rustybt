@@ -2,14 +2,12 @@
 
 from decimal import Decimal
 
-import pytest
 from hypothesis import assume, example, given
 
 from rustybt.assets import Equity, ExchangeInfo
 from rustybt.finance.commission import PerDollar, PerShare
 from rustybt.finance.decimal.order import DecimalOrder
 from rustybt.finance.decimal.transaction import DecimalTransaction
-from rustybt.finance.execution import LimitOrder, MarketOrder, StopLimitOrder, StopOrder
 
 from .strategies import commission_rates, decimal_prices, decimal_quantities
 
@@ -65,9 +63,7 @@ def test_order_fill_value_exact_calculation(price: Decimal, quantity: Decimal) -
 
 
 @given(
-    order_value=decimal_prices(
-        min_value=Decimal("100"), max_value=Decimal("100000"), scale=2
-    ),
+    order_value=decimal_prices(min_value=Decimal("100"), max_value=Decimal("100000"), scale=2),
     commission_rate=commission_rates(max_rate=Decimal("0.01")),
 )
 @example(order_value=Decimal("10000"), commission_rate=Decimal("0.001"))
@@ -81,7 +77,7 @@ def test_per_dollar_commission_bounds(order_value: Decimal, commission_rate: Dec
     Commission must be non-negative and cannot exceed the order value.
     """
     commission_model = PerDollar(cost=float(commission_rate))
-    asset = Equity(sid=1, exchange_info=NYSE, symbol="TEST")
+    Equity(sid=1, exchange_info=NYSE, symbol="TEST")
 
     # Calculate commission
     # PerDollar expects order object, so we need to calculate directly
@@ -177,7 +173,7 @@ def test_weighted_average_fill_price(fills: Decimal, prices: Decimal, num_fills:
 
     # Calculate weighted average
     total_value = sum(
-        (amount * price for amount, price in zip(fill_amounts, fill_prices)),
+        (amount * price for amount, price in zip(fill_amounts, fill_prices, strict=False)),
         start=Decimal("0"),
     )
     total_amount = sum(fill_amounts, start=Decimal("0"))

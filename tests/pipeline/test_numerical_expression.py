@@ -1,5 +1,6 @@
+import re
 from collections import OrderedDict
-from itertools import permutations, product, islice
+from itertools import islice, permutations, product
 from operator import (
     add,
     ge,
@@ -15,17 +16,16 @@ from string import ascii_uppercase
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from rustybt.pipeline import Factor, Filter
-from rustybt.pipeline.factors.factor import NumExprFactor
 from rustybt.pipeline.expression import (
     NUMEXPR_MATH_FUNCS,
     NumericalExpression,
 )
+from rustybt.pipeline.factors.factor import NumExprFactor
 from rustybt.testing import check_allclose
 from rustybt.utils.numpy_utils import datetime64ns_dtype, float64_dtype
-import pytest
-import re
 
 
 class F(Factor):
@@ -71,9 +71,7 @@ def set_num_expression(request):
         request.cls.h: np.full((5, 5), 1, float),
         request.cls.d: np.full((5, 5), 0, dtype="datetime64[ns]"),
     }
-    request.cls.mask = pd.DataFrame(
-        True, index=request.cls.dates, columns=request.cls.assets
-    )
+    request.cls.mask = pd.DataFrame(True, index=request.cls.dates, columns=request.cls.assets)
     yield
     pass
 
@@ -182,9 +180,7 @@ class TestNumericalExpression:
             self.fake_raw_data[new_expr] = np.full((5, 5), (i + 1), float)
             for new_expr_input in new_expr_inputs:
                 new_expr = new_expr + new_expr_input
-            self.fake_raw_data[new_expr] = np.full(
-                (5, 5), (i + 1) * (num_new_inputs + 1), float
-            )
+            self.fake_raw_data[new_expr] = np.full((5, 5), (i + 1) * (num_new_inputs + 1), float)
 
             # This will grow the number of inputs by num_new_inputs. We start
             # at 1 (self.f). The num_new_inputs=4 case grows by 4 and covers
@@ -221,18 +217,18 @@ class TestNumericalExpression:
         for float_value in (self.f, np.float64(1.0), 1.0):
             for op, sym in ((add, "+"), (mul, "*")):
                 expected = (
-                    "Don't know how to compute float64 {sym} datetime64[ns].\n"
+                    f"Don't know how to compute float64 {sym} datetime64[ns].\n"
                     "Arithmetic operators are only supported between Factors"
                     " of dtype 'float64'."
-                ).format(sym=sym)
+                )
                 with pytest.raises(TypeError, match=re.escape(expected)):
                     op(self.f, self.d)
 
                 expected = (
-                    "Don't know how to compute datetime64[ns] {sym} float64.\n"
+                    f"Don't know how to compute datetime64[ns] {sym} float64.\n"
                     "Arithmetic operators are only supported between Factors"
                     " of dtype 'float64'."
-                ).format(sym=sym)
+                )
                 with pytest.raises(TypeError, match=re.escape(expected)):
                     op(self.d, self.f)
 
@@ -552,5 +548,5 @@ class TestNumericalExpression:
         exprs = gen_boolops(eye_filter, custom_filter, first_row_filter)
         arrays = gen_boolops(eye_mask, custom_filter_mask, first_row_mask)
 
-        for expr, expected in zip(exprs, arrays):
+        for expr, expected in zip(exprs, arrays, strict=False):
             self.check_output(expr, expected)

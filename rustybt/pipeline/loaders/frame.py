@@ -10,6 +10,7 @@ import pandas as pd
 from rustybt.lib.adjusted_array import AdjustedArray
 from rustybt.lib.adjustment import make_adjustment_from_labels
 from rustybt.utils.numpy_utils import as_column
+
 from .base import PipelineLoader
 
 ADJUSTMENT_COLUMNS = pd.Index(
@@ -134,14 +135,11 @@ class DataFrameLoader(PipelineLoader):
 
             # Look up the approprate Adjustment constructor based on the value
             # of `kind`.
-            current_date_adjustments.append(
-                make_adjustment(start_date, end_date, sid, kind, value)
-            )
+            current_date_adjustments.append(make_adjustment(start_date, end_date, sid, kind, value))
         return out
 
     def load_adjusted_array(self, domain, columns, dates, sids, mask):
         """Load data from our stored baseline."""
-
         if len(columns) != 1:
             raise ValueError("Can't load multiple columns with DataFrameLoader")
 
@@ -172,6 +170,5 @@ class DataFrameLoader(PipelineLoader):
 
     def _validate_input_column(self, column):
         """Make sure a passed column is our column."""
-
         if column != self.column and column.unspecialize() != self.column:
             raise ValueError(f"Can't load unknown column {column}")

@@ -15,41 +15,41 @@
 
 """Tests for USEquityPricingLoader and related classes."""
 
-from parameterized import parameterized
 import sys
-from packaging.version import Version
+
 import numpy as np
+import pandas as pd
+import pytest
 from numpy.testing import (
     assert_allclose,
     assert_array_equal,
 )
-import pandas as pd
+from packaging.version import Version
 from pandas.testing import assert_frame_equal
+from parameterized import parameterized
 from toolz.curried.operator import getitem
 
+from rustybt.errors import WindowLengthTooLong
 from rustybt.lib.adjustment import Float64Multiply
+from rustybt.pipeline.data import USEquityPricing
 from rustybt.pipeline.domain import US_EQUITIES
-from rustybt.pipeline.loaders.synthetic import (
-    NullAdjustmentReader,
-    make_bar_data,
-    expected_bar_values_2d,
-)
 from rustybt.pipeline.loaders.equity_pricing_loader import (
     USEquityPricingLoader,
 )
-
-from rustybt.errors import WindowLengthTooLong
-from rustybt.pipeline.data import USEquityPricing
+from rustybt.pipeline.loaders.synthetic import (
+    NullAdjustmentReader,
+    expected_bar_values_2d,
+    make_bar_data,
+)
 from rustybt.testing import (
+    MockDailyBarReader,
     seconds_to_timestamp,
     str_to_seconds,
-    MockDailyBarReader,
 )
 from rustybt.testing.fixtures import (
     WithAdjustmentReader,
     ZiplineTestCase,
 )
-import pytest
 
 # Test calendar ranges over the month of June 2015
 #      June 2015
@@ -343,9 +343,7 @@ class USEquityPricingLoaderTestCase(WithAdjustmentReader, ZiplineTestCase):
         for table in SPLITS, MERGERS:
             for eff_date_secs, _, sid in table.itertuples(index=False):
                 eff_date = pd.Timestamp(eff_date_secs, unit="s")
-                asset_start, asset_end = EQUITY_INFO.loc[
-                    sid, ["start_date", "end_date"]
-                ]
+                asset_start, asset_end = EQUITY_INFO.loc[sid, ["start_date", "end_date"]]
                 assert eff_date >= asset_start
                 assert eff_date <= asset_end
 
@@ -363,12 +361,8 @@ class USEquityPricingLoaderTestCase(WithAdjustmentReader, ZiplineTestCase):
         price_adjustments = {}
         volume_adjustments = {}
 
-        should_include_price_adjustments = (
-            adjustment_type == "all" or adjustment_type == "price"
-        )
-        should_include_volume_adjustments = (
-            adjustment_type == "all" or adjustment_type == "volume"
-        )
+        should_include_price_adjustments = adjustment_type == "all" or adjustment_type == "price"
+        should_include_volume_adjustments = adjustment_type == "all" or adjustment_type == "volume"
 
         query_days = self.calendar_days_between(start_date, end_date)
         start_loc = query_days.get_loc(start_date)
@@ -491,9 +485,7 @@ class USEquityPricingLoaderTestCase(WithAdjustmentReader, ZiplineTestCase):
 
             if convert_dts:
                 for colname in reader._datetime_int_cols[name]:
-                    expected_df[colname] = pd.to_datetime(
-                        expected_df[colname], unit="s"
-                    )
+                    expected_df[colname] = pd.to_datetime(expected_df[colname], unit="s")
 
             return expected_df
 
@@ -502,9 +494,7 @@ class USEquityPricingLoaderTestCase(WithAdjustmentReader, ZiplineTestCase):
 
             for colname in reader._datetime_int_cols[name]:
                 if not convert_dts:
-                    expected_df[colname] = (
-                        expected_df[colname].astype("datetime64[s]").view(int)
-                    )
+                    expected_df[colname] = expected_df[colname].astype("datetime64[s]").view(int)
 
             return expected_df
 

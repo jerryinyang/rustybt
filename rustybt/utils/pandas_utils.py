@@ -2,23 +2,22 @@
 Utilities for working with pandas objects.
 """
 
+import operator as op
+import warnings
 from contextlib import contextmanager
 from copy import deepcopy
 from itertools import product
-import operator as op
-import warnings
 
 import numpy as np
 import pandas as pd
 from packaging.version import Version
-from rustybt.utils.calendar_utils import days_at_time
-from pandas.errors import PerformanceWarning
+
+# Re-export from calendar_utils for backward compatibility
+from rustybt.utils.calendar_utils import days_at_time  # noqa: F401
 
 pandas_version = Version(pd.__version__)
 new_pandas = pandas_version >= Version("0.19")
-skip_pipeline_new_pandas = (
-    "Pipeline categoricals are not yet compatible with pandas >=0.19"
-)
+skip_pipeline_new_pandas = "Pipeline categoricals are not yet compatible with pandas >=0.19"
 # skip_pipeline_blaze = "Blaze doesn't play nicely with Pandas >=1.0"
 
 # future_stack parameter was added in pandas 2.1.0
@@ -43,11 +42,13 @@ def _time_to_micros(time):
     ----------
     time : datetime.time
         The time to convert.
-    Returns
+
+    Returns:
     -------
     us : int
         The number of microseconds since midnight.
-    Notes
+
+    Notes:
     -----
     This does not account for leap seconds or daylight savings.
     """
@@ -59,6 +60,7 @@ _opmap = dict(
     zip(
         product((True, False), repeat=3),
         product((op.le, op.lt), (op.le, op.lt), (op.and_, op.or_)),
+        strict=False,
     )
 )
 
@@ -78,11 +80,13 @@ def mask_between_time(dts, start, end, include_start=True, include_end=True):
         Inclusive on ``start``.
     include_end : bool, optional
         Inclusive on ``end``.
-    Returns
+
+    Returns:
     -------
     mask : np.ndarray[bool]
         A bool array masking ``dts``.
-    See Also
+
+    See Also:
     --------
     :meth:`pandas.DatetimeIndex.indexer_between_time`
     """
@@ -119,19 +123,19 @@ def find_in_sorted_index(dts, dt):
     dt : pd.Timestamp
         ``dt`` to be looked up.
 
-    Returns
+    Returns:
     -------
     ix : int
         Integer index such that dts[ix] == dt.
 
-    Raises
+    Raises:
     ------
     KeyError
         If dt is not in ``dts``.
     """
     ix = dts.searchsorted(dt)
     if ix == len(dts) or dts[ix] != dt:
-        raise LookupError("{dt} is not in {dts}".format(dt=dt, dts=dts))
+        raise LookupError(f"{dt} is not in {dts}")
     return ix
 
 
@@ -219,12 +223,11 @@ def categorical_df_concat(df_list, inplace=False):
     inplace : bool
         True if input list can be modified. Default is False.
 
-    Returns
+    Returns:
     -------
     concatenated : df
         Dataframe of concatenated list.
     """
-
     if not inplace:
         df_list = deepcopy(df_list)
 
@@ -272,12 +275,12 @@ def empty_dataframe(*columns):
     *columns
         The (column_name, column_dtype) pairs.
 
-    Returns
+    Returns:
     -------
     typed_dataframe : pd.DataFrame
         The empty typed dataframe.
 
-    Examples
+    Examples:
     --------
     >>> df = empty_dataframe(
     ...     ('a', 'int64'),
@@ -321,7 +324,7 @@ def stack_future_compatible(df, level=-1, dropna=None, sort=None, future_stack=N
         Parameter added in pandas 2.1.0. If True, the behavior will be
         consistent with future pandas versions.
 
-    Returns
+    Returns:
     -------
     pd.DataFrame or pd.Series
         Stacked dataframe or series.
@@ -353,12 +356,11 @@ def check_indexes_all_same(indexes, message="Indexes are not equal."):
     indexes : iterable[pd.Index]
         Iterable of indexes to check.
 
-    Raises
+    Raises:
     ------
     ValueError
         If the indexes are not all the same.
     """
-
     iterator = iter(indexes)
     first = next(iterator)
     for other in iterator:
@@ -366,6 +368,6 @@ def check_indexes_all_same(indexes, message="Indexes are not equal."):
         if not same.all():
             bad_loc = np.flatnonzero(~same)[0]
             raise ValueError(
-                "{}\nFirst difference is at index {}: "
-                "{} != {}".format(message, bad_loc, first[bad_loc], other[bad_loc]),
+                f"{message}\nFirst difference is at index {bad_loc}: "
+                f"{first[bad_loc]} != {other[bad_loc]}",
             )

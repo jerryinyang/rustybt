@@ -15,7 +15,7 @@ class ExchangeInfo:
     country_code : str
         The country code where the exchange is located.
 
-    Attributes
+    Attributes:
     ----------
     name : str or None
         The full name of the exchange, for example 'NEW YORK STOCK EXCHANGE' or

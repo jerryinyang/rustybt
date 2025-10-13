@@ -1,13 +1,12 @@
 """Tests for event dispatcher."""
 
-import asyncio
 from decimal import Decimal
 
 import pandas as pd
 import pytest
 
 from rustybt.live.event_dispatcher import EventDispatcher
-from rustybt.live.events import MarketDataEvent, OrderFillEvent, SystemErrorEvent
+from rustybt.live.events import MarketDataEvent
 
 
 class TestEventDispatcher:

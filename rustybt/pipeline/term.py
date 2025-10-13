@@ -9,18 +9,21 @@ from weakref import WeakValueDictionary
 
 from numpy import (
     array,
-    record,
-    dtype as dtype_class,
     ndarray,
+    record,
 )
+from numpy import (
+    dtype as dtype_class,
+)
+
 from rustybt.assets import Asset
 from rustybt.errors import (
     DTypeNotSpecified,
     InvalidOutputName,
+    NonPipelineInputs,
     NonSliceableTerm,
     NonWindowSafeInput,
     NotDType,
-    NonPipelineInputs,
     TermInputsNotSpecified,
     TermOutputsEmpty,
     UnsupportedDType,
@@ -38,12 +41,12 @@ from rustybt.utils.numpy_utils import (
     float64_dtype,
 )
 from rustybt.utils.sharedoc import (
-    templated_docstring,
     PIPELINE_ALIAS_NAME_DOC,
     PIPELINE_DOWNSAMPLING_FREQUENCY_DOC,
+    templated_docstring,
 )
 
-from .domain import Domain, GENERIC, infer_domain
+from .domain import GENERIC, Domain, infer_domain
 from .downsample_helpers import expect_downsample_frequency
 from .sentinels import NotSpecified
 
@@ -53,7 +56,7 @@ class Term(ABC):
     Base class for objects that can appear in the compute graph of a
     :class:`zipline.pipeline.Pipeline`.
 
-    Notes
+    Notes:
     -----
     Most Pipeline API users only interact with :class:`Term` via subclasses:
 
@@ -182,19 +185,19 @@ class Term(ABC):
         kwargs : dict
             The kwargs passed to cls.__new__.
 
-        Returns
+        Returns:
         -------
         params : list[(str, object)]
             A list of string, value pairs containing the entries in cls.params.
 
-        Raises
+        Raises:
         ------
         TypeError
             Raised if any parameter values are not passed or not hashable.
         """
         params = cls.params
         if not isinstance(params, Mapping):
-            params = {k: NotSpecified for k in params}
+            params = dict.fromkeys(params, NotSpecified)
         param_values = []
         for key, default_value in params.items():
             try:
@@ -206,20 +209,12 @@ class Term(ABC):
                 # instead of trying to hash the param values tuple later.
                 hash(value)
             except KeyError as exc:
-                raise TypeError(
-                    "{typename} expected a keyword parameter {name!r}.".format(
-                        typename=cls.__name__, name=key
-                    )
-                ) from exc
+                raise TypeError(f"{cls.__name__} expected a keyword parameter {key!r}.") from exc
             except TypeError as exc:
                 # Value wasn't hashable.
                 raise TypeError(
-                    "{typename} expected a hashable value for parameter "
-                    "{name!r}, but got {value!r} instead.".format(
-                        typename=cls.__name__,
-                        name=key,
-                        value=value,
-                    )
+                    f"{cls.__name__} expected a hashable value for parameter "
+                    f"{key!r}, but got {value!r} instead."
                 ) from exc
 
             param_values.append((key, value))
@@ -290,11 +285,8 @@ class Term(ABC):
         for name, _ in params:
             if hasattr(self, name):
                 raise TypeError(
-                    "Parameter {name!r} conflicts with already-present"
-                    " attribute with value {value!r}.".format(
-                        name=name,
-                        value=getattr(self, name),
-                    )
+                    f"Parameter {name!r} conflicts with already-present"
+                    f" attribute with value {getattr(self, name)!r}."
                 )
             # TODO: Consider setting these values as attributes and replacing
             # the boilerplate in NumericalExpression, Rank, and
@@ -346,7 +338,7 @@ class Term(ABC):
             The minimum number of extra rows required of ``self``, as
             determined by other terms that depend on ``self``.
 
-        Returns
+        Returns:
         -------
         extra_rows : int
             The number of extra rows to compute.  Must be at least
@@ -412,7 +404,7 @@ class AssetExists(Term):
     This term is guaranteed to be available as an input for any term computed
     by SimplePipelineEngine.run_pipeline().
 
-    See Also
+    See Also:
     --------
     zipline.assets.AssetFinder.lifetimes
     """
@@ -431,8 +423,7 @@ class AssetExists(Term):
 
     def _compute(self, today, assets, out):
         raise NotImplementedError(
-            "AssetExists cannot be computed directly."
-            " Check your PipelineEngine configuration."
+            "AssetExists cannot be computed directly. Check your PipelineEngine configuration."
         )
 
 
@@ -460,8 +451,7 @@ class InputDates(Term):
 
     def _compute(self, today, assets, out):
         raise NotImplementedError(
-            "InputDates cannot be computed directly."
-            " Check your PipelineEngine configuration."
+            "InputDates cannot be computed directly. Check your PipelineEngine configuration."
         )
 
 
@@ -504,7 +494,6 @@ class ComputableTerm(Term):
         *args,
         **kwargs,
     ):
-
         if inputs is NotSpecified:
             inputs = cls.inputs
 
@@ -574,8 +563,8 @@ class ComputableTerm(Term):
 
         if not isinstance(self.domain, Domain):
             raise TypeError(
-                "Expected {}.domain to be an instance of Domain, "
-                "but got {}.".format(type(self).__name__, type(self.domain))
+                f"Expected {type(self).__name__}.domain to be an instance of Domain, "
+                f"but got {type(self.domain)}."
             )
 
         # Check outputs.
@@ -586,9 +575,7 @@ class ComputableTerm(Term):
         else:
             # Raise an exception if there are any naming conflicts between the
             # term's output names and certain attributes.
-            disallowed_names = [
-                attr for attr in dir(ComputableTerm) if not attr.startswith("_")
-            ]
+            disallowed_names = [attr for attr in dir(ComputableTerm) if not attr.startswith("_")]
 
             # The name 'compute' is an added special case that is disallowed.
             # Use insort to add it to the list in alphabetical order.
@@ -607,7 +594,7 @@ class ComputableTerm(Term):
 
         if self.mask is NotSpecified:
             # This isn't user error, this is a bug in our code.
-            raise AssertionError("{term} has no mask".format(term=self))
+            raise AssertionError(f"{self} has no mask")
 
         if self.window_length > 1:
             for child in self.inputs:
@@ -703,7 +690,7 @@ class ComputableTerm(Term):
             All of the assets being requested. This allows us to correctly
             shape the workspace value.
 
-        Returns
+        Returns:
         -------
         workspace_value : array-like
             An array like value that the engine can consume.
@@ -739,12 +726,12 @@ class ComputableTerm(Term):
         ----------
         {name}
 
-        Returns
+        Returns:
         -------
         aliased : Aliased
             ``self`` with a name.
 
-        Notes
+        Notes:
         -----
         This is useful for giving a name to a numerical or boolean expression.
         """
@@ -760,7 +747,7 @@ class ComputableTerm(Term):
         Equivalent to self.isnan() when ``self.dtype`` is float64.
         Otherwise equivalent to ``self.eq(self.missing_value)``.
 
-        Returns
+        Returns:
         -------
         filter : zipline.pipeline.Filter
         """
@@ -783,7 +770,7 @@ class ComputableTerm(Term):
         Equivalent to ``~self.isnan()` when ``self.dtype`` is float64.
         Otherwise equivalent to ``(self != self.missing_value)``.
 
-        Returns
+        Returns:
         -------
         filter : zipline.pipeline.Filter
         """
@@ -810,9 +797,8 @@ class ComputableTerm(Term):
             If a scalar (e.g. a number) is passed, the scalar will be used as a
             fill value.
 
-        Examples
+        Examples:
         --------
-
         **Filling with a Scalar:**
 
         Let ``f`` be a Factor which would produce the following output::
@@ -842,7 +828,7 @@ class ComputableTerm(Term):
             2017-03-13    1.0   20.0    3.0    4.0
             2017-03-14    1.5    2.5   35.0   45.0
 
-        Returns
+        Returns:
         -------
         filled : zipline.pipeline.ComputableTerm
             A term computing the same results as ``self``, but with missing
@@ -853,8 +839,8 @@ class ComputableTerm(Term):
 
         if isinstance(fill_value, LoadableTerm):
             raise TypeError(
-                "Can't use expression {} as a fill value. Did you mean to "
-                "append '.latest?'".format(fill_value)
+                f"Can't use expression {fill_value} as a fill value. Did you mean to "
+                "append '.latest?'"
             )
         elif isinstance(fill_value, ComputableTerm):
             if_false = fill_value
@@ -865,14 +851,9 @@ class ComputableTerm(Term):
                 fill_value = _coerce_to_dtype(fill_value, self.dtype)
             except TypeError as exc:
                 raise TypeError(
-                    "Fill value {value!r} is not a valid choice "
-                    "for term {termname} with dtype {dtype}.\n\n"
-                    "Coercion attempt failed with: {error}".format(
-                        termname=type(self).__name__,
-                        value=fill_value,
-                        dtype=self.dtype,
-                        error=exc,
-                    )
+                    f"Fill value {fill_value!r} is not a valid choice "
+                    f"for term {type(self).__name__} with dtype {self.dtype}.\n\n"
+                    f"Coercion attempt failed with: {exc}"
                 ) from exc
 
             if_false = self._constant_type(
@@ -919,12 +900,12 @@ def validate_dtype(termname, dtype, missing_value):
     Ensures that we know how to represent ``dtype``, and that missing_value
     is specified for types without default missing values.
 
-    Returns
+    Returns:
     -------
     validated_dtype, validated_missing_value : np.dtype, any
         The dtype and missing_value to use for the new term.
 
-    Raises
+    Raises:
     ------
     DTypeNotSpecified
         When no dtype was passed to the instance, and the class doesn't
@@ -954,14 +935,9 @@ def validate_dtype(termname, dtype, missing_value):
         _coerce_to_dtype(missing_value, dtype)
     except TypeError as exc:
         raise TypeError(
-            "Missing value {value!r} is not a valid choice "
-            "for term {termname} with dtype {dtype}.\n\n"
-            "Coercion attempt failed with: {error}".format(
-                termname=termname,
-                value=missing_value,
-                dtype=dtype,
-                error=exc,
-            )
+            f"Missing value {missing_value!r} is not a valid choice "
+            f"for term {termname} with dtype {dtype}.\n\n"
+            f"Coercion attempt failed with: {exc}"
         ) from exc
 
     return dtype, missing_value

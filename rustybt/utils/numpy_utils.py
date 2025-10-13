@@ -1,4 +1,4 @@
-""" Utilities for working with numpy arrays."""
+"""Utilities for working with numpy arrays."""
 
 from collections import OrderedDict
 from datetime import datetime
@@ -53,7 +53,7 @@ def NaT_for_dtype(dtype):
     dtype : dtype-coercable
         The dtype to lookup the NaT value for.
 
-    Returns
+    Returns:
     -------
     NaT : dtype
         The NaT value for the given dtype.
@@ -102,9 +102,7 @@ def unsigned_int_dtype_with_size_in_bytes(size):
     try:
         return UNSIGNED_INT_DTYPES_BY_SIZE_BYTES[size]
     except KeyError as exc:
-        raise ValueError(
-            "No unsigned integral dtype whose size is %d bytes." % size
-        ) from exc
+        raise ValueError("No unsigned integral dtype whose size is %d bytes." % size) from exc
 
 
 class NoDefaultMissingValue(Exception):
@@ -153,9 +151,7 @@ def default_missing_value_for_dtype(dtype):
     try:
         return _FILLVALUE_DEFAULTS[dtype]
     except KeyError as exc:
-        raise NoDefaultMissingValue(
-            "No default value registered for dtype %s." % dtype
-        ) from exc
+        raise NoDefaultMissingValue("No default value registered for dtype %s." % dtype) from exc
 
 
 def repeat_first_axis(array, count):
@@ -169,13 +165,13 @@ def repeat_first_axis(array, count):
     count : int
         Number of times to repeat `array`.
 
-    Returns
+    Returns:
     -------
     result : array
         Array of shape (count,) + array.shape, composed of `array` repeated
         `count` times along the first axis.
 
-    Example
+    Example:
     -------
     >>> from numpy import arange
     >>> a = arange(3); a
@@ -189,12 +185,12 @@ def repeat_first_axis(array, count):
            [0, 1, 2],
            [0, 1, 2]])
 
-    Notes
+    Notes:
     ----
     The resulting array will share memory with `array`.  If you need to assign
     to the input or output, you should probably make a copy first.
 
-    See Also
+    See Also:
     --------
     repeat_last_axis
     """
@@ -212,13 +208,13 @@ def repeat_last_axis(array, count):
     count : int
         Number of times to repeat `array`.
 
-    Returns
+    Returns:
     -------
     result : array
         Array of shape array.shape + (count,) composed of `array` repeated
         `count` times along the last axis.
 
-    Example
+    Example:
     -------
     >>> from numpy import arange
     >>> a = arange(3); a
@@ -232,12 +228,12 @@ def repeat_last_axis(array, count):
            [1, 1, 1, 1],
            [2, 2, 2, 2]])
 
-    Notes
+    Notes:
     ----
     The resulting array will share memory with `array`.  If you need to assign
     to the input or output, you should probably make a copy first.
 
-    See Also
+    See Also:
     --------
     repeat_last_axis
     """
@@ -265,11 +261,11 @@ def rolling_window(array, length):
     length : int
         Length of the synthetic first axis to generate.
 
-    Returns
+    Returns:
     -------
     out : np.ndarray
 
-    Example
+    Example:
     -------
     >>> from numpy import arange
     >>> a = arange(25).reshape(5, 5)
@@ -298,11 +294,7 @@ def rolling_window(array, length):
         raise IndexError("Can't restride a scalar.")
     elif orig_shape[0] <= length:
         raise IndexError(
-            "Can't restride array of shape {shape} with"
-            " a window length of {len}".format(
-                shape=orig_shape,
-                len=length,
-            )
+            f"Can't restride array of shape {orig_shape} with a window length of {length}"
         )
 
     num_windows = orig_shape[0] - length + 1
@@ -350,9 +342,9 @@ def same(x, y):
 
     Returns True if `x == y`, or if x and y are both NaN or both NaT.
     """
-    if is_float(x) and np.isnan(x) and is_float(y) and np.isnan(y):
-        return True
-    elif is_datetime(x) and isnat(x) and is_datetime(y) and isnat(y):
+    if (is_float(x) and np.isnan(x) and is_float(y) and np.isnan(y)) or (
+        is_datetime(x) and isnat(x) and is_datetime(y) and isnat(y)
+    ):
         return True
     else:
         return x == y
@@ -366,7 +358,7 @@ def busday_count_mask_NaT(begindates, enddates, out=None):
     Doesn't support custom weekdays or calendars, but probably should in the
     future.
 
-    See Also
+    See Also:
     --------
     np.busday_count
     """
@@ -440,7 +432,7 @@ def vectorized_is_element(array, choices):
     choices : object
         Object implementing __contains__.
 
-    Returns
+    Returns:
     -------
     was_element : np.ndarray[bool]
         Array indicating whether each element of ``array`` was in ``choices``.
@@ -458,7 +450,7 @@ def as_column(a):
     ----------
     a : np.ndarray
 
-    Example
+    Example:
     -------
     >>> import numpy as np
     >>> a = np.arange(5)
@@ -475,8 +467,7 @@ def as_column(a):
     """
     if a.ndim != 1:
         raise ValueError(
-            "as_column expected an 1-dimensional array, "
-            "but got an array of shape %s" % (a.shape,)
+            "as_column expected an 1-dimensional array, but got an array of shape %s" % (a.shape,)
         )
     return a[:, None]
 
@@ -492,7 +483,7 @@ def changed_locations(a, include_first):
     include_first : bool
         Whether or not to consider the first index of the array as "changed".
 
-    Example
+    Example:
     -------
     >>> import numpy as np
     >>> changed_locations(np.array([0, 0, 5, 5, 1, 1]), include_first=False)
@@ -515,11 +506,9 @@ def compare_datetime_arrays(x, y):
     """
     Compare datetime64 ndarrays, treating NaT values as equal.
     """
-
     return np.array_equal(x.view("int64"), y.view("int64"))
 
 
 def bytes_array_to_native_str_object_array(a):
     """Convert an array of dtype S to an object array containing `str`."""
-
     return a.astype(str).astype(object)

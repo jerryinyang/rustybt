@@ -33,9 +33,9 @@
 
 ---
 
-2022-11  
-Contributor(s):  
-Stefan Jansen  
+2022-11
+Contributor(s):
+Stefan Jansen
 >RELEASE: v2.3 (#146)- moving to PEP517/8
 - from versioneer to setuptools_scm
 - package_data to pyproject.toml
@@ -48,29 +48,29 @@ Stefan Jansen
 - add windows wheels and streamline workflow
 - add GHA retry step
 - skip two tests that randomly fail on CI
-- skip macos Cpy37 arm64  
->add win compiler path  
->np deps by py version  
->add c compiler  
->retry  
->update talib conda to 4.25  
->add c++ compiler  
->tox.ini to pyproject.toml  
->removing ubuntu deps again  
->set prefix in build; move reqs to host  
-- - - - - - - - - - - - - - - - - - - - - - - - - - - 
+- skip macos Cpy37 arm64
+>add win compiler path
+>np deps by py version
+>add c compiler
+>retry
+>update talib conda to 4.25
+>add c++ compiler
+>tox.ini to pyproject.toml
+>removing ubuntu deps again
+>set prefix in build; move reqs to host
+- - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-2022-05  
-Contributor(s):  
-Eric Lemesre  
->Fixe wrong link (#102)  
-- - - - - - - - - - - - - - - - - - - - - - - - - - - 
+2022-05
+Contributor(s):
+Eric Lemesre
+>Fixe wrong link (#102)
+- - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-2022-04  
-Contributor(s):  
-MBounouar  
+2022-04
+Contributor(s):
+MBounouar
 >MAINT: refactoring lazyval + silence a few warnings (#90)* replace distutils.version with packaging.version
 
 * moved the caching lazyval inside zipline
@@ -83,31 +83,31 @@ MBounouar
 
 * fix typo
 
-* fix import  
-- - - - - - - - - - - - - - - - - - - - - - - - - - - 
+* fix import
+- - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-2022-01  
-Contributor(s):  
-Norman Shi  
->Fix link to the examples directory. (#71)  
-- - - - - - - - - - - - - - - - - - - - - - - - - - - 
+2022-01
+Contributor(s):
+Norman Shi
+>Fix link to the examples directory. (#71)
+- - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-2021-11  
-Contributor(s):  
-Stefan Jansen  
->update conda build workflows  
->update docs  
->add conda dependency build workflows  
->shorten headings  
->Add conda dependency build workflows (#70)Adds GH actions to build and upload conda packages for TA-Lib and exchange_calendars.  
-- - - - - - - - - - - - - - - - - - - - - - - - - - - 
+2021-11
+Contributor(s):
+Stefan Jansen
+>update conda build workflows
+>update docs
+>add conda dependency build workflows
+>shorten headings
+>Add conda dependency build workflows (#70)Adds GH actions to build and upload conda packages for TA-Lib and exchange_calendars.
+- - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-2021-10  
-Contributor(s):  
-MBounouar  
+2021-10
+Contributor(s):
+MBounouar
 >MAINT: Update development guidelines (#63)* removed unused sequentialpool
 
 * MAINT:Update dev guide (#10)
@@ -122,54 +122,53 @@ MBounouar
 
 * fix
 
-* Update development-guidelines.rst  
+* Update development-guidelines.rst
 >ENH: Add support for exchange-calendars and pandas > 1.2.5 (#57)* first step
 * Switched to exchange_calendars
 * fix pandas import  and NaT
-* include note in calendar_utils  
-- - - - - - - - - - - - - - - - - - - - - - - - - - - 
+* include note in calendar_utils
+- - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-2021-05  
-Contributor(s):  
-Stefan Jansen  
->fix src layout  
->PACKAGING adopt src layout  
->TESTS adapt to src layout  
-- - - - - - - - - - - - - - - - - - - - - - - - - - - 
+2021-05
+Contributor(s):
+Stefan Jansen
+>fix src layout
+>PACKAGING adopt src layout
+>TESTS adapt to src layout
+- - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-2021-04  
-Contributor(s):  
-Stefan Jansen  
->readme formatting  
->multiple cleanups  
->editing headlines  
->DOCS edits  
->retry  
->DOCS refs cleanup  
->conda packaging and upload workflows  
->DOCS review  
->ta-lib conda recipe  
->docs revision  
->manifest update - include tests  
->windows wheel talib test  
->workflow update - rebuild cython  
->conda workflow cleanup  
-- - - - - - - - - - - - - - - - - - - - - - - - - - - 
+2021-04
+Contributor(s):
+Stefan Jansen
+>readme formatting
+>multiple cleanups
+>editing headlines
+>DOCS edits
+>retry
+>DOCS refs cleanup
+>conda packaging and upload workflows
+>DOCS review
+>ta-lib conda recipe
+>docs revision
+>manifest update - include tests
+>windows wheel talib test
+>workflow update - rebuild cython
+>conda workflow cleanup
+- - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-2021-03  
-Contributor(s):  
-Stefan Jansen  
->docs update  
->update from master  
-- - - - - - - - - - - - - - - - - - - - - - - - - - - 
+2021-03
+Contributor(s):
+Stefan Jansen
+>docs update
+>update from master
+- - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-2021-02  
-Contributor(s):  
-Stefan Jansen  
->fixed adjustment test tz info issues  
-- - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
+2021-02
+Contributor(s):
+Stefan Jansen
+>fixed adjustment test tz info issues
+- - - - - - - - - - - - - - - - - - - - - - - - - - -

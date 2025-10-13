@@ -233,8 +233,7 @@ class RiskAnalytics:
                 var = self._var_montecarlo(confidence)
             else:
                 raise ValueError(
-                    f"Unknown VaR method: {method}. "
-                    f"Use 'parametric', 'historical', or 'montecarlo'"
+                    f"Unknown VaR method: {method}. Use 'parametric', 'historical', or 'montecarlo'"
                 )
 
             key = f"var_{int(confidence * 100)}"
@@ -743,13 +742,13 @@ class RiskAnalytics:
 
         # Plot VaR threshold line
         ax.axvline(
-            var, color="red", linestyle="--", linewidth=2, label=f"VaR ({confidence*100:.0f}%)"
+            var, color="red", linestyle="--", linewidth=2, label=f"VaR ({confidence * 100:.0f}%)"
         )
 
         # Labels
         ax.set_xlabel("Returns")
         ax.set_ylabel("Frequency")
-        ax.set_title(f"Returns Distribution with {confidence*100:.0f}% VaR")
+        ax.set_title(f"Returns Distribution with {confidence * 100:.0f}% VaR")
         ax.legend()
         ax.grid(alpha=0.3)
 

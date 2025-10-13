@@ -14,12 +14,12 @@ import os
 import time
 from decimal import Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from cryptography.fernet import Fernet
-from hyperliquid.info import Info
 from hyperliquid.exchange import Exchange
+from hyperliquid.info import Info
 from hyperliquid.utils import constants
 
 from rustybt.assets import Asset
@@ -86,9 +86,9 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
 
     def __init__(
         self,
-        private_key: Optional[str] = None,
-        encrypted_key_path: Optional[str] = None,
-        encryption_key: Optional[str] = None,
+        private_key: str | None = None,
+        encrypted_key_path: str | None = None,
+        encryption_key: str | None = None,
         testnet: bool = False,
     ) -> None:
         """Initialize Hyperliquid broker adapter.
@@ -134,16 +134,16 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
         self.exchange.wallet = self._get_wallet_from_key(self._private_key)
 
         self._connected = False
-        self._market_data_queue: asyncio.Queue[Dict] = asyncio.Queue()
-        self._wallet_address: Optional[str] = None
+        self._market_data_queue: asyncio.Queue[dict] = asyncio.Queue()
+        self._wallet_address: str | None = None
 
         # Rate limiting tracking
-        self._request_timestamps: List[float] = []
-        self._order_timestamps: Dict[str, List[float]] = {}
+        self._request_timestamps: list[float] = []
+        self._order_timestamps: dict[str, list[float]] = {}
 
         # WebSocket streaming components
-        self._ws_adapter: Optional[HyperliquidWebSocketAdapter] = None
-        self._bar_buffer: Optional[BarBuffer] = None
+        self._ws_adapter: HyperliquidWebSocketAdapter | None = None
+        self._bar_buffer: BarBuffer | None = None
 
         logger.info(
             "hyperliquid_adapter_initialized",
@@ -225,8 +225,8 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
         asset: Asset,
         amount: Decimal,
         order_type: str,
-        limit_price: Optional[Decimal] = None,
-        stop_price: Optional[Decimal] = None,
+        limit_price: Decimal | None = None,
+        stop_price: Decimal | None = None,
         post_only: bool = False,
         reduce_only: bool = False,
     ) -> str:
@@ -320,8 +320,7 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
             )
         else:
             raise ValueError(
-                f"Unsupported order type: {order_type}. "
-                f"Supported types: market, limit"
+                f"Unsupported order type: {order_type}. Supported types: market, limit"
             )
 
         # Check order result
@@ -392,9 +391,11 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
 
         except Exception as e:
             logger.error("order_cancellation_failed", order_id=broker_order_id, error=str(e))
-            raise HyperliquidOrderRejectError(f"Failed to cancel order {broker_order_id}: {e}") from e
+            raise HyperliquidOrderRejectError(
+                f"Failed to cancel order {broker_order_id}: {e}"
+            ) from e
 
-    async def get_account_info(self) -> Dict[str, Decimal]:
+    async def get_account_info(self) -> dict[str, Decimal]:
         """Get account information.
 
         Returns:
@@ -431,7 +432,7 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
             logger.error("get_account_info_failed", error=str(e))
             raise HyperliquidConnectionError(f"Failed to get account info: {e}") from e
 
-    async def get_positions(self) -> List[Dict]:
+    async def get_positions(self) -> list[dict]:
         """Get current positions.
 
         Returns:
@@ -466,13 +467,15 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
                 position_value = Decimal(position.get("positionValue", "0"))
                 unrealized_pnl = Decimal(position.get("unrealizedPnl", "0"))
 
-                positions.append({
-                    "symbol": coin,
-                    "amount": szi,
-                    "entry_price": entry_px,
-                    "market_value": position_value,
-                    "unrealized_pnl": unrealized_pnl,
-                })
+                positions.append(
+                    {
+                        "symbol": coin,
+                        "amount": szi,
+                        "entry_price": entry_px,
+                        "market_value": position_value,
+                        "unrealized_pnl": unrealized_pnl,
+                    }
+                )
 
             logger.debug("positions_fetched", count=len(positions))
 
@@ -482,7 +485,7 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
             logger.error("get_positions_failed", error=str(e))
             raise HyperliquidConnectionError(f"Failed to get positions: {e}") from e
 
-    async def get_open_orders(self) -> List[Dict]:
+    async def get_open_orders(self) -> list[dict]:
         """Get open/pending orders.
 
         Returns:
@@ -507,15 +510,17 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
                 sz = order_data.get("sz")
                 order_type = order_data.get("orderType", {})
 
-                orders.append({
-                    "order_id": f"{coin}:{oid}",
-                    "symbol": coin,
-                    "side": side,
-                    "type": "limit" if "limit" in order_type else "market",
-                    "quantity": Decimal(sz),
-                    "price": Decimal(limit_px) if limit_px else None,
-                    "status": "open",
-                })
+                orders.append(
+                    {
+                        "order_id": f"{coin}:{oid}",
+                        "symbol": coin,
+                        "side": side,
+                        "type": "limit" if "limit" in order_type else "market",
+                        "quantity": Decimal(sz),
+                        "price": Decimal(limit_px) if limit_px else None,
+                        "status": "open",
+                    }
+                )
 
             return orders
 
@@ -523,7 +528,7 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
             logger.error("get_open_orders_failed", error=str(e))
             raise HyperliquidConnectionError(f"Failed to get open orders: {e}") from e
 
-    async def subscribe_market_data(self, assets: List[Asset]) -> None:
+    async def subscribe_market_data(self, assets: list[Asset]) -> None:
         """Subscribe to real-time market data via WebSocket.
 
         Args:
@@ -554,7 +559,7 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
             logger.error("market_data_subscription_failed", symbols=symbols, error=str(e))
             raise HyperliquidConnectionError(f"Failed to subscribe to market data: {e}") from e
 
-    async def unsubscribe_market_data(self, assets: List[Asset]) -> None:
+    async def unsubscribe_market_data(self, assets: list[Asset]) -> None:
         """Unsubscribe from market data via WebSocket.
 
         Args:
@@ -585,7 +590,7 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
             logger.error("market_data_unsubscription_failed", symbols=symbols, error=str(e))
             raise HyperliquidConnectionError(f"Failed to unsubscribe from market data: {e}") from e
 
-    async def get_next_market_data(self) -> Optional[Dict]:
+    async def get_next_market_data(self) -> dict | None:
         """Get next market data update.
 
         Returns:
@@ -593,7 +598,7 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
         """
         try:
             return await asyncio.wait_for(self._market_data_queue.get(), timeout=0.1)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
 
     async def get_current_price(self, asset: Asset) -> Decimal:
@@ -655,8 +660,12 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
 
         # Check if we're at limit
         if len(self._request_timestamps) >= self.REQUESTS_PER_MINUTE:
-            logger.error("hyperliquid_rate_limit_exceeded", requests_in_window=len(self._request_timestamps))
-            raise HyperliquidRateLimitError(f"Rate limit exceeded: {len(self._request_timestamps)} requests in last minute")
+            logger.error(
+                "hyperliquid_rate_limit_exceeded", requests_in_window=len(self._request_timestamps)
+            )
+            raise HyperliquidRateLimitError(
+                f"Rate limit exceeded: {len(self._request_timestamps)} requests in last minute"
+            )
 
         # Warn at 80% of limit
         if len(self._request_timestamps) >= int(self.REQUESTS_PER_MINUTE * 0.8):
@@ -720,9 +729,9 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
 
     def _load_private_key(
         self,
-        private_key: Optional[str],
-        encrypted_key_path: Optional[str],
-        encryption_key: Optional[str],
+        private_key: str | None,
+        encrypted_key_path: str | None,
+        encryption_key: str | None,
     ) -> str:
         """Load private key securely from one of several sources.
 
@@ -827,7 +836,7 @@ class HyperliquidBrokerAdapter(BrokerAdapter):
         try:
             int(key, 16)
         except ValueError as e:
-            raise HyperliquidKeyError(f"Invalid private key: not a hex string") from e
+            raise HyperliquidKeyError("Invalid private key: not a hex string") from e
 
         return key
 

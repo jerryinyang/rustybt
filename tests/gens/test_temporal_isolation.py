@@ -41,9 +41,7 @@ class TestTemporalValidator:
 
     def test_debug_mode(self):
         """Test validator enables debug mode."""
-        validator = TemporalValidator(
-            pd.Timestamp("2023-01-01 10:00"), debug_mode=True
-        )
+        validator = TemporalValidator(pd.Timestamp("2023-01-01 10:00"), debug_mode=True)
 
         assert validator.debug_mode
 
@@ -66,9 +64,7 @@ class TestTemporalValidator:
         """Test validator blocks access to future data."""
         validator = TemporalValidator(pd.Timestamp("2023-01-01 10:00"))
 
-        with pytest.raises(
-            LookaheadError, match="Attempted to access price at 2023-01-01 11:00"
-        ):
+        with pytest.raises(LookaheadError, match="Attempted to access price at 2023-01-01 11:00"):
             validator.validate_access(pd.Timestamp("2023-01-01 11:00"), "price")
 
     def test_error_message_includes_asset(self):
@@ -76,9 +72,7 @@ class TestTemporalValidator:
         validator = TemporalValidator(pd.Timestamp("2023-01-01 10:00"))
 
         with pytest.raises(LookaheadError, match="for asset AAPL"):
-            validator.validate_access(
-                pd.Timestamp("2023-01-01 11:00"), "price", asset="AAPL"
-            )
+            validator.validate_access(pd.Timestamp("2023-01-01 11:00"), "price", asset="AAPL")
 
     def test_update_time(self):
         """Test validator updates current time."""
@@ -97,13 +91,9 @@ class TestTemporalValidator:
 
     def test_debug_mode_logs_access(self):
         """Test debug mode logs all data accesses."""
-        validator = TemporalValidator(
-            pd.Timestamp("2023-01-01 10:00"), debug_mode=True
-        )
+        validator = TemporalValidator(pd.Timestamp("2023-01-01 10:00"), debug_mode=True)
 
-        validator.validate_access(
-            pd.Timestamp("2023-01-01 09:00"), "price", asset="AAPL"
-        )
+        validator.validate_access(pd.Timestamp("2023-01-01 09:00"), "price", asset="AAPL")
 
         log = validator.get_access_log()
         assert len(log) == 1
@@ -114,9 +104,7 @@ class TestTemporalValidator:
 
     def test_clear_access_log(self):
         """Test clearing access log."""
-        validator = TemporalValidator(
-            pd.Timestamp("2023-01-01 10:00"), debug_mode=True
-        )
+        validator = TemporalValidator(pd.Timestamp("2023-01-01 10:00"), debug_mode=True)
 
         validator.validate_access(pd.Timestamp("2023-01-01 09:00"), "price")
         assert len(validator.get_access_log()) == 1
@@ -130,9 +118,7 @@ class TestTemporalIsolationProperties:
 
     @given(
         current_times=st.lists(
-            st.datetimes(
-                min_value=datetime(2020, 1, 1), max_value=datetime(2023, 12, 31)
-            ),
+            st.datetimes(min_value=datetime(2020, 1, 1), max_value=datetime(2023, 12, 31)),
             min_size=2,
             max_size=50,
         )
@@ -158,9 +144,7 @@ class TestTemporalIsolationProperties:
 
     @given(
         current_times=st.lists(
-            st.datetimes(
-                min_value=datetime(2020, 1, 1), max_value=datetime(2023, 12, 31)
-            ),
+            st.datetimes(min_value=datetime(2020, 1, 1), max_value=datetime(2023, 12, 31)),
             min_size=2,
             max_size=50,
         )
@@ -184,12 +168,8 @@ class TestTemporalIsolationProperties:
             validator.validate_access(past, "test")
 
     @given(
-        start_time=st.datetimes(
-            min_value=datetime(2020, 1, 1), max_value=datetime(2023, 1, 1)
-        ),
-        time_deltas=st.lists(
-            st.integers(min_value=1, max_value=1000), min_size=5, max_size=20
-        ),
+        start_time=st.datetimes(min_value=datetime(2020, 1, 1), max_value=datetime(2023, 1, 1)),
+        time_deltas=st.lists(st.integers(min_value=1, max_value=1000), min_size=5, max_size=20),
     )
     @settings(max_examples=100)
     def test_monotonic_time_updates(self, start_time, time_deltas):
@@ -204,9 +184,7 @@ class TestTemporalIsolationProperties:
             current = next_time
 
     @given(
-        base_time=st.datetimes(
-            min_value=datetime(2020, 1, 1), max_value=datetime(2023, 1, 1)
-        ),
+        base_time=st.datetimes(min_value=datetime(2020, 1, 1), max_value=datetime(2023, 1, 1)),
         offset_seconds=st.integers(min_value=-3600, max_value=3600),
     )
     @settings(max_examples=200)

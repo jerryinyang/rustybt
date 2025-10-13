@@ -1,10 +1,10 @@
 """Tests for adapter registry and auto-discovery."""
 
+import polars as pl
 import pytest
+
 from rustybt.data.adapters.base import BaseDataAdapter
 from rustybt.data.adapters.registry import AdapterRegistry
-import polars as pl
-import pandas as pd
 
 
 @pytest.fixture(autouse=True)
@@ -271,7 +271,7 @@ def test_discover_adapters_does_not_fail():
 
 def test_discover_adapters_skips_base_and_registry():
     """discover_adapters skips base and registry modules."""
-    count = AdapterRegistry.discover_adapters()
+    AdapterRegistry.discover_adapters()
 
     # Should not register BaseDataAdapter itself
     adapters = AdapterRegistry.list_adapters()

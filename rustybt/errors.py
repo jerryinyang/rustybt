@@ -479,8 +479,7 @@ class WindowLengthTooLong(ZiplineError):
     """
 
     msg = (
-        "Can't construct a rolling window of length "
-        "{window_length} on an array of length {nrows}."
+        "Can't construct a rolling window of length {window_length} on an array of length {nrows}."
     ).strip()
 
 
@@ -500,7 +499,7 @@ class NonWindowSafeInput(ZiplineError):
     functions on split/dividend adjusted data.
     """
 
-    msg = "Can't compute windowed expression {parent} with " "windowed input {child}."
+    msg = "Can't compute windowed expression {parent} with windowed input {child}."
 
 
 class TermInputsNotSpecified(ZiplineError):
@@ -520,20 +519,17 @@ class NonPipelineInputs(ZiplineError):
 
     def __str__(self):
         return (
-            "Unexpected input types in {}. "
+            f"Unexpected input types in {type(self.term).__name__}. "
             "Inputs to Pipeline expressions must be Filters, Factors, "
             "Classifiers, or BoundColumns.\n"
-            "Got the following type(s) instead: {}".format(
-                type(self.term).__name__,
-                sorted(set(map(type, self.inputs)), key=lambda t: t.__name__),
-            )
+            f"Got the following type(s) instead: {sorted(set(map(type, self.inputs)), key=lambda t: t.__name__)}"
         )
 
 
 class TermOutputsEmpty(ZiplineError):
     """Raised if a user attempts to construct a term with an empty outputs list."""
 
-    msg = "{termname} requires at least one output when passed an outputs " "argument."
+    msg = "{termname} requires at least one output when passed an outputs argument."
 
 
 class InvalidOutputName(ZiplineError):
@@ -578,10 +574,7 @@ class NotDType(ZiplineError):
     dtype object.
     """
 
-    msg = (
-        "{termname} expected a numpy dtype "
-        "object for a dtype, but got {dtype} instead."
-    )
+    msg = "{termname} expected a numpy dtype object for a dtype, but got {dtype} instead."
 
 
 class UnsupportedDType(ZiplineError):
@@ -589,10 +582,7 @@ class UnsupportedDType(ZiplineError):
     supported.
     """
 
-    msg = (
-        "Failed to construct {termname}.\n"
-        "Pipeline terms of dtype {dtype} are not yet supported."
-    )
+    msg = "Failed to construct {termname}.\nPipeline terms of dtype {dtype} are not yet supported."
 
 
 class BadPercentileBounds(ZiplineError):
@@ -612,7 +602,7 @@ class UnknownRankMethod(ZiplineError):
     method.
     """
 
-    msg = "Unknown ranking method: '{method}'. " "`method` must be one of {choices}"
+    msg = "Unknown ranking method: '{method}'. `method` must be one of {choices}"
 
 
 class AttachPipelineAfterInitialize(ZiplineError):
@@ -663,7 +653,7 @@ class UnsupportedDataType(ZiplineError):
         if hint:
             hint = " " + hint
         kwargs["hint"] = hint
-        super(UnsupportedDataType, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     msg = "{typename} instances with dtype {dtype} are not supported.{hint}"
 
@@ -678,9 +668,7 @@ class NoFurtherDataError(ZiplineError):
     msg = "{msg}"
 
     @classmethod
-    def from_lookback_window(
-        cls, initial_message, first_date, lookback_start, lookback_length
-    ):
+    def from_lookback_window(cls, initial_message, first_date, lookback_start, lookback_length):
         return cls(
             msg=dedent(
                 """
@@ -702,10 +690,7 @@ class NoFurtherDataError(ZiplineError):
 class UnsupportedDatetimeFormat(ZiplineError):
     """Raised when an unsupported datetime is passed to an API method."""
 
-    msg = (
-        "The input '{input}' passed to '{method}' is not "
-        "coercible to a pandas.Timestamp object."
-    )
+    msg = "The input '{input}' passed to '{method}' is not coercible to a pandas.Timestamp object."
 
 
 class AssetDBVersionError(ZiplineError):

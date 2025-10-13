@@ -1,8 +1,9 @@
 """Unit tests for DecimalTransaction."""
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
+
+import pytest
 
 from rustybt.finance.decimal import DecimalTransaction, create_decimal_transaction
 

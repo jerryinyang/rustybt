@@ -10,12 +10,11 @@ import pandas as pd
 import polars as pl
 import pytest
 
+from rustybt.data.adapters.alphavantage_adapter import AlphaVantageAdapter
 from rustybt.data.adapters.api_provider_base import (
     AuthenticationError,
     DataParsingError,
-    QuotaExceededError,
 )
-from rustybt.data.adapters.alphavantage_adapter import AlphaVantageAdapter
 
 
 def test_adapter_initialization_stocks() -> None:

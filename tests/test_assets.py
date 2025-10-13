@@ -16,6 +16,7 @@
 """
 Tests for the zipline.assets package
 """
+
 import os
 import pickle
 import re
@@ -299,9 +300,7 @@ def build_lookup_generic_cases():
 def set_test_asset(request):
     # Dynamically list the Asset properties we want to test.
     request.cls.asset_attrs = [
-        name
-        for name, value in vars(Asset).items()
-        if isinstance(value, GetSetDescriptorType)
+        name for name, value in vars(Asset).items() if isinstance(value, GetSetDescriptorType)
     ]
 
     # Very wow
@@ -362,9 +361,7 @@ def set_test_futures(request, with_asset_finder):
             }
         )
 
-    request.cls.asset_finder = with_asset_finder(
-        **dict(futures=futures, exchanges=exchanges)
-    )
+    request.cls.asset_finder = with_asset_finder(**dict(futures=futures, exchanges=exchanges))
 
 
 @pytest.fixture(scope="class")
@@ -401,9 +398,7 @@ def set_test_vectorized_symbol_lookup(request, with_asset_finder):
             }
         )
 
-    request.cls.asset_finder = with_asset_finder(
-        **dict(equities=equities, exchanges=exchanges)
-    )
+    request.cls.asset_finder = with_asset_finder(**dict(equities=equities, exchanges=exchanges))
 
 
 # @pytest.fixture(scope="function")
@@ -440,7 +435,7 @@ class TestAsset:
 
         assert {5061: "foo"}[the_asset] == "foo"
         assert the_asset == 5061
-        assert 5061 == the_asset
+        assert the_asset == 5061
         assert the_asset == the_asset
         assert int(the_asset) == 5061
         assert str(the_asset) == "Asset(5061)"
@@ -461,14 +456,14 @@ class TestAsset:
 
         assert s_23 == s_23
         assert s_23 == 23
-        assert 23 == s_23
+        assert s_23 == 23
         assert np.int32(23) == s_23
         assert np.int64(23) == s_23
         assert s_23 == np.int32(23)
         assert s_23 == np.int64(23)
         # Check all int types (includes long on py2):
-        assert int(23) == s_23
-        assert s_23 == int(23)
+        assert s_23 == 23
+        assert s_23 == 23
         assert s_23 != s_24
         assert s_23 != 24
         assert s_23 != "23"
@@ -479,7 +474,7 @@ class TestAsset:
         assert s_23, sys.maxsize + 1
         assert s_23 < s_24
         assert s_23 < 24
-        assert 24 > s_23
+        assert s_23 < 24
         assert s_24 > s_23
 
     def test_lt(self):
@@ -511,7 +506,7 @@ class TestAsset:
         with pytest.raises(TypeError):
             self.asset3 < "a"
         with pytest.raises(TypeError):
-            "a" < self.asset3
+            self.asset3 > "a"
 
 
 @pytest.mark.usefixtures("set_test_futures")
@@ -519,14 +514,11 @@ class TestFuture:
     def test_repr(self):
         future_symbol = self.asset_finder.lookup_future_symbol("OMH15")
         reprd = repr(future_symbol)
-        assert "Future(2468 [OMH15])" == reprd
+        assert reprd == "Future(2468 [OMH15])"
 
     def test_reduce(self):
         future_symbol = self.asset_finder.lookup_future_symbol("OMH15")
-        assert (
-            pickle.loads(pickle.dumps(future_symbol)).to_dict()
-            == future_symbol.to_dict()
-        )
+        assert pickle.loads(pickle.dumps(future_symbol)).to_dict() == future_symbol.to_dict()
 
     def test_to_and_from_dict(self):
         future_symbol = self.asset_finder.lookup_future_symbol("OMH15")
@@ -540,7 +532,7 @@ class TestFuture:
 
     def test_root_symbol(self):
         future_symbol = self.asset_finder.lookup_future_symbol("OMH15")
-        assert "OM" == future_symbol.root_symbol
+        assert future_symbol.root_symbol == "OM"
 
     def test_lookup_future_symbol(self):
         """Test the lookup_future_symbol method."""
@@ -651,26 +643,26 @@ class TestAssetFinder:
         with pytest.raises(SymbolNotFound):
             finder.lookup_symbol("PRTYHRD", dt)
         # Both fuzzys work
-        assert 0 == finder.lookup_symbol("PRTYHRD", None, fuzzy=True)
-        assert 0 == finder.lookup_symbol("PRTYHRD", dt, fuzzy=True)
+        assert finder.lookup_symbol("PRTYHRD", None, fuzzy=True) == 0
+        assert finder.lookup_symbol("PRTYHRD", dt, fuzzy=True) == 0
 
         # Try combos of looking up PRTY_HRD, all returning sid 0
-        assert 0 == finder.lookup_symbol("PRTY_HRD", None)
-        assert 0 == finder.lookup_symbol("PRTY_HRD", dt)
-        assert 0 == finder.lookup_symbol("PRTY_HRD", None, fuzzy=True)
-        assert 0 == finder.lookup_symbol("PRTY_HRD", dt, fuzzy=True)
+        assert finder.lookup_symbol("PRTY_HRD", None) == 0
+        assert finder.lookup_symbol("PRTY_HRD", dt) == 0
+        assert finder.lookup_symbol("PRTY_HRD", None, fuzzy=True) == 0
+        assert finder.lookup_symbol("PRTY_HRD", dt, fuzzy=True) == 0
 
         # Try combos of looking up BRKA, all returning sid 1
-        assert 1 == finder.lookup_symbol("BRKA", None)
-        assert 1 == finder.lookup_symbol("BRKA", dt)
-        assert 1 == finder.lookup_symbol("BRKA", None, fuzzy=True)
-        assert 1 == finder.lookup_symbol("BRKA", dt, fuzzy=True)
+        assert finder.lookup_symbol("BRKA", None) == 1
+        assert finder.lookup_symbol("BRKA", dt) == 1
+        assert finder.lookup_symbol("BRKA", None, fuzzy=True) == 1
+        assert finder.lookup_symbol("BRKA", dt, fuzzy=True) == 1
 
         # Try combos of looking up BRK_A, all returning sid 2
-        assert 2 == finder.lookup_symbol("BRK_A", None)
-        assert 2 == finder.lookup_symbol("BRK_A", dt)
-        assert 2 == finder.lookup_symbol("BRK_A", None, fuzzy=True)
-        assert 2 == finder.lookup_symbol("BRK_A", dt, fuzzy=True)
+        assert finder.lookup_symbol("BRK_A", None) == 2
+        assert finder.lookup_symbol("BRK_A", dt) == 2
+        assert finder.lookup_symbol("BRK_A", None, fuzzy=True) == 2
+        assert finder.lookup_symbol("BRK_A", dt, fuzzy=True) == 2
 
     def test_lookup_symbol_change_ticker(self, asset_finder):
         T = partial(pd.Timestamp)
@@ -1083,7 +1075,7 @@ class TestAssetFinder:
         sids = np.arange(len(equities))
         np.random.RandomState(1337).shuffle(sids)
         equities.index = sids
-        permute_sid = dict(zip(sids, range(len(sids)))).__getitem__
+        permute_sid = dict(zip(sids, range(len(sids)), strict=False)).__getitem__
 
         exchanges = pd.DataFrame.from_records(
             [
@@ -1132,12 +1124,7 @@ class TestAssetFinder:
 
             for country_codes in powerset(exchanges.country_code.unique()):
                 expected_sids = pd.Index(
-                    sorted(
-                        concat(
-                            sids_by_country[country_code]
-                            for country_code in country_codes
-                        )
-                    ),
+                    sorted(concat(sids_by_country[country_code] for country_code in country_codes)),
                     dtype="int64",
                 )
                 permuted_sids = [sid for sid in sorted(expected_sids, key=permute_sid)]
@@ -1285,9 +1272,9 @@ class TestAssetFinder:
 
         # At this point both sids 0 and 2 have held this value, so an
         # as_of_date is required.
-        expected_in_repr = (
-            "Multiple occurrences of the value '{}' found for field '{}'."
-        ).format("100000000", "ALT_ID")
+        expected_in_repr = ("Multiple occurrences of the value '{}' found for field '{}'.").format(
+            "100000000", "ALT_ID"
+        )
 
         with pytest.raises(MultipleValuesFoundForField, match=expected_in_repr):
             af.lookup_by_supplementary_field("ALT_ID", "100000000", None)
@@ -1368,7 +1355,7 @@ class TestAssetFinder:
         with pytest.raises(
             NoValueForSid, match="No '{}' value found for sid '{}'.".format("ALT_ID", 2)
         ):
-            finder.get_supplementary_field(2, "ALT_ID", dt),
+            (finder.get_supplementary_field(2, "ALT_ID", dt),)
 
         # After all assets have ended.
         dt = pd.Timestamp("2014-01-02")
@@ -1385,7 +1372,7 @@ class TestAssetFinder:
             MultipleValuesFoundForSid,
             match="Multiple '{}' values found for sid '{}'.".format("ALT_ID", 0),
         ):
-            finder.get_supplementary_field(0, "ALT_ID", None),
+            (finder.get_supplementary_field(0, "ALT_ID", None),)
 
     def test_group_by_type(self, asset_finder):
         equities = make_simple_equity_info(
@@ -1420,9 +1407,7 @@ class TestAssetFinder:
             (Future, "retrieve_futures_contracts", FutureContractsNotFound),
         ],
     )
-    def test_retrieve_specific_type(
-        self, type_, lookup_name, failure_type, asset_finder
-    ):
+    def test_retrieve_specific_type(self, type_, lookup_name, failure_type, asset_finder):
         equities = make_simple_equity_info(
             range(5),
             start_date=pd.Timestamp("2014-01-01"),
@@ -1453,7 +1438,7 @@ class TestAssetFinder:
             results = lookup(success_sids)
             assert isinstance(results, dict)
             assert set(results.keys()) == set(success_sids)
-            assert valmap(int, results) == dict(zip(success_sids, success_sids))
+            assert valmap(int, results) == dict(zip(success_sids, success_sids, strict=False))
             assert {type_} == {type(asset) for asset in results.values()}
             with pytest.raises(failure_type):
                 lookup(fail_sids)
@@ -1500,12 +1485,11 @@ class TestAssetFinder:
             results = finder.retrieve_all(sids)
             assert sids == tuple(map(int, results))
 
-            assert [Equity for _ in equity_sids] + [
-                Future for _ in future_sids
-            ] == list(map(type, results))
+            assert [Equity for _ in equity_sids] + [Future for _ in future_sids] == list(
+                map(type, results)
+            )
             assert (
-                list(equities.symbol.loc[equity_sids])
-                + list(futures.symbol.loc[future_sids])
+                list(equities.symbol.loc[equity_sids]) + list(futures.symbol.loc[future_sids])
             ) == list(asset.symbol for asset in results)
 
     @pytest.mark.parametrize(
@@ -1520,11 +1504,11 @@ class TestAssetFinder:
         try:
             raise error_type(sids=[1])
         except error_type as e:
-            assert str(e) == "No {singular} found for sid: 1.".format(singular=singular)
+            assert str(e) == f"No {singular} found for sid: 1."
         try:
             raise error_type(sids=[1, 2])
         except error_type as e:
-            assert str(e) == "No {plural} found for sids: [1, 2].".format(plural=plural)
+            assert str(e) == f"No {plural} found for sids: [1, 2]."
 
 
 @pytest.mark.usefixtures("with_trading_calendars")
@@ -1594,9 +1578,7 @@ class TestAssetFinderMultipleCountries:
                         country_code=self.country_code(n),
                     )
                     assert actual_asset == assets[n]
-                    assert actual_asset.exchange_info.country_code == self.country_code(
-                        n
-                    )
+                    assert actual_asset.exchange_info.country_code == self.country_code(n)
 
     def test_lookup_symbol_fuzzy(self, asset_finder):
         num_countries = 3
@@ -1749,9 +1731,7 @@ class TestAssetFinderMultipleCountries:
                     as_of_date,
                     country_code=self.country_code(n),
                 )
-                assert result == finder.retrieve_asset(sid_from_country_ix(n)), str(
-                    asof
-                )
+                assert result == finder.retrieve_asset(sid_from_country_ix(n)), str(asof)
                 # The symbol and asset_name should always be the last held
                 # values
                 assert result.symbol == expected_symbol
@@ -2123,7 +2103,7 @@ class TestAssetDBVersioning:
         metadata = sa.MetaData()
         metadata.reflect(conn)
         check_version_info(conn, metadata.tables["version_info"], 3)
-        assert not ("exchange_full" in metadata.tables)
+        assert "exchange_full" not in metadata.tables
 
         # now go all the way to v0
         downgrade(self.engine, 0)
@@ -2137,7 +2117,7 @@ class TestAssetDBVersioning:
         # Check some of the v1-to-v0 downgrades
         assert "futures_contracts" in metadata.tables
         assert "version_info" in metadata.tables
-        assert not ("tick_size" in metadata.tables["futures_contracts"].columns)
+        assert "tick_size" not in metadata.tables["futures_contracts"].columns
         assert "contract_multiplier" in metadata.tables["futures_contracts"].columns
 
     def test_impossible_downgrade(self):
@@ -2230,9 +2210,7 @@ class TestAssetDBVersioning:
 class TestVectorizedSymbolLookup:
     @pytest.mark.parametrize(
         "as_of",
-        pd.to_datetime(
-            ["2014-01-02", "2014-01-15", "2014-01-17", "2015-01-02"]
-        ).to_list(),
+        pd.to_datetime(["2014-01-02", "2014-01-15", "2014-01-17", "2015-01-02"]).to_list(),
     )
     @pytest.mark.parametrize(
         "symbols",
@@ -2273,11 +2251,9 @@ class TestVectorizedSymbolLookup:
 
 @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
 class TestAssetFinderPreprocessors:
-    def test_asset_finder_doesnt_silently_create_useless_empty_files(
-        self, tmp_path, request
-    ):
+    def test_asset_finder_doesnt_silently_create_useless_empty_files(self, tmp_path, request):
         nonexistent_path = str(tmp_path / request.node.name / "__nothing_here")
-        expected = "SQLite file {!r} doesn't exist.".format(nonexistent_path)
+        expected = f"SQLite file {nonexistent_path!r} doesn't exist."
         with pytest.raises(ValueError, match=expected):
             AssetFinder(nonexistent_path)
 
@@ -2334,10 +2310,7 @@ class TestExchangeInfo:
             ExchangeInfo("OSAKA STOCK EXCHANGE", "JPX", "JP"),
         ]
         exchange_info_table = pd.DataFrame(
-            [
-                (info.name, info.canonical_name, info.country_code)
-                for info in exchange_infos
-            ],
+            [(info.name, info.canonical_name, info.country_code) for info in exchange_infos],
             columns=["exchange", "canonical_name", "country_code"],
         )
         expected_exchange_info_map = {info.name: info for info in exchange_infos}
@@ -2353,9 +2326,7 @@ class TestExchangeInfo:
         assert actual_exchange_info_map == expected_exchange_info_map
 
         for asset in assets:
-            expected_exchange_info = expected_exchange_info_map[
-                exchange_names[asset.sid]
-            ]
+            expected_exchange_info = expected_exchange_info_map[exchange_names[asset.sid]]
             assert asset.exchange_info == expected_exchange_info
 
 

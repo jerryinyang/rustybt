@@ -7,7 +7,7 @@ state including positions, orders, and alignment metrics for crash recovery.
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -71,13 +71,11 @@ class OrderSnapshot(BaseModel):
     asset: str = Field(..., description="Asset symbol")
     sid: int = Field(..., description="Security identifier")
     amount: str = Field(..., description="Order quantity as Decimal string")
-    order_type: str = Field(
-        ..., description="Order type: market, limit, stop, stop-limit"
-    )
-    limit_price: Optional[str] = Field(
+    order_type: str = Field(..., description="Order type: market, limit, stop, stop-limit")
+    limit_price: str | None = Field(
         None, description="Limit price as Decimal string (for limit orders)"
     )
-    broker_order_id: Optional[str] = Field(None, description="Broker order identifier")
+    broker_order_id: str | None = Field(None, description="Broker order identifier")
     status: str = Field(
         ...,
         description="Order status: pending, submitted, filled, cancelled, rejected",
@@ -96,7 +94,7 @@ class OrderSnapshot(BaseModel):
 
     @field_validator("limit_price")
     @classmethod
-    def validate_limit_price(cls, v: Optional[str]) -> Optional[str]:
+    def validate_limit_price(cls, v: str | None) -> str | None:
         """Validate limit_price is a valid Decimal string if provided."""
         if v is not None:
             try:
@@ -109,7 +107,7 @@ class OrderSnapshot(BaseModel):
         """Convert amount to Decimal."""
         return Decimal(self.amount)
 
-    def to_decimal_limit_price(self) -> Optional[Decimal]:
+    def to_decimal_limit_price(self) -> Decimal | None:
         """Convert limit_price to Decimal if set."""
         return Decimal(self.limit_price) if self.limit_price else None
 
@@ -129,14 +127,10 @@ class AlignmentMetrics(BaseModel):
         last_updated: Timestamp of last metrics update
     """
 
-    signal_match_rate: float = Field(
-        ..., ge=0.0, le=1.0, description="Signal match rate (0.0-1.0)"
-    )
+    signal_match_rate: float = Field(..., ge=0.0, le=1.0, description="Signal match rate (0.0-1.0)")
     slippage_error_bps: float = Field(..., description="Slippage error in basis points")
     fill_rate_error_pct: float = Field(..., description="Fill rate error percentage")
-    backtest_signal_count: int = Field(
-        ..., ge=0, description="Backtest signal count for reference"
-    )
+    backtest_signal_count: int = Field(..., ge=0, description="Backtest signal count for reference")
     live_signal_count: int = Field(..., ge=0, description="Live signal count")
     last_updated: datetime = Field(..., description="Last metrics update timestamp")
 
@@ -159,17 +153,17 @@ class StateCheckpoint(BaseModel):
 
     strategy_name: str = Field(..., description="Strategy identifier")
     timestamp: datetime = Field(..., description="Checkpoint creation timestamp")
-    strategy_state: Dict[str, Any] = Field(
+    strategy_state: dict[str, Any] = Field(
         default_factory=dict, description="Custom strategy state data"
     )
-    positions: List[PositionSnapshot] = Field(
+    positions: list[PositionSnapshot] = Field(
         default_factory=list, description="Position snapshots"
     )
-    pending_orders: List[OrderSnapshot] = Field(
+    pending_orders: list[OrderSnapshot] = Field(
         default_factory=list, description="Pending order snapshots"
     )
     cash_balance: str = Field(..., description="Cash balance as Decimal string")
-    alignment_metrics: Optional[AlignmentMetrics] = Field(
+    alignment_metrics: AlignmentMetrics | None = Field(
         None, description="Shadow trading alignment metrics"
     )
 
@@ -239,23 +233,17 @@ class PositionDiscrepancy(BaseModel):
     """
 
     asset: str = Field(..., description="Asset symbol")
-    local_amount: Optional[str] = Field(
-        None, description="Local position size as Decimal string"
-    )
-    broker_amount: Optional[str] = Field(
-        None, description="Broker position size as Decimal string"
-    )
+    local_amount: str | None = Field(None, description="Local position size as Decimal string")
+    broker_amount: str | None = Field(None, description="Broker position size as Decimal string")
     discrepancy_type: DiscrepancyType = Field(..., description="Discrepancy type")
     severity: DiscrepancySeverity = Field(..., description="Severity level")
-    discrepancy_pct: float = Field(
-        ..., ge=0.0, description="Discrepancy percentage (0.0-1.0)"
-    )
+    discrepancy_pct: float = Field(..., ge=0.0, description="Discrepancy percentage (0.0-1.0)")
 
-    def to_decimal_local_amount(self) -> Optional[Decimal]:
+    def to_decimal_local_amount(self) -> Decimal | None:
         """Convert local_amount to Decimal."""
         return Decimal(self.local_amount) if self.local_amount else None
 
-    def to_decimal_broker_amount(self) -> Optional[Decimal]:
+    def to_decimal_broker_amount(self) -> Decimal | None:
         """Convert broker_amount to Decimal."""
         return Decimal(self.broker_amount) if self.broker_amount else None
 
@@ -272,9 +260,7 @@ class CashDiscrepancy(BaseModel):
 
     local_cash: str = Field(..., description="Local cash balance as Decimal string")
     broker_cash: str = Field(..., description="Broker cash balance as Decimal string")
-    discrepancy_pct: float = Field(
-        ..., ge=0.0, description="Discrepancy percentage (0.0-1.0)"
-    )
+    discrepancy_pct: float = Field(..., ge=0.0, description="Discrepancy percentage (0.0-1.0)")
     severity: DiscrepancySeverity = Field(..., description="Severity level")
 
     def to_decimal_local_cash(self) -> Decimal:
@@ -298,14 +284,14 @@ class OrderDiscrepancy(BaseModel):
         broker_status: Broker order status (if available)
     """
 
-    order_id: Optional[str] = Field(None, description="Internal order ID")
-    broker_order_id: Optional[str] = Field(None, description="Broker order ID")
+    order_id: str | None = Field(None, description="Internal order ID")
+    broker_order_id: str | None = Field(None, description="Broker order ID")
     asset: str = Field(..., description="Asset symbol")
     discrepancy_type: str = Field(
         ..., description="Discrepancy type: orphaned_local, orphaned_broker, status_mismatch"
     )
-    local_status: Optional[str] = Field(None, description="Local order status")
-    broker_status: Optional[str] = Field(None, description="Broker order status")
+    local_status: str | None = Field(None, description="Local order status")
+    broker_status: str | None = Field(None, description="Broker order status")
 
 
 class ReconciliationReport(BaseModel):
@@ -321,16 +307,14 @@ class ReconciliationReport(BaseModel):
     """
 
     timestamp: datetime = Field(..., description="Report creation timestamp")
-    position_discrepancies: List[PositionDiscrepancy] = Field(
+    position_discrepancies: list[PositionDiscrepancy] = Field(
         default_factory=list, description="Position discrepancies"
     )
-    cash_discrepancy: Optional[CashDiscrepancy] = Field(
-        None, description="Cash discrepancy"
-    )
-    order_discrepancies: List[OrderDiscrepancy] = Field(
+    cash_discrepancy: CashDiscrepancy | None = Field(None, description="Cash discrepancy")
+    order_discrepancies: list[OrderDiscrepancy] = Field(
         default_factory=list, description="Order discrepancies"
     )
-    actions_taken: List[str] = Field(default_factory=list, description="Actions taken")
+    actions_taken: list[str] = Field(default_factory=list, description="Actions taken")
     summary: str = Field(..., description="Human-readable summary")
 
     def has_critical_discrepancies(self) -> bool:

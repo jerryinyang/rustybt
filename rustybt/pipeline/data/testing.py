@@ -5,14 +5,15 @@ Loaders for datasets in this file can be found in
 zipline.pipeline.data.testing.
 """
 
-from .dataset import Column, DataSet
 from rustybt.utils.numpy_utils import (
     bool_dtype,
     categorical_dtype,
-    float64_dtype,
     datetime64ns_dtype,
+    float64_dtype,
     int64_dtype,
 )
+
+from .dataset import Column, DataSet
 
 
 class TestingDataSet(DataSet):

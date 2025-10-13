@@ -1,15 +1,16 @@
 from unittest import mock
 
-import rustybt.__main__ as main
-import rustybt
-from rustybt.testing.predicates import assert_equal
+import pytest
 from click.testing import CliRunner
+
+import rustybt
+import rustybt.__main__ as main
 from rustybt.extensions import (
     Namespace,
     create_args,
     parse_extension_arg,
 )
-import pytest
+from rustybt.testing.predicates import assert_equal
 
 
 class TestCmdLine:
@@ -44,24 +45,19 @@ class TestCmdLine:
         assert n.arg_3 == "test3"
         assert n._arg_4_ == "test4"
 
-        msg = "invalid extension argument '1=test3', " "must be in key=value form"
+        msg = "invalid extension argument '1=test3', must be in key=value form"
         with pytest.raises(ValueError, match=msg):
             parse_extension_arg("1=test3", {})
-        msg = "invalid extension argument 'arg4 test4', " "must be in key=value form"
+        msg = "invalid extension argument 'arg4 test4', must be in key=value form"
         with pytest.raises(ValueError, match=msg):
             parse_extension_arg("arg4 test4", {})
-        msg = "invalid extension argument 'arg5.1=test5', " "must be in key=value form"
+        msg = "invalid extension argument 'arg5.1=test5', must be in key=value form"
         with pytest.raises(ValueError, match=msg):
             parse_extension_arg("arg5.1=test5", {})
-        msg = (
-            "invalid extension argument 'arg6.6arg=test6', " "must be in key=value form"
-        )
+        msg = "invalid extension argument 'arg6.6arg=test6', must be in key=value form"
         with pytest.raises(ValueError, match=msg):
             parse_extension_arg("arg6.6arg=test6", {})
-        msg = (
-            "invalid extension argument 'arg7.-arg7=test7', "
-            "must be in key=value form"
-        )
+        msg = "invalid extension argument 'arg7.-arg7=test7', must be in key=value form"
         with pytest.raises(ValueError, match=msg):
             parse_extension_arg("arg7.-arg7=test7", {})
 
@@ -156,9 +152,7 @@ class TestCmdLine:
 
             if result.exit_code != 0:
                 raise AssertionError(
-                    "Cli run failed with {exc}\n\n"
-                    "Output was:\n\n"
-                    "{output}".format(exc=result.exception, output=result.output),
+                    f"Cli run failed with {result.exception}\n\nOutput was:\n\n{result.output}",
                 )
 
             mock_run.assert_called_once()

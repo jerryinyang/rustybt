@@ -1,31 +1,29 @@
 """Tests for pipelines on international markets."""
 
+import re
 from itertools import cycle, islice
 
-from parameterized import parameterized
 import numpy as np
 import pandas as pd
+import pytest
+from parameterized import parameterized
 
-from rustybt.utils.calendar_utils import get_calendar
-
+import rustybt.testing.fixtures as zf
 from rustybt.assets.synthetic import make_rotating_equity_info
 from rustybt.data.in_memory_daily_bars import InMemoryDailyBarReader
+from rustybt.pipeline import Pipeline
+from rustybt.pipeline.data import EquityPricing, USEquityPricing
 from rustybt.pipeline.domain import (
     CA_EQUITIES,
     GB_EQUITIES,
     US_EQUITIES,
 )
-from rustybt.pipeline import Pipeline
-from rustybt.pipeline.data import EquityPricing, USEquityPricing
 from rustybt.pipeline.engine import SimplePipelineEngine
 from rustybt.pipeline.loaders.equity_pricing_loader import EquityPricingLoader
 from rustybt.pipeline.loaders.synthetic import NullAdjustmentReader
-from rustybt.testing.predicates import assert_equal
 from rustybt.testing.core import parameter_space, random_tick_prices
-
-import rustybt.testing.fixtures as zf
-import pytest
-import re
+from rustybt.testing.predicates import assert_equal
+from rustybt.utils.calendar_utils import get_calendar
 
 
 def T(s):
@@ -54,10 +52,7 @@ class WithInternationalDailyBarData(zf.WithAssetFinder):
         "XTSE": ["CAD"],
         "XLON": ["GBP", "EUR", "USD"],
     }
-    assert (
-        INTERNATIONAL_PRICING_STARTING_PRICES.keys()
-        == INTERNATIONAL_PRICING_CURRENCIES.keys()
-    )
+    assert INTERNATIONAL_PRICING_STARTING_PRICES.keys() == INTERNATIONAL_PRICING_CURRENCIES.keys()
 
     FX_RATES_CURRENCIES = ["USD", "CAD", "GBP", "EUR"]
 
@@ -91,9 +86,7 @@ class WithInternationalDailyBarData(zf.WithAssetFinder):
     @classmethod
     def make_currency_codes(cls, calendar, assets):
         currencies = cls.INTERNATIONAL_PRICING_CURRENCIES[calendar.name]
-        return pd.Series(
-            index=assets, data=list(islice(cycle(currencies), len(assets)))
-        )
+        return pd.Series(index=assets, data=list(islice(cycle(currencies), len(assets))))
 
     @classmethod
     def init_class_fixtures(cls):
@@ -137,8 +130,7 @@ class WithInternationalDailyBarData(zf.WithAssetFinder):
                 .swaplevel()
             )
             frames = {
-                field: frame.reset_index(level=0, drop=True)
-                for field, frame in df.groupby(level=0)
+                field: frame.reset_index(level=0, drop=True) for field, frame in df.groupby(level=0)
             }
 
             # panel = (pd.Panel.from_dict(cls.daily_bar_data[name])
@@ -156,9 +148,7 @@ class WithInternationalDailyBarData(zf.WithAssetFinder):
             )
 
 
-class WithInternationalPricingPipelineEngine(
-    zf.WithFXRates, WithInternationalDailyBarData
-):
+class WithInternationalPricingPipelineEngine(zf.WithFXRates, WithInternationalDailyBarData):
     @classmethod
     def init_class_fixtures(cls):
         (super(WithInternationalPricingPipelineEngine, cls).init_class_fixtures())
@@ -194,9 +184,7 @@ class WithInternationalPricingPipelineEngine(
         return self.engine.run_pipeline(pipeline, start_date, end_date)
 
 
-class InternationalEquityTestCase(
-    WithInternationalPricingPipelineEngine, zf.ZiplineTestCase
-):
+class InternationalEquityTestCase(WithInternationalPricingPipelineEngine, zf.ZiplineTestCase):
     START_DATE = pd.Timestamp("2014-01-02")
     END_DATE = pd.Timestamp("2014-02-06")  # Chosen to match the asset setup data below.
 
@@ -271,9 +259,7 @@ class InternationalEquityTestCase(
         # alive during the interval between our start and end (not including
         # the asset's IPO date).
         expected_assets = [
-            a
-            for a in all_assets
-            if alive_in_range(a, start, end, include_asset_start_date=False)
+            a for a in all_assets if alive_in_range(a, start, end, include_asset_start_date=False)
         ]
         # off by 1 from above to be inclusive of the end date
         expected_dates = sessions[-17:-9]
@@ -281,15 +267,15 @@ class InternationalEquityTestCase(
         for col in pipe.columns:
             # result_date should look like this:
             #
-            #     E     F     G     H     I     J     K     L     M     N     O     P # noqa
-            # 24.17 25.17 26.17 27.17 28.17   NaN   NaN   NaN   NaN   NaN   NaN   NaN # noqa
-            #   NaN 25.18 26.18 27.18 28.18 29.18   NaN   NaN   NaN   NaN   NaN   NaN # noqa
-            #   NaN   NaN 26.23 27.23 28.23 29.23 30.23   NaN   NaN   NaN   NaN   NaN # noqa
-            #   NaN   NaN   NaN 27.28 28.28 29.28 30.28 31.28   NaN   NaN   NaN   NaN # noqa
-            #   NaN   NaN   NaN   NaN 28.30 29.30 30.30 31.30 32.30   NaN   NaN   NaN # noqa
-            #   NaN   NaN   NaN   NaN   NaN 29.29 30.29 31.29 32.29 33.29   NaN   NaN # noqa
-            #   NaN   NaN   NaN   NaN   NaN   NaN 30.27 31.27 32.27 33.27 34.27   NaN # noqa
-            #   NaN   NaN   NaN   NaN   NaN   NaN   NaN 31.29 32.29 33.29 34.29 35.29 # noqa
+            #     E     F     G     H     I     J     K     L     M     N     O     P
+            # 24.17 25.17 26.17 27.17 28.17   NaN   NaN   NaN   NaN   NaN   NaN   NaN
+            #   NaN 25.18 26.18 27.18 28.18 29.18   NaN   NaN   NaN   NaN   NaN   NaN
+            #   NaN   NaN 26.23 27.23 28.23 29.23 30.23   NaN   NaN   NaN   NaN   NaN
+            #   NaN   NaN   NaN 27.28 28.28 29.28 30.28 31.28   NaN   NaN   NaN   NaN
+            #   NaN   NaN   NaN   NaN 28.30 29.30 30.30 31.30 32.30   NaN   NaN   NaN
+            #   NaN   NaN   NaN   NaN   NaN 29.29 30.29 31.29 32.29 33.29   NaN   NaN
+            #   NaN   NaN   NaN   NaN   NaN   NaN 30.27 31.27 32.27 33.27 34.27   NaN
+            #   NaN   NaN   NaN   NaN   NaN   NaN   NaN 31.29 32.29 33.29 34.29 35.29
             result_data = result[col].unstack()
 
             # Check indices.

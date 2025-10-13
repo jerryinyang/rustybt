@@ -100,7 +100,7 @@ class TestEventQueuePerformance:
     @pytest.mark.benchmark
     def test_event_queue_push_pop(self, benchmark):
         """Benchmark event queue push/pop operations."""
-        from rustybt.gens.events import Event, EventQueue, EventPriority
+        from rustybt.gens.events import Event, EventPriority, EventQueue
 
         def push_pop_events():
             queue = EventQueue()
@@ -126,7 +126,7 @@ class TestEventQueuePerformance:
     @pytest.mark.benchmark
     def test_event_priority_ordering(self, benchmark):
         """Benchmark event ordering with mixed priorities."""
-        from rustybt.gens.events import Event, EventQueue, EventPriority
+        from rustybt.gens.events import Event, EventPriority, EventQueue
 
         def order_events():
             queue = EventQueue()

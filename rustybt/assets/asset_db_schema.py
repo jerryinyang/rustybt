@@ -240,7 +240,9 @@ bundle_metadata = sa.Table(
     sa.Column("missing_days_list", sa.Text, nullable=False, server_default="[]"),
     sa.Column("outlier_count", sa.Integer, nullable=False, server_default="0"),
     sa.Column("ohlcv_violations", sa.Integer, nullable=False, server_default="0"),
-    sa.Column("validation_passed", sa.Boolean, nullable=False, server_default=sa.sql.expression.true()),
+    sa.Column(
+        "validation_passed", sa.Boolean, nullable=False, server_default=sa.sql.expression.true()
+    ),
     sa.Column("validation_timestamp", sa.Integer, nullable=True),
     sa.Column("file_checksum", sa.Text),
     sa.Column("file_size_bytes", sa.Integer),
@@ -255,7 +257,7 @@ bundle_metadata = sa.Table(
         sa.Integer,
         nullable=False,
     ),
-# Close bundle_metadata table definition
+    # Close bundle_metadata table definition
 )
 
 # Create indexes for bundle metadata table

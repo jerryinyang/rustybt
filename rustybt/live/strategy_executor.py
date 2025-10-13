@@ -4,11 +4,9 @@ This module wraps TradingAlgorithm and provides async triggers for live events,
 ensuring the same strategy code works in both backtest and live modes.
 """
 
-import asyncio
 from decimal import Decimal
-from typing import Any, Dict, Optional
+from typing import Any
 
-import pandas as pd
 import structlog
 
 from rustybt.algorithm import TradingAlgorithm
@@ -245,9 +243,7 @@ class StrategyExecutor:
         class SimplifiedBarData:
             """Simplified BarData for initial implementation."""
 
-            def __init__(
-                self, event: MarketDataEvent, data_portal: Any
-            ) -> None:
+            def __init__(self, event: MarketDataEvent, data_portal: Any) -> None:
                 self._event = event
                 self._data_portal = data_portal
 
@@ -266,15 +262,11 @@ class StrategyExecutor:
                 else:
                     raise ValueError(f"Unsupported field: {field}")
 
-            def history(
-                self, asset: Any, field: str, bar_count: int, frequency: str
-            ) -> Any:
+            def history(self, asset: Any, field: str, bar_count: int, frequency: str) -> Any:
                 """Get historical data window from data portal."""
                 # This should use PolarsDataPortal to fetch historical data
                 # returning a Polars DataFrame with Decimal columns
-                return self._data_portal.get_history(
-                    asset, field, bar_count, frequency
-                )
+                return self._data_portal.get_history(asset, field, bar_count, frequency)
 
             def can_trade(self, asset: Any) -> bool:
                 """Check if asset is tradable."""

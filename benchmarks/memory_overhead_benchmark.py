@@ -8,20 +8,23 @@ Run with: pytest benchmarks/memory_overhead_benchmark.py --benchmark-only
 Note: Memory profiling uses tracemalloc (stdlib) for accurate memory tracking.
 """
 
-import pytest
-import polars as pl
-from decimal import Decimal
-import tracemalloc
 import random
+import tracemalloc
 from collections import namedtuple
+from decimal import Decimal
 
+import polars as pl
+import pytest
+
+from rustybt.assets import Equity
 from rustybt.finance.decimal.ledger import DecimalLedger
 from rustybt.finance.decimal.position import DecimalPosition
-from rustybt.assets import Equity
 
 # Test fixture for exchange info
-ExchangeInfo = namedtuple('ExchangeInfo', ['canonical_name', 'name', 'country_code'])
-TEST_EXCHANGE = ExchangeInfo(canonical_name='NYSE', name='New York Stock Exchange', country_code='US')
+ExchangeInfo = namedtuple("ExchangeInfo", ["canonical_name", "name", "country_code"])
+TEST_EXCHANGE = ExchangeInfo(
+    canonical_name="NYSE", name="New York Stock Exchange", country_code="US"
+)
 
 
 def measure_memory(func):
@@ -42,6 +45,7 @@ def test_memory_decimal_vs_float_1000_values(benchmark):
         float64: ~8 bytes per value (64-bit)
         Overhead: ~100% (2x memory)
     """
+
     def create_decimals():
         _, peak_decimal = measure_memory(
             lambda: [Decimal(str(50.0 + i * 0.01)) for i in range(1000)]
@@ -60,6 +64,7 @@ def test_memory_decimal_series_vs_float_10000(benchmark):
 
     Expected overhead: ~100-150% (2-2.5x memory)
     """
+
     def create_decimal_series():
         random.seed(42)
         values = [Decimal(str(random.random() * 100)) for _ in range(10000)]
@@ -77,6 +82,7 @@ def test_memory_decimal_portfolio_100_positions(benchmark):
 
     Expected: ~50-100 KB for 100 positions
     """
+
     def create_portfolio():
         ledger = DecimalLedger(starting_cash=Decimal("1000000"))
 
@@ -109,16 +115,32 @@ def test_memory_decimal_dataframe_ohlcv(benchmark):
     1 year × 100 assets = 25,200 rows × 5 Decimal columns
     Expected: ~5-15 MB
     """
+
     def create_decimal_dataframe():
         random.seed(42)
         num_rows = 252 * 100
 
         data = {
-            "open": pl.Series([Decimal(str(50.0 + random.random() * 10)) for _ in range(num_rows)], dtype=pl.Decimal(scale=8)),
-            "high": pl.Series([Decimal(str(55.0 + random.random() * 10)) for _ in range(num_rows)], dtype=pl.Decimal(scale=8)),
-            "low": pl.Series([Decimal(str(45.0 + random.random() * 10)) for _ in range(num_rows)], dtype=pl.Decimal(scale=8)),
-            "close": pl.Series([Decimal(str(50.0 + random.random() * 10)) for _ in range(num_rows)], dtype=pl.Decimal(scale=8)),
-            "volume": pl.Series([Decimal(str(random.random() * 1000000)) for _ in range(num_rows)], dtype=pl.Decimal(scale=8)),
+            "open": pl.Series(
+                [Decimal(str(50.0 + random.random() * 10)) for _ in range(num_rows)],
+                dtype=pl.Decimal(scale=8),
+            ),
+            "high": pl.Series(
+                [Decimal(str(55.0 + random.random() * 10)) for _ in range(num_rows)],
+                dtype=pl.Decimal(scale=8),
+            ),
+            "low": pl.Series(
+                [Decimal(str(45.0 + random.random() * 10)) for _ in range(num_rows)],
+                dtype=pl.Decimal(scale=8),
+            ),
+            "close": pl.Series(
+                [Decimal(str(50.0 + random.random() * 10)) for _ in range(num_rows)],
+                dtype=pl.Decimal(scale=8),
+            ),
+            "volume": pl.Series(
+                [Decimal(str(random.random() * 1000000)) for _ in range(num_rows)],
+                dtype=pl.Decimal(scale=8),
+            ),
         }
 
         return pl.DataFrame(data)
@@ -139,6 +161,7 @@ def test_memory_returns_series_252_vs_2520(benchmark):
     Tests memory scaling: 252 returns (1 year) vs 2520 returns (10 years)
     Expected: Linear scaling ~10x memory for 10x data
     """
+
     def create_returns_series(num_returns):
         random.seed(42)
         returns = [Decimal(str(random.gauss(0.0005, 0.015))) for _ in range(num_returns)]
@@ -170,6 +193,7 @@ def test_memory_portfolio_scaling(benchmark, num_positions):
 
     Expected: Linear O(n) memory scaling
     """
+
     def create_portfolio():
         ledger = DecimalLedger(starting_cash=Decimal("1000000"))
 
@@ -206,6 +230,7 @@ def test_calculate_total_memory_overhead(benchmark):
 
     This represents typical backtest memory footprint.
     """
+
     def create_backtest_memory_footprint():
         # Portfolio
         ledger = DecimalLedger(starting_cash=Decimal("1000000"))
@@ -223,9 +248,14 @@ def test_calculate_total_memory_overhead(benchmark):
         # Price data
         random.seed(42)
         num_rows = 252 * 100
-        price_df = pl.DataFrame({
-            "close": pl.Series([Decimal(str(50.0 + random.random() * 10)) for _ in range(num_rows)], dtype=pl.Decimal(scale=8)),
-        })
+        price_df = pl.DataFrame(
+            {
+                "close": pl.Series(
+                    [Decimal(str(50.0 + random.random() * 10)) for _ in range(num_rows)],
+                    dtype=pl.Decimal(scale=8),
+                ),
+            }
+        )
 
         # Returns series
         returns = [Decimal(str(random.gauss(0.0005, 0.015))) for _ in range(252)]
@@ -243,9 +273,9 @@ def test_calculate_total_memory_overhead(benchmark):
     result = benchmark(create_backtest_memory_footprint)
 
     print(f"\nTotal backtest memory footprint: {memory_mb:.2f} MB")
-    print(f"  - Portfolio: 100 positions")
-    print(f"  - Price data: 25,200 rows")
-    print(f"  - Returns: 252 values")
+    print("  - Portfolio: 100 positions")
+    print("  - Price data: 25,200 rows")
+    print("  - Returns: 252 values")
 
     assert "ledger" in result
     assert "prices" in result
@@ -258,6 +288,7 @@ def test_memory_overhead_summary(benchmark):
 
     Compares Decimal vs expected float memory usage across all components.
     """
+
     def measure_all_components():
         results = {}
 
@@ -270,7 +301,10 @@ def test_memory_overhead_summary(benchmark):
         # 2. Series (10,000)
         random.seed(42)
         _, series_mem = measure_memory(
-            lambda: pl.Series([Decimal(str(random.random() * 100)) for _ in range(10000)], dtype=pl.Decimal(scale=8))
+            lambda: pl.Series(
+                [Decimal(str(random.random() * 100)) for _ in range(10000)],
+                dtype=pl.Decimal(scale=8),
+            )
         )
         results["10000_series_kb"] = series_mem / 1024
 

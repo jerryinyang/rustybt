@@ -1,39 +1,40 @@
-from .factor import (
-    CustomFactor,
-    Factor,
-    Latest,
-    RecarrayField,
-)
 from .basic import (
+    EWMA,
+    EWMSTD,
+    VWAP,
     AnnualizedVolatility,
     AverageDollarVolume,
     DailyReturns,
-    EWMA,
     ExponentialWeightedMovingAverage,
     ExponentialWeightedMovingStdDev,
-    EWMSTD,
     LinearWeightedMovingAverage,
     MaxDrawdown,
     PeerCount,
     PercentChange,
     Returns,
     SimpleMovingAverage,
-    VWAP,
     WeightedAverageValue,
 )
 from .events import (
     BusinessDaysSincePreviousEvent,
     BusinessDaysUntilNextEvent,
 )
+from .factor import (
+    CustomFactor,
+    Factor,
+    Latest,
+    RecarrayField,
+)
 from .statistical import (
-    RollingPearson,
-    RollingSpearman,
     RollingLinearRegressionOfReturns,
+    RollingPearson,
     RollingPearsonOfReturns,
+    RollingSpearman,
     RollingSpearmanOfReturns,
     SimpleBeta,
 )
 from .technical import (
+    RSI,
     Aroon,
     BollingerBands,
     FastStochasticOscillator,
@@ -41,11 +42,14 @@ from .technical import (
     MACDSignal,
     MovingAverageConvergenceDivergenceSignal,
     RateOfChangePercentage,
-    RSI,
     TrueRange,
 )
 
 __all__ = [
+    "EWMA",
+    "EWMSTD",
+    "RSI",
+    "VWAP",
     "AnnualizedVolatility",
     "Aroon",
     "AverageDollarVolume",
@@ -54,8 +58,6 @@ __all__ = [
     "BusinessDaysUntilNextEvent",
     "CustomFactor",
     "DailyReturns",
-    "EWMA",
-    "EWMSTD",
     "ExponentialWeightedMovingAverage",
     "ExponentialWeightedMovingStdDev",
     "Factor",
@@ -68,7 +70,6 @@ __all__ = [
     "MovingAverageConvergenceDivergenceSignal",
     "PeerCount",
     "PercentChange",
-    "RSI",
     "RateOfChangePercentage",
     "RecarrayField",
     "Returns",
@@ -80,6 +81,5 @@ __all__ = [
     "SimpleBeta",
     "SimpleMovingAverage",
     "TrueRange",
-    "VWAP",
     "WeightedAverageValue",
 ]

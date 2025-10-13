@@ -113,7 +113,7 @@ To keep benchmark runtime manageable (~12 minutes), we prioritize 15 key scenari
 
 ### Simple Strategy (1-2 indicators)
 **File**: `strategies/simple_sma_crossover.py`
-**Indicators**: 
+**Indicators**:
 - SMA Short (50 periods)
 - SMA Long (200 periods)
 **Logic**: Buy when SMA Short > SMA Long, sell otherwise
@@ -286,7 +286,7 @@ Graphs are automatically generated after each benchmark run in CI/CD.
 Workflow: `.github/workflows/nightly-benchmarks.yml`
 
 **Schedule**: Daily at 2 AM UTC
-**Triggers**: 
+**Triggers**:
 - Scheduled (nightly)
 - Manual trigger (workflow_dispatch)
 
@@ -466,7 +466,7 @@ For issues or questions:
 
 ---
 
-**Last Updated**: 2025-01-09  
-**Story**: 7.5 - Implement Comprehensive Benchmarking Suite  
-**Author**: James (Full Stack Developer)  
+**Last Updated**: 2025-01-09
+**Story**: 7.5 - Implement Comprehensive Benchmarking Suite
+**Author**: James (Full Stack Developer)
 **Status**: In Development

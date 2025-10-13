@@ -14,9 +14,12 @@ import structlog
 
 from rustybt.assets import Asset
 from rustybt.exceptions import (
-    BrokerConnectionError,
     BrokerError as BaseBrokerError,
+)
+from rustybt.exceptions import (
     DataNotFoundError,
+)
+from rustybt.exceptions import (
     InsufficientFundsError as BaseInsufficientFundsError,
 )
 from rustybt.finance.decimal.commission import DecimalCommissionModel, NoCommission
@@ -25,7 +28,6 @@ from rustybt.finance.decimal.position import DecimalPosition
 from rustybt.finance.decimal.slippage import DecimalSlippageModel, NoSlippage
 from rustybt.finance.decimal.transaction import DecimalTransaction
 from rustybt.live.brokers.base import BrokerAdapter
-from rustybt.utils.error_handling import log_exception
 
 logger = structlog.get_logger(__name__)
 
@@ -291,9 +293,7 @@ class PaperBroker(BrokerAdapter):
                 raise PaperBrokerError(f"Unsupported order type: {order.order_type}")
 
         except Exception as e:
-            logger.error(
-                "paper_order_execution_failed", order_id=order.id, error=str(e)
-            )
+            logger.error("paper_order_execution_failed", order_id=order.id, error=str(e))
             # Remove from open orders on failure
             self.open_orders.pop(order.id, None)
 
@@ -632,9 +632,7 @@ class PaperBroker(BrokerAdapter):
             Dict with keys: 'cash', 'equity', 'buying_power', 'portfolio_value'
         """
         # Calculate portfolio value
-        positions_value = sum(
-            pos.market_value for pos in self.positions.values()
-        )
+        positions_value = sum(pos.market_value for pos in self.positions.values())
         portfolio_value = self.cash + positions_value
 
         return {
@@ -694,10 +692,7 @@ class PaperBroker(BrokerAdapter):
         self.subscribed_assets.extend(assets)
         logger.info(
             "paper_broker_subscribed_to_market_data",
-            assets=[
-                asset.symbol if hasattr(asset, "symbol") else str(asset)
-                for asset in assets
-            ],
+            assets=[asset.symbol if hasattr(asset, "symbol") else str(asset) for asset in assets],
         )
 
     async def unsubscribe_market_data(self, assets: list[Asset]) -> None:

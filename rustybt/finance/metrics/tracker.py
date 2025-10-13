@@ -14,9 +14,8 @@
 # limitations under the License.
 import logging
 
-from ..ledger import Ledger
+from rustybt.finance.ledger import Ledger
 from rustybt.utils.exploding_object import NamedExplodingObject
-
 
 log = logging.getLogger(__name__)
 
@@ -102,14 +101,15 @@ class MetricsTracker:
 
         self._benchmark_source = NamedExplodingObject(
             "self._benchmark_source",
-            "_benchmark_source is not set until ``handle_start_of_simulation``"
-            " is called",
+            "_benchmark_source is not set until ``handle_start_of_simulation`` is called",
         )
 
         if emission_rate == "minute":
 
             def progress(self):
-                return 1.0  # a fake value
+                # For minute-level data, return 1.0 as we don't track minute-by-minute progress
+                # This is used for display purposes only
+                return 1.0
 
         else:
 
@@ -215,7 +215,7 @@ class MetricsTracker:
         dt : Timestamp
             The minute that is ending
 
-        Returns
+        Returns:
         -------
         A minute perf packet.
         """
@@ -289,7 +289,7 @@ class MetricsTracker:
         data_portal : DataPortal
             The current data portal.
 
-        Returns
+        Returns:
         -------
         A daily perf packet.
         """

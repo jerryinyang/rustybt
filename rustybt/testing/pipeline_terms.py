@@ -1,7 +1,7 @@
 import numpy as np
 
-from rustybt.pipeline.factors.factor import CustomFactor
 from rustybt.pipeline.classifiers.classifier import CustomClassifier
+from rustybt.pipeline.factors.factor import CustomFactor
 from rustybt.utils.idbox import IDBox
 
 from .predicates import assert_equal
@@ -48,7 +48,7 @@ class CheckWindowsClassifier(CheckWindowsMixin, CustomClassifier):
     expected_windows : dict[int, dict[pd.Timestamp, np.ndarray]]
         For each asset, for each day, what the expected lookback window is.
 
-    Notes
+    Notes:
     -----
     The output of this classifier is the same as ``Latest``. Any assets or days
     not in ``expected_windows`` are not checked.
@@ -65,9 +65,7 @@ class CheckWindowsClassifier(CheckWindowsMixin, CustomClassifier):
             inputs=[input_],
             dtype=dtype,
             window_length=window_length,
-            expected_windows=frozenset(
-                (k, IDBox(v)) for k, v in expected_windows.items()
-            ),
+            expected_windows=frozenset((k, IDBox(v)) for k, v in expected_windows.items()),
         )
 
 
@@ -84,7 +82,7 @@ class CheckWindowsFactor(CheckWindowsMixin, CustomFactor):
     expected_windows : dict[int, dict[pd.Timestamp, np.ndarray]]
         For each asset, for each day, what the expected lookback window is.
 
-    Notes
+    Notes:
     -----
     The output of this factor is the same as ``Latest``. Any assets or days
     not in ``expected_windows`` are not checked.
@@ -96,7 +94,5 @@ class CheckWindowsFactor(CheckWindowsMixin, CustomFactor):
             inputs=[input_],
             dtype=input_.dtype,
             window_length=window_length,
-            expected_windows=frozenset(
-                (k, IDBox(v)) for k, v in expected_windows.items()
-            ),
+            expected_windows=frozenset((k, IDBox(v)) for k, v in expected_windows.items()),
         )

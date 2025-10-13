@@ -1,8 +1,9 @@
 """Property-based tests for DecimalLedger using Hypothesis."""
 
-import pytest
 from decimal import Decimal
-from hypothesis import given, strategies as st
+
+from hypothesis import given
+from hypothesis import strategies as st
 
 from rustybt.finance.decimal import DecimalLedger, DecimalPosition
 
@@ -27,11 +28,19 @@ class MockAsset:
 
 # Hypothesis strategies for Decimal generation
 decimal_strategy = st.decimals(
-    min_value=Decimal("0.01"), max_value=Decimal("1000000"), places=2, allow_nan=False, allow_infinity=False
+    min_value=Decimal("0.01"),
+    max_value=Decimal("1000000"),
+    places=2,
+    allow_nan=False,
+    allow_infinity=False,
 )
 
 positive_decimal_strategy = st.decimals(
-    min_value=Decimal("1"), max_value=Decimal("1000000"), places=2, allow_nan=False, allow_infinity=False
+    min_value=Decimal("1"),
+    max_value=Decimal("1000000"),
+    places=2,
+    allow_nan=False,
+    allow_infinity=False,
 )
 
 
@@ -211,7 +220,9 @@ class TestLedgerProperties:
         import pandas as pd
 
         position.update(
-            transaction_amount=amount2, transaction_price=price2, transaction_dt=pd.Timestamp("2025-01-15")
+            transaction_amount=amount2,
+            transaction_price=price2,
+            transaction_dt=pd.Timestamp("2025-01-15"),
         )
 
         # Calculate expected volume-weighted cost

@@ -2051,7 +2051,7 @@ Parameter sensitivity analysis validates optimization results by measuring how p
 - **Sensitive Parameter**: Performance changes sharply with small parameter changes (steep gradient, sharp peak)
 - **Stable (Robust) Parameter**: Performance relatively flat across parameter range (gentle gradient, broad optimum)
 
-**Analogy**: 
+**Analogy**:
 - Robust parameter = Hilltop plateau (easy to stay on top)
 - Sensitive parameter = Mountain peak (easy to fall off)
 
@@ -2069,33 +2069,33 @@ graph TB
     A[Optimal Parameters<br/>from Optimization] --> B[SensitivityAnalyzer]
     B --> C[Single-Parameter<br/>Variation]
     B --> D[Interaction<br/>Analysis]
-    
+
     C --> E[Calculate Metrics]
     E --> F[Variance]
     E --> G[Gradient]
     E --> H[Curvature]
-    
+
     F --> I[Stability Score]
     G --> I
     H --> I
-    
+
     I --> J{Classification}
     J -->|Score > 0.8| K[Robust]
     J -->|0.5 < Score ≤ 0.8| L[Moderate]
     J -->|Score ≤ 0.5| M[Sensitive/Overfit]
-    
+
     D --> N[2D Performance<br/>Surface]
     N --> O[Cross-Derivative]
     O --> P{Interaction?}
     P -->|Yes| Q[Optimize Jointly]
     P -->|No| R[Optimize Independently]
-    
+
     K --> S[Generate Report]
     L --> S
     M --> S
     Q --> S
     R --> S
-    
+
     S --> T[Recommendations]
 ```
 
@@ -2113,13 +2113,13 @@ class SensitivityAnalyzer:
         param_ranges: dict,
         calculate_ci: bool
     ) -> dict[str, SensitivityResult]
-    
+
     def analyze_interaction(
         param1: str,
         param2: str,
         objective: Callable
     ) -> InteractionResult
-    
+
     def plot_sensitivity(parameter_name: str) -> Figure
     def plot_interaction(param1: str, param2: str) -> Figure
     def generate_report() -> str
@@ -2508,7 +2508,7 @@ Stability metrics (gradient, curvature) assume smooth objective function.
 - Highly stochastic objectives (noisy backtests)
 - Discontinuous parameters (e.g., integer thresholds)
 
-**Mitigation**: 
+**Mitigation**:
 - Increase n_points for better gradient estimation
 - Use confidence intervals to quantify uncertainty
 
@@ -3246,7 +3246,7 @@ class NoiseInfusionResult:
 
 class NoiseInfusionSimulator:
     """Monte Carlo simulation with noise infusion for robustness testing."""
-    
+
     def __init__(
         self,
         n_simulations: int = 1000,
@@ -3257,7 +3257,7 @@ class NoiseInfusionSimulator:
     ):
         """Initialize noise infusion simulator."""
         ...
-    
+
     def run(
         self,
         data: pl.DataFrame,                  # OHLCV data
@@ -3265,7 +3265,7 @@ class NoiseInfusionSimulator:
     ) -> NoiseInfusionResult:
         """Run noise infusion simulation."""
         ...
-    
+
     def add_noise(
         self,
         data: pl.DataFrame,
@@ -3329,16 +3329,16 @@ def _fix_ohlcv_relationships(data: pl.DataFrame) -> pl.DataFrame:
     """Fix OHLCV constraints after noise."""
     # Adjust high to be max of all
     high = np.maximum.reduce([high, open, close])
-    
+
     # Adjust low to be min of all
     low = np.minimum.reduce([low, open, close])
-    
+
     # Ensure high ≥ low
     high = np.maximum(high, low + epsilon)
-    
+
     # Ensure volume ≥ 0
     volume = np.maximum(volume, 0)
-    
+
     return fixed_data
 ```
 
@@ -3501,7 +3501,7 @@ simulator = NoiseInfusionSimulator(n_simulations=1000, std_pct=0.01, seed=42)
 noise_result = simulator.run(data, backtest_with_best_params)
 
 # 4. Decision gate
-if (wf_result.is_consistent and 
+if (wf_result.is_consistent and
     noise_result.is_robust['sharpe_ratio']):
     print("✅ Strategy passed all validation tests → Ready for live trading")
 else:
@@ -3516,7 +3516,7 @@ def test_ohlcv_constraints_preserved():
     """Noisy data must satisfy OHLCV constraints."""
     sim = NoiseInfusionSimulator(seed=42)
     noisy_data = sim.add_noise(data)
-    
+
     assert (noisy_data['high'] >= noisy_data['low']).all()
     assert (noisy_data['high'] >= noisy_data['open']).all()
     assert (noisy_data['high'] >= noisy_data['close']).all()
@@ -3529,13 +3529,13 @@ def test_noise_amplitude_scaling(std_pct):
     """Higher noise amplitude increases variance."""
     sim1 = NoiseInfusionSimulator(std_pct=std_pct, seed=42)
     sim2 = NoiseInfusionSimulator(std_pct=std_pct*2, seed=43)
-    
+
     noisy1 = sim1.add_noise(data)
     noisy2 = sim2.add_noise(data)
-    
+
     var1 = np.var(noisy1['close'] - data['close'])
     var2 = np.var(noisy2['close'] - data['close'])
-    
+
     assert var2 > var1  # Higher amplitude → higher variance
 ```
 
@@ -3546,7 +3546,7 @@ def test_robust_vs_fragile_strategies():
     # Robust strategy (trend following)
     robust_result = simulator.run(data, robust_strategy)
     assert robust_result.degradation_pct['sharpe_ratio'] < Decimal('20')
-    
+
     # Fragile strategy (pattern matching)
     fragile_result = simulator.run(data, fragile_strategy)
     assert fragile_result.degradation_pct['sharpe_ratio'] > Decimal('50')
@@ -3576,7 +3576,7 @@ def run_parallel_noise_infusion(
             for i in range(n_simulations)
         ]
         results = [f.result() for f in futures]
-    
+
     return aggregate_results(results)
 ```
 
@@ -3606,4 +3606,3 @@ Noise infusion testing answers: **"Is my strategy overfit to noise-free historic
 - ✅ **Robust** (< 20% degradation): Deploy with confidence
 - ⚠️ **Moderate** (20-50%): Review strategy, consider simplification
 - ❌ **Fragile** (> 50%): Do not deploy, likely overfit
-

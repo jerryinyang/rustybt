@@ -6,9 +6,7 @@ MarketDataEvent objects for the event queue.
 
 import asyncio
 from decimal import Decimal
-from typing import List, Set
 
-import pandas as pd
 import structlog
 
 from rustybt.assets import Asset
@@ -28,11 +26,11 @@ class DataFeed:
             broker_adapter: Broker adapter for market data
         """
         self._broker = broker_adapter
-        self._subscribed_assets: Set[Asset] = set()
+        self._subscribed_assets: set[Asset] = set()
         self._running = False
         self._reconnect_delay = 5  # seconds
 
-    async def subscribe(self, assets: List[Asset]) -> None:
+    async def subscribe(self, assets: list[Asset]) -> None:
         """Subscribe to market data for assets.
 
         Args:
@@ -56,7 +54,7 @@ class DataFeed:
             total_subscriptions=len(self._subscribed_assets),
         )
 
-    async def unsubscribe(self, assets: List[Asset]) -> None:
+    async def unsubscribe(self, assets: list[Asset]) -> None:
         """Unsubscribe from market data.
 
         Args:
@@ -128,9 +126,7 @@ class DataFeed:
                     await self._broker.connect()
                     # Re-subscribe to assets after reconnect
                     if self._subscribed_assets:
-                        await self._broker.subscribe_market_data(
-                            list(self._subscribed_assets)
-                        )
+                        await self._broker.subscribe_market_data(list(self._subscribed_assets))
                     logger.info("broker_reconnected")
                 except Exception as e:
                     logger.error(
@@ -157,7 +153,7 @@ class DataFeed:
         """
         return asset in self._subscribed_assets
 
-    def get_subscribed_assets(self) -> List[Asset]:
+    def get_subscribed_assets(self) -> list[Asset]:
         """Get list of subscribed assets.
 
         Returns:

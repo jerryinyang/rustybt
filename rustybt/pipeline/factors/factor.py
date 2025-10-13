@@ -2,16 +2,15 @@
 factor.py
 """
 
-import numpy as np
-from operator import attrgetter
-from numbers import Number
 from math import ceil
+from numbers import Number
+from operator import attrgetter
 from textwrap import dedent
 
+import numpy as np
 from numpy import empty_like, inf, isnan, nan, where
 from scipy.stats import rankdata
 
-from rustybt.utils.compat import wraps
 from rustybt.errors import (
     BadPercentileBounds,
     UnknownRankMethod,
@@ -27,21 +26,21 @@ from rustybt.pipeline.dtypes import (
     FILTER_DTYPES,
 )
 from rustybt.pipeline.expression import (
-    BadBinaryOperator,
     COMPARISONS,
-    is_comparison,
     MATH_BINOPS,
-    method_name_for_op,
-    NumericalExpression,
     NUMEXPR_MATH_FUNCS,
     UNARY_OPS,
+    BadBinaryOperator,
+    NumericalExpression,
+    is_comparison,
+    method_name_for_op,
     unary_op_name,
 )
 from rustybt.pipeline.filters import (
     Filter,
+    MaximumFilter,
     NumExprFilter,
     PercentileFilter,
-    MaximumFilter,
 )
 from rustybt.pipeline.mixins import (
     CustomTermMixin,
@@ -52,6 +51,7 @@ from rustybt.pipeline.mixins import (
 )
 from rustybt.pipeline.sentinels import NotSpecified, NotSpecifiedType
 from rustybt.pipeline.term import AssetExists, ComputableTerm, Term
+from rustybt.utils.compat import wraps
 from rustybt.utils.functional import with_doc, with_name
 from rustybt.utils.input_validation import expect_types
 from rustybt.utils.math_utils import (
@@ -70,7 +70,6 @@ from rustybt.utils.numpy_utils import (
     is_missing,
 )
 from rustybt.utils.sharedoc import templated_docstring
-
 
 _RANK_METHODS = frozenset(["average", "min", "max", "dense", "ordinal"])
 
@@ -114,7 +113,7 @@ def binop_return_dtype(op, left, right):
     right : numpy.dtype
         Dtype of right hand side.
 
-    Returns
+    Returns:
     -------
     outdtype : numpy.dtype
         The dtype of the result of `left <op> right`.
@@ -122,21 +121,17 @@ def binop_return_dtype(op, left, right):
     if is_comparison(op):
         if left != right:
             raise TypeError(
-                "Don't know how to compute {left} {op} {right}.\n"
+                f"Don't know how to compute {left} {op} {right}.\n"
                 "Comparisons are only supported between Factors of equal "
-                "dtypes.".format(left=left, op=op, right=right)
+                "dtypes."
             )
         return bool_dtype
 
     elif left != float64_dtype or right != float64_dtype:
         raise TypeError(
-            "Don't know how to compute {left} {op} {right}.\n"
+            f"Don't know how to compute {left.name} {op} {right.name}.\n"
             "Arithmetic operators are only supported between Factors of "
-            "dtype 'float64'.".format(
-                left=left.name,
-                op=op,
-                right=right.name,
-            )
+            "dtype 'float64'."
         )
     return float64_dtype
 
@@ -209,11 +204,7 @@ def binary_operator(op):
                 other,
             )
             return return_type(
-                "({left}) {op} ({right})".format(
-                    left=self_expr,
-                    op=op,
-                    right=other_expr,
-                ),
+                f"({self_expr}) {op} ({other_expr})",
                 new_inputs,
                 dtype=binop_return_dtype(op, self.dtype, other.dtype),
             )
@@ -225,18 +216,18 @@ def binary_operator(op):
         elif isinstance(other, Term):
             if self is other:
                 return return_type(
-                    "x_0 {op} x_0".format(op=op),
+                    f"x_0 {op} x_0",
                     (self,),
                     dtype=binop_return_dtype(op, self.dtype, other.dtype),
                 )
             return return_type(
-                "x_0 {op} x_1".format(op=op),
+                f"x_0 {op} x_1",
                 (self, other),
                 dtype=binop_return_dtype(op, self.dtype, other.dtype),
             )
         elif isinstance(other, Number):
             return return_type(
-                "x_0 {op} ({constant})".format(op=op, constant=other),
+                f"x_0 {op} ({other})",
                 binds=(self,),
                 # .dtype access is safe here because coerce_numbers_to_my_dtype
                 # will convert any input numbers to numpy equivalents.
@@ -259,15 +250,10 @@ def reflected_binary_operator(op):
     @with_name(method_name_for_op(op, commute=True))
     @coerce_numbers_to_my_dtype
     def reflected_binary_operator(self, other):
-
         if isinstance(self, NumericalExpression):
             self_expr, other_expr, new_inputs = self.build_binary_op(op, other)
             return NumExprFactor(
-                "({left}) {op} ({right})".format(
-                    left=other_expr,
-                    right=self_expr,
-                    op=op,
-                ),
+                f"({other_expr}) {op} ({self_expr})",
                 new_inputs,
                 dtype=binop_return_dtype(op, other.dtype, self.dtype),
             )
@@ -276,7 +262,7 @@ def reflected_binary_operator(op):
         # the corresponding left-binding method will be called.
         elif isinstance(other, Number):
             return NumExprFactor(
-                "{constant} {op} x_0".format(op=op, constant=other),
+                f"{other} {op} x_0",
                 binds=(self,),
                 dtype=binop_return_dtype(op, other.dtype, self.dtype),
             )
@@ -299,14 +285,10 @@ def unary_operator(op):
     def unary_operator(self):
         if self.dtype != float64_dtype:
             raise TypeError(
-                "Can't apply unary operator {op!r} to instance of "
-                "{typename!r} with dtype {dtypename!r}.\n"
-                "{op!r} is only supported for Factors of dtype "
-                "'float64'.".format(
-                    op=op,
-                    typename=type(self).__name__,
-                    dtypename=self.dtype.name,
-                )
+                f"Can't apply unary operator {op!r} to instance of "
+                f"{type(self).__name__!r} with dtype {self.dtype.name!r}.\n"
+                f"{op!r} is only supported for Factors of dtype "
+                "'float64'."
             )
 
         # This can't be hoisted up a scope because the types returned by
@@ -314,13 +296,13 @@ def unary_operator(op):
         # invoked.
         if isinstance(self, NumericalExpression):
             return NumExprFactor(
-                "{op}({expr})".format(op=op, expr=self._expr),
+                f"{op}({self._expr})",
                 self.inputs,
                 dtype=float64_dtype,
             )
         else:
             return NumExprFactor(
-                "{op}x_0".format(op=op),
+                f"{op}x_0",
                 (self,),
                 dtype=float64_dtype,
             )
@@ -337,15 +319,13 @@ def function_application(func):
         raise ValueError("Unsupported mathematical function '%s'" % func)
 
     docstring = dedent(
-        """\
-        Construct a Factor that computes ``{}()`` on each output of ``self``.
+        f"""\
+        Construct a Factor that computes ``{func}()`` on each output of ``self``.
 
         Returns
         -------
         factor : zipline.pipeline.Factor
-        """.format(
-            func
-        )
+        """
     )
 
     @with_doc(docstring)
@@ -353,13 +333,13 @@ def function_application(func):
     def mathfunc(self):
         if isinstance(self, NumericalExpression):
             return NumExprFactor(
-                "{func}({expr})".format(func=func, expr=self._expr),
+                f"{func}({self._expr})",
                 self.inputs,
                 dtype=float64_dtype,
             )
         else:
             return NumExprFactor(
-                "{func}(x_0)".format(func=func),
+                f"{func}(x_0)",
                 (self,),
                 dtype=float64_dtype,
             )
@@ -448,7 +428,7 @@ def summary_method(name):
            If supplied, we ignore asset/date pairs where ``mask`` produces
            ``False``.
 
-        Returns
+        Returns:
         -------
         result : zipline.pipeline.Factor
         """
@@ -509,16 +489,11 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         }
     )
     clsdict.update(
-        {
-            method_name_for_op(op, commute=True): reflected_binary_operator(op)
-            for op in MATH_BINOPS
-        }
+        {method_name_for_op(op, commute=True): reflected_binary_operator(op) for op in MATH_BINOPS}
     )
     clsdict.update({unary_op_name(op): unary_operator(op) for op in UNARY_OPS})
 
-    clsdict.update(
-        {funcname: function_application(funcname) for funcname in NUMEXPR_MATH_FUNCS}
-    )
+    clsdict.update({funcname: function_application(funcname) for funcname in NUMEXPR_MATH_FUNCS})
 
     __truediv__ = clsdict["__div__"]
     __rtruediv__ = clsdict["__rdiv__"]
@@ -556,7 +531,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         groupby : zipline.pipeline.Classifier, optional
             A classifier defining partitions over which to compute means.
 
-        Examples
+        Examples:
         --------
         Let ``f`` be a Factor which would produce the following output::
 
@@ -632,7 +607,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
             2017-03-15 -0.500  0.500    NaN  0.000
             2017-03-16 -0.500  0.500  0.000    NaN
 
-        Notes
+        Notes:
         -----
         Mean is sensitive to the magnitudes of outliers. When working with
         factor that can potentially produce large outliers, it is often useful
@@ -646,7 +621,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
 
         ``demean()`` is only supported on Factors of dtype float64.
 
-        See Also
+        See Also:
         --------
         :meth:`pandas.DataFrame.groupby`
         """
@@ -689,12 +664,12 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         groupby : zipline.pipeline.Classifier, optional
             A classifier defining partitions over which to compute Z-Scores.
 
-        Returns
+        Returns:
         -------
         zscored : zipline.pipeline.Factor
             A Factor producing that z-scores the output of self.
 
-        Notes
+        Notes:
         -----
         Mean and standard deviation are sensitive to the magnitudes of
         outliers. When working with factor that can potentially produce large
@@ -708,12 +683,12 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
 
         ``zscore()`` is only supported on Factors of dtype float64.
 
-        Examples
+        Examples:
         --------
         See :meth:`~zipline.pipeline.Factor.demean` for an in-depth
         example of the semantics for ``mask`` and ``groupby``.
 
-        See Also
+        See Also:
         --------
         :meth:`pandas.DataFrame.groupby`
         """
@@ -728,9 +703,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
             window_safe=True,
         )
 
-    def rank(
-        self, method="ordinal", ascending=True, mask=NotSpecified, groupby=NotSpecified
-    ):
+    def rank(self, method="ordinal", ascending=True, mask=NotSpecified, groupby=NotSpecified):
         """
         Construct a new Factor representing the sorted rank of each column
         within each row.
@@ -751,13 +724,13 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         groupby : zipline.pipeline.Classifier, optional
             A classifier defining partitions over which to perform ranking.
 
-        Returns
+        Returns:
         -------
         ranks : zipline.pipeline.Factor
             A new factor that will compute the ranking of the data produced by
             `self`.
 
-        Notes
+        Notes:
         -----
         The default value for `method` is different from the default for
         `scipy.stats.rankdata`.  See that function's documentation for a full
@@ -766,11 +739,10 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         Missing or non-existent data on a given day will cause an asset to be
         given a rank of NaN for that day.
 
-        See Also
+        See Also:
         --------
         :func:`scipy.stats.rankdata`
         """
-
         if groupby is NotSpecified:
             return Rank(self, method=method, ascending=ascending, mask=mask)
 
@@ -810,17 +782,17 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
             A Filter describing which assets should have their correlation with
             the target slice computed each day.
 
-        Returns
+        Returns:
         -------
         correlations : zipline.pipeline.Factor
             A new Factor that will compute correlations between ``target`` and
             the columns of ``self``.
 
-        Notes
+        Notes:
         -----
         {CORRELATION_METHOD_NOTE}
 
-        Examples
+        Examples:
         --------
         Suppose we want to create a factor that computes the correlation
         between AAPL's 10-day returns and the 10-day returns of all other
@@ -839,7 +811,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
                 target=sid(24), returns_length=10, correlation_length=30,
             )
 
-        See Also
+        See Also:
         --------
         :func:`scipy.stats.pearsonr`
         :class:`zipline.pipeline.factors.RollingPearsonOfReturns`
@@ -879,17 +851,17 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
             A Filter describing which assets should have their correlation with
             the target slice computed each day.
 
-        Returns
+        Returns:
         -------
         correlations : zipline.pipeline.Factor
             A new Factor that will compute correlations between ``target`` and
             the columns of ``self``.
 
-        Notes
+        Notes:
         -----
         {CORRELATION_METHOD_NOTE}
 
-        Examples
+        Examples:
         --------
         Suppose we want to create a factor that computes the correlation
         between AAPL's 10-day returns and the 10-day returns of all other
@@ -908,7 +880,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
                 target=sid(24), returns_length=10, correlation_length=30,
             )
 
-        See Also
+        See Also:
         --------
         :func:`scipy.stats.spearmanr`
         :meth:`Factor.pearsonr`
@@ -946,17 +918,17 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
             A Filter describing which assets should be regressed with the
             target slice each day.
 
-        Returns
+        Returns:
         -------
         regressions : zipline.pipeline.Factor
             A new Factor that will compute linear regressions of `target`
             against the columns of `self`.
 
-        Notes
+        Notes:
         -----
         {CORRELATION_METHOD_NOTE}
 
-        Examples
+        Examples:
         --------
         Suppose we want to create a factor that regresses AAPL's 10-day returns
         against the 10-day returns of all other assets, computing each
@@ -974,7 +946,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
                 target=sid(24), returns_length=10, regression_length=30,
             )
 
-        See Also
+        See Also:
         --------
         :func:`scipy.stats.linregress`
         """
@@ -994,9 +966,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         groupby=(Classifier, NotSpecifiedType),
     )
     @float64_only
-    def winsorize(
-        self, min_percentile, max_percentile, mask=NotSpecified, groupby=NotSpecified
-    ):
+    def winsorize(self, min_percentile, max_percentile, mask=NotSpecified, groupby=NotSpecified):
         """
         Construct a new factor that winsorizes the result of this factor.
 
@@ -1030,12 +1000,12 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         groupby : zipline.pipeline.Classifier, optional
             A classifier defining partitions over which to winsorize.
 
-        Returns
+        Returns:
         -------
         winsorized : zipline.pipeline.Factor
             A Factor producing a winsorized version of self.
 
-        Examples
+        Examples:
         --------
         .. code-block:: python
 
@@ -1067,7 +1037,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
             Asset_5    5        5          5          4
             Asset_6    6        5          5          4
 
-        See Also
+        See Also:
         --------
         :func:`scipy.stats.mstats.winsorize`
         :meth:`pandas.DataFrame.groupby`
@@ -1107,7 +1077,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         mask : zipline.pipeline.Filter, optional
             Mask of values to ignore when computing quantiles.
 
-        Returns
+        Returns:
         -------
         quantiles : zipline.pipeline.Classifier
             A classifier producing integer labels ranging from 0 to (bins - 1).
@@ -1133,7 +1103,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         mask : zipline.pipeline.Filter, optional
             Mask of values to ignore when computing quartiles.
 
-        Returns
+        Returns:
         -------
         quartiles : zipline.pipeline.Classifier
             A classifier producing integer labels ranging from 0 to 3.
@@ -1157,7 +1127,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         mask : zipline.pipeline.Filter, optional
             Mask of values to ignore when computing quintiles.
 
-        Returns
+        Returns:
         -------
         quintiles : zipline.pipeline.Classifier
             A classifier producing integer labels ranging from 0 to 4.
@@ -1181,7 +1151,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         mask : zipline.pipeline.Filter, optional
             Mask of values to ignore when computing deciles.
 
-        Returns
+        Returns:
         -------
         deciles : zipline.pipeline.Classifier
             A classifier producing integer labels ranging from 0 to 9.
@@ -1206,7 +1176,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         groupby : zipline.pipeline.Classifier, optional
             A classifier defining partitions over which to perform ranking.
 
-        Returns
+        Returns:
         -------
         filter : zipline.pipeline.Filter
         """
@@ -1234,7 +1204,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         groupby : zipline.pipeline.Classifier, optional
             A classifier defining partitions over which to perform ranking.
 
-        Returns
+        Returns:
         -------
         filter : zipline.pipeline.Filter
         """
@@ -1261,7 +1231,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
             True.  Assets for which ``mask`` produces False will produce False
             in the output of this Factor as well.
 
-        Returns
+        Returns:
         -------
         out : zipline.pipeline.Filter
             A new filter that will compute the specified percentile-range mask.
@@ -1278,7 +1248,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         """
         A Filter producing True for all values where this Factor is NaN.
 
-        Returns
+        Returns:
         -------
         nanfilter : zipline.pipeline.Filter
         """
@@ -1289,7 +1259,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         """
         A Filter producing True for values where this Factor is not NaN.
 
-        Returns
+        Returns:
         -------
         nanfilter : zipline.pipeline.Filter
         """
@@ -1320,7 +1290,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
         mask : zipline.pipeline.Filter, optional
             A Filter representing assets to consider when clipping.
 
-        Notes
+        Notes:
         -----
         To only clip values on one side, ``-np.inf` and ``np.inf`` may be
         passed.  For example, to only clip the maximum value but not clip a
@@ -1330,7 +1300,7 @@ class Factor(RestrictedDTypeMixin, ComputableTerm):
 
            factor.clip(min_bound=-np.inf, max_bound=user_provided_max)
 
-        See Also
+        See Also:
         --------
         numpy.clip
         """
@@ -1360,7 +1330,7 @@ class NumExprFactor(NumericalExpression, Factor):
     binds : tuple
        A tuple of factors to use as inputs.
 
-    Notes
+    Notes:
     -----
     NumExprFactors are constructed by numerical operators like `+` and `-`.
     Users should rarely need to construct a NumExprFactor directly.
@@ -1392,13 +1362,13 @@ class GroupedRowTransform(Factor):
     transform_args : tuple[hashable]
         Additional positional arguments to forward to ``transform``.
 
-    Notes
+    Notes:
     -----
     Users should rarely construct instances of this factor directly.  Instead,
     they should construct instances via factor normalization methods like
     ``zscore`` and ``demean`` or using ``rank`` with ``groupby``.
 
-    See Also
+    See Also:
     --------
     zipline.pipeline.Factor.zscore
     zipline.pipeline.Factor.demean
@@ -1418,7 +1388,6 @@ class GroupedRowTransform(Factor):
         mask,
         **kwargs,
     ):
-
         if mask is NotSpecified:
             mask = factor.mask
         else:
@@ -1490,12 +1459,12 @@ class Rank(SingleInputMixin, Factor):
         `scipy.stats.rankdata` for a full description of the semantics for each
         ranking method.
 
-    See Also
+    See Also:
     --------
     :func:`scipy.stats.rankdata`
     :class:`Factor.rank`
 
-    Notes
+    Notes:
     -----
     Most users should call Factor.rank rather than directly construct an
     instance of this class.
@@ -1556,21 +1525,13 @@ class Rank(SingleInputMixin, Factor):
             # Don't include mask in repr if it's the default.
             mask_info = ""
         else:
-            mask_info = ", mask={}".format(self.mask.recursive_repr())
+            mask_info = f", mask={self.mask.recursive_repr()}"
 
-        return "{type}({input_}, method='{method}'{mask_info})".format(
-            type=type(self).__name__,
-            input_=self.inputs[0].recursive_repr(),
-            method=self._method,
-            mask_info=mask_info,
-        )
+        return f"{type(self).__name__}({self.inputs[0].recursive_repr()}, method='{self._method}'{mask_info})"
 
     def graph_repr(self):
         # Graphviz interprets `\l` as "divide label into lines, left-justified"
-        return "Rank:\\l  method: {!r}\\l  mask: {}\\l".format(
-            self._method,
-            type(self.mask).__name__,
-        )
+        return f"Rank:\\l  method: {self._method!r}\\l  mask: {type(self.mask).__name__}\\l"
 
 
 class CustomFactor(PositiveWindowLengthMixin, CustomTermMixin, Factor):
@@ -1599,7 +1560,7 @@ class CustomFactor(PositiveWindowLengthMixin, CustomTermMixin, Factor):
         which ``mask`` produced True on the day for which compute is being
         called.
 
-    Notes
+    Notes:
     -----
     Users implementing their own Factors should subclass CustomFactor and
     implement a method named `compute` with the following signature:
@@ -1636,9 +1597,8 @@ class CustomFactor(PositiveWindowLengthMixin, CustomTermMixin, Factor):
     3rd, 2014, the column of input data for asset A will have 9 leading NaNs
     for the preceding days on which data was not yet available.
 
-    Examples
+    Examples:
     --------
-
     A CustomFactor with pre-declared defaults:
 
     .. code-block:: python
@@ -1748,21 +1708,13 @@ class CustomFactor(PositiveWindowLengthMixin, CustomTermMixin, Factor):
                 return super(CustomFactor, self).__getattribute__(name)
             except AttributeError as exc:
                 raise AttributeError(
-                    "Instance of {factor} has no output named {attr!r}. "
-                    "Possible choices are: {choices}.".format(
-                        factor=type(self).__name__,
-                        attr=name,
-                        choices=self.outputs,
-                    )
+                    f"Instance of {type(self).__name__} has no output named {name!r}. "
+                    f"Possible choices are: {self.outputs}."
                 ) from exc
 
     def __iter__(self):
         if self.outputs is NotSpecified:
-            raise ValueError(
-                "{factor} does not have multiple outputs.".format(
-                    factor=type(self).__name__,
-                )
-            )
+            raise ValueError(f"{type(self).__name__} does not have multiple outputs.")
         return (RecarrayField(self, attr) for attr in self.outputs)
 
 
@@ -1798,7 +1750,7 @@ class RecarrayField(SingleInputMixin, Factor):
         return windows[0][self._attribute]
 
     def graph_repr(self):
-        return "{}.{}".format(self.inputs[0].recursive_repr(), self._attribute)
+        return f"{self.inputs[0].recursive_repr()}.{self._attribute}"
 
 
 class Latest(LatestMixin, CustomFactor):
@@ -1827,7 +1779,7 @@ class DailySummary(SingleInputMixin, Factor):
         # requires extra care for handling NaT.
         if dtype != float64_dtype:
             raise AssertionError(
-                "DailySummary only supports float64 dtype, got {}".format(dtype),
+                f"DailySummary only supports float64 dtype, got {dtype}",
             )
 
         return super(DailySummary, cls).__new__(

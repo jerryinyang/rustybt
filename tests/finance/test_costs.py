@@ -6,11 +6,11 @@ integration with the DecimalLedger.
 """
 
 from decimal import Decimal
-from pathlib import Path
 
 import pandas as pd
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from rustybt.finance.costs import (
     AssetClass,
@@ -22,7 +22,6 @@ from rustybt.finance.costs import (
     CSVFinancingRateProvider,
     DictBorrowRateProvider,
     DictFinancingRateProvider,
-    FinancingDirection,
     FinancingRateLoadError,
     FinancingResult,
     OvernightFinancingModel,
@@ -67,9 +66,7 @@ def test_daily_accrual_calculation_easy_to_borrow():
     current_time = pd.Timestamp("2023-01-01")
 
     # Calculate daily cost
-    daily_cost, annual_rate = model.calculate_daily_cost(
-        symbol, position_value, current_time
-    )
+    daily_cost, annual_rate = model.calculate_daily_cost(symbol, position_value, current_time)
 
     # Expected: $15,000 × (0.003 / 365) = $0.12328767...
     expected_daily_cost = position_value * (Decimal("0.003") / Decimal("365"))
@@ -94,9 +91,7 @@ def test_daily_accrual_calculation_hard_to_borrow():
     current_time = pd.Timestamp("2021-01-15")
 
     # Calculate daily cost
-    daily_cost, annual_rate = model.calculate_daily_cost(
-        symbol, position_value, current_time
-    )
+    daily_cost, annual_rate = model.calculate_daily_cost(symbol, position_value, current_time)
 
     # Expected: $20,000 × (0.25 / 365) = $13.698630...
     expected_daily_cost = position_value * (Decimal("0.25") / Decimal("365"))
@@ -162,9 +157,7 @@ def test_default_rate_fallback():
     current_time = pd.Timestamp("2023-01-01")
 
     # Known symbol
-    daily_cost_aapl, rate_aapl = model.calculate_daily_cost(
-        "AAPL", position_value, current_time
-    )
+    daily_cost_aapl, rate_aapl = model.calculate_daily_cost("AAPL", position_value, current_time)
     assert rate_aapl == Decimal("0.003")
 
     # Unknown symbol (should use default)
@@ -212,7 +205,7 @@ def test_cost_accumulation_over_30_days():
         position.last_sale_price = Decimal("250.00")
 
         # Accrue borrow costs
-        result = model.accrue_costs(ledger, current_time)
+        model.accrue_costs(ledger, current_time)
 
         accumulated_costs.append(position.accumulated_borrow_cost)
 
@@ -237,24 +230,16 @@ def test_rate_type_classification():
     provider = DictBorrowRateProvider({})
 
     # Easy to borrow
-    assert (
-        provider.get_rate_type("AAPL", Decimal("0.003"))
-        == BorrowRateType.EASY_TO_BORROW
-    )
+    assert provider.get_rate_type("AAPL", Decimal("0.003")) == BorrowRateType.EASY_TO_BORROW
 
     # Moderate
     assert provider.get_rate_type("TSLA", Decimal("0.015")) == BorrowRateType.MODERATE
 
     # Hard to borrow
-    assert (
-        provider.get_rate_type("GME", Decimal("0.25")) == BorrowRateType.HARD_TO_BORROW
-    )
+    assert provider.get_rate_type("GME", Decimal("0.25")) == BorrowRateType.HARD_TO_BORROW
 
     # Extremely hard
-    assert (
-        provider.get_rate_type("DWAC", Decimal("0.80"))
-        == BorrowRateType.EXTREMELY_HARD
-    )
+    assert provider.get_rate_type("DWAC", Decimal("0.80")) == BorrowRateType.EXTREMELY_HARD
 
 
 # ============================================================================
@@ -464,12 +449,8 @@ def test_borrow_cost_result_structure():
 
 
 @given(
-    position_value=st.decimals(
-        min_value=Decimal("1"), max_value=Decimal("1000000"), places=2
-    ),
-    annual_rate=st.decimals(
-        min_value=Decimal("0"), max_value=Decimal("1"), places=4
-    ),
+    position_value=st.decimals(min_value=Decimal("1"), max_value=Decimal("1000000"), places=2),
+    annual_rate=st.decimals(min_value=Decimal("0"), max_value=Decimal("1"), places=4),
 )
 def test_costs_always_reduce_profitability(position_value, annual_rate):
     """Property: Borrow costs always reduce profitability (never negative costs)."""
@@ -488,12 +469,8 @@ def test_costs_always_reduce_profitability(position_value, annual_rate):
 
 
 @given(
-    position_value=st.decimals(
-        min_value=Decimal("1"), max_value=Decimal("1000000"), places=2
-    ),
-    annual_rate=st.decimals(
-        min_value=Decimal("0"), max_value=Decimal("1"), places=4
-    ),
+    position_value=st.decimals(min_value=Decimal("1"), max_value=Decimal("1000000"), places=2),
+    annual_rate=st.decimals(min_value=Decimal("0"), max_value=Decimal("1"), places=4),
 )
 def test_daily_rate_bounds(position_value, annual_rate):
     """Property: Daily rate is always between 0 and annual_rate/365."""
@@ -506,15 +483,9 @@ def test_daily_rate_bounds(position_value, annual_rate):
 
 
 @given(
-    position_value=st.decimals(
-        min_value=Decimal("1"), max_value=Decimal("100000"), places=2
-    ),
-    annual_rate=st.decimals(
-        min_value=Decimal("0.001"), max_value=Decimal("1"), places=4
-    ),
-    scale_factor=st.decimals(
-        min_value=Decimal("1"), max_value=Decimal("10"), places=2
-    ),
+    position_value=st.decimals(min_value=Decimal("1"), max_value=Decimal("100000"), places=2),
+    annual_rate=st.decimals(min_value=Decimal("0.001"), max_value=Decimal("1"), places=4),
+    scale_factor=st.decimals(min_value=Decimal("1"), max_value=Decimal("10"), places=2),
 )
 def test_cost_proportional_to_position_size(position_value, annual_rate, scale_factor):
     """Property: Borrow cost scales linearly with position size."""
@@ -522,9 +493,7 @@ def test_cost_proportional_to_position_size(position_value, annual_rate, scale_f
     model = BorrowCostModel(provider)
 
     # Calculate cost for base position
-    cost1, _ = model.calculate_daily_cost(
-        "TEST", position_value, pd.Timestamp("2023-01-01")
-    )
+    cost1, _ = model.calculate_daily_cost("TEST", position_value, pd.Timestamp("2023-01-01"))
 
     # Calculate cost for scaled position
     cost2, _ = model.calculate_daily_cost(
@@ -539,9 +508,7 @@ def test_cost_proportional_to_position_size(position_value, annual_rate, scale_f
 
 
 @given(
-    annual_rate=st.decimals(
-        min_value=Decimal("0.001"), max_value=Decimal("1"), places=4
-    ),
+    annual_rate=st.decimals(min_value=Decimal("0.001"), max_value=Decimal("1"), places=4),
 )
 def test_annual_cost_approximates_rate(annual_rate):
     """Property: Cost over 365 days approximates annual rate × position value."""
@@ -550,9 +517,7 @@ def test_annual_cost_approximates_rate(annual_rate):
     model = BorrowCostModel(provider, days_in_year=365)
 
     # Calculate daily cost
-    daily_cost, _ = model.calculate_daily_cost(
-        "TEST", position_value, pd.Timestamp("2023-01-01")
-    )
+    daily_cost, _ = model.calculate_daily_cost("TEST", position_value, pd.Timestamp("2023-01-01"))
 
     # Property: Annual cost ≈ annual_rate × position_value
     # (over 365 days)
@@ -741,21 +706,15 @@ def test_leveraged_exposure_calculation():
     model = OvernightFinancingModel(provider)
 
     # Case 1: $100k position with $50k cash = $50k leverage
-    exposure1 = model.calculate_leveraged_exposure(
-        Decimal("100000.00"), Decimal("50000.00")
-    )
+    exposure1 = model.calculate_leveraged_exposure(Decimal("100000.00"), Decimal("50000.00"))
     assert exposure1 == Decimal("50000.00")
 
     # Case 2: $100k position with $100k cash = $0 leverage (no financing)
-    exposure2 = model.calculate_leveraged_exposure(
-        Decimal("100000.00"), Decimal("100000.00")
-    )
+    exposure2 = model.calculate_leveraged_exposure(Decimal("100000.00"), Decimal("100000.00"))
     assert exposure2 == Decimal("0")
 
     # Case 3: $100k position with $25k cash = $75k leverage (4x)
-    exposure3 = model.calculate_leveraged_exposure(
-        Decimal("100000.00"), Decimal("25000.00")
-    )
+    exposure3 = model.calculate_leveraged_exposure(Decimal("100000.00"), Decimal("25000.00"))
     assert exposure3 == Decimal("75000.00")
 
 
@@ -887,20 +846,14 @@ USD/JPY,forex,0.00,0.012
     provider = CSVFinancingRateProvider(csv_path)
 
     # Test long rate
-    aapl_long = provider.get_long_rate(
-        "AAPL", AssetClass.EQUITY, pd.Timestamp("2023-01-01")
-    )
+    aapl_long = provider.get_long_rate("AAPL", AssetClass.EQUITY, pd.Timestamp("2023-01-01"))
     assert aapl_long == Decimal("0.05")
 
     # Test short rates
-    eur_short = provider.get_short_rate(
-        "EUR/USD", AssetClass.FOREX, pd.Timestamp("2023-01-01")
-    )
+    eur_short = provider.get_short_rate("EUR/USD", AssetClass.FOREX, pd.Timestamp("2023-01-01"))
     assert eur_short == Decimal("-0.005")
 
-    jpy_short = provider.get_short_rate(
-        "USD/JPY", AssetClass.FOREX, pd.Timestamp("2023-01-01")
-    )
+    jpy_short = provider.get_short_rate("USD/JPY", AssetClass.FOREX, pd.Timestamp("2023-01-01"))
     assert jpy_short == Decimal("0.012")
 
 
@@ -957,9 +910,7 @@ def test_leveraged_equity_strategy_over_time():
     # Expected daily financing: $50k leverage × (5% / 365) = $6.85/day
     # 30 days: $6.85 × 30 = $205.48
     total_financing = sum(daily_financing_amounts, Decimal("0"))
-    expected_total = (
-        Decimal("50000.00") * (Decimal("0.05") / Decimal("365")) * Decimal("30")
-    )
+    expected_total = Decimal("50000.00") * (Decimal("0.05") / Decimal("365")) * Decimal("30")
 
     assert abs(total_financing - expected_total) < Decimal("0.01")
 
@@ -977,12 +928,8 @@ def test_leveraged_equity_strategy_over_time():
 
 
 @given(
-    leveraged_exposure=st.decimals(
-        min_value=Decimal("1"), max_value=Decimal("1000000"), places=2
-    ),
-    annual_rate=st.decimals(
-        min_value=Decimal("0.001"), max_value=Decimal("0.20"), places=4
-    ),
+    leveraged_exposure=st.decimals(min_value=Decimal("1"), max_value=Decimal("1000000"), places=2),
+    annual_rate=st.decimals(min_value=Decimal("0.001"), max_value=Decimal("0.20"), places=4),
 )
 def test_financing_proportional_to_exposure(leveraged_exposure, annual_rate):
     """Property: Financing cost scales linearly with leveraged exposure."""
@@ -1009,12 +956,8 @@ def test_financing_proportional_to_exposure(leveraged_exposure, annual_rate):
 
 
 @given(
-    leveraged_exposure=st.decimals(
-        min_value=Decimal("1"), max_value=Decimal("1000000"), places=2
-    ),
-    annual_rate=st.decimals(
-        min_value=Decimal("0.001"), max_value=Decimal("0.20"), places=4
-    ),
+    leveraged_exposure=st.decimals(min_value=Decimal("1"), max_value=Decimal("1000000"), places=2),
+    annual_rate=st.decimals(min_value=Decimal("0.001"), max_value=Decimal("0.20"), places=4),
 )
 def test_long_leverage_always_pays(leveraged_exposure, annual_rate):
     """Property: Long leverage always pays interest (never receives)."""
@@ -1030,12 +973,8 @@ def test_long_leverage_always_pays(leveraged_exposure, annual_rate):
 
 
 @given(
-    position_value=st.decimals(
-        min_value=Decimal("1000"), max_value=Decimal("1000000"), places=2
-    ),
-    cash_used=st.decimals(
-        min_value=Decimal("100"), max_value=Decimal("1000000"), places=2
-    ),
+    position_value=st.decimals(min_value=Decimal("1000"), max_value=Decimal("1000000"), places=2),
+    cash_used=st.decimals(min_value=Decimal("100"), max_value=Decimal("1000000"), places=2),
 )
 def test_leveraged_exposure_bounds(position_value, cash_used):
     """Property: Leveraged exposure is always non-negative and <= position value."""
@@ -1052,9 +991,7 @@ def test_leveraged_exposure_bounds(position_value, cash_used):
 
 
 @given(
-    annual_rate=st.decimals(
-        min_value=Decimal("0.001"), max_value=Decimal("0.20"), places=4
-    ),
+    annual_rate=st.decimals(min_value=Decimal("0.001"), max_value=Decimal("0.20"), places=4),
     days_in_year=st.sampled_from([360, 365]),
 )
 def test_annual_financing_approximates_rate(annual_rate, days_in_year):

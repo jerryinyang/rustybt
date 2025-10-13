@@ -38,7 +38,6 @@ import asyncio
 import random
 from decimal import Decimal, getcontext
 from pathlib import Path
-from typing import List, Optional
 
 import httpx
 import pandas as pd
@@ -86,11 +85,7 @@ class CustomAPIDataSource(DataSource):
     """
 
     def __init__(
-        self,
-        api_url: str,
-        api_key: str,
-        rate_limit_per_second: int = 5,
-        timeout: int = 30
+        self, api_url: str, api_key: str, rate_limit_per_second: int = 5, timeout: int = 30
     ):
         """Initialize custom data source.
 
@@ -100,7 +95,7 @@ class CustomAPIDataSource(DataSource):
             rate_limit_per_second: Maximum requests per second
             timeout: Request timeout in seconds
         """
-        self.api_url = api_url.rstrip('/')
+        self.api_url = api_url.rstrip("/")
         self.api_key = api_key
         self.timeout = timeout
 
@@ -108,18 +103,12 @@ class CustomAPIDataSource(DataSource):
         self.client = httpx.AsyncClient(timeout=timeout)
 
         logger.info(
-            "custom_adapter_initialized",
-            api_url=self.api_url,
-            rate_limit=rate_limit_per_second
+            "custom_adapter_initialized", api_url=self.api_url, rate_limit=rate_limit_per_second
         )
 
     @with_retry(max_retries=3, initial_delay=1.0, backoff_factor=2.0)
     async def fetch(
-        self,
-        symbols: List[str],
-        start: pd.Timestamp,
-        end: pd.Timestamp,
-        frequency: str
+        self, symbols: list[str], start: pd.Timestamp, end: pd.Timestamp, frequency: str
     ) -> pl.DataFrame:
         """Fetch OHLCV data from custom API.
 
@@ -149,7 +138,7 @@ class CustomAPIDataSource(DataSource):
             symbols=symbols,
             start=start.isoformat(),
             end=end.isoformat(),
-            frequency=frequency
+            frequency=frequency,
         )
 
         all_data = []
@@ -157,35 +146,25 @@ class CustomAPIDataSource(DataSource):
         for symbol in symbols:
             # Fetch data for each symbol
             try:
-                symbol_data = await self._fetch_symbol(
-                    symbol, start, end, frequency
-                )
+                symbol_data = await self._fetch_symbol(symbol, start, end, frequency)
                 all_data.append(symbol_data)
 
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 429:
                     # Rate limit exceeded
                     raise RateLimitError(
-                        f"Rate limit exceeded for {symbol}",
-                        adapter="custom_api",
-                        reset_after=60.0
+                        f"Rate limit exceeded for {symbol}", adapter="custom_api", reset_after=60.0
                     )
                 elif e.response.status_code >= 500:
                     # Server error - retry
-                    raise NetworkError(
-                        f"Server error for {symbol}: {e}",
-                        adapter="custom_api"
-                    )
+                    raise NetworkError(f"Server error for {symbol}: {e}", adapter="custom_api")
                 else:
                     # Client error - don't retry
                     logger.error("api_error", symbol=symbol, status=e.response.status_code)
                     raise
 
             except httpx.TimeoutException as e:
-                raise NetworkError(
-                    f"Timeout fetching {symbol}: {e}",
-                    adapter="custom_api"
-                )
+                raise NetworkError(f"Timeout fetching {symbol}: {e}", adapter="custom_api")
 
         # Combine all symbols into single DataFrame
         if not all_data:
@@ -201,11 +180,7 @@ class CustomAPIDataSource(DataSource):
         return df
 
     async def _fetch_symbol(
-        self,
-        symbol: str,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
-        frequency: str
+        self, symbol: str, start: pd.Timestamp, end: pd.Timestamp, frequency: str
     ) -> pl.DataFrame:
         """Fetch data for a single symbol.
 
@@ -226,12 +201,9 @@ class CustomAPIDataSource(DataSource):
             "start": start.isoformat(),
             "end": end.isoformat(),
             "frequency": frequency,
-            "format": "json"
+            "format": "json",
         }
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Accept": "application/json"
-        }
+        headers = {"Authorization": f"Bearer {self.api_key}", "Accept": "application/json"}
 
         # Make API request
         response = await self.client.get(url, params=params, headers=headers)
@@ -247,40 +219,54 @@ class CustomAPIDataSource(DataSource):
 
         rows = []
         for record in data["data"]:
-            rows.append({
-                "symbol": symbol,
-                "date": pd.Timestamp(record["timestamp"]).date() if frequency.endswith('d') else pd.Timestamp(record["timestamp"]),
-                "open": Decimal(str(record["open"])),
-                "high": Decimal(str(record["high"])),
-                "low": Decimal(str(record["low"])),
-                "close": Decimal(str(record["close"])),
-                "volume": Decimal(str(record["volume"])),
-            })
+            rows.append(
+                {
+                    "symbol": symbol,
+                    "date": (
+                        pd.Timestamp(record["timestamp"]).date()
+                        if frequency.endswith("d")
+                        else pd.Timestamp(record["timestamp"])
+                    ),
+                    "open": Decimal(str(record["open"])),
+                    "high": Decimal(str(record["high"])),
+                    "low": Decimal(str(record["low"])),
+                    "close": Decimal(str(record["close"])),
+                    "volume": Decimal(str(record["volume"])),
+                }
+            )
 
         if not rows:
             return pl.DataFrame()
 
         # Create DataFrame with proper types
-        if frequency.endswith('d'):
+        if frequency.endswith("d"):
             # Daily data - use date
-            df = pl.DataFrame(rows).with_columns([
-                pl.col("date").cast(pl.Date),
-                pl.col("open").cast(pl.Decimal(18, 8)),
-                pl.col("high").cast(pl.Decimal(18, 8)),
-                pl.col("low").cast(pl.Decimal(18, 8)),
-                pl.col("close").cast(pl.Decimal(18, 8)),
-                pl.col("volume").cast(pl.Decimal(18, 8))
-            ])
+            df = pl.DataFrame(rows).with_columns(
+                [
+                    pl.col("date").cast(pl.Date),
+                    pl.col("open").cast(pl.Decimal(18, 8)),
+                    pl.col("high").cast(pl.Decimal(18, 8)),
+                    pl.col("low").cast(pl.Decimal(18, 8)),
+                    pl.col("close").cast(pl.Decimal(18, 8)),
+                    pl.col("volume").cast(pl.Decimal(18, 8)),
+                ]
+            )
         else:
             # Intraday data - use timestamp
-            df = pl.DataFrame(rows).rename({"date": "timestamp"}).with_columns([
-                pl.col("timestamp").cast(pl.Datetime),
-                pl.col("open").cast(pl.Decimal(18, 8)),
-                pl.col("high").cast(pl.Decimal(18, 8)),
-                pl.col("low").cast(pl.Decimal(18, 8)),
-                pl.col("close").cast(pl.Decimal(18, 8)),
-                pl.col("volume").cast(pl.Decimal(18, 8))
-            ])
+            df = (
+                pl.DataFrame(rows)
+                .rename({"date": "timestamp"})
+                .with_columns(
+                    [
+                        pl.col("timestamp").cast(pl.Datetime),
+                        pl.col("open").cast(pl.Decimal(18, 8)),
+                        pl.col("high").cast(pl.Decimal(18, 8)),
+                        pl.col("low").cast(pl.Decimal(18, 8)),
+                        pl.col("close").cast(pl.Decimal(18, 8)),
+                        pl.col("volume").cast(pl.Decimal(18, 8)),
+                    ]
+                )
+            )
 
         return df
 
@@ -302,34 +288,31 @@ class CustomAPIDataSource(DataSource):
 
         if not required_cols.issubset(actual_cols):
             missing = required_cols - actual_cols
-            raise DataValidationError(
-                f"Missing required columns: {missing}",
-                adapter="custom_api"
-            )
+            raise DataValidationError(f"Missing required columns: {missing}", adapter="custom_api")
 
         # Validate OHLCV relationships (high >= low, etc.)
         invalid_rows = df.filter(
-            (pl.col("high") < pl.col("low")) |
-            (pl.col("close") > pl.col("high")) |
-            (pl.col("close") < pl.col("low")) |
-            (pl.col("open") > pl.col("high")) |
-            (pl.col("open") < pl.col("low"))
+            (pl.col("high") < pl.col("low"))
+            | (pl.col("close") > pl.col("high"))
+            | (pl.col("close") < pl.col("low"))
+            | (pl.col("open") > pl.col("high"))
+            | (pl.col("open") < pl.col("low"))
         )
 
         if len(invalid_rows) > 0:
             raise DataValidationError(
                 f"Found {len(invalid_rows)} rows with invalid OHLCV relationships",
-                adapter="custom_api"
+                adapter="custom_api",
             )
 
     def ingest_to_bundle(
         self,
         bundle_name: str,
-        symbols: List[str],
+        symbols: list[str],
         start: pd.Timestamp,
         end: pd.Timestamp,
         frequency: str,
-        **kwargs
+        **kwargs,
     ) -> Path:
         """Ingest data and create bundle.
 
@@ -355,7 +338,7 @@ class CustomAPIDataSource(DataSource):
             start=start,
             end=end,
             frequency=frequency,
-            **kwargs
+            **kwargs,
         )
 
     def get_metadata(self) -> DataSourceMetadata:
@@ -371,7 +354,7 @@ class CustomAPIDataSource(DataSource):
             supports_live=False,  # Set True if supports real-time streaming
             supported_frequencies=["1d", "1h", "5m", "1m"],
             rate_limit=300,  # Requests per minute
-            requires_auth=True
+            requires_auth=True,
         )
 
     def supports_live(self) -> bool:
@@ -400,20 +383,16 @@ class MockAPIDataSource(CustomAPIDataSource):
     """
 
     async def _fetch_symbol(
-        self,
-        symbol: str,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
-        frequency: str
+        self, symbol: str, start: pd.Timestamp, end: pd.Timestamp, frequency: str
     ) -> pl.DataFrame:
         """Generate mock data instead of fetching from API."""
         # Generate date range
         if frequency == "1d":
-            dates = pd.date_range(start=start, end=end, freq='D')
+            dates = pd.date_range(start=start, end=end, freq="D")
         elif frequency == "1h":
-            dates = pd.date_range(start=start, end=end, freq='H')
+            dates = pd.date_range(start=start, end=end, freq="H")
         else:
-            dates = pd.date_range(start=start, end=end, freq='5min')
+            dates = pd.date_range(start=start, end=end, freq="5min")
 
         # Generate fake OHLCV data
         base_price = Decimal("100")
@@ -428,37 +407,47 @@ class MockAPIDataSource(CustomAPIDataSource):
             close_price = min(max(close_price, low_price), high_price)
             volume = Decimal(str(random.randint(100000, 1000000)))
 
-            rows.append({
-                "symbol": symbol,
-                "date": date.date() if frequency == "1d" else date,
-                "open": open_price,
-                "high": high_price,
-                "low": low_price,
-                "close": close_price,
-                "volume": volume
-            })
+            rows.append(
+                {
+                    "symbol": symbol,
+                    "date": date.date() if frequency == "1d" else date,
+                    "open": open_price,
+                    "high": high_price,
+                    "low": low_price,
+                    "close": close_price,
+                    "volume": volume,
+                }
+            )
 
             base_price = close_price
 
         # Create DataFrame
         if frequency == "1d":
-            df = pl.DataFrame(rows).with_columns([
-                pl.col("date").cast(pl.Date),
-                pl.col("open").cast(pl.Decimal(18, 8)),
-                pl.col("high").cast(pl.Decimal(18, 8)),
-                pl.col("low").cast(pl.Decimal(18, 8)),
-                pl.col("close").cast(pl.Decimal(18, 8)),
-                pl.col("volume").cast(pl.Decimal(18, 8))
-            ])
+            df = pl.DataFrame(rows).with_columns(
+                [
+                    pl.col("date").cast(pl.Date),
+                    pl.col("open").cast(pl.Decimal(18, 8)),
+                    pl.col("high").cast(pl.Decimal(18, 8)),
+                    pl.col("low").cast(pl.Decimal(18, 8)),
+                    pl.col("close").cast(pl.Decimal(18, 8)),
+                    pl.col("volume").cast(pl.Decimal(18, 8)),
+                ]
+            )
         else:
-            df = pl.DataFrame(rows).rename({"date": "timestamp"}).with_columns([
-                pl.col("timestamp").cast(pl.Datetime),
-                pl.col("open").cast(pl.Decimal(18, 8)),
-                pl.col("high").cast(pl.Decimal(18, 8)),
-                pl.col("low").cast(pl.Decimal(18, 8)),
-                pl.col("close").cast(pl.Decimal(18, 8)),
-                pl.col("volume").cast(pl.Decimal(18, 8))
-            ])
+            df = (
+                pl.DataFrame(rows)
+                .rename({"date": "timestamp"})
+                .with_columns(
+                    [
+                        pl.col("timestamp").cast(pl.Datetime),
+                        pl.col("open").cast(pl.Decimal(18, 8)),
+                        pl.col("high").cast(pl.Decimal(18, 8)),
+                        pl.col("low").cast(pl.Decimal(18, 8)),
+                        pl.col("close").cast(pl.Decimal(18, 8)),
+                        pl.col("volume").cast(pl.Decimal(18, 8)),
+                    ]
+                )
+            )
 
         return df
 
@@ -472,9 +461,7 @@ async def main():
     # Create custom adapter (using mock version for demo)
     print("\n[1/4] Initializing custom data source...")
     source = MockAPIDataSource(
-        api_url="https://api.example.com/v1",
-        api_key="mock_api_key",
-        rate_limit_per_second=5
+        api_url="https://api.example.com/v1", api_key="mock_api_key", rate_limit_per_second=5
     )
     print("✓ Data source initialized")
 
@@ -488,11 +475,11 @@ async def main():
         symbols=["AAPL", "MSFT"],
         start=pd.Timestamp("2023-01-01"),
         end=pd.Timestamp("2023-03-31"),
-        frequency="1d"
+        frequency="1d",
     )
 
     print(f"✓ Fetched {len(data)} rows")
-    print(f"\nSample data:")
+    print("\nSample data:")
     print(data.head(10))
 
     # Display metadata
@@ -511,7 +498,7 @@ async def main():
         symbols=["AAPL", "MSFT"],
         start=pd.Timestamp("2023-01-01"),
         end=pd.Timestamp("2023-03-31"),
-        frequency="1d"
+        frequency="1d",
     )
     print(f"✓ Bundle created: {bundle_path}")
 

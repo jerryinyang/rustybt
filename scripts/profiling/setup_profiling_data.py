@@ -7,7 +7,6 @@ for fast setup without requiring external APIs or network access.
 
 import sys
 from pathlib import Path
-from decimal import Decimal
 
 import pandas as pd
 import structlog
@@ -15,9 +14,7 @@ import structlog
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from rustybt.data.bundles import register, ingest
-from rustybt.assets.synthetic import make_simple_equity_info
-from rustybt.data.polars.parquet_writer import ParquetWriter
+from rustybt.data.bundles import ingest, register
 
 logger = structlog.get_logger(__name__)
 
@@ -95,7 +92,7 @@ def generate_synthetic_ohlcv(
         np.random.seed(hash(symbol) % (2**32))  # Deterministic per symbol
 
         # Starting price based on symbol hash (between $10-$200)
-        base_price = 10 + ((hash(symbol) % 190))
+        base_price = 10 + (hash(symbol) % 190)
 
         # Generate price series with realistic volatility
         returns = np.random.normal(0, 0.02, len(dates))  # 2% daily volatility
@@ -172,7 +169,9 @@ def profiling_daily_bundle(
     end = pd.Timestamp("2026-10-01", tz="UTC")
 
     # Generate synthetic data using the trading calendar
-    df = generate_synthetic_ohlcv(symbols=symbols, start=start, end=end, frequency="1d", calendar=calendar)
+    df = generate_synthetic_ohlcv(
+        symbols=symbols, start=start, end=end, frequency="1d", calendar=calendar
+    )
 
     # Create asset metadata
     equity_info = pd.DataFrame(
@@ -232,7 +231,9 @@ def profiling_hourly_bundle(
     end = pd.Timestamp("2025-01-01", tz="UTC")
 
     # Generate minute-level synthetic data (hourly scenario aggregates from minutes)
-    df = generate_synthetic_ohlcv(symbols=symbols, start=start, end=end, frequency="1m", calendar=calendar)
+    df = generate_synthetic_ohlcv(
+        symbols=symbols, start=start, end=end, frequency="1m", calendar=calendar
+    )
 
     # Create asset metadata
     equity_info = pd.DataFrame(
@@ -292,7 +293,9 @@ def profiling_minute_bundle(
     end = pd.Timestamp("2024-11-15", tz="UTC")
 
     # Generate minute-level synthetic data aligned to calendar market minutes
-    df = generate_synthetic_ohlcv(symbols=symbols, start=start, end=end, frequency="1m", calendar=calendar)
+    df = generate_synthetic_ohlcv(
+        symbols=symbols, start=start, end=end, frequency="1m", calendar=calendar
+    )
 
     # Create asset metadata
     equity_info = pd.DataFrame(

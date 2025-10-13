@@ -29,14 +29,12 @@ async def main():
     print("✓ Data source initialized")
 
     # Test parameters
-    symbols = ["AAPL", "MSFT"]
     assets = [
         Equity(sid=1, symbol="AAPL"),
         Equity(sid=2, symbol="MSFT"),
     ]
-    start = pd.Timestamp("2024-01-01")
-    end = pd.Timestamp("2024-01-31")
-    frequency = "1d"
+    pd.Timestamp("2024-01-01")
+    pd.Timestamp("2024-01-31")
 
     # === Test 1: Without caching ===
     print("\n[2/5] Testing WITHOUT caching...")
@@ -46,7 +44,7 @@ async def main():
     )
 
     start_time = time.time()
-    df1 = await portal_no_cache.get_spot_value(
+    await portal_no_cache.get_spot_value(
         assets=assets,
         field="close",
         dt=pd.Timestamp("2024-01-15"),
@@ -63,7 +61,7 @@ async def main():
     )
 
     start_time = time.time()
-    df2 = await portal_with_cache.get_spot_value(
+    await portal_with_cache.get_spot_value(
         assets=assets,
         field="close",
         dt=pd.Timestamp("2024-01-15"),
@@ -77,7 +75,7 @@ async def main():
     print("\n[4/5] Testing WITH caching (second fetch - cache hit)...")
 
     start_time = time.time()
-    df3 = await portal_with_cache.get_spot_value(
+    await portal_with_cache.get_spot_value(
         assets=assets,
         field="close",
         dt=pd.Timestamp("2024-01-15"),
@@ -90,7 +88,9 @@ async def main():
     # === Performance Summary ===
     print("\n[5/5] Performance Summary:")
     print(f"  No cache: {no_cache_time:.3f}s")
-    print(f"  Cache miss: {cache_miss_time:.3f}s (write overhead: {cache_miss_time - no_cache_time:.3f}s)")
+    print(
+        f"  Cache miss: {cache_miss_time:.3f}s (write overhead: {cache_miss_time - no_cache_time:.3f}s)"
+    )
     print(f"  Cache hit: {cache_hit_time:.3f}s")
 
     if cache_hit_time > 0:

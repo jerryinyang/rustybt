@@ -1,8 +1,9 @@
 """Unit tests for ExecutionQualityTracker."""
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
+
+import pytest
 
 from rustybt.live.shadow.config import ShadowTradingConfig
 from rustybt.live.shadow.execution_tracker import ExecutionQualityTracker

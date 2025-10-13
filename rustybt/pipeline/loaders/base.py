@@ -29,7 +29,7 @@ class PipelineLoader(ABC):
             which we believe the requested assets were alive/tradeable. This is
             used for optimization by some loaders.
 
-        Returns
+        Returns:
         -------
         arrays : dict[BoundColumn -> zipline.lib.adjusted_array.AdjustedArray]
             Map from column to an AdjustedArray representing a point-in-time

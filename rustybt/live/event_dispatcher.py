@@ -5,7 +5,7 @@ handler functions based on event type.
 """
 
 import asyncio
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from collections.abc import Awaitable, Callable
 
 import structlog
 
@@ -22,7 +22,7 @@ class EventDispatcher:
 
     def __init__(self) -> None:
         """Initialize event dispatcher."""
-        self._handlers: Dict[str, List[HandlerFunc]] = {}
+        self._handlers: dict[str, list[HandlerFunc]] = {}
 
     def register_handler(self, event_type: str, handler: HandlerFunc) -> None:
         """Register a handler for an event type.
@@ -49,13 +49,11 @@ class EventDispatcher:
         if event_type in self._handlers:
             try:
                 self._handlers[event_type].remove(handler)
-                logger.debug("handler_unregistered", event_type=event_type, handler=handler.__name__)
-            except ValueError:
-                logger.warning(
-                    "handler_not_found",
-                    event_type=event_type,
-                    handler=handler.__name__
+                logger.debug(
+                    "handler_unregistered", event_type=event_type, handler=handler.__name__
                 )
+            except ValueError:
+                logger.warning("handler_not_found", event_type=event_type, handler=handler.__name__)
 
     async def dispatch(self, event: Event) -> None:
         """Dispatch event to all registered handlers.
@@ -77,7 +75,7 @@ class EventDispatcher:
             "dispatching_event",
             event_type=event_type,
             handler_count=len(handlers),
-            priority=event.priority
+            priority=event.priority,
         )
 
         # Execute all handlers concurrently
@@ -102,7 +100,7 @@ class EventDispatcher:
                 event_type=event.event_type,
                 handler=handler.__name__,
                 error=str(e),
-                exc_info=True
+                exc_info=True,
             )
 
     def get_handler_count(self, event_type: str) -> int:
@@ -116,7 +114,7 @@ class EventDispatcher:
         """
         return len(self._handlers.get(event_type, []))
 
-    def clear_handlers(self, event_type: Optional[str] = None) -> None:
+    def clear_handlers(self, event_type: str | None = None) -> None:
         """Clear handlers for event type or all handlers.
 
         Args:

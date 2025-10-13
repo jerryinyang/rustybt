@@ -67,13 +67,9 @@ class StreamConfig:
         if self.bar_resolution <= 0:
             raise ValueError(f"bar_resolution must be positive, got {self.bar_resolution}")
         if self.heartbeat_interval <= 0:
-            raise ValueError(
-                f"heartbeat_interval must be positive, got {self.heartbeat_interval}"
-            )
+            raise ValueError(f"heartbeat_interval must be positive, got {self.heartbeat_interval}")
         if self.heartbeat_timeout <= 0:
-            raise ValueError(
-                f"heartbeat_timeout must be positive, got {self.heartbeat_timeout}"
-            )
+            raise ValueError(f"heartbeat_timeout must be positive, got {self.heartbeat_timeout}")
         if self.reconnect_delay <= 0:
             raise ValueError(f"reconnect_delay must be positive, got {self.reconnect_delay}")
         if self.reconnect_max_delay < self.reconnect_delay:

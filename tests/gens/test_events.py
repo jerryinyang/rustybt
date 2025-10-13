@@ -180,9 +180,7 @@ class TestPriceThresholdTrigger:
     def test_invalid_field(self):
         """Test trigger rejects invalid field."""
         with pytest.raises(ValueError, match="must be 'open', 'high', 'low', or 'close'"):
-            PriceThresholdTrigger(
-                "AAPL", Decimal("100"), direction="above", field="invalid"
-            )
+            PriceThresholdTrigger("AAPL", Decimal("100"), direction="above", field="invalid")
 
     def test_crossing_above_threshold(self):
         """Test trigger detects price crossing above threshold."""
@@ -227,9 +225,7 @@ class TestPriceThresholdTrigger:
         trigger = PriceThresholdTrigger("AAPL", Decimal("100.00"), direction="above")
 
         # Below threshold
-        trigger.should_trigger(
-            pd.Timestamp("2023-01-01"), {"AAPL": {"close": Decimal("99.00")}}
-        )
+        trigger.should_trigger(pd.Timestamp("2023-01-01"), {"AAPL": {"close": Decimal("99.00")}})
 
         # Exactly at threshold - should trigger
         assert trigger.should_trigger(
@@ -248,9 +244,7 @@ class TestPriceThresholdTrigger:
 
     def test_different_price_fields(self):
         """Test trigger works with different price fields."""
-        trigger = PriceThresholdTrigger(
-            "AAPL", Decimal("100.00"), direction="above", field="high"
-        )
+        trigger = PriceThresholdTrigger("AAPL", Decimal("100.00"), direction="above", field="high")
 
         # High crosses threshold
         assert not trigger.should_trigger(

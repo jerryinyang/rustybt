@@ -1,8 +1,7 @@
 """Pipeline hooks for tracking and displaying progress."""
 
-from collections import namedtuple
 import time
-
+from collections import namedtuple
 
 from rustybt.utils.compat import contextmanager, escape_html
 from rustybt.utils.string_formatting import bulleted_list
@@ -122,7 +121,7 @@ class ProgressModel:
     end_date : pd.Timestamp
         End date of the range over which ``plan`` will be computed.
 
-    Methods
+    Methods:
     -------
     start_chunk(start_date, end_date)
     finish_chunk(start_date, end_date)
@@ -133,7 +132,7 @@ class ProgressModel:
     finish_compute_term(term)
     finish(success)
 
-    Attributes
+    Attributes:
     ----------
     state : {'init', 'loading', 'computing', 'error', 'success'}
         Current state of the execution.
@@ -276,7 +275,8 @@ except ImportError:
     HAVE_WIDGETS = False
 
 try:
-    from IPython.display import display, HTML as IPython_HTML
+    from IPython.display import HTML as IPython_HTML
+    from IPython.display import display
 
     HAVE_IPYTHON = True
 except ImportError:
@@ -298,7 +298,7 @@ class IPythonWidgetProgressPublisher:
         if missing:
             raise ValueError(
                 "IPythonWidgetProgressPublisher needs ipywidgets and IPython:"
-                "\nMissing:\n{}".format(bulleted_list(missing))
+                f"\nMissing:\n{bulleted_list(missing)}"
             )
 
         # Heading for progress display.
@@ -317,7 +317,7 @@ class IPythonWidgetProgressPublisher:
             max=100.0,
             bar_style="info",
             # Leave enough space for the percent indicator.
-            layout={"width": "calc(100% - {})".format(indicator_width)},
+            layout={"width": f"calc(100% - {indicator_width})"},
         )
         bar_and_percent = ipywidgets.HBox([self._percent_indicator, self._bar])
 
@@ -363,11 +363,7 @@ class IPythonWidgetProgressPublisher:
             self._details_body.value = details_heading + term_list
 
             chunk_start, chunk_end = model.current_chunk_bounds
-            self._heading.value = (
-                "<b>Running Pipeline</b>: Chunk Start={}, Chunk End={}".format(
-                    chunk_start.date(), chunk_end.date()
-                )
-            )
+            self._heading.value = f"<b>Running Pipeline</b>: Chunk Start={chunk_start.date()}, Chunk End={chunk_end.date()}"
 
             self._set_progress(model.percent_complete)
 
@@ -378,9 +374,7 @@ class IPythonWidgetProgressPublisher:
             self._stop_displaying()
             display(
                 IPython_HTML(
-                    "<b>Pipeline Execution Time:</b> {}".format(
-                        self._format_execution_time(model.execution_time)
-                    )
+                    f"<b>Pipeline Execution Time:</b> {self._format_execution_time(model.execution_time)}"
                 ),
             )
 
@@ -389,7 +383,7 @@ class IPythonWidgetProgressPublisher:
             self._stop_displaying()
         else:
             self._layout.close()
-            raise ValueError("Unknown display state: {!r}".format(model.state))
+            raise ValueError(f"Unknown display state: {model.state!r}")
 
     def _ensure_displayed(self):
         if not self._displayed:
@@ -401,16 +395,12 @@ class IPythonWidgetProgressPublisher:
 
     @staticmethod
     def _render_term_list(terms):
-        list_elements = "".join(
-            ["<li><pre>{}</pre></li>".format(repr_htmlsafe(t)) for t in terms]
-        )
-        return "<ul>{}</ul>".format(list_elements)
+        list_elements = "".join([f"<li><pre>{repr_htmlsafe(t)}</pre></li>" for t in terms])
+        return f"<ul>{list_elements}</ul>"
 
     def _set_progress(self, percent_complete):
         self._bar.value = percent_complete
-        self._percent_indicator.value = "<b>{:.2f}% Complete</b>".format(
-            percent_complete
-        )
+        self._percent_indicator.value = f"<b>{percent_complete:.2f}% Complete</b>"
 
     @staticmethod
     def _format_execution_time(total_seconds):
@@ -421,7 +411,7 @@ class IPythonWidgetProgressPublisher:
         total_seconds : float
             Number of seconds elapsed.
 
-        Returns
+        Returns:
         -------
         formatted : str
             User-facing text representation of elapsed time.
@@ -452,7 +442,7 @@ class IPythonWidgetProgressPublisher:
                 seconds=seconds,
             )
         else:
-            return "{seconds:.2f} Seconds".format(seconds=seconds)
+            return f"{seconds:.2f} Seconds"
 
 
 class TestingProgressPublisher:
@@ -492,6 +482,6 @@ def repr_htmlsafe(t):
     try:
         r = repr(t)
     except Exception:
-        r = "(Error Displaying {})".format(type(t).__name__)
+        r = f"(Error Displaying {type(t).__name__})"
 
     return escape_html(str(r), quote=True)

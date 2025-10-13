@@ -1,14 +1,15 @@
 """Unit tests for DecimalOrder."""
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
 
+import pytest
+
 from rustybt.finance.decimal import (
     DecimalOrder,
+    InsufficientPrecisionError,
     InvalidPriceError,
     InvalidQuantityError,
-    InsufficientPrecisionError,
 )
 from rustybt.finance.decimal.config import DecimalConfig
 
@@ -389,12 +390,12 @@ def test_trailing_stop_with_percent(equity_asset):
 
     # Initial price: $100
     order.update_trailing_stop(Decimal("100.00"))
-    expected_stop = Decimal("100.00") * (Decimal("1") - Decimal("0.05"))
+    Decimal("100.00") * (Decimal("1") - Decimal("0.05"))
     assert order.stop == Decimal("95.00")
 
     # Price rises to $110 (new high for sell)
     order.update_trailing_stop(Decimal("110.00"))
-    expected_stop = Decimal("110.00") * (Decimal("1") - Decimal("0.05"))
+    Decimal("110.00") * (Decimal("1") - Decimal("0.05"))
     assert order.stop == Decimal("104.50")  # 110 * 0.95
 
 
@@ -409,12 +410,12 @@ def test_trailing_stop_buy_with_percent(equity_asset):
 
     # Initial price: $100
     order.update_trailing_stop(Decimal("100.00"))
-    expected_stop = Decimal("100.00") * (Decimal("1") + Decimal("0.05"))
+    Decimal("100.00") * (Decimal("1") + Decimal("0.05"))
     assert order.stop == Decimal("105.00")
 
     # Price drops to $90 (new low for buy)
     order.update_trailing_stop(Decimal("90.00"))
-    expected_stop = Decimal("90.00") * (Decimal("1") + Decimal("0.05"))
+    Decimal("90.00") * (Decimal("1") + Decimal("0.05"))
     assert order.stop == Decimal("94.50")  # 90 * 1.05
 
 

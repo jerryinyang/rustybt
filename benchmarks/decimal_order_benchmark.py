@@ -6,17 +6,20 @@ order execution.
 Run with: pytest benchmarks/decimal_order_benchmark.py --benchmark-only
 """
 
-import pytest
-from decimal import Decimal
 from collections import namedtuple
+from decimal import Decimal
 
-from rustybt.finance.decimal.order import DecimalOrder
-from rustybt.finance.decimal.commission import PerShareCommission, PerDollarCommission
+import pytest
+
 from rustybt.assets import Equity
+from rustybt.finance.decimal.commission import PerDollarCommission, PerShareCommission
+from rustybt.finance.decimal.order import DecimalOrder
 
 # Test fixture for exchange info
-ExchangeInfo = namedtuple('ExchangeInfo', ['canonical_name', 'name', 'country_code'])
-TEST_EXCHANGE = ExchangeInfo(canonical_name='NYSE', name='New York Stock Exchange', country_code='US')
+ExchangeInfo = namedtuple("ExchangeInfo", ["canonical_name", "name", "country_code"])
+TEST_EXCHANGE = ExchangeInfo(
+    canonical_name="NYSE", name="New York Stock Exchange", country_code="US"
+)
 
 
 @pytest.mark.benchmark(group="order-creation")
@@ -26,6 +29,7 @@ def test_order_creation_1000_orders(benchmark):
     Expected: ~50-100 milliseconds for 1000 orders
     Target (Epic 7): <30 milliseconds
     """
+
     def create_orders():
         orders = []
         for i in range(1, 1001):
@@ -189,6 +193,7 @@ def test_fractional_quantity_orders_1000(benchmark):
     Tests precision handling for fractional shares/crypto.
     Expected: ~60-120 milliseconds for 1000 orders
     """
+
     def create_fractional_orders():
         orders = []
         for i in range(1, 1001):
@@ -218,6 +223,7 @@ def test_order_arithmetic_operations_10000(benchmark):
     Expected: ~10-30 milliseconds for 10000 operations
     Target (Epic 7): <5 milliseconds (Rust optimization)
     """
+
     def arithmetic_operations():
         results = []
         for i in range(1, 10001):

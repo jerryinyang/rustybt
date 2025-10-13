@@ -22,60 +22,83 @@ def test_portfolio_value_invariant(cash, positions):
 
 ## Hypothesis Profiles
 
-RustyBT configures four Hypothesis profiles:
+RustyBT configures three Hypothesis profiles in `pyproject.toml`:
 
-### Quick Profile (Default for Local Development)
+### Default Profile
+- **Examples**: 1000 per test
+- **Use**: Standard development and comprehensive testing
+- **Activate**: `pytest -m property` (default)
+
+### Quick Profile
 - **Examples**: 100 per test
 - **Use**: Fast feedback during development
-- **Activate**: Default, or set `HYPOTHESIS_PROFILE=quick`
-
-### Thorough Profile (Pre-Commit)
-- **Examples**: 1000 per test
-- **Use**: Comprehensive testing before committing
-- **Activate**: `HYPOTHESIS_PROFILE=thorough pytest tests/property_tests/`
+- **Activate**: `pytest -m property --hypothesis-profile=quick`
 
 ### CI Profile (GitHub Actions)
-- **Examples**: 500 per test
-- **Verbosity**: Verbose output for debugging
+- **Examples**: 1000 per test
+- **Derandomize**: true (reproducible results)
 - **Use**: Automated CI/CD pipeline
-- **Activate**: `HYPOTHESIS_PROFILE=ci` (set in GitHub Actions)
+- **Activate**: `pytest -m property --hypothesis-profile=ci`
 
-### Debug Profile (Investigation)
-- **Examples**: 10 per test
-- **Verbosity**: Debug level with detailed output
-- **Use**: Investigating test failures
-- **Activate**: `HYPOTHESIS_PROFILE=debug pytest tests/property_tests/test_ledger_properties.py -v`
+**Configuration** (`pyproject.toml`):
+```toml
+[tool.hypothesis]
+database_file = ".hypothesis/examples.db"
+
+[tool.hypothesis.profiles]
+default = { max_examples = 1000 }
+ci = { max_examples = 1000, derandomize = true }
+quick = { max_examples = 100 }
+```
 
 ## Running Property Tests
 
-### Run all property tests (quick profile):
+### Run all property tests (default - 1000 examples):
 ```bash
-pytest tests/property_tests/
+pytest -m property
 ```
 
-### Run with thorough profile (1000 examples):
+### Run with quick profile (100 examples):
 ```bash
-HYPOTHESIS_PROFILE=thorough pytest tests/property_tests/
+pytest -m property --hypothesis-profile=quick
+```
+
+### Run with CI profile (deterministic):
+```bash
+pytest -m property --hypothesis-profile=ci
 ```
 
 ### Run specific test file:
 ```bash
-pytest tests/property_tests/test_ledger_properties.py
+pytest tests/finance/test_decimal_properties.py -m property
 ```
 
 ### Run with Hypothesis statistics:
 ```bash
-pytest tests/property_tests/ --hypothesis-show-statistics
+pytest -m property --hypothesis-show-statistics
 ```
 
-### Debug a failing test:
+### Run with coverage:
 ```bash
-HYPOTHESIS_PROFILE=debug pytest tests/property_tests/test_ledger_properties.py::test_portfolio_value_accounting_identity -v
+pytest -m property --cov=rustybt --cov-report=term
 ```
+
+## Example Implementation
+
+For a complete example of property-based testing for Decimal arithmetic, see:
+- **`tests/finance/test_decimal_properties.py`** - 19 comprehensive property tests covering:
+  - Commutativity (addition, multiplication)
+  - Associativity (addition, multiplication)
+  - Identity (additive, multiplicative)
+  - Precision (Decimal vs float)
+  - Division by zero handling
+  - Distributivity
+  - Inverse operations
+  - Edge cases (very small, very large, negative numbers)
 
 ## Custom Strategies
 
-RustyBT provides custom Hypothesis strategies for financial data in `tests/property_tests/strategies.py`:
+Example strategies for financial data:
 
 ### Decimal Prices
 ```python

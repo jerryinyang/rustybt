@@ -1,7 +1,8 @@
-"""Simple common factors.
-"""
+"""Simple common factors."""
 
 from numbers import Number
+
+import numpy as np
 from numpy import (
     arange,
     average,
@@ -14,11 +15,14 @@ from numpy import (
     log,
     # NINF,
     sqrt,
-    sum as np_sum,
     unique,
+)
+from numpy import (
     errstate as np_errstate,
 )
-import numpy as np
+from numpy import (
+    sum as np_sum,
+)
 
 from rustybt.pipeline.data import EquityPricing
 from rustybt.utils.input_validation import expect_types
@@ -34,8 +38,8 @@ from rustybt.utils.numpy_utils import (
     # ignore_nanwarnings,
 )
 
-from .factor import CustomFactor
 from ..mixins import SingleInputMixin
+from .factor import CustomFactor
 
 
 class Returns(CustomFactor):
@@ -53,8 +57,8 @@ class Returns(CustomFactor):
         if self.window_length < 2:
             raise ValueError(
                 "'Returns' expected a window length of at least 2, but was "
-                "given {window_length}. For daily returns, use a window "
-                "length of 2.".format(window_length=self.window_length)
+                f"given {self.window_length}. For daily returns, use a window "
+                "length of 2."
             )
 
     def compute(self, today, assets, out, close):
@@ -69,7 +73,7 @@ class PercentChange(SingleInputMixin, CustomFactor):
 
     **Default Window Length:** None
 
-    Notes
+    Notes:
     -----
     Percent change is calculated as ``(new - old) / abs(old)``.
     """
@@ -81,9 +85,9 @@ class PercentChange(SingleInputMixin, CustomFactor):
         if self.window_length < 2:
             raise ValueError(
                 "'PercentChange' expected a window length"
-                "of at least 2, but was given {window_length}. "
+                f"of at least 2, but was given {self.window_length}. "
                 "For daily percent change, use a window "
-                "length of 2.".format(window_length=self.window_length)
+                "length of 2."
             )
 
     def compute(self, today, assets, out, values):
@@ -198,7 +202,7 @@ def exponential_weights(length, decay_rate):
     decay_rate : float
         The rate at which entries in the weight vector increase or decrease.
 
-    Returns
+    Returns:
     -------
     weights : ndarray[float64]
     """
@@ -227,7 +231,7 @@ class _ExponentialWeightedFactor(SingleInputMixin, CustomFactor):
 
             decay_rate, decay_rate ** 2, decay_rate ** 3, ...
 
-    Methods
+    Methods:
     -------
     weights
     from_span
@@ -246,7 +250,7 @@ class _ExponentialWeightedFactor(SingleInputMixin, CustomFactor):
         Forwards `decay_rate` as `1 - (2.0 / (1 + span))`.  This provides the
         behavior equivalent to passing `span` to pandas.ewma.
 
-        Examples
+        Examples:
         --------
         .. code-block:: python
 
@@ -262,7 +266,7 @@ class _ExponentialWeightedFactor(SingleInputMixin, CustomFactor):
                 span=15,
             )
 
-        Notes
+        Notes:
         -----
         This classmethod is provided by both
         :class:`ExponentialWeightedMovingAverage` and
@@ -274,9 +278,7 @@ class _ExponentialWeightedFactor(SingleInputMixin, CustomFactor):
         decay_rate = 1.0 - (2.0 / (1.0 + span))
         assert 0.0 < decay_rate <= 1.0
 
-        return cls(
-            inputs=inputs, window_length=window_length, decay_rate=decay_rate, **kwargs
-        )
+        return cls(inputs=inputs, window_length=window_length, decay_rate=decay_rate, **kwargs)
 
     @classmethod
     @expect_types(halflife=Number)
@@ -288,7 +290,7 @@ class _ExponentialWeightedFactor(SingleInputMixin, CustomFactor):
         Forwards ``decay_rate`` as ``exp(log(.5) / halflife)``.  This provides
         the behavior equivalent to passing `halflife` to pandas.ewma.
 
-        Examples
+        Examples:
         --------
         .. code-block:: python
 
@@ -304,22 +306,18 @@ class _ExponentialWeightedFactor(SingleInputMixin, CustomFactor):
                 halflife=15,
             )
 
-        Notes
+        Notes:
         -----
         This classmethod is provided by both
         :class:`ExponentialWeightedMovingAverage` and
         :class:`ExponentialWeightedMovingStdDev`.
         """
         if halflife <= 0:
-            raise ValueError(
-                "`span` must be a positive number. %s was passed." % halflife
-            )
+            raise ValueError("`span` must be a positive number. %s was passed." % halflife)
         decay_rate = exp(log(0.5) / halflife)
         assert 0.0 < decay_rate <= 1.0
 
-        return cls(
-            inputs=inputs, window_length=window_length, decay_rate=decay_rate, **kwargs
-        )
+        return cls(inputs=inputs, window_length=window_length, decay_rate=decay_rate, **kwargs)
 
     @classmethod
     def from_center_of_mass(cls, inputs, window_length, center_of_mass, **kwargs):
@@ -330,7 +328,7 @@ class _ExponentialWeightedFactor(SingleInputMixin, CustomFactor):
         Forwards `decay_rate` as `1 - (1 / 1 + center_of_mass)`.  This provides
         behavior equivalent to passing `center_of_mass` to pandas.ewma.
 
-        Examples
+        Examples:
         --------
         .. code-block:: python
 
@@ -346,7 +344,7 @@ class _ExponentialWeightedFactor(SingleInputMixin, CustomFactor):
                 center_of_mass=15,
             )
 
-        Notes
+        Notes:
         -----
         This classmethod is provided by both
         :class:`ExponentialWeightedMovingAverage` and
@@ -382,11 +380,11 @@ class ExponentialWeightedMovingAverage(_ExponentialWeightedFactor):
 
             decay_rate, decay_rate ** 2, decay_rate ** 3, ...
 
-    Notes
+    Notes:
     -----
     - This class can also be imported under the name ``EWMA``.
 
-    See Also
+    See Also:
     --------
     :meth:`pandas.DataFrame.ewm`
     """
@@ -421,11 +419,11 @@ class ExponentialWeightedMovingStdDev(_ExponentialWeightedFactor):
 
             decay_rate, decay_rate ** 2, decay_rate ** 3, ...
 
-    Notes
+    Notes:
     -----
     - This class can also be imported under the name ``EWMSTD``.
 
-    See Also
+    See Also:
     --------
     :func:`pandas.DataFrame.ewm`
     """
@@ -510,8 +508,7 @@ class PeerCount(SingleInputMixin, CustomFactor):
         super(PeerCount, self)._validate()
         if self.window_length != 1:
             raise ValueError(
-                "'PeerCount' expected a window length of 1, but was given"
-                "{window_length}.".format(window_length=self.window_length)
+                f"'PeerCount' expected a window length of 1, but was given{self.window_length}."
             )
 
     def compute(self, today, assets, out, classifier_values):
@@ -547,7 +544,7 @@ class Clip(CustomFactor):
     max_bound : float
         The maximum value to use.
 
-    Notes
+    Notes:
     -----
     To only clip values on one side, ``-np.inf` and ``np.inf`` may be passed.
     For example, to only clip the maximum value but not clip a minimum value:
@@ -556,7 +553,7 @@ class Clip(CustomFactor):
 
        Clip(inputs=[factor], min_bound=-np.inf, max_bound=user_provided_max)
 
-    See Also
+    See Also:
     --------
     numpy.clip
     """

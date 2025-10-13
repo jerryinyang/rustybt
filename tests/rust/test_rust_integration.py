@@ -6,7 +6,6 @@ These tests validate the Python → Rust → Python roundtrip works correctly.
 
 import pytest
 
-
 pytestmark = pytest.mark.rust
 
 

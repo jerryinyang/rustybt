@@ -289,9 +289,7 @@ class TestMonteCarloSimulator:
 
             # CI should contain some simulated values
             distribution = result.simulated_metrics[metric]
-            values_in_ci = sum(
-                1 for v in distribution if ci_lower <= v <= ci_upper
-            )
+            values_in_ci = sum(1 for v in distribution if ci_lower <= v <= ci_upper)
             # At least 90% should be in 95% CI
             assert values_in_ci >= 0.90 * len(distribution)
 
@@ -418,9 +416,7 @@ class TestMonteCarloResult:
         output_file = tmp_path / "test_plot.png"
 
         # Plot should not raise errors
-        sample_result.plot_distribution(
-            metric="sharpe_ratio", output_path=output_file, show=False
-        )
+        sample_result.plot_distribution(metric="sharpe_ratio", output_path=output_file, show=False)
 
         # File should be created
         assert output_file.exists()
@@ -533,9 +529,7 @@ class TestIntegration:
         observed_metrics = {"sharpe_ratio": Decimal("1.5")}
 
         # Run both methods
-        mc_perm = MonteCarloSimulator(
-            n_simulations=200, method="permutation", seed=42
-        )
+        mc_perm = MonteCarloSimulator(n_simulations=200, method="permutation", seed=42)
         result_perm = mc_perm.run(trades, observed_metrics)
 
         mc_boot = MonteCarloSimulator(n_simulations=200, method="bootstrap", seed=42)

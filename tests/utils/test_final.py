@@ -1,7 +1,7 @@
-import pytest
-
 # from abc import abstractmethod, ABCMeta
 from unittest import TestCase
+
+import pytest
 
 from rustybt.utils.final import (
     FinalMeta,
@@ -14,7 +14,7 @@ from rustybt.utils.final import (
 class FinalMetaTestCase(TestCase):
     @classmethod
     def setup_class(cls):
-        class ClassWithFinal(object, metaclass=FinalMeta):
+        class ClassWithFinal(metaclass=FinalMeta):
             a = final("ClassWithFinal: a")
             b = "ClassWithFinal: b"
 
@@ -229,7 +229,7 @@ class FinalABCMetaTestCase(FinalMetaTestCase):
     def test_subclass_setattr(self):
         """Tests that subclasses don't destroy the __setattr__."""
 
-        class ClassWithFinal(object, metaclass=FinalMeta):
+        class ClassWithFinal(metaclass=FinalMeta):
             @final
             def f(self):
                 return "ClassWithFinal: f"
@@ -243,7 +243,7 @@ class FinalABCMetaTestCase(FinalMetaTestCase):
         assert SubClass().f() == "ClassWithFinal: f"
 
     def test_final_classmethod(self):
-        class ClassWithClassMethod(object, metaclass=FinalMeta):
+        class ClassWithClassMethod(metaclass=FinalMeta):
             count = 0
 
             @final

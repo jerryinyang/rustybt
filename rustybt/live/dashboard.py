@@ -15,13 +15,10 @@ Note: Streamlit is an optional dependency. Install with: pip install streamlit
 """
 
 import argparse
-import asyncio
-import json
-import os
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -29,7 +26,6 @@ try:
     import streamlit as st
 except ImportError:
     st = None  # type: ignore
-    print("Streamlit not installed. Install with: pip install streamlit")
 
 import structlog
 
@@ -75,7 +71,7 @@ class DashboardDataProvider:
         # TODO: Calculate PnL from starting value
         return Decimal("5000.00")
 
-    def get_positions(self) -> List[Dict[str, Any]]:
+    def get_positions(self) -> list[dict[str, Any]]:
         """Get current positions.
 
         Returns:
@@ -87,7 +83,7 @@ class DashboardDataProvider:
             {"asset": "GOOGL", "amount": "50", "market_value": "7500.00", "pnl": "-200.00"},
         ]
 
-    def get_circuit_breaker_status(self) -> Dict[str, Any]:
+    def get_circuit_breaker_status(self) -> dict[str, Any]:
         """Get circuit breaker status.
 
         Returns:
@@ -104,7 +100,7 @@ class DashboardDataProvider:
             "manual": {"enabled": True, "state": "normal"},
         }
 
-    def get_recent_orders(self, limit: int = 20) -> List[Dict[str, Any]]:
+    def get_recent_orders(self, limit: int = 20) -> list[dict[str, Any]]:
         """Get recent orders.
 
         Args:
@@ -135,7 +131,7 @@ class DashboardDataProvider:
             },
         ]
 
-    def get_recent_errors(self, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_recent_errors(self, limit: int = 50) -> list[dict[str, Any]]:
         """Get recent errors.
 
         Args:
@@ -157,7 +153,9 @@ class DashboardDataProvider:
             True if successful, False otherwise
         """
         # TODO: Connect to live engine and trigger manual halt
-        logger.critical("manual_halt_triggered_from_dashboard", reason=reason, strategy=self._strategy_name)
+        logger.critical(
+            "manual_halt_triggered_from_dashboard", reason=reason, strategy=self._strategy_name
+        )
         return True
 
 
@@ -168,7 +166,6 @@ def create_dashboard(strategy_name: str) -> None:
         strategy_name: Name of strategy to monitor
     """
     if st is None:
-        print("Streamlit not installed. Install with: pip install streamlit")
         return
 
     # Initialize data provider
@@ -207,7 +204,9 @@ def create_dashboard(strategy_name: str) -> None:
     with col2:
         st.metric("PnL", f"${pnl:,.2f}", f"{pnl_percent:.2f}%")
     with col3:
-        cash = portfolio_value - sum(Decimal(p["market_value"]) for p in data_provider.get_positions())
+        cash = portfolio_value - sum(
+            Decimal(p["market_value"]) for p in data_provider.get_positions()
+        )
         st.metric("Cash", f"${cash:,.2f}")
 
     # Circuit Breaker Status
@@ -215,11 +214,11 @@ def create_dashboard(strategy_name: str) -> None:
     cb_status = data_provider.get_circuit_breaker_status()
 
     # Overall status
-    overall_state = cb_status["overall_state"]
+    cb_status["overall_state"]
     is_tripped = cb_status["is_tripped"]
 
     if is_tripped:
-        st.error(f"⚠️ CIRCUIT BREAKER TRIPPED - Trading Halted")
+        st.error("⚠️ CIRCUIT BREAKER TRIPPED - Trading Halted")
     else:
         st.success("✅ All Systems Normal - Trading Active")
 
@@ -267,7 +266,9 @@ def create_dashboard(strategy_name: str) -> None:
     if st.session_state.get("show_halt_confirm", False):
         with st.form("halt_confirm_form"):
             st.warning("⚠️ Are you sure you want to halt trading?")
-            reason = st.text_input("Reason for halt (required):", placeholder="e.g., Market anomaly detected")
+            reason = st.text_input(
+                "Reason for halt (required):", placeholder="e.g., Market anomaly detected"
+            )
             col1, col2 = st.columns(2)
             with col1:
                 confirm = st.form_submit_button("Confirm Halt", type="primary")
@@ -296,7 +297,9 @@ def create_dashboard(strategy_name: str) -> None:
 
     if positions:
         positions_df = pd.DataFrame(positions)
-        positions_df["market_value"] = positions_df["market_value"].apply(lambda x: f"${float(x):,.2f}")
+        positions_df["market_value"] = positions_df["market_value"].apply(
+            lambda x: f"${float(x):,.2f}"
+        )
         positions_df["pnl"] = positions_df["pnl"].apply(
             lambda x: f"${float(x):,.2f}" if float(x) >= 0 else f"-${abs(float(x)):,.2f}"
         )

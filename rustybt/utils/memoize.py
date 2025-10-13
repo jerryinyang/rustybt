@@ -2,12 +2,12 @@
 Tools for memoization of function results.
 """
 
-from collections.abc import Sequence
+from _thread import allocate_lock as Lock
 from collections import OrderedDict, namedtuple
+from collections.abc import Sequence
 from itertools import compress
 from weakref import WeakKeyDictionary, ref
 
-from _thread import allocate_lock as Lock
 from toolz.sandbox import unzip
 
 from rustybt.utils.compat import wraps
@@ -17,9 +17,8 @@ class lazyval(property):
     """Decorator that marks that an attribute of an instance should not be
     computed until needed, and that the value should be memoized.
 
-    Example
+    Example:
     -------
-
     >>> from rustybt.utils.memoize import lazyval
     >>> class C:
     ...     def __init__(self):
@@ -44,7 +43,7 @@ class lazyval(property):
     'val'
     """
 
-    __slots__ = ["func", "_cache"]
+    __slots__ = ["_cache", "func"]
 
     def __init__(self, func):
         self.func = func
@@ -72,9 +71,8 @@ class classlazyval(lazyval):
     """Decorator that marks that an attribute of a class should not be
     computed until needed, and that the value should be memoized.
 
-    Example
+    Example:
     -------
-
     >>> from rustybt.utils.memoize import classlazyval
     >>> class C:
     ...     count = 0
@@ -109,10 +107,7 @@ def _weak_lru_cache(maxsize=100):
     to allow the implementation to change.
     """
 
-    def decorating_function(
-        user_function, tuple=tuple, sorted=sorted, KeyError=KeyError
-    ):
-
+    def decorating_function(user_function, tuple=tuple, sorted=sorted, KeyError=KeyError):
         hits = misses = 0
         kwd_mark = (object(),)  # separates positional and keyword args
         lock = Lock()  # needed because OrderedDict isn't threadsafe
@@ -199,9 +194,7 @@ class _WeakArgs(Sequence):
             if self is not None and dict_remove is not None:
                 dict_remove(self)
 
-        self._items, self._selectors = unzip(
-            self._try_ref(item, remove) for item in items
-        )
+        self._items, self._selectors = unzip(self._try_ref(item, remove) for item in items)
         self._items = tuple(self._items)
         self._selectors = tuple(self._selectors)
 
@@ -220,9 +213,7 @@ class _WeakArgs(Sequence):
 
     @property
     def alive(self):
-        return all(
-            item() is not None for item in compress(self._items, self._selectors)
-        )
+        return all(item() is not None for item in compress(self._items, self._selectors))
 
     def __eq__(self, other):
         return self._items == other._items
@@ -235,7 +226,7 @@ class _WeakArgs(Sequence):
             return h
 
 
-class _WeakArgsDict(WeakKeyDictionary, object):
+class _WeakArgsDict(WeakKeyDictionary):
     def __delitem__(self, key):
         del self.data[_WeakArgs(key)]
 
@@ -259,7 +250,7 @@ class _WeakArgsDict(WeakKeyDictionary, object):
         return self.data.pop(_WeakArgs(key), *args)
 
 
-class _WeakArgsOrderedDict(_WeakArgsDict, object):
+class _WeakArgsOrderedDict(_WeakArgsDict):
     def __init__(self):
         super(_WeakArgsOrderedDict, self).__init__()
         self.data = OrderedDict()

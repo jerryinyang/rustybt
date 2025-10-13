@@ -5,11 +5,11 @@ Dependency-Graph representation of Pipeline API terms.
 import uuid
 
 import networkx as nx
-from rustybt.utils.memoize import lazyval
+
 from rustybt.pipeline.visualize import display_graph
+from rustybt.utils.memoize import lazyval
 
 from .term import LoadableTerm
-from pprint import pprint
 
 
 class CyclicDependency(Exception):
@@ -38,11 +38,11 @@ class TermGraph:
     terms : dict
         A dict mapping names to final output terms.
 
-    Attributes
+    Attributes:
     ----------
     outputs
 
-    Methods
+    Methods:
     -------
     ordered()
         Return a topologically-sorted iterator over the terms in self.
@@ -50,7 +50,7 @@ class TermGraph:
         Return a topologically-sorted iterator over the terms in self, skipping
         entries in ``workspace`` and entries with refcounts of zero.
 
-    See Also
+    See Also:
     --------
     ExecutionPlan
     """
@@ -81,9 +81,7 @@ class TermGraph:
         so far. It is only used to detect dependency cycles.
         """
         if self._frozen:
-            raise ValueError(
-                "Can't mutate %s after construction." % type(self).__name__
-            )
+            raise ValueError("Can't mutate %s after construction." % type(self).__name__)
 
         # If we've seen this node already as a parent of the current traversal,
         # it means we have an unsatisifiable dependency.  This should only be
@@ -190,7 +188,7 @@ class TermGraph:
         """
         Decrement terms recursively.
 
-        Notes
+        Notes:
         -----
         This should only be used to build the initial workspace, after that we
         should use:
@@ -216,7 +214,7 @@ class TermGraph:
         refcounts : dict[Term -> int]
             Dictionary of refcounts.
 
-        Return
+        Return:
         ------
         garbage : set[Term]
             Terms whose refcounts hit zero after decrefing.
@@ -257,7 +255,7 @@ class ExecutionPlan(TermGraph):
     end_date : pd.Timestamp
         The last date for which output is requested for ``terms``.
 
-    Attributes
+    Attributes:
     ----------
     domain
     extra_rows
@@ -346,9 +344,9 @@ class ExecutionPlan(TermGraph):
             offset(term, input) = (extra_rows_computed(input)
                                    - extra_rows_computed(term)
                                    - requested_extra_rows(term, input))
-        Examples
-        --------
 
+        Examples:
+        --------
         Case 1
         ~~~~~~
 
@@ -379,7 +377,7 @@ class ExecutionPlan(TermGraph):
             offset[Factor B, USEquityPricing.close] == (8 - 0) - 2 == 6
             offset[Factor B, Factor A]              == (3 - 0) - 3 == 0
 
-        Notes
+        Notes:
         -----
         `offset(term, input) >= 0` for all valid pairs, since `input` must be
         an input to `term` if the pair appears in the mapping.
@@ -390,7 +388,7 @@ class ExecutionPlan(TermGraph):
         dependency.  We can do so by truncating off the first `offset` rows of
         the loaded data for `input`.
 
-        See Also
+        See Also:
         --------
         :meth:`zipline.pipeline.graph.ExecutionPlan.offset`
         :meth:`zipline.pipeline.engine.ExecutionPlan.mask_and_dates_for_term`
@@ -418,14 +416,14 @@ class ExecutionPlan(TermGraph):
         """
         A dict mapping `term` -> `# of extra rows to load/compute of `term`.
 
-        Notes
+        Notes:
         ----
         This value depends on the other terms in the graph that require `term`
         **as an input**.  This is not to be confused with `term.dependencies`,
         which describes how many additional rows of `term`'s inputs we need to
         load, and which is determined entirely by `Term` itself.
 
-        Examples
+        Examples:
         --------
         Our graph contains the following terms:
 
@@ -442,12 +440,11 @@ class ExecutionPlan(TermGraph):
         self.extra_rows[high] = 9  # Ensures that we can service B.
         self.extra_rows[low] = 7
 
-        See Also
+        See Also:
         --------
         :meth:`zipline.pipeline.graph.ExecutionPlan.offset`
         :meth:`zipline.pipeline.Term.dependencies`
         """
-
         return {term: self.graph.nodes[term]["extra_rows"] for term in self.graph.nodes}
 
     def _ensure_extra_rows(self, term, N):
@@ -472,7 +469,7 @@ class ExecutionPlan(TermGraph):
         all_dates : pd.DatetimeIndex
             All of the dates that are being computed for in the pipeline.
 
-        Returns
+        Returns:
         -------
         mask : np.ndarray
             The correct mask for this term.

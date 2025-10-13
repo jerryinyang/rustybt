@@ -13,15 +13,15 @@
 # limitations under the License.
 from collections import defaultdict
 
-from numpy import iinfo, uint32, multiply
+from numpy import iinfo, multiply, uint32
 
 from rustybt.data.fx import ExplodingFXRateReader
 from rustybt.lib.adjusted_array import AdjustedArray
 from rustybt.utils.numpy_utils import repeat_first_axis
 
+from ..data.equity_pricing import EquityPricing
 from .base import PipelineLoader
 from .utils import shift_dates
-from ..data.equity_pricing import EquityPricing
 
 UINT32_MAX = iinfo(uint32).max
 
@@ -59,7 +59,7 @@ class EquityPricingLoader(PipelineLoader):
         adjustments_reader : zipline.data.adjustments.SQLiteAdjustmentReader
             Reader providing price/volume adjustments.
 
-        Returns
+        Returns:
         -------
         loader : EquityPricingLoader
             A loader that can only provide currency-naive data.
@@ -107,7 +107,7 @@ class EquityPricingLoader(PipelineLoader):
         )
 
         out = {}
-        for c, c_raw, c_adjs in zip(ohlcv_cols, raw_ohlcv_arrays, adjustments):
+        for c, c_raw, c_adjs in zip(ohlcv_cols, raw_ohlcv_arrays, adjustments, strict=False):
             out[c] = AdjustedArray(
                 c_raw.astype(c.dtype),
                 c_adjs,
@@ -148,7 +148,7 @@ class EquityPricingLoader(PipelineLoader):
         sids : np.array[int64]
             Labels for columns of ``arrays``.
 
-        Returns
+        Returns:
         -------
         None
 
@@ -158,7 +158,7 @@ class EquityPricingLoader(PipelineLoader):
         """
         # Group columns by currency conversion spec.
         by_spec = defaultdict(list)
-        for column, array in zip(columns, arrays):
+        for column, array in zip(columns, arrays, strict=False):
             by_spec[column.currency_conversion].append(array)
 
         # Nothing to do for terms with no currency conversion.
@@ -188,7 +188,7 @@ class EquityPricingLoader(PipelineLoader):
         columns : list[zipline.pipeline.data.BoundColumn]
             Columns to be loaded by ``load_adjusted_array``.
 
-        Returns
+        Returns:
         -------
         ohlcv_columns : list[zipline.pipeline.data.BoundColumn]
             Price and volume columns from ``columns``.

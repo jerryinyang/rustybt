@@ -1,8 +1,9 @@
 """Tests for optimization result data structures."""
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
+
+import pytest
 
 from rustybt.optimization.result import OptimizationResult
 

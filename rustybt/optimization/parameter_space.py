@@ -73,9 +73,9 @@ class CategoricalParameter(BaseModel):
 class ParameterSpace(BaseModel):
     """Complete parameter space definition."""
 
-    parameters: list[
-        ContinuousParameter | DiscreteParameter | CategoricalParameter
-    ] = Field(..., min_length=1)
+    parameters: list[ContinuousParameter | DiscreteParameter | CategoricalParameter] = Field(
+        ..., min_length=1
+    )
 
     @field_validator("parameters")
     def validate_unique_names(cls, v):
@@ -152,9 +152,7 @@ class ParameterSpace(BaseModel):
                     value = int(value)
 
                 if not isinstance(value, int):
-                    raise ValueError(
-                        f"Parameter '{name}' must be integer, got {type(value)}"
-                    )
+                    raise ValueError(f"Parameter '{name}' must be integer, got {type(value)}")
                 if not (param.min_value <= value <= param.max_value):
                     raise ValueError(
                         f"Parameter '{name}' value {value} outside bounds "
@@ -167,9 +165,7 @@ class ParameterSpace(BaseModel):
 
             elif isinstance(param, CategoricalParameter):
                 # Allow string comparison for flexibility
-                if value not in param.choices and str(value) not in map(
-                    str, param.choices
-                ):
+                if value not in param.choices and str(value) not in map(str, param.choices):
                     raise ValueError(
                         f"Parameter '{name}' value {value} not in choices {param.choices}"
                     )

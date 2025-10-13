@@ -4,7 +4,6 @@ This module provides dynamic discovery of all DataSource implementations
 and factory methods for creating source instances by name.
 """
 
-
 from typing import Any, ClassVar
 
 import structlog
@@ -141,10 +140,7 @@ class DataSourceRegistry:
 
         if name_lower not in cls._sources:
             available = ", ".join(sorted(cls._sources.keys()))
-            raise ValueError(
-                f"Unknown data source: '{name}'. "
-                f"Available sources: {available}"
-            )
+            raise ValueError(f"Unknown data source: '{name}'. Available sources: {available}")
 
         source_class = cls._sources[name_lower]
 

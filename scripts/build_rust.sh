@@ -48,13 +48,13 @@ case "$BUILD_MODE" in
         echo -e "${GREEN}Building Rust extension (development mode)...${NC}"
         maturin develop
         ;;
-    
+
     release|prod|production)
         echo -e "${GREEN}Building Rust extension (release mode)...${NC}"
         maturin build --release
         echo -e "${GREEN}Wheel created in rust/target/wheels/${NC}"
         ;;
-    
+
     *)
         echo -e "${RED}Error: Invalid build mode: $BUILD_MODE${NC}"
         echo "Usage: $0 [dev|release]"

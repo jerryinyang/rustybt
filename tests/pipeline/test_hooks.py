@@ -15,15 +15,15 @@ from rustybt.pipeline.domain import US_EQUITIES
 from rustybt.pipeline.factors import CustomFactor
 from rustybt.pipeline.hooks.progress import (
     ProgressHooks,
-    repr_htmlsafe,
     TestingProgressPublisher,
+    repr_htmlsafe,
 )
 from rustybt.pipeline.hooks.testing import TestingHooks
 from rustybt.pipeline.term import AssetExists, ComputableTerm, LoadableTerm
 from rustybt.testing import parameter_space
 from rustybt.testing.fixtures import (
-    ZiplineTestCase,
     WithSeededRandomPipelineEngine,
+    ZiplineTestCase,
 )
 from rustybt.testing.predicates import instance_of
 
@@ -136,7 +136,7 @@ class HooksTestCase(WithSeededRandomPipelineEngine, ZiplineTestCase):
         # Break up the trace into the traces of each chunk.
         chunk_traces = self.split_by_chunk(trace[1:-1])
 
-        for ctrace, (chunk_start, chunk_end) in zip(chunk_traces, expected_chunks):
+        for ctrace, (chunk_start, chunk_end) in zip(chunk_traces, expected_chunks, strict=False):
             # Next call should bracket compute_chunk
             self.expect_context_pair(ctrace[0], ctrace[-1], "computing_chunk")
             assert isinstance(ctrace[0].args[0], list)  # terms
@@ -163,7 +163,7 @@ class HooksTestCase(WithSeededRandomPipelineEngine, ZiplineTestCase):
                     assert computed_term not in computes
                     computes.add(computed_term)
                 else:
-                    raise ValueError("Unexpected method: {}".format(enter.method_name))
+                    raise ValueError(f"Unexpected method: {enter.method_name}")
 
             assert loads == expected_loads
             assert computes == expected_computes
@@ -239,9 +239,7 @@ class ProgressHooksTestCase(WithSeededRandomPipelineEngine, ZiplineTestCase):
         # Populate valeus for PREPOPULATED_TERM. This is used to ensure that we
         # properly track progress when we skip prepopulated terms.
         def populate(initial_workspace, root_mask_term, execution_plan, dates, assets):
-            if PREPOPULATED_TERM not in execution_plan:
-                return initial_workspace
-            elif dates[-1] > cls.PREPOPULATED_TERM_CUTOFF:
+            if PREPOPULATED_TERM not in execution_plan or dates[-1] > cls.PREPOPULATED_TERM_CUTOFF:
                 return initial_workspace
 
             workspace = initial_workspace.copy()
@@ -387,7 +385,7 @@ class ProgressHooksTestCase(WithSeededRandomPipelineEngine, ZiplineTestCase):
                     assert isinstance(term, ComputableTerm)
             else:
                 raise AssertionError(
-                    "Unexpected state: {}".format(update.state),
+                    f"Unexpected state: {update.state}",
                 )
 
         # Break up the remaining updates by chunk.
@@ -472,9 +470,7 @@ class TestTermRepr:
             def __repr__(self):
                 return "<b>foo</b>"
 
-        assert repr_htmlsafe(MyFactor()) == "<b>foo</b>".replace("<", "&lt;").replace(
-            ">", "&gt;"
-        )
+        assert repr_htmlsafe(MyFactor()) == "<b>foo</b>".replace("<", "&lt;").replace(">", "&gt;")
 
     def test_htmlsafe_repr_handles_errors(self):
         class MyFactor(CustomFactor):
@@ -497,7 +493,7 @@ class TestTermRepr:
         MyFactor.__name__ = "<b>foo</b>"
         converted = MyFactor.__name__.replace("<", "&lt;").replace(">", "&gt;")
 
-        assert repr_htmlsafe(MyFactor()) == "(Error Displaying {})".format(converted)
+        assert repr_htmlsafe(MyFactor()) == f"(Error Displaying {converted})"
 
 
 def two_at_a_time(it):

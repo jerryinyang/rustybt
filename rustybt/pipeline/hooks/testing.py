@@ -1,10 +1,8 @@
 from collections import namedtuple
 
-from .iface import PipelineHooks, PIPELINE_HOOKS_CONTEXT_MANAGERS
-
-
 from rustybt.utils.compat import contextmanager, wraps
 
+from .iface import PIPELINE_HOOKS_CONTEXT_MANAGERS, PipelineHooks
 
 Call = namedtuple("Call", "method_name args kwargs")
 

@@ -27,13 +27,12 @@ from rustybt.live.brokers.bybit_adapter import BybitBrokerAdapter
 from rustybt.live.brokers.ccxt_adapter import CCXTBrokerAdapter
 from rustybt.live.brokers.hyperliquid_adapter import HyperliquidBrokerAdapter
 
-
 # Check if testnet credentials are configured
-BINANCE_TESTNET_CONFIGURED = (
-    os.getenv("BINANCE_TESTNET_API_KEY") and os.getenv("BINANCE_TESTNET_API_SECRET")
+BINANCE_TESTNET_CONFIGURED = os.getenv("BINANCE_TESTNET_API_KEY") and os.getenv(
+    "BINANCE_TESTNET_API_SECRET"
 )
-BYBIT_TESTNET_CONFIGURED = (
-    os.getenv("BYBIT_TESTNET_API_KEY") and os.getenv("BYBIT_TESTNET_API_SECRET")
+BYBIT_TESTNET_CONFIGURED = os.getenv("BYBIT_TESTNET_API_KEY") and os.getenv(
+    "BYBIT_TESTNET_API_SECRET"
 )
 HYPERLIQUID_CONFIGURED = os.getenv("HYPERLIQUID_PRIVATE_KEY")
 
@@ -51,7 +50,9 @@ def test_asset():
 
 
 @pytest.mark.exchange_integration
-@pytest.mark.skipif(not BINANCE_TESTNET_CONFIGURED, reason="Binance testnet credentials not configured")
+@pytest.mark.skipif(
+    not BINANCE_TESTNET_CONFIGURED, reason="Binance testnet credentials not configured"
+)
 class TestBinanceIntegration:
     """Integration tests for Binance adapter with testnet."""
 
@@ -202,7 +203,9 @@ class TestCCXTIntegration:
     Uses the configured testnet credentials from Binance for CCXT testing.
     """
 
-    @pytest.mark.skipif(not BINANCE_TESTNET_CONFIGURED, reason="Binance testnet credentials not configured")
+    @pytest.mark.skipif(
+        not BINANCE_TESTNET_CONFIGURED, reason="Binance testnet credentials not configured"
+    )
     @pytest.mark.asyncio
     async def test_ccxt_binance_connection(self):
         """Test CCXT adapter with Binance testnet."""

@@ -1,19 +1,18 @@
-import pandas as pd
-from pandas.testing import assert_series_equal
 from functools import partial
 
+import pandas as pd
+from pandas.testing import assert_series_equal
 from toolz import groupby
 
 from rustybt.finance.asset_restrictions import (
     RESTRICTION_STATES,
-    Restriction,
     HistoricalRestrictions,
-    StaticRestrictions,
-    SecurityListRestrictions,
     NoRestrictions,
+    Restriction,
+    SecurityListRestrictions,
+    StaticRestrictions,
     _UnionRestrictions,
 )
-
 from rustybt.testing import parameter_space
 from rustybt.testing.fixtures import (
     WithDataPortal,
@@ -31,7 +30,6 @@ MINUTE = pd.Timedelta(minutes=1)
 
 
 class RestrictionsTestCase(WithDataPortal, ZiplineTestCase):
-
     ASSET_FINDER_EQUITY_SIDS = 1, 2, 3
 
     @classmethod
@@ -103,9 +101,7 @@ class RestrictionsTestCase(WithDataPortal, ZiplineTestCase):
 
         # Check individual restrictions.
         for asset, r_history in restrictions_by_asset.items():
-            freeze_dt, unfreeze_dt, re_freeze_dt = sorted(
-                [r.effective_date for r in r_history]
-            )
+            freeze_dt, unfreeze_dt, re_freeze_dt = sorted([r.effective_date for r in r_history])
 
             # Starts implicitly unrestricted. Restricted on or after the freeze
             assert_not_restricted(asset, freeze_dt - MINUTE)
@@ -260,9 +256,7 @@ class RestrictionsTestCase(WithDataPortal, ZiplineTestCase):
         assert_not_restricted = partial(self.assert_not_restricted, rl)
         assert_all_restrictions = partial(self.assert_all_restrictions, rl)
 
-        for dt in [
-            str_to_ts(dt_str) for dt_str in ("2011-01-03", "2011-01-04", "2020-01-04")
-        ]:
+        for dt in [str_to_ts(dt_str) for dt_str in ("2011-01-03", "2011-01-04", "2020-01-04")]:
             assert_not_restricted(self.ASSET1, dt)
             assert_not_restricted(self.ASSET2, dt)
             assert_not_restricted(self.ASSET3, dt)
@@ -365,12 +359,6 @@ class RestrictionsTestCase(WithDataPortal, ZiplineTestCase):
         self.assert_all_restrictions(
             multi_union_restrictions, [True, True, False], before_frozen_dt
         )
-        self.assert_all_restrictions(
-            multi_union_restrictions, [True, True, True], freeze_dt_1
-        )
-        self.assert_all_restrictions(
-            multi_union_restrictions, [True, True, False], unfreeze_dt
-        )
-        self.assert_all_restrictions(
-            multi_union_restrictions, [True, True, True], freeze_dt_2
-        )
+        self.assert_all_restrictions(multi_union_restrictions, [True, True, True], freeze_dt_1)
+        self.assert_all_restrictions(multi_union_restrictions, [True, True, False], unfreeze_dt)
+        self.assert_all_restrictions(multi_union_restrictions, [True, True, True], freeze_dt_2)

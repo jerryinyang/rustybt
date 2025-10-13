@@ -1,22 +1,22 @@
-"""Tests for common behaviors shared by all ComputableTerms.
-"""
+"""Tests for common behaviors shared by all ComputableTerms."""
+
+import re
 
 import numpy as np
+import pytest
 
 from rustybt.lib.labelarray import LabelArray
 from rustybt.pipeline import Classifier, Factor, Filter
 from rustybt.testing import parameter_space
 from rustybt.utils.numpy_utils import (
+    NaTns,
     categorical_dtype,
     datetime64ns_dtype,
     float64_dtype,
     int64_dtype,
-    NaTns,
 )
 
 from .base import BaseUSEquityPipelineTestCase
-import pytest
-import re
 
 
 class Floats(Factor):
@@ -104,12 +104,7 @@ class FillNATestCase(BaseUSEquityPipelineTestCase):
         float_expected = np.where(null_locs, float_fillval, floats)
         float_expected_zero = np.where(null_locs, 0.0, floats)
 
-        dates = (
-            np.arange(num_cells, dtype="i8")
-            .view("M8[D]")
-            .astype("M8[ns]")
-            .reshape(shape)
-        )
+        dates = np.arange(num_cells, dtype="i8").view("M8[D]").astype("M8[ns]").reshape(shape)
         dates[null_locs] = NaTns
         date_fillval = np.datetime64("2014-01-02", "ns")
         date_expected = np.where(null_locs, date_fillval, dates)

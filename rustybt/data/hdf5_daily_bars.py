@@ -52,7 +52,7 @@ for each asset, aligned to the sids index.
 Contains a single dataset, ``code``, aligned to the sids index, which contains
 the listing currency of each sid.
 
-Example
+Example:
 ^^^^^^^
 Sample layout of the full file with multiple countries.
 
@@ -97,13 +97,12 @@ Sample layout of the full file with multiple countries.
          |- /code
 """
 
-from functools import partial
+import logging
+from functools import partial, reduce
 
 import h5py
-import logging
 import numpy as np
 import pandas as pd
-from functools import reduce
 
 from rustybt.data.bar_reader import (
     NoDataAfterDate,
@@ -174,14 +173,14 @@ def days_and_sids_for_frames(frames):
     frames : list[pd.DataFrame]
         A list of dataframes indexed by day, with a column per sid.
 
-    Returns
+    Returns:
     -------
     days : np.array[datetime64[ns]]
         The days in these dataframes.
     sids : np.array[int64]
         The sids in these dataframes.
 
-    Raises
+    Raises:
     ------
     ValueError
         If the dataframes passed are not all indexed by the same days
@@ -219,7 +218,7 @@ class HDF5DailyBarWriter:
         greater than the number of days in the data, the chunksize will
         match the actual number of days.
 
-    See Also
+    See Also:
     --------
     zipline.data.hdf5_daily_bars.HDF5DailyBarReader
     """
@@ -340,7 +339,7 @@ class HDF5DailyBarWriter:
                 scaling_factors,
             )
 
-        sids, frames = zip(*data)
+        sids, frames = zip(*data, strict=False)
         ohlcv_frame = pd.concat(frames)
 
         # Repeat each sid for each row in its corresponding frame.
@@ -429,7 +428,7 @@ def compute_asset_lifetimes(frames):
         A dict mapping each OHLCV field to a dataframe with a row for
         each date and a column for each sid, as passed to write().
 
-    Returns
+    Returns:
     -------
     start_date_ixs : np.array[int64]
         The index of the first date with non-nan values, for each sid.
@@ -546,7 +545,7 @@ class HDF5DailyBarReader(CurrencyAwareSessionBarReader):
         assets : list of int
            The asset identifiers in the window.
 
-        Returns
+        Returns:
         -------
         list of np.ndarray
             A list with an entry per field of ndarrays with shape
@@ -606,7 +605,7 @@ class HDF5DailyBarReader(CurrencyAwareSessionBarReader):
         assets : list[int]
             List of assets requested by a caller of ``load_raw_arrays``.
 
-        Returns
+        Returns:
         -------
         index : np.array[int64]
             Index array containing the index in ``self.sids`` for each location
@@ -637,7 +636,7 @@ class HDF5DailyBarReader(CurrencyAwareSessionBarReader):
         assets : array-like[int]
            The asset identifiers to validate.
 
-        Raises
+        Raises:
         ------
         NoDataForSid
             If one or more of the provided asset identifiers are not
@@ -646,9 +645,7 @@ class HDF5DailyBarReader(CurrencyAwareSessionBarReader):
         missing_sids = np.setdiff1d(assets, self.sids)
 
         if len(missing_sids):
-            raise NoDataForSid(
-                "Assets not contained in daily pricing file: {}".format(missing_sids)
-            )
+            raise NoDataForSid(f"Assets not contained in daily pricing file: {missing_sids}")
 
     def _validate_timestamp(self, ts):
         if ts.asm8 not in self.dates:
@@ -683,7 +680,7 @@ class HDF5DailyBarReader(CurrencyAwareSessionBarReader):
         sids : np.array[int64]
             Array of sids for which currencies are needed.
 
-        Returns
+        Returns:
         -------
         currency_codes : np.array[object]
             Array of currency codes for listing currencies of ``sids``.
@@ -704,7 +701,7 @@ class HDF5DailyBarReader(CurrencyAwareSessionBarReader):
     @property
     def last_available_dt(self):
         """
-        Returns
+        Returns:
         -------
         dt : pd.Timestamp
             The last session for which the reader can provide data.
@@ -717,14 +714,12 @@ class HDF5DailyBarReader(CurrencyAwareSessionBarReader):
         Returns the rustybt.utils.calendar.trading_calendar used to read
         the data.  Can be None (if the writer didn't specify it).
         """
-        raise NotImplementedError(
-            "HDF5 pricing does not yet support trading calendars."
-        )
+        raise NotImplementedError("HDF5 pricing does not yet support trading calendars.")
 
     @property
     def first_trading_day(self):
         """
-        Returns
+        Returns:
         -------
         dt : pd.Timestamp
             The first trading day (session) for which the reader can provide
@@ -735,7 +730,7 @@ class HDF5DailyBarReader(CurrencyAwareSessionBarReader):
     @lazyval
     def sessions(self):
         """
-        Returns
+        Returns:
         -------
         sessions : DatetimeIndex
            All session labels (unioning the range for all assets) which the
@@ -756,13 +751,13 @@ class HDF5DailyBarReader(CurrencyAwareSessionBarReader):
         field : string
             The OHLVC name for the desired data point.
 
-        Returns
+        Returns:
         -------
         value : float|int
             The value at the given coordinates, ``float`` for OHLC, ``int``
             for 'volume'.
 
-        Raises
+        Raises:
         ------
         NoDataOnDate
             If the given dt is not a valid market minute (in minute mode) or
@@ -774,9 +769,7 @@ class HDF5DailyBarReader(CurrencyAwareSessionBarReader):
         sid_ix = self.sids.searchsorted(sid)
         dt_ix = self.dates.searchsorted(dt.asm8)
 
-        value = self._postprocessors[field](
-            self._country_group[DATA][field][sid_ix, dt_ix]
-        )
+        value = self._postprocessors[field](self._country_group[DATA][field][sid_ix, dt_ix])
 
         # When the value is nan, this dt may be outside the asset's lifetime.
         # If that's the case, the proper NoDataOnDate exception is raised.
@@ -803,7 +796,7 @@ class HDF5DailyBarReader(CurrencyAwareSessionBarReader):
         dt : pd.Timestamp
             The dt at which to start searching for the last traded day.
 
-        Returns
+        Returns:
         -------
         last_traded : pd.Timestamp
             The day of the last trade for the given asset, using the
@@ -853,10 +846,7 @@ class MultiCountryDailyBarReader(CurrencyAwareSessionBarReader):
             An HDF5 daily pricing file.
         """
         return cls(
-            {
-                country: HDF5DailyBarReader.from_file(h5_file, country)
-                for country in h5_file.keys()
-            }
+            {country: HDF5DailyBarReader.from_file(h5_file, country) for country in h5_file.keys()}
         )
 
     @classmethod
@@ -890,10 +880,8 @@ class MultiCountryDailyBarReader(CurrencyAwareSessionBarReader):
             raise ValueError("At least one valid asset id is required.")
         elif num_countries > 1:
             raise NotImplementedError(
-                (
-                    "Assets were requested from multiple countries ({}),"
-                    " but multi-country reads are not yet supported."
-                ).format(list(unique_country_codes))
+                f"Assets were requested from multiple countries ({list(unique_country_codes)}),"
+                " but multi-country reads are not yet supported."
             )
 
         return unique_country_codes.item()
@@ -912,7 +900,7 @@ class MultiCountryDailyBarReader(CurrencyAwareSessionBarReader):
         assets : list of int
            The asset identifiers in the window.
 
-        Returns
+        Returns:
         -------
         list of np.ndarray
             A list with an entry per field of ndarrays with shape
@@ -932,7 +920,7 @@ class MultiCountryDailyBarReader(CurrencyAwareSessionBarReader):
     def last_available_dt(self):
         """
 
-        Returns
+        Returns:
         -------
         dt : pd.Timestamp
             The last session for which the reader can provide data.
@@ -945,15 +933,13 @@ class MultiCountryDailyBarReader(CurrencyAwareSessionBarReader):
         Returns the rustybt.utils.calendar.trading_calendar used to read
         the data.  Can be None (if the writer didn't specify it).
         """
-        raise NotImplementedError(
-            "HDF5 pricing does not yet support trading calendars."
-        )
+        raise NotImplementedError("HDF5 pricing does not yet support trading calendars.")
 
     @property
     def first_trading_day(self):
         """
 
-        Returns
+        Returns:
         -------
         dt : pd.Timestamp
             The first trading day (session) for which the reader can provide
@@ -965,7 +951,7 @@ class MultiCountryDailyBarReader(CurrencyAwareSessionBarReader):
     def sessions(self):
         """
 
-        Returns
+        Returns:
         -------
         sessions : DatetimeIndex
            All session labels (unioning the range for all assets) which the
@@ -990,13 +976,13 @@ class MultiCountryDailyBarReader(CurrencyAwareSessionBarReader):
         field : string
             The OHLVC name for the desired data point.
 
-        Returns
+        Returns:
         -------
         value : float|int
             The value at the given coordinates, ``float`` for OHLC, ``int``
             for 'volume'.
 
-        Raises
+        Raises:
         ------
         NoDataOnDate
             If the given dt is not a valid market minute (in minute mode) or
@@ -1007,9 +993,7 @@ class MultiCountryDailyBarReader(CurrencyAwareSessionBarReader):
         try:
             country_code = self._country_code_for_assets([sid])
         except ValueError as exc:
-            raise NoDataForSid(
-                "Asset not contained in daily pricing file: {}".format(sid)
-            ) from exc
+            raise NoDataForSid(f"Asset not contained in daily pricing file: {sid}") from exc
         return self._readers[country_code].get_value(sid, dt, field)
 
     def get_last_traded_dt(self, asset, dt):
@@ -1024,7 +1008,7 @@ class MultiCountryDailyBarReader(CurrencyAwareSessionBarReader):
         dt : pd.Timestamp
             The dt at which to start searching for the last traded day.
 
-        Returns
+        Returns:
         -------
         last_traded : pd.Timestamp
             The day of the last trade for the given asset, using the
@@ -1043,7 +1027,7 @@ class MultiCountryDailyBarReader(CurrencyAwareSessionBarReader):
         sids : np.array[int64]
             Array of sids for which currencies are needed.
 
-        Returns
+        Returns:
         -------
         currency_codes : np.array[S3]
             Array of currency codes for listing currencies of ``sids``.
@@ -1055,13 +1039,9 @@ class MultiCountryDailyBarReader(CurrencyAwareSessionBarReader):
 def check_sids_arrays_match(left, right, message):
     """Check that two 1d arrays of sids are equal"""
     if len(left) != len(right):
-        raise ValueError(
-            "{}:\nlen(left) ({}) != len(right) ({})".format(
-                message, len(left), len(right)
-            )
-        )
+        raise ValueError(f"{message}:\nlen(left) ({len(left)}) != len(right) ({len(right)})")
 
     diff = left != right
     if diff.any():
         (bad_locs,) = np.where(diff)
-        raise ValueError("{}:\n Indices with differences: {}".format(message, bad_locs))
+        raise ValueError(f"{message}:\n Indices with differences: {bad_locs}")

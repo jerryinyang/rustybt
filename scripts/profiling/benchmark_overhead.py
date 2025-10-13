@@ -17,11 +17,12 @@ import json
 import statistics
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 import structlog
@@ -75,7 +76,7 @@ class ScenarioComparison:
 # ============================================================================
 
 
-def run_daily_backtest(use_decimal: bool = False) -> Dict[str, Any]:
+def run_daily_backtest(use_decimal: bool = False) -> dict[str, Any]:
     """Run daily data backtest scenario.
 
     Args:
@@ -133,7 +134,7 @@ def run_daily_backtest(use_decimal: bool = False) -> Dict[str, Any]:
     return results
 
 
-def run_hourly_backtest(use_decimal: bool = False) -> Dict[str, Any]:
+def run_hourly_backtest(use_decimal: bool = False) -> dict[str, Any]:
     """Run hourly data backtest scenario.
 
     Args:
@@ -185,7 +186,7 @@ def run_hourly_backtest(use_decimal: bool = False) -> Dict[str, Any]:
     return results
 
 
-def run_minute_backtest(use_decimal: bool = False) -> Dict[str, Any]:
+def run_minute_backtest(use_decimal: bool = False) -> dict[str, Any]:
     """Run minute data backtest scenario.
 
     Args:
@@ -249,8 +250,8 @@ def run_minute_backtest(use_decimal: bool = False) -> Dict[str, Any]:
 
 
 def benchmark_scenario(
-    scenario_name: str, scenario_fn: Callable[[bool], Dict], use_decimal: bool, runs: int = 5
-) -> List[float]:
+    scenario_name: str, scenario_fn: Callable[[bool], dict], use_decimal: bool, runs: int = 5
+) -> list[float]:
     """Benchmark a scenario multiple times and return execution times.
 
     Args:
@@ -263,9 +264,7 @@ def benchmark_scenario(
         List of execution times in seconds
     """
     mode = "decimal_rust" if use_decimal else "float"
-    logger.info(
-        "benchmarking_scenario", scenario=scenario_name, mode=mode, runs=runs
-    )
+    logger.info("benchmarking_scenario", scenario=scenario_name, mode=mode, runs=runs)
 
     execution_times = []
 
@@ -287,9 +286,7 @@ def benchmark_scenario(
                 time=f"{execution_time:.3f}s",
             )
         except Exception as e:
-            logger.error(
-                "run_failed", scenario=scenario_name, mode=mode, run=run + 1, error=str(e)
-            )
+            logger.error("run_failed", scenario=scenario_name, mode=mode, run=run + 1, error=str(e))
             raise
 
     mean_time = statistics.mean(execution_times)
@@ -306,7 +303,7 @@ def benchmark_scenario(
     return execution_times
 
 
-def calculate_overhead(float_times: List[float], decimal_times: List[float]) -> float:
+def calculate_overhead(float_times: list[float], decimal_times: list[float]) -> float:
     """Calculate overhead percentage.
 
     Overhead = (Decimal+Rust_time / float_time - 1) × 100%
@@ -324,7 +321,7 @@ def calculate_overhead(float_times: List[float], decimal_times: List[float]) -> 
     return overhead
 
 
-def run_comparative_benchmarks(scenarios: List[str], runs: int = 5) -> List[ScenarioComparison]:
+def run_comparative_benchmarks(scenarios: list[str], runs: int = 5) -> list[ScenarioComparison]:
     """Run comparative benchmarks for all scenarios.
 
     Args:
@@ -389,7 +386,7 @@ def run_comparative_benchmarks(scenarios: List[str], runs: int = 5) -> List[Scen
 # ============================================================================
 
 
-def save_results(comparisons: List[ScenarioComparison], output_file: Path) -> None:
+def save_results(comparisons: list[ScenarioComparison], output_file: Path) -> None:
     """Save benchmark results to JSON file.
 
     Args:
@@ -408,7 +405,7 @@ def save_results(comparisons: List[ScenarioComparison], output_file: Path) -> No
     logger.info("results_saved", output_file=str(output_file))
 
 
-def generate_markdown_report(comparisons: List[ScenarioComparison], output_file: Path) -> None:
+def generate_markdown_report(comparisons: list[ScenarioComparison], output_file: Path) -> None:
     """Generate markdown performance report.
 
     Args:
@@ -433,10 +430,10 @@ def generate_markdown_report(comparisons: List[ScenarioComparison], output_file:
 
 ## Methodology
 
-**Hardware**: macOS (darwin 25.0.0), Python 3.13.1  
-**Scenarios**: Daily (2yr, 10 assets), Hourly (3mo, 5 assets), Minute (1mo, 3 assets)  
-**Measurement**: Python `time.perf_counter()`, {comparisons[0].runs} iterations per scenario, mean execution time  
-**Baseline**: Float-based capital_base (100000.0)  
+**Hardware**: macOS (darwin 25.0.0), Python 3.13.1
+**Scenarios**: Daily (2yr, 10 assets), Hourly (3mo, 5 assets), Minute (1mo, 3 assets)
+**Measurement**: Python `time.perf_counter()`, {comparisons[0].runs} iterations per scenario, mean execution time
+**Baseline**: Float-based capital_base (100000.0)
 **Optimized**: Decimal-based capital_base (Decimal("100000")) with Rust optimizations enabled
 
 ## Results Summary
@@ -449,7 +446,7 @@ def generate_markdown_report(comparisons: List[ScenarioComparison], output_file:
         target_symbol = "✅" if comparison.target_met else "❌"
         report += f"| {comparison.scenario.capitalize():8s} | {comparison.float_mean:6.2f}s ± {comparison.float_std:.2f}s | {comparison.decimal_rust_mean:6.2f}s ± {comparison.decimal_rust_std:.2f}s | {comparison.overhead_percent:5.1f}% | {target_symbol} |\n"
 
-    report += f"| **Average** | | | **{avg_overhead:.1f}%** | **{"✅" if overall_target_met else "❌"}** |\n\n"
+    report += f"| **Average** | | | **{avg_overhead:.1f}%** | **{'✅' if overall_target_met else '❌'}** |\n\n"
 
     # Detailed results
     report += "## Detailed Results\n\n"
@@ -459,15 +456,15 @@ def generate_markdown_report(comparisons: List[ScenarioComparison], output_file:
         report += f"**Float Baseline**: {comparison.float_mean:.3f}s (σ = {comparison.float_std:.3f}s)  \n"
         report += f"**Decimal + Rust**: {comparison.decimal_rust_mean:.3f}s (σ = {comparison.decimal_rust_std:.3f}s)  \n"
         report += f"**Overhead**: {comparison.overhead_percent:.1f}%  \n"
-        report += f"**Target Met**: {"✅ Yes" if comparison.target_met else "❌ No"}  \n"
+        report += f"**Target Met**: {'✅ Yes' if comparison.target_met else '❌ No'}  \n"
         report += f"**Runs**: {comparison.runs}\n\n"
 
     # Conclusion
     report += "## Conclusion\n\n"
 
     if overall_target_met:
-        report += f"""The Decimal + Rust optimizations achieve an average overhead of {avg_overhead:.1f}%, which is 
-**below the 30% target**. This validates that the Decimal precision approach with Rust optimizations 
+        report += f"""The Decimal + Rust optimizations achieve an average overhead of {avg_overhead:.1f}%, which is
+**below the 30% target**. This validates that the Decimal precision approach with Rust optimizations
 is viable for production use.
 
 ### Production Readiness
@@ -485,7 +482,7 @@ is viable for production use.
 4. Proceed to Epic 8 (Unified Data Architecture)
 """
     else:
-        report += f"""The Decimal + Rust optimizations achieve an average overhead of {avg_overhead:.1f}%, which is 
+        report += f"""The Decimal + Rust optimizations achieve an average overhead of {avg_overhead:.1f}%, which is
 **above the 30% target**. Additional optimization is needed before production deployment.
 
 ### Contingency Planning
@@ -515,7 +512,7 @@ Focus on the scenarios with highest overhead first.
 """
 
     report += "\n---\n\n"
-    report += f"**Report Generated**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}  \n"
+    report += f"**Report Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  \n"
     report += "**Story**: 7.4 - Validate Performance Target Achievement  \n"
     report += "**Profiler**: James (Full Stack Developer)  \n"
 
@@ -574,9 +571,7 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Select scenarios
-    scenarios = (
-        ["daily", "hourly", "minute"] if args.scenario == "all" else [args.scenario]
-    )
+    scenarios = ["daily", "hourly", "minute"] if args.scenario == "all" else [args.scenario]
 
     logger.info("starting_benchmarks", scenarios=scenarios, runs=args.runs)
 

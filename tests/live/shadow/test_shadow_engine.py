@@ -1,19 +1,20 @@
 """Unit tests for ShadowBacktestEngine."""
 
-import pytest
-import pytz
 from datetime import datetime
 from decimal import Decimal
+from unittest.mock import Mock
+
+import pytest
+import pytz
 
 from rustybt.algorithm import TradingAlgorithm
-from rustybt.assets import Equity, ExchangeInfo, AssetFinder
+from rustybt.assets import AssetFinder, Equity, ExchangeInfo
 from rustybt.finance.decimal.commission import NoCommission
 from rustybt.finance.decimal.slippage import NoSlippage
 from rustybt.live.shadow.config import ShadowTradingConfig
 from rustybt.live.shadow.engine import ShadowBacktestEngine, ShadowBarData, ShadowContext
 from rustybt.live.shadow.models import SignalAlignment
 from rustybt.utils.factory import create_simulation_parameters
-from unittest.mock import Mock
 
 
 class SimpleBuyStrategy(TradingAlgorithm):
@@ -117,9 +118,7 @@ class TestShadowBacktestEngine:
             starting_cash=Decimal("100000"),
         )
 
-        market_data = {
-            test_asset: {"price": Decimal("150.00"), "volume": 1000000}
-        }
+        market_data = {test_asset: {"price": Decimal("150.00"), "volume": 1000000}}
 
         await disabled_engine.process_market_data(datetime.utcnow(), market_data)
 
@@ -141,9 +140,7 @@ class TestShadowBacktestEngine:
             starting_cash=Decimal("100000"),
         )
 
-        market_data = {
-            test_asset: {"price": Decimal("150.00"), "volume": 1000000}
-        }
+        market_data = {test_asset: {"price": Decimal("150.00"), "volume": 1000000}}
 
         await engine.process_market_data(datetime.utcnow(), market_data)
 
@@ -156,14 +153,14 @@ class TestShadowBacktestEngine:
         assert signal.source == "backtest"
 
     @pytest.mark.asyncio
-    async def test_process_market_data_no_signal_when_cannot_trade(self, engine, test_asset, simple_strategy):
+    async def test_process_market_data_no_signal_when_cannot_trade(
+        self, engine, test_asset, simple_strategy
+    ):
         """Test no signal generated when asset has no price data."""
         simple_strategy.asset = test_asset
 
         # Market data without price
-        market_data = {
-            test_asset: {"volume": 1000000}  # Missing 'price'
-        }
+        market_data = {test_asset: {"volume": 1000000}}  # Missing 'price'
 
         await engine.process_market_data(datetime.utcnow(), market_data)
 
@@ -171,7 +168,9 @@ class TestShadowBacktestEngine:
         assert len(engine.signal_validator._backtest_signals) == 0
 
     @pytest.mark.asyncio
-    async def test_conditional_strategy_signal_logic(self, test_asset, config, sim_params, asset_finder):
+    async def test_conditional_strategy_signal_logic(
+        self, test_asset, config, sim_params, asset_finder
+    ):
         """Test conditional strategy logic is executed correctly."""
         strategy = ConditionalStrategy(sim_params=sim_params, asset_finder=asset_finder)
         strategy.asset = test_asset
@@ -186,16 +185,12 @@ class TestShadowBacktestEngine:
         )
 
         # Price below threshold - should not trade
-        market_data_low = {
-            test_asset: {"price": Decimal("95.00"), "volume": 1000000}
-        }
+        market_data_low = {test_asset: {"price": Decimal("95.00"), "volume": 1000000}}
         await engine.process_market_data(datetime.utcnow(), market_data_low)
         assert len(engine.signal_validator._backtest_signals) == 0
 
         # Price above threshold - should trade
-        market_data_high = {
-            test_asset: {"price": Decimal("105.00"), "volume": 1000000}
-        }
+        market_data_high = {test_asset: {"price": Decimal("105.00"), "volume": 1000000}}
         await engine.process_market_data(datetime.utcnow(), market_data_high)
         assert len(engine.signal_validator._backtest_signals) == 1
         signal = engine.signal_validator._backtest_signals[0]
@@ -289,6 +284,7 @@ class TestShadowBacktestEngine:
     async def test_start_when_disabled(self, engine):
         """Test start does nothing when shadow mode disabled."""
         from dataclasses import replace
+
         engine.config = replace(engine.config, enabled=False)
 
         await engine.start()

@@ -42,7 +42,6 @@ class RollingPanel:
         dtype=np.float64,
         initial_dates=None,
     ):
-
         self._pos = window
         self._window = window
 
@@ -238,10 +237,7 @@ class RollingPanel:
         Roll window worth of data up to position zero.
         Save the effort of having to expensively roll at each iteration
         """
-
-        self.buffer.values[:, : self._window, :] = self.buffer.values[
-            :, -self._window :, :
-        ]
+        self.buffer.values[:, : self._window, :] = self.buffer.values[:, -self._window :, :]
         self.date_buf[: self._window] = self.date_buf[-self._window :]
         self._pos = self._window
 

@@ -1,15 +1,16 @@
 """Tests for Decimal-aware pipeline factors."""
 
-import pytest
-import polars as pl
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+
+import polars as pl
+import pytest
 
 from rustybt.pipeline.factors.decimal_factors import (
-    DecimalLatestPrice,
-    DecimalSimpleMovingAverage,
-    DecimalReturns,
     DecimalAverageDollarVolume,
+    DecimalLatestPrice,
+    DecimalReturns,
+    DecimalSimpleMovingAverage,
 )
 
 
@@ -18,11 +19,13 @@ class TestDecimalLatestPrice:
 
     def test_returns_latest_close_price(self):
         """Test that factor returns latest close price."""
-        df = pl.DataFrame({
-            "date": [date(2023, 1, 1), date(2023, 1, 2), date(2023, 1, 3)],
-            "sid": [1, 1, 1],
-            "close": [Decimal("100.00"), Decimal("102.00"), Decimal("105.00")],
-        })
+        df = pl.DataFrame(
+            {
+                "date": [date(2023, 1, 1), date(2023, 1, 2), date(2023, 1, 3)],
+                "sid": [1, 1, 1],
+                "close": [Decimal("100.00"), Decimal("102.00"), Decimal("105.00")],
+            }
+        )
 
         factor = DecimalLatestPrice()
         result = factor.compute(df)
@@ -31,10 +34,12 @@ class TestDecimalLatestPrice:
 
     def test_preserves_decimal_precision(self):
         """Test that precision is preserved."""
-        df = pl.DataFrame({
-            "sid": [1],
-            "close": [Decimal("123.45678901")],
-        })
+        df = pl.DataFrame(
+            {
+                "sid": [1],
+                "close": [Decimal("123.45678901")],
+            }
+        )
 
         factor = DecimalLatestPrice()
         result = factor.compute(df)
@@ -65,13 +70,15 @@ class TestDecimalSimpleMovingAverage:
 
     def test_3_period_sma(self):
         """Test 3-period SMA calculation."""
-        df = pl.DataFrame({
-            "close": [
-                Decimal("100.00"),
-                Decimal("102.00"),
-                Decimal("104.00"),
-            ],
-        })
+        df = pl.DataFrame(
+            {
+                "close": [
+                    Decimal("100.00"),
+                    Decimal("102.00"),
+                    Decimal("104.00"),
+                ],
+            }
+        )
 
         factor = DecimalSimpleMovingAverage(window_length=3)
         result = factor.compute(df)
@@ -82,13 +89,15 @@ class TestDecimalSimpleMovingAverage:
 
     def test_preserves_decimal_precision(self):
         """Test that SMA preserves Decimal precision."""
-        df = pl.DataFrame({
-            "close": [
-                Decimal("100.11"),
-                Decimal("100.22"),
-                Decimal("100.33"),
-            ],
-        })
+        df = pl.DataFrame(
+            {
+                "close": [
+                    Decimal("100.11"),
+                    Decimal("100.22"),
+                    Decimal("100.33"),
+                ],
+            }
+        )
 
         factor = DecimalSimpleMovingAverage(window_length=3)
         result = factor.compute(df)
@@ -99,9 +108,11 @@ class TestDecimalSimpleMovingAverage:
 
     def test_handles_nan_for_insufficient_data(self):
         """Test that early values are None when window not filled."""
-        df = pl.DataFrame({
-            "close": [Decimal("100.00"), Decimal("102.00"), Decimal("104.00")],
-        })
+        df = pl.DataFrame(
+            {
+                "close": [Decimal("100.00"), Decimal("102.00"), Decimal("104.00")],
+            }
+        )
 
         factor = DecimalSimpleMovingAverage(window_length=5)
         result = factor.compute(df)
@@ -121,9 +132,11 @@ class TestDecimalReturns:
 
     def test_simple_return_calculation(self):
         """Test basic return calculation."""
-        df = pl.DataFrame({
-            "close": [Decimal("100.00"), Decimal("105.00")],
-        })
+        df = pl.DataFrame(
+            {
+                "close": [Decimal("100.00"), Decimal("105.00")],
+            }
+        )
 
         factor = DecimalReturns(window_length=1)
         result = factor.compute(df)
@@ -134,9 +147,11 @@ class TestDecimalReturns:
 
     def test_negative_return(self):
         """Test negative return calculation."""
-        df = pl.DataFrame({
-            "close": [Decimal("100.00"), Decimal("95.00")],
-        })
+        df = pl.DataFrame(
+            {
+                "close": [Decimal("100.00"), Decimal("95.00")],
+            }
+        )
 
         factor = DecimalReturns(window_length=1)
         result = factor.compute(df)
@@ -147,14 +162,16 @@ class TestDecimalReturns:
 
     def test_multi_period_return(self):
         """Test return over multiple periods."""
-        df = pl.DataFrame({
-            "close": [
-                Decimal("100.00"),
-                Decimal("102.00"),
-                Decimal("104.00"),
-                Decimal("110.00"),
-            ],
-        })
+        df = pl.DataFrame(
+            {
+                "close": [
+                    Decimal("100.00"),
+                    Decimal("102.00"),
+                    Decimal("104.00"),
+                    Decimal("110.00"),
+                ],
+            }
+        )
 
         factor = DecimalReturns(window_length=3)
         result = factor.compute(df)
@@ -165,9 +182,11 @@ class TestDecimalReturns:
 
     def test_preserves_decimal_precision(self):
         """Test that returns preserve Decimal precision."""
-        df = pl.DataFrame({
-            "close": [Decimal("100.00000000"), Decimal("100.00000001")],
-        })
+        df = pl.DataFrame(
+            {
+                "close": [Decimal("100.00000000"), Decimal("100.00000001")],
+            }
+        )
 
         factor = DecimalReturns(window_length=1)
         result = factor.compute(df)
@@ -191,10 +210,12 @@ class TestDecimalAverageDollarVolume:
 
     def test_simple_dollar_volume_calculation(self):
         """Test basic average dollar volume calculation."""
-        df = pl.DataFrame({
-            "close": [Decimal("100.00"), Decimal("102.00"), Decimal("104.00")],
-            "volume": [Decimal("1000.00"), Decimal("1500.00"), Decimal("2000.00")],
-        })
+        df = pl.DataFrame(
+            {
+                "close": [Decimal("100.00"), Decimal("102.00"), Decimal("104.00")],
+                "volume": [Decimal("1000.00"), Decimal("1500.00"), Decimal("2000.00")],
+            }
+        )
 
         factor = DecimalAverageDollarVolume(window_length=3)
         result = factor.compute(df)
@@ -208,10 +229,12 @@ class TestDecimalAverageDollarVolume:
 
     def test_preserves_decimal_precision(self):
         """Test that dollar volume preserves Decimal precision."""
-        df = pl.DataFrame({
-            "close": [Decimal("100.12345"), Decimal("100.12345")],
-            "volume": [Decimal("1000.00000"), Decimal("1000.00000")],
-        })
+        df = pl.DataFrame(
+            {
+                "close": [Decimal("100.12345"), Decimal("100.12345")],
+                "volume": [Decimal("1000.00000"), Decimal("1000.00000")],
+            }
+        )
 
         factor = DecimalAverageDollarVolume(window_length=2)
         result = factor.compute(df)
@@ -222,10 +245,12 @@ class TestDecimalAverageDollarVolume:
 
     def test_handles_large_volumes(self):
         """Test calculation with large volume values."""
-        df = pl.DataFrame({
-            "close": [Decimal("50.00"), Decimal("55.00")],
-            "volume": [Decimal("10000000.00"), Decimal("15000000.00")],
-        })
+        df = pl.DataFrame(
+            {
+                "close": [Decimal("50.00"), Decimal("55.00")],
+                "volume": [Decimal("10000000.00"), Decimal("15000000.00")],
+            }
+        )
 
         factor = DecimalAverageDollarVolume(window_length=2)
         result = factor.compute(df)
@@ -249,12 +274,14 @@ class TestDecimalFactorIntegration:
 
     def test_factors_work_on_same_data(self):
         """Test that multiple factors can compute on same DataFrame."""
-        df = pl.DataFrame({
-            "date": [date(2023, 1, 1), date(2023, 1, 2), date(2023, 1, 3)],
-            "sid": [1, 1, 1],
-            "close": [Decimal("100.00"), Decimal("102.00"), Decimal("105.00")],
-            "volume": [Decimal("1000.00"), Decimal("1500.00"), Decimal("2000.00")],
-        })
+        df = pl.DataFrame(
+            {
+                "date": [date(2023, 1, 1), date(2023, 1, 2), date(2023, 1, 3)],
+                "sid": [1, 1, 1],
+                "close": [Decimal("100.00"), Decimal("102.00"), Decimal("105.00")],
+                "volume": [Decimal("1000.00"), Decimal("1500.00"), Decimal("2000.00")],
+            }
+        )
 
         latest_price = DecimalLatestPrice()
         sma = DecimalSimpleMovingAverage(window_length=3)
@@ -269,13 +296,15 @@ class TestDecimalFactorIntegration:
 
     def test_chained_calculations_preserve_precision(self):
         """Test that chained Decimal operations preserve precision."""
-        df = pl.DataFrame({
-            "close": [
-                Decimal("100.00000001"),
-                Decimal("100.00000002"),
-                Decimal("100.00000003"),
-            ],
-        })
+        df = pl.DataFrame(
+            {
+                "close": [
+                    Decimal("100.00000001"),
+                    Decimal("100.00000002"),
+                    Decimal("100.00000003"),
+                ],
+            }
+        )
 
         sma = DecimalSimpleMovingAverage(window_length=3)
         sma_result = sma.compute(df)

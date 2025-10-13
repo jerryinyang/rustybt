@@ -22,9 +22,7 @@ def is_final(name, mro):
     of the classes. Because `final` objects are descriptor, we need to grab
     them _BEFORE_ the `__call__` is invoked.
     """
-    return any(
-        isinstance(getattr(c, "__dict__", {}).get(name), final) for c in bases_mro(mro)
-    )
+    return any(isinstance(getattr(c, "__dict__", {}).get(name), final) for c in bases_mro(mro))
 
 
 class FinalMeta(type):
@@ -42,7 +40,8 @@ class FinalMeta(type):
             # No `__setattr__` was explicitly defined, look up the super
             # class's. `bases[0]` will have a `__setattr__` because
             # `object` does so we don't need to worry about the mro.
-            setattr_ = bases[0].__setattr__
+            # If bases is empty, fall back to object.__setattr__
+            setattr_ = bases[0].__setattr__ if bases else object.__setattr__
 
         if not is_final("__setattr__", bases) and not isinstance(setattr_, final):
             # implicitly make the `__setattr__` a `final` object so that

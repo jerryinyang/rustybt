@@ -5,9 +5,9 @@ from rustybt.utils.input_validation import (
     optional,
 )
 
-from .domain import Domain, GENERIC, infer_domain
-from .graph import ExecutionPlan, TermGraph, SCREEN_NAME
+from .domain import GENERIC, Domain, infer_domain
 from .filters import Filter
+from .graph import SCREEN_NAME, ExecutionPlan, TermGraph
 from .term import AssetExists, ComputableTerm, Term
 
 
@@ -35,7 +35,7 @@ class Pipeline:
         Initial screen.
     """
 
-    __slots__ = ("_columns", "_screen", "_domain", "__weakref__")
+    __slots__ = ("__weakref__", "_columns", "_domain", "_screen")
 
     @expect_types(columns=optional(dict), screen=optional(Filter), domain=Domain)
     def __init__(self, columns=None, screen=None, domain=GENERIC):
@@ -47,11 +47,8 @@ class Pipeline:
             validate_column(column_name, term)
             if not isinstance(term, ComputableTerm):
                 raise TypeError(
-                    "Column {column_name!r} contains an invalid pipeline term "
-                    "({term}). Did you mean to append '.latest'?".format(
-                        column_name=column_name,
-                        term=term,
-                    )
+                    f"Column {column_name!r} contains an invalid pipeline term "
+                    f"({term}). Did you mean to append '.latest'?"
                 )
 
         self._columns = columns
@@ -62,7 +59,7 @@ class Pipeline:
     def columns(self):
         """The output columns of this pipeline.
 
-        Returns
+        Returns:
         -------
         columns : dict[str, zipline.pipeline.ComputableTerm]
             Map from column name to expression computing that column's output.
@@ -74,7 +71,7 @@ class Pipeline:
         """
         The screen of this pipeline.
 
-        Returns
+        Returns:
         -------
         screen : zipline.pipeline.Filter or None
             Term defining the screen for this pipeline. If ``screen`` is a
@@ -82,7 +79,7 @@ class Pipeline:
             filter computed ``False``) will be dropped from the output of this
             pipeline before returning results.
 
-        Notes
+        Notes:
         -----
         Setting a screen on a Pipeline does not change the values produced for
         any rows: it only affects whether a given row is returned. Computing a
@@ -116,12 +113,11 @@ class Pipeline:
             if overwrite:
                 self.remove(name)
             else:
-                raise KeyError("Column '{}' already exists.".format(name))
+                raise KeyError(f"Column '{name}' already exists.")
 
         if not isinstance(term, ComputableTerm):
             raise TypeError(
-                "{term} is not a valid pipeline column. Did you mean to "
-                "append '.latest'?".format(term=term)
+                f"{term} is not a valid pipeline column. Did you mean to append '.latest'?"
             )
 
         self._columns[name] = term
@@ -135,12 +131,12 @@ class Pipeline:
         name : str
             The name of the column to remove.
 
-        Raises
+        Raises:
         ------
         KeyError
             If `name` is not in self.columns.
 
-        Returns
+        Returns:
         -------
         removed : zipline.pipeline.Term
             The removed term.
@@ -188,7 +184,7 @@ class Pipeline:
         end_date : pd.Timestamp
             The last date of requested output.
 
-        Returns
+        Returns:
         -------
         graph : zipline.pipeline.graph.ExecutionPlan
             Graph encoding term dependencies, including metadata about extra
@@ -196,8 +192,8 @@ class Pipeline:
         """
         if self._domain is not GENERIC and self._domain is not domain:
             raise AssertionError(
-                "Attempted to compile Pipeline with domain {} to execution "
-                "plan with different domain {}.".format(self._domain, domain)
+                f"Attempted to compile Pipeline with domain {self._domain} to execution "
+                f"plan with different domain {domain}."
             )
 
         return ExecutionPlan(
@@ -216,7 +212,7 @@ class Pipeline:
         default_screen : zipline.pipeline.Term
             Term to use as a screen if self.screen is None.
 
-        Returns
+        Returns:
         -------
         graph : zipline.pipeline.graph.TermGraph
             Graph encoding term dependencies.
@@ -289,12 +285,12 @@ class Pipeline:
             Domain to use if no domain can be inferred from this pipeline by
             itself.
 
-        Returns
+        Returns:
         -------
         domain : zipline.pipeline.domain.Domain
             The domain for the pipeline.
 
-        Raises
+        Raises:
         ------
         AmbiguousDomain
         ValueError
@@ -317,7 +313,7 @@ class Pipeline:
             # Both non-generic. They have to match.
             if inferred is not self._domain:
                 raise ValueError(
-                    "Conflicting domains in Pipeline. Inferred {}, but {} was "
-                    "passed at construction.".format(inferred, self._domain)
+                    f"Conflicting domains in Pipeline. Inferred {inferred}, but {self._domain} was "
+                    "passed at construction."
                 )
             return inferred

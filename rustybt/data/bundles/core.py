@@ -1,14 +1,26 @@
-from collections import namedtuple
 import errno
+import logging
 import os
 import shutil
 import warnings
+from collections import namedtuple
 
 import click
-import logging
 import pandas as pd
+from toolz import complement, curry, take
+
+import rustybt.utils.paths as pth
+from rustybt.assets import ASSET_DB_VERSION, AssetDBWriter, AssetFinder
+from rustybt.assets.asset_db_migrations import downgrade
+from rustybt.utils.cache import (
+    dataframe_cache,
+    working_dir,
+    working_file,
+)
 from rustybt.utils.calendar_utils import get_calendar
-from toolz import curry, complement, take
+from rustybt.utils.compat import ExitStack, mappingproxy
+from rustybt.utils.input_validation import ensure_timestamp, optionally
+from rustybt.utils.preprocess import preprocess
 
 from ..adjustments import SQLiteAdjustmentReader, SQLiteAdjustmentWriter
 from ..bcolz_daily_bars import BcolzDailyBarReader, BcolzDailyBarWriter
@@ -16,17 +28,6 @@ from ..bcolz_minute_bars import (
     BcolzMinuteBarReader,
     BcolzMinuteBarWriter,
 )
-from rustybt.assets import AssetDBWriter, AssetFinder, ASSET_DB_VERSION
-from rustybt.assets.asset_db_migrations import downgrade
-from rustybt.utils.cache import (
-    dataframe_cache,
-    working_dir,
-    working_file,
-)
-from rustybt.utils.compat import ExitStack, mappingproxy
-from rustybt.utils.input_validation import ensure_timestamp, optionally
-import rustybt.utils.paths as pth
-from rustybt.utils.preprocess import preprocess
 
 log = logging.getLogger(__name__)
 
@@ -97,7 +98,7 @@ def to_bundle_ingest_dirname(ts):
     ts : pandas.Timestamp
         The time of the ingestions
 
-    Returns
+    Returns:
     -------
     name : str
         The name of the directory for this ingestion.
@@ -113,7 +114,7 @@ def from_bundle_ingest_dirname(cs):
     cs : str
         The name of the directory.
 
-    Returns
+    Returns:
     -------
     ts : pandas.Timestamp
         The time when this ingestion happened.
@@ -146,8 +147,7 @@ RegisteredBundle = namedtuple(
 
 _BundleData = namedtuple(
     "_BundleData",
-    "asset_finder equity_minute_bar_reader equity_daily_bar_reader "
-    "adjustment_reader",
+    "asset_finder equity_minute_bar_reader equity_daily_bar_reader adjustment_reader",
 )
 
 
@@ -202,7 +202,7 @@ class BadClean(click.ClickException, ValueError):
     before, after, keep_last : any
         The bad arguments to ``clean``.
 
-    See Also
+    See Also:
     --------
     clean
     """
@@ -224,12 +224,11 @@ class BadClean(click.ClickException, ValueError):
 
 
 # TODO: simplify
-# flake8: noqa: C901
 def _make_bundle_core():
     """Create a family of data bundle functions that read from the same
     bundle mapping.
 
-    Returns
+    Returns:
     -------
     bundles : mappingproxy
         The mapping of bundles to bundle payloads.
@@ -310,7 +309,7 @@ def _make_bundle_core():
             function. This can be disabled as an optimization for cases where
             they are not needed, like the ``quantopian-quandl`` bundle.
 
-        Notes
+        Notes:
         -----
         This function my be used as a decorator, for example:
 
@@ -320,7 +319,7 @@ def _make_bundle_core():
            def quandl_ingest_function(...):
                ...
 
-        See Also
+        See Also:
         --------
         zipline.data.bundles.bundles
         """
@@ -352,12 +351,12 @@ def _make_bundle_core():
         name : str
             The name of the bundle to unregister.
 
-        Raises
+        Raises:
         ------
         UnknownBundle
             Raised when no bundle has been registered with the given name.
 
-        See Also
+        See Also:
         --------
         zipline.data.bundles.bundles
         """
@@ -420,9 +419,7 @@ def _make_bundle_core():
             # we use `cleanup_on_failure=False` so that we don't purge the
             # cache directory if the load fails in the middle
             if bundle.create_writers:
-                wd = stack.enter_context(
-                    working_dir(pth.data_path([], environ=environ))
-                )
+                wd = stack.enter_context(working_dir(pth.data_path([], environ=environ)))
                 daily_bars_path = wd.ensure_dir(*daily_equity_relative(name, timestr))
                 daily_bar_writer = BcolzDailyBarWriter(
                     daily_bars_path,
@@ -525,11 +522,8 @@ def _make_bundle_core():
             if getattr(e, "errno", errno.ENOENT) != errno.ENOENT:
                 raise
             raise ValueError(
-                "no data for bundle {bundle!r} on or before {timestamp}\n"
-                "maybe you need to run: $ zipline ingest -b {bundle}".format(
-                    bundle=bundle_name,
-                    timestamp=timestamp,
-                ),
+                f"no data for bundle {bundle_name!r} on or before {timestamp}\n"
+                f"maybe you need to run: $ zipline ingest -b {bundle_name}",
             )
 
     def load(name, environ=os.environ, timestamp=None):
@@ -545,7 +539,7 @@ def _make_bundle_core():
             The timestamp of the data to lookup.
             Defaults to the current time.
 
-        Returns
+        Returns:
         -------
         bundle_data : BundleData
             The raw data readers for this bundle.
@@ -594,12 +588,12 @@ def _make_bundle_core():
         environ : mapping, optional
             The environment variables. Defaults of os.environ.
 
-        Returns
+        Returns:
         -------
         cleaned : set[str]
             The names of the runs that were removed.
 
-        Raises
+        Raises:
         ------
         BadClean
             Raised when ``before`` and or ``after`` are passed with
@@ -627,9 +621,7 @@ def _make_bundle_core():
 
             def should_clean(name):
                 dt = from_bundle_ingest_dirname(name)
-                return (before is not None and dt < before) or (
-                    after is not None and dt > after
-                )
+                return (before is not None and dt < before) or (after is not None and dt > after)
 
         elif keep_last >= 0:
             last_n_dts = set(take(keep_last, reversed(all_runs)))

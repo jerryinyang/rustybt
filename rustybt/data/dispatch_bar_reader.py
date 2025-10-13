@@ -14,7 +14,7 @@
 # limitations under the License.
 from abc import ABC, abstractmethod
 
-from numpy import full, nan, int64, zeros
+from numpy import full, int64, nan, zeros
 
 from rustybt.utils.memoize import lazyval
 
@@ -49,10 +49,8 @@ class AssetDispatchBarReader(ABC):
         for t, r in self._readers.items():
             assert trading_calendar == r.trading_calendar, (
                 "All readers must share target trading_calendar. "
-                "Reader={0} for type={1} uses calendar={2} which does not "
-                "match the desired shared calendar={3} ".format(
-                    r, t, r.trading_calendar, trading_calendar
-                )
+                f"Reader={r} for type={t} uses calendar={r.trading_calendar} which does not "
+                f"match the desired shared calendar={trading_calendar} "
             )
 
     @abstractmethod

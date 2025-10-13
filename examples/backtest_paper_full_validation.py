@@ -14,21 +14,19 @@ Usage:
 """
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
-from typing import Optional
-import pandas as pd
+
 import pytz
 
 from rustybt.algorithm import TradingAlgorithm
-from rustybt.utils.run_algo import run_algorithm, BenchmarkSpec
-from rustybt.assets import Equity, ExchangeInfo
 from rustybt.finance.decimal.commission import PerShareCommission
 from rustybt.finance.decimal.slippage import FixedBasisPointsSlippage
-from rustybt.live.brokers import PaperBroker
 from rustybt.live import LiveTradingEngine
+from rustybt.live.brokers import PaperBroker
 from rustybt.live.data_feed import SimulatedMarketDataFeed
 from rustybt.live.scheduler import TradingScheduler
+from rustybt.utils.run_algo import run_algorithm
 
 
 class SimpleMomentumStrategy(TradingAlgorithm):
@@ -44,7 +42,7 @@ class SimpleMomentumStrategy(TradingAlgorithm):
 
     def initialize(self, context):
         """Initialize strategy state and parameters."""
-        context.asset = self.symbol('SPY')
+        context.asset = self.symbol("SPY")
         context.sma_fast = 10  # Fast moving average period
         context.sma_slow = 30  # Slow moving average period
         context.invested = False
@@ -66,33 +64,30 @@ class SimpleMomentumStrategy(TradingAlgorithm):
             return
 
         # Get historical prices
-        prices = data.history(
-            context.asset,
-            'close',
-            context.sma_slow,
-            '1d'
-        )
+        prices = data.history(context.asset, "close", context.sma_slow, "1d")
 
         # Calculate moving averages
-        fast_mavg = prices[-context.sma_fast:].mean()
+        fast_mavg = prices[-context.sma_fast :].mean()
         slow_mavg = prices.mean()
 
         # Generate signal
-        current_price = data.current(context.asset, 'close')
+        current_price = data.current(context.asset, "close")
 
         if fast_mavg > slow_mavg and not context.invested:
             # Buy signal: Fast MA crosses above slow MA
             target_shares = int(context.portfolio.cash / current_price * Decimal("0.95"))
             if target_shares > 0:
                 self.order(context.asset, target_shares)
-                context.signals.append({
-                    'timestamp': data.current_dt,
-                    'signal': 'BUY',
-                    'shares': target_shares,
-                    'price': current_price,
-                    'fast_ma': fast_mavg,
-                    'slow_ma': slow_mavg,
-                })
+                context.signals.append(
+                    {
+                        "timestamp": data.current_dt,
+                        "signal": "BUY",
+                        "shares": target_shares,
+                        "price": current_price,
+                        "fast_ma": fast_mavg,
+                        "slow_ma": slow_mavg,
+                    }
+                )
                 context.invested = True
                 self.log.info(
                     "Buy signal generated",
@@ -107,14 +102,16 @@ class SimpleMomentumStrategy(TradingAlgorithm):
             position = context.portfolio.positions.get(context.asset)
             if position and position.amount > 0:
                 self.order(context.asset, -position.amount)
-                context.signals.append({
-                    'timestamp': data.current_dt,
-                    'signal': 'SELL',
-                    'shares': -position.amount,
-                    'price': current_price,
-                    'fast_ma': fast_mavg,
-                    'slow_ma': slow_mavg,
-                })
+                context.signals.append(
+                    {
+                        "timestamp": data.current_dt,
+                        "signal": "SELL",
+                        "shares": -position.amount,
+                        "price": current_price,
+                        "fast_ma": fast_mavg,
+                        "slow_ma": slow_mavg,
+                    }
+                )
                 context.invested = False
                 self.log.info(
                     "Sell signal generated",
@@ -127,7 +124,7 @@ class SimpleMomentumStrategy(TradingAlgorithm):
     def before_trading_start(self, context, data):
         """Optional: Daily pre-processing before market open."""
         # Track trading day counter
-        if not hasattr(context, 'trading_day'):
+        if not hasattr(context, "trading_day"):
             context.trading_day = 0
         context.trading_day += 1
 
@@ -150,11 +147,9 @@ def run_backtest_mode(start_date: datetime, end_date: datetime, capital_base: fl
     # Configure execution models
     commission_model = PerShareCommission(
         rate=Decimal("0.005"),  # $0.005 per share
-        minimum=Decimal("1.00")
+        minimum=Decimal("1.00"),
     )
-    slippage_model = FixedBasisPointsSlippage(
-        basis_points=Decimal("5")  # 5 bps = 0.05%
-    )
+    slippage_model = FixedBasisPointsSlippage(basis_points=Decimal("5"))  # 5 bps = 0.05%
 
     # Set models on strategy
     strategy.set_commission(commission_model)
@@ -172,10 +167,10 @@ def run_backtest_mode(start_date: datetime, end_date: datetime, capital_base: fl
         handle_data=strategy.handle_data,
         before_trading_start=strategy.before_trading_start,
         capital_base=capital_base,
-        data_frequency='daily',
-        bundle='quandl',  # Using Quandl bundle for historical data
+        data_frequency="daily",
+        bundle="quandl",  # Using Quandl bundle for historical data
         trading_calendar=None,  # Use default XNYS calendar
-        metrics_set='default',
+        metrics_set="default",
         benchmark_returns=None,
     )
 
@@ -187,11 +182,7 @@ def run_backtest_mode(start_date: datetime, end_date: datetime, capital_base: fl
     return perf
 
 
-async def run_paper_trading_mode(
-    start_date: datetime,
-    end_date: datetime,
-    capital_base: Decimal
-):
+async def run_paper_trading_mode(start_date: datetime, end_date: datetime, capital_base: Decimal):
     """Run strategy in paper trading mode using LiveTradingEngine."""
     print("=" * 80)
     print("PAPER TRADING MODE (using LiveTradingEngine)")
@@ -202,13 +193,8 @@ async def run_paper_trading_mode(
     strategy = SimpleMomentumStrategy()
 
     # Configure execution models (SAME as backtest)
-    commission_model = PerShareCommission(
-        rate=Decimal("0.005"),
-        minimum=Decimal("1.00")
-    )
-    slippage_model = FixedBasisPointsSlippage(
-        basis_points=Decimal("5")
-    )
+    commission_model = PerShareCommission(rate=Decimal("0.005"), minimum=Decimal("1.00"))
+    slippage_model = FixedBasisPointsSlippage(basis_points=Decimal("5"))
 
     # Create PaperBroker with same models
     broker = PaperBroker(
@@ -223,13 +209,13 @@ async def run_paper_trading_mode(
     data_feed = SimulatedMarketDataFeed(
         start_date=start_date,
         end_date=end_date,
-        frequency='daily',
-        bundle='quandl',
+        frequency="daily",
+        bundle="quandl",
     )
 
     # Create scheduler for daily execution
     scheduler = TradingScheduler(
-        trading_calendar='XNYS',
+        trading_calendar="XNYS",
         timezone=pytz.UTC,
     )
 
@@ -254,7 +240,9 @@ async def run_paper_trading_mode(
 
     print("Paper trading completed successfully")
     print(f"Final portfolio value: ${float(account_info['portfolio_value']):,.2f}")
-    print(f"Total return: {float((account_info['portfolio_value'] - capital_base) / capital_base * 100):+.2f}%")
+    print(
+        f"Total return: {float((account_info['portfolio_value'] - capital_base) / capital_base * 100):+.2f}%"
+    )
     print()
 
     return engine, broker
@@ -268,8 +256,8 @@ def compare_results(backtest_perf, paper_broker):
     print()
 
     # Extract final values
-    backtest_final_value = backtest_perf['portfolio_value'].iloc[-1]
-    paper_final_value = float(paper_broker.get_account_info()['portfolio_value'])
+    backtest_final_value = backtest_perf["portfolio_value"].iloc[-1]
+    paper_final_value = float(paper_broker.get_account_info()["portfolio_value"])
 
     # Calculate correlation
     difference = abs(backtest_final_value - paper_final_value)
@@ -278,8 +266,12 @@ def compare_results(backtest_perf, paper_broker):
 
     print(f"{'Metric':<25} {'Backtest':<20} {'Paper Trading':<20} {'Difference':<15}")
     print("-" * 80)
-    print(f"{'Final portfolio value':<25} ${backtest_final_value:>18,.2f} ${paper_final_value:>18,.2f} ${difference:>13,.2f}")
-    print(f"{'Correlation':<25} {'100.00%':>20} {f'{correlation_pct:.2f}%':>20} {f'{difference_pct:.4f}%':>15}")
+    print(
+        f"{'Final portfolio value':<25} ${backtest_final_value:>18,.2f} ${paper_final_value:>18,.2f} ${difference:>13,.2f}"
+    )
+    print(
+        f"{'Correlation':<25} {'100.00%':>20} {f'{correlation_pct:.2f}%':>20} {f'{difference_pct:.4f}%':>15}"
+    )
     print()
 
     # Validate >99% correlation
@@ -290,7 +282,9 @@ def compare_results(backtest_perf, paper_broker):
         print("  ✓ Same TradingAlgorithm class runs in both modes")
         print("  ✓ Used actual run_algorithm() function for backtest")
         print("  ✓ Historical data fed through data portal")
-        print("  ✓ Full strategy lifecycle validated (initialize, handle_data, before_trading_start)")
+        print(
+            "  ✓ Full strategy lifecycle validated (initialize, handle_data, before_trading_start)"
+        )
         print("  ✓ Portfolio values match within 1%")
         print("  ✓ Demonstrates >99% correlation")
         print()
@@ -323,11 +317,7 @@ async def main():
     backtest_perf = run_backtest_mode(start_date, end_date, capital_base)
 
     # Run paper trading
-    engine, broker = await run_paper_trading_mode(
-        start_date,
-        end_date,
-        Decimal(str(capital_base))
-    )
+    engine, broker = await run_paper_trading_mode(start_date, end_date, Decimal(str(capital_base)))
 
     # Compare results
     validation_passed = compare_results(backtest_perf, broker)

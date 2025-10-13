@@ -4,13 +4,12 @@ This module provides programmatic access to alignment metrics and dashboard data
 that can be consumed by UI frameworks (CLI, web, notebooks).
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Dict, List, Optional, Tuple
 
 import structlog
 
-from rustybt.live.shadow.models import AlignmentMetrics, SignalAlignment
+from rustybt.live.shadow.models import SignalAlignment
 from rustybt.live.state_manager import StateManager
 
 logger = structlog.get_logger()
@@ -45,7 +44,7 @@ class AlignmentDashboard:
     def get_signal_match_rate(
         self,
         time_window: timedelta = timedelta(hours=1),
-    ) -> Tuple[Decimal, Dict[str, int]]:
+    ) -> tuple[Decimal, dict[str, int]]:
         """Get rolling signal match rate for specified time window.
 
         Args:
@@ -56,7 +55,7 @@ class AlignmentDashboard:
             percentage of matching signals and divergence_breakdown is dict
             of alignment type counts
         """
-        end_time = datetime.now(timezone.utc)
+        end_time = datetime.now(UTC)
         start_time = end_time - time_window
 
         history = self.state_manager.get_alignment_history(
@@ -71,7 +70,7 @@ class AlignmentDashboard:
         # Aggregate signal alignment counts
         total_backtest = 0
         total_live = 0
-        divergence_counts: Dict[str, int] = {}
+        divergence_counts: dict[str, int] = {}
 
         for metrics_dict in history:
             if "signal_alignment" not in metrics_dict:
@@ -83,9 +82,7 @@ class AlignmentDashboard:
 
             breakdown = signal_data.get("divergence_breakdown", {})
             for alignment_type, count in breakdown.items():
-                divergence_counts[alignment_type] = (
-                    divergence_counts.get(alignment_type, 0) + count
-                )
+                divergence_counts[alignment_type] = divergence_counts.get(alignment_type, 0) + count
 
         # Calculate match rate (exact matches / total backtest signals)
         exact_matches = divergence_counts.get(SignalAlignment.EXACT_MATCH.value, 0)
@@ -98,7 +95,7 @@ class AlignmentDashboard:
     def get_execution_quality_metrics(
         self,
         time_window: timedelta = timedelta(hours=1),
-    ) -> Dict[str, Decimal]:
+    ) -> dict[str, Decimal]:
         """Get execution quality metrics for specified time window.
 
         Args:
@@ -110,7 +107,7 @@ class AlignmentDashboard:
             fill_rate_error_pct, commission_expected, commission_actual,
             commission_error_pct
         """
-        end_time = datetime.now(timezone.utc)
+        end_time = datetime.now(UTC)
         start_time = end_time - time_window
 
         history = self.state_manager.get_alignment_history(
@@ -189,7 +186,7 @@ class AlignmentDashboard:
     def get_pnl_comparison(
         self,
         time_window: timedelta = timedelta(days=1),
-    ) -> Dict[str, List[Dict[str, any]]]:
+    ) -> dict[str, list[dict[str, any]]]:
         """Get P&L comparison between backtest and live trading.
 
         Args:
@@ -199,10 +196,10 @@ class AlignmentDashboard:
             Dict with 'cumulative' and 'daily' keys, each containing list of
             {timestamp, backtest_pnl, live_pnl, difference} dicts
         """
-        end_time = datetime.now(timezone.utc)
+        end_time = datetime.now(UTC)
         start_time = end_time - time_window
 
-        history = self.state_manager.get_alignment_history(
+        self.state_manager.get_alignment_history(
             strategy_name=self.strategy_name,
             start_time=start_time,
             end_time=end_time,
@@ -222,7 +219,7 @@ class AlignmentDashboard:
             "daily": [],
         }
 
-    def get_circuit_breaker_status(self) -> Dict[str, any]:
+    def get_circuit_breaker_status(self) -> dict[str, any]:
         """Get current circuit breaker status.
 
         Returns:
@@ -246,8 +243,8 @@ class AlignmentDashboard:
 
     def get_alignment_trend(
         self,
-        periods: List[timedelta] = None,
-    ) -> Dict[str, Dict[str, Decimal]]:
+        periods: list[timedelta] = None,
+    ) -> dict[str, dict[str, Decimal]]:
         """Get alignment trend over multiple time periods.
 
         Args:
@@ -291,7 +288,7 @@ class AlignmentDashboard:
     def export_dashboard_json(
         self,
         time_window: timedelta = timedelta(hours=1),
-    ) -> Dict[str, any]:
+    ) -> dict[str, any]:
         """Export all dashboard data as JSON-serializable dict.
 
         Args:
@@ -307,15 +304,14 @@ class AlignmentDashboard:
         trends = self.get_alignment_trend()
 
         return {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "time_window_seconds": int(time_window.total_seconds()),
             "signal_alignment": {
                 "match_rate": str(match_rate),
                 "divergence_breakdown": divergence,
             },
             "execution_quality": {
-                k: str(v) if isinstance(v, Decimal) else v
-                for k, v in exec_metrics.items()
+                k: str(v) if isinstance(v, Decimal) else v for k, v in exec_metrics.items()
             },
             "pnl_comparison": pnl_data,
             "circuit_breaker": breaker_status,
@@ -325,7 +321,7 @@ class AlignmentDashboard:
             },
         }
 
-    def _empty_execution_metrics(self) -> Dict[str, Decimal]:
+    def _empty_execution_metrics(self) -> dict[str, Decimal]:
         """Return empty execution metrics dict."""
         return {
             "expected_slippage_bps": Decimal("0"),

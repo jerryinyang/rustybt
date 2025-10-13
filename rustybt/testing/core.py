@@ -1,5 +1,3 @@
-from abc import ABCMeta, abstractmethod
-from contextlib import contextmanager
 import gzip
 import json
 import operator
@@ -7,13 +5,15 @@ import os
 import shutil
 import sys
 import tempfile
+from abc import ABCMeta, abstractmethod
+from contextlib import contextmanager
 from itertools import combinations, count, product
 from os.path import abspath, dirname, join, realpath
 from traceback import format_exception
+from unittest import mock
 
 import numpy as np
 import pandas as pd
-from unittest import mock
 from numpy.testing import assert_allclose, assert_array_equal
 from sqlalchemy import create_engine
 from testfixtures import TempDirectory
@@ -22,12 +22,12 @@ from toolz import concat, curry
 from rustybt.assets import AssetDBWriter, AssetFinder
 from rustybt.assets.synthetic import make_simple_equity_info
 from rustybt.data.bcolz_daily_bars import BcolzDailyBarReader, BcolzDailyBarWriter
-from rustybt.data.data_portal import DataPortal
 from rustybt.data.bcolz_minute_bars import (
     US_EQUITIES_MINUTES_PER_DAY,
     BcolzMinuteBarReader,
     BcolzMinuteBarWriter,
 )
+from rustybt.data.data_portal import DataPortal
 from rustybt.finance.blotter import SimulationBlotter
 from rustybt.finance.order import ORDER_STATUS
 from rustybt.lib.labelarray import LabelArray
@@ -92,7 +92,7 @@ def check_algo_results(
 ):
     if expected_transactions_count is not None:
         txns = flatten_list(results["transactions"])
-        test.assertEqual(expected_transactions_count, len(txns))
+        assert expected_transactions_count == len(txns)
 
     if expected_positions_count is not None:
         raise NotImplementedError
@@ -102,7 +102,7 @@ def check_algo_results(
         # whenever they a txn is filled
         orders = set([order["id"] for order in flatten_list(results["orders"])])
 
-        test.assertEqual(expected_order_count, len(orders))
+        assert expected_order_count == len(orders)
 
 
 def flatten_list(list):
@@ -113,11 +113,9 @@ def assert_single_position(test, zipline):
     output, transaction_count = drain_zipline(test, zipline)
 
     if "expected_transactions" in test.zipline_test_config:
-        test.assertEqual(
-            test.zipline_test_config["expected_transactions"], transaction_count
-        )
+        assert test.zipline_test_config["expected_transactions"] == transaction_count
     else:
-        test.assertEqual(test.zipline_test_config["order_count"], transaction_count)
+        assert test.zipline_test_config["order_count"] == transaction_count
 
     # the final message is the risk report, the second to
     # last is the final day's results. Positions is a list of
@@ -135,16 +133,12 @@ def assert_single_position(test, zipline):
                     orders_by_id[order["id"]] = order
 
     for order in orders_by_id.value():
-        test.assertEqual(order["status"], ORDER_STATUS.FILLED, "")
+        assert order["status"] == ORDER_STATUS.FILLED, ""
 
-    test.assertEqual(len(closing_positions), 1, "Portfolio should have one position.")
+    assert len(closing_positions) == 1, "Portfolio should have one position."
 
     sid = test.zipline_test_config["sid"]
-    test.assertEqual(
-        closing_positions[0]["sid"],
-        sid,
-        "Portfolio should have one position in " + str(sid),
-    )
+    assert closing_positions[0]["sid"] == sid, "Portfolio should have one position in " + str(sid)
 
     return output, transaction_count
 
@@ -155,9 +149,7 @@ def security_list_copy():
     new_dir = tempfile.mkdtemp()
     try:
         for subdir in os.listdir(old_dir):
-            shutil.copytree(
-                os.path.join(old_dir, subdir), os.path.join(new_dir, subdir)
-            )
+            shutil.copytree(os.path.join(old_dir, subdir), os.path.join(new_dir, subdir))
             with (
                 mock.patch.object(security_list, "SECURITY_LISTS_DIR", new_dir),
                 mock.patch.object(security_list, "using_copy", True, create=True),
@@ -169,9 +161,7 @@ def security_list_copy():
 
 def add_security_data(adds, deletes):
     if not hasattr(security_list, "using_copy"):
-        raise Exception(
-            "add_security_data must be used within " "security_list_copy context"
-        )
+        raise Exception("add_security_data must be used within security_list_copy context")
     directory = os.path.join(
         security_list.SECURITY_LISTS_DIR, "leveraged_etf_list/20150127/20150125"
     )
@@ -199,12 +189,12 @@ def all_pairs_matching_predicate(values, pred):
     values : iterable
     pred : function
 
-    Returns
+    Returns:
     -------
     pairs_iterator : generator
        Generator yielding pairs matching `pred`.
 
-    Examples
+    Examples:
     --------
     >>> from rustybt.testing import all_pairs_matching_predicate
     >>> from operator import eq, lt
@@ -230,10 +220,7 @@ def product_upper_triangle(values, include_diagonal=False):
 
 def all_subindices(index):
     """Return all valid sub-indices of a pandas Index."""
-    return (
-        index[start:stop]
-        for start, stop in product_upper_triangle(range(len(index) + 1))
-    )
+    return (index[start:stop] for start, stop in product_upper_triangle(range(len(index) + 1)))
 
 
 def make_trade_data_for_asset_info(
@@ -290,7 +277,7 @@ def check_allclose(actual, desired, rtol=1e-07, atol=0, err_msg="", verbose=True
     """Wrapper around np.testing.assert_allclose that also verifies that inputs
     are ndarrays.
 
-    See Also
+    See Also:
     --------
     np.assert_allclose
     """
@@ -310,12 +297,12 @@ def check_arrays(x, y, err_msg="", verbose=True, check_dtypes=True):
     """Wrapper around np.testing.assert_array_equal that also verifies that inputs
     are ndarrays.
 
-    See Also
+    See Also:
     --------
     np.assert_array_equal
     """
-    assert type(x) is type(y), "{x} != {y}".format(x=type(x), y=type(y))
-    assert x.dtype == y.dtype, "{x.dtype} != {y.dtype}".format(x=x, y=y)
+    assert type(x) is type(y), f"{type(x)} != {type(y)}"
+    assert x.dtype == y.dtype, f"{x.dtype} != {y.dtype}"
 
     if isinstance(x, LabelArray):
         # Check that both arrays have missing values in the same locations...
@@ -377,31 +364,37 @@ def write_minute_data(trading_calendar, tempdir, minutes, sids):
 def create_minute_bar_data(minutes, sids):
     length = len(minutes)
     for sid_idx, sid in enumerate(sids):
-        yield sid, pd.DataFrame(
-            {
-                "open": np.arange(length) + 10 + sid_idx,
-                "high": np.arange(length) + 15 + sid_idx,
-                "low": np.arange(length) + 8 + sid_idx,
-                "close": np.arange(length) + 10 + sid_idx,
-                "volume": 100 + sid_idx,
-            },
-            index=minutes,
+        yield (
+            sid,
+            pd.DataFrame(
+                {
+                    "open": np.arange(length) + 10 + sid_idx,
+                    "high": np.arange(length) + 15 + sid_idx,
+                    "low": np.arange(length) + 8 + sid_idx,
+                    "close": np.arange(length) + 10 + sid_idx,
+                    "volume": 100 + sid_idx,
+                },
+                index=minutes,
+            ),
         )
 
 
 def create_daily_bar_data(sessions, sids):
     length = len(sessions)
     for sid_idx, sid in enumerate(sids):
-        yield sid, pd.DataFrame(
-            {
-                "open": (np.array(range(10, 10 + length)) + sid_idx),
-                "high": (np.array(range(15, 15 + length)) + sid_idx),
-                "low": (np.array(range(8, 8 + length)) + sid_idx),
-                "close": (np.array(range(10, 10 + length)) + sid_idx),
-                "volume": np.array(range(100, 100 + length)) + sid_idx,
-                "day": [session.value for session in sessions],
-            },
-            index=sessions,
+        yield (
+            sid,
+            pd.DataFrame(
+                {
+                    "open": (np.array(range(10, 10 + length)) + sid_idx),
+                    "high": (np.array(range(15, 15 + length)) + sid_idx),
+                    "low": (np.array(range(8, 8 + length)) + sid_idx),
+                    "close": (np.array(range(10, 10 + length)) + sid_idx),
+                    "volume": np.array(range(100, 100 + length)) + sid_idx,
+                    "day": [session.value for session in sessions],
+                },
+                index=sessions,
+            ),
         )
 
 
@@ -437,9 +430,7 @@ def create_data_portal(
             adjustment_reader=adjustment_reader,
         )
     else:
-        minutes = trading_calendar.minutes_in_range(
-            sim_params.first_open, sim_params.last_close
-        )
+        minutes = trading_calendar.minutes_in_range(sim_params.first_open, sim_params.last_close)
 
         minute_path = write_minute_data(trading_calendar, tempdir, minutes, sids)
 
@@ -549,15 +540,18 @@ def trades_by_sid_to_dfs(trades_by_sid, index):
             closes.append(trade.close_price)
             volumes.append(trade.volume)
 
-        yield sidint, pd.DataFrame(
-            {
-                "open": opens,
-                "high": highs,
-                "low": lows,
-                "close": closes,
-                "volume": volumes,
-            },
-            index=index,
+        yield (
+            sidint,
+            pd.DataFrame(
+                {
+                    "open": opens,
+                    "high": highs,
+                    "low": lows,
+                    "close": closes,
+                    "volume": volumes,
+                },
+                index=index,
+            ),
         )
 
 
@@ -585,9 +579,7 @@ def create_data_portal_from_trade_history(
             equity_daily_reader=equity_daily_reader,
         )
     else:
-        minutes = trading_calendar.minutes_in_range(
-            sim_params.first_open, sim_params.last_close
-        )
+        minutes = trading_calendar.minutes_in_range(sim_params.first_open, sim_params.last_close)
 
         length = len(minutes)
         assets = {}
@@ -620,9 +612,7 @@ def create_data_portal_from_trade_history(
                 }
             ).set_index("dt")
 
-        write_bcolz_minute_data(
-            trading_calendar, sim_params.sessions, tempdir.path, assets
-        )
+        write_bcolz_minute_data(trading_calendar, sim_params.sessions, tempdir.path, assets)
 
         equity_minute_reader = BcolzMinuteBarReader(tempdir.path)
 
@@ -639,9 +629,7 @@ class FakeDataPortal(DataPortal):
         if trading_calendar is None:
             trading_calendar = get_calendar("NYSE")
 
-        super(FakeDataPortal, self).__init__(
-            asset_finder, trading_calendar, first_trading_day
-        )
+        super(FakeDataPortal, self).__init__(asset_finder, trading_calendar, first_trading_day)
 
     def get_spot_value(self, asset, field, dt, data_frequency):
         if field == "volume":
@@ -668,9 +656,7 @@ class FakeDataPortal(DataPortal):
         end_idx = self.trading_calendar.sessions.searchsorted(end_dt)
         days = self.trading_calendar.sessions[(end_idx - bar_count + 1) : (end_idx + 1)]
 
-        df = pd.DataFrame(
-            np.full((bar_count, len(assets)), 100.0), index=days, columns=assets
-        )
+        df = pd.DataFrame(np.full((bar_count, len(assets)), 100.0), index=days, columns=assets)
 
         if frequency == "1m" and not df.empty:
             df = df.reindex(
@@ -690,16 +676,12 @@ class FetcherDataPortal(DataPortal):
     """
 
     def __init__(self, asset_finder, trading_calendar, first_trading_day=None):
-        super(FetcherDataPortal, self).__init__(
-            asset_finder, trading_calendar, first_trading_day
-        )
+        super(FetcherDataPortal, self).__init__(asset_finder, trading_calendar, first_trading_day)
 
     def get_spot_value(self, asset, field, dt, data_frequency):
         # if this is a fetcher field, exercise the regular code path
         if self._is_extra_source(asset, field, self._augmented_sources_map):
-            return super(FetcherDataPortal, self).get_spot_value(
-                asset, field, dt, data_frequency
-            )
+            return super(FetcherDataPortal, self).get_spot_value(asset, field, dt, data_frequency)
 
         # otherwise just return a fixed value
         return int(asset)
@@ -718,7 +700,7 @@ class tmp_assets_db:
         By default this maps equities:
         ('A', 'B', 'C') -> map(ord, 'ABC')
 
-    See Also
+    See Also:
     --------
     empty_assets_db
     tmp_asset_finder
@@ -755,7 +737,7 @@ class tmp_assets_db:
 def empty_assets_db():
     """Context manager for creating an empty assets db.
 
-    See Also
+    See Also:
     --------
     tmp_assets_db
     """
@@ -774,7 +756,7 @@ class tmp_asset_finder(tmp_assets_db):
     **frames
         Forwarded to ``tmp_assets_db``.
 
-    See Also
+    See Also:
     --------
     tmp_assets_db
     """
@@ -800,7 +782,7 @@ class tmp_asset_finder(tmp_assets_db):
 def empty_asset_finder():
     """Context manager for creating an empty asset finder.
 
-    See Also
+    See Also:
     --------
     empty_assets_db
     tmp_assets_db
@@ -854,9 +836,8 @@ def subtest(iterator, *_names):
         to print the scope when a test fails. If not provided, it will use the
         integer index of the value as the name.
 
-    Examples
+    Examples:
     --------
-
     ::
 
        class MyTest(TestCase):
@@ -872,7 +853,7 @@ def subtest(iterator, *_names):
                # Example usage to parameterize an entire function.
                self.assertEqual(n % 2, 1, 'n was not odd')
 
-    Notes
+    Notes:
     -----
     We use this when we:
 
@@ -886,7 +867,7 @@ def subtest(iterator, *_names):
     We cannot use ``unittest2.TestCase.subTest`` because nose, pytest, and
     nose2 do not support ``addSubTest``.
 
-    See Also
+    See Also:
     --------
     zipline.testing.parameter_space
     """
@@ -904,7 +885,7 @@ def subtest(iterator, *_names):
                     info = sys.exc_info()
                     if not names:
                         names = count()
-                    failures.append((dict(zip(names, scope)), info))
+                    failures.append((dict(zip(names, scope, strict=False)), info))
             if failures:
                 raise SubTestFailures(*failures)
 
@@ -1043,7 +1024,7 @@ def bool_from_envvar(name, default=False, env=None):
         Mapping in which to look up ``name``. This is a parameter primarily for
         testing purposes. Default is os.environ.
 
-    Returns
+    Returns:
     -------
     value : bool
         ``env[name]`` coerced to a boolean, or ``default`` if ``name`` is not
@@ -1078,7 +1059,7 @@ def parameter_space(__fail_fast=_FAIL_FAST_DEFAULT, **params):
     The decorated test function will be called with the cross-product of all
     possible inputs
 
-    Examples
+    Examples:
     --------
     >>> from unittest import TestCase
     >>> class SomeTestCase(TestCase):
@@ -1087,7 +1068,7 @@ def parameter_space(__fail_fast=_FAIL_FAST_DEFAULT, **params):
     ...         # Will be called with every possible combination of x and y.
     ...         self.assertEqual(somefunc(x, y), expected_result(x, y))
 
-    See Also
+    See Also:
     --------
     zipline.testing.subtest
     """
@@ -1109,15 +1090,13 @@ def parameter_space(__fail_fast=_FAIL_FAST_DEFAULT, **params):
         extra = set(params) - set(argnames)
         if extra:
             raise AssertionError(
-                "Keywords %s supplied to parameter_space() are "
-                "not in function signature." % extra
+                "Keywords %s supplied to parameter_space() are not in function signature." % extra
             )
 
         unspecified = set(argnames) - set(params)
         if unspecified:
             raise AssertionError(
-                "Function arguments %s were not "
-                "supplied to parameter_space()." % unspecified
+                "Function arguments %s were not supplied to parameter_space()." % unspecified
             )
 
         def make_param_sets():
@@ -1184,7 +1163,7 @@ def make_alternating_boolean_array(shape, first_value=True):
     """Create a 2D numpy array with the given shape containing alternating values
     of False, True, False, True,... along each row and each column.
 
-    Examples
+    Examples:
     --------
     >>> make_alternating_boolean_array((4,4))
     array([[ True, False,  True, False],
@@ -1198,9 +1177,7 @@ def make_alternating_boolean_array(shape, first_value=True):
            [ True, False,  True]], dtype=bool)
     """
     if len(shape) != 2:
-        raise ValueError(
-            "Shape must be 2-dimensional. Given shape was {}".format(shape)
-        )
+        raise ValueError(f"Shape must be 2-dimensional. Given shape was {shape}")
     alternating = np.empty(shape, dtype=bool)
     for row in alternating:
         row[::2] = first_value
@@ -1213,7 +1190,7 @@ def make_cascading_boolean_array(shape, first_value=True):
     """Create a numpy array with the given shape containing cascading boolean
     values, with `first_value` being the top-left value.
 
-    Examples
+    Examples:
     --------
     >>> make_cascading_boolean_array((4,4))
     array([[ True,  True,  True, False],
@@ -1230,9 +1207,7 @@ def make_cascading_boolean_array(shape, first_value=True):
            [ True,  True, False, False]], dtype=bool)
     """
     if len(shape) != 2:
-        raise ValueError(
-            "Shape must be 2-dimensional. Given shape was {}".format(shape)
-        )
+        raise ValueError(f"Shape must be 2-dimensional. Given shape was {shape}")
     cascading = np.full(shape, not (first_value), dtype=bool)
     ending_col = shape[1] - 1
     for row in cascading:
@@ -1307,7 +1282,7 @@ def patch_os_environment(remove=None, **values):
                 os.environ[old_key] = old_value
 
 
-class tmp_dir(TempDirectory, object):
+class tmp_dir(TempDirectory):
     """New style class that wrapper for TempDirectory in python 2."""
 
     pass
@@ -1374,7 +1349,7 @@ class tmp_bcolz_equity_minute_bar_reader(_TmpBarReader):
         The path to the directory to write the data into. If not given, this
         will be a unique name.
 
-    See Also
+    See Also:
     --------
     tmp_bcolz_equity_daily_bar_reader
     """
@@ -1398,7 +1373,7 @@ class tmp_bcolz_equity_daily_bar_reader(_TmpBarReader):
         The path to the directory to write the data into. If not given, this
         will be a unique name.
 
-    See Also
+    See Also:
     --------
     tmp_bcolz_equity_daily_bar_reader
     """
@@ -1436,8 +1411,7 @@ def patch_read_csv(url_map, module=pd, strict=False):
             return read_csv(filepath_or_buffer, *args, **kwargs)
         else:
             raise AssertionError(
-                "attempted to call read_csv on  %r which not in the url map"
-                % filepath_or_buffer,
+                "attempted to call read_csv on  %r which not in the url map" % filepath_or_buffer,
             )
 
     with mock.patch.object(module, "read_csv", patched_read_csv):
@@ -1457,14 +1431,12 @@ def ensure_doctest(f, name=None):
         The name to use in the doctest function mapping. If this is None,
         Then ``f.__name__`` will be used.
 
-    Returns
+    Returns:
     -------
     f : any
        ``f`` unchanged.
     """
-    sys._getframe(2).f_globals.setdefault("__test__", {})[
-        f.__name__ if name is None else name
-    ] = f
+    sys._getframe(2).f_globals.setdefault("__test__", {})[f.__name__ if name is None else name] = f
     return f
 
 
@@ -1520,7 +1492,7 @@ def prices_generating_returns(returns, starting_price):
     starting_price : float
         The value of the asset.
 
-    Returns
+    Returns:
     -------
     prices : np.ndaray[float]
         The prices that generate the given returns. This array will be one
@@ -1538,9 +1510,7 @@ def prices_generating_returns(returns, starting_price):
     return rounded_prices
 
 
-def random_tick_prices(
-    starting_price, count, tick_size=0.01, tick_range=(-5, 7), seed=42
-):
+def random_tick_prices(starting_price, count, tick_size=0.01, tick_range=(-5, 7), seed=42):
     """Construct a time series of prices that ticks by a random multiple of
     ``tick_size`` every period.
 
@@ -1608,9 +1578,7 @@ def simulate_minutes_for_day(
 
     max_ = max(close, open_)
     where = values > max_
-    values[where] = (values[where] - max_) * (high - max_) / (
-        values.max() - max_
-    ) + max_
+    values[where] = (values[where] - max_) * (high - max_) / (values.max() - max_) + max_
 
     min_ = min(close, open_)
     where = values < min_

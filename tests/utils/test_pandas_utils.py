@@ -3,15 +3,13 @@ Tests for zipline/utils/pandas_utils.py
 """
 
 import pandas as pd
-from packaging.version import Version
+import pytest
+
 from rustybt.testing.predicates import assert_equal
 from rustybt.utils.pandas_utils import (
     categorical_df_concat,
     nearest_unequal_elements,
-    new_pandas,
-    skip_pipeline_new_pandas,
 )
-import pytest
 
 
 class TestNearestUnequalElements:
@@ -114,15 +112,9 @@ class TestCatDFConcat:
 
         expected = pd.DataFrame(
             {
-                "A": pd.Series(
-                    ["a", "b", "c", "c", "b", "d", "a", "b", "d"], dtype="category"
-                ),
-                "B": pd.Series(
-                    [100, 102, 103, 103, 102, 104, 101, 102, 104], dtype="int64"
-                ),
-                "C": pd.Series(
-                    ["x", "x", "x", "y", "y", "y", "z", "z", "z"], dtype="category"
-                ),
+                "A": pd.Series(["a", "b", "c", "c", "b", "d", "a", "b", "d"], dtype="category"),
+                "B": pd.Series([100, 102, 103, 103, 102, 104, 101, 102, 104], dtype="int64"),
+                "C": pd.Series(["x", "x", "x", "y", "y", "y", "z", "z", "z"], dtype="category"),
             },
         )
         expected.index = pd.Index([0, 1, 2, 0, 1, 2, 0, 1, 2], dtype="int64")
@@ -165,7 +157,5 @@ class TestCatDFConcat:
         # ):
         #     categorical_df_concat(mismatched_dtypes)
 
-        with pytest.raises(
-            ValueError, match="Input DataFrames must have the same columns."
-        ):
+        with pytest.raises(ValueError, match="Input DataFrames must have the same columns."):
             categorical_df_concat(mismatched_column_names)

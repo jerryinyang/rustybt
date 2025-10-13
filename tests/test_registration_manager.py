@@ -1,6 +1,8 @@
-from rustybt.extensions import Registry
-import pytest
 import re
+
+import pytest
+
+from rustybt.extensions import Registry
 
 
 class FakeInterface:
@@ -11,10 +13,7 @@ class TestRegistrationManager:
     def test_load_not_registered(self):
         rm = Registry(FakeInterface)
 
-        msg = (
-            "no FakeInterface factory registered under name 'ayy-lmao',"
-            " options are: []"
-        )
+        msg = "no FakeInterface factory registered under name 'ayy-lmao', options are: []"
         with pytest.raises(ValueError, match=re.escape(msg)):
             rm.load("ayy-lmao")
 
@@ -63,10 +62,7 @@ class TestRegistrationManager:
         # Unregister the key and assert that the key is now gone.
         rm.unregister("ayy-lmao")
 
-        msg = (
-            "no FakeInterface factory registered under name 'ayy-lmao', "
-            "options are: []"
-        )
+        msg = "no FakeInterface factory registered under name 'ayy-lmao', options are: []"
         with pytest.raises(ValueError, match=re.escape(msg)):
             rm.load("ayy-lmao")
 
@@ -105,10 +101,7 @@ class TestRegistrationManager:
 
         rm.unregister("ayy-lmao")
 
-        msg = (
-            "no FakeInterface factory registered under name 'ayy-lmao', "
-            "options are: []"
-        )
+        msg = "no FakeInterface factory registered under name 'ayy-lmao', options are: []"
         with pytest.raises(ValueError, match=re.escape(msg)):
             rm.load("ayy-lmao")
 

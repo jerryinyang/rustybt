@@ -4,15 +4,16 @@ This module extends the circuit breaker framework with alignment-specific
 trip conditions to halt trading when backtest-live divergence exceeds thresholds.
 """
 
-from datetime import datetime, timedelta
-from decimal import Decimal
-from typing import List, Optional
+from datetime import UTC, datetime, timedelta
 
 import structlog
 
-from rustybt.live.circuit_breakers import BaseCircuitBreaker, CircuitBreakerState, CircuitBreakerType
+from rustybt.live.circuit_breakers import (
+    BaseCircuitBreaker,
+    CircuitBreakerType,
+)
 from rustybt.live.shadow.config import ShadowTradingConfig
-from rustybt.live.shadow.models import AlignmentMetrics, ExecutionQualityMetrics
+from rustybt.live.shadow.models import AlignmentMetrics
 
 logger = structlog.get_logger()
 
@@ -43,9 +44,9 @@ class AlignmentCircuitBreaker(BaseCircuitBreaker):
         super().__init__(CircuitBreakerType.MANUAL)  # Use MANUAL type for now
         self.config = config
         self.grace_period_seconds = config.grace_period_seconds
-        self._breach_start_time: Optional[datetime] = None
-        self._recent_breaches: List[str] = []
-        self._current_time: Optional[datetime] = None  # For testing
+        self._breach_start_time: datetime | None = None
+        self._recent_breaches: list[str] = []
+        self._current_time: datetime | None = None  # For testing
 
         logger.info(
             "alignment_circuit_breaker_initialized",
@@ -62,8 +63,7 @@ class AlignmentCircuitBreaker(BaseCircuitBreaker):
         """
         if self._current_time is not None:
             return self._current_time
-        from datetime import timezone
-        return datetime.now(timezone.utc)
+        return datetime.now(UTC)
 
     def reset(self) -> None:
         """Reset circuit breaker to NORMAL state.
@@ -154,7 +154,7 @@ class AlignmentCircuitBreaker(BaseCircuitBreaker):
             )
             return True
 
-    def _identify_breaches(self, metrics: AlignmentMetrics) -> List[str]:
+    def _identify_breaches(self, metrics: AlignmentMetrics) -> list[str]:
         """Identify specific threshold breaches.
 
         Args:
@@ -176,16 +176,14 @@ class AlignmentCircuitBreaker(BaseCircuitBreaker):
         slippage_error = abs(metrics.execution_quality.slippage_error_bps)
         if slippage_error > self.config.slippage_error_bps_max:
             breaches.append(
-                f"Slippage error {slippage_error}bps > "
-                f"{self.config.slippage_error_bps_max}bps"
+                f"Slippage error {slippage_error}bps > {self.config.slippage_error_bps_max}bps"
             )
 
         # Check fill rate error
         fill_rate_error = abs(metrics.execution_quality.fill_rate_error_pct)
         if fill_rate_error > self.config.fill_rate_error_pct_max:
             breaches.append(
-                f"Fill rate error {fill_rate_error:.1f}% > "
-                f"{self.config.fill_rate_error_pct_max}%"
+                f"Fill rate error {fill_rate_error:.1f}% > {self.config.fill_rate_error_pct_max}%"
             )
 
         # Check commission error
@@ -205,7 +203,7 @@ class AlignmentCircuitBreaker(BaseCircuitBreaker):
             Dictionary with breach details for each metric
         """
         # Return the most recent metrics checked (stored during last check_alignment call)
-        if not hasattr(self, '_last_metrics'):
+        if not hasattr(self, "_last_metrics"):
             return {}
 
         metrics = self._last_metrics
@@ -217,17 +215,20 @@ class AlignmentCircuitBreaker(BaseCircuitBreaker):
                 "actual": metrics.signal_match_rate,
             },
             "slippage_error_bps": {
-                "breached": abs(metrics.execution_quality.slippage_error_bps) > self.config.slippage_error_bps_max,
+                "breached": abs(metrics.execution_quality.slippage_error_bps)
+                > self.config.slippage_error_bps_max,
                 "threshold": self.config.slippage_error_bps_max,
                 "actual": abs(metrics.execution_quality.slippage_error_bps),
             },
             "fill_rate_error_pct": {
-                "breached": abs(metrics.execution_quality.fill_rate_error_pct) > self.config.fill_rate_error_pct_max,
+                "breached": abs(metrics.execution_quality.fill_rate_error_pct)
+                > self.config.fill_rate_error_pct_max,
                 "threshold": self.config.fill_rate_error_pct_max,
                 "actual": abs(metrics.execution_quality.fill_rate_error_pct),
             },
             "commission_error_pct": {
-                "breached": abs(metrics.execution_quality.commission_error_pct) > self.config.commission_error_pct_max,
+                "breached": abs(metrics.execution_quality.commission_error_pct)
+                > self.config.commission_error_pct_max,
                 "threshold": self.config.commission_error_pct_max,
                 "actual": abs(metrics.execution_quality.commission_error_pct),
             },

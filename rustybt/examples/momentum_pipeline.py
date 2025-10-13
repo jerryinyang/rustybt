@@ -27,7 +27,6 @@ def make_pipeline():
 
 
 def rebalance(context, data):
-
     # Pipeline data will be a dataframe with boolean columns named 'longs' and
     # 'shorts'.
     pipeline_data = context.pipeline_data

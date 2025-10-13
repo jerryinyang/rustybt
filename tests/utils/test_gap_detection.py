@@ -7,7 +7,8 @@ import pandas as pd
 import polars as pl
 import pytest
 from exchange_calendars import get_calendar
-from hypothesis import given, strategies as st, settings
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from rustybt.utils.gap_detection import (
     detect_missing_days,
@@ -247,7 +248,9 @@ class TestGapDetectionPropertyBased:
     @settings(deadline=1000)  # Allow 1 second for calendar operations
     @given(
         st.lists(
-            st.dates(min_value=datetime(2020, 1, 1).date(), max_value=datetime(2023, 12, 31).date()),
+            st.dates(
+                min_value=datetime(2020, 1, 1).date(), max_value=datetime(2023, 12, 31).date()
+            ),
             min_size=10,
             max_size=50,
             unique=True,
@@ -259,9 +262,7 @@ class TestGapDetectionPropertyBased:
 
         # Convert dates to timestamps and filter to only include trading days
         trading_dates = [
-            pd.Timestamp(d)
-            for d in dates
-            if nyse_calendar.is_session(pd.Timestamp(d))
+            pd.Timestamp(d) for d in dates if nyse_calendar.is_session(pd.Timestamp(d))
         ]
 
         if len(trading_dates) < 2:
@@ -304,15 +305,11 @@ class TestGapDetectionPropertyBased:
         report = generate_gap_report(missing_days, threshold=5)
 
         # Invariant 1: Total gaps should equal input length
-        assert (
-            report["total_gaps"] == len(missing_days)
-        ), "Total gaps should match input length"
+        assert report["total_gaps"] == len(missing_days), "Total gaps should match input length"
 
         # Invariant 2: Sum of gap_ranges counts should equal total_gaps
         total_from_ranges = sum(count for _, _, count in report["gap_ranges"])
-        assert (
-            total_from_ranges == report["total_gaps"]
-        ), "Sum of range counts should equal total"
+        assert total_from_ranges == report["total_gaps"], "Sum of range counts should equal total"
 
         # Invariant 3: Gap ranges should be non-overlapping and sorted
         for i in range(len(report["gap_ranges"]) - 1):
@@ -326,7 +323,9 @@ class TestGapDetectionPropertyBased:
 
     @given(
         st.lists(
-            st.dates(min_value=datetime(2020, 1, 1).date(), max_value=datetime(2023, 12, 31).date()),
+            st.dates(
+                min_value=datetime(2020, 1, 1).date(), max_value=datetime(2023, 12, 31).date()
+            ),
             min_size=0,
             max_size=30,
         )
@@ -344,6 +343,6 @@ class TestGapDetectionPropertyBased:
         # Should be equal (order-preserved)
         assert len(parsed) == len(timestamps), "Roundtrip should preserve length"
 
-        for original, roundtrip in zip(timestamps, parsed):
+        for original, roundtrip in zip(timestamps, parsed, strict=False):
             # Compare dates (ignore time components)
             assert original.date() == roundtrip.date(), "Roundtrip should preserve dates"

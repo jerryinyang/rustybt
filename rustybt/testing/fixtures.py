@@ -1,31 +1,51 @@
-import os
-from pathlib import Path
-import sqlite3
-from unittest import TestCase
-import warnings
-import sys
 import gc
+import os
+import sqlite3
+import sys
 import time as time_module
+import warnings
+from pathlib import Path
+from unittest import TestCase
 
+import h5py
 import numpy as np
 import pandas as pd
-from pandas.errors import PerformanceWarning
 import responses
+from pandas.errors import PerformanceWarning
 from toolz import flip, groupby, merge
-from rustybt.utils.calendar_utils import (
-    get_calendar,
-    register_calendar_alias,
-)
-import h5py
 
 import rustybt
 from rustybt.algorithm import TradingAlgorithm
 from rustybt.assets import Equity, Future
 from rustybt.assets.continuous_futures import CHAIN_PREDICATES
+from rustybt.data.adjustments import SQLiteAdjustmentReader, SQLiteAdjustmentWriter
+from rustybt.data.bcolz_daily_bars import BcolzDailyBarReader, BcolzDailyBarWriter
+from rustybt.data.bcolz_minute_bars import (
+    FUTURES_MINUTES_PER_DAY,
+    US_EQUITIES_MINUTES_PER_DAY,
+    BcolzMinuteBarReader,
+    BcolzMinuteBarWriter,
+)
 from rustybt.data.benchmarks import get_benchmark_returns_from_file
-from rustybt.data.fx import DEFAULT_FX_RATE
+from rustybt.data.data_portal import (
+    DEFAULT_DAILY_HISTORY_PREFETCH,
+    DEFAULT_MINUTE_HISTORY_PREFETCH,
+    DataPortal,
+)
+from rustybt.data.fx import (
+    DEFAULT_FX_RATE,
+    HDF5FXRateReader,
+    HDF5FXRateWriter,
+    InMemoryFXRateReader,
+)
+from rustybt.data.hdf5_daily_bars import (
+    HDF5DailyBarReader,
+    HDF5DailyBarWriter,
+    MultiCountryDailyBarReader,
+)
+from rustybt.data.resample import MinuteResampleSessionBarReader, minute_frame_to_session_frame
 from rustybt.finance.asset_restrictions import NoRestrictions
-from rustybt.utils.memoize import classlazyval
+from rustybt.finance.trading import SimulationParameters
 from rustybt.pipeline import SimplePipelineEngine
 from rustybt.pipeline.data import USEquityPricing
 from rustybt.pipeline.data.testing import TestingDataSet
@@ -33,8 +53,16 @@ from rustybt.pipeline.domain import GENERIC, US_EQUITIES
 from rustybt.pipeline.loaders import USEquityPricingLoader
 from rustybt.pipeline.loaders.testing import make_seeded_random_loader
 from rustybt.protocol import BarData
+from rustybt.utils.calendar_utils import (
+    get_calendar,
+    register_calendar_alias,
+)
+from rustybt.utils.classproperty import classproperty
 from rustybt.utils.compat import ExitStack
+from rustybt.utils.final import FinalMeta, final
+from rustybt.utils.memoize import classlazyval, remember_last
 from rustybt.utils.paths import ensure_directory, ensure_directory_containing
+
 from .core import (
     create_daily_bar_data,
     create_minute_bar_data,
@@ -44,45 +72,6 @@ from .core import (
     write_hdf5_daily_bars,
 )
 from .debug import debug_mro_failure
-from ..data.adjustments import (
-    SQLiteAdjustmentReader,
-    SQLiteAdjustmentWriter,
-)
-from ..data.bcolz_daily_bars import (
-    BcolzDailyBarReader,
-    BcolzDailyBarWriter,
-)
-from ..data.data_portal import (
-    DataPortal,
-    DEFAULT_MINUTE_HISTORY_PREFETCH,
-    DEFAULT_DAILY_HISTORY_PREFETCH,
-)
-from ..data.fx import (
-    InMemoryFXRateReader,
-    HDF5FXRateReader,
-    HDF5FXRateWriter,
-)
-from ..data.hdf5_daily_bars import (
-    HDF5DailyBarReader,
-    HDF5DailyBarWriter,
-    MultiCountryDailyBarReader,
-)
-from ..data.bcolz_minute_bars import (
-    BcolzMinuteBarReader,
-    BcolzMinuteBarWriter,
-    US_EQUITIES_MINUTES_PER_DAY,
-    FUTURES_MINUTES_PER_DAY,
-)
-from ..data.resample import (
-    minute_frame_to_session_frame,
-    MinuteResampleSessionBarReader,
-)
-
-from ..finance.trading import SimulationParameters
-from ..utils.classproperty import classproperty
-from ..utils.final import FinalMeta, final
-from ..utils.memoize import remember_last
-from ..utils.date_utils import make_utc_aware
 
 zipline_dir = Path(rustybt.__file__).parent
 
@@ -195,7 +184,6 @@ class ZiplineTestCase(TestCase, metaclass=DebugMROMeta):
     @classmethod
     def enter_class_context(cls, context_manager):
         """Enter a context manager to be exited during the tearDownClass"""
-
         if cls._in_setup:
             raise ValueError(
                 "Attempted to enter a class context in init_instance_fixtures."
@@ -299,12 +287,12 @@ def alias(attr_name):
     attr_name : str
         The name of the attribute to alias.
 
-    Returns
+    Returns:
     -------
     p : classproperty
         A class property that does the property aliasing.
 
-    Examples
+    Examples:
     --------
     >>> class C:
     ...     attr = 1
@@ -327,14 +315,14 @@ def alias(attr_name):
     return classproperty(flip(getattr, attr_name))
 
 
-class WithDefaultDateBounds(object, metaclass=DebugMROMeta):
+class WithDefaultDateBounds(metaclass=DebugMROMeta):
     """ZiplineTestCase mixin which makes it possible to synchronize date bounds
     across fixtures.
 
     This fixture should always be the last fixture in bases of any fixture or
     test case that uses it.
 
-    Attributes
+    Attributes:
     ----------
     START_DATE : datetime
     END_DATE : datetime
@@ -353,7 +341,7 @@ class WithAssetFinder(WithDefaultDateBounds):
     After init_class_fixtures has been called, `cls.asset_finder` is populated
     with an AssetFinder.
 
-    Attributes
+    Attributes:
     ----------
     ASSET_FINDER_EQUITY_SIDS : iterable[int]
         The default sids to construct equity data for.
@@ -372,7 +360,7 @@ class WithAssetFinder(WithDefaultDateBounds):
     ASSET_FINDER_COUNTRY_CODE : str
         The default country code to assign each exchange.
 
-    Methods
+    Methods:
     -------
     make_equity_info() -> pd.DataFrame
         A class method which constructs the dataframe of equity info to write
@@ -395,7 +383,7 @@ class WithAssetFinder(WithDefaultDateBounds):
         for the class. If this method is overridden then the ``make_*_info``
         methods may not be respected.
 
-    See Also
+    See Also:
     --------
     zipline.testing.make_simple_equity_info
     zipline.testing.make_jagged_equity_info
@@ -443,7 +431,7 @@ class WithAssetFinder(WithDefaultDateBounds):
     def make_asset_finder(cls):
         """Returns a new AssetFinder
 
-        Returns
+        Returns:
         -------
         asset_finder : zipline.assets.AssetFinder
         """
@@ -454,9 +442,7 @@ class WithAssetFinder(WithDefaultDateBounds):
         exchanges = cls.make_exchanges_info(equities, futures, root_symbols)
         if exchanges is None:
             exchange_names = [
-                df["exchange"]
-                for df in (equities, futures, root_symbols)
-                if df is not None
+                df["exchange"] for df in (equities, futures, root_symbols) if df is not None
             ]
             if exchange_names:
                 exchanges = pd.DataFrame(
@@ -473,9 +459,7 @@ class WithAssetFinder(WithDefaultDateBounds):
                 futures=futures,
                 exchanges=exchanges,
                 root_symbols=root_symbols,
-                equity_supplementary_mappings=(
-                    cls.make_equity_supplementary_mappings()
-                ),
+                equity_supplementary_mappings=(cls.make_equity_supplementary_mappings()),
                 future_chain_predicates=cls.ASSET_FINDER_FUTURE_CHAIN_PREDICATES,
             )
         )
@@ -522,7 +506,7 @@ class WithTradingCalendars:
     - `cls.trading_calendar_for_asset_type` is populated with the trading
     calendars keyed by the asset type which uses the respective calendar.
 
-    Attributes
+    Attributes:
     ----------
     TRADING_CALENDAR_STRS : iterable
         Iterable of identifiers of the calendars to use.
@@ -548,12 +532,10 @@ class WithTradingCalendars:
         # construction. This causes nosetest to fail.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", PerformanceWarning)
-            for cal_str in set(cls.TRADING_CALENDAR_STRS) | {
-                cls.TRADING_CALENDAR_PRIMARY_CAL
-            }:
+            for cal_str in set(cls.TRADING_CALENDAR_STRS) | {cls.TRADING_CALENDAR_PRIMARY_CAL}:
                 # Set name to allow aliasing.
                 calendar = get_calendar(cal_str)
-                setattr(cls, "{0}_calendar".format(cal_str.lower()), calendar)
+                setattr(cls, f"{cal_str.lower()}_calendar", calendar)
                 cls.trading_calendars[cal_str] = calendar
 
             type_to_cal = cls.TRADING_CALENDAR_FOR_ASSET_TYPE.items()
@@ -602,20 +584,11 @@ class WithBenchmarkReturns(WithDefaultDateBounds, WithTradingCalendars):
         static_end_date = benchmark_returns.index[-1].date()
         warning_message = (
             "The WithBenchmarkReturns fixture uses static data between "
-            "{static_start} and {static_end}. To use a start and end date "
-            "of {given_start} and {given_end} you will have to update the "
-            "file in {benchmark_path} to include the missing dates.".format(
-                static_start=static_start_date,
-                static_end=static_end_date,
-                given_start=cls.START_DATE.date(),
-                given_end=cls.END_DATE.date(),
-                benchmark_path=STATIC_BENCHMARK_PATH,
-            )
+            f"{static_start_date} and {static_end_date}. To use a start and end date "
+            f"of {cls.START_DATE.date()} and {cls.END_DATE.date()} you will have to update the "
+            f"file in {STATIC_BENCHMARK_PATH} to include the missing dates."
         )
-        if (
-            cls.START_DATE.date() < static_start_date
-            or cls.END_DATE.date() > static_end_date
-        ):
+        if cls.START_DATE.date() < static_start_date or cls.END_DATE.date() > static_end_date:
             raise AssertionError(warning_message)
 
         return benchmark_returns
@@ -624,7 +597,7 @@ class WithBenchmarkReturns(WithDefaultDateBounds, WithTradingCalendars):
 class WithSimParams(WithDefaultDateBounds):
     """ZiplineTestCase mixin providing cls.sim_params as a class level fixture.
 
-    Attributes
+    Attributes:
     ----------
     SIM_PARAMS_CAPITAL_BASE : float
     SIM_PARAMS_DATA_FREQUENCY : {'daily', 'minute'}
@@ -636,14 +609,14 @@ class WithSimParams(WithDefaultDateBounds):
         Forwarded to ``SimulationParameters``. If not
         explicitly overridden these will be ``START_DATE`` and ``END_DATE``
 
-    Methods
+    Methods:
     -------
     make_simparams(**overrides)
         Construct a ``SimulationParameters`` using the defaults defined by
         fixture configuration attributes. Any parameters to
         ``SimulationParameters`` can be overridden by passing them by keyword.
 
-    See Also
+    See Also:
     --------
     zipline.finance.trading.SimulationParameters
     """
@@ -688,7 +661,7 @@ class WithTradingSessions(WithDefaultDateBounds, WithTradingCalendars):
     assumption that trading days are equity only, defaults to the nyse trading
     sessions.
 
-    Attributes
+    Attributes:
     ----------
     DATA_MAX_DAY : datetime
         The most recent trading day in the calendar.
@@ -724,7 +697,7 @@ class WithTradingSessions(WithDefaultDateBounds, WithTradingCalendars):
 
             sessions = trading_calendar.sessions_in_range(DATA_MIN_DAY, DATA_MAX_DAY)
             # Set name for aliasing.
-            setattr(cls, "{0}_sessions".format(cal_str.lower()), sessions)
+            setattr(cls, f"{cal_str.lower()}_sessions", sessions)
             cls.trading_sessions[cal_str] = sessions
 
 
@@ -734,7 +707,7 @@ class WithTmpDir:
     After init_class_fixtures has been called, `cls.tmpdir` is populated with
     a `testfixtures.TempDirectory` object whose path is `cls.TMP_DIR_PATH`.
 
-    Attributes
+    Attributes:
     ----------
     TMP_DIR_PATH : str
         The path to the new directory to create. By default this is None
@@ -758,7 +731,7 @@ class WithInstanceTmpDir:
     with a `testfixtures.TempDirectory` object whose path is
     `cls.TMP_DIR_PATH`.
 
-    Attributes
+    Attributes:
     ----------
     INSTANCE_TMP_DIR_PATH : str
         The path to the new directory to create. By default this is None
@@ -829,8 +802,11 @@ class WithEquityDailyBarData(WithAssetFinder, WithTradingCalendars):
         assets = cls.asset_finder.retrieve_all(cls.asset_finder.equities_sids)
         minute_data = dict(cls.make_equity_minute_bar_data())
         for asset in assets:
-            yield asset.sid, minute_frame_to_session_frame(
-                minute_data[asset.sid], cls.trading_calendars[Equity]
+            yield (
+                asset.sid,
+                minute_frame_to_session_frame(
+                    minute_data[asset.sid], cls.trading_calendars[Equity]
+                ),
             )
 
     @classmethod
@@ -846,14 +822,13 @@ class WithEquityDailyBarData(WithAssetFinder, WithTradingCalendars):
         sids : tuple[int]
             The sids to include in the data.
 
-        Yields
+        Yields:
         ------
         (int, pd.DataFrame)
             A sid, dataframe pair to be passed to a daily bar writer.
             The dataframe should be indexed by date, with columns of
             ('open', 'high', 'low', 'close', 'volume', 'day', & 'id').
         """
-
         # Requires a WithEquityMinuteBarData to come before in the MRO.
         # Resample that data so that daily and minute bar data are aligned.
         if cls.EQUITY_DAILY_BAR_SOURCE_FROM_MINUTE:
@@ -875,7 +850,7 @@ class WithEquityDailyBarData(WithAssetFinder, WithTradingCalendars):
         sids : tuple[int]
             The sids to include in the data.
 
-        Returns
+        Returns:
         -------
         currency_codes : pd.Series[int, str]
             Map from sids to currency for that sid's prices.
@@ -920,7 +895,7 @@ class WithEquityDailyBarData(WithAssetFinder, WithTradingCalendars):
 class WithFutureDailyBarData(WithAssetFinder, WithTradingCalendars):
     """ZiplineTestCase mixin providing cls.make_future_daily_bar_data.
 
-    Attributes
+    Attributes:
     ----------
     FUTURE_DAILY_BAR_START_DATE : Timestamp
         The date at to which to start creating data. This defaults to
@@ -932,7 +907,7 @@ class WithFutureDailyBarData(WithAssetFinder, WithTradingCalendars):
         the minute bars defined by `WithFutureMinuteBarData`.
         The current default is `False`, but could be `True` in the future.
 
-    Methods
+    Methods:
     -------
     make_future_daily_bar_data() -> iterable[(int, pd.DataFrame)]
         A class method that returns an iterator of (sid, dataframe) pairs
@@ -941,7 +916,7 @@ class WithFutureDailyBarData(WithAssetFinder, WithTradingCalendars):
         some simple synthetic data with
         :func:`~zipline.testing.create_daily_bar_data`
 
-    See Also
+    See Also:
     --------
     WithFutureMinuteBarData
     zipline.testing.create_daily_bar_data
@@ -970,8 +945,11 @@ class WithFutureDailyBarData(WithAssetFinder, WithTradingCalendars):
         assets = cls.asset_finder.retrieve_all(cls.asset_finder.futures_sids)
         minute_data = dict(cls.make_future_minute_bar_data())
         for asset in assets:
-            yield asset.sid, minute_frame_to_session_frame(
-                minute_data[asset.sid], cls.trading_calendars[Future]
+            yield (
+                asset.sid,
+                minute_frame_to_session_frame(
+                    minute_data[asset.sid], cls.trading_calendars[Future]
+                ),
             )
 
     @classmethod
@@ -1027,7 +1005,7 @@ class WithBcolzEquityDailyBarReader(WithEquityDailyBarData, WithTmpDir):
     - `cls.bcolz_equity_daily_bar_reader` is a daily bar reader
        pointing to the directory that was just written to.
 
-    Attributes
+    Attributes:
     ----------
     BCOLZ_DAILY_BAR_PATH : str
         The path inside the tmpdir where this will be written.
@@ -1048,14 +1026,14 @@ class WithBcolzEquityDailyBarReader(WithEquityDailyBarData, WithTmpDir):
         If this flag is set, `make_equity_daily_bar_data` will read data from
         the minute bar reader defined by a `WithBcolzEquityMinuteBarReader`.
 
-    Methods
+    Methods:
     -------
     make_bcolz_daily_bar_rootdir_path() -> string
         A class method that returns the path for the rootdir of the daily
         bars ctable. By default this is a subdirectory BCOLZ_DAILY_BAR_PATH in
         the shared temp directory.
 
-    See Also
+    See Also:
     --------
     WithBcolzEquityMinuteBarReader
     WithDataPortal
@@ -1087,9 +1065,7 @@ class WithBcolzEquityDailyBarReader(WithEquityDailyBarData, WithTmpDir):
         cls.bcolz_daily_bar_path = p = cls.make_bcolz_daily_bar_rootdir_path()
 
         days = cls.equity_daily_bar_days
-        sids = cls.asset_finder.equities_sids_for_country_code(
-            cls.BCOLZ_DAILY_BAR_COUNTRY_CODE
-        )
+        sids = cls.asset_finder.equities_sids_for_country_code(cls.BCOLZ_DAILY_BAR_COUNTRY_CODE)
 
         trading_calendar = cls.trading_calendars[Equity]
         cls.bcolz_daily_bar_ctable = t = getattr(
@@ -1125,7 +1101,7 @@ class WithBcolzFutureDailyBarReader(WithFutureDailyBarData, WithTmpDir):
     - `cls.bcolz_future_daily_bar_reader` is a daily bar reader
        pointing to the directory that was just written to.
 
-    Attributes
+    Attributes:
     ----------
     BCOLZ_DAILY_BAR_PATH : str
         The path inside the tmpdir where this will be written.
@@ -1146,14 +1122,14 @@ class WithBcolzFutureDailyBarReader(WithFutureDailyBarData, WithTmpDir):
         If this flag is set, `make_future_daily_bar_data` will read data from
         the minute bar reader defined by a `WithBcolzFutureMinuteBarReader`.
 
-    Methods
+    Methods:
     -------
     make_bcolz_daily_bar_rootdir_path() -> string
         A class method that returns the path for the rootdir of the daily
         bars ctable. By default this is a subdirectory BCOLZ_DAILY_BAR_PATH in
         the shared temp directory.
 
-    See Also
+    See Also:
     --------
     WithBcolzFutureMinuteBarReader
     WithDataPortal
@@ -1213,13 +1189,9 @@ def _trading_days_for_minute_bars(calendar, start_date, end_date, lookback_days)
     first_session = calendar.minute_to_session(start_date)
 
     if lookback_days > 0:
-        first_session = calendar.sessions_window(
-            first_session, -1 * (lookback_days + 1)
-        )[0]
+        first_session = calendar.sessions_window(first_session, -1 * (lookback_days + 1))[0]
 
-    return calendar.sessions_in_range(
-        first_session, end_date.normalize().tz_localize(None)
-    )
+    return calendar.sessions_in_range(first_session, end_date.normalize().tz_localize(None))
 
 
 # TODO_SS: This currently doesn't define any relationship between country_code
@@ -1230,12 +1202,12 @@ class WithWriteHDF5DailyBars(WithEquityDailyBarData, WithTmpDir):
     Uses cls.make_equity_daily_bar_data (inherited from WithEquityDailyBarData)
     to determine the data to write.
 
-    Methods
+    Methods:
     -------
     write_hdf5_daily_bars(cls, path, country_codes)
         Creates an HDF5 file on disk and populates it with pricing data.
 
-    Attributes
+    Attributes:
     ----------
     HDF5_DAILY_BAR_CHUNK_SIZE
     """
@@ -1254,7 +1226,7 @@ class WithWriteHDF5DailyBars(WithEquityDailyBarData, WithTmpDir):
         country_codes : list[str]
             List of country codes to write.
 
-        Returns
+        Returns:
         -------
         written : h5py.File
              A read-only h5py.File pointing at the written data. The returned
@@ -1289,21 +1261,21 @@ class WithHDF5EquityMultiCountryDailyBarReader(WithWriteHDF5DailyBars):
     - `cls.hdf5_equity_daily_bar_reader` is a daily bar reader pointing
       to the file that was just written to.
 
-    Attributes
+    Attributes:
     ----------
     HDF5_DAILY_BAR_PATH : str
         The path inside the tmpdir where this will be written.
     HDF5_DAILY_BAR_COUNTRY_CODE : str
         The ISO 3166 alpha-2 country code for the country to write/read.
 
-    Methods
+    Methods:
     -------
     make_hdf5_daily_bar_path() -> string
         A class method that returns the path for the rootdir of the daily
         bars ctable. By default this is a subdirectory HDF5_DAILY_BAR_PATH in
         the shared temp directory.
 
-    See Also
+    See Also:
     --------
     WithDataPortal
     zipline.testing.create_daily_bar_data
@@ -1328,8 +1300,7 @@ class WithHDF5EquityMultiCountryDailyBarReader(WithWriteHDF5DailyBars):
         f = cls.write_hdf5_daily_bars(path, cls.HDF5_DAILY_BAR_COUNTRY_CODES)
 
         cls.single_country_hdf5_equity_daily_bar_readers = {
-            country_code: HDF5DailyBarReader.from_file(f, country_code)
-            for country_code in f
+            country_code: HDF5DailyBarReader.from_file(f, country_code) for country_code in f
         }
 
         cls.hdf5_equity_daily_bar_reader = MultiCountryDailyBarReader(
@@ -1344,7 +1315,7 @@ class WithEquityMinuteBarData(WithAssetFinder, WithTradingCalendars):
     - `cls.equity_minute_bar_days` has the range over which data has been
        generated.
 
-    Attributes
+    Attributes:
     ----------
     EQUITY_MINUTE_BAR_LOOKBACK_DAYS : int
         The number of days of data to add before the first day.
@@ -1356,14 +1327,14 @@ class WithEquityMinuteBarData(WithAssetFinder, WithTradingCalendars):
     EQUITY_MINUTE_BAR_END_DATE = Timestamp
         The end date up to which to create data. This defaults to ``END_DATE``.
 
-    Methods
+    Methods:
     -------
     make_equity_minute_bar_data() -> iterable[(int, pd.DataFrame)]
         Classmethod producing an iterator of (sid, minute_data) pairs.
         The default implementation invokes
         zipline.testing.core.create_minute_bar_data.
 
-    See Also
+    See Also:
     --------
     WithEquityDailyBarData
     zipline.testing.create_minute_bar_data
@@ -1403,7 +1374,7 @@ class WithFutureMinuteBarData(WithAssetFinder, WithTradingCalendars):
     - `cls.future_minute_bar_days` has the range over which data has been
        generated.
 
-    Attributes
+    Attributes:
     ----------
     FUTURE_MINUTE_BAR_LOOKBACK_DAYS : int
         The number of days of data to add before the first day.
@@ -1415,7 +1386,7 @@ class WithFutureMinuteBarData(WithAssetFinder, WithTradingCalendars):
     FUTURE_MINUTE_BAR_END_DATE = Timestamp
         The end date up to which to create data. This defaults to ``END_DATE``.
 
-    Methods
+    Methods:
     -------
     make_future_minute_bar_data() -> iterable[(int, pd.DataFrame)]
         A class method that returns a dict mapping sid to dataframe
@@ -1424,7 +1395,7 @@ class WithFutureMinuteBarData(WithAssetFinder, WithTradingCalendars):
         By default this creates some simple sythetic data with
         :func:`~zipline.testing.create_minute_bar_data`
 
-    See Also
+    See Also:
     --------
     zipline.testing.create_minute_bar_data
     """
@@ -1471,19 +1442,19 @@ class WithBcolzEquityMinuteBarReader(WithEquityMinuteBarData, WithTmpDir):
     - `cls.bcolz_equity_minute_bar_reader` is a minute bar reader
        pointing to the directory that was just written to.
 
-    Attributes
+    Attributes:
     ----------
     BCOLZ_MINUTE_BAR_PATH : str
         The path inside the tmpdir where this will be written.
 
-    Methods
+    Methods:
     -------
     make_bcolz_minute_bar_rootdir_path() -> string
         A class method that returns the path for the directory that contains
         the minute bar ctables. By default this is a subdirectory
         BCOLZ_MINUTE_BAR_PATH in the shared temp directory.
 
-    See Also
+    See Also:
     --------
     WithBcolzEquityDailyBarReader
     WithDataPortal
@@ -1499,9 +1470,7 @@ class WithBcolzEquityMinuteBarReader(WithEquityMinuteBarData, WithTmpDir):
     @classmethod
     def init_class_fixtures(cls):
         super(WithBcolzEquityMinuteBarReader, cls).init_class_fixtures()
-        cls.bcolz_equity_minute_bar_path = p = (
-            cls.make_bcolz_equity_minute_bar_rootdir_path()
-        )
+        cls.bcolz_equity_minute_bar_path = p = cls.make_bcolz_equity_minute_bar_rootdir_path()
         days = cls.equity_minute_bar_days
 
         writer = BcolzMinuteBarWriter(
@@ -1531,19 +1500,19 @@ class WithBcolzFutureMinuteBarReader(WithFutureMinuteBarData, WithTmpDir):
     - `cls.bcolz_equity_minute_bar_reader` is a minute bar reader
        pointing to the directory that was just written to.
 
-    Attributes
+    Attributes:
     ----------
     BCOLZ_FUTURE_MINUTE_BAR_PATH : str
         The path inside the tmpdir where this will be written.
 
-    Methods
+    Methods:
     -------
     make_bcolz_minute_bar_rootdir_path() -> string
         A class method that returns the path for the directory that contains
         the minute bar ctables. By default this is a subdirectory
         BCOLZ_MINUTE_BAR_PATH in the shared temp directory.
 
-    See Also
+    See Also:
     --------
     WithBcolzEquityDailyBarReader
     WithDataPortal
@@ -1561,9 +1530,7 @@ class WithBcolzFutureMinuteBarReader(WithFutureMinuteBarData, WithTmpDir):
     def init_class_fixtures(cls):
         super(WithBcolzFutureMinuteBarReader, cls).init_class_fixtures()
         trading_calendar = get_calendar("us_futures")
-        cls.bcolz_future_minute_bar_path = p = (
-            cls.make_bcolz_future_minute_bar_rootdir_path()
-        )
+        cls.bcolz_future_minute_bar_path = p = cls.make_bcolz_future_minute_bar_rootdir_path()
         days = cls.future_minute_bar_days
 
         writer = BcolzMinuteBarWriter(
@@ -1652,7 +1619,7 @@ class WithAdjustmentReader(WithBcolzEquityDailyBarReader):
     by overriding `make_adjustment_writer_equity_daily_bar_reader`.
     This is useful to providing a `MockDailyBarReader`.
 
-    Methods
+    Methods:
     -------
     make_splits_data() -> pd.DataFrame
         A class method that returns a dataframe of splits data to write to the
@@ -1682,7 +1649,7 @@ class WithAdjustmentReader(WithBcolzEquityDailyBarReader):
         to write the data into the connection to be used by the class's
         adjustment reader.
 
-    See Also
+    See Also:
     --------
     zipline.testing.MockDailyBarReader
     """
@@ -1798,7 +1765,7 @@ class WithSeededRandomPipelineEngine(WithTradingSessions, WithAssetFinder):
     ZiplineTestCase mixin providing class-level fixtures for running pipelines
     against deterministically-generated random data.
 
-    Attributes
+    Attributes:
     ----------
     SEEDED_RANDOM_PIPELINE_SEED : int
         Fixture input. Random seed used to initialize the random state loader.
@@ -1809,12 +1776,12 @@ class WithSeededRandomPipelineEngine(WithTradingSessions, WithAssetFinder):
         Fixture output.  A pipeline engine that will use seeded_random_loader
         as its only data provider.
 
-    Methods
+    Methods:
     -------
     run_pipeline(start_date, end_date)
         Run a pipeline with self.seeded_random_engine.
 
-    See Also
+    See Also:
     --------
     zipline.pipeline.loaders.synthetic.SeededRandomLoader
     zipline.pipeline.loaders.testing.make_seeded_random_loader
@@ -1839,9 +1806,7 @@ class WithSeededRandomPipelineEngine(WithTradingSessions, WithAssetFinder):
             asset_finder=cls.asset_finder,
             default_domain=cls.SEEDED_RANDOM_PIPELINE_DEFAULT_DOMAIN,
             default_hooks=cls.make_seeded_random_pipeline_engine_hooks(),
-            populate_initial_workspace=(
-                cls.make_seeded_random_populate_initial_workspace()
-            ),
+            populate_initial_workspace=(cls.make_seeded_random_populate_initial_workspace()),
         )
 
     @classmethod
@@ -1880,9 +1845,7 @@ class WithSeededRandomPipelineEngine(WithTradingSessions, WithAssetFinder):
             hooks=hooks,
         )
 
-    def run_chunked_pipeline(
-        self, pipeline, start_date, end_date, chunksize, hooks=None
-    ):
+    def run_chunked_pipeline(self, pipeline, start_date, end_date, chunksize, hooks=None):
         """
         Run a chunked pipeline with self.seeded_random_engine.
         """
@@ -1909,7 +1872,7 @@ class WithDataPortal(
     trading env, `cls.bcolz_equity_minute_bar_reader`,
     `cls.bcolz_equity_daily_bar_reader`, and `cls.adjustment_reader`.
 
-    Attributes
+    Attributes:
     ----------
     DATA_PORTAL_USE_DAILY_DATA : bool
         Should the daily bar reader be used? Defaults to True.
@@ -1918,7 +1881,7 @@ class WithDataPortal(
     DATA_PORTAL_USE_ADJUSTMENTS : bool
         Should the adjustment reader be used? Defaults to True.
 
-    Methods
+    Methods:
     -------
     make_data_portal() -> DataPortal
         Method which returns the data portal to be used for each test case.
@@ -1954,22 +1917,16 @@ class WithDataPortal(
             self.trading_calendar,
             first_trading_day=self.DATA_PORTAL_FIRST_TRADING_DAY,
             equity_daily_reader=(
-                self.bcolz_equity_daily_bar_reader
-                if self.DATA_PORTAL_USE_DAILY_DATA
-                else None
+                self.bcolz_equity_daily_bar_reader if self.DATA_PORTAL_USE_DAILY_DATA else None
             ),
             equity_minute_reader=(
-                self.bcolz_equity_minute_bar_reader
-                if self.DATA_PORTAL_USE_MINUTE_DATA
-                else None
+                self.bcolz_equity_minute_bar_reader if self.DATA_PORTAL_USE_MINUTE_DATA else None
             ),
             adjustment_reader=(
                 self.adjustment_reader if self.DATA_PORTAL_USE_ADJUSTMENTS else None
             ),
             future_minute_reader=(
-                self.bcolz_future_minute_bar_reader
-                if self.DATA_PORTAL_USE_MINUTE_DATA
-                else None
+                self.bcolz_future_minute_bar_reader if self.DATA_PORTAL_USE_MINUTE_DATA else None
             ),
             future_daily_reader=(
                 MinuteResampleSessionBarReader(
@@ -2035,9 +1992,7 @@ class WithMakeAlgo(WithBenchmarkReturns, WithSimParams, WithDataPortal):
         """
         return cls.asset_finder.sids[0]
 
-    def merge_with_inherited_algo_kwargs(
-        self, overriding_type, suite_overrides, method_overrides
-    ):
+    def merge_with_inherited_algo_kwargs(self, overriding_type, suite_overrides, method_overrides):
         """Helper for subclasses overriding ``make_algo_kwargs``.
 
         A common pattern for tests using `WithMakeAlgoKwargs` is that a
@@ -2168,7 +2123,7 @@ class WithFXRates:
         reference : pd.DataFrame
             DataFrame of "true" values for currencies.
 
-        Returns
+        Returns:
         -------
         rates : dict[str, pd.DataFrame]
             Map from quote currency to FX rates for that currency.
@@ -2266,7 +2221,7 @@ class WithFXRates:
         assert len(bases) == len(dts)
         rates = [
             cls.get_expected_fx_rate_scalar(rate, quote, base, dt)
-            for base, dt in zip(bases, dts)
+            for base, dt in zip(bases, dts, strict=False)
         ]
         return np.array(rates, dtype="float64")
 

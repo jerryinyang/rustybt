@@ -103,7 +103,9 @@ def test_bundle_migrate_dry_run_invokes_script(monkeypatch, runner: CliRunner):
         errors: list[str] = []
 
     stub = SimpleNamespace()
-    stub.run_migration = lambda dry_run, backup: calls.setdefault("run", (dry_run, backup)) or StubStats()
+    stub.run_migration = (
+        lambda dry_run, backup: calls.setdefault("run", (dry_run, backup)) or StubStats()
+    )
     stub.validate_migration = lambda: calls.setdefault("validate", True) or True
 
     monkeypatch.setattr("rustybt.__main__._load_migration_module", lambda: stub)

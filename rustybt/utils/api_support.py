@@ -14,8 +14,8 @@
 # limitations under the License.
 
 import rustybt.api
-from rustybt.utils.compat import wraps
 from rustybt.utils.algo_instance import get_algo_instance, set_algo_instance
+from rustybt.utils.compat import wraps
 
 
 class ZiplineAPI:
@@ -67,7 +67,7 @@ def require_not_initialized(exception):
     TradingAlgorithm.initialize.  `exception` will be raised if the method is
     called after initialize.
 
-    Examples
+    Examples:
     --------
     @require_not_initialized(SomeException("Don't do that!"))
     def method(self):
@@ -92,7 +92,7 @@ def require_initialized(exception):
     TradingAlgorithm.initialize.  `exception` will be raised if the method is
     called before initialize has completed.
 
-    Examples
+    Examples:
     --------
     @require_initialized(SomeException("Don't do that!"))
     def method(self):
@@ -117,7 +117,7 @@ def disallowed_in_before_trading_start(exception):
     TradingAlgorithm.before_trading_start.  `exception` will be raised if the
     method is called inside `before_trading_start`.
 
-    Examples
+    Examples:
     --------
     @disallowed_in_before_trading_start(SomeException("Don't do that!"))
     def method(self):

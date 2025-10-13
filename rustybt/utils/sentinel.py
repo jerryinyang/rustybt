@@ -23,7 +23,7 @@ def is_sentinel(obj: Any) -> bool:
 
 
 def sentinel(name: str, doc: str | None = None) -> type[_Sentinel]:
-    cache: dict[str, type[_Sentinel]] = getattr(sentinel, "_cache")
+    cache: dict[str, type[_Sentinel]] = sentinel._cache
     try:
         value = cache[name]  # memoized
     except KeyError:

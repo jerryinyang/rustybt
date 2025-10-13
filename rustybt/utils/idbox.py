@@ -7,12 +7,12 @@ class IDBox:
     ob : any
         The object to wrap.
 
-    Attributes
+    Attributes:
     ----------
     ob : any
         The object being wrapped.
 
-    Notes
+    Notes:
     -----
     This is useful for storing non-hashable values in a set or dict.
     """

@@ -360,8 +360,8 @@ Production readiness documentation:
 
 ---
 
-**Last Updated**: 2024-10-11  
-**Documentation Version**: 0.1.0  
+**Last Updated**: 2024-10-11
+**Documentation Version**: 0.1.0
 **Framework Version**: 0.1.0-dev
 
 ---

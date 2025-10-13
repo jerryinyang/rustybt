@@ -42,9 +42,7 @@ def cpu_intensive_backtest(params):
     lookback_penalty = abs(lookback - 50) / 100
     threshold_penalty = abs(threshold - 0.02) * 10
 
-    sharpe = Decimal("2.0") - Decimal(str(lookback_penalty)) - Decimal(
-        str(threshold_penalty)
-    )
+    sharpe = Decimal("2.0") - Decimal(str(lookback_penalty)) - Decimal(str(threshold_penalty))
 
     return sharpe
 
@@ -138,9 +136,7 @@ def example_parallel_grid_search():
     param_space = ParameterSpace(
         parameters=[
             DiscreteParameter(name="lookback", min_value=20, max_value=80, step=20),
-            ContinuousParameter(
-                name="threshold", min_value=0.01, max_value=0.05, prior="uniform"
-            ),
+            ContinuousParameter(name="threshold", min_value=0.01, max_value=0.05, prior="uniform"),
         ]
     )
 
@@ -174,9 +170,7 @@ def example_parallel_bayesian_optimization():
 
     param_space = ParameterSpace(
         parameters=[
-            ContinuousParameter(
-                name="lookback", min_value=10, max_value=100, prior="uniform"
-            ),
+            ContinuousParameter(name="lookback", min_value=10, max_value=100, prior="uniform"),
             ContinuousParameter(
                 name="threshold", min_value=0.001, max_value=0.1, prior="log-uniform"
             ),
@@ -219,9 +213,7 @@ def example_speedup_comparison():
     print("=" * 80)
 
     param_space = ParameterSpace(
-        parameters=[
-            DiscreteParameter(name="lookback", min_value=10, max_value=100, step=10)
-        ]
+        parameters=[DiscreteParameter(name="lookback", min_value=10, max_value=100, step=10)]
     )
 
     # Serial execution (1 worker)
@@ -246,7 +238,7 @@ def example_speedup_comparison():
     speedup = serial_time / parallel_time
     efficiency = speedup / 4
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  Serial time:     {serial_time:.1f} seconds")
     print(f"  Parallel time:   {parallel_time:.1f} seconds")
     print(f"  Speedup:         {speedup:.2f}×")
@@ -268,9 +260,7 @@ def example_resource_limits():
     print("=" * 80)
 
     param_space = ParameterSpace(
-        parameters=[
-            DiscreteParameter(name="lookback", min_value=10, max_value=50, step=10)
-        ]
+        parameters=[DiscreteParameter(name="lookback", min_value=10, max_value=50, step=10)]
     )
 
     algorithm = GridSearchAlgorithm(parameter_space=param_space)

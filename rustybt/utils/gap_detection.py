@@ -1,7 +1,6 @@
 """Gap detection utilities for identifying missing trading days."""
 
 import json
-from typing import Optional
 
 import pandas as pd
 import polars as pl
@@ -90,7 +89,7 @@ def format_missing_days_list(missing_days: list[pd.Timestamp]) -> str:
     return json.dumps(date_strings)
 
 
-def parse_missing_days_list(missing_days_json: Optional[str]) -> list[pd.Timestamp]:
+def parse_missing_days_list(missing_days_json: str | None) -> list[pd.Timestamp]:
     """Parse missing days JSON string into list of timestamps.
 
     Args:
@@ -106,9 +105,7 @@ def parse_missing_days_list(missing_days_json: Optional[str]) -> list[pd.Timesta
     return [pd.Timestamp(date_str) for date_str in date_strings]
 
 
-def generate_gap_report(
-    missing_days: list[pd.Timestamp], threshold: int = 5
-) -> dict[str, any]:
+def generate_gap_report(missing_days: list[pd.Timestamp], threshold: int = 5) -> dict[str, any]:
     """Generate gap report showing missing date ranges and warnings.
 
     Args:

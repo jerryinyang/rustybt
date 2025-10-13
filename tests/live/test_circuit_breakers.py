@@ -9,7 +9,6 @@ Tests all circuit breaker types:
 - CircuitBreakerManager
 """
 
-import asyncio
 import time
 from decimal import Decimal
 

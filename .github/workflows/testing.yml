@@ -1,0 +1,149 @@
+name: Testing
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'rustybt/**/*.py'
+      - 'tests/**/*.py'
+      - 'pyproject.toml'
+      - '.github/workflows/testing.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'rustybt/**/*.py'
+      - 'tests/**/*.py'
+      - 'pyproject.toml'
+
+jobs:
+  test:
+    name: Unit Tests & Coverage
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.local/share/uv
+          key: ${{ runner.os }}-uv-py${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-py${{ matrix.python-version }}-
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Run unit tests with coverage (BLOCKING)
+        run: |
+          echo "Running unit tests with coverage..."
+          uv run pytest -m "not memory and not api_integration and not live and not ib_integration" \
+            --cov=rustybt \
+            --cov-report=term \
+            --cov-report=html \
+            --cov-report=xml \
+            -v
+        id: unit-tests
+
+      - name: Check module-specific coverage thresholds (BLOCKING)
+        run: |
+          echo "Checking module-specific coverage thresholds..."
+          echo "Requirements: finance ≥95%, core ≥90%, others ≥90%"
+          uv run python scripts/check_coverage_thresholds.py --coverage-file coverage.xml --verbose
+        id: coverage-check
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Archive coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report-py${{ matrix.python-version }}
+          path: htmlcov/
+
+  property-tests:
+    name: Property-Based Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.local/share/uv
+          key: ${{ runner.os }}-uv-property-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-property-
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Run property-based tests (BLOCKING)
+        run: |
+          echo "Running property-based tests with Hypothesis..."
+          uv run pytest -m property --hypothesis-profile=ci -v
+        id: property-tests
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test, property-tests]
+    if: always()
+
+    steps:
+      - name: Check results
+        run: |
+          echo "=== Test Results ==="
+          echo ""
+          echo "✅ Unit tests & coverage: ${{ needs.test.result }}"
+          echo "   (Includes module-specific thresholds: finance ≥95%, core ≥90%)"
+          echo "✅ Property-based tests: ${{ needs.property-tests.result }}"
+          echo ""
+
+          if [[ "${{ needs.test.result }}" == "failure" ]] || \
+             [[ "${{ needs.property-tests.result }}" == "failure" ]]; then
+            echo "❌ Testing FAILED"
+            exit 1
+          else
+            echo "✅ All tests PASSED"
+          fi

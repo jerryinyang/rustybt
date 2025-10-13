@@ -26,12 +26,12 @@ class CallbackManager:
         A post-execution callback. This will be passed ``*args`` and
         ``**kwargs``.
 
-    Notes
+    Notes:
     -----
     The enter value of this context manager will be the result of calling
     ``pre(*args, **kwargs)``
 
-    Examples
+    Examples:
     --------
     >>> def pre(where):
     ...     print('entering %s block' % where)

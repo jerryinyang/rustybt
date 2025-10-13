@@ -75,9 +75,7 @@ class DecimalPosition:
         """Validate position data after initialization."""
         # Ensure all numeric fields are Decimal
         if not isinstance(self.amount, Decimal):
-            raise InvalidPositionError(
-                f"Position amount must be Decimal, got {type(self.amount)}"
-            )
+            raise InvalidPositionError(f"Position amount must be Decimal, got {type(self.amount)}")
         if not isinstance(self.cost_basis, Decimal):
             raise InvalidPositionError(
                 f"Position cost_basis must be Decimal, got {type(self.cost_basis)}"
@@ -275,9 +273,7 @@ class DecimalPosition:
             txn_direction = (
                 D("1")
                 if transaction_amount > D("0")
-                else D("-1")
-                if transaction_amount < D("0")
-                else D("0")
+                else D("-1") if transaction_amount < D("0") else D("0")
             )
 
             if (

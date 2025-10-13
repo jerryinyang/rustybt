@@ -27,7 +27,6 @@ Usage:
 import asyncio
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, List, Tuple
 
 from rustybt.assets import Equity, ExchangeInfo
 from rustybt.finance.decimal.commission import PerShareCommission
@@ -53,9 +52,9 @@ class SimulatedBacktestExecutor:
         self.starting_cash = starting_cash
         self.commission_model = commission_model
         self.slippage_model = slippage_model
-        self.positions: Dict[Equity, Decimal] = {}
-        self.cost_basis: Dict[Equity, Decimal] = {}
-        self.transactions: List[Dict] = []
+        self.positions: dict[Equity, Decimal] = {}
+        self.cost_basis: dict[Equity, Decimal] = {}
+        self.transactions: list[dict] = []
 
     def execute_trade(
         self,
@@ -63,7 +62,7 @@ class SimulatedBacktestExecutor:
         amount: Decimal,
         market_price: Decimal,
         timestamp: datetime,
-    ) -> Dict:
+    ) -> dict:
         """Execute trade in simulated backtest.
 
         Returns:
@@ -79,6 +78,7 @@ class SimulatedBacktestExecutor:
         # Apply commission model
         # Create a mock order object for commission calculation
         from types import SimpleNamespace
+
         mock_order = SimpleNamespace(
             id="mock-order",
             asset=asset,
@@ -103,8 +103,9 @@ class SimulatedBacktestExecutor:
             if current_amount == Decimal("0"):
                 # New position
                 self.cost_basis[asset] = fill_price
-            elif (current_amount > Decimal("0") and amount > Decimal("0")) or \
-                 (current_amount < Decimal("0") and amount < Decimal("0")):
+            elif (current_amount > Decimal("0") and amount > Decimal("0")) or (
+                current_amount < Decimal("0") and amount < Decimal("0")
+            ):
                 # Adding to position
                 current_basis = self.cost_basis.get(asset, Decimal("0"))
                 total_cost = current_basis * abs(current_amount) + fill_price * abs(amount)
@@ -127,15 +128,14 @@ class SimulatedBacktestExecutor:
 
         return transaction
 
-    def get_portfolio_value(self, market_prices: Dict[Equity, Decimal]) -> Decimal:
+    def get_portfolio_value(self, market_prices: dict[Equity, Decimal]) -> Decimal:
         """Calculate total portfolio value."""
         positions_value = sum(
-            amount * market_prices[asset]
-            for asset, amount in self.positions.items()
+            amount * market_prices[asset] for asset, amount in self.positions.items()
         )
         return self.cash + positions_value
 
-    def print_summary(self, market_prices: Dict[Equity, Decimal]) -> None:
+    def print_summary(self, market_prices: dict[Equity, Decimal]) -> None:
         """Print portfolio summary."""
         portfolio_value = self.get_portfolio_value(market_prices)
         total_pnl = portfolio_value - self.starting_cash
@@ -144,7 +144,9 @@ class SimulatedBacktestExecutor:
         print(f"  Current cash:      ${float(self.cash):>12,.2f}")
         print(f"  Positions value:   ${float(portfolio_value - self.cash):>12,.2f}")
         print(f"  Portfolio value:   ${float(portfolio_value):>12,.2f}")
-        print(f"  Total P&L:         ${float(total_pnl):>12,.2f} ({float(total_pnl / self.starting_cash * 100):+.2f}%)")
+        print(
+            f"  Total P&L:         ${float(total_pnl):>12,.2f} ({float(total_pnl / self.starting_cash * 100):+.2f}%)"
+        )
         print(f"  Total trades:      {len(self.transactions)}")
 
 
@@ -162,15 +164,15 @@ async def run_validation():
     starting_cash = Decimal("200000")  # Increased to accommodate trading scenario
     commission_model = PerShareCommission(
         rate=Decimal("0.005"),  # $0.005 per share
-        minimum=Decimal("1.00")
+        minimum=Decimal("1.00"),
     )
-    slippage_model = FixedBasisPointsSlippage(
-        basis_points=Decimal("5")  # 5 bps = 0.05%
-    )
+    slippage_model = FixedBasisPointsSlippage(basis_points=Decimal("5"))  # 5 bps = 0.05%
 
     print("Configuration:")
     print(f"  Starting capital:  ${float(starting_cash):,.2f}")
-    print(f"  Commission:        ${float(commission_model.rate)}/share (${float(commission_model.minimum)} min)")
+    print(
+        f"  Commission:        ${float(commission_model.rate)}/share (${float(commission_model.minimum)} min)"
+    )
     print(f"  Slippage:          {float(slippage_model.basis_points)} basis points (0.05%)")
     print()
 
@@ -185,15 +187,12 @@ async def run_validation():
         # Day 1: Initial positions
         ("2025-01-02 09:30", aapl, Decimal("100"), Decimal("150.00")),  # Buy 100 AAPL @ $150
         ("2025-01-02 10:00", googl, Decimal("50"), Decimal("140.00")),  # Buy 50 GOOGL @ $140
-        ("2025-01-02 14:00", spy, Decimal("200"), Decimal("450.00")),   # Buy 200 SPY @ $450
-
+        ("2025-01-02 14:00", spy, Decimal("200"), Decimal("450.00")),  # Buy 200 SPY @ $450
         # Day 2: Partial exit on AAPL (price rose)
         ("2025-01-03 10:30", aapl, Decimal("-50"), Decimal("155.00")),  # Sell 50 AAPL @ $155
-
         # Day 3: Rebalance - exit GOOGL (underperforming), add to SPY
         ("2025-01-04 11:00", googl, Decimal("-50"), Decimal("138.00")),  # Sell all GOOGL @ $138
-        ("2025-01-04 11:30", spy, Decimal("50"), Decimal("455.00")),     # Buy 50 SPY @ $455
-
+        ("2025-01-04 11:30", spy, Decimal("50"), Decimal("455.00")),  # Buy 50 SPY @ $455
         # Day 4: Final exit of AAPL position (take profits)
         ("2025-01-05 15:00", aapl, Decimal("-50"), Decimal("158.00")),  # Sell 50 AAPL @ $158
     ]
@@ -201,7 +200,9 @@ async def run_validation():
     print("Trading Scenario (7 trades over 4 days):")
     for timestamp_str, asset, amount, price in trading_scenario:
         side = "BUY" if amount > 0 else "SELL"
-        print(f"  {timestamp_str}: {side:>4} {abs(float(amount)):>6.0f} {asset.symbol:<6} @ ${float(price):>7.2f}")
+        print(
+            f"  {timestamp_str}: {side:>4} {abs(float(amount)):>6.0f} {asset.symbol:<6} @ ${float(price):>7.2f}"
+        )
     print()
 
     # Execute in simulated backtest
@@ -222,13 +223,19 @@ async def run_validation():
         txn = backtest.execute_trade(asset, amount, market_price, timestamp)
 
         side = "BUY" if amount > 0 else "SELL"
-        print(f"  {timestamp_str}: {side:>4} {abs(float(amount)):>6.0f} {asset.symbol:<6} "
-              f"filled @ ${float(txn['fill_price']):>7.2f} "
-              f"(commission: ${float(txn['commission']):>6.2f})")
+        print(
+            f"  {timestamp_str}: {side:>4} {abs(float(amount)):>6.0f} {asset.symbol:<6} "
+            f"filled @ ${float(txn['fill_price']):>7.2f} "
+            f"(commission: ${float(txn['commission']):>6.2f})"
+        )
 
     print()
     print("Backtest Final Results:")
-    final_prices_backtest = {aapl: Decimal("158.00"), googl: Decimal("138.00"), spy: Decimal("455.00")}
+    final_prices_backtest = {
+        aapl: Decimal("158.00"),
+        googl: Decimal("138.00"),
+        spy: Decimal("455.00"),
+    }
     backtest.print_summary(final_prices_backtest)
     print()
 
@@ -251,18 +258,17 @@ async def run_validation():
     print("Executing trades...")
     for timestamp_str, asset, amount, market_price in trading_scenario:
         # Update market data
-        broker._update_market_data(asset, {
-            "close": market_price,
-            "volume": Decimal("50000000"),  # Mock volume
-            "timestamp": datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M"),
-        })
+        broker._update_market_data(
+            asset,
+            {
+                "close": market_price,
+                "volume": Decimal("50000000"),  # Mock volume
+                "timestamp": datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M"),
+            },
+        )
 
         # Submit order
-        order_id = await broker.submit_order(
-            asset=asset,
-            amount=amount,
-            order_type="market"
-        )
+        await broker.submit_order(asset=asset, amount=amount, order_type="market")
 
         # Wait for fill
         await asyncio.sleep(0.01)
@@ -270,20 +276,25 @@ async def run_validation():
         # Get transaction details
         txn = broker.transactions[-1]
         side = "BUY" if amount > 0 else "SELL"
-        print(f"  {timestamp_str}: {side:>4} {abs(float(amount)):>6.0f} {asset.symbol:<6} "
-              f"filled @ ${float(txn.price):>7.2f} "
-              f"(commission: ${float(txn.commission):>6.2f})")
+        print(
+            f"  {timestamp_str}: {side:>4} {abs(float(amount)):>6.0f} {asset.symbol:<6} "
+            f"filled @ ${float(txn.price):>7.2f} "
+            f"(commission: ${float(txn.commission):>6.2f})"
+        )
 
     print()
     print("PaperBroker Final Results:")
 
     # Update final market prices
     for asset, price in final_prices_backtest.items():
-        broker._update_market_data(asset, {
-            "close": price,
-            "volume": Decimal("50000000"),
-            "timestamp": datetime.now(),
-        })
+        broker._update_market_data(
+            asset,
+            {
+                "close": price,
+                "volume": Decimal("50000000"),
+                "timestamp": datetime.now(),
+            },
+        )
 
     account_info = await broker.get_account_info()
     portfolio_value = account_info["portfolio_value"]
@@ -293,7 +304,9 @@ async def run_validation():
     print(f"  Current cash:      ${float(account_info['cash']):>12,.2f}")
     print(f"  Positions value:   ${float(portfolio_value - account_info['cash']):>12,.2f}")
     print(f"  Portfolio value:   ${float(portfolio_value):>12,.2f}")
-    print(f"  Total P&L:         ${float(total_pnl):>12,.2f} ({float(total_pnl / starting_cash * 100):+.2f}%)")
+    print(
+        f"  Total P&L:         ${float(total_pnl):>12,.2f} ({float(total_pnl / starting_cash * 100):+.2f}%)"
+    )
     print(f"  Total trades:      {len(broker.transactions)}")
     print()
 
@@ -310,10 +323,18 @@ async def run_validation():
 
     print(f"{'Metric':<25} {'Backtest':<20} {'PaperBroker':<20} {'Difference':<15}")
     print("-" * 80)
-    print(f"{'Starting cash':<25} ${float(backtest.starting_cash):>18,.2f} ${float(starting_cash):>18,.2f} ${0.00:>13,.2f}")
-    print(f"{'Final cash':<25} ${float(backtest.cash):>18,.2f} ${float(account_info['cash']):>18,.2f} ${float(abs(backtest.cash - account_info['cash'])):>13,.2f}")
-    print(f"{'Portfolio value':<25} ${float(backtest_portfolio_value):>18,.2f} ${float(paper_portfolio_value):>18,.2f} ${float(abs(backtest_portfolio_value - paper_portfolio_value)):>13,.2f}")
-    print(f"{'Total P&L':<25} ${float(backtest_portfolio_value - backtest.starting_cash):>18,.2f} ${float(total_pnl):>18,.2f} ${float(abs((backtest_portfolio_value - backtest.starting_cash) - total_pnl)):>13,.2f}")
+    print(
+        f"{'Starting cash':<25} ${float(backtest.starting_cash):>18,.2f} ${float(starting_cash):>18,.2f} ${0.00:>13,.2f}"
+    )
+    print(
+        f"{'Final cash':<25} ${float(backtest.cash):>18,.2f} ${float(account_info['cash']):>18,.2f} ${float(abs(backtest.cash - account_info['cash'])):>13,.2f}"
+    )
+    print(
+        f"{'Portfolio value':<25} ${float(backtest_portfolio_value):>18,.2f} ${float(paper_portfolio_value):>18,.2f} ${float(abs(backtest_portfolio_value - paper_portfolio_value)):>13,.2f}"
+    )
+    print(
+        f"{'Total P&L':<25} ${float(backtest_portfolio_value - backtest.starting_cash):>18,.2f} ${float(total_pnl):>18,.2f} ${float(abs((backtest_portfolio_value - backtest.starting_cash) - total_pnl)):>13,.2f}"
+    )
     print()
 
     # Calculate correlation

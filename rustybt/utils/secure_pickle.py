@@ -4,9 +4,9 @@ SECURITY (Story 8.10): Protect against pickle deserialization attacks by adding
 HMAC signatures to pickled data. Only data with valid signatures can be unpickled.
 """
 
-import os
-import hmac
 import hashlib
+import hmac
+import os
 import pickle
 from typing import Any
 

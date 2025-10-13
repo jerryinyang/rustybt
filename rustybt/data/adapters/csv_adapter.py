@@ -219,9 +219,7 @@ class CSVAdapter(BaseDataAdapter, DataSource):
         if end_date.tz is None:
             end_date = end_date.tz_localize("UTC")
 
-        df = df.filter(
-            (pl.col("timestamp") >= start_date) & (pl.col("timestamp") <= end_date)
-        )
+        df = df.filter((pl.col("timestamp") >= start_date) & (pl.col("timestamp") <= end_date))
 
         # Filter by symbols if symbol column exists
         if self.config.schema_mapping.symbol_column and symbols:
@@ -334,8 +332,7 @@ class CSVAdapter(BaseDataAdapter, DataSource):
         missing_cols = required_std_cols - mapped_std_cols
         if missing_cols:
             raise InvalidDataError(
-                f"Missing required columns in CSV: {missing_cols}. "
-                f"Available columns: {df.columns}"
+                f"Missing required columns in CSV: {missing_cols}. Available columns: {df.columns}"
             )
 
         # Rename columns
@@ -435,9 +432,7 @@ class CSVAdapter(BaseDataAdapter, DataSource):
                         )
                     ]
                 )
-                logger.info(
-                    "date_parsing_succeeded", format="epoch_seconds", method="auto_detect"
-                )
+                logger.info("date_parsing_succeeded", format="epoch_seconds", method="auto_detect")
                 return result_df
             except Exception:  # noqa: BLE001, S110
                 # Not epoch seconds, try milliseconds - polars can raise various exceptions
@@ -598,9 +593,7 @@ class CSVAdapter(BaseDataAdapter, DataSource):
         for col in price_cols:
             if col in df.columns:
                 # Convert to string first, then to Decimal to preserve precision
-                df = df.with_columns(
-                    [pl.col(col).cast(pl.Utf8).str.to_decimal(scale=8).alias(col)]
-                )
+                df = df.with_columns([pl.col(col).cast(pl.Utf8).str.to_decimal(scale=8).alias(col)])
 
         logger.info("decimal_conversion_applied", columns=price_cols)
 

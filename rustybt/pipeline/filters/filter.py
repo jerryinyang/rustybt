@@ -7,6 +7,8 @@ from operator import attrgetter
 
 from numpy import (
     any as np_any,
+)
+from numpy import (
     float64,
     nan,
     nanpercentile,
@@ -19,17 +21,17 @@ from rustybt.errors import (
     UnsupportedDataType,
 )
 from rustybt.lib.labelarray import LabelArray
-from rustybt.lib.rank import is_missing, grouped_masked_is_maximal
+from rustybt.lib.rank import grouped_masked_is_maximal, is_missing
 from rustybt.pipeline.dtypes import (
     CLASSIFIER_DTYPES,
     FACTOR_DTYPES,
     FILTER_DTYPES,
 )
 from rustybt.pipeline.expression import (
-    BadBinaryOperator,
     FILTER_BINOPS,
-    method_name_for_op,
+    BadBinaryOperator,
     NumericalExpression,
+    method_name_for_op,
 )
 from rustybt.pipeline.mixins import (
     CustomTermMixin,
@@ -43,10 +45,10 @@ from rustybt.pipeline.mixins import (
 from rustybt.pipeline.term import ComputableTerm, Term
 from rustybt.utils.input_validation import expect_types
 from rustybt.utils.numpy_utils import (
-    same,
     bool_dtype,
     int64_dtype,
     repeat_first_axis,
+    same,
 )
 
 from ..sentinels import NotSpecified
@@ -78,11 +80,7 @@ def binary_operator(op):
                 other,
             )
             return NumExprFilter.create(
-                "({left}) {op} ({right})".format(
-                    left=self_expr,
-                    op=op,
-                    right=other_expr,
-                ),
+                f"({self_expr}) {op} ({other_expr})",
                 new_inputs,
             )
         elif isinstance(other, NumericalExpression):
@@ -95,16 +93,16 @@ def binary_operator(op):
                 raise BadBinaryOperator(op, self, other)
             if self is other:
                 return NumExprFilter.create(
-                    "x_0 {op} x_0".format(op=op),
+                    f"x_0 {op} x_0",
                     (self,),
                 )
             return NumExprFilter.create(
-                "x_0 {op} x_1".format(op=op),
+                f"x_0 {op} x_1",
                 (self, other),
             )
         elif isinstance(other, int):  # Note that this is true for bool as well
             return NumExprFilter.create(
-                "x_0 {op} {constant}".format(op=op, constant=int(other)),
+                f"x_0 {op} {int(other)}",
                 binds=(self,),
             )
         raise BadBinaryOperator(op, self, other)
@@ -127,11 +125,11 @@ def unary_operator(op):
         # invoked.
         if isinstance(self, NumericalExpression):
             return NumExprFilter.create(
-                "{op}({expr})".format(op=op, expr=self._expr),
+                f"{op}({self._expr})",
                 self.inputs,
             )
         else:
-            return NumExprFilter.create("{op}x_0".format(op=op), (self,))
+            return NumExprFilter.create(f"{op}x_0", (self,))
 
     unary_operator.__doc__ = "Unary Operator: '%s'" % op
     return unary_operator
@@ -195,14 +193,9 @@ class Filter(RestrictedDTypeMixin, ComputableTerm):
     dtype = bool_dtype
 
     clsdict = locals()
+    clsdict.update({method_name_for_op(op): binary_operator(op) for op in FILTER_BINOPS})
     clsdict.update(
-        {method_name_for_op(op): binary_operator(op) for op in FILTER_BINOPS}
-    )
-    clsdict.update(
-        {
-            method_name_for_op(op, commute=True): binary_operator(op)
-            for op in FILTER_BINOPS
-        }
+        {method_name_for_op(op, commute=True): binary_operator(op) for op in FILTER_BINOPS}
     )
 
     __invert__ = unary_operator("~")
@@ -233,7 +226,7 @@ class Filter(RestrictedDTypeMixin, ComputableTerm):
             Expression whose values should be used at locations where this
             filter outputs False.
 
-        Returns
+        Returns:
         -------
         merged : zipline.pipeline.term.ComputableTerm
            A term that computes by taking values from either ``if_true`` or
@@ -243,9 +236,8 @@ class Filter(RestrictedDTypeMixin, ComputableTerm):
            produces True, and it draws from ``if_false`` at locations where
            ``self`` produces False.
 
-        Example
+        Example:
         -------
-
         Let ``f`` be a Factor that produces the following output::
 
                          AAPL   MSFT    MCD     BK
@@ -272,7 +264,7 @@ class Filter(RestrictedDTypeMixin, ComputableTerm):
             2017-03-13    1.0   20.0    3.0   40.0
             2017-03-14    5.0    6.0   70.0   80.0
 
-        See Also
+        See Also:
         --------
         numpy.where
         Factor.fillna
@@ -282,33 +274,25 @@ class Filter(RestrictedDTypeMixin, ComputableTerm):
 
         if true_type is not false_type:
             raise TypeError(
-                "Mismatched types in if_else(): if_true={}, but if_false={}".format(
-                    true_type.__name__, false_type.__name__
-                )
+                f"Mismatched types in if_else(): if_true={true_type.__name__}, but if_false={false_type.__name__}"
             )
 
         if if_true.dtype != if_false.dtype:
             raise TypeError(
                 "Mismatched dtypes in if_else(): "
-                "if_true.dtype = {}, if_false.dtype = {}".format(
-                    if_true.dtype, if_false.dtype
-                )
+                f"if_true.dtype = {if_true.dtype}, if_false.dtype = {if_false.dtype}"
             )
 
         if if_true.outputs != if_false.outputs:
             raise ValueError(
                 "Mismatched outputs in if_else(): "
-                "if_true.outputs = {}, if_false.outputs = {}".format(
-                    if_true.outputs, if_false.outputs
-                ),
+                f"if_true.outputs = {if_true.outputs}, if_false.outputs = {if_false.outputs}",
             )
 
         if not same(if_true.missing_value, if_false.missing_value):
             raise ValueError(
                 "Mismatched missing values in if_else(): "
-                "if_true.missing_value = {!r}, if_false.missing_value = {!r}".format(
-                    if_true.missing_value, if_false.missing_value
-                )
+                f"if_true.missing_value = {if_true.missing_value!r}, if_false.missing_value = {if_false.missing_value!r}"
             )
 
         return_type = type(if_true)._with_mixin(IfElseMixin)
@@ -481,11 +465,7 @@ class PercentileFilter(SingleInputMixin, Filter):
 
     def graph_repr(self):
         # Graphviz interprets `\l` as "divide label into lines, left-justified"
-        return "{}:\\l  min: {}, max: {}\\l".format(
-            type(self).__name__,
-            self._min_percentile,
-            self._max_percentile,
-        )
+        return f"{type(self).__name__}:\\l  min: {self._min_percentile}, max: {self._max_percentile}\\l"
 
 
 class CustomFilter(PositiveWindowLengthMixin, CustomTermMixin, Filter):
@@ -504,7 +484,7 @@ class CustomFilter(PositiveWindowLengthMixin, CustomTermMixin, Filter):
         to the CustomFilter constructor, we look for a class-level attribute
         named `window_length`.
 
-    Notes
+    Notes:
     -----
     Users implementing their own Filters should subclass CustomFilter and
     implement a method named ``compute`` with the following signature:
@@ -534,7 +514,7 @@ class CustomFilter(PositiveWindowLengthMixin, CustomTermMixin, Filter):
     :class:`~zipline.pipeline.CustomFactor` for more details on
     implementing a custom ``compute`` method.
 
-    See Also
+    See Also:
     --------
     zipline.pipeline.CustomFactor
     """
@@ -645,7 +625,7 @@ class SingleAsset(Filter):
 
     def graph_repr(self):
         # Graphviz interprets `\l` as "divide label into lines, left-justified"
-        return "SingleAsset:\\l  asset: {!r}\\l".format(self._asset)
+        return f"SingleAsset:\\l  asset: {self._asset!r}\\l"
 
 
 class StaticSids(Filter):
@@ -698,7 +678,6 @@ class AllPresent(CustomFilter, SingleInputMixin, StandardOutputs):
     """Pipeline filter indicating input term has data for a given window."""
 
     def _validate(self):
-
         if isinstance(self.inputs[0], Filter):
             raise TypeError("Input to filter `AllPresent` cannot be a Filter.")
 
@@ -737,9 +716,7 @@ class MaximumFilter(Filter, StandardOutputs):
         data = arrays[0]
         group_labels, null_label = self.inputs[1]._to_integral(arrays[1])
         effective_mask = (
-            mask
-            & (group_labels != null_label)
-            & ~is_missing(data, self.inputs[0].missing_value)
+            mask & (group_labels != null_label) & ~is_missing(data, self.inputs[0].missing_value)
         ).view(uint8)
 
         return grouped_masked_is_maximal(
@@ -753,15 +730,8 @@ class MaximumFilter(Filter, StandardOutputs):
         )
 
     def __repr__(self):
-        return "Maximum({}, groupby={}, mask={})".format(
-            self.inputs[0].recursive_repr(),
-            self.inputs[1].recursive_repr(),
-            self.mask.recursive_repr(),
-        )
+        return f"Maximum({self.inputs[0].recursive_repr()}, groupby={self.inputs[1].recursive_repr()}, mask={self.mask.recursive_repr()})"
 
     def graph_repr(self):
         # Graphviz interprets `\l` as "divide label into lines, left-justified"
-        return "Maximum:\\l  groupby: {}\\l  mask: {}\\l".format(
-            self.inputs[1].recursive_repr(),
-            self.mask.recursive_repr(),
-        )
+        return f"Maximum:\\l  groupby: {self.inputs[1].recursive_repr()}\\l  mask: {self.mask.recursive_repr()}\\l"

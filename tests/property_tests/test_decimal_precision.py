@@ -2,7 +2,6 @@
 
 from decimal import Decimal, getcontext
 
-import pytest
 from hypothesis import example, given
 
 from .strategies import decimal_prices, decimal_quantities
@@ -26,11 +25,9 @@ def test_decimal_addition_associativity(a: Decimal, b: Decimal, c: Decimal) -> N
     left = (a + b) + c
     right = a + (b + c)
 
-    assert left == right, (
-        f"Addition associativity violated: "
-        f"({a} + {b}) + {c} = {left}, "
-        f"{a} + ({b} + {c}) = {right}"
-    )
+    assert (
+        left == right
+    ), f"Addition associativity violated: ({a} + {b}) + {c} = {left}, {a} + ({b} + {c}) = {right}"
 
 
 @given(
@@ -50,7 +47,9 @@ def test_decimal_addition_commutativity(a: Decimal, b: Decimal) -> None:
     left = a + b
     right = b + a
 
-    assert left == right, f"Addition commutativity violated: {a} + {b} = {left}, {b} + {a} = {right}"
+    assert (
+        left == right
+    ), f"Addition commutativity violated: {a} + {b} = {left}, {b} + {a} = {right}"
 
 
 @given(
@@ -95,9 +94,9 @@ def test_decimal_multiplication_commutativity(a: Decimal, b: Decimal) -> None:
     left = a * b
     right = b * a
 
-    assert left == right, (
-        f"Multiplication commutativity violated: " f"{a} × {b} = {left}, {b} × {a} = {right}"
-    )
+    assert (
+        left == right
+    ), f"Multiplication commutativity violated: {a} × {b} = {left}, {b} × {a} = {right}"
 
 
 @given(
@@ -119,11 +118,9 @@ def test_decimal_distributivity(a: Decimal, b: Decimal, c: Decimal) -> None:
     left = a * (b + c)
     right = a * b + a * c
 
-    assert left == right, (
-        f"Distributivity violated: "
-        f"{a} × ({b} + {c}) = {left}, "
-        f"{a} × {b} + {a} × {c} = {right}"
-    )
+    assert (
+        left == right
+    ), f"Distributivity violated: {a} × ({b} + {c}) = {left}, {a} × {b} + {a} × {c} = {right}"
 
 
 @given(
@@ -159,12 +156,11 @@ def test_decimal_precision_preserved_across_operations(value: Decimal) -> None:
         assert isinstance(result4, Decimal), "Result should be Decimal type"
 
         # Verify operations are reversible
-        reconstructed = (result3 / Decimal("1.00000001"))
+        reconstructed = result3 / Decimal("1.00000001")
         # Allow for small rounding in final decimal place due to division
-        assert abs(reconstructed - value) < Decimal("0.00000001"), (
-            f"Precision lost in round-trip: "
-            f"original={value}, reconstructed={reconstructed}"
-        )
+        assert abs(reconstructed - value) < Decimal(
+            "0.00000001"
+        ), f"Precision lost in round-trip: original={value}, reconstructed={reconstructed}"
     finally:
         getcontext().prec = original_prec
 
@@ -248,9 +244,7 @@ def test_decimal_string_representation_preserves_precision(value: Decimal) -> No
 )
 @example(price=Decimal("100.50"), quantity=Decimal("123.45"))
 @example(price=Decimal("0.01"), quantity=Decimal("0.01"))
-def test_decimal_multiplication_no_float_contamination(
-    price: Decimal, quantity: Decimal
-) -> None:
+def test_decimal_multiplication_no_float_contamination(price: Decimal, quantity: Decimal) -> None:
     """Test Decimal multiplication doesn't introduce float errors.
 
     Property:
@@ -263,7 +257,7 @@ def test_decimal_multiplication_no_float_contamination(
 
     # Calculate using float (which would introduce errors)
     float_result = float(price) * float(quantity)
-    float_as_decimal = Decimal(str(float_result))
+    Decimal(str(float_result))
 
     # Decimal result should be more precise than float result
     # They might differ due to float rounding
@@ -272,6 +266,6 @@ def test_decimal_multiplication_no_float_contamination(
     # Verify Decimal result is exact (no rounding beyond specified precision)
     # By checking it maintains more precision than float conversion
     str_result = str(decimal_result)
-    assert "." in str_result or decimal_result == Decimal("0"), (
-        "Decimal result should maintain decimal precision"
-    )
+    assert "." in str_result or decimal_result == Decimal(
+        "0"
+    ), "Decimal result should maintain decimal precision"

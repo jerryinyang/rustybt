@@ -127,15 +127,13 @@ def run_random_search_demo():
 
     # Sample 50 random combinations (much less than 75 grid points)
     n_iter = 50
-    print(f"\nParameter space: Continuous (infinite combinations)")
-    print(f"  - ma_short: [10, 30] (continuous)")
-    print(f"  - ma_long: [40, 60] (continuous)")
-    print(f"  - threshold: [0.01, 0.03] (continuous)")
+    print("\nParameter space: Continuous (infinite combinations)")
+    print("  - ma_short: [10, 30] (continuous)")
+    print("  - ma_long: [40, 60] (continuous)")
+    print("  - threshold: [0.01, 0.03] (continuous)")
     print(f"\nRandom samples: {n_iter}")
 
-    random_search = RandomSearchAlgorithm(
-        parameter_space=param_space, n_iter=n_iter, seed=42
-    )
+    random_search = RandomSearchAlgorithm(parameter_space=param_space, n_iter=n_iter, seed=42)
 
     start_time = time.time()
     trial_count = 0
@@ -156,9 +154,11 @@ def run_random_search_demo():
         if sharpe > best_sharpe:
             best_sharpe = sharpe
             print(f"\nTrial {trial_count}: New best Sharpe = {sharpe:.4f}")
-            print(f"  Parameters: ma_short={params['ma_short']:.1f}, "
-                  f"ma_long={params['ma_long']:.1f}, "
-                  f"threshold={params['threshold']:.4f}")
+            print(
+                f"  Parameters: ma_short={params['ma_short']:.1f}, "
+                f"ma_long={params['ma_long']:.1f}, "
+                f"threshold={params['threshold']:.4f}"
+            )
 
     elapsed = time.time() - start_time
 
@@ -170,9 +170,11 @@ def run_random_search_demo():
     print(f"  Trials completed: {trial_count}")
     print(f"  Time elapsed: {elapsed:.2f}s")
     print(f"  Best Sharpe: {best_score:.4f}")
-    print(f"  Best params: ma_short={best_params['ma_short']:.2f}, "
-          f"ma_long={best_params['ma_long']:.2f}, "
-          f"threshold={best_params['threshold']:.4f}")
+    print(
+        f"  Best params: ma_short={best_params['ma_short']:.2f}, "
+        f"ma_long={best_params['ma_long']:.2f}, "
+        f"threshold={best_params['threshold']:.4f}"
+    )
 
     return trial_count, elapsed, best_score
 
@@ -199,17 +201,17 @@ def main():
     speedup = grid_time / random_time if random_time > 0 else 0
     efficiency = (grid_trials / random_trials) if random_trials > 0 else 0
 
-    print(f"\nTrials:")
+    print("\nTrials:")
     print(f"  Grid Search:   {grid_trials:3d} trials")
     print(f"  Random Search: {random_trials:3d} trials")
     print(f"  Efficiency:    {efficiency:.2f}× fewer trials")
 
-    print(f"\nTime:")
+    print("\nTime:")
     print(f"  Grid Search:   {grid_time:.2f}s")
     print(f"  Random Search: {random_time:.2f}s")
     print(f"  Speedup:       {speedup:.2f}× faster")
 
-    print(f"\nBest Result:")
+    print("\nBest Result:")
     print(f"  Grid Search:   Sharpe = {grid_best:.4f}")
     print(f"  Random Search: Sharpe = {random_best:.4f}")
     quality_ratio = float(random_best) / float(grid_best) if grid_best > 0 else 0

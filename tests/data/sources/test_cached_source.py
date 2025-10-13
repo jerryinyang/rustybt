@@ -1,7 +1,6 @@
 """Unit tests for CachedDataSource wrapper."""
 
 import time
-from pathlib import Path
 from unittest.mock import AsyncMock, Mock
 
 import pandas as pd
@@ -14,7 +13,6 @@ from rustybt.data.sources.cached_source import CachedDataSource
 from rustybt.data.sources.freshness import (
     AlwaysStaleFreshnessPolicy,
     NeverStaleFreshnessPolicy,
-    TTLFreshnessPolicy,
 )
 
 
@@ -282,7 +280,6 @@ async def test_cache_warming(mock_adapter, temp_cache_dir, test_catalog):
 @pytest.mark.asyncio
 async def test_cache_size_alert(mock_adapter, temp_cache_dir, test_catalog, caplog):
     """Test cache size alert when usage >90%."""
-    import structlog
 
     # Set small cache limit to trigger alert
     cached = CachedDataSource(

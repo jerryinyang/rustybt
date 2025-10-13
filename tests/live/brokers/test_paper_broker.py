@@ -18,7 +18,6 @@ import pytest
 from rustybt.assets import Equity, ExchangeInfo
 from rustybt.finance.decimal.commission import (
     NoCommission,
-    PerDollarCommission,
     PerShareCommission,
 )
 from rustybt.finance.decimal.slippage import (
@@ -56,9 +55,7 @@ def paper_broker_with_costs():
     """Create PaperBroker with commission and slippage."""
     return PaperBroker(
         starting_cash=Decimal("100000"),
-        commission_model=PerShareCommission(
-            rate=Decimal("0.005"), minimum=Decimal("1.00")
-        ),
+        commission_model=PerShareCommission(rate=Decimal("0.005"), minimum=Decimal("1.00")),
         slippage_model=FixedBasisPointsSlippage(basis_points=Decimal("5")),
         order_latency_ms=10,
     )
@@ -128,9 +125,7 @@ class TestPaperBrokerMarketOrders:
     """Test market order execution."""
 
     @pytest.mark.asyncio
-    async def test_market_order_buy_full_fill(
-        self, paper_broker, sample_asset
-    ):
+    async def test_market_order_buy_full_fill(self, paper_broker, sample_asset):
         """Test market buy order fills completely at current price."""
         await paper_broker.connect()
 
@@ -209,9 +204,7 @@ class TestPaperBrokerMarketOrders:
         assert paper_broker.cash == expected_cash
 
     @pytest.mark.asyncio
-    async def test_market_order_with_commission(
-        self, paper_broker_with_costs, sample_asset
-    ):
+    async def test_market_order_with_commission(self, paper_broker_with_costs, sample_asset):
         """Test market order applies commission correctly."""
         broker = paper_broker_with_costs
         await broker.connect()
@@ -227,9 +220,7 @@ class TestPaperBrokerMarketOrders:
         )
 
         # Submit buy order
-        await broker.submit_order(
-            asset=sample_asset, amount=Decimal("100"), order_type="market"
-        )
+        await broker.submit_order(asset=sample_asset, amount=Decimal("100"), order_type="market")
         await asyncio.sleep(0.1)
 
         # Check commission charged (100 shares × $0.005 = $0.50, but minimum is $1.00)
@@ -246,9 +237,7 @@ class TestPaperBrokerMarketOrders:
         assert abs(broker.cash - expected_cash) < Decimal("0.01")  # Allow small rounding
 
     @pytest.mark.asyncio
-    async def test_market_order_with_slippage(
-        self, paper_broker_with_costs, sample_asset
-    ):
+    async def test_market_order_with_slippage(self, paper_broker_with_costs, sample_asset):
         """Test market order applies slippage correctly."""
         broker = paper_broker_with_costs
         await broker.connect()
@@ -264,9 +253,7 @@ class TestPaperBrokerMarketOrders:
         )
 
         # Submit buy order
-        await broker.submit_order(
-            asset=sample_asset, amount=Decimal("100"), order_type="market"
-        )
+        await broker.submit_order(asset=sample_asset, amount=Decimal("100"), order_type="market")
         await asyncio.sleep(0.1)
 
         # Check position cost basis reflects slippage
@@ -277,9 +264,7 @@ class TestPaperBrokerMarketOrders:
         assert abs(position.cost_basis - expected_cost_basis) < Decimal("0.01")
 
     @pytest.mark.asyncio
-    async def test_market_order_insufficient_funds(
-        self, paper_broker, sample_asset
-    ):
+    async def test_market_order_insufficient_funds(self, paper_broker, sample_asset):
         """Test market order rejected if insufficient funds."""
         await paper_broker.connect()
 
@@ -418,9 +403,7 @@ class TestPaperBrokerPartialFills:
     """Test partial fill simulation based on volume."""
 
     @pytest.mark.asyncio
-    async def test_partial_fill_exceeds_volume_limit(
-        self, paper_broker, sample_asset
-    ):
+    async def test_partial_fill_exceeds_volume_limit(self, paper_broker, sample_asset):
         """Test order partially fills when exceeding volume limit."""
         await paper_broker.connect()
 
@@ -451,9 +434,7 @@ class TestPaperBrokerPartialFills:
         assert order.id in paper_broker.open_orders  # Partially filled
 
     @pytest.mark.asyncio
-    async def test_full_fill_within_volume_limit(
-        self, paper_broker, sample_asset
-    ):
+    async def test_full_fill_within_volume_limit(self, paper_broker, sample_asset):
         """Test order fully fills when within volume limit."""
         await paper_broker.connect()
 
@@ -509,9 +490,7 @@ class TestPaperBrokerPositionTracking:
         assert position.market_value == Decimal("100") * Decimal("150.00")
 
     @pytest.mark.asyncio
-    async def test_position_updated_on_additional_buy(
-        self, paper_broker, sample_asset
-    ):
+    async def test_position_updated_on_additional_buy(self, paper_broker, sample_asset):
         """Test position updates cost basis on additional buy."""
         await paper_broker.connect()
 
@@ -546,7 +525,9 @@ class TestPaperBrokerPositionTracking:
         # Check position: 200 shares, cost basis = (100×$100 + 100×$110) / 200 = $105
         position = paper_broker.positions[sample_asset]
         assert position.amount == Decimal("200")
-        expected_cost_basis = (Decimal("100") * Decimal("100") + Decimal("100") * Decimal("110")) / Decimal("200")
+        expected_cost_basis = (
+            Decimal("100") * Decimal("100") + Decimal("100") * Decimal("110")
+        ) / Decimal("200")
         assert position.cost_basis == expected_cost_basis
 
     @pytest.mark.asyncio
@@ -635,9 +616,7 @@ class TestPaperBrokerAccountInfo:
         assert account_info["starting_cash"] == Decimal("100000")
 
     @pytest.mark.asyncio
-    async def test_get_account_info_with_position(
-        self, paper_broker, sample_asset
-    ):
+    async def test_get_account_info_with_position(self, paper_broker, sample_asset):
         """Test account info includes position value."""
         await paper_broker.connect()
 
@@ -661,9 +640,7 @@ class TestPaperBrokerAccountInfo:
         assert account_info["cash"] == Decimal("90000")
 
         # Portfolio value = cash + position value = $90,000 + $10,000 = $100,000
-        expected_portfolio_value = Decimal("90000") + (
-            Decimal("100") * Decimal("100.00")
-        )
+        expected_portfolio_value = Decimal("90000") + (Decimal("100") * Decimal("100.00"))
         assert account_info["portfolio_value"] == expected_portfolio_value
 
     @pytest.mark.asyncio

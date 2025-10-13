@@ -23,25 +23,26 @@ This module provides:
 """
 
 import base64
+from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from io import BytesIO
 from pathlib import Path
-from typing import Optional, Union, List, Callable, Dict, Any
-from contextlib import contextmanager
+from typing import Any
 
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import polars as pl
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 import seaborn as sns
-from matplotlib.backends.backend_pdf import PdfPages
 from jinja2 import Environment, PackageLoader, select_autoescape
-from decimal import Decimal
+from matplotlib.backends.backend_pdf import PdfPages
 
 # Import empyrical for accurate financial metrics
 try:
     import empyrical
+
     EMPYRICAL_AVAILABLE = True
 except ImportError:
     EMPYRICAL_AVAILABLE = False
@@ -55,7 +56,7 @@ def publication_style():
     """
     original_style = plt.rcParams.copy()
     try:
-        plt.style.use('seaborn-v0_8-darkgrid')
+        plt.style.use("seaborn-v0_8-darkgrid")
         sns.set_palette("husl")
         yield
     finally:
@@ -80,16 +81,17 @@ class ReportConfig:
         dpi: Chart resolution (150 for screen, 300 for print)
         figsize: Default figure size (width, height) in inches
     """
+
     title: str = "Backtest Report"
-    subtitle: Optional[str] = None
-    logo_path: Optional[Path] = None
+    subtitle: str | None = None
+    logo_path: Path | None = None
     include_equity_curve: bool = True
     include_drawdown: bool = True
     include_returns_distribution: bool = True
     include_metrics_table: bool = True
     include_trade_statistics: bool = True
     include_position_distribution: bool = True
-    custom_charts: List[Callable] = field(default_factory=list)
+    custom_charts: list[Callable] = field(default_factory=list)
     dpi: int = 150
     figsize: tuple = (10, 6)
 
@@ -111,9 +113,7 @@ class ReportGenerator:
     """
 
     def __init__(
-        self,
-        backtest_result: Union[pd.DataFrame, pl.DataFrame],
-        config: Optional[ReportConfig] = None
+        self, backtest_result: pd.DataFrame | pl.DataFrame, config: ReportConfig | None = None
     ):
         """Initialize report generator.
 
@@ -132,8 +132,8 @@ class ReportGenerator:
 
         # Setup Jinja2 environment
         self.jinja_env = Environment(
-            loader=PackageLoader('rustybt', 'analytics/templates'),
-            autoescape=select_autoescape(['html', 'xml'])
+            loader=PackageLoader("rustybt", "analytics/templates"),
+            autoescape=select_autoescape(["html", "xml"]),
         )
 
         # Validate data
@@ -145,7 +145,7 @@ class ReportGenerator:
         Raises:
             ValueError: If required columns are missing
         """
-        required_columns = ['portfolio_value', 'ending_value']
+        required_columns = ["portfolio_value", "ending_value"]
         has_portfolio_value = any(col in self.data.columns for col in required_columns)
 
         if not has_portfolio_value:
@@ -154,11 +154,7 @@ class ReportGenerator:
                 f"Found columns: {list(self.data.columns)}"
             )
 
-    def generate_report(
-        self,
-        output_path: Union[str, Path],
-        format: str = 'html'
-    ) -> None:
+    def generate_report(self, output_path: str | Path, format: str = "html") -> None:
         """Generate report in specified format.
 
         Args:
@@ -170,15 +166,12 @@ class ReportGenerator:
         """
         output_path = Path(output_path)
 
-        if format.lower() == 'html':
+        if format.lower() == "html":
             self._generate_html_report(output_path)
-        elif format.lower() == 'pdf':
+        elif format.lower() == "pdf":
             self._generate_pdf_report(output_path)
         else:
-            raise ValueError(
-                f"Unsupported format: {format}. "
-                f"Supported formats: 'html', 'pdf'"
-            )
+            raise ValueError(f"Unsupported format: {format}. Supported formats: 'html', 'pdf'")
 
     def _generate_html_report(self, output_path: Path) -> None:
         """Generate HTML report with embedded charts.
@@ -189,34 +182,34 @@ class ReportGenerator:
         # Generate all charts as base64 encoded images
         charts = {}
         if self.config.include_equity_curve:
-            charts['equity_curve'] = self._generate_equity_curve()
+            charts["equity_curve"] = self._generate_equity_curve()
         if self.config.include_drawdown:
-            charts['drawdown'] = self._generate_drawdown_chart()
+            charts["drawdown"] = self._generate_drawdown_chart()
         if self.config.include_returns_distribution:
-            charts['returns_distribution'] = self._generate_returns_distribution()
+            charts["returns_distribution"] = self._generate_returns_distribution()
         if self.config.include_position_distribution:
-            charts['position_distribution'] = self._generate_position_distribution()
+            charts["position_distribution"] = self._generate_position_distribution()
 
         # Add custom charts
         for i, chart_func in enumerate(self.config.custom_charts):
-            charts[f'custom_{i}'] = chart_func(self.data)
+            charts[f"custom_{i}"] = chart_func(self.data)
 
         # Extract metrics and statistics
         metrics = self._get_performance_metrics() if self.config.include_metrics_table else None
         trade_stats = self._get_trade_statistics() if self.config.include_trade_statistics else None
 
         # Render template
-        template = self.jinja_env.get_template('report.html')
+        template = self.jinja_env.get_template("report.html")
         html_content = template.render(
             config=self.config,
             charts=charts,
             metrics=metrics,
             trade_stats=trade_stats,
-            generated_date=pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
+            generated_date=pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
 
         # Write to file
-        output_path.write_text(html_content, encoding='utf-8')
+        output_path.write_text(html_content, encoding="utf-8")
 
     def _generate_pdf_report(self, output_path: Path) -> None:
         """Generate PDF report using matplotlib.
@@ -269,24 +262,24 @@ class ReportGenerator:
         fig, ax = plt.subplots(figsize=self.config.figsize)
 
         # Get portfolio values
-        if 'portfolio_value' in self.data.columns:
-            values = self.data['portfolio_value']
+        if "portfolio_value" in self.data.columns:
+            values = self.data["portfolio_value"]
         else:
-            values = self.data['ending_value']
+            values = self.data["ending_value"]
 
         # Plot
-        ax.plot(self.data.index, values, linewidth=2, color='#1976d2')
-        ax.set_title('Portfolio Equity Curve', fontsize=14, fontweight='bold')
-        ax.set_xlabel('Date', fontsize=12)
-        ax.set_ylabel('Portfolio Value ($)', fontsize=12)
+        ax.plot(self.data.index, values, linewidth=2, color="#1976d2")
+        ax.set_title("Portfolio Equity Curve", fontsize=14, fontweight="bold")
+        ax.set_xlabel("Date", fontsize=12)
+        ax.set_ylabel("Portfolio Value ($)", fontsize=12)
         ax.grid(True, alpha=0.3)
 
         # Format x-axis
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        plt.xticks(rotation=45, ha='right')
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+        plt.xticks(rotation=45, ha="right")
 
         # Format y-axis with thousands separator
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f"${x:,.0f}"))
 
         plt.tight_layout()
 
@@ -301,32 +294,37 @@ class ReportGenerator:
         fig, ax = plt.subplots(figsize=self.config.figsize)
 
         # Get portfolio values
-        if 'portfolio_value' in self.data.columns:
-            values = self.data['portfolio_value']
+        if "portfolio_value" in self.data.columns:
+            values = self.data["portfolio_value"]
         else:
-            values = self.data['ending_value']
+            values = self.data["ending_value"]
 
         # Calculate drawdown
         cummax = values.expanding().max()
         drawdown = (values - cummax) / cummax * 100
 
         # Plot
-        ax.fill_between(self.data.index, drawdown, 0, alpha=0.3, color='#d32f2f')
-        ax.plot(self.data.index, drawdown, linewidth=2, color='#d32f2f')
-        ax.set_title('Portfolio Drawdown', fontsize=14, fontweight='bold')
-        ax.set_xlabel('Date', fontsize=12)
-        ax.set_ylabel('Drawdown (%)', fontsize=12)
+        ax.fill_between(self.data.index, drawdown, 0, alpha=0.3, color="#d32f2f")
+        ax.plot(self.data.index, drawdown, linewidth=2, color="#d32f2f")
+        ax.set_title("Portfolio Drawdown", fontsize=14, fontweight="bold")
+        ax.set_xlabel("Date", fontsize=12)
+        ax.set_ylabel("Drawdown (%)", fontsize=12)
         ax.grid(True, alpha=0.3)
 
         # Add max drawdown line
         max_dd = drawdown.min()
-        ax.axhline(y=max_dd, color='black', linestyle='--', linewidth=1,
-                   label=f'Max Drawdown: {max_dd:.2f}%')
+        ax.axhline(
+            y=max_dd,
+            color="black",
+            linestyle="--",
+            linewidth=1,
+            label=f"Max Drawdown: {max_dd:.2f}%",
+        )
         ax.legend()
 
         # Format x-axis
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        plt.xticks(rotation=45, ha='right')
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+        plt.xticks(rotation=45, ha="right")
 
         plt.tight_layout()
 
@@ -341,37 +339,48 @@ class ReportGenerator:
         fig, ax = plt.subplots(figsize=self.config.figsize)
 
         # Calculate returns
-        if 'returns' in self.data.columns:
-            returns = self.data['returns'].dropna() * 100  # Convert to percentage
-        elif 'portfolio_value' in self.data.columns:
-            returns = self.data['portfolio_value'].pct_change().dropna() * 100
+        if "returns" in self.data.columns:
+            returns = self.data["returns"].dropna() * 100  # Convert to percentage
+        elif "portfolio_value" in self.data.columns:
+            returns = self.data["portfolio_value"].pct_change().dropna() * 100
         else:
-            returns = self.data['ending_value'].pct_change().dropna() * 100
+            returns = self.data["ending_value"].pct_change().dropna() * 100
 
         # Plot histogram with KDE
-        sns.histplot(returns, kde=True, bins=50, ax=ax, color='#1976d2')
+        sns.histplot(returns, kde=True, bins=50, ax=ax, color="#1976d2")
 
         # Add mean line
         mean_return = returns.mean()
-        ax.axvline(x=mean_return, color='#00c853', linestyle='--', linewidth=2,
-                   label=f'Mean: {mean_return:.3f}%')
+        ax.axvline(
+            x=mean_return,
+            color="#00c853",
+            linestyle="--",
+            linewidth=2,
+            label=f"Mean: {mean_return:.3f}%",
+        )
 
-        ax.set_title('Returns Distribution', fontsize=14, fontweight='bold')
-        ax.set_xlabel('Returns (%)', fontsize=12)
-        ax.set_ylabel('Frequency', fontsize=12)
+        ax.set_title("Returns Distribution", fontsize=14, fontweight="bold")
+        ax.set_xlabel("Returns (%)", fontsize=12)
+        ax.set_ylabel("Frequency", fontsize=12)
         ax.legend()
         ax.grid(True, alpha=0.3)
 
         # Add statistics text box
         stats_text = (
-            f'Mean: {mean_return:.3f}%\n'
-            f'Std Dev: {returns.std():.3f}%\n'
-            f'Skewness: {returns.skew():.3f}\n'
-            f'Kurtosis: {returns.kurtosis():.3f}'
+            f"Mean: {mean_return:.3f}%\n"
+            f"Std Dev: {returns.std():.3f}%\n"
+            f"Skewness: {returns.skew():.3f}\n"
+            f"Kurtosis: {returns.kurtosis():.3f}"
         )
-        ax.text(0.02, 0.98, stats_text, transform=ax.transAxes,
-                verticalalignment='top', bbox=dict(boxstyle='round',
-                facecolor='wheat', alpha=0.5), fontsize=10)
+        ax.text(
+            0.02,
+            0.98,
+            stats_text,
+            transform=ax.transAxes,
+            verticalalignment="top",
+            bbox={"boxstyle": "round", "facecolor": "wheat", "alpha": 0.5},
+            fontsize=10,
+        )
 
         plt.tight_layout()
 
@@ -405,44 +414,49 @@ class ReportGenerator:
             # Customize chart
             ax.set_yticks(range(len(position_data)))
             ax.set_yticklabels(position_data.index)
-            ax.set_xlabel('Average Position Size', fontsize=12)
-            ax.set_title('Top 10 Position Distribution', fontsize=14, fontweight='bold')
-            ax.grid(True, alpha=0.3, axis='x')
+            ax.set_xlabel("Average Position Size", fontsize=12)
+            ax.set_title("Top 10 Position Distribution", fontsize=14, fontweight="bold")
+            ax.grid(True, alpha=0.3, axis="x")
 
             # Add value labels on bars
-            for i, (bar, value) in enumerate(zip(bars, position_data.values)):
-                ax.text(value, i, f' {value:.1f}', va='center', fontsize=9)
+            for i, (bar, value) in enumerate(zip(bars, position_data.values, strict=False)):
+                ax.text(value, i, f" {value:.1f}", va="center", fontsize=9)
 
             plt.tight_layout()
         else:
             # Graceful degradation: Show informative message
-            ax.text(0.5, 0.5,
-                   'Position data not available\n\n'
-                   'Supported formats:\n'
-                   '• position_* columns (e.g., position_AAPL)\n'
-                   '• position_value/position_weights columns\n'
-                   '• positions column with structured data',
-                   ha='center', va='center', fontsize=11,
-                   bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.3))
-            ax.set_title('Position Distribution', fontsize=14, fontweight='bold')
-            ax.axis('off')
+            ax.text(
+                0.5,
+                0.5,
+                "Position data not available\n\n"
+                "Supported formats:\n"
+                "• position_* columns (e.g., position_AAPL)\n"
+                "• position_value/position_weights columns\n"
+                "• positions column with structured data",
+                ha="center",
+                va="center",
+                fontsize=11,
+                bbox={"boxstyle": "round", "facecolor": "wheat", "alpha": 0.3},
+            )
+            ax.set_title("Position Distribution", fontsize=14, fontweight="bold")
+            ax.axis("off")
             plt.tight_layout()
 
         return self._save_figure_as_base64(fig)
 
-    def _extract_position_data(self) -> Optional[pd.Series]:
+    def _extract_position_data(self) -> pd.Series | None:
         """Extract position data from DataFrame in various common formats.
 
         Returns:
             Series of position sizes by asset name, or None if unavailable
         """
         # Strategy 1: Look for position_* columns (e.g., position_AAPL, position_MSFT)
-        position_cols = [col for col in self.data.columns if col.startswith('position_')]
+        position_cols = [col for col in self.data.columns if col.startswith("position_")]
         if position_cols:
             # Calculate average position size for each asset
             position_data = {}
             for col in position_cols:
-                asset_name = col.replace('position_', '')
+                asset_name = col.replace("position_", "")
                 # Take mean of non-zero positions
                 non_zero = self.data[col][self.data[col] != 0]
                 if len(non_zero) > 0:
@@ -452,13 +466,13 @@ class ReportGenerator:
                 return pd.Series(position_data)
 
         # Strategy 2: Look for position_value or position_weights column
-        if 'position_values' in self.data.columns:
+        if "position_values" in self.data.columns:
             # Aggregate position values
             # Assuming format: {asset: value} dict or similar
             return None  # Would need specific format knowledge
 
         # Strategy 3: Check if 'positions' column contains structured data
-        if 'positions' in self.data.columns:
+        if "positions" in self.data.columns:
             # Try to extract from structured positions data
             # This would need to be adapted based on actual structure
             return None
@@ -466,7 +480,7 @@ class ReportGenerator:
         # No position data found
         return None
 
-    def _get_performance_metrics(self) -> Dict[str, Any]:
+    def _get_performance_metrics(self) -> dict[str, Any]:
         """Extract performance metrics from backtest results.
 
         Uses empyrical library for accurate financial metrics when available,
@@ -476,21 +490,21 @@ class ReportGenerator:
             Dictionary of metric names and values
         """
         # Get portfolio values
-        if 'portfolio_value' in self.data.columns:
-            values = self.data['portfolio_value']
+        if "portfolio_value" in self.data.columns:
+            values = self.data["portfolio_value"]
         else:
-            values = self.data['ending_value']
+            values = self.data["ending_value"]
 
         # Calculate returns
-        if 'returns' in self.data.columns:
-            returns = self.data['returns']
+        if "returns" in self.data.columns:
+            returns = self.data["returns"]
         else:
             returns = values.pct_change().dropna()
 
         # Use empyrical for accurate calculations if available
         if EMPYRICAL_AVAILABLE:
             # Empyrical expects pandas Series with datetime index
-            returns_series = pd.Series(returns.values, index=self.data.index[:len(returns)])
+            returns_series = pd.Series(returns.values, index=self.data.index[: len(returns)])
 
             # Calculate metrics using empyrical
             total_return = empyrical.cum_returns_final(returns_series)
@@ -506,16 +520,16 @@ class ReportGenerator:
             tail_ratio = empyrical.tail_ratio(returns_series)
 
             metrics = {
-                'Total Return': f'{total_return * 100:.2f}%',
-                'Annual Return': f'{annual_return * 100:.2f}%',
-                'Sharpe Ratio': f'{sharpe_ratio:.2f}',
-                'Sortino Ratio': f'{sortino_ratio:.2f}',
-                'Max Drawdown': f'{max_drawdown * 100:.2f}%',
-                'Calmar Ratio': f'{calmar_ratio:.2f}',
-                'Volatility (Annual)': f'{volatility * 100:.2f}%',
-                'Stability': f'{stability:.3f}',
-                'Tail Ratio': f'{tail_ratio:.2f}',
-                'Trading Days': len(returns),
+                "Total Return": f"{total_return * 100:.2f}%",
+                "Annual Return": f"{annual_return * 100:.2f}%",
+                "Sharpe Ratio": f"{sharpe_ratio:.2f}",
+                "Sortino Ratio": f"{sortino_ratio:.2f}",
+                "Max Drawdown": f"{max_drawdown * 100:.2f}%",
+                "Calmar Ratio": f"{calmar_ratio:.2f}",
+                "Volatility (Annual)": f"{volatility * 100:.2f}%",
+                "Stability": f"{stability:.3f}",
+                "Tail Ratio": f"{tail_ratio:.2f}",
+                "Trading Days": len(returns),
             }
         else:
             # Fallback to simplified calculations
@@ -535,38 +549,40 @@ class ReportGenerator:
             sharpe_ratio = mean_return / std_return if std_return != 0 else 0
 
             downside_returns = returns[returns < 0]
-            downside_std = downside_returns.std() * np.sqrt(252) if len(downside_returns) > 0 else std_return
+            downside_std = (
+                downside_returns.std() * np.sqrt(252) if len(downside_returns) > 0 else std_return
+            )
             sortino_ratio = mean_return / downside_std if downside_std != 0 else 0
 
             # Calmar ratio
             calmar_ratio = annual_return / abs(max_drawdown) if max_drawdown != 0 else 0
 
             metrics = {
-                'Total Return': f'{total_return * 100:.2f}%',
-                'Annual Return': f'{annual_return * 100:.2f}%',
-                'Sharpe Ratio': f'{sharpe_ratio:.2f}',
-                'Sortino Ratio': f'{sortino_ratio:.2f}',
-                'Max Drawdown': f'{max_drawdown * 100:.2f}%',
-                'Calmar Ratio': f'{calmar_ratio:.2f}',
-                'Volatility': f'{std_return * 100:.2f}%',
-                'Trading Days': trading_days,
+                "Total Return": f"{total_return * 100:.2f}%",
+                "Annual Return": f"{annual_return * 100:.2f}%",
+                "Sharpe Ratio": f"{sharpe_ratio:.2f}",
+                "Sortino Ratio": f"{sortino_ratio:.2f}",
+                "Max Drawdown": f"{max_drawdown * 100:.2f}%",
+                "Calmar Ratio": f"{calmar_ratio:.2f}",
+                "Volatility": f"{std_return * 100:.2f}%",
+                "Trading Days": trading_days,
             }
 
         return metrics
 
-    def _get_trade_statistics(self) -> Dict[str, Any]:
+    def _get_trade_statistics(self) -> dict[str, Any]:
         """Calculate trade statistics.
 
         Returns:
             Dictionary of trade statistics
         """
         # Calculate daily returns
-        if 'returns' in self.data.columns:
-            returns = self.data['returns'].dropna()
-        elif 'portfolio_value' in self.data.columns:
-            returns = self.data['portfolio_value'].pct_change().dropna()
+        if "returns" in self.data.columns:
+            returns = self.data["returns"].dropna()
+        elif "portfolio_value" in self.data.columns:
+            returns = self.data["portfolio_value"].pct_change().dropna()
         else:
-            returns = self.data['ending_value'].pct_change().dropna()
+            returns = self.data["ending_value"].pct_change().dropna()
 
         # Treat each day as a "trade" for simplicity
         # In a real implementation, would analyze actual trade records
@@ -584,18 +600,18 @@ class ReportGenerator:
         # Profit factor
         total_profit = winning_days.sum() if len(winning_days) > 0 else 0
         total_loss = abs(losing_days.sum()) if len(losing_days) > 0 else 0
-        profit_factor = total_profit / total_loss if total_loss != 0 else float('inf')
+        profit_factor = total_profit / total_loss if total_loss != 0 else float("inf")
 
         return {
-            'Total Trades': total_trades,
-            'Winning Trades': winning_trades,
-            'Losing Trades': losing_trades,
-            'Win Rate': f'{win_rate * 100:.2f}%',
-            'Average Win': f'{avg_win * 100:.3f}%',
-            'Average Loss': f'{avg_loss * 100:.3f}%',
-            'Profit Factor': f'{profit_factor:.2f}' if profit_factor != float('inf') else 'N/A',
-            'Largest Win': f'{winning_days.max() * 100:.3f}%' if len(winning_days) > 0 else 'N/A',
-            'Largest Loss': f'{losing_days.min() * 100:.3f}%' if len(losing_days) > 0 else 'N/A',
+            "Total Trades": total_trades,
+            "Winning Trades": winning_trades,
+            "Losing Trades": losing_trades,
+            "Win Rate": f"{win_rate * 100:.2f}%",
+            "Average Win": f"{avg_win * 100:.3f}%",
+            "Average Loss": f"{avg_loss * 100:.3f}%",
+            "Profit Factor": f"{profit_factor:.2f}" if profit_factor != float("inf") else "N/A",
+            "Largest Win": f"{winning_days.max() * 100:.3f}%" if len(winning_days) > 0 else "N/A",
+            "Largest Loss": f"{losing_days.min() * 100:.3f}%" if len(losing_days) > 0 else "N/A",
         }
 
     def _save_figure_as_base64(self, fig: plt.Figure) -> str:
@@ -608,11 +624,11 @@ class ReportGenerator:
             Base64 encoded PNG image with data URL prefix
         """
         buf = BytesIO()
-        fig.savefig(buf, format='png', dpi=self.config.dpi, bbox_inches='tight')
+        fig.savefig(buf, format="png", dpi=self.config.dpi, bbox_inches="tight")
         buf.seek(0)
-        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        img_base64 = base64.b64encode(buf.read()).decode("utf-8")
         plt.close(fig)
-        return f'data:image/png;base64,{img_base64}'
+        return f"data:image/png;base64,{img_base64}"
 
     # PDF-specific figure creation methods
 
@@ -624,34 +640,40 @@ class ReportGenerator:
         """
         fig = plt.figure(figsize=(8.5, 11))
         ax = fig.add_subplot(111)
-        ax.axis('off')
+        ax.axis("off")
 
         # Title
-        ax.text(0.5, 0.7, self.config.title, ha='center', va='center',
-                fontsize=24, fontweight='bold')
+        ax.text(
+            0.5, 0.7, self.config.title, ha="center", va="center", fontsize=24, fontweight="bold"
+        )
 
         # Subtitle
         if self.config.subtitle:
-            ax.text(0.5, 0.65, self.config.subtitle, ha='center', va='center',
-                    fontsize=16)
+            ax.text(0.5, 0.65, self.config.subtitle, ha="center", va="center", fontsize=16)
 
         # Date range
-        start_date = self.data.index[0].strftime('%Y-%m-%d')
-        end_date = self.data.index[-1].strftime('%Y-%m-%d')
-        ax.text(0.5, 0.55, f'Period: {start_date} to {end_date}',
-                ha='center', va='center', fontsize=12)
+        start_date = self.data.index[0].strftime("%Y-%m-%d")
+        end_date = self.data.index[-1].strftime("%Y-%m-%d")
+        ax.text(
+            0.5, 0.55, f"Period: {start_date} to {end_date}", ha="center", va="center", fontsize=12
+        )
 
         # Summary metrics
         metrics = self._get_performance_metrics()
-        metrics_text = '\n'.join([f'{k}: {v}' for k, v in list(metrics.items())[:4]])
-        ax.text(0.5, 0.4, 'Key Metrics', ha='center', va='center',
-                fontsize=14, fontweight='bold')
-        ax.text(0.5, 0.3, metrics_text, ha='center', va='top',
-                fontsize=12, family='monospace')
+        metrics_text = "\n".join([f"{k}: {v}" for k, v in list(metrics.items())[:4]])
+        ax.text(0.5, 0.4, "Key Metrics", ha="center", va="center", fontsize=14, fontweight="bold")
+        ax.text(0.5, 0.3, metrics_text, ha="center", va="top", fontsize=12, family="monospace")
 
         # Generated timestamp
-        ax.text(0.5, 0.1, f'Generated: {pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")}',
-                ha='center', va='center', fontsize=10, style='italic')
+        ax.text(
+            0.5,
+            0.1,
+            f"Generated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            ha="center",
+            va="center",
+            fontsize=10,
+            style="italic",
+        )
 
         return fig
 
@@ -663,19 +685,19 @@ class ReportGenerator:
         """
         fig, ax = plt.subplots(figsize=(8, 6))
 
-        if 'portfolio_value' in self.data.columns:
-            values = self.data['portfolio_value']
+        if "portfolio_value" in self.data.columns:
+            values = self.data["portfolio_value"]
         else:
-            values = self.data['ending_value']
+            values = self.data["ending_value"]
 
-        ax.plot(self.data.index, values, linewidth=2, color='#1976d2')
-        ax.set_title('Portfolio Equity Curve', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Date', fontsize=12)
-        ax.set_ylabel('Portfolio Value ($)', fontsize=12)
+        ax.plot(self.data.index, values, linewidth=2, color="#1976d2")
+        ax.set_title("Portfolio Equity Curve", fontsize=16, fontweight="bold")
+        ax.set_xlabel("Date", fontsize=12)
+        ax.set_ylabel("Portfolio Value ($)", fontsize=12)
         ax.grid(True, alpha=0.3)
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
-        plt.xticks(rotation=45, ha='right')
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f"${x:,.0f}"))
+        plt.xticks(rotation=45, ha="right")
         plt.tight_layout()
 
         return fig
@@ -688,28 +710,33 @@ class ReportGenerator:
         """
         fig, ax = plt.subplots(figsize=(8, 6))
 
-        if 'portfolio_value' in self.data.columns:
-            values = self.data['portfolio_value']
+        if "portfolio_value" in self.data.columns:
+            values = self.data["portfolio_value"]
         else:
-            values = self.data['ending_value']
+            values = self.data["ending_value"]
 
         cummax = values.expanding().max()
         drawdown = (values - cummax) / cummax * 100
 
-        ax.fill_between(self.data.index, drawdown, 0, alpha=0.3, color='#d32f2f')
-        ax.plot(self.data.index, drawdown, linewidth=2, color='#d32f2f')
-        ax.set_title('Portfolio Drawdown', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Date', fontsize=12)
-        ax.set_ylabel('Drawdown (%)', fontsize=12)
+        ax.fill_between(self.data.index, drawdown, 0, alpha=0.3, color="#d32f2f")
+        ax.plot(self.data.index, drawdown, linewidth=2, color="#d32f2f")
+        ax.set_title("Portfolio Drawdown", fontsize=16, fontweight="bold")
+        ax.set_xlabel("Date", fontsize=12)
+        ax.set_ylabel("Drawdown (%)", fontsize=12)
         ax.grid(True, alpha=0.3)
 
         max_dd = drawdown.min()
-        ax.axhline(y=max_dd, color='black', linestyle='--', linewidth=1,
-                   label=f'Max Drawdown: {max_dd:.2f}%')
+        ax.axhline(
+            y=max_dd,
+            color="black",
+            linestyle="--",
+            linewidth=1,
+            label=f"Max Drawdown: {max_dd:.2f}%",
+        )
         ax.legend()
 
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        plt.xticks(rotation=45, ha='right')
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+        plt.xticks(rotation=45, ha="right")
         plt.tight_layout()
 
         return fig
@@ -722,34 +749,45 @@ class ReportGenerator:
         """
         fig, ax = plt.subplots(figsize=(8, 6))
 
-        if 'returns' in self.data.columns:
-            returns = self.data['returns'].dropna() * 100
-        elif 'portfolio_value' in self.data.columns:
-            returns = self.data['portfolio_value'].pct_change().dropna() * 100
+        if "returns" in self.data.columns:
+            returns = self.data["returns"].dropna() * 100
+        elif "portfolio_value" in self.data.columns:
+            returns = self.data["portfolio_value"].pct_change().dropna() * 100
         else:
-            returns = self.data['ending_value'].pct_change().dropna() * 100
+            returns = self.data["ending_value"].pct_change().dropna() * 100
 
-        sns.histplot(returns, kde=True, bins=50, ax=ax, color='#1976d2')
+        sns.histplot(returns, kde=True, bins=50, ax=ax, color="#1976d2")
 
         mean_return = returns.mean()
-        ax.axvline(x=mean_return, color='#00c853', linestyle='--', linewidth=2,
-                   label=f'Mean: {mean_return:.3f}%')
+        ax.axvline(
+            x=mean_return,
+            color="#00c853",
+            linestyle="--",
+            linewidth=2,
+            label=f"Mean: {mean_return:.3f}%",
+        )
 
-        ax.set_title('Returns Distribution', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Returns (%)', fontsize=12)
-        ax.set_ylabel('Frequency', fontsize=12)
+        ax.set_title("Returns Distribution", fontsize=16, fontweight="bold")
+        ax.set_xlabel("Returns (%)", fontsize=12)
+        ax.set_ylabel("Frequency", fontsize=12)
         ax.legend()
         ax.grid(True, alpha=0.3)
 
         stats_text = (
-            f'Mean: {mean_return:.3f}%\n'
-            f'Std Dev: {returns.std():.3f}%\n'
-            f'Skewness: {returns.skew():.3f}\n'
-            f'Kurtosis: {returns.kurtosis():.3f}'
+            f"Mean: {mean_return:.3f}%\n"
+            f"Std Dev: {returns.std():.3f}%\n"
+            f"Skewness: {returns.skew():.3f}\n"
+            f"Kurtosis: {returns.kurtosis():.3f}"
         )
-        ax.text(0.02, 0.98, stats_text, transform=ax.transAxes,
-                verticalalignment='top', bbox=dict(boxstyle='round',
-                facecolor='wheat', alpha=0.5), fontsize=10)
+        ax.text(
+            0.02,
+            0.98,
+            stats_text,
+            transform=ax.transAxes,
+            verticalalignment="top",
+            bbox={"boxstyle": "round", "facecolor": "wheat", "alpha": 0.5},
+            fontsize=10,
+        )
 
         plt.tight_layout()
 
@@ -776,26 +814,31 @@ class ReportGenerator:
 
             ax.set_yticks(range(len(position_data)))
             ax.set_yticklabels(position_data.index)
-            ax.set_xlabel('Average Position Size', fontsize=12)
-            ax.set_title('Top 10 Position Distribution', fontsize=16, fontweight='bold')
-            ax.grid(True, alpha=0.3, axis='x')
+            ax.set_xlabel("Average Position Size", fontsize=12)
+            ax.set_title("Top 10 Position Distribution", fontsize=16, fontweight="bold")
+            ax.grid(True, alpha=0.3, axis="x")
 
             # Add value labels
-            for i, (bar, value) in enumerate(zip(bars, position_data.values)):
-                ax.text(value, i, f' {value:.1f}', va='center', fontsize=9)
+            for i, (bar, value) in enumerate(zip(bars, position_data.values, strict=False)):
+                ax.text(value, i, f" {value:.1f}", va="center", fontsize=9)
         else:
             # Graceful degradation
-            ax.text(0.5, 0.5,
-                   'Position data not available\n\n'
-                   'Supported formats:\n'
-                   '• position_* columns (e.g., position_AAPL)\n'
-                   '• position_value/position_weights columns\n'
-                   '• positions column with structured data',
-                   ha='center', va='center', fontsize=11,
-                   bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.3))
-            ax.axis('off')
+            ax.text(
+                0.5,
+                0.5,
+                "Position data not available\n\n"
+                "Supported formats:\n"
+                "• position_* columns (e.g., position_AAPL)\n"
+                "• position_value/position_weights columns\n"
+                "• positions column with structured data",
+                ha="center",
+                va="center",
+                fontsize=11,
+                bbox={"boxstyle": "round", "facecolor": "wheat", "alpha": 0.3},
+            )
+            ax.axis("off")
 
-        ax.set_title('Position Distribution', fontsize=16, fontweight='bold')
+        ax.set_title("Position Distribution", fontsize=16, fontweight="bold")
         plt.tight_layout()
 
         return fig

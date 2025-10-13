@@ -10,8 +10,8 @@ import pandas as pd
 import polars as pl
 import pytest
 
-from rustybt.data.adapters.api_provider_base import AuthenticationError, DataParsingError
 from rustybt.data.adapters.alpaca_adapter import AlpacaAdapter
+from rustybt.data.adapters.api_provider_base import AuthenticationError, DataParsingError
 
 
 def test_adapter_initialization_paper() -> None:

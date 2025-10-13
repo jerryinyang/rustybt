@@ -2,20 +2,22 @@
 Tests for Term.
 """
 
+import re
 from collections import Counter
 from itertools import product
 
-from toolz import assoc
 import pandas as pd
+import pytest
+from toolz import assoc
 
 from rustybt.assets import Asset, ExchangeInfo
 from rustybt.errors import (
     DTypeNotSpecified,
     InvalidOutputName,
+    NonPipelineInputs,
     NonWindowSafeInput,
     NotDType,
     TermInputsNotSpecified,
-    NonPipelineInputs,
     TermOutputsEmpty,
     UnsupportedDType,
     WindowLengthNotSpecified,
@@ -24,9 +26,9 @@ from rustybt.pipeline import (
     Classifier,
     CustomClassifier,
     CustomFactor,
+    ExecutionPlan,
     Factor,
     Filter,
-    ExecutionPlan,
 )
 from rustybt.pipeline.data import Column, DataSet
 from rustybt.pipeline.data.testing import TestingDataSet
@@ -38,16 +40,14 @@ from rustybt.pipeline.term import AssetExists, LoadableTerm
 from rustybt.testing.fixtures import WithTradingSessions, ZiplineTestCase
 from rustybt.testing.predicates import assert_equal
 from rustybt.utils.numpy_utils import (
+    NoDefaultMissingValue,
     bool_dtype,
     categorical_dtype,
     complex128_dtype,
     datetime64ns_dtype,
     float64_dtype,
     int64_dtype,
-    NoDefaultMissingValue,
 )
-import pytest
-import re
 
 
 class SomeDataSet(DataSet):
@@ -150,11 +150,10 @@ def to_dict(a_list):
     >>> to_dict([2, 3, 4])  # doctest: +SKIP
     {'0': 2, '1': 3, '2': 4}
     """
-    return dict(zip(map(str, range(len(a_list))), a_list))
+    return dict(zip(map(str, range(len(a_list))), a_list, strict=False))
 
 
 class DependencyResolutionTestCase(WithTradingSessions, ZiplineTestCase):
-
     TRADING_CALENDAR_STRS = ("NYSE",)
     START_DATE = pd.Timestamp("2014-01-02")
     END_DATE = pd.Timestamp("2014-12-31")
@@ -192,7 +191,6 @@ class DependencyResolutionTestCase(WithTradingSessions, ZiplineTestCase):
         """
 
         def check_output(graph):
-
             resolution_order = list(graph.ordered())
 
             # Loadable terms should get specialized during graph construction.
@@ -258,7 +256,6 @@ class DependencyResolutionTestCase(WithTradingSessions, ZiplineTestCase):
         self.check_dependency_order(resolution_order)
 
     def test_disallow_recursive_lookback(self):
-
         with pytest.raises(NonWindowSafeInput):
             SomeFactor(inputs=[SomeFactor(), SomeDataSet.foo])
 
@@ -287,7 +284,6 @@ class TestObjectIdentity:
             self.fail("%s appeared %d times in %s" % (dupe, count, objs))
 
     def test_instance_caching(self):
-
         self.assertSameObject(*gen_equivalent_factors())
         assert SomeFactor(window_length=SomeFactor.window_length + 1) is SomeFactor(
             window_length=SomeFactor.window_length + 1
@@ -295,9 +291,9 @@ class TestObjectIdentity:
 
         assert SomeFactor(dtype=float64_dtype) is SomeFactor(dtype=float64_dtype)
 
-        assert SomeFactor(
+        assert SomeFactor(inputs=[SomeFactor.inputs[1], SomeFactor.inputs[0]]) is SomeFactor(
             inputs=[SomeFactor.inputs[1], SomeFactor.inputs[0]]
-        ) is SomeFactor(inputs=[SomeFactor.inputs[1], SomeFactor.inputs[0]])
+        )
 
         mask = SomeFactor() + SomeOtherFactor()
         assert SomeFactor(mask=mask) is SomeFactor(mask=mask)
@@ -343,7 +339,6 @@ class TestObjectIdentity:
         assert c_slice is type(c_slice)(GenericClassifier(), my_asset)
 
     def test_instance_non_caching(self):
-
         f = SomeFactor()
 
         # Different window_length.
@@ -356,7 +351,6 @@ class TestObjectIdentity:
         assert f is not SomeFactor(inputs=[SomeFactor.inputs[1], SomeFactor.inputs[0]])
 
     def test_instance_non_caching_redefine_class(self):
-
         orig_foobar_instance = SomeFactorAlias()
 
         class SomeFactor(Factor):
@@ -440,7 +434,6 @@ class TestObjectIdentity:
         params = ("a", "b")
 
     def test_parameterized_term(self):
-
         f = self.SomeFactorParameterized(a=1, b=2)
         assert f.params == {"a": 1, "b": 2}
 
@@ -577,9 +570,7 @@ class TestObjectIdentity:
         with pytest.raises(AttributeError, match=expected):
             mo.not_an_attr
 
-        with pytest.raises(
-            ValueError, match="GenericCustomFactor does not have multiple outputs."
-        ):
+        with pytest.raises(ValueError, match="GenericCustomFactor does not have multiple outputs."):
             alpha, beta = GenericCustomFactor()
 
         # Public method, user-defined method.
@@ -630,7 +621,6 @@ class TestObjectIdentity:
             assert column.missing_value is column.latest.missing_value
 
     def test_failure_timing_on_bad_dtypes(self):
-
         # Just constructing a bad column shouldn't fail.
         Column(dtype=int64_dtype)
 
@@ -661,8 +651,7 @@ class TestSubDataSet:
         for k, some_dataset_column in some_dataset_map.items():
             sub_dataset_column = sub_dataset_map[k]
             assert some_dataset_column is not sub_dataset_column, (
-                "subclass column %r should not have the same identity as"
-                " the parent" % k
+                "subclass column %r should not have the same identity as the parent" % k
             )
             assert some_dataset_column.dtype == sub_dataset_column.dtype, (
                 "subclass column %r should have the same dtype as the parent" % k
@@ -670,23 +659,18 @@ class TestSubDataSet:
 
     def test_add_column(self):
         some_dataset_map = {column.name: column for column in SomeDataSet.columns}
-        sub_dataset_new_col_map = {
-            column.name: column for column in SubDataSetNewCol.columns
-        }
+        sub_dataset_new_col_map = {column.name: column for column in SubDataSetNewCol.columns}
         sub_col_names = {column.name for column in SubDataSetNewCol.columns}
 
         # check our extra col
         assert "qux" in sub_col_names
         assert sub_dataset_new_col_map["qux"].dtype == float64_dtype
 
-        assert {column.name for column in SomeDataSet.columns} == sub_col_names - {
-            "qux"
-        }
+        assert {column.name for column in SomeDataSet.columns} == sub_col_names - {"qux"}
         for k, some_dataset_column in some_dataset_map.items():
             sub_dataset_column = sub_dataset_new_col_map[k]
             assert some_dataset_column is not sub_dataset_column, (
-                "subclass column %r should not have the same identity as"
-                " the parent" % k
+                "subclass column %r should not have the same identity as the parent" % k
             )
             assert some_dataset_column.dtype == sub_dataset_column.dtype, (
                 "subclass column %r should have the same dtype as the parent" % k
@@ -716,7 +700,6 @@ class TestSubDataSet:
             SomeClassifier()
 
     def test_unreasonable_missing_values(self):
-
         for base_type, dtype_, bad_mv in (
             (Factor, float64_dtype, "ayy"),
             (Filter, bool_dtype, "lmao"),
@@ -731,10 +714,10 @@ class TestSubDataSet:
                 dtype = dtype_
 
             prefix = (
-                "^Missing value {mv!r} is not a valid choice "
-                "for term SomeTerm with dtype {dtype}.\n\n"
+                f"^Missing value {bad_mv!r} is not a valid choice "
+                f"for term SomeTerm with dtype {dtype_}.\n\n"
                 "Coercion attempt failed with:"
-            ).format(mv=bad_mv, dtype=dtype_)
+            )
 
             with pytest.raises(TypeError, match=prefix):
                 SomeTerm()

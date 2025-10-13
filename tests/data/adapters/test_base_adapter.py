@@ -1,27 +1,26 @@
 """Tests for base data adapter framework."""
 
-import asyncio
 import time
 from decimal import Decimal
 
 import pandas as pd
 import polars as pl
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from rustybt.data.adapters.base import (
     BaseDataAdapter,
     DataAdapterError,
     InvalidDataError,
     NetworkError,
-    RateLimitError,
     RateLimiter,
+    RateLimitError,
     ValidationError,
     detect_outliers,
     validate_ohlcv_relationships,
     with_retry,
 )
-
 
 # ============================================================================
 # Abstract Methods Tests
@@ -466,7 +465,9 @@ async def test_retry_logic_does_not_retry_validation_error():
                 allow_infinity=False,
                 places=2,  # Limit decimal places to avoid precision issues
             ),  # high
-        ).filter(lambda x: x[0] <= x[1]),  # Ensure low <= high
+        ).filter(
+            lambda x: x[0] <= x[1]
+        ),  # Ensure low <= high
         min_size=1,
         max_size=100,
     )
@@ -478,19 +479,16 @@ def test_standardized_data_preserves_ohlcv_invariants(ohlcv_data):
     df = pl.DataFrame(
         {
             "timestamp": [
-                pd.Timestamp("2023-01-01") + pd.Timedelta(days=i)
-                for i in range(len(ohlcv_data))
+                pd.Timestamp("2023-01-01") + pd.Timedelta(days=i) for i in range(len(ohlcv_data))
             ],
             "symbol": ["TEST"] * len(ohlcv_data),
             "low": [low.quantize(Decimal("0.01")) for low, _ in ohlcv_data],
             "high": [high.quantize(Decimal("0.01")) for _, high in ohlcv_data],
             "open": [
-                ((low + high) / Decimal("2")).quantize(Decimal("0.01"))
-                for low, high in ohlcv_data
+                ((low + high) / Decimal("2")).quantize(Decimal("0.01")) for low, high in ohlcv_data
             ],  # midpoint
             "close": [
-                ((low + high) / Decimal("2")).quantize(Decimal("0.01"))
-                for low, high in ohlcv_data
+                ((low + high) / Decimal("2")).quantize(Decimal("0.01")) for low, high in ohlcv_data
             ],  # midpoint
             "volume": [Decimal("1000")] * len(ohlcv_data),
         }

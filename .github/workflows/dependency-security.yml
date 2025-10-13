@@ -1,0 +1,149 @@
+name: Dependency Security
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Monday 2 AM UTC
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  dependency-security:
+    name: Dependency Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.local/share/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Install security tools
+        run: |
+          uv pip install safety pip-audit
+
+      - name: Run safety scan
+        run: |
+          echo "Running safety vulnerability scan..."
+          uv run safety scan --json > safety-report.json || true
+        id: safety
+        continue-on-error: true
+
+      - name: Run pip-audit
+        run: |
+          echo "Running pip-audit..."
+          uv run pip-audit --format json > pip-audit-report.json || true
+        id: pip-audit
+        continue-on-error: true
+
+      - name: Check licenses (BLOCKING)
+        run: |
+          echo "Checking package licenses..."
+          uv run python scripts/check_licenses.py
+        id: licenses
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports
+          path: |
+            safety-report.json
+            pip-audit-report.json
+
+      - name: Parse safety results
+        if: always()
+        run: |
+          if [ -f safety-report.json ]; then
+            echo "=== Safety Scan Results ==="
+            cat safety-report.json | python -m json.tool || echo "No vulnerabilities found"
+          fi
+
+      - name: Parse pip-audit results
+        if: always()
+        run: |
+          if [ -f pip-audit-report.json ]; then
+            echo "=== Pip-Audit Results ==="
+            cat pip-audit-report.json | python -m json.tool || echo "No vulnerabilities found"
+          fi
+
+      - name: Create issue if vulnerabilities found
+        if: steps.safety.outcome == 'failure' || steps.pip-audit.outcome == 'failure'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '# Weekly Dependency Security Scan: Vulnerabilities Found\n\n';
+
+            // Read safety report
+            try {
+              const safetyReport = JSON.parse(fs.readFileSync('safety-report.json', 'utf8'));
+              body += '## Safety Scan Results\n\n';
+              body += '```json\n' + JSON.stringify(safetyReport, null, 2) + '\n```\n\n';
+            } catch (e) {
+              body += '## Safety Scan Results\n\nNo report available\n\n';
+            }
+
+            // Read pip-audit report
+            try {
+              const pipAuditReport = JSON.parse(fs.readFileSync('pip-audit-report.json', 'utf8'));
+              body += '## Pip-Audit Results\n\n';
+              body += '```json\n' + JSON.stringify(pipAuditReport, null, 2) + '\n```\n\n';
+            } catch (e) {
+              body += '## Pip-Audit Results\n\nNo report available\n\n';
+            }
+
+            body += '## Action Required\n\n';
+            body += '1. Review the vulnerability reports above\n';
+            body += '2. Update affected packages to patched versions\n';
+            body += '3. If no patch available, assess risk and mitigate\n';
+            body += '4. Re-run the workflow to verify fixes\n';
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Weekly Dependency Security Scan: Vulnerabilities Found (${new Date().toISOString().split('T')[0]})`,
+              body: body,
+              labels: ['security', 'dependencies', 'automated']
+            });
+
+      - name: Dependency security summary
+        if: always()
+        run: |
+          echo "=== Dependency Security Results ==="
+          echo ""
+          echo "⚠️  Safety scan: ${{ steps.safety.outcome }}"
+          echo "⚠️  Pip-audit: ${{ steps.pip-audit.outcome }}"
+          echo "✅ License check: ${{ steps.licenses.outcome }}"
+          echo ""
+
+          if [[ "${{ steps.licenses.outcome }}" == "failure" ]]; then
+            echo "❌ License check FAILED (BLOCKING)"
+            exit 1
+          fi
+
+          if [[ "${{ steps.safety.outcome }}" == "failure" ]] || \
+             [[ "${{ steps.pip-audit.outcome }}" == "failure" ]]; then
+            echo "⚠️  Vulnerabilities found (non-blocking, issue created)"
+          else
+            echo "✅ No vulnerabilities found"
+          fi

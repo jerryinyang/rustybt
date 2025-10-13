@@ -1,26 +1,29 @@
+import re
+
 import numpy as np
 import pandas as pd
+import pytest
 from numpy.random import RandomState
 from packaging.version import Version
+
 from rustybt.lib.adjusted_array import AdjustedArray
 from rustybt.pipeline.data import USEquityPricing
 from rustybt.pipeline.factors import (
-    BollingerBands,
+    RSI,
+    AnnualizedVolatility,
     Aroon,
+    BollingerBands,
     FastStochasticOscillator,
     IchimokuKinkoHyo,
     LinearWeightedMovingAverage,
+    MovingAverageConvergenceDivergenceSignal,
     RateOfChangePercentage,
     TrueRange,
-    MovingAverageConvergenceDivergenceSignal,
-    AnnualizedVolatility,
-    RSI,
 )
 from rustybt.testing import check_allclose, parameter_space
 from rustybt.testing.predicates import assert_equal
+
 from .base import BaseUSEquityPipelineTestCase
-import pytest
-import re
 
 # talib is not yet compatible with numpy 2.0, and also now optional.
 NUMPY2 = Version(np.__version__) >= Version("2.0.0")
@@ -355,15 +358,11 @@ class TestIchimokuKinkoHyo:
             msg="chikou_span",
         )
 
-    @pytest.mark.parametrize(
-        "arg", ["tenkan_sen_length", "kijun_sen_length", "chikou_span_length"]
-    )
+    @pytest.mark.parametrize("arg", ["tenkan_sen_length", "kijun_sen_length", "chikou_span_length"])
     def test_input_validation(self, arg):
         window_length = 52
 
-        with pytest.raises(
-            ValueError, match=f"{arg} must be <= the window_length: 53 > 52"
-        ):
+        with pytest.raises(ValueError, match=f"{arg} must be <= the window_length: 53 > 52"):
             IchimokuKinkoHyo(**{arg: window_length + 1})
 
 
@@ -396,9 +395,7 @@ class TestRateOfChangePercentage:
 
 class TestLinearWeightedMovingAverage:
     def test_wma1(self):
-        wma1 = LinearWeightedMovingAverage(
-            inputs=(USEquityPricing.close,), window_length=10
-        )
+        wma1 = LinearWeightedMovingAverage(inputs=(USEquityPricing.close,), window_length=10)
 
         today = pd.Timestamp("2015")
         assets = np.arange(5, dtype=np.int64)
@@ -410,9 +407,7 @@ class TestLinearWeightedMovingAverage:
         assert_equal(out, np.ones(5))
 
     def test_wma2(self):
-        wma2 = LinearWeightedMovingAverage(
-            inputs=(USEquityPricing.close,), window_length=10
-        )
+        wma2 = LinearWeightedMovingAverage(inputs=(USEquityPricing.close,), window_length=10)
 
         today = pd.Timestamp("2015")
         assets = np.arange(5, dtype=np.int64)
@@ -681,16 +676,12 @@ class TestAnnualizedVolatility:
         ann_vol = AnnualizedVolatility()
         today = pd.Timestamp("2016", tz="utc")
         assets = np.arange(nassets, dtype=np.float64)
-        returns = np.random.normal(
-            loc=0.001, scale=0.01, size=(ann_vol.window_length, nassets)
-        )
+        returns = np.random.normal(loc=0.001, scale=0.01, size=(ann_vol.window_length, nassets))
         out = np.empty(shape=(nassets,), dtype=np.float64)
         ann_vol.compute(today, assets, out, returns, 252)
 
         mean = np.mean(returns, axis=0)
-        annualized_variance = (
-            ((returns - mean) ** 2).sum(axis=0) / returns.shape[0] * 252
-        )
+        annualized_variance = ((returns - mean) ** 2).sum(axis=0) / returns.shape[0] * 252
         expected_vol = np.sqrt(annualized_variance)
 
         np.testing.assert_almost_equal(out, expected_vol, decimal=8)

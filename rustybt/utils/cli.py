@@ -16,12 +16,12 @@ def maybe_show_progress(it, show_progress, **kwargs):
     **kwargs
         Forwarded to the click progress bar.
 
-    Returns
+    Returns:
     -------
     itercontext : context manager
         A context manager whose enter is the actual iterator to use.
 
-    Examples
+    Examples:
     --------
     .. code-block:: python
 

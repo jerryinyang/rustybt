@@ -50,9 +50,7 @@ def set_test_risk(request, set_trading_calendar):
         end_session=request.cls.end_session,
         trading_calendar=request.cls.trading_calendar,
     )
-    request.cls.algo_returns = factory.create_returns_from_list(
-        RETURNS, request.cls.sim_params
-    )
+    request.cls.algo_returns = factory.create_returns_from_list(RETURNS, request.cls.sim_params)
     request.cls.benchmark_returns = factory.create_returns_from_list(
         BENCHMARK, request.cls.sim_params
     )
@@ -75,13 +73,10 @@ class TestRisk:
             assert all(x["max_drawdown"] == 0 for x in self.metrics[period])
 
     def test_benchmark_returns_06(self):
-        for period, _period_len in zip(PERIODS, [1, 3, 6, 12]):
+        for period, _period_len in zip(PERIODS, [1, 3, 6, 12], strict=False):
             np.testing.assert_almost_equal(
                 [x["benchmark_period_return"] for x in self.metrics[period]],
-                [
-                    (1 + BENCHMARK_BASE) ** x["trading_days"] - 1
-                    for x in self.metrics[period]
-                ],
+                [(1 + BENCHMARK_BASE) ** x["trading_days"] - 1 for x in self.metrics[period]],
                 DECIMAL_PLACES,
             )
 
@@ -107,19 +102,13 @@ class TestRisk:
         # of period volatility will be limited to determine if the value is
         # numerical. This tests for its existence and format.
         for period in PERIODS:
-            assert all(
-                isinstance(x["benchmark_volatility"], float)
-                for x in self.metrics[period]
-            )
+            assert all(isinstance(x["benchmark_volatility"], float) for x in self.metrics[period])
 
     def test_algorithm_returns(self):
         for period in PERIODS:
             np.testing.assert_almost_equal(
                 [x["algorithm_period_return"] for x in self.metrics[period]],
-                [
-                    (1 + RETURNS_BASE) ** x["trading_days"] - 1
-                    for x in self.metrics[period]
-                ],
+                [(1 + RETURNS_BASE) ** x["trading_days"] - 1 for x in self.metrics[period]],
                 DECIMAL_PLACES,
             )
 
@@ -128,9 +117,7 @@ class TestRisk:
         # of period volatility will be limited to determine if the value is
         # numerical. This tests for its existence and format.
         for period in PERIODS:
-            assert all(
-                isinstance(x["algo_volatility"], float) for x in self.metrics[period]
-            )
+            assert all(isinstance(x["algo_volatility"], float) for x in self.metrics[period])
 
     def test_algorithm_sharpe(self):
         # The sharpe ratio is calculated by a empyrical function so testing
@@ -155,8 +142,7 @@ class TestRisk:
         # numerical. This tests for its existence and format.
         for period in PERIODS:
             assert all(
-                isinstance(x["beta"], float) or x["beta"] is None
-                for x in self.metrics[period]
+                isinstance(x["beta"], float) or x["beta"] is None for x in self.metrics[period]
             )
 
     def test_algorithm_alpha(self):
@@ -165,8 +151,7 @@ class TestRisk:
         # numerical. This tests for its existence and format.
         for period in PERIODS:
             assert all(
-                isinstance(x["alpha"], float) or x["alpha"] is None
-                for x in self.metrics[period]
+                isinstance(x["alpha"], float) or x["alpha"] is None for x in self.metrics[period]
             )
 
     def test_treasury_returns(self):
@@ -180,9 +165,9 @@ class TestRisk:
         # These values are all expected to be zero because we explicity zero
         # out the treasury period returns as they are no longer actually used.
         for period in PERIODS:
-            assert [x["treasury_period_return"] for x in metrics[period]] == [
-                0.0
-            ] * len(metrics[period])
+            assert [x["treasury_period_return"] for x in metrics[period]] == [0.0] * len(
+                metrics[period]
+            )
 
     def test_benchmarkrange(self):
         start_session = pd.Timestamp("2008-01-01")
@@ -208,10 +193,7 @@ class TestRisk:
         self.check_metrics(metrics, 24, start_session)
 
     def test_partial_month(self):
-
-        start_session = self.trading_calendar.minute_to_session(
-            pd.Timestamp("1993-02-01")
-        )
+        start_session = self.trading_calendar.minute_to_session(pd.Timestamp("1993-02-01"))
 
         # 1992 and 1996 were leap years
         total_days = 365 * 5 + 2
@@ -238,7 +220,7 @@ class TestRisk:
         confirm that the right number of riskmetrics were calculated for each
         window length.
         """
-        for period, length in zip(PERIODS, [1, 3, 6, 12]):
+        for period, length in zip(PERIODS, [1, 3, 6, 12], strict=False):
             self.assert_range_length(metrics[period], total_months, length, start_date)
 
     def assert_month(self, start_month, actual_end_month):
@@ -255,24 +237,16 @@ class TestRisk:
         else:
             period_end = pd.Timestamp(col[-1]["period_label"], tz="utc")
             assert len(col) == total_months - (period_length - 1), (
-                "mismatch for total months - expected:{total_months}/"
-                "actual:{actual}, period:{period_length}, "
-                "start:{start_date}, calculated end:{end}"
-            ).format(
-                total_months=total_months,
-                period_length=period_length,
-                start_date=start_date,
-                end=period_end,
-                actual=len(col),
+                f"mismatch for total months - expected:{total_months}/"
+                f"actual:{len(col)}, period:{period_length}, "
+                f"start:{start_date}, calculated end:{period_end}"
             )
             self.assert_month(start_date.month, period_end.month)
 
     def test_algorithm_leverages(self):
         # Max leverage for an algorithm with 'None' as leverage is 0.
-        for period, expected_len in zip(PERIODS, [12, 10, 7, 1]):
-            assert [x["max_leverage"] for x in self.metrics[period]] == [
-                0.0
-            ] * expected_len
+        for period, expected_len in zip(PERIODS, [12, 10, 7, 1], strict=False):
+            assert [x["max_leverage"] for x in self.metrics[period]] == [0.0] * expected_len
 
         test_period = ClassicRiskMetrics.risk_metric_period(
             start_session=self.start_session,

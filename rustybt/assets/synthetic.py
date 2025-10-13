@@ -33,7 +33,7 @@ def make_rotating_equity_info(
     exchange : str, optional
         The exchange name.
 
-    Returns
+    Returns:
     -------
     info : pd.DataFrame
         DataFrame representing newly-created assets.
@@ -59,9 +59,7 @@ def make_rotating_equity_info(
     )
 
 
-def make_simple_equity_info(
-    sids, start_date, end_date, symbols=None, names=None, exchange="TEST"
-):
+def make_simple_equity_info(sids, start_date, end_date, symbols=None, names=None, exchange="TEST"):
     """Create a DataFrame representing assets that exist for the full duration
     between `start_date` and `end_date`.
 
@@ -80,7 +78,7 @@ def make_simple_equity_info(
     exchange : str, optional
         The exchange name.
 
-    Returns
+    Returns:
     -------
     info : pd.DataFrame
         DataFrame representing newly-created assets.
@@ -169,7 +167,7 @@ def make_jagged_equity_info(
         Starting after the first end date, end each asset every
         `frequency` * `periods_between_ends`.
 
-    Returns
+    Returns:
     -------
     info : pd.DataFrame
         DataFrame representing newly-created assets.
@@ -238,7 +236,7 @@ def make_future_info(
     multiplier : int
         The contract multiplier.
 
-    Returns
+    Returns:
     -------
     futures_info : pd.DataFrame
         DataFrame of futures data suitable for passing to an AssetDBWriter.
@@ -254,7 +252,7 @@ def make_future_info(
     contract_suffix_to_beginning_of_month = tuple(
         (month_code + year_str[-2:], year + MonthBegin(month_num - 1))
         for ((year, year_str), (month_code, month_num)) in product(
-            zip(years, year_strs),
+            zip(years, year_strs, strict=False),
             sorted(list(month_codes.items()), key=lambda item: item[1]),
         )
     )
@@ -277,9 +275,7 @@ def make_future_info(
     return pd.DataFrame.from_records(contracts, index="sid")
 
 
-def make_commodity_future_info(
-    first_sid, root_symbols, years, month_codes=None, multiplier=500
-):
+def make_commodity_future_info(first_sid, root_symbols, years, month_codes=None, multiplier=500):
     """Make futures testing data that simulates the notice/expiration date
     behavior of physical commodities like oil.
 
@@ -302,7 +298,7 @@ def make_commodity_future_info(
     Notice dates are are on the 20th two months prior to the month code.
     Start dates are one year before the contract month.
 
-    See Also
+    See Also:
     --------
     make_future_info
     """

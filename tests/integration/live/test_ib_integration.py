@@ -18,7 +18,6 @@ import pytest
 from rustybt.assets import Equity
 from rustybt.live.brokers.ib_adapter import IBBrokerAdapter
 
-
 # Skip these tests by default (require IB paper account)
 pytestmark = pytest.mark.skipif(
     "not config.getoption('--run-ib-integration')",
@@ -202,10 +201,10 @@ async def test_order_lifecycle(ib_adapter, sample_stock):
     initial_cash = initial_account["cash"]
 
     # Get current price
-    current_price = await ib_adapter.get_current_price(sample_stock)
+    await ib_adapter.get_current_price(sample_stock)
 
     # Submit market order
-    order_id = await ib_adapter.submit_order(
+    await ib_adapter.submit_order(
         asset=sample_stock,
         amount=Decimal("1"),
         order_type="market",

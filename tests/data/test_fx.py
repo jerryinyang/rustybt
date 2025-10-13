@@ -1,11 +1,12 @@
-import numpy as np
-import pandas as pd
 import itertools
 
+import numpy as np
+import pandas as pd
+import pytest
+
+import rustybt.testing.fixtures as zp_fixtures
 from rustybt.data.fx import DEFAULT_FX_RATE
 from rustybt.testing.predicates import assert_equal
-import rustybt.testing.fixtures as zp_fixtures
-import pytest
 
 
 class _FXReaderTestCase(zp_fixtures.WithFXRates, zp_fixtures.ZiplineTestCase):
@@ -119,9 +120,7 @@ class _FXReaderTestCase(zp_fixtures.WithFXRates, zp_fixtures.ZiplineTestCase):
 
                 # Choose M random possibly-non-distinct currencies...
                 for nbases in 1, 2, 10, 200:
-                    bases = rand.choice(possible_bases, nbases, replace=True).astype(
-                        object
-                    )
+                    bases = rand.choice(possible_bases, nbases, replace=True).astype(object)
 
                 # ...And check that we get the expected result when querying
                 # for those dates/currencies.

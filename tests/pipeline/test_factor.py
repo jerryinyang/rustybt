@@ -3,18 +3,20 @@ Tests for Factor terms.
 """
 
 import re
-import sys
 from functools import partial
 from itertools import product
 from unittest import skipIf
+
 import numpy as np
 import pandas as pd
 import pytest
 from numpy import nan
 from numpy.random import randn, seed
+from packaging.version import Version
 from parameterized import parameterized
 from scipy.stats.mstats import winsorize as scipy_winsorize
 from toolz import compose
+
 from rustybt.errors import BadPercentileBounds, UnknownRankMethod
 from rustybt.lib.labelarray import LabelArray
 from rustybt.lib.normalize import naive_grouped_rowwise_apply as grouped_apply
@@ -40,9 +42,6 @@ from rustybt.utils.numpy_utils import (
 from rustybt.utils.pandas_utils import new_pandas, skip_pipeline_new_pandas
 
 from .base import BaseUSEquityPipelineTestCase
-from packaging.version import Version
-
-from tests.conftest import ON_WINDOWS_CI, ON_LINUX_CI
 
 NUMPY2 = Version(np.__version__) >= Version("2.0.0")
 
@@ -524,18 +523,8 @@ class FactorTestCase(BaseUSEquityPipelineTestCase):
         # Not specifying the value of ascending param should default to True
         check({meth: f.rank(method=meth, groupby=c) for meth in expected_ranks})
         check({meth: f.rank(method=meth, groupby=str_c) for meth in expected_ranks})
-        check(
-            {
-                meth: f.rank(method=meth, groupby=c, ascending=True)
-                for meth in expected_ranks
-            }
-        )
-        check(
-            {
-                meth: f.rank(method=meth, groupby=str_c, ascending=True)
-                for meth in expected_ranks
-            }
-        )
+        check({meth: f.rank(method=meth, groupby=c, ascending=True) for meth in expected_ranks})
+        check({meth: f.rank(method=meth, groupby=str_c, ascending=True) for meth in expected_ranks})
 
         # Not passing a method should default to ordinal
         check({"ordinal": f.rank(groupby=c)})
@@ -640,17 +629,9 @@ class FactorTestCase(BaseUSEquityPipelineTestCase):
                 mask=self.build_mask(np.ones((5, 5))),
             )
 
+        check({meth: f.rank(method=meth, groupby=c, ascending=False) for meth in expected_ranks})
         check(
-            {
-                meth: f.rank(method=meth, groupby=c, ascending=False)
-                for meth in expected_ranks
-            }
-        )
-        check(
-            {
-                meth: f.rank(method=meth, groupby=str_c, ascending=False)
-                for meth in expected_ranks
-            }
+            {meth: f.rank(method=meth, groupby=str_c, ascending=False) for meth in expected_ranks}
         )
 
         # Not passing a method should default to ordinal
@@ -732,9 +713,7 @@ class FactorTestCase(BaseUSEquityPipelineTestCase):
         )
 
     @parameterized.expand(gen_ranking_cases())
-    def test_masked_rankdata_2d(
-        self, seed_value, method, use_mask, set_missing, ascending
-    ):
+    def test_masked_rankdata_2d(self, seed_value, method, use_mask, set_missing, ascending):
         eyemask = ~np.eye(5, dtype=bool)
         nomask = np.ones((5, 5), dtype=bool)
 
@@ -921,9 +900,7 @@ class FactorTestCase(BaseUSEquityPipelineTestCase):
             "winsor_3": f.winsorize(min_percentile=0, max_percentile=0.67),
             "masked": f.winsorize(min_percentile=0.33, max_percentile=0.67, mask=m),
             "grouped": f.winsorize(min_percentile=0.34, max_percentile=0.66, groupby=c),
-            "grouped_str": f.winsorize(
-                min_percentile=0.34, max_percentile=0.66, groupby=str_c
-            ),
+            "grouped_str": f.winsorize(min_percentile=0.34, max_percentile=0.66, groupby=str_c),
             "grouped_masked": f.winsorize(
                 min_percentile=0.34, max_percentile=0.66, mask=m, groupby=c
             ),
@@ -1072,75 +1049,55 @@ class FactorTestCase(BaseUSEquityPipelineTestCase):
         for perm in slice(None), permutation:
             # Winsorize both tails at 90%.
             result = zp_winsorize(data[perm], 0.1, 0.9)
-            expected = np.array([1.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 8.0])[
-                perm
-            ]
+            expected = np.array([1.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 8.0])[perm]
             assert_equal(result, expected)
 
             # Winsorize both tails at 80%.
             result = zp_winsorize(data[perm], 0.2, 0.8)
-            expected = np.array([2.0, 2.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 7.0, 7.0])[
-                perm
-            ]
+            expected = np.array([2.0, 2.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 7.0, 7.0])[perm]
             assert_equal(result, expected)
 
             # Winsorize just the upper tail.
             result = zp_winsorize(data[perm], 0.0, 0.8)
-            expected = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 7.0, 7.0])[
-                perm
-            ]
+            expected = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 7.0, 7.0])[perm]
             assert_equal(result, expected)
 
             # Winsorize just the lower tail.
             result = zp_winsorize(data[perm], 0.2, 1.0)
-            expected = np.array([2.0, 2.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])[
-                perm
-            ]
+            expected = np.array([2.0, 2.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])[perm]
             assert_equal(result, expected)
 
             # Don't winsorize.
             result = zp_winsorize(data[perm], 0.0, 1.0)
-            expected = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])[
-                perm
-            ]
+            expected = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])[perm]
             assert_equal(result, expected)
 
     def test_winsorize_nans(self):
         # 5 low non-nan values, then some nans, then 5 high non-nans.
-        data = np.array(
-            [4.0, 3.0, 0.0, 1.0, 2.0, nan, nan, nan, 9.0, 5.0, 6.0, 8.0, 7.0]
-        )
+        data = np.array([4.0, 3.0, 0.0, 1.0, 2.0, nan, nan, nan, 9.0, 5.0, 6.0, 8.0, 7.0])
 
         # Winsorize both tails at 10%.
         # 0.0 -> 1.0
         # 9.0 -> 8.0
         result = zp_winsorize(data, 0.10, 0.90)
-        expected = np.array(
-            [4.0, 3.0, 1.0, 1.0, 2.0, nan, nan, nan, 8.0, 5.0, 6.0, 8.0, 7.0]
-        )
+        expected = np.array([4.0, 3.0, 1.0, 1.0, 2.0, nan, nan, nan, 8.0, 5.0, 6.0, 8.0, 7.0])
         assert_equal(result, expected)
 
         # Winsorize both tails at 20%.
         # 0.0 and 1.0 -> 2.0
         # 9.0 and 8.0 -> 7.0
         result = zp_winsorize(data, 0.20, 0.80)
-        expected = np.array(
-            [4.0, 3.0, 2.0, 2.0, 2.0, nan, nan, nan, 7.0, 5.0, 6.0, 7.0, 7.0]
-        )
+        expected = np.array([4.0, 3.0, 2.0, 2.0, 2.0, nan, nan, nan, 7.0, 5.0, 6.0, 7.0, 7.0])
         assert_equal(result, expected)
 
         # Winsorize just the upper tail.
         result = zp_winsorize(data, 0, 0.8)
-        expected = np.array(
-            [4.0, 3.0, 0.0, 1.0, 2.0, nan, nan, nan, 7.0, 5.0, 6.0, 7.0, 7.0]
-        )
+        expected = np.array([4.0, 3.0, 0.0, 1.0, 2.0, nan, nan, nan, 7.0, 5.0, 6.0, 7.0, 7.0])
         assert_equal(result, expected)
 
         # Winsorize just the lower tail.
         result = zp_winsorize(data, 0.2, 1.0)
-        expected = np.array(
-            [4.0, 3.0, 2.0, 2.0, 2.0, nan, nan, nan, 9.0, 5.0, 6.0, 8.0, 7.0]
-        )
+        expected = np.array([4.0, 3.0, 2.0, 2.0, 2.0, nan, nan, nan, 9.0, 5.0, 6.0, 8.0, 7.0])
         assert_equal(result, expected)
 
     def test_winsorize_bad_bounds(self):
@@ -1196,9 +1153,7 @@ class FactorTestCase(BaseUSEquityPipelineTestCase):
             factor_data = np.where(eyemask, factor_data, nan)
 
         # Cycles of 0, 1, 2, 0, 1, 2, ...
-        classifier_data = (
-            self.arange_data(shape=shape, dtype=int64_dtype) + seed_value
-        ) % 3
+        classifier_data = (self.arange_data(shape=shape, dtype=int64_dtype) + seed_value) % 3
         # With -1s on main diagonal.
         classifier_data_eyenulls = np.where(eyemask, classifier_data, -1)
         # With -1s on opposite diagonal.
@@ -1286,9 +1241,9 @@ class FactorTestCase(BaseUSEquityPipelineTestCase):
 
         d = DateFactor()
         expected = (
-            "{normalizer}() is only defined on Factors of dtype float64,"
+            f"{method_name}() is only defined on Factors of dtype float64,"
             " but it was called on a Factor of dtype datetime64[ns]."
-        ).format(normalizer=method_name)
+        )
         with pytest.raises(TypeError, match=re.escape(expected)):
             getattr(d, method_name)()
 
@@ -1664,15 +1619,9 @@ class TestRepr:
     def test_winsorize_is_window_safe_if_input_is_window_safe(self):
         assert not F().winsorize(min_percentile=0.05, max_percentile=0.95).window_safe
         assert (
-            not F(window_safe=False)
-            .winsorize(min_percentile=0.05, max_percentile=0.95)
-            .window_safe
+            not F(window_safe=False).winsorize(min_percentile=0.05, max_percentile=0.95).window_safe
         )
-        assert (
-            F(window_safe=True)
-            .winsorize(min_percentile=0.05, max_percentile=0.95)
-            .window_safe
-        )
+        assert F(window_safe=True).winsorize(min_percentile=0.05, max_percentile=0.95).window_safe
 
 
 class TestPostProcessAndToWorkSpaceValue:
@@ -1955,5 +1904,5 @@ class SummaryTestCase(BaseUSEquityPipelineTestCase, ZiplineTestCase):
 
         for method in summary_funcs.names:
             summarized = getattr(f, method)()
-            assert repr(summarized) == "MyFactor().{}()".format(method)
-            assert summarized.recursive_repr() == "MyFactor().{}()".format(method)
+            assert repr(summarized) == f"MyFactor().{method}()"
+            assert summarized.recursive_repr() == f"MyFactor().{method}()"

@@ -3411,10 +3411,10 @@ import pandas as pd
 async def main():
     # Create adapter
     ib = IBBrokerAdapter(host="127.0.0.1", port=7496, client_id=1)
-    
+
     # Connect
     await ib.connect()
-    
+
     # Create asset
     aapl = Equity(
         sid=1,
@@ -3423,11 +3423,11 @@ async def main():
         start_date=pd.Timestamp("2000-01-01"),
         end_date=pd.Timestamp("2030-01-01"),
     )
-    
+
     # Get current price
     price = await ib.get_current_price(aapl)
     print(f"AAPL price: ${price}")
-    
+
     # Submit market order
     order_id = await ib.submit_order(
         asset=aapl,
@@ -3435,18 +3435,18 @@ async def main():
         order_type="market",
     )
     print(f"Order submitted: {order_id}")
-    
+
     # Wait for fill
     await asyncio.sleep(2)
-    
+
     # Check positions
     positions = await ib.get_positions()
     print(f"Positions: {positions}")
-    
+
     # Check account
     account = await ib.get_account_info()
     print(f"Cash: ${account['cash']}")
-    
+
     # Disconnect
     await ib.disconnect()
 
@@ -3980,7 +3980,7 @@ manager = CircuitBreakerManager(
 async def handle_circuit_breaker_event(event):
     logger.critical("circuit_breaker_tripped", event=event)
     # Send alerts, halt trading, notify operators
-    
+
 manager.register_event_callback(handle_circuit_breaker_event)
 
 # Check circuit breakers
@@ -4257,4 +4257,3 @@ circuit_breakers = {
 - Verify engine respects circuit breaker state
 
 ---
-

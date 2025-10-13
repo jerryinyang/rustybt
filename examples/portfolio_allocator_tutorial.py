@@ -10,9 +10,11 @@ Example: 3-Strategy Diversified Equity Portfolio
 """
 
 from decimal import Decimal
+
 import pandas as pd
 import structlog
-from rustybt.portfolio.allocator import PortfolioAllocator, StrategyState
+
+from rustybt.portfolio.allocator import PortfolioAllocator
 
 # Configure logging
 structlog.configure(

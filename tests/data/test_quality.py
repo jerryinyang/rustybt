@@ -1,12 +1,11 @@
 """Tests for data quality metrics calculation."""
 
-from datetime import datetime, timedelta
-
 import pandas as pd
 import polars as pl
 import pytest
 from exchange_calendars import get_calendar
-from hypothesis import given, strategies as st, assume
+from hypothesis import assume, given
+from hypothesis import strategies as st
 
 from rustybt.data.quality import (
     calculate_quality_metrics,
@@ -338,8 +337,8 @@ class TestQualityMetricsPropertyBased:
         # Generate prices with proper OHLCV relationships
         open_prices = [base_price + i * 0.1 for i in range(row_count)]
         close_prices = [base_price + i * 0.1 + 0.5 for i in range(row_count)]
-        high_prices = [max(o, c) + 1.0 for o, c in zip(open_prices, close_prices)]
-        low_prices = [min(o, c) - 1.0 for o, c in zip(open_prices, close_prices)]
+        high_prices = [max(o, c) + 1.0 for o, c in zip(open_prices, close_prices, strict=False)]
+        low_prices = [min(o, c) - 1.0 for o, c in zip(open_prices, close_prices, strict=False)]
         volumes = [1000 + i * 10 for i in range(row_count)]
 
         data = pl.DataFrame(
@@ -359,9 +358,7 @@ class TestQualityMetricsPropertyBased:
         assert metrics["row_count"] == row_count, "Row count should match input"
 
         # Invariant 2: Start date should be before or equal to end date
-        assert (
-            metrics["start_date"] <= metrics["end_date"]
-        ), "Start date should be <= end date"
+        assert metrics["start_date"] <= metrics["end_date"], "Start date should be <= end date"
 
         # Invariant 3: OHLCV violations should be 0 for valid data
         assert metrics["ohlcv_violations"] == 0, "Valid OHLCV data should have no violations"
@@ -391,8 +388,8 @@ class TestQualityMetricsPropertyBased:
         # Create data with deliberate violation in first row: high < open
         open_prices = prices
         close_prices = [p + 1.0 for p in prices]
-        high_prices = [max(o, c) + 1.0 for o, c in zip(open_prices, close_prices)]
-        low_prices = [min(o, c) - 1.0 for o, c in zip(open_prices, close_prices)]
+        high_prices = [max(o, c) + 1.0 for o, c in zip(open_prices, close_prices, strict=False)]
+        low_prices = [min(o, c) - 1.0 for o, c in zip(open_prices, close_prices, strict=False)]
 
         # Make first row invalid: high < open
         high_prices[0] = open_prices[0] - 5.0

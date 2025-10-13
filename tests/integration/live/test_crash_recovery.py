@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from decimal import Decimal
-from pathlib import Path
 
 import pytest
 
@@ -221,9 +220,7 @@ class TestCrashRecoveryScenario:
 
         assert checkpoint is None
 
-    def test_checkpoint_cleanup_after_strategy_completion(
-        self, checkpoint_dir, strategy_name
-    ):
+    def test_checkpoint_cleanup_after_strategy_completion(self, checkpoint_dir, strategy_name):
         """Test checkpoint can be deleted when strategy completes."""
         state_manager = StateManager(checkpoint_dir=checkpoint_dir)
 
@@ -251,13 +248,11 @@ class TestCrashRecoveryWithReconciliation:
     """Integration tests for crash recovery with position reconciliation."""
 
     @pytest.mark.asyncio
-    async def test_restore_with_reconciliation_discrepancy(
-        self, checkpoint_dir, strategy_name
-    ):
+    async def test_restore_with_reconciliation_discrepancy(self, checkpoint_dir, strategy_name):
         """Test state restoration detects position discrepancies."""
+
         from rustybt.live.brokers.base import BrokerAdapter
         from rustybt.live.reconciler import PositionReconciler
-        from typing import Dict, List
 
         # Mock broker with discrepant positions
         class MockBroker(BrokerAdapter):
@@ -346,9 +341,7 @@ class TestCrashRecoveryWithReconciliation:
 
         # Verify discrepancy detected
         assert len(result["discrepancies"]) > 0
-        aapl_discrepancy = next(
-            (d for d in result["discrepancies"] if d.asset == "AAPL"), None
-        )
+        aapl_discrepancy = next((d for d in result["discrepancies"] if d.asset == "AAPL"), None)
         assert aapl_discrepancy is not None
         assert aapl_discrepancy.local_amount == Decimal("100")
         assert aapl_discrepancy.broker_amount == Decimal("150")

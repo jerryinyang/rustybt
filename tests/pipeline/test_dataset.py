@@ -1,12 +1,12 @@
-"""Tests for the zipline.pipeline.data.DataSet and related functionality.
-"""
+"""Tests for the zipline.pipeline.data.DataSet and related functionality."""
 
+import re
 import string
 from textwrap import dedent
 
-from rustybt.pipeline.data.dataset import Column, DataSet
 import pytest
-import re
+
+from rustybt.pipeline.data.dataset import Column, DataSet
 
 
 class SomeDataSet(DataSet):

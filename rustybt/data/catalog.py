@@ -7,9 +7,8 @@ Use rustybt.data.bundles.metadata.BundleMetadata instead.
 import time
 import warnings
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-import pandas as pd
 import sqlalchemy as sa
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
@@ -31,7 +30,7 @@ class DataCatalog:
         DataCatalog will be removed in v2.0.
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         """Initialize data catalog.
 
         .. deprecated:: 1.0
@@ -45,7 +44,7 @@ class DataCatalog:
             "DataCatalog is deprecated and will be removed in v2.0. "
             "Use BundleMetadata from rustybt.data.bundles.metadata instead.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
 
         if db_path is None:
@@ -60,7 +59,7 @@ class DataCatalog:
     def store_metadata(self, metadata: dict[str, Any]) -> None:
         """Store bundle metadata in catalog.
 
-    Args:
+        Args:
         metadata: Metadata dictionary with required fields:
             - bundle_name: str
             - source_type: str
@@ -80,7 +79,7 @@ class DataCatalog:
         bundle_name = metadata_copy.pop("bundle_name")
         BundleMetadata.update(bundle_name, **metadata_copy)
 
-    def get_bundle_metadata(self, bundle_name: str) -> Optional[dict[str, Any]]:
+    def get_bundle_metadata(self, bundle_name: str) -> dict[str, Any] | None:
         """Get metadata for a specific bundle.
 
         Args:
@@ -145,7 +144,7 @@ class DataCatalog:
         bundle_name = metrics_copy.pop("bundle_name")
         BundleMetadata.update(bundle_name, **metrics_copy)
 
-    def get_quality_metrics(self, bundle_name: str) -> Optional[dict[str, Any]]:
+    def get_quality_metrics(self, bundle_name: str) -> dict[str, Any] | None:
         """Get most recent quality metrics for a bundle.
 
         Args:
@@ -158,9 +157,9 @@ class DataCatalog:
 
     def list_bundles(
         self,
-        source_type: Optional[str] = None,
-        start_date: Optional[int] = None,
-        end_date: Optional[int] = None,
+        source_type: str | None = None,
+        start_date: int | None = None,
+        end_date: int | None = None,
     ) -> list[dict[str, Any]]:
         """List all bundles with optional filtering.
 
@@ -273,7 +272,7 @@ class DataCatalog:
 
             session.commit()
 
-    def find_cached_bundle(self, cache_key: str) -> Optional[dict[str, Any]]:
+    def find_cached_bundle(self, cache_key: str) -> dict[str, Any] | None:
         """Find cached bundle by cache key.
 
         Args:

@@ -6,7 +6,6 @@ Alpaca Market Data API v2 documentation: https://alpaca.markets/docs/api-referen
 import asyncio
 from decimal import Decimal
 from pathlib import Path
-from typing import Dict
 
 import pandas as pd
 import polars as pl
@@ -78,7 +77,7 @@ class AlpacaAdapter(BaseAPIProviderAdapter, DataSource):
             base_url="https://data.alpaca.markets",
         )
 
-    def _get_auth_headers(self) -> Dict[str, str]:
+    def _get_auth_headers(self) -> dict[str, str]:
         """Get Alpaca authentication headers.
 
         Alpaca requires custom headers: APCA-API-KEY-ID and APCA-API-SECRET-KEY
@@ -91,7 +90,7 @@ class AlpacaAdapter(BaseAPIProviderAdapter, DataSource):
             "APCA-API-SECRET-KEY": self.api_secret or "",
         }
 
-    def _get_auth_params(self) -> Dict[str, str]:
+    def _get_auth_params(self) -> dict[str, str]:
         """Get authentication query parameters.
 
         Returns:
@@ -153,18 +152,14 @@ class AlpacaAdapter(BaseAPIProviderAdapter, DataSource):
             if "message" in data:
                 error_msg = data["message"]
                 if "not found" in error_msg.lower() or "invalid" in error_msg.lower():
-                    raise SymbolNotFoundError(
-                        f"Symbol '{symbol}' not found in Alpaca"
-                    )
+                    raise SymbolNotFoundError(f"Symbol '{symbol}' not found in Alpaca")
                 raise DataParsingError(f"Alpaca API error: {error_msg}")
-            raise DataParsingError(
-                f"Unexpected response format from Alpaca for {symbol}"
-            )
+            raise DataParsingError(f"Unexpected response format from Alpaca for {symbol}")
 
         # Parse bars
         return self._parse_bars_response(data, symbol)
 
-    def _parse_bars_response(self, data: Dict, symbol: str) -> pl.DataFrame:
+    def _parse_bars_response(self, data: dict, symbol: str) -> pl.DataFrame:
         """Parse Alpaca bars API response.
 
         Args:
@@ -180,9 +175,7 @@ class AlpacaAdapter(BaseAPIProviderAdapter, DataSource):
         bars = data.get("bars", [])
 
         if not bars:
-            raise DataParsingError(
-                f"No bars found in Alpaca response for {symbol}"
-            )
+            raise DataParsingError(f"No bars found in Alpaca response for {symbol}")
 
         # Convert to DataFrame
         # Alpaca response format:
@@ -198,9 +191,7 @@ class AlpacaAdapter(BaseAPIProviderAdapter, DataSource):
         # }
         df = pl.DataFrame(
             {
-                "timestamp": [
-                    pd.Timestamp(bar["t"]).tz_convert("UTC") for bar in bars
-                ],
+                "timestamp": [pd.Timestamp(bar["t"]).tz_convert("UTC") for bar in bars],
                 "symbol": [symbol] * len(bars),
                 "open": [Decimal(str(bar["o"])) for bar in bars],
                 "high": [Decimal(str(bar["h"])) for bar in bars],
@@ -239,13 +230,9 @@ class AlpacaAdapter(BaseAPIProviderAdapter, DataSource):
         if df["timestamp"].dtype != pl.Datetime("us"):
             # Handle string timestamps
             if df["timestamp"].dtype == pl.Utf8:
-                df = df.with_columns(
-                    pl.col("timestamp").str.to_datetime("%Y-%m-%d")
-                )
+                df = df.with_columns(pl.col("timestamp").str.to_datetime("%Y-%m-%d"))
             # Then cast to microsecond precision
-            df = df.with_columns(
-                pl.col("timestamp").cast(pl.Datetime("us"))
-            )
+            df = df.with_columns(pl.col("timestamp").cast(pl.Datetime("us")))
 
         # Ensure Decimal types for price/volume columns
         decimal_cols = ["open", "high", "low", "close", "volume"]

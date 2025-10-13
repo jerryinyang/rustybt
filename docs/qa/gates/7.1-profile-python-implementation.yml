@@ -40,12 +40,12 @@ nfr_validation:
 
 recommendations:
   immediate: []  # No blockers remaining
-  
+
   future:
     - action: "Execute full profiling and generate results documentation (AC 4-9)"
       refs: ["docs/performance/profiling-results.md"]
       details: "Run `make profile-all` and document findings"
-    
+
     - action: "Consider py-spy configuration for flamegraph visualization (AC 1 - optional)"
       refs: ["scripts/profiling/run_profiler.py"]
       details: "cProfile is fully functional; py-spy is nice-to-have enhancement"
@@ -61,7 +61,7 @@ fixes_implemented:
       - "scripts/profiling/run_profiler.py"
       - "scripts/profiling/setup_profiling_data.py"
     result: "Daily scenario now executes without LookupError"
-  
+
   - id: "DECIMAL-002-FIX"
     description: "Fixed additional Decimal/float type mismatches in ledger.py"
     changes:
@@ -71,7 +71,7 @@ fixes_implemented:
     files:
       - "rustybt/finance/ledger.py (lines 390-403, 746-762)"
     result: "All Decimal/float TypeError exceptions resolved"
-  
+
   - id: "BUNDLE-002-FIX"
     description: "Added adjustment writer calls to create required database tables"
     changes:
@@ -80,7 +80,7 @@ fixes_implemented:
     files:
       - "scripts/profiling/setup_profiling_data.py"
     result: "No more 'no such table: mergers' errors"
-  
+
   - id: "CAPITAL-BASE-FIX"
     description: "Use float capital_base to avoid Decimal mixing in profiling"
     changes:
@@ -96,7 +96,7 @@ test_results:
   failed: 2  # Expected - hourly/minute bundles not ingested
   skipped: 1
   pass_rate: "91% (21/23 runnable tests)"
-  
+
   key_validations:
     - "✅ Daily scenario executes successfully"
     - "✅ cProfile output generation works"
@@ -116,15 +116,15 @@ history:
   - at: "2025-10-05T00:00:00Z"
     gate: CONCERNS
     note: "Initial review - Missing tests, placeholder implementations"
-  
+
   - at: "2025-10-08T00:00:00Z"
     gate: CONCERNS
     note: "Tests added (23 total), DECIMAL-001 blocker discovered"
-  
+
   - at: "2025-01-08T13:45:00Z"
     gate: FAIL
     note: "DECIMAL-001 resolved, but NEW DATA-001 blocker: date range mismatch"
-  
+
   - at: "2025-01-08T14:00:00Z"
     gate: PASS
     note: "ALL BLOCKERS RESOLVED: DATA-001 fixed (date alignment), DECIMAL-002 fixed (additional type handling), 21/23 tests passing, daily scenario executes successfully"

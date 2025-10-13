@@ -1,9 +1,9 @@
 import pandas as pd
-from rustybt.utils.calendar_utils import get_calendar
+import pytest
 from pandas.testing import assert_index_equal
 
+from rustybt.utils.calendar_utils import get_calendar
 from rustybt.utils.date_utils import compute_date_range_chunks, make_utc_aware
-import pytest
 
 
 def T(s, tz=None):
@@ -97,9 +97,7 @@ class TestMakeTZAware:
             ),
             (
                 DTI(start="2020-01-01", end="2020-02-01", tz="US/Eastern"),
-                DTI(start="2020-01-01", end="2020-02-01", tz="US/Eastern").tz_convert(
-                    "UTC"
-                ),
+                DTI(start="2020-01-01", end="2020-02-01", tz="US/Eastern").tz_convert("UTC"),
             ),
         ],
     )

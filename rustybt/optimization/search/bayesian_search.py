@@ -1,7 +1,6 @@
 """Bayesian optimization using Gaussian Process surrogate models."""
 
 # SECURITY FIX (Story 8.10): Use secure pickle with HMAC validation
-from rustybt.utils.secure_pickle import secure_dumps, secure_loads, SecurePickleError
 from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Union
@@ -10,6 +9,8 @@ import numpy as np
 import structlog
 from skopt import Optimizer
 from skopt.space import Categorical, Integer, Real
+
+from rustybt.utils.secure_pickle import SecurePickleError, secure_dumps, secure_loads
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -95,9 +96,7 @@ class BayesianOptimizer(SearchAlgorithm):
             raise ValueError("n_iter must be positive")
 
         if initial_points and initial_scores and len(initial_points) != len(initial_scores):
-            raise ValueError(
-                "initial_points and initial_scores must have same length"
-            )
+            raise ValueError("initial_points and initial_scores must have same length")
 
         self.n_iter = n_iter
         self.acq_func = acq_func
@@ -337,9 +336,7 @@ class BayesianOptimizer(SearchAlgorithm):
             "random_state": self.random_state,
             "iteration": self._iteration,
             "current_suggestion": self._current_suggestion,
-            "evaluations": [
-                (params, str(score)) for params, score in self._evaluations
-            ],
+            "evaluations": [(params, str(score)) for params, score in self._evaluations],
             "best_score": str(self._best_score) if self._best_score else None,
             "best_params": self._best_params,
             "converged": self._converged,
@@ -370,12 +367,8 @@ class BayesianOptimizer(SearchAlgorithm):
         self.random_state = state["random_state"]
         self._iteration = state["iteration"]
         self._current_suggestion = state["current_suggestion"]
-        self._evaluations = [
-            (params, Decimal(score)) for params, score in state["evaluations"]
-        ]
-        self._best_score = (
-            Decimal(state["best_score"]) if state["best_score"] else None
-        )
+        self._evaluations = [(params, Decimal(score)) for params, score in state["evaluations"]]
+        self._best_score = Decimal(state["best_score"]) if state["best_score"] else None
         self._best_params = state["best_params"]
         self._converged = state["converged"]
         self._acq_values = state["acq_values"]
@@ -394,9 +387,7 @@ class BayesianOptimizer(SearchAlgorithm):
             n_evaluations=len(self._evaluations),
         )
 
-    def plot_convergence(
-        self, save_path: str | Path | None = None
-    ) -> Union["Axes", "Figure"]:
+    def plot_convergence(self, save_path: str | Path | None = None) -> Union["Axes", "Figure"]:
         """Plot optimization convergence (objective value vs iterations).
 
         Args:
@@ -413,8 +404,7 @@ class BayesianOptimizer(SearchAlgorithm):
             from skopt.plots import plot_convergence
         except ImportError as e:
             raise ImportError(
-                "matplotlib required for plotting. Install with: "
-                "pip install rustybt[optimization]"
+                "matplotlib required for plotting. Install with: pip install rustybt[optimization]"
             ) from e
 
         result = self._optimizer.get_result()
@@ -428,9 +418,7 @@ class BayesianOptimizer(SearchAlgorithm):
 
         return ax
 
-    def plot_objective(
-        self, save_path: str | Path | None = None
-    ) -> Union["Axes", "Figure"]:
+    def plot_objective(self, save_path: str | Path | None = None) -> Union["Axes", "Figure"]:
         """Plot parameter importance and objective function.
 
         Args:
@@ -447,8 +435,7 @@ class BayesianOptimizer(SearchAlgorithm):
             from skopt.plots import plot_objective
         except ImportError as e:
             raise ImportError(
-                "matplotlib required for plotting. Install with: "
-                "pip install rustybt[optimization]"
+                "matplotlib required for plotting. Install with: pip install rustybt[optimization]"
             ) from e
 
         result = self._optimizer.get_result()
@@ -462,9 +449,7 @@ class BayesianOptimizer(SearchAlgorithm):
 
         return ax
 
-    def plot_evaluations(
-        self, save_path: str | Path | None = None
-    ) -> Union["Axes", "Figure"]:
+    def plot_evaluations(self, save_path: str | Path | None = None) -> Union["Axes", "Figure"]:
         """Plot parameter values vs objective for each evaluation.
 
         Args:
@@ -481,8 +466,7 @@ class BayesianOptimizer(SearchAlgorithm):
             from skopt.plots import plot_evaluations
         except ImportError as e:
             raise ImportError(
-                "matplotlib required for plotting. Install with: "
-                "pip install rustybt[optimization]"
+                "matplotlib required for plotting. Install with: pip install rustybt[optimization]"
             ) from e
 
         result = self._optimizer.get_result()

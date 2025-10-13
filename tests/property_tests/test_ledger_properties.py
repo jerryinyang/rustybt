@@ -2,7 +2,6 @@
 
 from decimal import Decimal
 
-import pytest
 from hypothesis import assume, example, given
 
 from rustybt.assets import Equity, ExchangeInfo
@@ -16,9 +15,7 @@ NYSE = ExchangeInfo("NYSE", "NYSE", "US")
 
 
 @given(
-    starting_cash=decimal_prices(
-        min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2
-    ),
+    starting_cash=decimal_prices(min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2),
     positions=decimal_portfolio_positions(min_positions=0, max_positions=20),
 )
 @example(starting_cash=Decimal("0"), positions=[])  # Edge case: empty portfolio
@@ -64,9 +61,7 @@ def test_portfolio_value_accounting_identity(
 
 
 @given(
-    start_value=decimal_prices(
-        min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2
-    ),
+    start_value=decimal_prices(min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2),
     end_value=decimal_prices(min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2),
 )
 @example(start_value=Decimal("1000"), end_value=Decimal("1000"))  # Zero return
@@ -92,7 +87,10 @@ def test_returns_reconstruction(start_value: Decimal, end_value: Decimal) -> Non
     # Quantize to same precision as input (2 decimal places)
     # This handles division precision issues while maintaining financial accuracy
     from decimal import ROUND_HALF_EVEN
-    reconstructed_end_rounded = reconstructed_end.quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN)
+
+    reconstructed_end_rounded = reconstructed_end.quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_EVEN
+    )
 
     # Must match when quantized to input precision
     assert reconstructed_end_rounded == end_value, (
@@ -104,9 +102,7 @@ def test_returns_reconstruction(start_value: Decimal, end_value: Decimal) -> Non
 
 
 @given(
-    starting_cash=decimal_prices(
-        min_value=Decimal("10000"), max_value=Decimal("1000000"), scale=2
-    ),
+    starting_cash=decimal_prices(min_value=Decimal("10000"), max_value=Decimal("1000000"), scale=2),
     price=decimal_prices(min_value=Decimal("10"), max_value=Decimal("500"), scale=2),
     quantity=decimal_quantities(min_value=Decimal("1"), max_value=Decimal("100"), scale=2),
 )
@@ -147,9 +143,7 @@ def test_buy_transaction_maintains_portfolio_value(
 
 @given(
     starting_cash=decimal_prices(min_value=Decimal("0"), max_value=Decimal("100000"), scale=2),
-    position_amount=decimal_quantities(
-        min_value=Decimal("1"), max_value=Decimal("100"), scale=2
-    ),
+    position_amount=decimal_quantities(min_value=Decimal("1"), max_value=Decimal("100"), scale=2),
     position_price=decimal_prices(min_value=Decimal("10"), max_value=Decimal("500"), scale=2),
     sell_price=decimal_prices(min_value=Decimal("10"), max_value=Decimal("500"), scale=2),
 )

@@ -6,12 +6,13 @@ compared to float-based pipelines.
 Run with: pytest benchmarks/decimal_data_pipeline_benchmark.py --benchmark-only
 """
 
-import pytest
-import polars as pl
-from decimal import Decimal
 import random
-from pathlib import Path
 import tempfile
+from decimal import Decimal
+from pathlib import Path
+
+import polars as pl
+import pytest
 
 
 @pytest.fixture
@@ -22,7 +23,9 @@ def temp_parquet_file():
     num_rows = 252 * 100  # 1 year × 100 assets
 
     data = {
-        "date": [f"2024-{(i % 252) // 21 + 1:02d}-{(i % 252) % 21 + 1:02d}" for i in range(num_rows)],
+        "date": [
+            f"2024-{(i % 252) // 21 + 1:02d}-{(i % 252) % 21 + 1:02d}" for i in range(num_rows)
+        ],
         "symbol": [f"STOCK{(i % 100) + 1}" for i in range(num_rows)],
         "open": [Decimal(str(50.0 + random.random() * 10)) for _ in range(num_rows)],
         "high": [Decimal(str(55.0 + random.random() * 10)) for _ in range(num_rows)],
@@ -31,15 +34,17 @@ def temp_parquet_file():
         "volume": [Decimal(str(random.random() * 1000000)) for _ in range(num_rows)],
     }
 
-    df = pl.DataFrame({
-        "date": data["date"],
-        "symbol": data["symbol"],
-        "open": pl.Series(data["open"], dtype=pl.Decimal(scale=8)),
-        "high": pl.Series(data["high"], dtype=pl.Decimal(scale=8)),
-        "low": pl.Series(data["low"], dtype=pl.Decimal(scale=8)),
-        "close": pl.Series(data["close"], dtype=pl.Decimal(scale=8)),
-        "volume": pl.Series(data["volume"], dtype=pl.Decimal(scale=8)),
-    })
+    df = pl.DataFrame(
+        {
+            "date": data["date"],
+            "symbol": data["symbol"],
+            "open": pl.Series(data["open"], dtype=pl.Decimal(scale=8)),
+            "high": pl.Series(data["high"], dtype=pl.Decimal(scale=8)),
+            "low": pl.Series(data["low"], dtype=pl.Decimal(scale=8)),
+            "close": pl.Series(data["close"], dtype=pl.Decimal(scale=8)),
+            "volume": pl.Series(data["volume"], dtype=pl.Decimal(scale=8)),
+        }
+    )
 
     # Write to temp file
     with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as f:
@@ -60,6 +65,7 @@ def test_load_parquet_decimal_columns(benchmark, temp_parquet_file):
     Expected: ~100-300 milliseconds
     Target (Epic 7): <80 milliseconds
     """
+
     def load_data():
         return pl.read_parquet(temp_parquet_file)
 
@@ -82,11 +88,11 @@ def test_ohlcv_validation_25200_rows(benchmark, temp_parquet_file):
     def validate_ohlcv():
         # Check OHLCV relationships
         invalid_rows = df.filter(
-            (pl.col('high') < pl.col('low')) |
-            (pl.col('high') < pl.col('open')) |
-            (pl.col('high') < pl.col('close')) |
-            (pl.col('low') > pl.col('open')) |
-            (pl.col('low') > pl.col('close'))
+            (pl.col("high") < pl.col("low"))
+            | (pl.col("high") < pl.col("open"))
+            | (pl.col("high") < pl.col("close"))
+            | (pl.col("low") > pl.col("open"))
+            | (pl.col("low") > pl.col("close"))
         )
         return len(invalid_rows)
 
@@ -124,13 +130,15 @@ def test_aggregate_ohlcv_by_symbol(benchmark, temp_parquet_file):
     df = pl.read_parquet(temp_parquet_file)
 
     def aggregate_data():
-        return df.group_by("symbol").agg([
-            pl.col("close").mean().alias("mean_close"),
-            pl.col("close").std().alias("std_close"),
-            pl.col("volume").sum().alias("total_volume"),
-            pl.col("high").max().alias("max_high"),
-            pl.col("low").min().alias("min_low"),
-        ])
+        return df.group_by("symbol").agg(
+            [
+                pl.col("close").mean().alias("mean_close"),
+                pl.col("close").std().alias("std_close"),
+                pl.col("volume").sum().alias("total_volume"),
+                pl.col("high").max().alias("max_high"),
+                pl.col("low").min().alias("min_low"),
+            ]
+        )
 
     result = benchmark(aggregate_data)
 
@@ -147,10 +155,13 @@ def test_calculate_returns_25200_rows(benchmark, temp_parquet_file):
     df = pl.read_parquet(temp_parquet_file)
 
     def calculate_returns():
-        return df.with_columns([
-            ((pl.col("close") - pl.col("close").shift(1)) / pl.col("close").shift(1))
-            .alias("returns")
-        ])
+        return df.with_columns(
+            [
+                ((pl.col("close") - pl.col("close").shift(1)) / pl.col("close").shift(1)).alias(
+                    "returns"
+                )
+            ]
+        )
 
     result = benchmark(calculate_returns)
 
@@ -168,9 +179,7 @@ def test_decimal_to_float_conversion_25200(benchmark, temp_parquet_file):
     df = pl.read_parquet(temp_parquet_file)
 
     def convert_to_float():
-        return df.with_columns([
-            pl.col("close").cast(pl.Float64).alias("close_float")
-        ])
+        return df.with_columns([pl.col("close").cast(pl.Float64).alias("close_float")])
 
     result = benchmark(convert_to_float)
 
@@ -221,24 +230,28 @@ def test_resample_minute_to_daily(benchmark):
         "volume": [Decimal(str(random.random() * 10000)) for _ in range(390)],
     }
 
-    df = pl.DataFrame({
-        "timestamp": minute_data["timestamp"],
-        "open": pl.Series(minute_data["open"], dtype=pl.Decimal(scale=8)),
-        "high": pl.Series(minute_data["high"], dtype=pl.Decimal(scale=8)),
-        "low": pl.Series(minute_data["low"], dtype=pl.Decimal(scale=8)),
-        "close": pl.Series(minute_data["close"], dtype=pl.Decimal(scale=8)),
-        "volume": pl.Series(minute_data["volume"], dtype=pl.Decimal(scale=8)),
-    })
+    df = pl.DataFrame(
+        {
+            "timestamp": minute_data["timestamp"],
+            "open": pl.Series(minute_data["open"], dtype=pl.Decimal(scale=8)),
+            "high": pl.Series(minute_data["high"], dtype=pl.Decimal(scale=8)),
+            "low": pl.Series(minute_data["low"], dtype=pl.Decimal(scale=8)),
+            "close": pl.Series(minute_data["close"], dtype=pl.Decimal(scale=8)),
+            "volume": pl.Series(minute_data["volume"], dtype=pl.Decimal(scale=8)),
+        }
+    )
 
     def resample_to_daily():
         # Aggregate to daily: first open, max high, min low, last close, sum volume
-        return pl.DataFrame({
-            "open": [df["open"][0]],
-            "high": [df["high"].max()],
-            "low": [df["low"].min()],
-            "close": [df["close"][-1]],
-            "volume": [df["volume"].sum()],
-        })
+        return pl.DataFrame(
+            {
+                "open": [df["open"][0]],
+                "high": [df["high"].max()],
+                "low": [df["low"].min()],
+                "close": [df["close"][-1]],
+                "volume": [df["volume"].sum()],
+            }
+        )
 
     result = benchmark(resample_to_daily)
 
@@ -257,13 +270,15 @@ def test_apply_split_adjustment_25200(benchmark, temp_parquet_file):
 
     def apply_split_adjustment():
         split_ratio = Decimal("2.0")  # 2:1 split
-        return df.with_columns([
-            (pl.col("open") / split_ratio).alias("open"),
-            (pl.col("high") / split_ratio).alias("high"),
-            (pl.col("low") / split_ratio).alias("low"),
-            (pl.col("close") / split_ratio).alias("close"),
-            (pl.col("volume") * split_ratio).alias("volume"),
-        ])
+        return df.with_columns(
+            [
+                (pl.col("open") / split_ratio).alias("open"),
+                (pl.col("high") / split_ratio).alias("high"),
+                (pl.col("low") / split_ratio).alias("low"),
+                (pl.col("close") / split_ratio).alias("close"),
+                (pl.col("volume") * split_ratio).alias("volume"),
+            ]
+        )
 
     result = benchmark(apply_split_adjustment)
 

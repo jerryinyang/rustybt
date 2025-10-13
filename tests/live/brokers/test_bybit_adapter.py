@@ -1,17 +1,16 @@
 """Unit tests for Bybit broker adapter."""
 
-import asyncio
+from datetime import UTC
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from rustybt.assets import Asset, Equity
+from rustybt.assets import Equity
 from rustybt.live.brokers.bybit_adapter import (
     BybitBrokerAdapter,
     BybitConnectionError,
     BybitOrderRejectError,
-    BybitRateLimitError,
 )
 
 
@@ -231,9 +230,7 @@ class TestBybitAdapter:
         # Mock ticker response
         bybit_adapter.client.get_tickers.return_value = {
             "retCode": 0,
-            "result": {
-                "list": [{"symbol": "BTCUSDT", "lastPrice": "51000.50"}]
-            },
+            "result": {"list": [{"symbol": "BTCUSDT", "lastPrice": "51000.50"}]},
         }
 
         # Get price
@@ -288,8 +285,7 @@ class TestBybitWebSocketIntegration:
 
         # Verify WebSocket subscribe was called with correct symbols and channels
         mock_ws.subscribe.assert_called_once_with(
-            symbols=["BTCUSDT", "ETHUSDT"],
-            channels=["publicTrade"]
+            symbols=["BTCUSDT", "ETHUSDT"], channels=["publicTrade"]
         )
 
     @pytest.mark.asyncio
@@ -306,10 +302,7 @@ class TestBybitWebSocketIntegration:
         await bybit_adapter.unsubscribe_market_data([test_asset])
 
         # Verify WebSocket unsubscribe was called
-        mock_ws.unsubscribe.assert_called_once_with(
-            symbols=["BTCUSDT"],
-            channels=["publicTrade"]
-        )
+        mock_ws.unsubscribe.assert_called_once_with(symbols=["BTCUSDT"], channels=["publicTrade"])
 
     @pytest.mark.asyncio
     @pytest.mark.websocket_integration
@@ -352,7 +345,8 @@ class TestBybitWebSocketIntegration:
     @pytest.mark.websocket_integration
     async def test_tick_to_bar_buffer_flow(self, bybit_adapter):
         """Test TickData flows from WebSocket to BarBuffer (AC 5)."""
-        from datetime import datetime, timezone
+        from datetime import datetime
+
         from rustybt.live.streaming.models import TickData, TickSide
 
         # Setup connected adapter with bar buffer
@@ -363,10 +357,10 @@ class TestBybitWebSocketIntegration:
         # Create a tick
         tick = TickData(
             symbol="BTCUSDT",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             price=Decimal("50000.50"),
             volume=Decimal("0.1"),
-            side=TickSide.BUY
+            side=TickSide.BUY,
         )
 
         # Call the tick handler (simulates WebSocket callback)
@@ -379,7 +373,8 @@ class TestBybitWebSocketIntegration:
     @pytest.mark.websocket_integration
     async def test_bar_complete_to_queue(self, bybit_adapter):
         """Test completed OHLCV bar pushed to market data queue (AC 5)."""
-        from datetime import datetime, timezone
+        from datetime import datetime
+
         from rustybt.live.streaming.bar_buffer import OHLCVBar
 
         # Setup connected adapter
@@ -388,12 +383,12 @@ class TestBybitWebSocketIntegration:
         # Create a completed bar
         bar = OHLCVBar(
             symbol="BTCUSDT",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             open=Decimal("50000"),
             high=Decimal("50100"),
             low=Decimal("49900"),
             close=Decimal("50050"),
-            volume=Decimal("10.5")
+            volume=Decimal("10.5"),
         )
 
         # Call the bar complete handler
@@ -432,7 +427,7 @@ class TestBybitAdvancedOrderTypes:
             amount=Decimal("0.1"),
             order_type="limit",
             limit_price=Decimal("50000"),
-            post_only=True
+            post_only=True,
         )
 
         # Verify order was submitted with correct params
@@ -448,10 +443,7 @@ class TestBybitAdvancedOrderTypes:
         # Should raise ValueError when combining post_only with market order
         with pytest.raises(ValueError, match="Post-Only mode is incompatible with Market orders"):
             await bybit_adapter.submit_order(
-                asset=test_asset,
-                amount=Decimal("0.1"),
-                order_type="market",
-                post_only=True
+                asset=test_asset, amount=Decimal("0.1"), order_type="market", post_only=True
             )
 
     @pytest.mark.asyncio
@@ -470,7 +462,7 @@ class TestBybitAdvancedOrderTypes:
             asset=test_asset,
             amount=Decimal("-0.1"),  # Sell to reduce position
             order_type="market",
-            reduce_only=True
+            reduce_only=True,
         )
 
         # Verify order was submitted with reduceOnly=True
@@ -496,7 +488,7 @@ class TestBybitAdvancedOrderTypes:
             order_type="limit",
             limit_price=Decimal("51000"),
             post_only=True,
-            reduce_only=True
+            reduce_only=True,
         )
 
         # Verify both params were sent

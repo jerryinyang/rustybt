@@ -1,7 +1,8 @@
 """Tests for parameter space definitions."""
 
-import pytest
 from decimal import Decimal
+
+import pytest
 from pydantic import ValidationError
 
 from rustybt.optimization.parameter_space import (

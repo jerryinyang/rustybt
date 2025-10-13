@@ -14,24 +14,25 @@
 # limitations under the License.
 """Unit tests for Decimal metrics calculations."""
 
-import pytest
-import polars as pl
 from decimal import Decimal
 
+import polars as pl
+import pytest
+
 from rustybt.finance.metrics import (
-    calculate_sharpe_ratio,
-    calculate_sortino_ratio,
-    calculate_max_drawdown,
-    calculate_calmar_ratio,
-    calculate_var,
-    calculate_cvar,
-    calculate_win_rate,
-    calculate_profit_factor,
-    calculate_excess_return,
-    calculate_information_ratio,
-    calculate_tracking_error,
     InsufficientDataError,
     InvalidMetricError,
+    calculate_calmar_ratio,
+    calculate_cvar,
+    calculate_excess_return,
+    calculate_information_ratio,
+    calculate_max_drawdown,
+    calculate_profit_factor,
+    calculate_sharpe_ratio,
+    calculate_sortino_ratio,
+    calculate_tracking_error,
+    calculate_var,
+    calculate_win_rate,
 )
 
 
@@ -198,9 +199,7 @@ class TestCalmarRatio:
 
     def test_calmar_ratio_no_drawdown(self):
         """Test Calmar ratio with no drawdown."""
-        cumulative_returns = pl.Series(
-            "returns", [Decimal("1.0"), Decimal("1.1"), Decimal("1.2")]
-        )
+        cumulative_returns = pl.Series("returns", [Decimal("1.0"), Decimal("1.1"), Decimal("1.2")])
 
         calmar = calculate_calmar_ratio(cumulative_returns)
 
@@ -275,9 +274,7 @@ class TestWinRateAndProfitFactor:
 
     def test_win_rate_bounds(self):
         """Test that win rate is in [0, 1]."""
-        trade_returns = pl.Series(
-            "returns", [Decimal("0.05"), Decimal("-0.02"), Decimal("0.03")]
-        )
+        trade_returns = pl.Series("returns", [Decimal("0.05"), Decimal("-0.02"), Decimal("0.03")])
 
         win_rate = calculate_win_rate(trade_returns)
 
@@ -383,9 +380,7 @@ class TestEdgeCases:
 
     def test_very_small_returns(self):
         """Test metrics with very small returns."""
-        returns = pl.Series(
-            "returns", [Decimal("0.0001"), Decimal("0.0002"), Decimal("-0.0001")]
-        )
+        returns = pl.Series("returns", [Decimal("0.0001"), Decimal("0.0002"), Decimal("-0.0001")])
 
         sharpe = calculate_sharpe_ratio(returns)
 

@@ -124,8 +124,6 @@ from rustybt.utils.events import (
 from rustybt.utils.pandas_utils import PerformanceWarning
 
 # Import CI detection variables
-from tests.conftest import ON_LINUX_CI, ON_WINDOWS_CI, ON_MACOS_CI
-import os
 
 # Because test cases appear to reuse some resources.
 _multiprocess_can_split_ = False
@@ -601,12 +599,8 @@ class TestMiscellaneousAPI(zf.WithMakeAlgo, zf.ZiplineTestCase):
             len(function_stack) == 3900
         ), "Incorrect number of functions called: %s != 3900" % len(function_stack)
         expected_functions = [pre, handle_data, f, g, post] * 97530
-        for n, (f, g) in enumerate(
-            zip(function_stack, expected_functions, strict=False)
-        ):
-            assert (
-                f == g
-            ), "function at position %d was incorrect, expected %s but got %s" % (
+        for n, (f, g) in enumerate(zip(function_stack, expected_functions, strict=False)):
+            assert f == g, "function at position %d was incorrect, expected %s but got %s" % (
                 n,
                 g.__name__,
                 f.__name__,
@@ -668,9 +662,7 @@ class TestMiscellaneousAPI(zf.WithMakeAlgo, zf.ZiplineTestCase):
         start_session = pd.Timestamp("2000-01-01")
 
         # Test before either PLAY existed
-        algo.sim_params = algo.sim_params.create_new(
-            start_session, pd.Timestamp("2001-12-01")
-        )
+        algo.sim_params = algo.sim_params.create_new(start_session, pd.Timestamp("2001-12-01"))
 
         with pytest.raises(SymbolNotFound):
             algo.symbol("PLAY")
@@ -678,28 +670,20 @@ class TestMiscellaneousAPI(zf.WithMakeAlgo, zf.ZiplineTestCase):
             algo.symbols("PLAY")
 
         # Test when first PLAY exists
-        algo.sim_params = algo.sim_params.create_new(
-            start_session, pd.Timestamp("2002-12-01")
-        )
+        algo.sim_params = algo.sim_params.create_new(start_session, pd.Timestamp("2002-12-01"))
         list_result = algo.symbols("PLAY")
         assert list_result[0] == 3
 
         # Test after first PLAY ends
-        algo.sim_params = algo.sim_params.create_new(
-            start_session, pd.Timestamp("2004-12-01")
-        )
+        algo.sim_params = algo.sim_params.create_new(start_session, pd.Timestamp("2004-12-01"))
         assert algo.symbol("PLAY") == 3
 
         # Test after second PLAY begins
-        algo.sim_params = algo.sim_params.create_new(
-            start_session, pd.Timestamp("2005-12-01")
-        )
+        algo.sim_params = algo.sim_params.create_new(start_session, pd.Timestamp("2005-12-01"))
         assert algo.symbol("PLAY") == 4
 
         # Test after second PLAY ends
-        algo.sim_params = algo.sim_params.create_new(
-            start_session, pd.Timestamp("2006-12-01")
-        )
+        algo.sim_params = algo.sim_params.create_new(start_session, pd.Timestamp("2006-12-01"))
         assert algo.symbol("PLAY") == 4
         list_result = algo.symbols("PLAY")
         assert list_result[0] == 4
@@ -1330,9 +1314,7 @@ class TestBeforeTradingStart(zf.WithMakeAlgo, zf.ZiplineTestCase):
         # commission of 0. On 1/07, the price is 780, and the increase in
         # portfolio value is 780-392-0
         assert results.port_value.iloc[0] == 10000
-        self.assertAlmostEqual(
-            results.port_value.iloc[1], 10000 + 780 - 392 - 0, places=2
-        )
+        self.assertAlmostEqual(results.port_value.iloc[1], 10000 + 780 - 392 - 0, places=2)
 
     def test_portfolio_bts_with_overnight_split(self):
         algo_code = dedent(
@@ -1409,9 +1391,7 @@ class TestBeforeTradingStart(zf.WithMakeAlgo, zf.ZiplineTestCase):
 
         # On 1/07, portfolio value is the same as without split
         assert results.port_value.iloc[0] == 10000
-        self.assertAlmostEqual(
-            results.port_value.iloc[1], 10000 + 780 - 392 - 0, places=2
-        )
+        self.assertAlmostEqual(results.port_value.iloc[1], 10000 + 780 - 392 - 0, places=2)
 
 
 class TestAlgoScript(zf.WithMakeAlgo, zf.ZiplineTestCase):
@@ -1597,9 +1577,7 @@ class TestAlgoScript(zf.WithMakeAlgo, zf.ZiplineTestCase):
         results = test_algo.run()
 
         # flatten the list of txns
-        all_txns = [
-            val for sublist in results["transactions"].tolist() for val in sublist
-        ]
+        all_txns = [val for sublist in results["transactions"].tolist() for val in sublist]
 
         assert len(all_txns) == 1
         txn = all_txns[0]
@@ -1680,9 +1658,7 @@ class TestAlgoScript(zf.WithMakeAlgo, zf.ZiplineTestCase):
             )
             results = test_algo.run()
 
-            all_txns = [
-                val for sublist in results["transactions"].tolist() for val in sublist
-            ]
+            all_txns = [val for sublist in results["transactions"].tolist() for val in sublist]
 
             assert len(all_txns) == 67
             # all_orders are all the incremental versions of the
@@ -1693,10 +1669,7 @@ class TestAlgoScript(zf.WithMakeAlgo, zf.ZiplineTestCase):
                 # for each incremental version of each order, the commission
                 # should be its filled amount * 0.02
                 for order_ in all_orders:
-                    assert (
-                        round(abs(order_["filled"] * 0.02 - order_["commission"]), 7)
-                        == 0
-                    )
+                    assert round(abs(order_["filled"] * 0.02 - order_["commission"]), 7) == 0
             else:
                 # the commission should be at least the min_trade_cost
                 for order_ in all_orders:
@@ -1944,10 +1917,7 @@ class TestAlgoScript(zf.WithMakeAlgo, zf.ZiplineTestCase):
         with pytest.raises(TypeError) as cm:
             algo.run()
 
-        assert (
-            "%s() got an unexpected keyword argument 'blahblah'" % name
-            == cm.value.args[0]
-        )
+        assert "%s() got an unexpected keyword argument 'blahblah'" % name == cm.value.args[0]
 
     @parameterized.expand(ARG_TYPE_TEST_CASES, skip_on_empty=True)
     def test_arg_types(self, name, inputs):
@@ -2064,8 +2034,7 @@ class TestAlgoScript(zf.WithMakeAlgo, zf.ZiplineTestCase):
             for i, warning in enumerate(w):
                 assert isinstance(warning.message, UserWarning)
                 assert (
-                    warning.message.args[0]
-                    == "Got a time rule for the second positional argument "
+                    warning.message.args[0] == "Got a time rule for the second positional argument "
                     "date_rule. You should use keyword argument "
                     "time_rule= when calling schedule_function without "
                     "specifying a date_rule"
@@ -2189,13 +2158,9 @@ class TestCapitalChanges(zf.WithMakeAlgo, zf.ZiplineTestCase):
         gen = algo.get_generator()
         results = list(gen)
 
-        cumulative_perf = [
-            r["cumulative_perf"] for r in results if "cumulative_perf" in r
-        ]
+        cumulative_perf = [r["cumulative_perf"] for r in results if "cumulative_perf" in r]
         daily_perf = [r["daily_perf"] for r in results if "daily_perf" in r]
-        capital_change_packets = [
-            r["capital_change"] for r in results if "capital_change" in r
-        ]
+        capital_change_packets = [r["capital_change"] for r in results if "capital_change" in r]
 
         assert len(capital_change_packets) == 1
         assert capital_change_packets[0] == {
@@ -2314,9 +2279,7 @@ class TestCapitalChanges(zf.WithMakeAlgo, zf.ZiplineTestCase):
                 err_msg="cumulative " + stat,
             )
 
-        assert algo.capital_change_deltas == {
-            pd.Timestamp("2006-01-06", tz="UTC"): 50000.0
-        }
+        assert algo.capital_change_deltas == {pd.Timestamp("2006-01-06", tz="UTC"): 50000.0}
 
     @parameterized.expand(
         [
@@ -2378,13 +2341,9 @@ class TestCapitalChanges(zf.WithMakeAlgo, zf.ZiplineTestCase):
         gen = algo.get_generator()
         results = list(gen)
 
-        cumulative_perf = [
-            r["cumulative_perf"] for r in results if "cumulative_perf" in r
-        ]
+        cumulative_perf = [r["cumulative_perf"] for r in results if "cumulative_perf" in r]
         daily_perf = [r["daily_perf"] for r in results if "daily_perf" in r]
-        capital_change_packets = [
-            r["capital_change"] for r in results if "capital_change" in r
-        ]
+        capital_change_packets = [r["capital_change"] for r in results if "capital_change" in r]
 
         assert len(capital_change_packets) == len(capital_changes)
         expected = [
@@ -2411,9 +2370,9 @@ class TestCapitalChanges(zf.WithMakeAlgo, zf.ZiplineTestCase):
         if change_loc == "intraday":
             # Fills at 491, +500 capital change comes at 638 (17:00) and
             # 698 (18:00), ends day at 879
-            day2_return = (1388.0 + 149.0 + 147.0) / 1388.0 * (
-                2184.0 + 60.0 + 60.0
-            ) / 2184.0 * (2804.0 + 181.0 + 181.0) / 2804.0 - 1.0
+            day2_return = (1388.0 + 149.0 + 147.0) / 1388.0 * (2184.0 + 60.0 + 60.0) / 2184.0 * (
+                2804.0 + 181.0 + 181.0
+            ) / 2804.0 - 1.0
         else:
             # Fills at 491, ends day at 879, capital change +1000
             day2_return = (2388.0 + 390.0 + 388.0) / 2388.0 - 1
@@ -2496,9 +2455,7 @@ class TestCapitalChanges(zf.WithMakeAlgo, zf.ZiplineTestCase):
             )
 
         if change_loc == "interday":
-            assert algo.capital_change_deltas == {
-                pd.Timestamp("2006-01-04", tz="UTC"): 1000.0
-            }
+            assert algo.capital_change_deltas == {pd.Timestamp("2006-01-04", tz="UTC"): 1000.0}
         else:
             assert algo.capital_change_deltas == {
                 pd.Timestamp("2006-01-04 17:00", tz="UTC"): 500.0,
@@ -2532,8 +2489,7 @@ class TestCapitalChanges(zf.WithMakeAlgo, zf.ZiplineTestCase):
         )
 
         capital_changes = {
-            pd.Timestamp(val[0], tz="UTC"): {"type": change_type, "value": val[1]}
-            for val in values
+            pd.Timestamp(val[0], tz="UTC"): {"type": change_type, "value": val[1]} for val in values
         }
 
         algocode = """
@@ -2556,14 +2512,10 @@ def order_stuff(context, data):
         gen = algo.get_generator()
         results = list(gen)
 
-        cumulative_perf = [
-            r["cumulative_perf"] for r in results if "cumulative_perf" in r
-        ]
+        cumulative_perf = [r["cumulative_perf"] for r in results if "cumulative_perf" in r]
         minute_perf = [r["minute_perf"] for r in results if "minute_perf" in r]
         daily_perf = [r["daily_perf"] for r in results if "daily_perf" in r]
-        capital_change_packets = [
-            r["capital_change"] for r in results if "capital_change" in r
-        ]
+        capital_change_packets = [r["capital_change"] for r in results if "capital_change" in r]
 
         assert len(capital_change_packets) == len(capital_changes)
         expected = [
@@ -2597,9 +2549,7 @@ def order_stuff(context, data):
         expected_minute["pnl"][392:782] = 2.0
         expected_minute["pnl"][782:] = 3.0
         for start, end in ((0, 390), (390, 780), (780, 1170)):
-            expected_minute["pnl"][start:end] = np.cumsum(
-                expected_minute["pnl"][start:end]
-            )
+            expected_minute["pnl"][start:end] = np.cumsum(expected_minute["pnl"][start:end])
 
         expected_minute["capital_used"] = np.concatenate(
             (
@@ -2658,15 +2608,9 @@ def order_stuff(context, data):
             prev_subperiod_return = expected_minute["returns"][538]
 
             # From 1/04 17:00 to 17:59
-            cur_subperiod_pnl = (
-                expected_minute["pnl"][539:599] - expected_minute["pnl"][538]
-            )
-            cur_subperiod_starting_value = np.array(
-                [expected_minute["ending_value"][538]] * 60
-            )
-            cur_subperiod_starting_cash = np.array(
-                [expected_minute["ending_cash"][538] + 500] * 60
-            )
+            cur_subperiod_pnl = expected_minute["pnl"][539:599] - expected_minute["pnl"][538]
+            cur_subperiod_starting_value = np.array([expected_minute["ending_value"][538]] * 60)
+            cur_subperiod_starting_cash = np.array([expected_minute["ending_cash"][538] + 500] * 60)
 
             cur_subperiod_returns = cur_subperiod_pnl / (
                 cur_subperiod_starting_value + cur_subperiod_starting_cash
@@ -2679,12 +2623,8 @@ def order_stuff(context, data):
             prev_subperiod_return = expected_minute["returns"][598]
 
             # From 1/04 18:00 to 21:00
-            cur_subperiod_pnl = (
-                expected_minute["pnl"][599:780] - expected_minute["pnl"][598]
-            )
-            cur_subperiod_starting_value = np.array(
-                [expected_minute["ending_value"][598]] * 181
-            )
+            cur_subperiod_pnl = expected_minute["pnl"][599:780] - expected_minute["pnl"][598]
+            cur_subperiod_starting_value = np.array([expected_minute["ending_value"][598]] * 181)
             cur_subperiod_starting_cash = np.array(
                 [expected_minute["ending_cash"][598] + 500] * 181
             )
@@ -2716,12 +2656,12 @@ def order_stuff(context, data):
 
         # "Add" daily return from 1/03 to minute returns on 1/04 and 1/05
         # "Add" daily return from 1/04 to minute returns on 1/05
-        expected_cumulative["returns"][390:] = (
-            expected_cumulative["returns"][390:] + 1
-        ) * (expected_daily["returns"][0] + 1) - 1
-        expected_cumulative["returns"][780:] = (
-            expected_cumulative["returns"][780:] + 1
-        ) * (expected_daily["returns"][1] + 1) - 1
+        expected_cumulative["returns"][390:] = (expected_cumulative["returns"][390:] + 1) * (
+            expected_daily["returns"][0] + 1
+        ) - 1
+        expected_cumulative["returns"][780:] = (expected_cumulative["returns"][780:] + 1) * (
+            expected_daily["returns"][1] + 1
+        ) - 1
 
         # Add daily pnl/capital_used from 1/03 to 1/04 and 1/05
         # Add daily pnl/capital_used from 1/04 to 1/05
@@ -2732,9 +2672,7 @@ def order_stuff(context, data):
 
         # starting_cash, starting_value are same as those of the first daily
         # packet
-        expected_cumulative["starting_cash"] = np.repeat(
-            expected_daily["starting_cash"][0:1], 1170
-        )
+        expected_cumulative["starting_cash"] = np.repeat(expected_daily["starting_cash"][0:1], 1170)
         expected_cumulative["starting_value"] = np.repeat(
             expected_daily["starting_value"][0:1], 1170
         )
@@ -2759,9 +2697,7 @@ def order_stuff(context, data):
             )
 
         if change_loc == "interday":
-            assert algo.capital_change_deltas == {
-                pd.Timestamp("2006-01-04", tz="UTC"): 1000.0
-            }
+            assert algo.capital_change_deltas == {pd.Timestamp("2006-01-04", tz="UTC"): 1000.0}
         else:
             assert algo.capital_change_deltas == {
                 pd.Timestamp("2006-01-04 17:00", tz="UTC"): 500.0,
@@ -2955,11 +2891,7 @@ class TestTradingControls(zf.WithMakeAlgo, zf.ZiplineTestCase):
         # Set HistoricalRestrictions for one sid for the entire simulation,
         # and fail.
         rlm = HistoricalRestrictions(
-            [
-                Restriction(
-                    self.sid, self.sim_params.start_session, RESTRICTION_STATES.FROZEN
-                )
-            ]
+            [Restriction(self.sid, self.sim_params.start_session, RESTRICTION_STATES.FROZEN)]
         )
         algo = self.make_algo(
             sid=self.sid,
@@ -3005,9 +2937,7 @@ class TestTradingControls(zf.WithMakeAlgo, zf.ZiplineTestCase):
         # set the restricted list to exclude the sid, and succeed
         rlm = HistoricalRestrictions(
             [
-                Restriction(
-                    sid, self.sim_params.start_session, RESTRICTION_STATES.FROZEN
-                )
+                Restriction(sid, self.sim_params.start_session, RESTRICTION_STATES.FROZEN)
                 for sid in [134, 135, 136]
             ]
         )
@@ -3021,9 +2951,7 @@ class TestTradingControls(zf.WithMakeAlgo, zf.ZiplineTestCase):
         self.check_algo_succeeds(algo)
         assert algo.could_trade
 
-    @parameterized.expand(
-        [("order_first_restricted_sid", 0), ("order_second_restricted_sid", 1)]
-    )
+    @parameterized.expand([("order_first_restricted_sid", 0), ("order_second_restricted_sid", 1)])
     def test_set_multiple_asset_restrictions(self, name, to_order_idx):
         def initialize(algo, restrictions1, restrictions2, on_error):
             algo.order_count = 0
@@ -3053,9 +2981,7 @@ class TestTradingControls(zf.WithMakeAlgo, zf.ZiplineTestCase):
         def initialize(self, restricted_list):
             self.order_count = 0
             # self.set_do_not_order_list(restricted_list, on_error="fail")
-            self.set_asset_restrictions(
-                StaticRestrictions(restricted_list), on_error="fail"
-            )
+            self.set_asset_restrictions(StaticRestrictions(restricted_list), on_error="fail")
 
         def handle_data(algo, data):
             algo.could_trade = data.can_trade(algo.sid(self.sid))
@@ -3075,9 +3001,7 @@ class TestTradingControls(zf.WithMakeAlgo, zf.ZiplineTestCase):
     def test_set_max_order_size(self):
         def initialize(algo, asset, max_shares, max_notional):
             algo.order_count = 0
-            algo.set_max_order_size(
-                asset=asset, max_shares=max_shares, max_notional=max_notional
-            )
+            algo.set_max_order_size(asset=asset, max_shares=max_shares, max_notional=max_notional)
 
         # Buy one share.
         def handle_data(algo, data):
@@ -3399,9 +3323,7 @@ class TestAccountControls(zf.WithMakeAlgo, zf.ZiplineTestCase):
             max_leverage=0,
         )
         self.check_algo_fails(algo)
-        assert algo.recorded_vars["latest_time"] == pd.Timestamp(
-            "2006-01-04 21:00:00", tz="UTC"
-        )
+        assert algo.recorded_vars["latest_time"] == pd.Timestamp("2006-01-04 21:00:00", tz="UTC")
 
         # Set max leverage to 1 so buying one share passes
         def handle_data(algo, data):
@@ -3443,17 +3365,13 @@ class TestAccountControls(zf.WithMakeAlgo, zf.ZiplineTestCase):
         offset = pd.Timedelta("1 days")
         algo = make_algo(min_leverage=1, grace_period=offset)
         self.check_algo_fails(algo)
-        assert algo.recorded_vars["latest_time"] == pd.Timestamp(
-            "2006-01-04 21:00:00", tz="UTC"
-        )
+        assert algo.recorded_vars["latest_time"] == pd.Timestamp("2006-01-04 21:00:00", tz="UTC")
 
         # Increase the offset to 2 days, and the algorithm fails a day later
         offset = pd.Timedelta("2 days")
         algo = make_algo(min_leverage=1, grace_period=offset)
         self.check_algo_fails(algo)
-        assert algo.recorded_vars["latest_time"] == pd.Timestamp(
-            "2006-01-05 21:00:00", tz="UTC"
-        )
+        assert algo.recorded_vars["latest_time"] == pd.Timestamp("2006-01-05 21:00:00", tz="UTC")
 
         # Set the min_leverage to .0001 and the algorithm succeeds.
         algo = make_algo(min_leverage=0.0001, grace_period=offset)
@@ -3607,9 +3525,7 @@ class TestFuturesAlgo(zf.WithMakeAlgo, zf.ZiplineTestCase):
         results = algo.run()
 
         # Flatten the list of transactions.
-        all_txns = [
-            val for sublist in results["transactions"].tolist() for val in sublist
-        ]
+        all_txns = [val for sublist in results["transactions"].tolist() for val in sublist]
 
         assert len(all_txns) == 1
         txn = all_txns[0]
@@ -3636,9 +3552,7 @@ class TestFuturesAlgo(zf.WithMakeAlgo, zf.ZiplineTestCase):
         assert results["orders"][0][0]["commission"] == 0.0
 
         # Flatten the list of transactions.
-        all_txns = [
-            val for sublist in results["transactions"].tolist() for val in sublist
-        ]
+        all_txns = [val for sublist in results["transactions"].tolist() for val in sublist]
 
         # With a volume limit of 0.05, and a total volume of 100 contracts
         # traded per minute, we should require 2 transactions to order 10
@@ -3844,9 +3758,7 @@ class TestOrderCancelation(zf.WithMakeAlgo, zf.ZiplineTestCase):
         # one txn per minute.  389 the first day (since no order until the
         # end of the first minute).  390 on the second day.  221 on the
         # the last day, sum = 1000.
-        np.testing.assert_array_equal(
-            [389, 390, 221], list(map(len, results.transactions))
-        )
+        np.testing.assert_array_equal([389, 390, 221], list(map(len, results.transactions)))
 
         with self._caplog.at_level(logging.WARNING):
             assert len(self._caplog.messages) == 0
@@ -4070,9 +3982,7 @@ class TestDailyEquityAutoClose(zf.WithMakeAlgo, zf.ZiplineTestCase):
 
         # We should have exactly one auto-close transaction on the close date
         # of asset 0.
-        (first_auto_close_transaction,) = transactions_for_date(
-            assets[0].auto_close_date
-        )
+        (first_auto_close_transaction,) = transactions_for_date(assets[0].auto_close_date)
         assert first_auto_close_transaction == {
             "amount": -order_size,
             "commission": None,
@@ -4084,9 +3994,7 @@ class TestDailyEquityAutoClose(zf.WithMakeAlgo, zf.ZiplineTestCase):
             "order_id": None,  # Auto-close txns emit Nones for order_id.
         }
 
-        (second_auto_close_transaction,) = transactions_for_date(
-            assets[1].auto_close_date
-        )
+        (second_auto_close_transaction,) = transactions_for_date(assets[1].auto_close_date)
         assert second_auto_close_transaction == {
             "amount": -order_size,
             "commission": None,
@@ -4114,9 +4022,7 @@ class TestDailyEquityAutoClose(zf.WithMakeAlgo, zf.ZiplineTestCase):
             # The only order we place in this test should never be filled.
             assert context.portfolio.cash == context.portfolio.starting_cash
 
-            today_session = self.trading_calendar.minute_to_session(
-                context.get_datetime()
-            )
+            today_session = self.trading_calendar.minute_to_session(context.get_datetime())
             day_after_auto_close = self.trading_calendar.next_session(
                 first_asset_auto_close_date,
             )
@@ -4384,9 +4290,7 @@ class TestMinutelyEquityAutoClose(zf.WithMakeAlgo, zf.ZiplineTestCase):
 
         # We should have exactly one auto-close transaction on the close date
         # of asset 0.
-        (first_auto_close_transaction,) = transactions_for_date(
-            assets[0].auto_close_date
-        )
+        (first_auto_close_transaction,) = transactions_for_date(assets[0].auto_close_date)
         assert first_auto_close_transaction == {
             "amount": -order_size,
             "commission": None,
@@ -4398,9 +4302,7 @@ class TestMinutelyEquityAutoClose(zf.WithMakeAlgo, zf.ZiplineTestCase):
             "order_id": None,  # Auto-close txns emit Nones for order_id.
         }
 
-        (second_auto_close_transaction,) = transactions_for_date(
-            assets[1].auto_close_date
-        )
+        (second_auto_close_transaction,) = transactions_for_date(assets[1].auto_close_date)
         assert second_auto_close_transaction == {
             "amount": -order_size,
             "commission": None,

@@ -12,21 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from unittest import mock
+
+import numpy as np
+import pandas as pd
+import pytest
 from parameterized import parameterized
 
-import pandas as pd
-import numpy as np
-from unittest import mock
 from rustybt.errors import UnsupportedOrderParameters
 from rustybt.sources.requests_csv import mask_requests_args
-from rustybt.utils import factory
 from rustybt.testing import FetcherDataPortal
 from rustybt.testing.fixtures import (
-    WithResponses,
     WithMakeAlgo,
+    WithResponses,
     ZiplineTestCase,
 )
-
+from rustybt.utils import factory
 from tests.resources.fetcher_inputs.fetcher_test_data import (
     AAPL_CSV_DATA,
     AAPL_IBM_CSV_DATA,
@@ -36,11 +37,10 @@ from tests.resources.fetcher_inputs.fetcher_test_data import (
     FETCHER_UNIVERSE_DATA,
     FETCHER_UNIVERSE_DATA_TICKER_COLUMN,
     MULTI_SIGNAL_CSV_DATA,
+    NFLX_DATA,
     NON_ASSET_FETCHER_UNIVERSE_DATA,
     PALLADIUM_DATA,
-    NFLX_DATA,
 )
-import pytest
 
 
 # XXX: The algorithms in this suite do way more work than they should have to.
@@ -165,7 +165,7 @@ def handle_data(context, data):
             if "minute_perf" in result
         ]
 
-        assert 6 * 390 == len(signal)
+        assert len(signal) == 6 * 390
 
         # csv data is:
         # symbol,date,signal
@@ -211,8 +211,8 @@ def handle_data(context, data):
     """
         )
 
-        assert 5 == results["ibm_signal"].iloc[-1]
-        assert 5 == results["dell_signal"].iloc[-1]
+        assert results["ibm_signal"].iloc[-1] == 5
+        assert results["dell_signal"].iloc[-1] == 5
 
     def test_fetch_csv_with_pure_signal_file(self):
         self.responses.add(
@@ -276,9 +276,9 @@ def handle_data(context, data):
         """
         )
 
-        assert 5 == results["signal"][-1]
-        assert 50 == results["scaled"][-1]
-        assert 24 == results["price"][-1]  # fake value
+        assert results["signal"][-1] == 5
+        assert results["scaled"][-1] == 50
+        assert results["price"][-1] == 24  # fake value
 
     def test_algo_fetch_csv_with_extra_symbols(self):
         self.responses.add(
@@ -309,9 +309,9 @@ def handle_data(context, data):
             """
         )
 
-        assert 5 == results["signal"][-1]
-        assert 50 == results["scaled"][-1]
-        assert 24 == results["price"][-1]  # fake value
+        assert results["signal"][-1] == 5
+        assert results["scaled"][-1] == 50
+        assert results["price"][-1] == 24  # fake value
 
     @parameterized.expand(
         [
@@ -391,7 +391,7 @@ def handle_data(context, data):
             )
 
             np.testing.assert_array_equal([24] * 251, results["aapl"])
-            assert 337 == pd.to_numeric(results["palladium"]).iloc[-1]
+            assert pd.to_numeric(results["palladium"]).iloc[-1] == 337
 
             expected = {
                 "allow_redirects": False,
@@ -462,9 +462,9 @@ def handle_data(context, data):
             results = self.run_algo(real_algocode, sim_params=sim_params)
 
             assert len(results) == 3
-            assert 3 == results["sid_count"].iloc[0]
-            assert 3 == results["sid_count"].iloc[1]
-            assert 4 == results["sid_count"].iloc[2]
+            assert results["sid_count"].iloc[0] == 3
+            assert results["sid_count"].iloc[1] == 3
+            assert results["sid_count"].iloc[2] == 4
 
     def test_fetcher_universe_non_security_return(self):
         self.responses.add(
@@ -568,10 +568,10 @@ def handle_data(context, data):
             sim_params=sim_params,
         )
 
-        assert 3 == len(results)
-        assert 3 == results["sid_count"].iloc[0]
-        assert 3 == results["sid_count"].iloc[1]
-        assert 4 == results["sid_count"].iloc[2]
+        assert len(results) == 3
+        assert results["sid_count"].iloc[0] == 3
+        assert results["sid_count"].iloc[1] == 3
+        assert results["sid_count"].iloc[2] == 4
 
     def test_fetcher_in_before_trading_start(self):
         self.responses.add(
@@ -643,4 +643,4 @@ def handle_data(context, data):
             sim_params=sim_params,
         )
 
-        assert 3 == len(results)
+        assert len(results) == 3

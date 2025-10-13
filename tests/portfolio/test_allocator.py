@@ -280,9 +280,7 @@ class TestPortfolioAllocatorBasics:
         portfolio.add_strategy("strategy3", MockStrategy(), Decimal("0.20"))
 
         # Total allocated cash should equal sum of strategy cash
-        total_strategy_cash = sum(
-            alloc.ledger.cash for alloc in portfolio.strategies.values()
-        )
+        total_strategy_cash = sum(alloc.ledger.cash for alloc in portfolio.strategies.values())
 
         assert total_strategy_cash == portfolio.allocated_capital
         assert portfolio.allocated_capital == Decimal("90000.00")
@@ -357,9 +355,7 @@ class TestPortfolioAllocatorProperties:
             )
 
         # Property: Sum of allocated capital equals total allocated
-        total_allocated = sum(
-            alloc.allocated_capital for alloc in portfolio.strategies.values()
-        )
+        total_allocated = sum(alloc.allocated_capital for alloc in portfolio.strategies.values())
 
         assert total_allocated == portfolio.allocated_capital
 
@@ -425,9 +421,7 @@ class TestPortfolioAllocatorProperties:
 
         # Property: Portfolio value = sum of strategy values
         portfolio_metrics = portfolio.get_portfolio_metrics()
-        total_value = sum(
-            alloc.ledger.portfolio_value for alloc in portfolio.strategies.values()
-        )
+        total_value = sum(alloc.ledger.portfolio_value for alloc in portfolio.strategies.values())
 
         assert Decimal(portfolio_metrics["total_value"]) == total_value
 
@@ -583,7 +577,7 @@ class TestStrategyPerformance:
             Decimal("107000"),
         ]
 
-        for ts, val in zip(timestamps, values):
+        for ts, val in zip(timestamps, values, strict=False):
             perf.update(ts, val)
 
         # Verify data stored
@@ -612,7 +606,7 @@ class TestStrategyPerformance:
 
         timestamps = [pd.Timestamp("2023-01-01") + pd.Timedelta(days=i) for i in range(5)]
 
-        for ts, val in zip(timestamps, values):
+        for ts, val in zip(timestamps, values, strict=False):
             perf.update(ts, val)
 
         # Peak should be 115000
@@ -636,7 +630,7 @@ class TestStrategyPerformance:
 
         timestamps = [pd.Timestamp("2023-01-01") + pd.Timedelta(days=i) for i in range(5)]
 
-        for ts, val in zip(timestamps, values):
+        for ts, val in zip(timestamps, values, strict=False):
             perf.update(ts, val)
 
         # Should have 2 wins, 2 losses

@@ -2,14 +2,15 @@
 Helpers for downsampling code.
 """
 
-from toolz import compose
 from operator import attrgetter, methodcaller
+
+from toolz import compose
 
 from rustybt.utils.input_validation import expect_element
 from rustybt.utils.numpy_utils import changed_locations
 from rustybt.utils.sharedoc import (
-    templated_docstring,
     PIPELINE_DOWNSAMPLING_FREQUENCY_DOC,
+    templated_docstring,
 )
 
 _dt_to_period = {
@@ -39,7 +40,7 @@ def select_sampling_indices(dates, frequency):
         Dates from which to select sample choices.
     {frequency}
 
-    Returns
+    Returns:
     -------
     indices : np.array[int64]
         An array condtaining indices of dates on which samples should be taken.
@@ -48,7 +49,7 @@ def select_sampling_indices(dates, frequency):
         will include the first date of each subsequent year/quarter/month/week,
         as determined by ``frequency``.
 
-    Notes
+    Notes:
     -----
     This function assumes that ``dates`` does not have large gaps.
 

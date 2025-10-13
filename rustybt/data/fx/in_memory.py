@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from .base import FXRateReader, DEFAULT_FX_RATE
+from .base import DEFAULT_FX_RATE, FXRateReader
 from .utils import check_dts
 
 

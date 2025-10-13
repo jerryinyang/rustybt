@@ -28,7 +28,7 @@ class SessionBarReader(BarReader):
     def sessions(self):
         """
 
-        Returns
+        Returns:
         -------
         sessions : DatetimeIndex
            All session labels (unioning the range for all assets) which the
@@ -48,7 +48,7 @@ class CurrencyAwareSessionBarReader(SessionBarReader):
         sids : np.array[int64]
             Array of sids for which currencies are needed.
 
-        Returns
+        Returns:
         -------
         currency_codes : np.array[object]
             Array of currency codes for listing currencies of

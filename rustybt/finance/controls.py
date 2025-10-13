@@ -16,8 +16,6 @@ import abc
 import logging
 from datetime import datetime
 
-import pandas as pd
-
 from rustybt.errors import (
     AccountControlViolation,
     TradingControlViolation,
@@ -59,9 +57,7 @@ class TradingControl(metaclass=abc.ABCMeta):
     def _constraint_msg(self, metadata):
         constraint = repr(self)
         if metadata:
-            constraint = "{constraint} (Metadata: {metadata})".format(
-                constraint=constraint, metadata=metadata
-            )
+            constraint = f"{constraint} (Metadata: {metadata})"
         return constraint
 
     def handle_violation(self, asset, amount, datetime, metadata=None):
@@ -85,9 +81,7 @@ class TradingControl(metaclass=abc.ABCMeta):
             )
 
     def __repr__(self):
-        return "{name}({attrs})".format(
-            name=self.__class__.__name__, attrs=self.__fail_args
-        )
+        return f"{self.__class__.__name__}({self.__fail_args})"
 
 
 class MaxOrderCount(TradingControl):
@@ -96,7 +90,6 @@ class MaxOrderCount(TradingControl):
     """
 
     def __init__(self, on_error, max_count):
-
         super(MaxOrderCount, self).__init__(on_error, max_count=max_count)
         self.orders_placed = 0
         self.max_count = max_count
@@ -165,7 +158,6 @@ class MaxOrderSize(TradingControl):
         """Fail if the magnitude of the given order exceeds either self.max_shares
         or self.max_notional.
         """
-
         if self.asset is not None and self.asset != asset:
             return
 
@@ -175,9 +167,7 @@ class MaxOrderSize(TradingControl):
         current_asset_price = algo_current_data.current(asset, "price")
         order_value = amount * current_asset_price
 
-        too_much_value = (
-            self.max_notional is not None and abs(order_value) > self.max_notional
-        )
+        too_much_value = self.max_notional is not None and abs(order_value) > self.max_notional
 
         if too_much_value:
             self.handle_violation(asset, amount, algo_datetime)
@@ -210,25 +200,20 @@ class MaxPositionSize(TradingControl):
         greater in shares than self.max_shares or greater in dollar value than
         self.max_notional.
         """
-
         if self.asset is not None and self.asset != asset:
             return
 
         current_share_count = portfolio.positions[asset].amount
         shares_post_order = current_share_count + amount
 
-        too_many_shares = (
-            self.max_shares is not None and abs(shares_post_order) > self.max_shares
-        )
+        too_many_shares = self.max_shares is not None and abs(shares_post_order) > self.max_shares
         if too_many_shares:
             self.handle_violation(asset, amount, algo_datetime)
 
         current_price = algo_current_data.current(asset, "price")
         value_post_order = shares_post_order * current_price
 
-        too_much_value = (
-            self.max_notional is not None and abs(value_post_order) > self.max_notional
-        )
+        too_much_value = self.max_notional is not None and abs(value_post_order) > self.max_notional
 
         if too_much_value:
             self.handle_violation(asset, amount, algo_datetime)
@@ -311,9 +296,7 @@ class AccountControl(metaclass=abc.ABCMeta):
         raise AccountControlViolation(constraint=repr(self))
 
     def __repr__(self):
-        return "{name}({attrs})".format(
-            name=self.__class__.__name__, attrs=self.__fail_args
-        )
+        return f"{self.__class__.__name__}({self.__fail_args})"
 
 
 class MaxLeverage(AccountControl):
@@ -355,9 +338,7 @@ class MinLeverage(AccountControl):
     double the account value by the deadline date.
     """
 
-    @expect_types(
-        __funcname="MinLeverage", min_leverage=(int, float), deadline=datetime
-    )
+    @expect_types(__funcname="MinLeverage", min_leverage=(int, float), deadline=datetime)
     @expect_bounded(__funcname="MinLeverage", min_leverage=(0, None))
     def __init__(self, min_leverage, deadline):
         super(MinLeverage, self).__init__(min_leverage=min_leverage, deadline=deadline)

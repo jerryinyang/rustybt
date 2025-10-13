@@ -12,8 +12,8 @@ Critical requirement per docs/architecture/strategy-reusability-guarantee.md:
 
 import asyncio
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, Mock
+from typing import Any
+from unittest.mock import Mock
 
 import pandas as pd
 import pytest
@@ -43,12 +43,14 @@ def mock_sim_params():
 def mock_asset_finder():
     """Create mock asset finder."""
     finder = Mock()
+
     # Mock symbol lookup
     def mock_symbol(symbol_str):
         asset = Mock(spec=Equity)
         asset.symbol = symbol_str
         asset.sid = 1
         return asset
+
     finder.lookup_symbol = mock_symbol
     return finder
 
@@ -88,7 +90,7 @@ class SimpleTestStrategy(TradingAlgorithm):
         # Test can_trade()
         if data.can_trade(context.asset):
             # Test current()
-            price = data.current(context.asset, "close")
+            data.current(context.asset, "close")
 
             # Test history() - commented out as SimplifiedBarData is placeholder
             # prices = data.history(context.asset, "close", 10, "1d")
@@ -111,9 +113,9 @@ class MockBrokerAdapter(BrokerAdapter):
         super().__init__()
         self.connected = False
         self.orders = []
-        self.positions_dict: Dict[str, Any] = {}
+        self.positions_dict: dict[str, Any] = {}
         self.market_data_queue: asyncio.Queue = asyncio.Queue()
-        self.subscribed_assets: List[Any] = []
+        self.subscribed_assets: list[Any] = []
 
     async def connect(self) -> None:
         """Connect to mock broker."""
@@ -128,8 +130,8 @@ class MockBrokerAdapter(BrokerAdapter):
         asset: Any,
         amount: Decimal,
         order_type: str = "market",
-        limit_price: Optional[Decimal] = None,
-        stop_price: Optional[Decimal] = None,
+        limit_price: Decimal | None = None,
+        stop_price: Decimal | None = None,
     ) -> str:
         """Submit order to mock broker.
 
@@ -137,15 +139,17 @@ class MockBrokerAdapter(BrokerAdapter):
             Order ID
         """
         order_id = f"order-{len(self.orders) + 1}"
-        self.orders.append({
-            "id": order_id,
-            "asset": asset,
-            "amount": amount,
-            "order_type": order_type,
-            "limit_price": limit_price,
-            "stop_price": stop_price,
-            "status": "submitted"
-        })
+        self.orders.append(
+            {
+                "id": order_id,
+                "asset": asset,
+                "amount": amount,
+                "order_type": order_type,
+                "limit_price": limit_price,
+                "stop_price": stop_price,
+                "status": "submitted",
+            }
+        )
         return order_id
 
     async def cancel_order(self, broker_order_id: str) -> None:
@@ -156,7 +160,7 @@ class MockBrokerAdapter(BrokerAdapter):
                 return
         raise ValueError(f"Order {broker_order_id} not found")
 
-    async def get_account_info(self) -> Dict[str, Decimal]:
+    async def get_account_info(self) -> dict[str, Decimal]:
         """Get account information."""
         return {
             "cash": Decimal("100000"),
@@ -164,30 +168,30 @@ class MockBrokerAdapter(BrokerAdapter):
             "buying_power": Decimal("400000"),  # 4x leverage
         }
 
-    async def get_positions(self) -> List[Dict]:
+    async def get_positions(self) -> list[dict]:
         """Get current positions."""
         return list(self.positions_dict.values())
 
-    async def get_open_orders(self) -> List[Dict]:
+    async def get_open_orders(self) -> list[dict]:
         """Get open/pending orders."""
         return [order for order in self.orders if order["status"] in ("submitted", "pending")]
 
-    async def subscribe_market_data(self, assets: List[Any]) -> None:
+    async def subscribe_market_data(self, assets: list[Any]) -> None:
         """Subscribe to real-time market data."""
         self.subscribed_assets.extend(assets)
 
-    async def unsubscribe_market_data(self, assets: List[Any]) -> None:
+    async def unsubscribe_market_data(self, assets: list[Any]) -> None:
         """Unsubscribe from market data."""
         for asset in assets:
             if asset in self.subscribed_assets:
                 self.subscribed_assets.remove(asset)
 
-    async def get_next_market_data(self) -> Optional[Dict]:
+    async def get_next_market_data(self) -> dict | None:
         """Get next market data update (blocking)."""
         try:
             event_data = await asyncio.wait_for(self.market_data_queue.get(), timeout=0.1)
             return event_data
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
 
     async def get_current_price(self, asset: Any) -> Decimal:
@@ -198,12 +202,9 @@ class MockBrokerAdapter(BrokerAdapter):
         """Check if broker connection is active."""
         return self.connected
 
-    def push_market_data(self, asset_symbol: str, ohlcv: Dict[str, Decimal]) -> None:
+    def push_market_data(self, asset_symbol: str, ohlcv: dict[str, Decimal]) -> None:
         """Push market data to queue (for testing)."""
-        self.market_data_queue.put_nowait({
-            "asset_symbol": asset_symbol,
-            **ohlcv
-        })
+        self.market_data_queue.put_nowait({"asset_symbol": asset_symbol, **ohlcv})
 
 
 @pytest.mark.integration
@@ -217,7 +218,7 @@ async def test_strategy_reusability_initialization(mock_sim_params, mock_asset_f
     - Strategy state is set up correctly
     """
     strategy = SimpleTestStrategy(sim_params=mock_sim_params, asset_finder=mock_asset_finder)
-    mock_broker = MockBrokerAdapter()
+    MockBrokerAdapter()
 
     # Create mock portfolio and account
     mock_portfolio = Mock()
@@ -229,7 +230,7 @@ async def test_strategy_reusability_initialization(mock_sim_params, mock_asset_f
         strategy=strategy,
         data_portal=None,  # Will be enhanced in Story 6.3
         portfolio=mock_portfolio,
-        account=mock_account
+        account=mock_account,
     )
 
     # Initialize strategy
@@ -254,7 +255,7 @@ async def test_strategy_reusability_context_api(mock_sim_params, mock_asset_find
     - User-defined context attributes work
     """
     strategy = SimpleTestStrategy(sim_params=mock_sim_params, asset_finder=mock_asset_finder)
-    mock_broker = MockBrokerAdapter()
+    MockBrokerAdapter()
 
     # Create mock portfolio and account with expected API
     mock_portfolio = Mock()
@@ -267,10 +268,7 @@ async def test_strategy_reusability_context_api(mock_sim_params, mock_asset_find
 
     # Create strategy executor
     executor = StrategyExecutor(
-        strategy=strategy,
-        data_portal=None,
-        portfolio=mock_portfolio,
-        account=mock_account
+        strategy=strategy, data_portal=None, portfolio=mock_portfolio, account=mock_account
     )
 
     # Initialize strategy
@@ -298,7 +296,7 @@ async def test_strategy_reusability_data_api(mock_sim_params, mock_asset_finder)
     - data.history() works (placeholder for now)
     """
     strategy = SimpleTestStrategy(sim_params=mock_sim_params, asset_finder=mock_asset_finder)
-    mock_broker = MockBrokerAdapter()
+    MockBrokerAdapter()
 
     # Create mock portfolio and account
     mock_portfolio = Mock()
@@ -307,10 +305,7 @@ async def test_strategy_reusability_data_api(mock_sim_params, mock_asset_finder)
 
     # Create strategy executor
     executor = StrategyExecutor(
-        strategy=strategy,
-        data_portal=None,
-        portfolio=mock_portfolio,
-        account=mock_account
+        strategy=strategy, data_portal=None, portfolio=mock_portfolio, account=mock_account
     )
 
     # Initialize strategy
@@ -324,7 +319,7 @@ async def test_strategy_reusability_data_api(mock_sim_params, mock_asset_finder)
         low=Decimal("149.00"),
         close=Decimal("150.50"),
         volume=Decimal("1000000"),
-        bar_timestamp=pd.Timestamp.now()
+        bar_timestamp=pd.Timestamp.now(),
     )
 
     # Call on_data (this will trigger handle_data)
@@ -347,7 +342,7 @@ async def test_strategy_reusability_order_api(mock_sim_params, mock_asset_finder
     - Orders are submitted to broker
     """
     strategy = SimpleTestStrategy(sim_params=mock_sim_params, asset_finder=mock_asset_finder)
-    mock_broker = MockBrokerAdapter()
+    MockBrokerAdapter()
 
     # Create mock portfolio and account
     mock_portfolio = Mock()
@@ -356,10 +351,7 @@ async def test_strategy_reusability_order_api(mock_sim_params, mock_asset_finder
 
     # Create strategy executor
     executor = StrategyExecutor(
-        strategy=strategy,
-        data_portal=None,
-        portfolio=mock_portfolio,
-        account=mock_account
+        strategy=strategy, data_portal=None, portfolio=mock_portfolio, account=mock_account
     )
 
     # Initialize strategy
@@ -373,7 +365,7 @@ async def test_strategy_reusability_order_api(mock_sim_params, mock_asset_finder
         low=Decimal("149.00"),
         close=Decimal("150.50"),
         volume=Decimal("1000000"),
-        bar_timestamp=pd.Timestamp.now()
+        bar_timestamp=pd.Timestamp.now(),
     )
 
     # Call on_data (this triggers order placement)
@@ -410,7 +402,7 @@ async def test_strategy_reusability_live_engine_integration(mock_sim_params, moc
         broker_adapter=mock_broker,
         data_portal=None,  # Will be enhanced in Story 6.3
         portfolio=mock_portfolio,
-        account=mock_account
+        account=mock_account,
     )
 
     # Push market data to mock broker
@@ -422,8 +414,8 @@ async def test_strategy_reusability_live_engine_integration(mock_sim_params, moc
             "low": Decimal("149.00"),
             "close": Decimal("150.50"),
             "volume": Decimal("1000000"),
-            "bar_timestamp": pd.Timestamp.now()
-        }
+            "bar_timestamp": pd.Timestamp.now(),
+        },
     )
 
     # Run engine for a short duration
@@ -434,15 +426,15 @@ async def test_strategy_reusability_live_engine_integration(mock_sim_params, moc
 
     # Create tasks
     engine_task = asyncio.create_task(engine.run())
-    timeout_task = asyncio.create_task(run_engine_briefly())
+    asyncio.create_task(run_engine_briefly())
 
     # Wait for either engine or timeout
     try:
         await asyncio.wait_for(engine_task, timeout=2.0)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         # Expected - we'll trigger shutdown
         await engine.graceful_shutdown()
-    except Exception as e:
+    except Exception:
         # Some error - cleanup and re-raise
         await engine.graceful_shutdown()
         raise

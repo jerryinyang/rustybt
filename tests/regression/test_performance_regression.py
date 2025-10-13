@@ -18,12 +18,11 @@ import pytest
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from rustybt.api import order_target, record, symbol
-from rustybt.utils.run_algo import run_algorithm
-
 # Import profiling bundle registrations (required before bundles can be loaded)
 # This ensures the @register decorators are executed
 import scripts.profiling.setup_profiling_data  # noqa: F401
+from rustybt.api import order_target, record, symbol
+from rustybt.utils.run_algo import run_algorithm
 
 logger = logging.getLogger(__name__)
 

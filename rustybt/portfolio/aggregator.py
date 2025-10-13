@@ -330,7 +330,8 @@ class OrderAggregator:
         )
 
     def aggregate_orders(
-        self, orders: dict[str, list[Any]]  # {strategy_id: [Order, ...]}
+        self,
+        orders: dict[str, list[Any]],  # {strategy_id: [Order, ...]}
     ) -> NetOrderResult:
         """Aggregate orders across strategies with netting.
 
@@ -525,7 +526,9 @@ class OrderAggregator:
         return net
 
     def _create_contributions(
-        self, orders: list[Any], net_amount: Decimal  # noqa: ARG002
+        self,
+        orders: list[Any],
+        net_amount: Decimal,  # noqa: ARG002
     ) -> list[OrderContribution]:
         """Create order contributions with percentages.
 

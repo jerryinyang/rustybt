@@ -18,7 +18,7 @@ import random
 from dataclasses import dataclass
 from decimal import Decimal
 from sys import float_info
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import pandas as pd
 import structlog
@@ -248,9 +248,7 @@ class TrailingStopOrder(ExecutionStyle):
 
         if trail_amount is not None:
             if trail_amount <= 0:
-                raise BadOrderParameters(
-                    msg=f"trail_amount must be positive, got {trail_amount}"
-                )
+                raise BadOrderParameters(msg=f"trail_amount must be positive, got {trail_amount}")
             self.trail_amount = trail_amount
             self.trail_percent = None
         else:
@@ -339,13 +337,9 @@ class OCOOrder(ExecutionStyle):
 
     def __init__(self, order1_style, order2_style, exchange=None):
         if not isinstance(order1_style, ExecutionStyle):
-            raise BadOrderParameters(
-                msg="order1_style must be an ExecutionStyle instance"
-            )
+            raise BadOrderParameters(msg="order1_style must be an ExecutionStyle instance")
         if not isinstance(order2_style, ExecutionStyle):
-            raise BadOrderParameters(
-                msg="order2_style must be an ExecutionStyle instance"
-            )
+            raise BadOrderParameters(msg="order2_style must be an ExecutionStyle instance")
 
         self.order1_style = order1_style
         self.order2_style = order2_style
@@ -388,18 +382,9 @@ class BracketOrder(ExecutionStyle):
     as an OCO pair. When one fills, the other is canceled.
     """
 
-    def __init__(
-        self,
-        entry_style,
-        stop_loss_price,
-        take_profit_price,
-        asset=None,
-        exchange=None
-    ):
+    def __init__(self, entry_style, stop_loss_price, take_profit_price, asset=None, exchange=None):
         if not isinstance(entry_style, ExecutionStyle):
-            raise BadOrderParameters(
-                msg="entry_style must be an ExecutionStyle instance"
-            )
+            raise BadOrderParameters(msg="entry_style must be an ExecutionStyle instance")
 
         check_stoplimit_prices(stop_loss_price, "stop_loss")
         check_stoplimit_prices(take_profit_price, "take_profit")
@@ -431,20 +416,16 @@ def check_stoplimit_prices(price, label):
     try:
         if not isfinite(price):
             raise BadOrderParameters(
-                msg=f"Attempted to place an order with a {label} price "
-                f"of {price}."
+                msg=f"Attempted to place an order with a {label} price of {price}."
             )
     # This catches arbitrary objects
     except TypeError as exc:
         raise BadOrderParameters(
-            msg=f"Attempted to place an order with a {label} price "
-            f"of {type(price)}."
+            msg=f"Attempted to place an order with a {label} price of {type(price)}."
         ) from exc
 
     if price < 0:
-        raise BadOrderParameters(
-            msg=f"Can't place a {label} order with a negative price."
-        )
+        raise BadOrderParameters(msg=f"Can't place a {label} order with a negative price.")
 
 
 # ============================================================================
@@ -518,9 +499,7 @@ class FixedLatencyModel(LatencyModel):
         Decimal('17.0')
     """
 
-    def __init__(
-        self, network_ms: Decimal, broker_ms: Decimal, exchange_ms: Decimal
-    ) -> None:
+    def __init__(self, network_ms: Decimal, broker_ms: Decimal, exchange_ms: Decimal) -> None:
         """Initialize fixed latency model."""
         self.network_ms = network_ms
         self.broker_ms = broker_ms
@@ -563,16 +542,14 @@ class RandomLatencyModel(LatencyModel):
 
     def __init__(
         self,
-        network_range_ms: Tuple[Decimal, Decimal],
-        broker_range_ms: Tuple[Decimal, Decimal],
-        exchange_range_ms: Tuple[Decimal, Decimal],
+        network_range_ms: tuple[Decimal, Decimal],
+        broker_range_ms: tuple[Decimal, Decimal],
+        exchange_range_ms: tuple[Decimal, Decimal],
         distribution: str = "uniform",
     ) -> None:
         """Initialize random latency model."""
         if distribution not in ("uniform", "normal"):
-            raise ValueError(
-                f"Distribution must be 'uniform' or 'normal', got '{distribution}'"
-            )
+            raise ValueError(f"Distribution must be 'uniform' or 'normal', got '{distribution}'")
 
         self.network_range = network_range_ms
         self.broker_range = broker_range_ms
@@ -640,7 +617,7 @@ class HistoricalLatencyModel(LatencyModel):
         >>> model = HistoricalLatencyModel(latency_data=data)
     """
 
-    def __init__(self, latency_data: Dict[pd.Timestamp, LatencyComponents]) -> None:
+    def __init__(self, latency_data: dict[pd.Timestamp, LatencyComponents]) -> None:
         """Initialize historical latency model."""
         self.latency_data = latency_data
         self.sorted_timestamps = sorted(latency_data.keys())
@@ -713,9 +690,7 @@ class CompositeLatencyModel(LatencyModel):
         """Calculate composite latency from sub-models."""
         network = self.network_model.calculate_latency(order, current_time, broker_name)
         broker = self.broker_model.calculate_latency(order, current_time, broker_name)
-        exchange = self.exchange_model.calculate_latency(
-            order, current_time, broker_name
-        )
+        exchange = self.exchange_model.calculate_latency(order, current_time, broker_name)
 
         return LatencyComponents(
             network_ms=network.network_ms,
@@ -750,7 +725,7 @@ class NetworkLatency(LatencyModel):
     def __init__(
         self,
         base_latency_ms: Decimal,
-        jitter_range_ms: Tuple[Decimal, Decimal],
+        jitter_range_ms: tuple[Decimal, Decimal],
         location: str = "US_EAST",
     ) -> None:
         """Initialize network latency model."""
@@ -800,7 +775,7 @@ class BrokerProcessingLatency(LatencyModel):
         self,
         base_processing_ms: Decimal,
         complexity_factor: Decimal = Decimal("0.5"),
-        processing_range_ms: Tuple[Decimal, Decimal] = (Decimal("1.0"), Decimal("10.0")),
+        processing_range_ms: tuple[Decimal, Decimal] = (Decimal("1.0"), Decimal("10.0")),
     ) -> None:
         """Initialize broker processing latency model."""
         self.base_processing_ms = base_processing_ms
@@ -825,11 +800,7 @@ class BrokerProcessingLatency(LatencyModel):
 
         # Add random variation
         variation = Decimal(
-            str(
-                random.uniform(
-                    float(self.processing_range[0]), float(self.processing_range[1])
-                )
-            )
+            str(random.uniform(float(self.processing_range[0]), float(self.processing_range[1])))
         )
         broker_ms = (processing_ms + variation) / Decimal("2")  # Average with variation
         broker_ms = max(self.processing_range[0], min(self.processing_range[1], broker_ms))
@@ -868,7 +839,7 @@ class ExchangeMatchingLatency(LatencyModel):
         self,
         base_matching_ms: Decimal,
         queue_factor: Decimal = Decimal("0.1"),
-        matching_range_ms: Tuple[Decimal, Decimal] = (Decimal("0.1"), Decimal("5.0")),
+        matching_range_ms: tuple[Decimal, Decimal] = (Decimal("0.1"), Decimal("5.0")),
         exchange_type: str = "traditional",
     ) -> None:
         """Initialize exchange matching latency model."""
@@ -893,14 +864,10 @@ class ExchangeMatchingLatency(LatencyModel):
         queue_latency = self.queue_factor * queue_position
 
         # Apply exchange type multiplier
-        matching_ms = (
-            self.base_matching_ms + queue_latency
-        ) * self.type_multiplier
+        matching_ms = (self.base_matching_ms + queue_latency) * self.type_multiplier
 
         # Clamp to valid range
-        matching_ms = max(
-            self.matching_range[0], min(self.matching_range[1], matching_ms)
-        )
+        matching_ms = max(self.matching_range[0], min(self.matching_range[1], matching_ms))
 
         return LatencyComponents(
             network_ms=Decimal("0"),
@@ -952,13 +919,13 @@ class LatencyProfileConfig(BaseModel):
     asset_class: str = Field(
         default="equities", description="Asset class (equities, crypto, futures, etc.)"
     )
-    network_latency_ms: Tuple[float, float] = Field(
+    network_latency_ms: tuple[float, float] = Field(
         description="(min, max) network latency in milliseconds"
     )
-    broker_processing_ms: Tuple[float, float] = Field(
+    broker_processing_ms: tuple[float, float] = Field(
         description="(min, max) broker processing latency in milliseconds"
     )
-    exchange_matching_ms: Tuple[float, float] = Field(
+    exchange_matching_ms: tuple[float, float] = Field(
         description="(min, max) exchange matching latency in milliseconds"
     )
     distribution: str = Field(
@@ -976,15 +943,13 @@ class LatencyProfileConfig(BaseModel):
 
     @field_validator("network_latency_ms", "broker_processing_ms", "exchange_matching_ms")
     @classmethod
-    def validate_latency_range(cls, v: Tuple[float, float]) -> Tuple[float, float]:
+    def validate_latency_range(cls, v: tuple[float, float]) -> tuple[float, float]:
         """Validate latency ranges are positive and min <= max."""
         min_val, max_val = v
         if min_val < 0:
             raise ValueError(f"Minimum latency cannot be negative, got {min_val}")
         if max_val < min_val:
-            raise ValueError(
-                f"Maximum latency ({max_val}) must be >= minimum ({min_val})"
-            )
+            raise ValueError(f"Maximum latency ({max_val}) must be >= minimum ({min_val})")
         return v
 
     def to_latency_model(self) -> RandomLatencyModel:
@@ -1062,10 +1027,10 @@ class BrokerLatencyProfile(BaseModel):
     """
 
     broker_name: str = Field(description="Name of the broker")
-    profiles: List[LatencyProfileConfig] = Field(
+    profiles: list[LatencyProfileConfig] = Field(
         description="List of asset class-specific latency configurations"
     )
-    default_profile: Optional[LatencyProfileConfig] = Field(
+    default_profile: LatencyProfileConfig | None = Field(
         default=None, description="Default profile if asset class not found"
     )
 
@@ -1109,7 +1074,7 @@ class LatencyProfileRegistry:
 
     def __init__(self) -> None:
         """Initialize latency profile registry."""
-        self._profiles: Dict[str, BrokerLatencyProfile] = {}
+        self._profiles: dict[str, BrokerLatencyProfile] = {}
         logger.debug("latency_profile_registry_initialized")
 
     def register_profile(self, profile: BrokerLatencyProfile) -> None:
@@ -1125,9 +1090,7 @@ class LatencyProfileRegistry:
             num_asset_classes=len(profile.profiles),
         )
 
-    def get_profile(
-        self, broker_name: str, asset_class: str = "equities"
-    ) -> LatencyProfileConfig:
+    def get_profile(self, broker_name: str, asset_class: str = "equities") -> LatencyProfileConfig:
         """Get latency profile for broker and asset class.
 
         Args:
@@ -1148,7 +1111,7 @@ class LatencyProfileRegistry:
         broker_profile = self._profiles[broker_name]
         return broker_profile.get_profile_for_asset_class(asset_class)
 
-    def load_from_dict(self, config: Dict[str, Any]) -> None:
+    def load_from_dict(self, config: dict[str, Any]) -> None:
         """Load broker latency profile from dictionary.
 
         Args:
@@ -1188,9 +1151,7 @@ class LatencyProfileRegistry:
             self.register_profile(broker_profile)
 
         except Exception as e:
-            raise LatencyConfigurationError(
-                f"Failed to load latency profile: {e}"
-            ) from e
+            raise LatencyConfigurationError(f"Failed to load latency profile: {e}") from e
 
     def load_from_yaml(self, filepath: str) -> None:
         """Load broker latency profile from YAML file.
@@ -1323,11 +1284,11 @@ class Order:
     asset: Any
     amount: Decimal
     order_type: str
-    limit_price: Optional[Decimal] = None
+    limit_price: Decimal | None = None
     state: OrderState = OrderState.NEW
-    partial_fills: List[PartialFill] = None
-    created_at: Optional[pd.Timestamp] = None
-    timeout_bars: Optional[int] = None
+    partial_fills: list[PartialFill] = None
+    created_at: pd.Timestamp | None = None
+    timeout_bars: int | None = None
 
     def __post_init__(self) -> None:
         """Initialize mutable fields."""
@@ -1362,7 +1323,7 @@ class Order:
         return self.remaining_quantity <= Decimal("0")
 
     @property
-    def average_fill_price(self) -> Optional[Decimal]:
+    def average_fill_price(self) -> Decimal | None:
         """Volume-weighted average fill price.
 
         Returns:
@@ -1425,7 +1386,7 @@ class PartialFillModel(metaclass=abc.ABCMeta):
         bar_volume: Decimal,
         bar_price: Decimal,
         current_time: pd.Timestamp,
-    ) -> Optional[PartialFill]:
+    ) -> PartialFill | None:
         """Calculate partial fill for current bar.
 
         Args:
@@ -1465,9 +1426,7 @@ class VolumeBasedFillModel(PartialFillModel):
     ) -> None:
         """Initialize volume-based fill model."""
         if fill_ratio <= Decimal("0") or fill_ratio > Decimal("1"):
-            raise ValueError(
-                f"fill_ratio must be between 0 and 1, got {fill_ratio}"
-            )
+            raise ValueError(f"fill_ratio must be between 0 and 1, got {fill_ratio}")
         if market_impact_factor < Decimal("0"):
             raise ValueError(
                 f"market_impact_factor must be non-negative, got {market_impact_factor}"
@@ -1482,7 +1441,7 @@ class VolumeBasedFillModel(PartialFillModel):
         bar_volume: Decimal,
         bar_price: Decimal,
         current_time: pd.Timestamp,
-    ) -> Optional[PartialFill]:
+    ) -> PartialFill | None:
         """Calculate volume-based partial fill.
 
         Args:
@@ -1523,9 +1482,7 @@ class VolumeBasedFillModel(PartialFillModel):
             fill_price = bar_price * (Decimal("1") - market_impact)
 
         # Create partial fill record
-        partial_fill = PartialFill(
-            timestamp=current_time, quantity=fill_quantity, price=fill_price
-        )
+        partial_fill = PartialFill(timestamp=current_time, quantity=fill_quantity, price=fill_price)
 
         logger.info(
             "partial_fill_executed",
@@ -1553,9 +1510,7 @@ class AggressiveFillModel(VolumeBasedFillModel):
 
     def __init__(self) -> None:
         """Initialize aggressive fill model."""
-        super().__init__(
-            fill_ratio=Decimal("0.25"), market_impact_factor=Decimal("0.02")
-        )
+        super().__init__(fill_ratio=Decimal("0.25"), market_impact_factor=Decimal("0.02"))
 
 
 class ConservativeFillModel(VolumeBasedFillModel):
@@ -1571,9 +1526,7 @@ class ConservativeFillModel(VolumeBasedFillModel):
 
     def __init__(self) -> None:
         """Initialize conservative fill model."""
-        super().__init__(
-            fill_ratio=Decimal("0.05"), market_impact_factor=Decimal("0.005")
-        )
+        super().__init__(fill_ratio=Decimal("0.05"), market_impact_factor=Decimal("0.005"))
 
 
 class BalancedFillModel(VolumeBasedFillModel):
@@ -1589,9 +1542,7 @@ class BalancedFillModel(VolumeBasedFillModel):
 
     def __init__(self) -> None:
         """Initialize balanced fill model."""
-        super().__init__(
-            fill_ratio=Decimal("0.10"), market_impact_factor=Decimal("0.01")
-        )
+        super().__init__(fill_ratio=Decimal("0.10"), market_impact_factor=Decimal("0.01"))
 
 
 class OrderTracker:
@@ -1613,7 +1564,7 @@ class OrderTracker:
     def __init__(self, fill_model: PartialFillModel) -> None:
         """Initialize order tracker."""
         self.fill_model = fill_model
-        self.open_orders: Dict[str, Order] = {}
+        self.open_orders: dict[str, Order] = {}
         self.logger = structlog.get_logger()
 
     def add_order(self, order: Order, current_time: pd.Timestamp) -> None:
@@ -1634,9 +1585,7 @@ class OrderTracker:
             order_type=order.order_type,
         )
 
-    def process_bar(
-        self, current_time: pd.Timestamp, data_portal: Any
-    ) -> List[Order]:
+    def process_bar(self, current_time: pd.Timestamp, data_portal: Any) -> list[Order]:
         """Process current bar and attempt to fill open orders.
 
         Args:
@@ -1652,9 +1601,7 @@ class OrderTracker:
             # Check timeout
             if order.timeout_bars is not None and order.created_at is not None:
                 # Calculate bars elapsed (assumes minute bars)
-                bars_elapsed = int(
-                    (current_time - order.created_at).total_seconds() / 60
-                )
+                bars_elapsed = int((current_time - order.created_at).total_seconds() / 60)
                 if bars_elapsed > order.timeout_bars:
                     order.state = OrderState.CANCELED
                     del self.open_orders[order_id]
@@ -1668,9 +1615,7 @@ class OrderTracker:
             # Get bar data
             try:
                 bar_volume = data_portal.get_volume(order.asset, current_time)
-                bar_price = data_portal.get_price(
-                    order.asset, current_time, field="close"
-                )
+                bar_price = data_portal.get_price(order.asset, current_time, field="close")
             except Exception as e:
                 self.logger.error(
                     "data_portal_error",
@@ -1705,7 +1650,7 @@ class OrderTracker:
 
         return filled_orders
 
-    def get_open_orders(self) -> List[Order]:
+    def get_open_orders(self) -> list[Order]:
         """Get list of currently open orders.
 
         Returns:
@@ -1713,7 +1658,7 @@ class OrderTracker:
         """
         return list(self.open_orders.values())
 
-    def cancel_order(self, order_id: str) -> Optional[Order]:
+    def cancel_order(self, order_id: str) -> Order | None:
         """Cancel an open order.
 
         Args:
@@ -1754,9 +1699,9 @@ class ExecutionResult:
     fill_price: Decimal
     fill_quantity: Decimal
     execution_time: pd.Timestamp
-    latency: Optional[LatencyComponents] = None
-    slippage: Optional[Any] = None  # SlippageResult from slippage.py
-    commission: Optional[Any] = None  # CommissionResult from commission.py
+    latency: LatencyComponents | None = None
+    slippage: Any | None = None  # SlippageResult from slippage.py
+    commission: Any | None = None  # CommissionResult from commission.py
 
 
 class ExecutionEngine:
@@ -1794,10 +1739,10 @@ class ExecutionEngine:
 
     def __init__(
         self,
-        latency_model: Optional[LatencyModel] = None,
-        slippage_model: Optional[Any] = None,  # DecimalSlippageModel from slippage.py
-        partial_fill_model: Optional[PartialFillModel] = None,
-        commission_model: Optional[Any] = None,  # DecimalCommissionModel from commission.py
+        latency_model: LatencyModel | None = None,
+        slippage_model: Any | None = None,  # DecimalSlippageModel from slippage.py
+        partial_fill_model: PartialFillModel | None = None,
+        commission_model: Any | None = None,  # DecimalCommissionModel from commission.py
         data_portal: Any = None,
         logger_instance: Any = None,
     ) -> None:
@@ -1814,7 +1759,7 @@ class ExecutionEngine:
         order: Any,
         current_time: pd.Timestamp,
         broker_name: str = "default",
-        bar_data: Optional[Dict[str, Any]] = None,
+        bar_data: dict[str, Any] | None = None,
     ) -> ExecutionResult:
         """Execute order with latency, slippage, partial fills, and commission calculation.
 
@@ -1838,12 +1783,8 @@ class ExecutionEngine:
         """
         # Step 1: Apply latency (from Story 4.1)
         if self.latency_model:
-            latency = self.latency_model.calculate_latency(
-                order, current_time, broker_name
-            )
-            execution_time = current_time + pd.Timedelta(
-                milliseconds=float(latency.total_ms)
-            )
+            latency = self.latency_model.calculate_latency(order, current_time, broker_name)
+            execution_time = current_time + pd.Timedelta(milliseconds=float(latency.total_ms))
 
             self.logger.debug(
                 "latency_applied",
@@ -1946,11 +1887,7 @@ class ExecutionEngine:
         self.logger.info(
             "order_executed",
             order_id=order.id if hasattr(order, "id") else "unknown",
-            asset=(
-                order.asset.symbol
-                if hasattr(order.asset, "symbol")
-                else str(order.asset)
-            ),
+            asset=(order.asset.symbol if hasattr(order.asset, "symbol") else str(order.asset)),
             fill_price=str(fill_price),
             fill_quantity=str(fill_quantity),
             slippage_bps=str(slippage_result.slippage_bps) if slippage_result else "0",
@@ -1959,7 +1896,7 @@ class ExecutionEngine:
 
         return result
 
-    def _fetch_bar_data(self, asset: Any, timestamp: pd.Timestamp) -> Dict[str, Any]:
+    def _fetch_bar_data(self, asset: Any, timestamp: pd.Timestamp) -> dict[str, Any]:
         """Fetch bar data from data portal.
 
         Args:

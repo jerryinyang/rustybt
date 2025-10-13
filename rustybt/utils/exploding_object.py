@@ -7,7 +7,7 @@ class NamedExplodingObject:
     name : str
         The name of the object. This will appear in the error messages.
 
-    Notes
+    Notes:
     -----
     One common use for this object is so ensure that an attribute always exists
     even if sometimes it should not be used.

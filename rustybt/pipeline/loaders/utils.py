@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
+
 from rustybt.errors import NoFurtherDataError
-from rustybt.pipeline.common import TS_FIELD_NAME, SID_FIELD_NAME
+from rustybt.pipeline.common import SID_FIELD_NAME, TS_FIELD_NAME
 from rustybt.utils.date_utils import make_utc_aware
 from rustybt.utils.numpy_utils import categorical_dtype
 
@@ -48,7 +49,7 @@ def next_event_indexer(
     event_sids : ndarray[int, ndim=1]
         Sids assocated with each input event.
 
-    Returns
+    Returns:
     -------
     indexer : ndarray[int, ndim=2]
         An array of shape (len(all_dates), len(all_sids)) of indices into
@@ -106,7 +107,7 @@ def previous_event_indexer(
     event_sids : ndarray[int, ndim=1]
         Sids assocated with each input event.
 
-    Returns
+    Returns:
     -------
     indexer : ndarray[int, ndim=2]
         An array of shape (len(all_dates), len(all_sids)) of indices into
@@ -136,7 +137,7 @@ def previous_event_indexer(
     for i in range(len(event_dates) - 1, -1, -1):
         sid_ix = sid_ixs[i]
         dt_ix = dt_ixs[i]
-        out[dt_ix : last_written.get(sid_ix, None), sid_ix] = i
+        out[dt_ix : last_written.get(sid_ix), sid_ix] = i
         last_written[sid_ix] = dt_ix
     return out
 
@@ -173,7 +174,7 @@ def last_in_date_group(
     extra_groupers : list of str
         Any extra field names that should be included in the groupby.
 
-    Returns
+    Returns:
     -------
     last_in_group : pd.DataFrame
         A DataFrame with dates as the index and fields used in the groupby as
@@ -194,10 +195,7 @@ def last_in_date_group(
 
     to_unstack = idx[-1 : -len(idx) : -1]
     last_in_group = (
-        df.drop(TS_FIELD_NAME, axis=1)
-        .groupby(idx, sort=False)
-        .last()
-        .unstack(level=to_unstack)
+        df.drop(TS_FIELD_NAME, axis=1).groupby(idx, sort=False).last().unstack(level=to_unstack)
     )
 
     # For the number of things that we're grouping by (except TS), unstack
@@ -214,9 +212,7 @@ def last_in_date_group(
                 tuple(cols.levels[0 : len(extra_groupers) + 1]) + (assets,),
                 names=cols.names,
             )
-            last_in_group = last_in_group.reindex(
-                index=data_query_cutoff_times, columns=columns
-            )
+            last_in_group = last_in_group.reindex(index=data_query_cutoff_times, columns=columns)
         else:
             last_in_group = last_in_group.reindex(data_query_cutoff_times)
 
@@ -268,9 +264,7 @@ def ffill_across_cols(df, columns, name_map):
             # column contains NaNs and needs to be cast to bool or int.
             # This is so that the NaNs are replaced first, since pandas
             # can't convert NaNs for those types.
-            df[column_name] = (
-                df[column_name].fillna(column.missing_value).astype(column.dtype)
-            )
+            df[column_name] = df[column_name].fillna(column.missing_value).astype(column.dtype)
 
 
 def shift_dates(dates, start_date, end_date, shift):
@@ -287,13 +281,13 @@ def shift_dates(dates, start_date, end_date, shift):
     shift : int
         The number of days to shift back the query dates.
 
-    Returns
+    Returns:
     -------
     shifted : pd.DatetimeIndex
         The range [start_date, end_date] from ``dates``, shifted backwards by
         ``shift`` days.
 
-    Raises
+    Raises:
     ------
     ValueError
         If ``start_date`` or ``end_date`` is not in ``dates``.
@@ -307,11 +301,8 @@ def shift_dates(dates, start_date, end_date, shift):
         if start_date < dates[0]:
             raise NoFurtherDataError(
                 msg=(
-                    "Pipeline Query requested data starting on {query_start}, "
-                    "but first known date is {calendar_start}"
-                ).format(
-                    query_start=str(start_date),
-                    calendar_start=str(dates[0]),
+                    f"Pipeline Query requested data starting on {start_date!s}, "
+                    f"but first known date is {dates[0]!s}"
                 )
             ) from exc
         else:
@@ -321,10 +312,10 @@ def shift_dates(dates, start_date, end_date, shift):
     if start < shift:
         raise NoFurtherDataError(
             msg=(
-                "Pipeline Query requested data from {shift}"
-                " days before {query_start}, but first known date is only "
-                "{start} days earlier."
-            ).format(shift=shift, query_start=start_date, start=start),
+                f"Pipeline Query requested data from {shift}"
+                f" days before {start_date}, but first known date is only "
+                f"{start} days earlier."
+            ),
         )
 
     try:
@@ -333,11 +324,8 @@ def shift_dates(dates, start_date, end_date, shift):
         if end_date > dates[-1]:
             raise NoFurtherDataError(
                 msg=(
-                    "Pipeline Query requesting data up to {query_end}, "
-                    "but last known date is {calendar_end}"
-                ).format(
-                    query_end=end_date,
-                    calendar_end=dates[-1],
+                    f"Pipeline Query requesting data up to {end_date}, "
+                    f"but last known date is {dates[-1]}"
                 )
             ) from exc
         else:

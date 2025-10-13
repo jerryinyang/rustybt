@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pandas as pd
+
 from rustybt.assets import Equity, ExchangeInfo
 from rustybt.finance.transaction import Transaction
 
@@ -24,7 +25,5 @@ def test_transaction_repr():
         exchange_info=ExchangeInfo("test", "test full", "US"),
     )
     txn = Transaction(asset, amount=100, dt=dt, price=10, order_id=0)
-    expected = (
-        "Transaction(asset=Equity(1), dt=2017-01-01 00:00:00," " amount=100, price=10)"
-    )
+    expected = "Transaction(asset=Equity(1), dt=2017-01-01 00:00:00, amount=100, price=10)"
     assert repr(txn) == expected

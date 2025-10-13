@@ -4,7 +4,6 @@ import json
 import os
 from datetime import datetime, timedelta
 from decimal import Decimal
-from pathlib import Path
 
 import pytest
 
@@ -200,7 +199,7 @@ class TestStateManager:
         state_manager.save_checkpoint(strategy_name, sample_checkpoint)
 
         checkpoint_path = state_manager._get_checkpoint_path(strategy_name)
-        with open(checkpoint_path, "r") as f:
+        with open(checkpoint_path) as f:
             data = json.load(f)
 
         assert data["strategy_name"] == strategy_name
@@ -265,9 +264,7 @@ class TestStateManager:
         finally:
             os.rename = original_rename
 
-    def test_atomic_write_no_temp_file_left_on_success(
-        self, state_manager, sample_checkpoint
-    ):
+    def test_atomic_write_no_temp_file_left_on_success(self, state_manager, sample_checkpoint):
         """Test temp file is removed after successful write."""
         strategy_name = "test_strategy"
 
@@ -371,7 +368,9 @@ class TestCheckpointRoundTrip:
         assert loaded.cash_balance == sample_checkpoint.cash_balance
 
         # Verify position details
-        for original, loaded_pos in zip(sample_checkpoint.positions, loaded.positions):
+        for original, loaded_pos in zip(
+            sample_checkpoint.positions, loaded.positions, strict=False
+        ):
             assert loaded_pos.asset == original.asset
             assert loaded_pos.amount == original.amount
             assert loaded_pos.cost_basis == original.cost_basis

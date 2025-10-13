@@ -32,5 +32,3 @@ Wed Oct  8 14:21:55 2025    docs/performance/profiles/baseline/daily_cprofile.ps
      5020    0.003    0.000    0.367    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/data_portal.py:774(_get_history_daily_window_data)
      5021    0.020    0.000    0.365    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexing.py:1033(_getitem_lowerdim)
      5020    0.016    0.000    0.364    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/data_portal.py:994(_get_daily_window_data)
-
-

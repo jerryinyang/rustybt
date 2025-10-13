@@ -15,14 +15,16 @@
 
 """Unit tests for finance.slippage"""
 
-from collections import namedtuple
 import datetime
+import re
+from collections import namedtuple
 from math import sqrt
 
-from parameterized import parameterized
 import numpy as np
 import pandas as pd
+import pytest
 import pytz
+from parameterized import parameterized
 
 from rustybt.assets import Equity, Future
 from rustybt.data.data_portal import DataPortal
@@ -30,12 +32,12 @@ from rustybt.finance.asset_restrictions import NoRestrictions
 from rustybt.finance.order import Order
 from rustybt.finance.slippage import (
     EquitySlippageModel,
-    fill_price_worse_than_limit_price,
+    FixedBasisPointsSlippage,
     FutureSlippageModel,
     SlippageModel,
     VolatilityVolumeShare,
     VolumeShareSlippage,
-    FixedBasisPointsSlippage,
+    fill_price_worse_than_limit_price,
 )
 from rustybt.protocol import DATASOURCE_TYPE, BarData
 from rustybt.testing import (
@@ -51,15 +53,11 @@ from rustybt.testing.fixtures import (
     ZiplineTestCase,
 )
 from rustybt.utils.classproperty import classproperty
-import pytest
-import re
 
 TestOrder = namedtuple("TestOrder", "limit direction")
 
 
-class SlippageTestCase(
-    WithCreateBarData, WithSimParams, WithDataPortal, ZiplineTestCase
-):
+class SlippageTestCase(WithCreateBarData, WithSimParams, WithDataPortal, ZiplineTestCase):
     START_DATE = pd.Timestamp("2006-01-05 14:31", tz="utc")
     END_DATE = pd.Timestamp("2006-01-05 14:36", tz="utc")
     SIM_PARAMS_CAPITAL_BASE = 1.0e5
@@ -69,9 +67,7 @@ class SlippageTestCase(
     ASSET_FINDER_EQUITY_SIDS = (133,)
     ASSET_FINDER_EQUITY_START_DATE = pd.Timestamp("2006-01-05")
     ASSET_FINDER_EQUITY_END_DATE = pd.Timestamp("2006-01-07")
-    minutes = pd.date_range(
-        start=START_DATE, end=END_DATE - pd.Timedelta("1 minute"), freq="1min"
-    )
+    minutes = pd.date_range(start=START_DATE, end=END_DATE - pd.Timedelta("1 minute"), freq="1min")
 
     @classproperty
     def CREATE_BARDATA_DATA_FREQUENCY(cls):
@@ -79,15 +75,18 @@ class SlippageTestCase(
 
     @classmethod
     def make_equity_minute_bar_data(cls):
-        yield 133, pd.DataFrame(
-            {
-                "open": [3.0, 3.0, 3.5, 4.0, 3.5],
-                "high": [3.15, 3.15, 3.15, 3.15, 3.15],
-                "low": [2.85, 2.85, 2.85, 2.85, 2.85],
-                "close": [3.0, 3.5, 4.0, 3.5, 3.0],
-                "volume": [2000, 2000, 2000, 2000, 2000],
-            },
-            index=cls.minutes,
+        yield (
+            133,
+            pd.DataFrame(
+                {
+                    "open": [3.0, 3.0, 3.5, 4.0, 3.5],
+                    "high": [3.15, 3.15, 3.15, 3.15, 3.15],
+                    "low": [2.85, 2.85, 2.85, 2.85, 2.85],
+                    "close": [3.0, 3.5, 4.0, 3.5, 3.0],
+                    "volume": [2000, 2000, 2000, 2000, 2000],
+                },
+                index=cls.minutes,
+            ),
         )
 
     @classmethod
@@ -239,11 +238,11 @@ class SlippageTestCase(
         txn = orders_txns[0][1]
 
         expected_txn = {
-            "price": float(3.50021875),
+            "price": 3.50021875,
             "dt": datetime.datetime(2006, 1, 5, 14, 34, tzinfo=pytz.utc),
             # we ordered 100 shares, but default volume slippage only allows
             # for 2.5% of the volume.  2.5% * 2000 = 50 shares
-            "amount": int(50),
+            "amount": 50,
             "asset": self.ASSET133,
             "order_id": open_orders[0].id,
         }
@@ -336,9 +335,9 @@ class SlippageTestCase(
         _, txn = orders_txns[0]
 
         expected_txn = {
-            "price": float(3.49978125),
+            "price": 3.49978125,
             "dt": datetime.datetime(2006, 1, 5, 14, 32, tzinfo=pytz.utc),
-            "amount": int(-50),
+            "amount": (-50),
             "asset": self.ASSET133,
         }
 
@@ -479,9 +478,9 @@ class SlippageTestCase(
         _, txn = orders_txns[0]
 
         expected_txn = {
-            "price": float(3.50021875),
+            "price": 3.50021875,
             "dt": datetime.datetime(2006, 1, 5, 14, 34, tzinfo=pytz.utc),
-            "amount": int(50),
+            "amount": 50,
             "asset": self.ASSET133,
         }
 
@@ -617,9 +616,9 @@ class SlippageTestCase(
         _, txn = orders_txns[0]
 
         expected_txn = {
-            "price": float(3.49978125),
+            "price": 3.49978125,
             "dt": datetime.datetime(2006, 1, 5, 14, 32, tzinfo=pytz.utc),
-            "amount": int(-50),
+            "amount": (-50),
             "asset": self.ASSET133,
         }
 
@@ -639,9 +638,7 @@ class VolumeShareSlippageTestCase(
     ASSET_FINDER_EQUITY_SIDS = (133,)
     ASSET_FINDER_EQUITY_START_DATE = pd.Timestamp("2006-01-05")
     ASSET_FINDER_EQUITY_END_DATE = pd.Timestamp("2006-01-07")
-    minutes = pd.date_range(
-        start=START_DATE, end=END_DATE - pd.Timedelta("1 minute"), freq="1min"
-    )
+    minutes = pd.date_range(start=START_DATE, end=END_DATE - pd.Timedelta("1 minute"), freq="1min")
 
     @classproperty
     def CREATE_BARDATA_DATA_FREQUENCY(cls):
@@ -649,15 +646,18 @@ class VolumeShareSlippageTestCase(
 
     @classmethod
     def make_equity_minute_bar_data(cls):
-        yield 133, pd.DataFrame(
-            {
-                "open": [3.00],
-                "high": [3.15],
-                "low": [2.85],
-                "close": [3.00],
-                "volume": [200],
-            },
-            index=[cls.minutes[0]],
+        yield (
+            133,
+            pd.DataFrame(
+                {
+                    "open": [3.00],
+                    "high": [3.15],
+                    "low": [2.85],
+                    "close": [3.00],
+                    "volume": [200],
+                },
+                index=[cls.minutes[0]],
+            ),
         )
 
     @classmethod
@@ -676,15 +676,18 @@ class VolumeShareSlippageTestCase(
 
     @classmethod
     def make_future_minute_bar_data(cls):
-        yield 1000, pd.DataFrame(
-            {
-                "open": [5.00],
-                "high": [5.15],
-                "low": [4.85],
-                "close": [5.00],
-                "volume": [100],
-            },
-            index=[cls.minutes[0]],
+        yield (
+            1000,
+            pd.DataFrame(
+                {
+                    "open": [5.00],
+                    "high": [5.15],
+                    "low": [4.85],
+                    "close": [5.00],
+                    "volume": [100],
+                },
+                index=[cls.minutes[0]],
+            ),
         )
 
     @classmethod
@@ -721,9 +724,9 @@ class VolumeShareSlippageTestCase(
         _, txn = orders_txns[0]
 
         expected_txn = {
-            "price": float(3.0001875),
+            "price": 3.0001875,
             "dt": datetime.datetime(2006, 1, 5, 14, 31, tzinfo=pytz.utc),
-            "amount": int(5),
+            "amount": 5,
             "asset": self.ASSET133,
             "type": DATASOURCE_TYPE.TRANSACTION,
             "order_id": open_orders[0].id,
@@ -776,9 +779,7 @@ class VolumeShareSlippageTestCase(
             simulation_dt_func=lambda: self.minutes[0],
         )
 
-        orders_txns = list(
-            slippage_model.simulate(bar_data, self.ASSET1000, open_orders)
-        )
+        orders_txns = list(slippage_model.simulate(bar_data, self.ASSET1000, open_orders))
 
         assert len(orders_txns) == 1
         _, txn = orders_txns[0]
@@ -1012,18 +1013,14 @@ class MarketImpactTestCase(WithCreateBarData, ZiplineTestCase):
         assert volatility == reference_vol
 
 
-class OrdersStopTestCase(
-    WithSimParams, WithAssetFinder, WithTradingCalendars, ZiplineTestCase
-):
+class OrdersStopTestCase(WithSimParams, WithAssetFinder, WithTradingCalendars, ZiplineTestCase):
     START_DATE = pd.Timestamp("2006-01-05 14:31")
     END_DATE = pd.Timestamp("2006-01-05 14:36")
     SIM_PARAMS_CAPITAL_BASE = 1.0e5
     SIM_PARAMS_DATA_FREQUENCY = "minute"
     SIM_PARAMS_EMISSION_RATE = "daily"
     ASSET_FINDER_EQUITY_SIDS = (133,)
-    minutes = pd.date_range(
-        start=START_DATE, end=END_DATE - pd.Timedelta("1 minute"), freq="1min"
-    )
+    minutes = pd.date_range(start=START_DATE, end=END_DATE - pd.Timedelta("1 minute"), freq="1min")
 
     @classmethod
     def init_class_fixtures(cls):
@@ -1171,12 +1168,8 @@ class OrdersStopTestCase(
                 ),
             ),
         )
-        days = pd.date_range(
-            start=self.minutes[0].normalize(), end=self.minutes[-1].normalize()
-        )
-        with tmp_bcolz_equity_minute_bar_reader(
-            self.trading_calendar, days, assets
-        ) as reader:
+        days = pd.date_range(start=self.minutes[0].normalize(), end=self.minutes[-1].normalize())
+        with tmp_bcolz_equity_minute_bar_reader(self.trading_calendar, days, assets) as reader:
             data_portal = DataPortal(
                 self.asset_finder,
                 self.trading_calendar,
@@ -1225,15 +1218,18 @@ class FixedBasisPointsSlippageTestCase(WithCreateBarData, ZiplineTestCase):
 
     @classmethod
     def make_equity_minute_bar_data(cls):
-        yield 133, pd.DataFrame(
-            {
-                "open": [2.9],
-                "high": [3.15],
-                "low": [2.85],
-                "close": [3.00],
-                "volume": [200],
-            },
-            index=[cls.first_minute],
+        yield (
+            133,
+            pd.DataFrame(
+                {
+                    "open": [2.9],
+                    "high": [3.15],
+                    "low": [2.85],
+                    "close": [3.00],
+                    "volume": [200],
+                },
+                index=[cls.first_minute],
+            ),
         )
 
     @classmethod
@@ -1396,7 +1392,7 @@ class FixedBasisPointsSlippageTestCase(WithCreateBarData, ZiplineTestCase):
             )
         )
 
-        assert 1 == len(orders_txns)
+        assert len(orders_txns) == 1
 
         # ordering zero shares should result in zero transactions
         open_orders = [
@@ -1415,27 +1411,24 @@ class FixedBasisPointsSlippageTestCase(WithCreateBarData, ZiplineTestCase):
                 open_orders,
             )
         )
-        assert 0 == len(orders_txns)
+        assert len(orders_txns) == 0
 
 
 # ============================================================================
 # Decimal-based Slippage Model Tests (Story 4.3)
 # ============================================================================
 
-from decimal import Decimal
 from dataclasses import dataclass as dc
-from typing import Any
-from hypothesis import given, strategies as st
+from decimal import Decimal
+
+from hypothesis import given
+from hypothesis import strategies as st
 
 from rustybt.finance.slippage import (
-    OrderSide,
-    SlippageResult,
-    DecimalSlippageModel,
-    VolumeShareSlippageDecimal,
-    FixedBasisPointSlippageDecimal,
     BidAskSpreadSlippageDecimal,
+    FixedBasisPointSlippageDecimal,
+    VolumeShareSlippageDecimal,
 )
-
 
 # ============================================================================
 # Test Fixtures and Mock Objects
@@ -1445,12 +1438,14 @@ from rustybt.finance.slippage import (
 @dc
 class MockAsset:
     """Mock asset for testing."""
+
     symbol: str
 
 
 @dc
 class MockOrder:
     """Mock order for testing."""
+
     id: str
     asset: MockAsset
     amount: Decimal  # Positive=buy, negative=sell
@@ -1469,19 +1464,19 @@ class TestVolumeShareSlippageDecimal:
         model = VolumeShareSlippageDecimal(
             volume_limit=Decimal("0.025"),  # 2.5%
             price_impact=Decimal("0.10"),  # 10%
-            power_factor=Decimal("0.5")  # Square root
+            power_factor=Decimal("0.5"),  # Square root
         )
 
         order = MockOrder(
             id="order-1",
             asset=MockAsset(symbol="AAPL"),
-            amount=Decimal("1000")  # Buy 1000 shares
+            amount=Decimal("1000"),  # Buy 1000 shares
         )
 
         bar_data = {
-            'close': 100.00,
-            'volume': 10000,  # Order is 10% of volume (4x volume_limit)
-            'volatility': 0.20  # 20% annual volatility
+            "close": 100.00,
+            "volume": 10000,  # Order is 10% of volume (4x volume_limit)
+            "volatility": 0.20,  # 20% annual volatility
         }
 
         result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
@@ -1503,16 +1498,12 @@ class TestVolumeShareSlippageDecimal:
         """VolumeShareSlippage uses default when volume is zero."""
         model = VolumeShareSlippageDecimal()
 
-        order = MockOrder(
-            id="order-1",
-            asset=MockAsset(symbol="AAPL"),
-            amount=Decimal("1000")
-        )
+        order = MockOrder(id="order-1", asset=MockAsset(symbol="AAPL"), amount=Decimal("1000"))
 
         bar_data = {
-            'close': 100.00,
-            'volume': 0,  # No volume
-            'volatility': 0.20
+            "close": 100.00,
+            "volume": 0,  # No volume
+            "volatility": 0.20,
         }
 
         result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
@@ -1525,26 +1516,26 @@ class TestVolumeShareSlippageDecimal:
         """VolumeShareSlippage uses volatility from bar_data if provided."""
         model = VolumeShareSlippageDecimal()
 
-        order = MockOrder(
-            id="order-1",
-            asset=MockAsset(symbol="AAPL"),
-            amount=Decimal("1000")
-        )
+        order = MockOrder(id="order-1", asset=MockAsset(symbol="AAPL"), amount=Decimal("1000"))
 
         bar_data_high_vol = {
-            'close': 100.00,
-            'volume': 10000,
-            'volatility': 0.30  # Higher volatility
+            "close": 100.00,
+            "volume": 10000,
+            "volatility": 0.30,  # Higher volatility
         }
 
         bar_data_low_vol = {
-            'close': 100.00,
-            'volume': 10000,
-            'volatility': 0.10  # Lower volatility
+            "close": 100.00,
+            "volume": 10000,
+            "volatility": 0.10,  # Lower volatility
         }
 
-        result_high_vol = model.calculate_slippage(order, bar_data_high_vol, pd.Timestamp("2023-01-01"))
-        result_low_vol = model.calculate_slippage(order, bar_data_low_vol, pd.Timestamp("2023-01-01"))
+        result_high_vol = model.calculate_slippage(
+            order, bar_data_high_vol, pd.Timestamp("2023-01-01")
+        )
+        result_low_vol = model.calculate_slippage(
+            order, bar_data_low_vol, pd.Timestamp("2023-01-01")
+        )
 
         # Higher volatility should result in higher slippage
         assert result_high_vol.slippage_amount > result_low_vol.slippage_amount
@@ -1562,16 +1553,12 @@ class TestFixedBasisPointSlippageDecimal:
         """FixedBasisPointSlippage applies constant basis points."""
         model = FixedBasisPointSlippageDecimal(
             basis_points=Decimal("5.0"),  # 5 bps
-            min_slippage=Decimal("0.01")
+            min_slippage=Decimal("0.01"),
         )
 
-        order = MockOrder(
-            id="order-1",
-            asset=MockAsset(symbol="AAPL"),
-            amount=Decimal("100")
-        )
+        order = MockOrder(id="order-1", asset=MockAsset(symbol="AAPL"), amount=Decimal("100"))
 
-        bar_data = {'close': 100.00}
+        bar_data = {"close": 100.00}
 
         result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
 
@@ -1584,16 +1571,12 @@ class TestFixedBasisPointSlippageDecimal:
         """FixedBasisPointSlippage enforces minimum slippage."""
         model = FixedBasisPointSlippageDecimal(
             basis_points=Decimal("1.0"),  # 1 bp (very small)
-            min_slippage=Decimal("0.10")  # Minimum $0.10
+            min_slippage=Decimal("0.10"),  # Minimum $0.10
         )
 
-        order = MockOrder(
-            id="order-1",
-            asset=MockAsset(symbol="AAPL"),
-            amount=Decimal("100")
-        )
+        order = MockOrder(id="order-1", asset=MockAsset(symbol="AAPL"), amount=Decimal("100"))
 
-        bar_data = {'close': 100.00}
+        bar_data = {"close": 100.00}
 
         result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
 
@@ -1617,14 +1600,10 @@ class TestBidAskSpreadSlippageDecimal:
         order = MockOrder(
             id="order-1",
             asset=MockAsset(symbol="AAPL"),
-            amount=Decimal("100")  # Buy order
+            amount=Decimal("100"),  # Buy order
         )
 
-        bar_data = {
-            'bid': 99.90,
-            'ask': 100.10,
-            'close': 100.00
-        }
+        bar_data = {"bid": 99.90, "ask": 100.10, "close": 100.00}
 
         result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
 
@@ -1637,16 +1616,12 @@ class TestBidAskSpreadSlippageDecimal:
         """BidAskSpreadSlippage estimates spread when bid/ask unavailable."""
         model = BidAskSpreadSlippageDecimal(
             spread_estimate=Decimal("0.001"),  # 0.1% = 10 bps
-            spread_factor=Decimal("1.0")
+            spread_factor=Decimal("1.0"),
         )
 
-        order = MockOrder(
-            id="order-1",
-            asset=MockAsset(symbol="AAPL"),
-            amount=Decimal("100")
-        )
+        order = MockOrder(id="order-1", asset=MockAsset(symbol="AAPL"), amount=Decimal("100"))
 
-        bar_data = {'close': 100.00}  # No bid/ask
+        bar_data = {"close": 100.00}  # No bid/ask
 
         result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
 
@@ -1671,10 +1646,10 @@ class TestDirectionalSlippage:
         buy_order = MockOrder(
             id="buy-1",
             asset=MockAsset(symbol="AAPL"),
-            amount=Decimal("100")  # Positive = buy
+            amount=Decimal("100"),  # Positive = buy
         )
 
-        bar_data = {'close': 100.00}
+        bar_data = {"close": 100.00}
         base_price = Decimal("100.00")
 
         result = model.calculate_slippage(buy_order, bar_data, pd.Timestamp("2023-01-01"))
@@ -1694,10 +1669,10 @@ class TestDirectionalSlippage:
         sell_order = MockOrder(
             id="sell-1",
             asset=MockAsset(symbol="AAPL"),
-            amount=Decimal("-100")  # Negative = sell
+            amount=Decimal("-100"),  # Negative = sell
         )
 
-        bar_data = {'close': 100.00}
+        bar_data = {"close": 100.00}
         base_price = Decimal("100.00")
 
         result = model.calculate_slippage(sell_order, bar_data, pd.Timestamp("2023-01-01"))
@@ -1722,7 +1697,7 @@ class TestSlippageProperties:
     @given(
         order_size=st.decimals(min_value=Decimal("1"), max_value=Decimal("10000"), places=2),
         bar_volume=st.decimals(min_value=Decimal("1000"), max_value=Decimal("100000"), places=2),
-        bar_price=st.decimals(min_value=Decimal("1"), max_value=Decimal("1000"), places=2)
+        bar_price=st.decimals(min_value=Decimal("1"), max_value=Decimal("1000"), places=2),
     )
     def test_slippage_always_worsens_execution_buy(self, order_size, bar_volume, bar_price):
         """Property: Slippage always worsens execution for buy orders."""
@@ -1731,14 +1706,10 @@ class TestSlippageProperties:
         order = MockOrder(
             id="test-order",
             asset=MockAsset(symbol="TEST"),
-            amount=order_size  # Buy order (positive)
+            amount=order_size,  # Buy order (positive)
         )
 
-        bar_data = {
-            'close': float(bar_price),
-            'volume': float(bar_volume),
-            'volatility': 0.20
-        }
+        bar_data = {"close": float(bar_price), "volume": float(bar_volume), "volatility": 0.20}
 
         result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
         order_side = model._get_order_side(order)
@@ -1752,7 +1723,7 @@ class TestSlippageProperties:
     @given(
         order_size=st.decimals(min_value=Decimal("1"), max_value=Decimal("10000"), places=2),
         bar_volume=st.decimals(min_value=Decimal("1000"), max_value=Decimal("100000"), places=2),
-        bar_price=st.decimals(min_value=Decimal("1"), max_value=Decimal("1000"), places=2)
+        bar_price=st.decimals(min_value=Decimal("1"), max_value=Decimal("1000"), places=2),
     )
     def test_slippage_always_worsens_execution_sell(self, order_size, bar_volume, bar_price):
         """Property: Slippage always worsens execution for sell orders."""
@@ -1761,14 +1732,10 @@ class TestSlippageProperties:
         order = MockOrder(
             id="test-order",
             asset=MockAsset(symbol="TEST"),
-            amount=-order_size  # Sell order (negative)
+            amount=-order_size,  # Sell order (negative)
         )
 
-        bar_data = {
-            'close': float(bar_price),
-            'volume': float(bar_volume),
-            'volatility': 0.20
-        }
+        bar_data = {"close": float(bar_price), "volume": float(bar_volume), "volatility": 0.20}
 
         result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
         order_side = model._get_order_side(order)
@@ -1784,13 +1751,9 @@ class TestSlippageProperties:
         """Property: Slippage amount is never negative."""
         model = FixedBasisPointSlippageDecimal(basis_points=basis_points)
 
-        order = MockOrder(
-            id="test",
-            asset=MockAsset(symbol="TEST"),
-            amount=Decimal("100")
-        )
+        order = MockOrder(id="test", asset=MockAsset(symbol="TEST"), amount=Decimal("100"))
 
-        bar_data = {'close': 100.00}
+        bar_data = {"close": 100.00}
 
         result = model.calculate_slippage(order, bar_data, pd.Timestamp("2023-01-01"))
 

@@ -121,9 +121,7 @@ def test_dataportal_with_unified_data_source(test_assets):
 
     # Test get_spot_value
     dt = pd.Timestamp("2024-01-15")
-    prices = portal.get_spot_value(
-        assets=test_assets, field="close", dt=dt, data_frequency="daily"
-    )
+    prices = portal.get_spot_value(assets=test_assets, field="close", dt=dt, data_frequency="daily")
 
     assert len(prices) == 2
     assert all(price == Decimal("102.0") for price in prices)
@@ -157,14 +155,10 @@ def test_dataportal_with_cached_source(test_assets):
         dt = pd.Timestamp("2024-01-15")
 
         # First fetch (cache miss)
-        prices1 = portal.get_spot_value(
-            assets=assets, field="close", dt=dt, data_frequency="daily"
-        )
+        prices1 = portal.get_spot_value(assets=assets, field="close", dt=dt, data_frequency="daily")
 
         # Second fetch (cache hit - should not increment fetch_count)
-        prices2 = portal.get_spot_value(
-            assets=assets, field="close", dt=dt, data_frequency="daily"
-        )
+        prices2 = portal.get_spot_value(assets=assets, field="close", dt=dt, data_frequency="daily")
 
         assert prices1.equals(prices2)
         # Cache should reduce API calls
@@ -244,9 +238,7 @@ def test_dataportal_cache_statistics(test_assets):
     assets = [test_assets[0]]  # Use first asset from fixture
     dt = pd.Timestamp("2024-01-15")
 
-    portal.get_spot_value(
-        assets=assets, field="close", dt=dt, data_frequency="daily"
-    )
+    portal.get_spot_value(assets=assets, field="close", dt=dt, data_frequency="daily")
 
     # Cache hit rate should be calculable
     assert isinstance(portal.cache_hit_rate, float)

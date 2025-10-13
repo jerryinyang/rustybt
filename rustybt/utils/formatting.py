@@ -11,7 +11,7 @@ def s(word, seq, suffix="s"):
     suffix : str, optional.
         The suffix to add to ``word``
 
-    Returns
+    Returns:
     -------
     maybe_plural : str
         ``word`` with ``suffix`` added if ``len(seq) != 1``.
@@ -34,7 +34,7 @@ def plural(singular, plural, seq):
     seq : sequence
         The sequence to check the length of.
 
-    Returns
+    Returns:
     -------
     maybe_plural : str
         Either ``singlular`` or ``plural``.
@@ -57,7 +57,7 @@ def bulleted_list(items, indent=0, bullet_type="-"):
     bullet_type : str, optional
         The bullet type to use.
 
-    Returns
+    Returns:
     -------
     formatted_list : str
         The formatted list as a single string.

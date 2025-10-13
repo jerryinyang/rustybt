@@ -2,10 +2,10 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, List
 
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from rustybt.live.brokers.base import BrokerAdapter
 from rustybt.live.models import (
@@ -23,9 +23,9 @@ class MockBrokerAdapter(BrokerAdapter):
 
     def __init__(
         self,
-        mock_positions: List[Dict],
+        mock_positions: list[dict],
         mock_cash: Decimal = Decimal("100000.00"),
-        mock_orders: List[Dict] = None,
+        mock_orders: list[dict] = None,
     ):
         """Initialize with mock data.
 
@@ -55,15 +55,15 @@ class MockBrokerAdapter(BrokerAdapter):
         """Mock cancel order."""
         pass
 
-    async def get_account_info(self) -> Dict:
+    async def get_account_info(self) -> dict:
         """Mock account info."""
         return {"cash": self._mock_cash, "equity": Decimal("100000.00")}
 
-    async def get_positions(self) -> List[Dict]:
+    async def get_positions(self) -> list[dict]:
         """Return mock positions."""
         return self._mock_positions
 
-    async def get_open_orders(self) -> List[Dict]:
+    async def get_open_orders(self) -> list[dict]:
         """Return mock open orders."""
         return self._mock_orders
 
@@ -326,9 +326,7 @@ class TestOrderReconciliation:
             ),
         ]
 
-        broker_orders = [
-            {"order_id": "broker-order-1", "asset": "AAPL", "status": "pending"}
-        ]
+        broker_orders = [{"order_id": "broker-order-1", "asset": "AAPL", "status": "pending"}]
 
         broker = MockBrokerAdapter([], mock_orders=broker_orders)
         reconciler = PositionReconciler(broker, ReconciliationStrategy.WARN_ONLY)
@@ -378,9 +376,7 @@ class TestOrderReconciliation:
         """Test order exists at broker but not locally."""
         local_orders = []  # No local orders
 
-        broker_orders = [
-            {"order_id": "broker-order-1", "asset": "AAPL", "status": "pending"}
-        ]
+        broker_orders = [{"order_id": "broker-order-1", "asset": "AAPL", "status": "pending"}]
 
         broker = MockBrokerAdapter([], mock_orders=broker_orders)
         reconciler = PositionReconciler(broker, ReconciliationStrategy.WARN_ONLY)
@@ -412,9 +408,7 @@ class TestOrderReconciliation:
             ),
         ]
 
-        broker_orders = [
-            {"order_id": "broker-order-1", "asset": "AAPL", "status": "filled"}
-        ]
+        broker_orders = [{"order_id": "broker-order-1", "asset": "AAPL", "status": "filled"}]
 
         broker = MockBrokerAdapter([], mock_orders=broker_orders)
         reconciler = PositionReconciler(broker, ReconciliationStrategy.WARN_ONLY)
@@ -675,9 +669,7 @@ class TestPropertyBasedDiscrepancyCalculations:
     """Property-based tests for discrepancy percentage calculations using Hypothesis."""
 
     @given(
-        local=st.decimals(
-            min_value=Decimal("-10000"), max_value=Decimal("10000"), allow_nan=False
-        ),
+        local=st.decimals(min_value=Decimal("-10000"), max_value=Decimal("10000"), allow_nan=False),
         broker=st.decimals(
             min_value=Decimal("-10000"), max_value=Decimal("10000"), allow_nan=False
         ),
@@ -695,9 +687,7 @@ class TestPropertyBasedDiscrepancyCalculations:
         )
 
     @given(
-        value=st.decimals(
-            min_value=Decimal("-10000"), max_value=Decimal("10000"), allow_nan=False
-        )
+        value=st.decimals(min_value=Decimal("-10000"), max_value=Decimal("10000"), allow_nan=False)
     )
     def test_identical_values_have_zero_discrepancy(self, value):
         """Property: Identical local and broker values always yield 0% discrepancy."""
@@ -706,10 +696,9 @@ class TestPropertyBasedDiscrepancyCalculations:
 
         discrepancy_pct = reconciler._calculate_discrepancy_percentage(value, value)
 
-        assert discrepancy_pct == 0.0, (
-            f"Identical values should have 0% discrepancy, got {discrepancy_pct} "
-            f"for value={value}"
-        )
+        assert (
+            discrepancy_pct == 0.0
+        ), f"Identical values should have 0% discrepancy, got {discrepancy_pct} for value={value}"
 
     def test_none_values_have_expected_discrepancy(self):
         """Property: None values result in predictable discrepancy percentages."""
@@ -725,9 +714,7 @@ class TestPropertyBasedDiscrepancyCalculations:
 
     @given(
         local=st.decimals(min_value=Decimal("1"), max_value=Decimal("10000"), allow_nan=False),
-        broker=st.decimals(
-            min_value=Decimal("1"), max_value=Decimal("10000"), allow_nan=False
-        ),
+        broker=st.decimals(min_value=Decimal("1"), max_value=Decimal("10000"), allow_nan=False),
     )
     def test_discrepancy_is_symmetric(self, local, broker):
         """Property: Discrepancy percentage is symmetric (swap local/broker gives same result)."""
@@ -742,9 +729,7 @@ class TestPropertyBasedDiscrepancyCalculations:
             f"reverse={discrepancy_reverse}, local={local}, broker={broker}"
         )
 
-    @given(
-        base=st.decimals(min_value=Decimal("100"), max_value=Decimal("1000"), allow_nan=False)
-    )
+    @given(base=st.decimals(min_value=Decimal("100"), max_value=Decimal("1000"), allow_nan=False))
     def test_small_percentage_differences_classified_correctly(self, base):
         """Property: Known percentage differences result in correct severity classification."""
         broker_adapter = MockBrokerAdapter([])
@@ -799,9 +784,7 @@ class TestPropertyBasedDiscrepancyCalculations:
         assert discrepancy == 1.0
 
     @given(
-        local=st.decimals(
-            min_value=Decimal("-1000"), max_value=Decimal("-1"), allow_nan=False
-        ),
+        local=st.decimals(min_value=Decimal("-1000"), max_value=Decimal("-1"), allow_nan=False),
         broker=st.decimals(min_value=Decimal("1"), max_value=Decimal("1000"), allow_nan=False),
     )
     def test_opposite_signs_use_absolute_values(self, local, broker):
@@ -813,6 +796,6 @@ class TestPropertyBasedDiscrepancyCalculations:
         discrepancy_pct = reconciler._calculate_discrepancy_percentage(local, broker)
 
         # Should be between 0 and 1
-        assert 0.0 <= discrepancy_pct <= 1.0, (
-            f"Discrepancy for opposite signs should be bounded, got {discrepancy_pct}"
-        )
+        assert (
+            0.0 <= discrepancy_pct <= 1.0
+        ), f"Discrepancy for opposite signs should be bounded, got {discrepancy_pct}"

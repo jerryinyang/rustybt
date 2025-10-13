@@ -6,7 +6,6 @@ extending Zipline's Order with support for fractional quantities and exact price
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 from uuid import uuid4
 
 import structlog
@@ -56,32 +55,32 @@ class DecimalOrder(Order):
     """
 
     __slots__ = [
-        "id",
-        "dt",
-        "reason",
-        "created",
-        "asset",
-        "amount",
-        "filled",
-        "commission",
         "_status",
-        "stop",
-        "limit",
-        "stop_reached",
-        "limit_reached",
-        "direction",
-        "type",
+        "amount",
+        "asset",
         "broker_order_id",
+        "commission",
+        "config",
+        "created",
+        "direction",
+        "dt",
+        "filled",
+        "filled_price",
+        "id",
+        "is_trailing_stop",
+        "limit",
+        "limit_reached",
+        "linked_order_ids",
+        "order_type",
+        "parent_order_id",
+        "reason",
+        "stop",
+        "stop_reached",
         "trail_amount",
         "trail_percent",
-        "linked_order_ids",
-        "parent_order_id",
-        "is_trailing_stop",
         "trailing_highest_price",
         "trailing_lowest_price",
-        "filled_price",
-        "config",
-        "order_type",
+        "type",
     ]
 
     @expect_types(asset=Asset)
@@ -91,16 +90,16 @@ class DecimalOrder(Order):
         asset: Asset,
         amount: Decimal,
         order_type: str = "market",
-        stop: Optional[Decimal] = None,
-        limit: Optional[Decimal] = None,
-        filled: Optional[Decimal] = None,
-        commission: Optional[Decimal] = None,
-        id: Optional[str] = None,
-        trail_amount: Optional[Decimal] = None,
-        trail_percent: Optional[Decimal] = None,
-        linked_order_ids: Optional[list[str]] = None,
-        parent_order_id: Optional[str] = None,
-        config: Optional[DecimalConfig] = None,
+        stop: Decimal | None = None,
+        limit: Decimal | None = None,
+        filled: Decimal | None = None,
+        commission: Decimal | None = None,
+        id: str | None = None,
+        trail_amount: Decimal | None = None,
+        trail_percent: Decimal | None = None,
+        linked_order_ids: list[str] | None = None,
+        parent_order_id: str | None = None,
+        config: DecimalConfig | None = None,
     ) -> None:
         """Initialize DecimalOrder with Decimal values.
 
@@ -149,11 +148,11 @@ class DecimalOrder(Order):
         self.linked_order_ids = linked_order_ids if linked_order_ids else []
         self.parent_order_id = parent_order_id
         self.is_trailing_stop = trail_amount is not None or trail_percent is not None
-        self.trailing_highest_price: Optional[Decimal] = None
-        self.trailing_lowest_price: Optional[Decimal] = None
+        self.trailing_highest_price: Decimal | None = None
+        self.trailing_lowest_price: Decimal | None = None
 
         # Decimal-specific fields
-        self.filled_price: Optional[Decimal] = None
+        self.filled_price: Decimal | None = None
         self.config = config or DecimalConfig.get_instance()
 
         # Validate order
@@ -271,10 +270,7 @@ class DecimalOrder(Order):
                 self.stop = self.trailing_lowest_price * (Decimal("1") + self.trail_percent)
         else:
             # For sell orders (closing long), track highest price
-            if (
-                self.trailing_highest_price is None
-                or current_price > self.trailing_highest_price
-            ):
+            if self.trailing_highest_price is None or current_price > self.trailing_highest_price:
                 self.trailing_highest_price = current_price
 
             if self.trail_amount is not None:

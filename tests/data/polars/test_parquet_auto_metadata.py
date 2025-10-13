@@ -12,22 +12,18 @@ Phase: 3 (Auto-Population)
 """
 
 import tempfile
-import time
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
 import polars as pl
-import pytest
 
 from rustybt.data.bundles.metadata import BundleMetadata
-from rustybt.data.polars.parquet_writer import ParquetWriter
 from rustybt.data.polars.parquet_schema import DAILY_BARS_SCHEMA
+from rustybt.data.polars.parquet_writer import ParquetWriter
 
 
-def create_ohlcv_df(
-    dates, sids, opens, highs, lows, closes, volumes
-):
+def create_ohlcv_df(dates, sids, opens, highs, lows, closes, volumes):
     """Helper to create DataFrame with correct Decimal precision."""
     df = pl.DataFrame(
         {
@@ -41,13 +37,15 @@ def create_ohlcv_df(
         }
     )
 
-    df = df.with_columns([
-        pl.col("open").cast(pl.Decimal(precision=18, scale=8)),
-        pl.col("high").cast(pl.Decimal(precision=18, scale=8)),
-        pl.col("low").cast(pl.Decimal(precision=18, scale=8)),
-        pl.col("close").cast(pl.Decimal(precision=18, scale=8)),
-        pl.col("volume").cast(pl.Decimal(precision=18, scale=8)),
-    ])
+    df = df.with_columns(
+        [
+            pl.col("open").cast(pl.Decimal(precision=18, scale=8)),
+            pl.col("high").cast(pl.Decimal(precision=18, scale=8)),
+            pl.col("low").cast(pl.Decimal(precision=18, scale=8)),
+            pl.col("close").cast(pl.Decimal(precision=18, scale=8)),
+            pl.col("volume").cast(pl.Decimal(precision=18, scale=8)),
+        ]
+    )
 
     return df.cast(DAILY_BARS_SCHEMA, strict=False)
 
@@ -97,16 +95,17 @@ class TestAutoPopulation:
 
             writer = ParquetWriter(str(Path(tmpdir) / "test-bundle"))
 
-            df = pl.DataFrame({
-                "date": [date(2025, 1, 1)],
-                "sid": [1],
-                
-                "open": [Decimal("100.00")],
-                "high": [Decimal("101.00")],
-                "low": [Decimal("99.00")],
-                "close": [Decimal("100.50")],
-                "volume": [1000000],
-            })
+            df = pl.DataFrame(
+                {
+                    "date": [date(2025, 1, 1)],
+                    "sid": [1],
+                    "open": [Decimal("100.00")],
+                    "high": [Decimal("101.00")],
+                    "low": [Decimal("99.00")],
+                    "close": [Decimal("100.50")],
+                    "volume": [1000000],
+                }
+            )
 
             source_metadata = {
                 "source_type": "yfinance",
@@ -143,16 +142,17 @@ class TestAutoPopulation:
             writer = ParquetWriter(str(Path(tmpdir) / "test-bundle"))
 
             # Valid OHLCV data
-            df = pl.DataFrame({
-                "date": [date(2025, 1, 1)],
-                "sid": [1],
-                
-                "open": [Decimal("100.00")],
-                "high": [Decimal("101.00")],
-                "low": [Decimal("99.00")],
-                "close": [Decimal("100.50")],
-                "volume": [1000000],
-            })
+            df = pl.DataFrame(
+                {
+                    "date": [date(2025, 1, 1)],
+                    "sid": [1],
+                    "open": [Decimal("100.00")],
+                    "high": [Decimal("101.00")],
+                    "low": [Decimal("99.00")],
+                    "close": [Decimal("100.50")],
+                    "volume": [1000000],
+                }
+            )
 
             source_metadata = {"source_type": "yfinance", "symbols": ["AAPL"]}
 
@@ -179,16 +179,17 @@ class TestAutoPopulation:
             writer = ParquetWriter(str(Path(tmpdir) / "test-bundle"))
 
             # Invalid OHLCV data (high < low)
-            df = pl.DataFrame({
-                "date": [date(2025, 1, 1)],
-                "sid": [1],
-                
-                "open": [Decimal("100.00")],
-                "high": [Decimal("99.00")],  # Invalid: high < low
-                "low": [Decimal("101.00")],
-                "close": [Decimal("100.50")],
-                "volume": [1000000],
-            })
+            df = pl.DataFrame(
+                {
+                    "date": [date(2025, 1, 1)],
+                    "sid": [1],
+                    "open": [Decimal("100.00")],
+                    "high": [Decimal("99.00")],  # Invalid: high < low
+                    "low": [Decimal("101.00")],
+                    "close": [Decimal("100.50")],
+                    "volume": [1000000],
+                }
+            )
 
             source_metadata = {"source_type": "yfinance", "symbols": ["AAPL", "MSFT"]}
 
@@ -212,16 +213,18 @@ class TestAutoPopulation:
 
             writer = ParquetWriter(str(Path(tmpdir) / "test-bundle"))
 
-            df = pl.DataFrame({
-                "date": [date(2025, 1, 1), date(2025, 1, 2), date(2025, 1, 3)],
-                "sid": [1, 2, 1],
-                  # 2 unique symbols
-                "open": [Decimal("100.00"), Decimal("200.00"), Decimal("101.00")],
-                "high": [Decimal("101.00"), Decimal("201.00"), Decimal("102.00")],
-                "low": [Decimal("99.00"), Decimal("199.00"), Decimal("100.00")],
-                "close": [Decimal("100.50"), Decimal("200.50"), Decimal("101.50")],
-                "volume": [1000000, 2000000, 1100000],
-            })
+            df = pl.DataFrame(
+                {
+                    "date": [date(2025, 1, 1), date(2025, 1, 2), date(2025, 1, 3)],
+                    "sid": [1, 2, 1],
+                    # 2 unique symbols
+                    "open": [Decimal("100.00"), Decimal("200.00"), Decimal("101.00")],
+                    "high": [Decimal("101.00"), Decimal("201.00"), Decimal("102.00")],
+                    "low": [Decimal("99.00"), Decimal("199.00"), Decimal("100.00")],
+                    "close": [Decimal("100.50"), Decimal("200.50"), Decimal("101.50")],
+                    "volume": [1000000, 2000000, 1100000],
+                }
+            )
 
             source_metadata = {"source_type": "yfinance", "symbols": ["AAPL", "MSFT"]}
 
@@ -252,16 +255,18 @@ class TestAutoPopulation:
 
             writer = ParquetWriter(str(Path(tmpdir) / "test-bundle"))
 
-            df = pl.DataFrame({
-                "date": [date(2025, 1, 1)],
-                "sid": [1],
-                  # Crypto pattern
-                "open": [Decimal("50000.00")],
-                "high": [Decimal("51000.00")],
-                "low": [Decimal("49000.00")],
-                "close": [Decimal("50500.00")],
-                "volume": [100],
-            })
+            df = pl.DataFrame(
+                {
+                    "date": [date(2025, 1, 1)],
+                    "sid": [1],
+                    # Crypto pattern
+                    "open": [Decimal("50000.00")],
+                    "high": [Decimal("51000.00")],
+                    "low": [Decimal("49000.00")],
+                    "close": [Decimal("50500.00")],
+                    "volume": [100],
+                }
+            )
 
             source_metadata = {"source_type": "ccxt", "symbols": ["BTC/USDT"]}
 
@@ -285,16 +290,18 @@ class TestAutoPopulation:
 
             writer = ParquetWriter(str(Path(tmpdir) / "test-bundle"))
 
-            df = pl.DataFrame({
-                "date": [date(2025, 1, 1)],
-                "sid": [1],
-                  # Future pattern (contract code + month + year)
-                "open": [Decimal("4500.00")],
-                "high": [Decimal("4510.00")],
-                "low": [Decimal("4490.00")],
-                "close": [Decimal("4505.00")],
-                "volume": [50000],
-            })
+            df = pl.DataFrame(
+                {
+                    "date": [date(2025, 1, 1)],
+                    "sid": [1],
+                    # Future pattern (contract code + month + year)
+                    "open": [Decimal("4500.00")],
+                    "high": [Decimal("4510.00")],
+                    "low": [Decimal("4490.00")],
+                    "close": [Decimal("4505.00")],
+                    "volume": [50000],
+                }
+            )
 
             source_metadata = {"source_type": "interactive_brokers", "symbols": ["ESH25"]}
 
@@ -318,16 +325,17 @@ class TestAutoPopulation:
 
             writer = ParquetWriter(str(Path(tmpdir) / "test-bundle"))
 
-            df = pl.DataFrame({
-                "date": [date(2025, 1, 1)],
-                "sid": [1],
-                
-                "open": [Decimal("100.00")],
-                "high": [Decimal("101.00")],
-                "low": [Decimal("99.00")],
-                "close": [Decimal("100.50")],
-                "volume": [1000000],
-            })
+            df = pl.DataFrame(
+                {
+                    "date": [date(2025, 1, 1)],
+                    "sid": [1],
+                    "open": [Decimal("100.00")],
+                    "high": [Decimal("101.00")],
+                    "low": [Decimal("99.00")],
+                    "close": [Decimal("100.50")],
+                    "volume": [1000000],
+                }
+            )
 
             source_metadata = {
                 "source_type": "yfinance",
@@ -354,16 +362,17 @@ class TestAutoPopulation:
 
             writer = ParquetWriter(str(Path(tmpdir) / "test-bundle"))
 
-            df = pl.DataFrame({
-                "date": [date(2025, 1, 1), date(2025, 1, 2)],
-                "sid": [1, 2],
-                
-                "open": [Decimal("100.00"), Decimal("50000.00")],
-                "high": [Decimal("101.00"), Decimal("51000.00")],
-                "low": [Decimal("99.00"), Decimal("49000.00")],
-                "close": [Decimal("100.50"), Decimal("50500.00")],
-                "volume": [1000000, 100],
-            })
+            df = pl.DataFrame(
+                {
+                    "date": [date(2025, 1, 1), date(2025, 1, 2)],
+                    "sid": [1, 2],
+                    "open": [Decimal("100.00"), Decimal("50000.00")],
+                    "high": [Decimal("101.00"), Decimal("51000.00")],
+                    "low": [Decimal("99.00"), Decimal("49000.00")],
+                    "close": [Decimal("100.50"), Decimal("50500.00")],
+                    "volume": [1000000, 100],
+                }
+            )
 
             source_metadata = {
                 "source_type": "mixed",

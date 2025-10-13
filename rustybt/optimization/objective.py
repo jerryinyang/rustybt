@@ -80,7 +80,4 @@ class ObjectiveFunction:
 
     def __repr__(self) -> str:
         """String representation."""
-        return (
-            f"ObjectiveFunction(metric={self.metric}, "
-            f"higher_is_better={self.higher_is_better})"
-        )
+        return f"ObjectiveFunction(metric={self.metric}, higher_is_better={self.higher_is_better})"

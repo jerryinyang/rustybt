@@ -258,9 +258,7 @@ class OrderManager:
             order = self._orders[order_id]
 
             if order.status not in (OrderStatus.SUBMITTED, OrderStatus.PENDING):
-                raise ValueError(
-                    f"Cannot cancel order in status {order.status.value}"
-                )
+                raise ValueError(f"Cannot cancel order in status {order.status.value}")
 
             order.status = OrderStatus.CANCELED
             order.reject_reason = reason

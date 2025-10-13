@@ -12,8 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from parameterized import parameterized
 import pandas as pd
+import pytest
+from parameterized import parameterized
 
 from rustybt.errors import BadOrderParameters
 from rustybt.finance.execution import (
@@ -23,12 +24,10 @@ from rustybt.finance.execution import (
     StopOrder,
 )
 from rustybt.testing.fixtures import (
-    ZiplineTestCase,
     WithConstantFutureMinuteBarData,
+    ZiplineTestCase,
 )
-
 from rustybt.testing.predicates import assert_equal
-import pytest
 
 
 class ExecutionStyleTestCase(WithConstantFutureMinuteBarData, ZiplineTestCase):
@@ -187,12 +186,8 @@ class ExecutionStyleTestCase(WithConstantFutureMinuteBarData, ZiplineTestCase):
         """
         style = LimitOrder(price, asset=self.asset_finder.retrieve_asset(asset))
 
-        assert_equal(
-            expected_limit_buy_or_stop_sell, style.get_limit_price(is_buy=True)
-        )
-        assert_equal(
-            expected_limit_sell_or_stop_buy, style.get_limit_price(is_buy=False)
-        )
+        assert_equal(expected_limit_buy_or_stop_sell, style.get_limit_price(is_buy=True))
+        assert_equal(expected_limit_sell_or_stop_buy, style.get_limit_price(is_buy=False))
 
         assert_equal(None, style.get_stop_price(_is_buy=True))
         assert_equal(None, style.get_stop_price(_is_buy=False))
@@ -214,9 +209,7 @@ class ExecutionStyleTestCase(WithConstantFutureMinuteBarData, ZiplineTestCase):
         assert_equal(None, style.get_limit_price(_is_buy=False))
         assert_equal(None, style.get_limit_price(_is_buy=True))
 
-        assert_equal(
-            expected_limit_buy_or_stop_sell, style.get_stop_price(is_buy=False)
-        )
+        assert_equal(expected_limit_buy_or_stop_sell, style.get_stop_price(is_buy=False))
         assert_equal(expected_limit_sell_or_stop_buy, style.get_stop_price(is_buy=True))
 
     @parameterized.expand(FINAL_PARAMETER_SET)
@@ -233,20 +226,10 @@ class ExecutionStyleTestCase(WithConstantFutureMinuteBarData, ZiplineTestCase):
         prices.
         """
 
-        style = StopLimitOrder(
-            price, price + 1, asset=self.asset_finder.retrieve_asset(asset)
-        )
+        style = StopLimitOrder(price, price + 1, asset=self.asset_finder.retrieve_asset(asset))
 
-        assert_equal(
-            expected_limit_buy_or_stop_sell, style.get_limit_price(is_buy=True)
-        )
-        assert_equal(
-            expected_limit_sell_or_stop_buy, style.get_limit_price(is_buy=False)
-        )
+        assert_equal(expected_limit_buy_or_stop_sell, style.get_limit_price(is_buy=True))
+        assert_equal(expected_limit_sell_or_stop_buy, style.get_limit_price(is_buy=False))
 
-        assert_equal(
-            expected_limit_buy_or_stop_sell + 1, style.get_stop_price(is_buy=False)
-        )
-        assert_equal(
-            expected_limit_sell_or_stop_buy + 1, style.get_stop_price(is_buy=True)
-        )
+        assert_equal(expected_limit_buy_or_stop_sell + 1, style.get_stop_price(is_buy=False))
+        assert_equal(expected_limit_sell_or_stop_buy + 1, style.get_stop_price(is_buy=True))

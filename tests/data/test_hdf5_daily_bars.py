@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
 
+import rustybt.testing.fixtures as zp_fixtures
 from rustybt.data.hdf5_daily_bars import (
     HDF5DailyBarReader,
     HDF5DailyBarWriter,
     MultiCountryDailyBarReader,
 )
-import rustybt.testing.fixtures as zp_fixtures
 from rustybt.testing.predicates import assert_equal
 
 

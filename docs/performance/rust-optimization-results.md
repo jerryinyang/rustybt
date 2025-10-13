@@ -10,10 +10,10 @@
 
 ## Methodology
 
-**Hardware**: macOS (darwin 25.0.0), Python 3.13.1  
-**Scenarios**: Daily (2yr, 10 assets), Hourly (3mo, 5 assets), Minute (1mo, 3 assets)  
-**Measurement**: Python `time.perf_counter()`, 3 iterations per scenario, mean execution time  
-**Baseline**: Float-based capital_base (100000.0)  
+**Hardware**: macOS (darwin 25.0.0), Python 3.13.1
+**Scenarios**: Daily (2yr, 10 assets), Hourly (3mo, 5 assets), Minute (1mo, 3 assets)
+**Measurement**: Python `time.perf_counter()`, 3 iterations per scenario, mean execution time
+**Baseline**: Float-based capital_base (100000.0)
 **Optimized**: Decimal-based capital_base (Decimal("100000")) with Rust optimizations enabled
 
 ## Results Summary
@@ -29,26 +29,26 @@
 
 ### Daily Scenario
 
-**Float Baseline**: 1.147s (σ = 0.198s)  
-**Decimal + Rust**: 1.120s (σ = 0.080s)  
-**Overhead**: -2.3%  
-**Target Met**: ✅ Yes  
+**Float Baseline**: 1.147s (σ = 0.198s)
+**Decimal + Rust**: 1.120s (σ = 0.080s)
+**Overhead**: -2.3%
+**Target Met**: ✅ Yes
 **Runs**: 3
 
 ### Hourly Scenario
 
-**Float Baseline**: 17.026s (σ = 0.302s)  
-**Decimal + Rust**: 17.721s (σ = 0.024s)  
-**Overhead**: 4.1%  
-**Target Met**: ✅ Yes  
+**Float Baseline**: 17.026s (σ = 0.302s)
+**Decimal + Rust**: 17.721s (σ = 0.024s)
+**Overhead**: 4.1%
+**Target Met**: ✅ Yes
 **Runs**: 3
 
 ### Minute Scenario
 
-**Float Baseline**: 3.789s (σ = 0.012s)  
-**Decimal + Rust**: 3.853s (σ = 0.094s)  
-**Overhead**: 1.7%  
-**Target Met**: ✅ Yes  
+**Float Baseline**: 3.789s (σ = 0.012s)
+**Decimal + Rust**: 3.853s (σ = 0.094s)
+**Overhead**: 1.7%
+**Target Met**: ✅ Yes
 **Runs**: 3
 
 ## Module-Level Overhead Breakdown
@@ -57,24 +57,24 @@ Analysis of overhead by component based on profiling data from Story 7.1 and opt
 
 ### Finance/Decimal Modules (DecimalLedger, DecimalPosition, DecimalTransaction)
 
-**Pre-Rust Overhead**: ~40-50% (Story 7.1 profiling)  
-**Post-Rust Overhead**: <5% (estimated from daily scenario -2.3% overhead)  
+**Pre-Rust Overhead**: ~40-50% (Story 7.1 profiling)
+**Post-Rust Overhead**: <5% (estimated from daily scenario -2.3% overhead)
 **Impact**: Rust optimizations effectively eliminated Decimal arithmetic overhead in the ledger system
 
 ### Finance/Metrics (Performance metrics calculations)
 
-**Pre-Rust Overhead**: ~30-40% (Story 7.1 profiling)  
-**Post-Rust Overhead**: <10% (estimated from hourly scenario 4.1% overhead)  
+**Pre-Rust Overhead**: ~30-40% (Story 7.1 profiling)
+**Post-Rust Overhead**: <10% (estimated from hourly scenario 4.1% overhead)
 **Impact**: Metrics calculations benefit from Rust optimizations, though some Python overhead remains for complex aggregations
 
 ### Data/Polars (Data portal, bar readers)
 
-**Overhead**: Minimal (<2%)  
+**Overhead**: Minimal (<2%)
 **Note**: Data access layer uses efficient Polars/Parquet infrastructure and is not a bottleneck
 
 ### Algorithm Event Loop
 
-**Overhead**: Minimal (<1%)  
+**Overhead**: Minimal (<1%)
 **Note**: Event processing is efficient and not significantly impacted by Decimal vs float
 
 ### Overall Assessment
@@ -93,8 +93,8 @@ For detailed function-level profiling data, see `docs/performance/profiling-resu
 
 ## Conclusion
 
-The Decimal + Rust optimizations achieve an average overhead of 1.1%, which is 
-**below the 30% target**. This validates that the Decimal precision approach with Rust optimizations 
+The Decimal + Rust optimizations achieve an average overhead of 1.1%, which is
+**below the 30% target**. This validates that the Decimal precision approach with Rust optimizations
 is viable for production use.
 
 ### Production Readiness
@@ -113,6 +113,6 @@ is viable for production use.
 
 ---
 
-**Report Generated**: 2025-10-09 18:20:40  
-**Story**: 7.4 - Validate Performance Target Achievement  
-**Profiler**: James (Full Stack Developer)  
+**Report Generated**: 2025-10-09 18:20:40
+**Story**: 7.4 - Validate Performance Target Achievement
+**Profiler**: James (Full Stack Developer)

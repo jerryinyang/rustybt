@@ -4,6 +4,7 @@ announcements, acquisitions, dividends, etc.).
 """
 
 from numpy import newaxis
+
 from rustybt.utils.numpy_utils import (
     NaTD,
     busday_count_mask_NaT,
@@ -30,7 +31,7 @@ class BusinessDaysSincePreviousEvent(Factor):
     Assets for which the event date is `NaT` will produce a value of `NaN`.
 
 
-    Example
+    Example:
     -------
     ``BusinessDaysSincePreviousEvent`` can be used to create an event-driven
     factor. For instance, you may want to only trade assets that have
@@ -54,7 +55,6 @@ class BusinessDaysSincePreviousEvent(Factor):
     dtype = float64_dtype
 
     def _compute(self, arrays, dates, assets, mask):
-
         # Coerce from [ns] to [D] for numpy busday_count.
         announce_dates = arrays[0].astype(datetime64D_dtype)
 
@@ -90,7 +90,6 @@ class BusinessDaysUntilNextEvent(Factor):
     dtype = float64_dtype
 
     def _compute(self, arrays, dates, assets, mask):
-
         # Coerce from [ns] to [D] for numpy busday_count.
         announce_dates = arrays[0].astype(datetime64D_dtype)
 

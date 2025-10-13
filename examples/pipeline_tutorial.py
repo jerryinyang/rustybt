@@ -33,14 +33,10 @@ Note: Pipeline API is an advanced feature primarily for factor-based strategies.
       For simple strategies, use the standard TradingAlgorithm API.
 """
 
-import pandas as pd
-import polars as pl
 from rustybt import TradingAlgorithm
-from rustybt.pipeline import Pipeline, CustomFactor
+from rustybt.pipeline import CustomFactor, Pipeline
 from rustybt.pipeline.data import USEquityPricing
-from rustybt.pipeline.filters import StaticAssets
-from rustybt.pipeline.factors import SimpleMovingAverage, RSI, Returns
-
+from rustybt.pipeline.factors import RSI, Returns, SimpleMovingAverage
 
 print("=" * 70)
 print("Pipeline API Tutorial")
@@ -52,6 +48,7 @@ print("that screen and rank assets based on computed factors.")
 # ============================================================================
 # Example 1: Basic Pipeline with Built-in Factors
 # ============================================================================
+
 
 def example_1_basic_pipeline():
     """Example 1: Basic pipeline with moving averages and RSI."""
@@ -80,12 +77,12 @@ def example_1_basic_pipeline():
         # Build pipeline
         return Pipeline(
             columns={
-                'close': close,
-                'sma_50': sma_50,
-                'sma_200': sma_200,
-                'rsi_14': rsi_14,
+                "close": close,
+                "sma_50": sma_50,
+                "sma_200": sma_200,
+                "rsi_14": rsi_14,
             },
-            screen=screen
+            screen=screen,
         )
 
     print("\n✓ Pipeline defined")
@@ -102,6 +99,7 @@ def example_1_basic_pipeline():
 # ============================================================================
 # Example 2: Custom Factor
 # ============================================================================
+
 
 def example_2_custom_factor():
     """Example 2: Creating a custom factor."""
@@ -149,10 +147,10 @@ def example_2_custom_factor():
 
         return Pipeline(
             columns={
-                'close': close,
-                'mean_reversion_score': mean_reversion,
+                "close": close,
+                "mean_reversion_score": mean_reversion,
             },
-            screen=top_oversold
+            screen=top_oversold,
         )
 
     print("\n✓ Custom factor created")
@@ -165,6 +163,7 @@ def example_2_custom_factor():
 # ============================================================================
 # Example 3: Pipeline in Trading Algorithm
 # ============================================================================
+
 
 def example_3_pipeline_in_algorithm():
     """Example 3: Using pipeline in a trading algorithm."""
@@ -181,13 +180,13 @@ def example_3_pipeline_in_algorithm():
             pipe = self.make_pipeline()
 
             # Attach pipeline to algorithm
-            self.attach_pipeline(pipe, 'momentum_screen')
+            self.attach_pipeline(pipe, "momentum_screen")
 
             # Schedule rebalance
             self.schedule_function(
                 self.rebalance,
                 date_rule=self.date_rules.month_start(),
-                time_rule=self.time_rules.market_open()
+                time_rule=self.time_rules.market_open(),
             )
 
         def make_pipeline(self):
@@ -212,19 +211,19 @@ def example_3_pipeline_in_algorithm():
 
             return Pipeline(
                 columns={
-                    'close': close,
-                    'momentum_score': momentum_score,
-                    'returns_1m': returns_1m,
-                    'returns_3m': returns_3m,
-                    'returns_6m': returns_6m,
+                    "close": close,
+                    "momentum_score": momentum_score,
+                    "returns_1m": returns_1m,
+                    "returns_3m": returns_3m,
+                    "returns_6m": returns_6m,
                 },
-                screen=top_momentum
+                screen=top_momentum,
             )
 
         def rebalance(self, context, data):
             """Rebalance portfolio based on pipeline output."""
             # Get pipeline output
-            pipeline_output = self.pipeline_output('momentum_screen')
+            pipeline_output = self.pipeline_output("momentum_screen")
 
             # Get current positions
             current_positions = set(context.portfolio.positions.keys())
@@ -256,6 +255,7 @@ def example_3_pipeline_in_algorithm():
 # Example 4: Advanced Filters and Classifiers
 # ============================================================================
 
+
 def example_4_advanced_filters():
     """Example 4: Advanced filters and classifiers."""
     print("\n" + "=" * 70)
@@ -285,11 +285,11 @@ def example_4_advanced_filters():
 
         return Pipeline(
             columns={
-                'close': close,
-                'returns_3m': returns_3m,
+                "close": close,
+                "returns_3m": returns_3m,
                 # 'sector': sector,
             },
-            screen=top_momentum
+            screen=top_momentum,
         )
 
     print("\n✓ Advanced pipeline defined")
@@ -303,6 +303,7 @@ def example_4_advanced_filters():
 # ============================================================================
 # Example 5: Pipeline Performance Tips
 # ============================================================================
+
 
 def example_5_performance_tips():
     """Example 5: Pipeline performance optimization."""
@@ -338,6 +339,7 @@ def example_5_performance_tips():
 # Example 6: Pipeline Debugging
 # ============================================================================
 
+
 def example_6_debugging():
     """Example 6: Pipeline debugging techniques."""
     print("\n" + "=" * 70)
@@ -370,6 +372,7 @@ def example_6_debugging():
 # ============================================================================
 # Run All Examples
 # ============================================================================
+
 
 def main():
     """Run all pipeline tutorial examples."""
@@ -408,6 +411,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
 
 

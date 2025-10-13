@@ -1,3 +1,5 @@
+import pytest
+
 from rustybt.errors import UnsupportedDataType
 from rustybt.pipeline import CustomClassifier, CustomFactor, CustomFilter
 from rustybt.pipeline.dtypes import (
@@ -8,8 +10,7 @@ from rustybt.pipeline.dtypes import (
 from rustybt.pipeline.sentinels import NotSpecified
 from rustybt.testing import parameter_space
 from rustybt.testing.fixtures import ZiplineTestCase
-from rustybt.utils.numpy_utils import int64_dtype, bool_dtype
-import pytest
+from rustybt.utils.numpy_utils import bool_dtype, int64_dtype
 
 missing_values = {
     int64_dtype: -1,

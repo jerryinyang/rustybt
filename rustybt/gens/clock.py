@@ -19,14 +19,13 @@ Unified clock abstraction for simulation and live trading modes.
 
 import time
 from abc import ABC, abstractmethod
-from typing import Iterator, Literal
+from collections.abc import Iterator
+from typing import Literal
 
 import pandas as pd
 
 # Resolution types
-Resolution = Literal[
-    "daily", "minute", "second", "millisecond", "microsecond"
-]
+Resolution = Literal["daily", "minute", "second", "millisecond", "microsecond"]
 
 
 class BaseClock(ABC):
@@ -76,8 +75,7 @@ class SimulationClock(BaseClock):
         valid_resolutions = {"daily", "minute", "second", "millisecond", "microsecond"}
         if resolution not in valid_resolutions:
             raise ValueError(
-                f"Invalid resolution '{resolution}'. "
-                f"Must be one of {valid_resolutions}"
+                f"Invalid resolution '{resolution}'. Must be one of {valid_resolutions}"
             )
 
         self.start = start
@@ -129,9 +127,7 @@ class LiveClock(BaseClock):
             ValueError: If tick_interval_ms <= 0
         """
         if tick_interval_ms <= 0:
-            raise ValueError(
-                f"tick_interval_ms must be positive, got {tick_interval_ms}"
-            )
+            raise ValueError(f"tick_interval_ms must be positive, got {tick_interval_ms}")
 
         self.tick_interval_ms = tick_interval_ms
         self.current_time = pd.Timestamp.now(tz="UTC")

@@ -12,14 +12,12 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from rustybt.assets import Equity, ExchangeInfo
-from rustybt.finance.decimal.commission import PerShareCommission
-from rustybt.finance.decimal.slippage import FixedBasisPointsSlippage
 from rustybt.live.shadow import (
-    ShadowTradingConfig,
-    SignalRecord,
-    SignalAlignmentValidator,
-    ExecutionQualityTracker,
     AlignmentCircuitBreaker,
+    ExecutionQualityTracker,
+    ShadowTradingConfig,
+    SignalAlignmentValidator,
+    SignalRecord,
 )
 
 
@@ -46,7 +44,7 @@ async def main():
 
     # Create shadow trading components
     signal_validator = SignalAlignmentValidator(config)
-    execution_tracker = ExecutionQualityTracker(config)
+    ExecutionQualityTracker(config)
     circuit_breaker = AlignmentCircuitBreaker(config)
 
     # Simulate trading scenario
@@ -135,11 +133,15 @@ async def main():
 
         if result:
             matched_signal, alignment = result
-            print(f"  Backtest: {scenario['backtest'].side} {scenario['backtest'].quantity} @ ${scenario['backtest'].price}")
-            print(f"  Live:     {scenario['live'].side} {scenario['live'].quantity} @ ${scenario['live'].price}")
+            print(
+                f"  Backtest: {scenario['backtest'].side} {scenario['backtest'].quantity} @ ${scenario['backtest'].price}"
+            )
+            print(
+                f"  Live:     {scenario['live'].side} {scenario['live'].quantity} @ ${scenario['live'].price}"
+            )
             print(f"  Alignment: {alignment.value.upper()}")
         else:
-            print(f"  ❌ No match found (MISSING_SIGNAL)")
+            print("  ❌ No match found (MISSING_SIGNAL)")
 
         print()
 
@@ -211,6 +213,7 @@ async def main():
     print()
 
     import json
+
     print(json.dumps(metrics, indent=2))
 
     print()

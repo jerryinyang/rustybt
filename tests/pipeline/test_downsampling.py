@@ -2,39 +2,38 @@
 Tests for Downsampled Filters/Factors/Classifiers
 """
 
-from functools import partial
+import re
 
 import pandas as pd
+import pytest
 from pandas.testing import assert_frame_equal
 
 from rustybt.errors import NoFurtherDataError
 from rustybt.pipeline import (
-    Pipeline,
+    CustomClassifier,
     CustomFactor,
     CustomFilter,
-    CustomClassifier,
+    Pipeline,
     SimplePipelineEngine,
 )
 from rustybt.pipeline.data.testing import TestingDataSet
 from rustybt.pipeline.domain import (
     CA_EQUITIES,
-    EquitySessionDomain,
     GB_EQUITIES,
     US_EQUITIES,
+    EquitySessionDomain,
 )
 from rustybt.pipeline.factors import SimpleMovingAverage
 from rustybt.pipeline.filters.smoothing import All
-from rustybt.testing import ZiplineTestCase, parameter_space, ExplodingObject
+from rustybt.testing import ExplodingObject, ZiplineTestCase, parameter_space
 from rustybt.testing.fixtures import (
-    WithTradingSessions,
-    WithSeededRandomPipelineEngine,
     WithAssetFinder,
+    WithSeededRandomPipelineEngine,
+    WithTradingSessions,
 )
 from rustybt.utils.classproperty import classproperty
 from rustybt.utils.input_validation import _qualified_name
 from rustybt.utils.numpy_utils import int64_dtype
-import pytest
-import re
 
 
 class NDaysAgoFactor(CustomFactor):
@@ -60,7 +59,6 @@ class NDaysAgoClassifier(CustomClassifier):
 
 
 class ComputeExtraRowsTestCase(WithTradingSessions, ZiplineTestCase):
-
     DATA_MIN_DAY = pd.Timestamp("2012-06")
     DATA_MAX_DAY = pd.Timestamp("2015")
     TRADING_CALENDAR_STRS = ("NYSE", "LSE", "TSX")
@@ -573,15 +571,10 @@ class ComputeExtraRowsTestCase(WithTradingSessions, ZiplineTestCase):
             )
             assert (
                 result == expected_extra_rows
-            ), "Expected {} extra_rows from {}, but got {}.".format(
-                expected_extra_rows,
-                term,
-                result,
-            )
+            ), f"Expected {expected_extra_rows} extra_rows from {term}, but got {result}."
 
 
 class DownsampledPipelineTestCase(WithSeededRandomPipelineEngine, ZiplineTestCase):
-
     # Extend into the last few days of 2013 to test year/quarter boundaries.
     START_DATE = pd.Timestamp("2013-12-15")
 
@@ -604,7 +597,6 @@ class DownsampledPipelineTestCase(WithSeededRandomPipelineEngine, ZiplineTestCas
         return cls.DOMAIN.sessions()
 
     def check_downsampled_term(self, term):
-
         #       June 2014
         # Mo Tu We Th Fr Sa Su
         #                    1
@@ -614,9 +606,7 @@ class DownsampledPipelineTestCase(WithSeededRandomPipelineEngine, ZiplineTestCas
         # 23 24 25 26 27 28 29
         # 30
         all_sessions = self.all_sessions
-        compute_dates = all_sessions[
-            all_sessions.slice_indexer("2014-06-05", "2015-01-06")
-        ]
+        compute_dates = all_sessions[all_sessions.slice_indexer("2014-06-05", "2015-01-06")]
         start_date, end_date = compute_dates[[0, -1]]
 
         pipe = Pipeline(
@@ -716,13 +706,12 @@ class DownsampledPipelineTestCase(WithSeededRandomPipelineEngine, ZiplineTestCas
         self.check_downsampled_term(sma.quantiles(5))
 
     def test_errors_on_bad_downsample_frequency(self):
-
         f = NDaysAgoFactor(window_length=3)
         expected = (
-            "{}() expected a value in "
+            f"{_qualified_name(f.downsample)}() expected a value in "
             "('month_start', 'quarter_start', 'week_start', 'year_start') "
             "for argument 'frequency', but got 'bad' instead."
-        ).format(_qualified_name(f.downsample))
+        )
         with pytest.raises(ValueError, match=re.escape(expected)):
             f.downsample("bad")
 
@@ -736,7 +725,6 @@ class DownsampledCAPipelineTestCase(DownsampledPipelineTestCase):
 
 
 class TestDownsampledRowwiseOperation(WithAssetFinder, ZiplineTestCase):
-
     START_DATE = pd.Timestamp("2014-01-01")
     END_DATE = pd.Timestamp("2014-02-01")
     HALF_WAY_POINT = pd.Timestamp("2014-01-15")

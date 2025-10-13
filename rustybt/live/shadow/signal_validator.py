@@ -5,9 +5,8 @@ when strategy behavior diverges from backtest expectations.
 """
 
 from collections import defaultdict, deque
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Dict, List, Optional, Tuple
 
 import structlog
 
@@ -41,7 +40,7 @@ class SignalAlignmentValidator:
         self._backtest_signals: deque = deque(maxlen=10000)  # Last 10k signals
         self._live_signals: deque = deque(maxlen=10000)
         self._matched_pairs: deque = deque(maxlen=1000)  # Last 1k matches
-        self._divergence_counts: Dict[SignalAlignment, int] = defaultdict(int)
+        self._divergence_counts: dict[SignalAlignment, int] = defaultdict(int)
         # Use deques with maxlen to prevent unbounded memory growth
         self._unmatched_backtest: deque = deque(maxlen=1000)  # Last 1k unmatched
         self._unmatched_live: deque = deque(maxlen=1000)  # Last 1k unmatched
@@ -68,7 +67,7 @@ class SignalAlignmentValidator:
             timestamp=signal.timestamp.isoformat(),
         )
 
-    def add_live_signal(self, signal: SignalRecord) -> Optional[Tuple[SignalRecord, SignalAlignment]]:
+    def add_live_signal(self, signal: SignalRecord) -> tuple[SignalRecord, SignalAlignment] | None:
         """Add live signal and attempt to match with backtest signal.
 
         Args:
@@ -115,7 +114,7 @@ class SignalAlignmentValidator:
 
     def _find_matching_backtest_signal(
         self, live_signal: SignalRecord
-    ) -> Optional[Tuple[SignalRecord, SignalAlignment]]:
+    ) -> tuple[SignalRecord, SignalAlignment] | None:
         """Find matching backtest signal for live signal.
 
         Matching criteria (in order of priority):
@@ -159,8 +158,7 @@ class SignalAlignmentValidator:
 
         # Take closest match by timestamp
         best_match = min(
-            candidates,
-            key=lambda bs: abs((bs.timestamp - live_signal.timestamp).total_seconds())
+            candidates, key=lambda bs: abs((bs.timestamp - live_signal.timestamp).total_seconds())
         )
 
         # Classify alignment quality
@@ -188,7 +186,9 @@ class SignalAlignmentValidator:
         if backtest_signal.price and live_signal.price:
             if backtest_signal.price > Decimal("0"):
                 price_diff_pct = (
-                    abs(backtest_signal.price - live_signal.price) / backtest_signal.price * Decimal("100")
+                    abs(backtest_signal.price - live_signal.price)
+                    / backtest_signal.price
+                    * Decimal("100")
                 )
 
         # Exact match: quantity within 10%, price within 1%
@@ -211,23 +211,17 @@ class SignalAlignmentValidator:
         Returns:
             Signal match rate as Decimal (0.95 = 95%)
         """
-        from datetime import timezone
-        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
+        cutoff_time = datetime.now(UTC) - timedelta(minutes=window_minutes)
 
         # Count signals in window
-        backtest_count = sum(
-            1 for sig in self._backtest_signals
-            if sig.timestamp >= cutoff_time
-        )
+        backtest_count = sum(1 for sig in self._backtest_signals if sig.timestamp >= cutoff_time)
 
-        live_count = sum(
-            1 for sig in self._live_signals
-            if sig.timestamp >= cutoff_time
-        )
+        live_count = sum(1 for sig in self._live_signals if sig.timestamp >= cutoff_time)
 
         # Count matches in window
         match_count = sum(
-            1 for bt_sig, live_sig, alignment in self._matched_pairs
+            1
+            for bt_sig, live_sig, alignment in self._matched_pairs
             if live_sig.timestamp >= cutoff_time
             and alignment in (SignalAlignment.EXACT_MATCH, SignalAlignment.DIRECTION_MATCH)
         )
@@ -249,7 +243,7 @@ class SignalAlignmentValidator:
 
         return match_rate
 
-    def get_divergence_breakdown(self) -> Dict[SignalAlignment, int]:
+    def get_divergence_breakdown(self) -> dict[SignalAlignment, int]:
         """Get count of each divergence type.
 
         Returns:
@@ -257,7 +251,7 @@ class SignalAlignmentValidator:
         """
         return dict(self._divergence_counts)
 
-    def get_unmatched_signals(self) -> Tuple[List[SignalRecord], List[SignalRecord]]:
+    def get_unmatched_signals(self) -> tuple[list[SignalRecord], list[SignalRecord]]:
         """Get unmatched signals for debugging.
 
         Returns:

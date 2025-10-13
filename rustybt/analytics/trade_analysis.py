@@ -232,9 +232,7 @@ class TradeAnalyzer:
                     allocated_exit_commission = exit_commission * position_fraction
                     allocated_exit_slippage = exit_slippage * position_fraction
 
-                    total_commission = (
-                        entry_pos["entry_commission"] + allocated_exit_commission
-                    )
+                    total_commission = entry_pos["entry_commission"] + allocated_exit_commission
                     total_slippage = entry_pos["entry_slippage"] + allocated_exit_slippage
                     net_pnl = gross_pnl - total_commission - total_slippage
 
@@ -528,9 +526,7 @@ class TradeAnalyzer:
                 entry_qualities.append(entry_quality)
 
             # Get price history after exit
-            optimal_exit = self._get_optimal_exit_price(
-                trade.asset, trade.exit_time, lookback_bars
-            )
+            optimal_exit = self._get_optimal_exit_price(trade.asset, trade.exit_time, lookback_bars)
             if optimal_exit is not None:
                 if trade.amount > Decimal("0"):
                     # Long: higher exit is better
@@ -549,9 +545,7 @@ class TradeAnalyzer:
                 exit_qualities.append(exit_quality)
 
         return {
-            "average_entry_quality": (
-                float(np.mean(entry_qualities)) if entry_qualities else 0.0
-            ),
+            "average_entry_quality": (float(np.mean(entry_qualities)) if entry_qualities else 0.0),
             "average_exit_quality": float(np.mean(exit_qualities)) if exit_qualities else 0.0,
             "entry_quality_std": float(np.std(entry_qualities)) if entry_qualities else 0.0,
             "exit_quality_std": float(np.std(exit_qualities)) if exit_qualities else 0.0,
@@ -638,9 +632,7 @@ class TradeAnalyzer:
             "min_pnl": float(pnls.min()),
             "max_pnl": float(pnls.max()),
             "pnl_skewness": float(
-                ((pnls - pnls.mean()) ** 3).mean() / (pnls.std() ** 3)
-                if pnls.std() > 0
-                else 0.0
+                ((pnls - pnls.mean()) ** 3).mean() / (pnls.std() ** 3) if pnls.std() > 0 else 0.0
             ),
         }
 
@@ -659,9 +651,7 @@ class TradeAnalyzer:
             "max_mae": float(np.max(maes)) if maes else 0.0,
             "max_mfe": float(np.max(mfes)) if mfes else 0.0,
             "mae_mfe_ratio": (
-                float(np.mean(maes) / np.mean(mfes))
-                if mfes and np.mean(mfes) > 0
-                else float("inf")
+                float(np.mean(maes) / np.mean(mfes)) if mfes and np.mean(mfes) > 0 else float("inf")
             ),
         }
 
@@ -679,15 +669,11 @@ class TradeAnalyzer:
         total_trades = len(trades_df)
 
         top_3_assets = asset_counts.head(3)["count"].sum() if len(asset_counts) > 0 else 0
-        top_3_concentration = (
-            float(top_3_assets / total_trades) if total_trades > 0 else 0.0
-        )
+        top_3_concentration = float(top_3_assets / total_trades) if total_trades > 0 else 0.0
 
         # Time clustering - calculate trades per day
         trades_by_date = (
-            trades_df.with_columns(
-                pl.col("entry_time").cast(pl.Date).alias("entry_date")
-            )
+            trades_df.with_columns(pl.col("entry_time").cast(pl.Date).alias("entry_date"))
             .group_by("entry_date")
             .agg(pl.count().alias("trades_per_day"))
         )
@@ -695,12 +681,12 @@ class TradeAnalyzer:
         return {
             "unique_assets_traded": len(asset_counts),
             "top_3_asset_concentration": top_3_concentration,
-            "avg_trades_per_day": float(trades_by_date["trades_per_day"].mean())
-            if len(trades_by_date) > 0
-            else 0.0,
-            "max_trades_per_day": int(trades_by_date["trades_per_day"].max())
-            if len(trades_by_date) > 0
-            else 0,
+            "avg_trades_per_day": (
+                float(trades_by_date["trades_per_day"].mean()) if len(trades_by_date) > 0 else 0.0
+            ),
+            "max_trades_per_day": (
+                int(trades_by_date["trades_per_day"].max()) if len(trades_by_date) > 0 else 0
+            ),
         }
 
     def _analyze_slippage(self, trades_df: pl.DataFrame) -> dict[str, Any]:
@@ -719,9 +705,7 @@ class TradeAnalyzer:
 
         # Find trades with excessive slippage (>2x average)
         if avg_slippage > 0:
-            excessive_slippage_trades = len(
-                trades_df.filter(pl.col("slippage") > 2 * avg_slippage)
-            )
+            excessive_slippage_trades = len(trades_df.filter(pl.col("slippage") > 2 * avg_slippage))
         else:
             excessive_slippage_trades = 0
 

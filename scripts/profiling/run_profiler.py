@@ -143,10 +143,10 @@ def run_daily_scenario() -> None:
     """Run daily data backtest scenario (2 years, 50 assets, SMA strategy)."""
     logger.info("running_daily_scenario")
 
-    from decimal import Decimal
     import pandas as pd
+
+    from rustybt.api import order_target, record, symbol
     from rustybt.utils.run_algo import run_algorithm
-    from rustybt.api import symbol, order_target, record
 
     def initialize(context):
         """Initialize strategy with symbols."""
@@ -176,7 +176,9 @@ def run_daily_scenario() -> None:
                 order_target(asset, 0)
 
             # Record for analysis
-            record(**{f"{asset.symbol}_sma_short": short_mavg, f"{asset.symbol}_sma_long": long_mavg})
+            record(
+                **{f"{asset.symbol}_sma_short": short_mavg, f"{asset.symbol}_sma_long": long_mavg}
+            )
 
     # Run backtest
     # Use fixed dates to ensure alignment with bundle data
@@ -205,10 +207,10 @@ def run_hourly_scenario() -> None:
     """Run hourly data backtest scenario (6 months, 20 assets, momentum strategy)."""
     logger.info("running_hourly_scenario")
 
-    from decimal import Decimal
     import pandas as pd
+
+    from rustybt.api import order_target, record, symbol
     from rustybt.utils.run_algo import run_algorithm
-    from rustybt.api import symbol, order_target, record
 
     def initialize(context):
         """Initialize momentum strategy."""
@@ -262,10 +264,10 @@ def run_minute_scenario() -> None:
     """Run minute data backtest scenario (1 month, 10 assets, mean reversion strategy)."""
     logger.info("running_minute_scenario")
 
-    from decimal import Decimal
     import pandas as pd
+
+    from rustybt.api import order_target, record, symbol
     from rustybt.utils.run_algo import run_algorithm
-    from rustybt.api import symbol, order_target, record
 
     def initialize(context):
         """Initialize mean reversion strategy."""
@@ -388,9 +390,7 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Select scenarios
-    scenarios = (
-        ["daily", "hourly", "minute"] if args.scenario == "all" else [args.scenario]
-    )
+    scenarios = ["daily", "hourly", "minute"] if args.scenario == "all" else [args.scenario]
 
     scenario_functions = {
         "daily": run_daily_scenario,

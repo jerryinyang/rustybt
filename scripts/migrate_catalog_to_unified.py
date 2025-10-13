@@ -35,9 +35,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
 
-import pandas as pd
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
@@ -58,7 +56,7 @@ class MigrationStats:
     symbols_migrated: int = 0
     cache_entries_migrated: int = 0
     quality_records_migrated: int = 0
-    errors: List[str] = None
+    errors: list[str] = None
 
     def __post_init__(self):
         if self.errors is None:
@@ -72,7 +70,7 @@ class BackupManifest:
     timestamp: int
     backup_path: Path
     datacatalog_checksum: str
-    parquet_catalogs: Dict[str, str]  # bundle_name → checksum
+    parquet_catalogs: dict[str, str]  # bundle_name → checksum
     bundle_count: int
 
 
@@ -81,8 +79,8 @@ class MigrationTransaction:
 
     def __init__(self, db_path: Path):
         self.db_path = db_path
-        self.conn: Optional[sqlite3.Connection] = None
-        self.savepoint_stack: List[str] = []
+        self.conn: sqlite3.Connection | None = None
+        self.savepoint_stack: list[str] = []
 
     def __enter__(self):
         self.conn = sqlite3.connect(self.db_path)
@@ -219,7 +217,7 @@ def restore_from_backup(manifest: BackupManifest):
         else:
             console.print(f"  [red]✗[/red] Backup for {bundle_name} not found!")
 
-    console.print(f"[green]✓ Rollback complete[/green]\n")
+    console.print("[green]✓ Rollback complete[/green]\n")
 
 
 def validate_migration() -> bool:
@@ -495,7 +493,9 @@ def run_migration(dry_run: bool = False, backup: bool = True) -> MigrationStats:
                 progress.update(task, completed=True)
 
             if dry_run:
-                console.print("\n[yellow]DRY RUN: Rolling back transaction (no changes saved)[/yellow]")
+                console.print(
+                    "\n[yellow]DRY RUN: Rolling back transaction (no changes saved)[/yellow]"
+                )
                 raise RuntimeError("Dry run - rollback intentional")
 
     except Exception as e:
@@ -542,9 +542,13 @@ def print_migration_summary(stats: MigrationStats, dry_run: bool = False):
 def main():
     parser = argparse.ArgumentParser(description="Migrate catalogs to unified BundleMetadata")
     parser.add_argument("--dry-run", action="store_true", help="Preview migration without saving")
-    parser.add_argument("--backup", action="store_true", default=True, help="Create backup before migration")
+    parser.add_argument(
+        "--backup", action="store_true", default=True, help="Create backup before migration"
+    )
     parser.add_argument("--no-backup", action="store_true", help="Skip backup (dangerous!)")
-    parser.add_argument("--rollback", type=int, metavar="TIMESTAMP", help="Rollback to backup timestamp")
+    parser.add_argument(
+        "--rollback", type=int, metavar="TIMESTAMP", help="Rollback to backup timestamp"
+    )
     parser.add_argument("--validate", action="store_true", help="Validate existing migration")
 
     args = parser.parse_args()

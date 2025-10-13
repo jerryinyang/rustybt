@@ -4,7 +4,6 @@ This module contains unit tests and integration tests for the CCXT adapter,
 including data format conversion, symbol normalization, and live data fetching.
 """
 
-import asyncio
 from decimal import Decimal
 
 import pandas as pd
@@ -77,7 +76,7 @@ class TestCCXTAdapter:
 
     def test_data_format_conversion(self) -> None:
         """CCXT data format converts to unified schema correctly."""
-        adapter = CCXTAdapter(exchange_id="binance")
+        CCXTAdapter(exchange_id="binance")
 
         # Simulate CCXT format data with symbol appended
         ccxt_data = [
@@ -118,7 +117,7 @@ class TestCCXTAdapter:
 
     def test_decimal_conversion_preserves_precision(self) -> None:
         """Decimal conversion preserves precision correctly."""
-        adapter = CCXTAdapter(exchange_id="binance")
+        CCXTAdapter(exchange_id="binance")
 
         # Test various price formats as strings (to avoid float formatting issues)
         test_cases = [
@@ -369,9 +368,7 @@ class TestCCXTAdapterEdgeCases:
 
     def test_api_credentials_initialization(self) -> None:
         """CCXTAdapter accepts API credentials."""
-        adapter = CCXTAdapter(
-            exchange_id="binance", api_key="test_key", api_secret="test_secret"
-        )
+        adapter = CCXTAdapter(exchange_id="binance", api_key="test_key", api_secret="test_secret")
 
         assert adapter.exchange.apiKey == "test_key"
         assert adapter.exchange.secret == "test_secret"

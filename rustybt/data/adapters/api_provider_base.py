@@ -9,7 +9,6 @@ import os
 import time
 from abc import abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import aiohttp
 import pandas as pd
@@ -78,7 +77,7 @@ class APIRateLimiter:
     def __init__(
         self,
         requests_per_minute: int,
-        requests_per_day: Optional[int] = None,
+        requests_per_day: int | None = None,
     ) -> None:
         """Initialize API rate limiter.
 
@@ -88,8 +87,8 @@ class APIRateLimiter:
         """
         self.requests_per_minute = requests_per_minute
         self.requests_per_day = requests_per_day
-        self.minute_requests: List[float] = []
-        self.day_requests: List[float] = []
+        self.minute_requests: list[float] = []
+        self.day_requests: list[float] = []
         self.quota_warnings_sent = False
 
     async def acquire(self) -> None:
@@ -178,9 +177,9 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
         self,
         name: str,
         api_key_env_var: str,
-        api_secret_env_var: Optional[str] = None,
+        api_secret_env_var: str | None = None,
         requests_per_minute: int = 10,
-        requests_per_day: Optional[int] = None,
+        requests_per_day: int | None = None,
         base_url: str = "",
     ) -> None:
         """Initialize base API provider adapter.
@@ -206,9 +205,7 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
         )
 
         # Load API credentials
-        self.api_key, self.api_secret = self._load_credentials(
-            api_key_env_var, api_secret_env_var
-        )
+        self.api_key, self.api_secret = self._load_credentials(api_key_env_var, api_secret_env_var)
 
         # Validate API key exists
         if not self.api_key:
@@ -227,7 +224,7 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
         )
 
         # HTTP session (created on first request)
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.base_url = base_url
 
         logger.info(
@@ -238,8 +235,8 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
         )
 
     def _load_credentials(
-        self, api_key_env_var: str, api_secret_env_var: Optional[str]
-    ) -> Tuple[Optional[str], Optional[str]]:
+        self, api_key_env_var: str, api_secret_env_var: str | None
+    ) -> tuple[str | None, str | None]:
         """Load API credentials from environment variables or config file.
 
         Checks in order:
@@ -255,9 +252,7 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
         """
         # Try environment variables first
         api_key = os.environ.get(api_key_env_var)
-        api_secret = (
-            os.environ.get(api_secret_env_var) if api_secret_env_var else None
-        )
+        api_secret = os.environ.get(api_secret_env_var) if api_secret_env_var else None
 
         if api_key:
             logger.debug(
@@ -304,9 +299,7 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
 
         # Check if api_keys.ini exists in project root
         if Path("api_keys.ini").exists():
-            security_issues.append(
-                "api_keys.ini found in project root - should be in ~/.rustybt/"
-            )
+            security_issues.append("api_keys.ini found in project root - should be in ~/.rustybt/")
 
         if security_issues:
             logger.warning(
@@ -314,8 +307,7 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
                 adapter=self.name,
                 issues=security_issues,
                 recommendation=(
-                    "Ensure API key files are in .gitignore "
-                    "and not committed to version control"
+                    "Ensure API key files are in .gitignore and not committed to version control"
                 ),
             )
 
@@ -339,7 +331,7 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
             logger.debug("api_session_closed", adapter=self.name)
 
     @abstractmethod
-    def _get_auth_headers(self) -> Dict[str, str]:
+    def _get_auth_headers(self) -> dict[str, str]:
         """Get authentication headers for API requests.
 
         Must be implemented by subclasses to provide provider-specific
@@ -351,7 +343,7 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
         pass
 
     @abstractmethod
-    def _get_auth_params(self) -> Dict[str, str]:
+    def _get_auth_params(self) -> dict[str, str]:
         """Get authentication query parameters for API requests.
 
         Must be implemented by subclasses to provide provider-specific
@@ -367,9 +359,9 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
         self,
         method: str,
         url: str,
-        params: Optional[Dict[str, str]] = None,
+        params: dict[str, str] | None = None,
         **kwargs,
-    ) -> Dict:
+    ) -> dict:
         """Make authenticated HTTP request with rate limiting and retry logic.
 
         Args:
@@ -419,9 +411,7 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
 
                 # Handle symbol not found
                 if response.status == 404:
-                    raise SymbolNotFoundError(
-                        f"Symbol not found in {self.name} API"
-                    )
+                    raise SymbolNotFoundError(f"Symbol not found in {self.name} API")
 
                 # Raise for other HTTP errors
                 response.raise_for_status()
@@ -431,9 +421,7 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
                     data = await response.json()
                     return data
                 except Exception as e:
-                    raise DataParsingError(
-                        f"Failed to parse JSON response from {self.name}: {e}"
-                    )
+                    raise DataParsingError(f"Failed to parse JSON response from {self.name}: {e}")
 
         except aiohttp.ClientError as e:
             raise NetworkError(f"Network error for {self.name}: {e}")
@@ -481,7 +469,7 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
 
     async def fetch(
         self,
-        symbols: List[str],
+        symbols: list[str],
         start_date: pd.Timestamp,
         end_date: pd.Timestamp,
         resolution: str,
@@ -514,9 +502,7 @@ class BaseAPIProviderAdapter(BaseDataAdapter):
                 continue
 
         if not frames:
-            raise SymbolNotFoundError(
-                f"No data found for symbols {symbols} in {self.name}"
-            )
+            raise SymbolNotFoundError(f"No data found for symbols {symbols} in {self.name}")
 
         # Concatenate all symbol data
         result = pl.concat(frames)

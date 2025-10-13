@@ -218,10 +218,7 @@ def apply_split_adjustment_to_dataframe(
     )
 
     # Apply split adjustment to each price column
-    adjusted_df = df.with_columns([
-        (pl.col(col) / split_ratio).alias(col)
-        for col in price_columns
-    ])
+    adjusted_df = df.with_columns([(pl.col(col) / split_ratio).alias(col) for col in price_columns])
 
     return adjusted_df
 
@@ -273,10 +270,9 @@ def apply_dividend_adjustment_to_dataframe(
     )
 
     # Apply dividend adjustment to each price column
-    adjusted_df = df.with_columns([
-        (pl.col(col) - dividend_amount).alias(col)
-        for col in price_columns
-    ])
+    adjusted_df = df.with_columns(
+        [(pl.col(col) - dividend_amount).alias(col) for col in price_columns]
+    )
 
     # Validate non-negative prices if requested
     if validate_non_negative:

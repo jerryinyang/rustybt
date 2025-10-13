@@ -1,8 +1,9 @@
 """Unit tests for DecimalPosition."""
 
-import pytest
 from decimal import Decimal
+
 import pandas as pd
+import pytest
 
 from rustybt.finance.decimal import (
     DecimalPosition,
@@ -202,9 +203,9 @@ class TestDecimalPosition:
 
         # New cost basis should be volume-weighted average
         # (100 * 150 + 50 * 155) / 150 = (15000 + 7750) / 150 = 151.67
-        expected_cost_basis = (Decimal("100") * Decimal("150.00") + Decimal("50") * Decimal("155.00")) / Decimal(
-            "150"
-        )
+        expected_cost_basis = (
+            Decimal("100") * Decimal("150.00") + Decimal("50") * Decimal("155.00")
+        ) / Decimal("150")
 
         assert position.amount == Decimal("150")
         assert position.cost_basis == expected_cost_basis
@@ -328,7 +329,9 @@ class TestDecimalPosition:
         position.adjust_commission_cost_basis(commission=Decimal("10.00"))
 
         # New cost basis: (150 * 100 + 10) / 100 = 150.10
-        expected_cost_basis = (Decimal("150.00") * Decimal("100") + Decimal("10.00")) / Decimal("100")
+        expected_cost_basis = (Decimal("150.00") * Decimal("100") + Decimal("10.00")) / Decimal(
+            "100"
+        )
         assert position.cost_basis == expected_cost_basis
         assert position.cost_basis == Decimal("150.10")
 
@@ -347,7 +350,9 @@ class TestDecimalPosition:
 
         # For shorts, commission decreases the cost basis (break even at lower price)
         # New cost basis: (150 * -100 + 10) / -100 = 149.90
-        expected_cost_basis = (Decimal("150.00") * Decimal("-100") + Decimal("10.00")) / Decimal("-100")
+        expected_cost_basis = (Decimal("150.00") * Decimal("-100") + Decimal("10.00")) / Decimal(
+            "-100"
+        )
         assert position.cost_basis == expected_cost_basis
         assert position.cost_basis == Decimal("149.90")
 

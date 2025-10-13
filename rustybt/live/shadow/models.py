@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Dict, List, Optional
 
 from rustybt.assets import Asset
 
@@ -42,7 +41,7 @@ class SignalRecord:
     asset: Asset
     side: str
     quantity: Decimal
-    price: Optional[Decimal]
+    price: Decimal | None
     order_type: str
     source: str  # "backtest" or "live"
     signal_id: str = field(default="")
@@ -104,8 +103,8 @@ class ExecutionQualityMetrics:
     @classmethod
     def from_fills(
         cls,
-        backtest_fills: List[Dict],
-        live_fills: List[Dict],
+        backtest_fills: list[dict],
+        live_fills: list[dict],
     ) -> "ExecutionQualityMetrics":
         """Calculate execution quality metrics from fill records.
 
@@ -135,21 +134,15 @@ class ExecutionQualityMetrics:
         total_expected_slippage = sum(
             fill.get("slippage_bps", Decimal("0")) for fill in backtest_fills
         )
-        total_actual_slippage = sum(
-            fill.get("slippage_bps", Decimal("0")) for fill in live_fills
-        )
+        total_actual_slippage = sum(fill.get("slippage_bps", Decimal("0")) for fill in live_fills)
 
         expected_slippage_bps = total_expected_slippage / len(backtest_fills)
         actual_slippage_bps = total_actual_slippage / len(live_fills)
         slippage_error_bps = actual_slippage_bps - expected_slippage_bps
 
         # Calculate fill rates
-        total_expected_fill = sum(
-            fill.get("fill_pct", Decimal("1")) for fill in backtest_fills
-        )
-        total_actual_fill = sum(
-            fill.get("fill_pct", Decimal("1")) for fill in live_fills
-        )
+        total_expected_fill = sum(fill.get("fill_pct", Decimal("1")) for fill in backtest_fills)
+        total_actual_fill = sum(fill.get("fill_pct", Decimal("1")) for fill in live_fills)
 
         fill_rate_expected = total_expected_fill / len(backtest_fills)
         fill_rate_actual = total_actual_fill / len(live_fills)
@@ -165,9 +158,7 @@ class ExecutionQualityMetrics:
         total_expected_commission = sum(
             fill.get("commission", Decimal("0")) for fill in backtest_fills
         )
-        total_actual_commission = sum(
-            fill.get("commission", Decimal("0")) for fill in live_fills
-        )
+        total_actual_commission = sum(fill.get("commission", Decimal("0")) for fill in live_fills)
 
         commission_expected = total_expected_commission / len(backtest_fills)
         commission_actual = total_actual_commission / len(live_fills)
@@ -213,7 +204,7 @@ class AlignmentMetrics:
     backtest_signal_count: int
     live_signal_count: int
     signal_match_rate: Decimal
-    divergence_breakdown: Dict[SignalAlignment, int]
+    divergence_breakdown: dict[SignalAlignment, int]
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
     def is_aligned(self, config) -> bool:
@@ -243,17 +234,20 @@ class AlignmentMetrics:
 
         return True
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
         result = {
             "backtest_signal_count": self.backtest_signal_count,
             "live_signal_count": self.live_signal_count,
             "signal_match_rate": self.signal_match_rate,
             "divergence_breakdown": {
-                alignment.value: count
-                for alignment, count in self.divergence_breakdown.items()
+                alignment.value: count for alignment, count in self.divergence_breakdown.items()
             },
-            "timestamp": self.timestamp.isoformat() if hasattr(self.timestamp, 'isoformat') else str(self.timestamp),
+            "timestamp": (
+                self.timestamp.isoformat()
+                if hasattr(self.timestamp, "isoformat")
+                else str(self.timestamp)
+            ),
         }
 
         # Add execution quality if present

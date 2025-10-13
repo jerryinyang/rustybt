@@ -75,9 +75,7 @@ class RiskLimits:
     halt_drawdown: Decimal = field(default_factory=lambda: Decimal("0.20"))  # 20% halt trading
 
     # Volatility limits
-    target_volatility: Decimal | None = field(
-        default_factory=lambda: Decimal("0.12")
-    )  # 12% target
+    target_volatility: Decimal | None = field(default_factory=lambda: Decimal("0.12"))  # 12% target
     max_volatility: Decimal | None = field(default_factory=lambda: Decimal("0.20"))  # 20% max
 
     # VaR limits (Value at Risk)
@@ -251,9 +249,7 @@ class RiskManager:
         self.metrics_history: list[RiskMetrics] = []
 
         # Violation tracking
-        self.violation_count: dict[RiskLimitType, int] = {
-            limit_type: 0 for limit_type in RiskLimitType
-        }
+        self.violation_count: dict[RiskLimitType, int] = dict.fromkeys(RiskLimitType, 0)
 
         logger.info(
             "risk_manager_initialized", limits=str(self.limits), lookback_window=lookback_window

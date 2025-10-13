@@ -124,9 +124,9 @@ Below are precise updates with acceptance criteria.
 
 ## 5) Suggested Order of Execution
 
-1) Fix README and high-severity guide issues (Ingestion, API Reference, Validation link).  
-2) Correct Caching Guide references.  
-3) Update Examples index and any remaining consistency items.  
+1) Fix README and high-severity guide issues (Ingestion, API Reference, Validation link).
+2) Correct Caching Guide references.
+3) Update Examples index and any remaining consistency items.
 4) Optionally add `--list-exchanges` to CLI or adjust that part of the docs.
 
 ## 6) Acceptance Criteria Checklist

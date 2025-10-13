@@ -1,13 +1,13 @@
 """Unit tests for CCXT broker adapter."""
 
-import asyncio
+from datetime import UTC
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 import ccxt
+import pytest
 
-from rustybt.assets import Asset, Equity
+from rustybt.assets import Equity
 from rustybt.live.brokers.ccxt_adapter import (
     CCXTBrokerAdapter,
     CCXTConnectionError,
@@ -317,16 +317,14 @@ class TestCCXTWebSocketIntegration:
         await ccxt_adapter.subscribe_market_data([test_asset])
 
         # Verify WebSocket subscribe was called
-        mock_ws.subscribe.assert_called_once_with(
-            symbols=["BTC/USDT"],
-            channels=["trades"]
-        )
+        mock_ws.subscribe.assert_called_once_with(symbols=["BTC/USDT"], channels=["trades"])
 
     @pytest.mark.asyncio
     @pytest.mark.websocket_integration
     async def test_websocket_bar_buffer_aggregation(self, ccxt_adapter):
         """Test BarBuffer aggregation from CCXT Pro WebSocket (AC 5)."""
-        from datetime import datetime, timezone
+        from datetime import datetime
+
         from rustybt.live.streaming.models import TickData, TickSide
 
         # Setup connected adapter with bar buffer
@@ -337,10 +335,10 @@ class TestCCXTWebSocketIntegration:
         # Create a tick
         tick = TickData(
             symbol="BTC/USDT",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             price=Decimal("50000.50"),
             volume=Decimal("0.1"),
-            side=TickSide.BUY
+            side=TickSide.BUY,
         )
 
         # Call the tick handler (simulates WebSocket callback)

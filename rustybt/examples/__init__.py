@@ -1,14 +1,13 @@
-from importlib import import_module
 import os
-
-from toolz import merge
-from rustybt.utils.calendar_utils import register_calendar, get_calendar
-
-from rustybt import run_algorithm
-from packaging.version import Version
+from importlib import import_module
 
 # talib is not yet compatible with numpy 2.0
 import numpy
+from packaging.version import Version
+from toolz import merge
+
+from rustybt import run_algorithm
+from rustybt.utils.calendar_utils import get_calendar, register_calendar
 
 NUMPY2 = Version(numpy.__version__) >= Version("2.0.0")
 if not NUMPY2:

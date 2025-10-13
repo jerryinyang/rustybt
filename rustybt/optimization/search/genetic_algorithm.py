@@ -1,7 +1,6 @@
 """Genetic algorithm optimization implementation using DEAP."""
 
 # SECURITY FIX (Story 8.10): Use secure pickle with HMAC validation
-from rustybt.utils.secure_pickle import secure_dumps, secure_loads, SecurePickleError
 import time
 import warnings
 from decimal import Decimal
@@ -19,6 +18,7 @@ from rustybt.optimization.parameter_space import (
     DiscreteParameter,
     ParameterSpace,
 )
+from rustybt.utils.secure_pickle import SecurePickleError, secure_dumps, secure_loads
 
 logger = structlog.get_logger()
 
@@ -205,9 +205,7 @@ class GeneticAlgorithm(SearchAlgorithm):
     def _register_selection(self) -> None:
         """Register selection operator."""
         if self.selection_method == "tournament":
-            self.toolbox.register(
-                "select", tools.selTournament, tournsize=self.tournament_size
-            )
+            self.toolbox.register("select", tools.selTournament, tournsize=self.tournament_size)
         elif self.selection_method == "roulette":
             self.toolbox.register("select", tools.selRoulette)
         elif self.selection_method == "rank":
@@ -314,9 +312,7 @@ class GeneticAlgorithm(SearchAlgorithm):
         for param in self.parameter_space.parameters:
             value = params[param.name]
 
-            if isinstance(param, ContinuousParameter):
-                genes.append(float(value))
-            elif isinstance(param, DiscreteParameter):
+            if isinstance(param, (ContinuousParameter, DiscreteParameter)):
                 genes.append(float(value))
             elif isinstance(param, CategoricalParameter):
                 # Find index of choice
@@ -583,9 +579,7 @@ class GeneticAlgorithm(SearchAlgorithm):
             std = np.std(genes[:, i])
 
             # Normalize by parameter range
-            if isinstance(param, ContinuousParameter):
-                param_range = float(param.max_value - param.min_value)
-            elif isinstance(param, DiscreteParameter):
+            if isinstance(param, (ContinuousParameter, DiscreteParameter)):
                 param_range = float(param.max_value - param.min_value)
             elif isinstance(param, CategoricalParameter):
                 param_range = float(len(param.choices))
@@ -775,19 +769,13 @@ class GeneticAlgorithm(SearchAlgorithm):
         }
         missing_keys = required_keys - set(state.keys())
         if missing_keys:
-            raise ValueError(
-                f"Invalid checkpoint state: missing required keys {missing_keys}"
-            )
+            raise ValueError(f"Invalid checkpoint state: missing required keys {missing_keys}")
 
         # Validate critical parameter ranges before unpickling
         if state["population_size"] <= 0 or state["population_size"] > 10000:
-            raise ValueError(
-                f"Invalid population_size in checkpoint: {state['population_size']}"
-            )
+            raise ValueError(f"Invalid population_size in checkpoint: {state['population_size']}")
         if state["max_generations"] <= 0 or state["max_generations"] > 100000:
-            raise ValueError(
-                f"Invalid max_generations in checkpoint: {state['max_generations']}"
-            )
+            raise ValueError(f"Invalid max_generations in checkpoint: {state['max_generations']}")
         if state["current_generation"] < 0:
             raise ValueError(
                 f"Invalid current_generation in checkpoint: {state['current_generation']}"
@@ -802,9 +790,7 @@ class GeneticAlgorithm(SearchAlgorithm):
         self.mutation_prob = state["mutation_prob"]
         self.elite_size = state["elite_size"]
         self.patience = state["patience"]
-        self.target_fitness = (
-            Decimal(state["target_fitness"]) if state["target_fitness"] else None
-        )
+        self.target_fitness = Decimal(state["target_fitness"]) if state["target_fitness"] else None
         self.max_time_seconds = state["max_time_seconds"]
         self.diversity_threshold = state["diversity_threshold"]
         self.seed = state["seed"]

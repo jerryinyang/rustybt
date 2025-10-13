@@ -66,9 +66,7 @@ class TestRustyBTError:
 
     def test_context_filtering_none_values(self) -> None:
         """Test that None values are filtered from context."""
-        exc = RustyBTError(
-            "Error", context={"valid": "value", "invalid": None, "also_valid": 123}
-        )
+        exc = RustyBTError("Error", context={"valid": "value", "invalid": None, "also_valid": 123})
         assert exc.context == {"valid": "value", "also_valid": 123}
         assert "invalid" not in exc.context
 
@@ -111,10 +109,7 @@ class TestDataErrors:
     def test_data_not_found_error(self) -> None:
         """Test DataNotFoundError with asset context."""
         exc = DataNotFoundError(
-            "Price data not found",
-            asset="AAPL",
-            start="2023-01-01",
-            end="2023-01-31"
+            "Price data not found", asset="AAPL", start="2023-01-01", end="2023-01-31"
         )
         assert exc.context["asset"] == "AAPL"
         assert exc.context["start"] == "2023-01-01"
@@ -122,29 +117,20 @@ class TestDataErrors:
 
     def test_data_validation_error(self) -> None:
         """Test DataValidationError with invalid rows."""
-        exc = DataValidationError(
-            "Invalid OHLCV data",
-            invalid_rows=5
-        )
+        exc = DataValidationError("Invalid OHLCV data", invalid_rows=5)
         assert exc.context["invalid_rows"] == 5
 
     def test_lookahead_error(self) -> None:
         """Test LookaheadError with timestamp context."""
         exc = LookaheadError(
-            "Accessed future data",
-            requested_dt="2023-01-02",
-            current_dt="2023-01-01"
+            "Accessed future data", requested_dt="2023-01-02", current_dt="2023-01-01"
         )
         assert exc.context["requested_dt"] == "2023-01-02"
         assert exc.context["current_dt"] == "2023-01-01"
 
     def test_data_adapter_error(self) -> None:
         """Test DataAdapterError with adapter context."""
-        exc = DataAdapterError(
-            "API request failed",
-            adapter="YFinanceAdapter",
-            attempt=3
-        )
+        exc = DataAdapterError("API request failed", adapter="YFinanceAdapter", attempt=3)
         assert exc.context["adapter"] == "YFinanceAdapter"
         assert exc.context["attempt"] == 3
 
@@ -159,7 +145,7 @@ class TestOrderErrors:
             order_id="ORD123",
             asset="AAPL",
             broker="Binance",
-            reason="Insufficient margin"
+            reason="Insufficient margin",
         )
         assert exc.context["order_id"] == "ORD123"
         assert exc.context["asset"] == "AAPL"
@@ -173,21 +159,13 @@ class TestOrderErrors:
 
     def test_insufficient_funds_error(self) -> None:
         """Test InsufficientFundsError with balance context."""
-        exc = InsufficientFundsError(
-            "Not enough balance",
-            required="10000.00",
-            available="5000.00"
-        )
+        exc = InsufficientFundsError("Not enough balance", required="10000.00", available="5000.00")
         assert exc.context["required"] == "10000.00"
         assert exc.context["available"] == "5000.00"
 
     def test_invalid_order_error(self) -> None:
         """Test InvalidOrderError with parameter context."""
-        exc = InvalidOrderError(
-            "Invalid order parameter",
-            parameter="limit_price",
-            value="-150.00"
-        )
+        exc = InvalidOrderError("Invalid order parameter", parameter="limit_price", value="-150.00")
         assert exc.context["parameter"] == "limit_price"
         assert exc.context["value"] == "-150.00"
 
@@ -197,37 +175,23 @@ class TestBrokerErrors:
 
     def test_broker_connection_error(self) -> None:
         """Test BrokerConnectionError."""
-        exc = BrokerConnectionError(
-            "Connection timeout",
-            broker="Binance"
-        )
+        exc = BrokerConnectionError("Connection timeout", broker="Binance")
         assert exc.context["broker"] == "Binance"
 
     def test_broker_authentication_error(self) -> None:
         """Test BrokerAuthenticationError."""
-        exc = BrokerAuthenticationError(
-            "Invalid API key",
-            broker="Kraken"
-        )
+        exc = BrokerAuthenticationError("Invalid API key", broker="Kraken")
         assert exc.context["broker"] == "Kraken"
 
     def test_broker_rate_limit_error(self) -> None:
         """Test BrokerRateLimitError with reset time."""
-        exc = BrokerRateLimitError(
-            "Rate limit exceeded",
-            broker="Coinbase",
-            reset_after=60.0
-        )
+        exc = BrokerRateLimitError("Rate limit exceeded", broker="Coinbase", reset_after=60.0)
         assert exc.context["broker"] == "Coinbase"
         assert exc.context["reset_after"] == 60.0
 
     def test_broker_response_error(self) -> None:
         """Test BrokerResponseError with status code."""
-        exc = BrokerResponseError(
-            "Invalid response",
-            broker="Bybit",
-            status_code=500
-        )
+        exc = BrokerResponseError("Invalid response", broker="Bybit", status_code=500)
         assert exc.context["broker"] == "Bybit"
         assert exc.context["status_code"] == 500
 
@@ -256,11 +220,7 @@ class TestValidationErrors:
 
     def test_validation_error(self) -> None:
         """Test base ValidationError with field context."""
-        exc = ValidationError(
-            "Validation failed",
-            field="amount",
-            value=-100
-        )
+        exc = ValidationError("Validation failed", field="amount", value=-100)
         assert exc.context["field"] == "amount"
         assert exc.context["value"] == -100
 
@@ -367,6 +327,7 @@ class TestExceptionCatching:
 
     def test_multiple_exception_handling(self) -> None:
         """Test handling multiple exception types."""
+
         def risky_operation(error_type: str) -> None:
             if error_type == "data":
                 raise DataNotFoundError("Data error")

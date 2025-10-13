@@ -3,11 +3,13 @@ Tests BoundColumn attributes and methods.
 """
 
 import operator
+import re
 from unittest import skipIf
 
-from parameterized import parameterized
-from pandas import Timestamp, DataFrame
+import pytest
+from pandas import DataFrame, Timestamp
 from pandas.testing import assert_frame_equal
+from parameterized import parameterized
 
 from rustybt.lib.labelarray import LabelArray
 from rustybt.pipeline import Pipeline
@@ -26,13 +28,9 @@ from rustybt.utils.pandas_utils import (
     new_pandas,
     skip_pipeline_new_pandas,
 )
-import pytest
-import re
 
 
-class LatestTestCase(
-    WithSeededRandomPipelineEngine, WithTradingSessions, ZiplineTestCase
-):
+class LatestTestCase(WithSeededRandomPipelineEngine, WithTradingSessions, ZiplineTestCase):
     START_DATE = Timestamp("2014-01-01")
     END_DATE = Timestamp("2015-12-31")
     SEEDED_RANDOM_PIPELINE_SEED = 100
@@ -112,8 +110,7 @@ class LatestTestCase(
     def test_comparison_error_message(self):
         column = USEquityPricing.volume
         err_msg = (
-            "Can't compare 'EquityPricing<US>.volume' with 'int'."
-            " (Did you mean to use '.latest'?)"
+            "Can't compare 'EquityPricing<US>.volume' with 'int'. (Did you mean to use '.latest'?)"
         )
 
         with pytest.raises(TypeError, match=re.escape(err_msg)):

@@ -6,9 +6,8 @@ from backtest assumptions.
 """
 
 from collections import deque
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Dict, List, Optional
 
 import structlog
 
@@ -73,9 +72,7 @@ class ExecutionQualityTracker:
         """
         # Calculate slippage in bps
         if signal_price > Decimal("0"):
-            slippage_bps = (
-                abs(fill_price - signal_price) / signal_price * Decimal("10000")
-            )
+            slippage_bps = abs(fill_price - signal_price) / signal_price * Decimal("10000")
         else:
             slippage_bps = Decimal("0")
 
@@ -131,9 +128,7 @@ class ExecutionQualityTracker:
         """
         # Calculate slippage in bps
         if signal_price > Decimal("0"):
-            slippage_bps = (
-                abs(fill_price - signal_price) / signal_price * Decimal("10000")
-            )
+            slippage_bps = abs(fill_price - signal_price) / signal_price * Decimal("10000")
         else:
             slippage_bps = Decimal("0")
 
@@ -166,7 +161,7 @@ class ExecutionQualityTracker:
             commission=str(commission),
         )
 
-    def calculate_metrics(self, window_minutes: Optional[int] = None) -> ExecutionQualityMetrics:
+    def calculate_metrics(self, window_minutes: int | None = None) -> ExecutionQualityMetrics:
         """Calculate execution quality metrics over recent window.
 
         Args:
@@ -177,16 +172,9 @@ class ExecutionQualityTracker:
         """
         # Filter fills by time window if specified
         if window_minutes:
-            from datetime import timezone
-            cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
-            backtest_fills = [
-                f for f in self._backtest_fills
-                if f["timestamp"] >= cutoff_time
-            ]
-            live_fills = [
-                f for f in self._live_fills
-                if f["timestamp"] >= cutoff_time
-            ]
+            cutoff_time = datetime.now(UTC) - timedelta(minutes=window_minutes)
+            backtest_fills = [f for f in self._backtest_fills if f["timestamp"] >= cutoff_time]
+            live_fills = [f for f in self._live_fills if f["timestamp"] >= cutoff_time]
         else:
             backtest_fills = list(self._backtest_fills)
             live_fills = list(self._live_fills)
@@ -205,7 +193,7 @@ class ExecutionQualityTracker:
 
         return metrics
 
-    def check_thresholds(self, metrics: ExecutionQualityMetrics) -> List[str]:
+    def check_thresholds(self, metrics: ExecutionQualityMetrics) -> list[str]:
         """Check if execution quality metrics breach thresholds.
 
         Args:
@@ -248,9 +236,7 @@ class ExecutionQualityTracker:
 
         return breaches
 
-    def get_fill_history(
-        self, source: str = "both", limit: int = 100
-    ) -> List[Dict]:
+    def get_fill_history(self, source: str = "both", limit: int = 100) -> list[dict]:
         """Get fill history for analysis.
 
         Args:

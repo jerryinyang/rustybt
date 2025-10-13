@@ -1,19 +1,16 @@
 """Synthetic data loaders for testing."""
 
-import numpy as np
-
-from numpy.random import RandomState
-from pandas import DataFrame, Timestamp
 from sqlite3 import connect as sqlite3_connect
 
-from .base import PipelineLoader
-from .frame import DataFrameLoader
+import numpy as np
+from numpy.random import RandomState
+from pandas import DataFrame, Timestamp
+
 from rustybt.data.adjustments import (
     SQLiteAdjustmentReader,
     SQLiteAdjustmentWriter,
 )
 from rustybt.data.bcolz_daily_bars import US_EQUITY_PRICING_BCOLZ_COLUMNS
-
 from rustybt.utils.numpy_utils import (
     bool_dtype,
     datetime64ns_dtype,
@@ -22,6 +19,8 @@ from rustybt.utils.numpy_utils import (
     object_dtype,
 )
 
+from .base import PipelineLoader
+from .frame import DataFrameLoader
 
 UINT_32_MAX = np.iinfo(np.uint32).max
 
@@ -46,7 +45,7 @@ class PrecomputedLoader(PipelineLoader):
         Column labels for input data.  Can be anything that pd.DataFrame will
         coerce to an Int64Index.
 
-    Notes
+    Notes:
     -----
     Adjustments are unsupported by this loader.
     """
@@ -235,7 +234,7 @@ def make_bar_data(asset_info, calendar, holes=None):
         A dict mapping asset ids to the tuple of dates that should have
         no data for that asset in the output. Default is no holes.
 
-    Yields
+    Yields:
     ------
     p : (int, pd.DataFrame)
         A sid, data pair to be passed to BcolzDailyDailyBarWriter.write
@@ -279,13 +278,11 @@ def make_bar_data(asset_info, calendar, holes=None):
         # TODO FIXME TZ MESS
 
         if datetimes.tzinfo is None:
-            data[:, :5] += np.array(
-                (datetimes.tz_localize("UTC") - PSEUDO_EPOCH_UTC).days
-            )[:, None].astype(np.uint32)
-        else:
-            data[:, :5] += np.array((datetimes - PSEUDO_EPOCH_UTC).days)[
+            data[:, :5] += np.array((datetimes.tz_localize("UTC") - PSEUDO_EPOCH_UTC).days)[
                 :, None
             ].astype(np.uint32)
+        else:
+            data[:, :5] += np.array((datetimes - PSEUDO_EPOCH_UTC).days)[:, None].astype(np.uint32)
 
         frame = DataFrame(
             data,
@@ -355,9 +352,7 @@ def expected_bar_values_2d(dates, assets, asset_info, colname, holes=None):
             # No value expected for dates outside the asset's start/end
             # date.
             # TODO FIXME TZ MESS
-            if not (
-                start.tz_localize(date.tzinfo) <= date <= end.tz_localize(date.tzinfo)
-            ):
+            if not (start.tz_localize(date.tzinfo) <= date <= end.tz_localize(date.tzinfo)):
                 continue
 
             if holes is not None:

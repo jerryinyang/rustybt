@@ -16,18 +16,19 @@
 """
 Tests for the zipline.finance package
 """
-from pathlib import Path
+
 from datetime import datetime, timedelta
-from functools import partial
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
-import pytz
-import rustybt.utils.factory as factory
 from testfixtures import TempDirectory
+
+import rustybt.utils.factory as factory
 from rustybt.data.bcolz_daily_bars import BcolzDailyBarReader, BcolzDailyBarWriter
+from rustybt.data.bcolz_minute_bars import BcolzMinuteBarReader
 from rustybt.data.data_portal import DataPortal
-from rustybt.data.bcolz_minute_bars import BcolzMinuteBarReader, BcolzMinuteBarWriter
 from rustybt.finance.asset_restrictions import NoRestrictions
 from rustybt.finance.blotter.simulation_blotter import SimulationBlotter
 from rustybt.finance.execution import LimitOrder, MarketOrder
@@ -66,6 +67,7 @@ def set_test_finance(request, with_asset_finder):
                     "NYSE",
                 ]
                 * 3,
+                strict=False,
             )
         ),
         columns=["sid", "symbol", "start_date", "end_date", "exchange"],
@@ -80,9 +82,7 @@ def set_test_finance(request, with_asset_finder):
             }
         )
 
-    request.cls.asset_finder = with_asset_finder(
-        **dict(equities=equities, exchanges=exchanges)
-    )
+    request.cls.asset_finder = with_asset_finder(**dict(equities=equities, exchanges=exchanges))
 
 
 @pytest.mark.usefixtures("set_test_finance", "with_trading_calendars")
@@ -212,9 +212,7 @@ class TestFinance:
         asset1 = self.asset_finder.retrieve_asset(1)
 
         with TempDirectory() as tempdir:
-
             if trade_interval < timedelta(days=1):
-
                 sim_params = factory.create_simulation_parameters(
                     start=self.start, end=self.end, data_frequency="minute"
                 )
@@ -257,9 +255,7 @@ class TestFinance:
                     equity_minute_reader=equity_minute_reader,
                 )
             else:
-                sim_params = factory.create_simulation_parameters(
-                    data_frequency="daily"
-                )
+                sim_params = factory.create_simulation_parameters(data_frequency="daily")
 
                 days = sim_params.sessions
 
@@ -278,9 +274,9 @@ class TestFinance:
                 }
 
                 path = Path(tempdir.path) / "testdata.bcolz"
-                BcolzDailyBarWriter(
-                    path, self.trading_calendar, days[0], days[-1]
-                ).write(assets.items())
+                BcolzDailyBarWriter(path, self.trading_calendar, days[0], days[-1]).write(
+                    assets.items()
+                )
 
                 equity_daily_reader = BcolzDailyBarReader(path)
 
@@ -407,21 +403,21 @@ class TestFinance:
         for asset in [asset1, asset2]:
             order_lists = blotter.open_orders[asset]
             assert order_lists is not None
-            assert 1 == len(order_lists)
+            assert len(order_lists) == 1
 
         asset1_order = blotter.open_orders[1][0]
         asset2_order = blotter.open_orders[2][0]
 
         # make sure the asset1 order didn't change
-        assert 100 == asset1_order.amount
-        assert 10 == asset1_order.limit
-        assert 1 == asset1_order.asset
+        assert asset1_order.amount == 100
+        assert asset1_order.limit == 10
+        assert asset1_order.asset == 1
 
         # make sure the asset2 order did change
         # to 300 shares at 3.33
-        assert 300 == asset2_order.amount
-        assert 3.33 == asset2_order.limit
-        assert 2 == asset2_order.asset
+        assert asset2_order.amount == 300
+        assert asset2_order.limit == 3.33
+        assert asset2_order.asset == 2
 
 
 @pytest.mark.usefixtures("with_trading_calendars")
@@ -443,7 +439,6 @@ class TestSimulationParameters:
 
     @pytest.mark.timeout(DEFAULT_TIMEOUT)
     def test_sim_params_days_in_period(self):
-
         #     January 2008
         #  Su Mo Tu We Th Fr Sa
         #         1  2  3  4  5

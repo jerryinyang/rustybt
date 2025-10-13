@@ -152,8 +152,7 @@ def set_test_statistical_built_ins(request, with_trading_calendars, with_asset_f
                 hasattr(unspecialized, "name")
                 and unspecialized.name == "close"
                 and hasattr(unspecialized, "dataset")
-                and unspecialized.dataset.__name__
-                in ("EquityPricing", "USEquityPricing")
+                and unspecialized.dataset.__name__ in ("EquityPricing", "USEquityPricing")
             )
             or (
                 hasattr(column, "name")
@@ -180,9 +179,7 @@ def set_test_statistical_built_ins(request, with_trading_calendars, with_asset_f
     # Set up mask data
     from rustybt.testing import AssetIDPlusDay
 
-    request.cls.cascading_mask = AssetIDPlusDay() < (
-        sids[-1] + dates[start_date_index].day
-    )
+    request.cls.cascading_mask = AssetIDPlusDay() < (sids[-1] + dates[start_date_index].day)
     request.cls.expected_cascading_mask_result = make_cascading_boolean_array(
         shape=(request.cls.num_days, num_assets),
     )

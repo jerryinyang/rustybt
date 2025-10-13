@@ -20,7 +20,7 @@ from toolz import merge
 from rustybt.assets import Equity, Future
 from rustybt.finance.constants import FUTURE_EXCHANGE_FEES_BY_SYMBOL
 from rustybt.finance.shared import AllowedAssetMarker, FinancialModelMeta
-from rustybt.utils.dummy import DummyMapping
+from rustybt.utils.dummy import SingleValueMapping
 
 DEFAULT_PER_SHARE_COST = 0.001  # 0.1 cents per share
 DEFAULT_PER_CONTRACT_COST = 0.85  # $0.85 per future contract
@@ -63,7 +63,7 @@ class CommissionModel(metaclass=FinancialModelMeta):
             multiple transactions if there isn't enough volume in a given bar
             to fill the full amount requested in the order.
 
-        Returns
+        Returns:
         -------
         amount_charged : float
             The additional commission, in dollars, that we should attribute to
@@ -75,7 +75,7 @@ class CommissionModel(metaclass=FinancialModelMeta):
 class NoCommission(CommissionModel):
     """Model commissions as free.
 
-    Notes
+    Notes:
     -----
     This is primarily used for testing.
     """
@@ -127,9 +127,7 @@ def calculate_per_unit_commission(
         # we've already paid some commission, so figure out how much we
         # would be paying if we only counted per unit.
         per_unit_total = (
-            abs(order.filled * cost_per_unit)
-            + additional_commission
-            + initial_commission
+            abs(order.filled * cost_per_unit) + additional_commission + initial_commission
         )
 
         if per_unit_total < min_trade_cost:
@@ -155,7 +153,7 @@ class PerShare(EquityCommissionModel):
         The minimum amount of commissions paid per trade. Default is no
         minimum.
 
-    Notes
+    Notes:
     -----
     This is zipline's default commission model for equities.
     """
@@ -170,12 +168,8 @@ class PerShare(EquityCommissionModel):
 
     def __repr__(self):
         return (
-            "{class_name}(cost_per_share={cost_per_share}, "
-            "min_trade_cost={min_trade_cost})".format(
-                class_name=self.__class__.__name__,
-                cost_per_share=self.cost_per_share,
-                min_trade_cost=self.min_trade_cost,
-            )
+            f"{self.__class__.__name__}(cost_per_share={self.cost_per_share}, "
+            f"min_trade_cost={self.min_trade_cost})"
         )
 
     def calculate(self, order, transaction):
@@ -221,17 +215,15 @@ class PerContract(FutureCommissionModel):
         # NOTE: These dictionary does not handle unknown root symbols, so it
         # may be worth revisiting this behavior.
         if isinstance(cost, (int, float)):
-            self._cost_per_contract = DummyMapping(float(cost))
+            self._cost_per_contract = SingleValueMapping(float(cost))
         else:
             # Cost per contract is a dictionary. If the user's dictionary does
             # not provide a commission cost for a certain contract, fall back
             # on the pre-defined cost values per root symbol.
-            self._cost_per_contract = defaultdict(
-                lambda: DEFAULT_PER_CONTRACT_COST, **cost
-            )
+            self._cost_per_contract = defaultdict(lambda: DEFAULT_PER_CONTRACT_COST, **cost)
 
         if isinstance(exchange_fee, (int, float)):
-            self._exchange_fee = DummyMapping(float(exchange_fee))
+            self._exchange_fee = SingleValueMapping(float(exchange_fee))
         else:
             # Exchange fee is a dictionary. If the user's dictionary does not
             # provide an exchange fee for a certain contract, fall back on the
@@ -244,26 +236,21 @@ class PerContract(FutureCommissionModel):
         self.min_trade_cost = min_trade_cost or 0
 
     def __repr__(self):
-        if isinstance(self._cost_per_contract, DummyMapping):
+        if isinstance(self._cost_per_contract, SingleValueMapping):
             # Cost per contract is a constant, so extract it.
             cost_per_contract = self._cost_per_contract["dummy key"]
         else:
             cost_per_contract = "<varies>"
 
-        if isinstance(self._exchange_fee, DummyMapping):
+        if isinstance(self._exchange_fee, SingleValueMapping):
             # Exchange fee is a constant, so extract it.
             exchange_fee = self._exchange_fee["dummy key"]
         else:
             exchange_fee = "<varies>"
 
         return (
-            "{class_name}(cost_per_contract={cost_per_contract}, "
-            "exchange_fee={exchange_fee}, min_trade_cost={min_trade_cost})".format(
-                class_name=self.__class__.__name__,
-                cost_per_contract=cost_per_contract,
-                exchange_fee=exchange_fee,
-                min_trade_cost=self.min_trade_cost,
-            )
+            f"{self.__class__.__name__}(cost_per_contract={cost_per_contract}, "
+            f"exchange_fee={exchange_fee}, min_trade_cost={self.min_trade_cost})"
         )
 
     def calculate(self, order, transaction):
@@ -303,10 +290,7 @@ class PerTrade(CommissionModel):
         self.cost = float(cost)
 
     def __repr__(self):
-        return "{class_name}(cost_per_trade={cost})".format(
-            class_name=self.__class__.__name__,
-            cost=self.cost,
-        )
+        return f"{self.__class__.__name__}(cost_per_trade={self.cost})"
 
     def calculate(self, order, transaction):
         """
@@ -348,15 +332,12 @@ class PerFutureTrade(PerContract):
         self._cost_per_trade = self._exchange_fee
 
     def __repr__(self):
-        if isinstance(self._cost_per_trade, DummyMapping):
+        if isinstance(self._cost_per_trade, SingleValueMapping):
             # Cost per trade is a constant, so extract it.
             cost_per_trade = self._cost_per_trade["dummy key"]
         else:
             cost_per_trade = "<varies>"
-        return "{class_name}(cost_per_trade={cost_per_trade})".format(
-            class_name=self.__class__.__name__,
-            cost_per_trade=cost_per_trade,
-        )
+        return f"{self.__class__.__name__}(cost_per_trade={cost_per_trade})"
 
 
 class PerDollar(EquityCommissionModel):
@@ -378,9 +359,7 @@ class PerDollar(EquityCommissionModel):
         self.cost_per_dollar = float(cost)
 
     def __repr__(self):
-        return "{class_name}(cost_per_dollar={cost})".format(
-            class_name=self.__class__.__name__, cost=self.cost_per_dollar
-        )
+        return f"{self.__class__.__name__}(cost_per_dollar={self.cost_per_dollar})"
 
     def calculate(self, order, transaction):
         """
@@ -396,9 +375,8 @@ class PerDollar(EquityCommissionModel):
 
 from abc import ABC
 from dataclasses import dataclass, field
-from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, Optional
+from typing import Any
 
 import pandas as pd
 import structlog
@@ -425,9 +403,9 @@ class CommissionResult:
 
     commission: Decimal  # Total commission amount
     model_name: str  # Name of commission model used
-    tier_applied: Optional[str] = None  # Tier name if applicable
-    maker_taker: Optional[str] = None  # "maker" or "taker" if applicable
-    metadata: Dict[str, Any] = field(default_factory=dict)  # Additional data
+    tier_applied: str | None = None  # Tier name if applicable
+    maker_taker: str | None = None  # "maker" or "taker" if applicable
+    metadata: dict[str, Any] = field(default_factory=dict)  # Additional data
 
 
 class DecimalCommissionModel(ABC):
@@ -493,9 +471,7 @@ class PerShareCommission(DecimalCommissionModel):
     Common for US equity brokers (e.g., Interactive Brokers: $0.005/share).
     """
 
-    def __init__(
-        self, cost_per_share: Decimal, min_commission: Decimal = Decimal("1.00")
-    ):
+    def __init__(self, cost_per_share: Decimal, min_commission: Decimal = Decimal("1.00")):
         """Initialize per-share commission model.
 
         Args:
@@ -551,7 +527,9 @@ class PercentageCommission(DecimalCommissionModel):
     """
 
     def __init__(
-        self, percentage: Decimal, min_commission: Decimal = Decimal("0")  # As decimal (e.g., 0.001 = 0.1%)
+        self,
+        percentage: Decimal,
+        min_commission: Decimal = Decimal("0"),  # As decimal (e.g., 0.001 = 0.1%)
     ):
         """Initialize percentage commission model.
 
@@ -608,8 +586,8 @@ class VolumeTracker:
 
     def __init__(self):
         """Initialize volume tracker."""
-        self.monthly_volumes: Dict[str, Decimal] = {}
-        self.current_month: Optional[str] = None
+        self.monthly_volumes: dict[str, Decimal] = {}
+        self.current_month: str | None = None
         self.logger = structlog.get_logger()
 
     def get_monthly_volume(self, current_time: pd.Timestamp) -> Decimal:
@@ -674,9 +652,9 @@ class TieredCommission(DecimalCommissionModel):
 
     def __init__(
         self,
-        tiers: Dict[Decimal, Decimal],  # {volume_threshold: commission_rate}
+        tiers: dict[Decimal, Decimal],  # {volume_threshold: commission_rate}
         min_commission: Decimal = Decimal("0"),
-        volume_tracker: Optional[VolumeTracker] = None,
+        volume_tracker: VolumeTracker | None = None,
     ):
         """Initialize tiered commission model.
 

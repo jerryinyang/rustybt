@@ -6,18 +6,17 @@ These tests ensure no precision loss occurs during:
 - Multiple read/write cycles
 """
 
-import pytest
-import polars as pl
 import tempfile
-from decimal import Decimal
 from datetime import date, datetime
+from decimal import Decimal
 from pathlib import Path
 
-from rustybt.data.polars.parquet_schema import DAILY_BARS_SCHEMA, MINUTE_BARS_SCHEMA
+import polars as pl
+
 from rustybt.data.polars.aggregation import (
     resample_minute_to_daily,
-    resample_daily_to_weekly,
 )
+from rustybt.data.polars.parquet_schema import DAILY_BARS_SCHEMA, MINUTE_BARS_SCHEMA
 
 
 def test_parquet_roundtrip_daily_bars():

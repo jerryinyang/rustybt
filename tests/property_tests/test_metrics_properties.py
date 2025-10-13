@@ -3,7 +3,6 @@
 from decimal import Decimal
 
 import polars as pl
-import pytest
 from hypothesis import assume, example, given
 
 from rustybt.finance.metrics.decimal_metrics import calculate_max_drawdown
@@ -48,16 +47,16 @@ def test_max_drawdown_valid_range(returns: list[Decimal]) -> None:
     max_dd_decimal = Decimal(str(max_dd))
 
     # Verify valid range
-    assert max_dd_decimal <= Decimal("0"), (
-        f"Max drawdown must be non-positive: {max_dd_decimal}"
-    )
-    assert max_dd_decimal >= Decimal("-1"), (
-        f"Max drawdown cannot exceed 100% loss: {max_dd_decimal}"
-    )
+    assert max_dd_decimal <= Decimal("0"), f"Max drawdown must be non-positive: {max_dd_decimal}"
+    assert max_dd_decimal >= Decimal(
+        "-1"
+    ), f"Max drawdown cannot exceed 100% loss: {max_dd_decimal}"
 
 
 @given(
-    returns=return_series(min_size=30, max_size=252, min_return=Decimal("0"), max_return=Decimal("0.1")),
+    returns=return_series(
+        min_size=30, max_size=252, min_return=Decimal("0"), max_return=Decimal("0.1")
+    ),
 )
 @example(returns=[Decimal("0.01")] * 100)
 def test_max_drawdown_zero_for_all_positive_returns(returns: list[Decimal]) -> None:
@@ -79,9 +78,9 @@ def test_max_drawdown_zero_for_all_positive_returns(returns: list[Decimal]) -> N
     max_dd_decimal = Decimal(str(max_dd))
 
     # Should be zero (or very close due to numerical precision)
-    assert max_dd_decimal >= Decimal("-0.0001"), (
-        f"Max drawdown should be ~0 for all positive returns: {max_dd_decimal}"
-    )
+    assert max_dd_decimal >= Decimal(
+        "-0.0001"
+    ), f"Max drawdown should be ~0 for all positive returns: {max_dd_decimal}"
 
 
 @given(
@@ -151,12 +150,8 @@ def test_sharpe_ratio_zero_when_return_equals_risk_free(
 
 
 @given(
-    starting_value=decimal_prices(
-        min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2
-    ),
-    ending_value=decimal_prices(
-        min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2
-    ),
+    starting_value=decimal_prices(min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2),
+    ending_value=decimal_prices(min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2),
 )
 @example(starting_value=Decimal("1000"), ending_value=Decimal("2000"))
 @example(starting_value=Decimal("1000"), ending_value=Decimal("1000"))  # No change
@@ -241,9 +236,7 @@ def test_win_rate_bounds(win_count: Decimal, total_count: Decimal) -> None:
 
 
 @given(
-    gross_profit=decimal_prices(
-        min_value=Decimal("1000"), max_value=Decimal("100000"), scale=2
-    ),
+    gross_profit=decimal_prices(min_value=Decimal("1000"), max_value=Decimal("100000"), scale=2),
     gross_loss=decimal_prices(min_value=Decimal("1000"), max_value=Decimal("100000"), scale=2),
 )
 @example(gross_profit=Decimal("10000"), gross_loss=Decimal("5000"))
@@ -271,12 +264,8 @@ def test_profit_factor_calculation(gross_profit: Decimal, gross_loss: Decimal) -
 
 
 @given(
-    strategy_return=decimal_prices(
-        min_value=Decimal("-0.5"), max_value=Decimal("1.0"), scale=4
-    ),
-    benchmark_return=decimal_prices(
-        min_value=Decimal("-0.5"), max_value=Decimal("1.0"), scale=4
-    ),
+    strategy_return=decimal_prices(min_value=Decimal("-0.5"), max_value=Decimal("1.0"), scale=4),
+    benchmark_return=decimal_prices(min_value=Decimal("-0.5"), max_value=Decimal("1.0"), scale=4),
 )
 @example(strategy_return=Decimal("0.15"), benchmark_return=Decimal("0.10"))
 @example(strategy_return=Decimal("0.10"), benchmark_return=Decimal("0.10"))  # No alpha

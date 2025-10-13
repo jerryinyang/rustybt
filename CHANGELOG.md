@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+### Fixed - Missing Cython Source Files and Test Coverage
+- **Critical Fix**: Added 9 missing Cython source files in `rustybt/lib/` that were previously untracked
+  - `adjustment.pyx`, `adjustment.pxd` (1,054 lines) - Corporate action adjustments
+  - `_factorize.pyx` (246 lines) - Categorical data factorization
+  - `_windowtemplate.pxi` (161 lines) - Rolling window template
+  - `_float64window.pyx`, `_int64window.pyx`, `_uint8window.pyx`, `_labelwindow.pyx` - Type-specific windows
+  - `rank.pyx` (172 lines) - Ranking algorithms
+- **Test Coverage**: Added comprehensive test suite with 112 test cases (103 passing, 9 intentionally skipped)
+  - `tests/lib/test_adjustment.py` - 46 tests for all adjustment types
+  - `tests/lib/test_factorize.py` - 36 tests for factorization algorithms
+  - `tests/lib/test_windows.py` - 30 tests for rolling windows
+  - Property-based tests using Hypothesis for mathematical correctness
+  - Edge case coverage (empty arrays, large datasets, Unicode, boundary conditions)
+  - Performance validation (100K element arrays)
+- **Build System**: Updated `.gitignore` to allow `rustybt/lib/` directory (exception to global `lib/` ignore)
+- **Documentation**: Added `tests/lib/TEST_SUITE_SUMMARY.md` documenting test implementation and review findings
+
+### Changed
+- `.gitignore`: Added exception for `rustybt/lib/` to allow Cython source files while keeping virtual environment `lib/` ignored
+
 ### Added - Epic 8: Unified Data Architecture (Story 8.5)
 - **DataPortal Integration**: Updated `PolarsDataPortal` to accept `data_source` parameter for unified data access
 - **Smart Caching**: Automatic cache wrapping with `use_cache=True` parameter

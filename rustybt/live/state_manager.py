@@ -11,7 +11,7 @@ from pathlib import Path
 
 import structlog
 
-from rustybt.live.models import StateCheckpoint
+from rustybt.live.models import ReconciliationStrategy, StateCheckpoint
 
 logger = structlog.get_logger(__name__)
 

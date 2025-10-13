@@ -1,6 +1,7 @@
 import inspect
 
 import pandas as pd
+from exchange_calendars import ExchangeCalendar
 from exchange_calendars import get_calendar as ec_get_calendar
 from exchange_calendars.calendar_utils import (  # noqa: F401
     global_calendar_dispatcher,
@@ -9,6 +10,9 @@ from exchange_calendars.calendar_utils import (  # noqa: F401
 from exchange_calendars.utils.pandas_utils import days_at_time  # noqa: F401
 
 # from exchange_calendars.errors import InvalidCalendarName
+
+# Backward compatibility alias
+TradingCalendar = ExchangeCalendar
 
 
 # https://stackoverflow.com/questions/56753846/python-wrapping-function-with-signature

@@ -208,10 +208,18 @@ class SQLiteAdjustmentReader:
         ]
 
     def get_adjustments_for_sid(self, table_name, sid):
+        # Validate table name to prevent SQL injection
+        if table_name not in SQLITE_ADJUSTMENT_TABLENAMES:
+            raise ValueError(
+                f"Invalid table name: {table_name}. "
+                f"Must be one of {SQLITE_ADJUSTMENT_TABLENAMES}"
+            )
+
         t = (sid,)
         c = self.conn.cursor()
+        # Table name is now validated, safe to use in query  # nosec B608
         adjustments_for_sid = c.execute(
-            "SELECT effective_date, ratio FROM %s WHERE sid = ?" % table_name, t
+            f"SELECT effective_date, ratio FROM {table_name} WHERE sid = ?", t
         ).fetchall()
         c.close()
 
@@ -308,6 +316,7 @@ class SQLiteAdjustmentReader:
             else {}
         )
 
+        # Table name is validated against _datetime_int_cols keys  # nosec B608
         result = pd.read_sql(
             f"select * from {table_name}",
             self.conn,

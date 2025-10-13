@@ -42,6 +42,9 @@ if TYPE_CHECKING:
 
 logger = structlog.get_logger(__name__)
 
+# Backward compatibility alias
+CCXTConnectionError = BrokerConnectionError
+
 
 class CCXTBrokerAdapter(BrokerAdapter):
     """CCXT unified broker adapter.

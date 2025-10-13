@@ -15,6 +15,7 @@ from rustybt.live.events import (
     ScheduledTriggerEvent,
     SystemErrorEvent,
 )
+from rustybt.live.models import ReconciliationStrategy
 from rustybt.live.order_manager import Order, OrderManager, OrderStatus
 
 __all__ = [
@@ -28,6 +29,7 @@ __all__ = [
     "OrderManager",
     "OrderRejectEvent",
     "OrderStatus",
+    "ReconciliationStrategy",
     "ScheduledTriggerEvent",
     "SystemErrorEvent",
 ]

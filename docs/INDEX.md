@@ -279,6 +279,18 @@ Quality gates for each story (see [qa/gates/](qa/gates/)):
 Detailed documentation for significant pull requests:
 
 - **[PR Documentation Index](pr/README.md)** - Overview and naming conventions
+
+### 🚨 Critical Issues
+
+- **[2025-10-13: CI/CD Blocking Issues](pr/2025-10-13-CI-BLOCKING-dependency-issues.md)** 🟡 **IN PROGRESS**
+  - All CI/CD workflows failing due to dependency/build issues
+  - ✅ RESOLVED: Numpy/numexpr version conflicts (Python 3.12/3.13)
+  - ✅ RESOLVED: Python version classifiers mismatch
+  - ❌ BLOCKING: Editable install module import failures
+  - Comprehensive analysis with attempted solutions and recommendations
+
+### Recent Implementations
+
 - **[2025-10-13-PR1: Test Suite Implementation](pr/2025-10-13-PR1-335f312-test-suite-implementation.md)** ⭐ NEW
   - Comprehensive test suite for rustybt.lib Cython modules
   - 112 tests covering 2,028 lines of code

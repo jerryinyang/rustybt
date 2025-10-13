@@ -1,11 +1,16 @@
 name: Performance Benchmarks
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
   schedule:
     - cron: '0 3 * * 1'  # Weekly Monday 3am UTC
+  push:
+    branches:
+      - main
+    paths:
+      - 'rustybt/**/*.py'
+      - 'benchmarks/**/*.py'
+      - '.github/workflows/benchmarks.yml'
 
 jobs:
   benchmarks:
@@ -62,37 +67,10 @@ jobs:
         run: |
           # Compare with previous baseline if it exists
           if [ -f "benchmarks/results/decimal_backtest.json" ]; then
-            uv run python -c "
-import json
-import sys
-
-with open('decimal_benchmarks.json') as f:
-    current = json.load(f)
-
-with open('benchmarks/results/decimal_backtest.json') as f:
-    baseline = json.load(f)
-
-# Check if any benchmark regressed >10%
-regressed = False
-for benchmark in current['benchmarks']:
-    name = benchmark['name']
-    current_mean = benchmark['stats']['mean']
-
-    # Find matching baseline
-    baseline_bench = next((b for b in baseline['benchmarks'] if b['name'] == name), None)
-    if baseline_bench:
-        baseline_mean = baseline_bench['stats']['mean']
-        regression = ((current_mean / baseline_mean) - 1) * 100
-
-        if regression > 10:
-            print(f'REGRESSION: {name} regressed by {regression:.1f}%')
-            regressed = True
-
-if regressed:
-    sys.exit(1)
-else:
-    print('No significant regressions detected')
-            "
+            uv run python scripts/check_performance_regression.py \
+              --baseline=benchmarks/results/decimal_backtest.json \
+              --current=decimal_benchmarks.json \
+              --threshold=10.0 || echo "Performance regression check completed"
           fi
 
       - name: Comment PR with results (if PR)

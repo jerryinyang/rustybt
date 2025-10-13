@@ -209,6 +209,14 @@ local_scheme = 'dirty-tag'
 "rustybt" = [
     "py.typed",
 ]
+"rustybt.lib" = [
+    "*.py",      # Ensure labelarray.py is included
+    "*.pyx",
+    "*.pxd",
+    "*.pxi",
+    "*.so",
+    "*.pyd",
+]
 
 [tool.pytest.ini_options]
 pythonpath = ['.']
@@ -594,6 +602,10 @@ database_file = ".hypothesis/examples.db"
 default = { max_examples = 1000 }
 ci = { max_examples = 1000, derandomize = true }
 quick = { max_examples = 100 }
+
+[tool.bandit]
+exclude_dirs = ["tests", "build", "dist"]
+skips = ["B101", "B601"]
 
 [tool.tox]
 legacy_tox_ini = """

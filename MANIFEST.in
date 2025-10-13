@@ -1,4 +1,5 @@
 recursive-include rust *
+recursive-include rustybt *.py
 recursive-include rustybt *.pyx
 recursive-include rustybt *.pxd
 recursive-include rustybt *.pxi

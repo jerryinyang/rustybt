@@ -14,8 +14,8 @@ import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
-# Import the module we're testing so the coverage script can detect it
-import rustybt.data.polars.data_portal
+# Import from the specific modules we're testing so coverage script detects them
+from rustybt.data.polars.data_portal import DataPortal  # noqa: F401
 
 
 class TestPolarsDataPortalProperties:

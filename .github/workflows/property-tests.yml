@@ -34,7 +34,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --dev
+          uv sync --all-extras
 
       - name: Check property test coverage
         run: |
@@ -99,7 +99,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --dev
+          uv sync --all-extras
 
       - name: Run thorough property tests (1000 examples)
         env:

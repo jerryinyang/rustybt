@@ -31,22 +31,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install .
 
-      - name: Debug installed files
+      - name: Run smoke test (from different directory to avoid source import)
         run: |
-          echo "=== Checking installed rustybt location ==="
-          python -c "import rustybt; import os; print(f'RustyBT location: {os.path.dirname(rustybt.__file__)}')"
-          echo ""
-          echo "=== Listing gens directory ==="
-          python -c "import rustybt, os; gens_dir = os.path.join(os.path.dirname(rustybt.__file__), 'gens'); print(f'Contents of {gens_dir}:'); import subprocess; subprocess.run(['ls', '-la', gens_dir])"
-          echo ""
-          echo "=== Checking for .so files ==="
-          python -c "import rustybt, os, glob; base = os.path.dirname(rustybt.__file__); so_files = glob.glob(os.path.join(base, '**/*.so'), recursive=True); print(f'Found {len(so_files)} .so files:'); [print(f)  for f in so_files]"
-
-      - name: Run smoke test
-        run: |
+          cd /tmp
           python -c "import rustybt; print(f'RustyBT version: {rustybt.__version__}')"
+          python -c "import rustybt; import os; print(f'RustyBT location: {os.path.dirname(rustybt.__file__)}')"
           python -c "import polars, hypothesis, structlog, pydantic; print('All dependencies OK')"
-          python -c "from rustybt.lib.labelarray import LabelArray; print('✅ Cython/Python modules OK')"
+          python -c "from rustybt.lib.labelarray import LabelArray; print('✅ labelarray import OK')"
+          python -c "from rustybt.gens.sim_engine import SESSION_END; print('✅ sim_engine import OK')"
 
   # Code quality checks
   lint:

@@ -14,9 +14,9 @@ from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 # Import the modules we're testing so the coverage script can detect them
-from rustybt.finance import slippage
-from rustybt.finance.decimal import blotter
-from rustybt.finance.metrics import core
+import rustybt.finance.slippage
+import rustybt.finance.decimal.blotter
+import rustybt.finance.metrics.core
 
 # Set decimal precision for tests
 getcontext().prec = 10

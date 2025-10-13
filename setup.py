@@ -18,7 +18,7 @@ from pathlib import Path
 
 import numpy
 from Cython.Build import cythonize
-from setuptools import Extension, setup
+from setuptools import Extension, find_packages, setup
 from setuptools_rust import Binding, RustExtension
 
 ROOT_DIR = Path(__file__).parent.resolve()
@@ -109,6 +109,7 @@ ext_modules = [
 #     ext_module.cython_directives = dict(language_level="3")
 
 setup(
+    packages=find_packages(exclude=["tests*", "deps*", "docs*", ".bmad-core*"]),
     use_scm_version=True,
     ext_modules=cythonize(ext_modules, **ext_options),
     rust_extensions=[

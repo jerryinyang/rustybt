@@ -190,6 +190,7 @@ zip-safe = false
 
 [tool.setuptools.packages.find]
 where = ['.']
+include = ['rustybt*']  # Explicitly include all rustybt subpackages
 exclude = ['tests*', 'deps*', 'docs*', '.bmad-core*']
 
 [tool.setuptools_scm]
@@ -203,6 +204,8 @@ local_scheme = 'dirty-tag'
     "*.pyx",
     "*.pxi",
     "*.pxd",
+    "*.so",      # Include compiled Cython extensions (Linux/Mac)
+    "*.pyd",     # Include compiled Cython extensions (Windows)
 ]
 "rustybt" = [
     "py.typed",

@@ -1,21 +1,20 @@
 """Comprehensive tests for capital allocation algorithms."""
 
-import pytest
 from decimal import Decimal
-from typing import Dict, List
+
 import numpy as np
 import pandas as pd
+import pytest
 
 from rustybt.portfolio.allocation import (
-    AllocationAlgorithm,
     AllocationConstraints,
-    FixedAllocation,
-    DynamicAllocation,
-    RiskParityAllocation,
-    KellyCriterionAllocation,
-    DrawdownBasedAllocation,
     AllocationRebalancer,
+    DrawdownBasedAllocation,
+    DynamicAllocation,
+    FixedAllocation,
+    KellyCriterionAllocation,
     RebalancingFrequency,
+    RiskParityAllocation,
 )
 from rustybt.portfolio.allocator import StrategyPerformance
 
@@ -209,9 +208,7 @@ def test_constraint_enforcement_min_max():
     allocations = {"strategy1": Decimal("0.80"), "strategy2": Decimal("0.20")}
 
     # Create constraints: max 50% per strategy
-    constraints = AllocationConstraints(
-        default_min=Decimal("0.10"), default_max=Decimal("0.50")
-    )
+    constraints = AllocationConstraints(default_min=Decimal("0.10"), default_max=Decimal("0.50"))
 
     algo = FixedAllocation(allocations, constraints)
     strategies = {
@@ -352,8 +349,7 @@ def test_allocations_always_sum_to_one(num_strategies):
     """Property: Allocations always sum to 1.0 after normalization."""
     # Create random allocations
     allocations = {
-        f"strategy_{i}": Decimal(str(np.random.uniform(0.1, 1.0)))
-        for i in range(num_strategies)
+        f"strategy_{i}": Decimal(str(np.random.uniform(0.1, 1.0))) for i in range(num_strategies)
     }
 
     algo = FixedAllocation({"s1": Decimal("1.0")})  # Dummy for normalization
@@ -383,7 +379,7 @@ def test_constraints_always_enforced(min_alloc, max_alloc):
     }
 
     algo = FixedAllocation({"s1": Decimal("0.5"), "s2": Decimal("0.5")}, constraints)
-    constrained = algo.apply_constraints(allocations)
+    algo.apply_constraints(allocations)
 
     # All allocations should be within constraints (after normalization)
     # Note: Normalization may change values, so we check pre-normalization values

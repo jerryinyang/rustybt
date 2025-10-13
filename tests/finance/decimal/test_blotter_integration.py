@@ -7,18 +7,18 @@ This ensures end-to-end integration maintains Decimal precision throughout
 the order lifecycle including ledger updates.
 """
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
+
+import pytest
 
 from rustybt.finance.decimal import (
     DecimalBlotter,
     DecimalLedger,
-    DecimalOrder,
+    FixedBasisPointsSlippage,
+    FixedSlippage,
     PerShareCommission,
     PerTradeCommission,
-    FixedSlippage,
-    FixedBasisPointsSlippage,
 )
 
 
@@ -156,8 +156,6 @@ def test_buy_then_sell_updates_ledger_correctly(blotter, ledger, equity_asset):
     Flow: buy 100 shares → sell 100 shares → verify position closed and cash updated.
     """
     blotter.set_current_dt(datetime.now())
-
-    initial_cash = ledger.cash
 
     # Buy 100 shares
     buy_order_id = blotter.order(
@@ -361,7 +359,7 @@ def test_blotter_transaction_history_matches_ledger_updates(blotter, ledger, equ
     assert len(blotter_txns) == len(ledger_txns) == 3
 
     # Verify transaction values match
-    for b_txn, l_txn in zip(blotter_txns, ledger_txns):
+    for b_txn, l_txn in zip(blotter_txns, ledger_txns, strict=False):
         assert b_txn.order_id == l_txn.order_id
         assert b_txn.amount == l_txn.amount
         assert b_txn.price == l_txn.price

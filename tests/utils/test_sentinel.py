@@ -1,9 +1,11 @@
-from copy import copy, deepcopy
-from pickle import loads, dumps
 import sys
+from copy import copy, deepcopy
+from pickle import dumps, loads
 from weakref import ref
-from rustybt.utils.sentinel import sentinel
+
 import pytest
+
+from rustybt.utils.sentinel import sentinel
 
 
 @pytest.fixture(scope="function")

@@ -9,7 +9,7 @@ import hashlib
 import hmac
 import time
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import urlencode
 
 import aiohttp
@@ -80,7 +80,7 @@ class BinanceBrokerAdapter(BrokerAdapter):
         api_secret: str,
         market_type: str = "spot",
         testnet: bool = False,
-        stream_config: Optional[StreamConfig] = None,
+        stream_config: StreamConfig | None = None,
     ) -> None:
         """Initialize Binance broker adapter.
 
@@ -108,9 +108,7 @@ class BinanceBrokerAdapter(BrokerAdapter):
                 self.TESTNET_SPOT_URL if market_type == "spot" else self.TESTNET_FUTURES_URL
             )
         else:
-            self.base_url = (
-                self.SPOT_BASE_URL if market_type == "spot" else self.FUTURES_BASE_URL
-            )
+            self.base_url = self.SPOT_BASE_URL if market_type == "spot" else self.FUTURES_BASE_URL
 
         # WebSocket adapter
         self.ws_adapter = BinanceWebSocketAdapter(
@@ -120,13 +118,13 @@ class BinanceBrokerAdapter(BrokerAdapter):
         )
 
         # HTTP session
-        self._session: Optional[aiohttp.ClientSession] = None
+        self._session: aiohttp.ClientSession | None = None
         self._connected = False
-        self._market_data_queue: asyncio.Queue[Dict] = asyncio.Queue()
+        self._market_data_queue: asyncio.Queue[dict] = asyncio.Queue()
 
         # Rate limiting
-        self._request_timestamps: List[float] = []
-        self._order_timestamps: Dict[str, List[float]] = {}
+        self._request_timestamps: list[float] = []
+        self._order_timestamps: dict[str, list[float]] = {}
 
         logger.info(
             "binance_adapter_initialized",
@@ -192,10 +190,10 @@ class BinanceBrokerAdapter(BrokerAdapter):
         asset: Asset,
         amount: Decimal,
         order_type: str,
-        limit_price: Optional[Decimal] = None,
-        stop_price: Optional[Decimal] = None,
-        oco_params: Optional[Dict[str, Decimal]] = None,
-        iceberg_qty: Optional[Decimal] = None,
+        limit_price: Decimal | None = None,
+        stop_price: Decimal | None = None,
+        oco_params: dict[str, Decimal] | None = None,
+        iceberg_qty: Decimal | None = None,
     ) -> str:
         """Submit order to Binance.
 
@@ -358,7 +356,7 @@ class BinanceBrokerAdapter(BrokerAdapter):
             logger.error("order_cancellation_failed", order_id=broker_order_id, error=str(e))
             raise BinanceOrderRejectError(f"Failed to cancel order {broker_order_id}: {e}") from e
 
-    async def get_account_info(self) -> Dict[str, Decimal]:
+    async def get_account_info(self) -> dict[str, Decimal]:
         """Get account information.
 
         Returns:
@@ -406,7 +404,7 @@ class BinanceBrokerAdapter(BrokerAdapter):
             logger.error("get_account_info_failed", error=str(e))
             raise BinanceConnectionError(f"Failed to get account info: {e}") from e
 
-    async def get_positions(self) -> List[Dict]:
+    async def get_positions(self) -> list[dict]:
         """Get current positions.
 
         Returns:
@@ -441,14 +439,16 @@ class BinanceBrokerAdapter(BrokerAdapter):
                 mark_price = Decimal(position_data["markPrice"])
                 unrealized_pnl = Decimal(position_data["unRealizedProfit"])
 
-                positions.append({
-                    "symbol": symbol,
-                    "amount": position_amt,
-                    "entry_price": entry_price,
-                    "mark_price": mark_price,
-                    "unrealized_pnl": unrealized_pnl,
-                    "market_value": position_amt * mark_price,
-                })
+                positions.append(
+                    {
+                        "symbol": symbol,
+                        "amount": position_amt,
+                        "entry_price": entry_price,
+                        "mark_price": mark_price,
+                        "unrealized_pnl": unrealized_pnl,
+                        "market_value": position_amt * mark_price,
+                    }
+                )
 
             logger.debug("positions_fetched", count=len(positions))
 
@@ -458,7 +458,7 @@ class BinanceBrokerAdapter(BrokerAdapter):
             logger.error("get_positions_failed", error=str(e))
             raise BinanceConnectionError(f"Failed to get positions: {e}") from e
 
-    async def get_open_orders(self) -> List[Dict]:
+    async def get_open_orders(self) -> list[dict]:
         """Get open/pending orders.
 
         Returns:
@@ -477,15 +477,17 @@ class BinanceBrokerAdapter(BrokerAdapter):
 
             orders = []
             for order_data in response:
-                orders.append({
-                    "order_id": f"{order_data['symbol']}:{order_data['orderId']}",
-                    "symbol": order_data["symbol"],
-                    "side": order_data["side"],
-                    "type": order_data["type"],
-                    "quantity": Decimal(order_data["origQty"]),
-                    "price": Decimal(order_data["price"]) if order_data["price"] else None,
-                    "status": order_data["status"],
-                })
+                orders.append(
+                    {
+                        "order_id": f"{order_data['symbol']}:{order_data['orderId']}",
+                        "symbol": order_data["symbol"],
+                        "side": order_data["side"],
+                        "type": order_data["type"],
+                        "quantity": Decimal(order_data["origQty"]),
+                        "price": Decimal(order_data["price"]) if order_data["price"] else None,
+                        "status": order_data["status"],
+                    }
+                )
 
             return orders
 
@@ -493,7 +495,7 @@ class BinanceBrokerAdapter(BrokerAdapter):
             logger.error("get_open_orders_failed", error=str(e))
             raise BinanceConnectionError(f"Failed to get open orders: {e}") from e
 
-    async def subscribe_market_data(self, assets: List[Asset]) -> None:
+    async def subscribe_market_data(self, assets: list[Asset]) -> None:
         """Subscribe to real-time market data.
 
         Args:
@@ -517,7 +519,7 @@ class BinanceBrokerAdapter(BrokerAdapter):
             logger.error("market_data_subscription_failed", symbols=symbols, error=str(e))
             raise BinanceConnectionError(f"Failed to subscribe to market data: {e}") from e
 
-    async def unsubscribe_market_data(self, assets: List[Asset]) -> None:
+    async def unsubscribe_market_data(self, assets: list[Asset]) -> None:
         """Unsubscribe from market data.
 
         Args:
@@ -540,7 +542,7 @@ class BinanceBrokerAdapter(BrokerAdapter):
             logger.error("market_data_unsubscription_failed", symbols=symbols, error=str(e))
             raise BinanceConnectionError(f"Failed to unsubscribe from market data: {e}") from e
 
-    async def get_next_market_data(self) -> Optional[Dict]:
+    async def get_next_market_data(self) -> dict | None:
         """Get next market data update.
 
         Returns:
@@ -552,7 +554,7 @@ class BinanceBrokerAdapter(BrokerAdapter):
         try:
             # Non-blocking get from queue
             return await asyncio.wait_for(self._market_data_queue.get(), timeout=0.1)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
 
     async def get_current_price(self, asset: Asset) -> Decimal:
@@ -635,8 +637,8 @@ class BinanceBrokerAdapter(BrokerAdapter):
             raise BinanceConnectionError(f"Connectivity test failed: {e}") from e
 
     async def _unsigned_request(
-        self, method: str, endpoint: str, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, params: dict[str, Any]
+    ) -> dict[str, Any]:
         """Make unsigned API request.
 
         Args:
@@ -672,9 +674,7 @@ class BinanceBrokerAdapter(BrokerAdapter):
                     elif response.status == 503:
                         raise BinanceMaintenanceError(f"Exchange under maintenance: {error_msg}")
                     else:
-                        raise BinanceConnectionError(
-                            f"API error {error_code}: {error_msg}"
-                        )
+                        raise BinanceConnectionError(f"API error {error_code}: {error_msg}")
 
                 return response_json
 
@@ -683,8 +683,8 @@ class BinanceBrokerAdapter(BrokerAdapter):
             raise BinanceConnectionError(f"HTTP request failed: {e}") from e
 
     async def _signed_request(
-        self, method: str, endpoint: str, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, params: dict[str, Any]
+    ) -> dict[str, Any]:
         """Make signed API request.
 
         Args:
@@ -707,9 +707,7 @@ class BinanceBrokerAdapter(BrokerAdapter):
         # Generate signature
         query_string = urlencode(params)
         signature = hmac.new(
-            self.api_secret.encode("utf-8"),
-            query_string.encode("utf-8"),
-            hashlib.sha256
+            self.api_secret.encode("utf-8"), query_string.encode("utf-8"), hashlib.sha256
         ).hexdigest()
 
         params["signature"] = signature
@@ -726,8 +724,11 @@ class BinanceBrokerAdapter(BrokerAdapter):
 
         try:
             async with self._session.request(
-                method, url, params=params if method == "GET" else None,
-                data=params if method != "GET" else None, headers=headers
+                method,
+                url,
+                params=params if method == "GET" else None,
+                data=params if method != "GET" else None,
+                headers=headers,
             ) as response:
                 response_json = await response.json()
 
@@ -745,7 +746,9 @@ class BinanceBrokerAdapter(BrokerAdapter):
                     elif error_code == -2010:
                         raise BinanceOrderRejectError(f"Insufficient balance: {error_msg}")
                     elif error_code == -2011:
-                        raise BinanceOrderRejectError(f"Order would trigger immediately: {error_msg}")
+                        raise BinanceOrderRejectError(
+                            f"Order would trigger immediately: {error_msg}"
+                        )
                     elif response.status == 503:
                         raise BinanceMaintenanceError(f"Exchange under maintenance: {error_msg}")
                     else:
@@ -766,9 +769,7 @@ class BinanceBrokerAdapter(BrokerAdapter):
         current_time = time.time()
 
         # Remove timestamps older than 1 minute
-        self._request_timestamps = [
-            ts for ts in self._request_timestamps if current_time - ts < 60
-        ]
+        self._request_timestamps = [ts for ts in self._request_timestamps if current_time - ts < 60]
 
         # Check if we're at limit
         if len(self._request_timestamps) >= self.REQUESTS_PER_MINUTE:
@@ -849,7 +850,7 @@ class BinanceBrokerAdapter(BrokerAdapter):
         asset: Asset,
         side: str,
         quantity: Decimal,
-        oco_params: Dict[str, Decimal],
+        oco_params: dict[str, Decimal],
     ) -> str:
         """Submit OCO (One-Cancels-Other) order to Binance.
 
@@ -871,13 +872,13 @@ class BinanceBrokerAdapter(BrokerAdapter):
             BinanceOrderRejectError: If order is rejected
         """
         # Validate OCO params
-        required_keys = {'limit_price', 'stop_price', 'stop_limit_price'}
+        required_keys = {"limit_price", "stop_price", "stop_limit_price"}
         if not all(key in oco_params for key in required_keys):
             raise ValueError(f"OCO params must include: {required_keys}")
 
-        limit_price = oco_params['limit_price']
-        stop_price = oco_params['stop_price']
-        stop_limit_price = oco_params['stop_limit_price']
+        limit_price = oco_params["limit_price"]
+        stop_price = oco_params["stop_price"]
+        stop_limit_price = oco_params["stop_limit_price"]
 
         # Build OCO order params
         params = {

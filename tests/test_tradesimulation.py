@@ -15,20 +15,16 @@
 
 import pandas as pd
 
-from rustybt.gens.sim_engine import BEFORE_TRADING_START_BAR
-
-from rustybt.finance.asset_restrictions import NoRestrictions
+import rustybt.testing.fixtures as zf
 from rustybt.finance import metrics
+from rustybt.finance.asset_restrictions import NoRestrictions
 from rustybt.finance.trading import SimulationParameters
+from rustybt.gens.sim_engine import BEFORE_TRADING_START_BAR
 from rustybt.gens.tradesimulation import AlgorithmSimulator
 from rustybt.testing.core import parameter_space
-import rustybt.testing.fixtures as zf
 
 
-class TestBeforeTradingStartTiming(
-    zf.WithMakeAlgo, zf.WithTradingSessions, zf.ZiplineTestCase
-):
-
+class TestBeforeTradingStartTiming(zf.WithMakeAlgo, zf.WithTradingSessions, zf.ZiplineTestCase):
     ASSET_FINDER_EQUITY_SIDS = (1,)
     BENCHMARK_SID = 1
     # These dates are chosen to cross a DST transition.
@@ -48,9 +44,7 @@ class TestBeforeTradingStartTiming(
         emission_rate=["daily", "minute"],
         __fail_fast=True,
     )
-    def test_before_trading_start_runs_at_8_45(
-        self, num_sessions, data_frequency, emission_rate
-    ):
+    def test_before_trading_start_runs_at_8_45(self, num_sessions, data_frequency, emission_rate):
         bts_times = []
 
         def initialize(algo, data):
@@ -92,7 +86,6 @@ class BeforeTradingStartsOnlyClock:
 
 
 class TestBeforeTradingStartSimulationDt(zf.WithMakeAlgo, zf.ZiplineTestCase):
-
     SIM_PARAMS_DATA_FREQUENCY = "daily"
     DATA_PORTAL_USE_MINUTE_DATA = False
 

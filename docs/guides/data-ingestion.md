@@ -334,7 +334,7 @@ async def main():
 
     # Get data source
     source = DataSourceRegistry.get_source("yfinance")
-    
+
     # Ingest only new data
     await source.ingest_to_bundle(
         bundle_name="my-stocks",
@@ -358,7 +358,7 @@ from rustybt.data.bundles.metadata import BundleMetadata
 
 async def main():
     source = DataSourceRegistry.get_source("yfinance")
-    
+
     await source.ingest_to_bundle(
         bundle_name="my-stocks",
         symbols=["AAPL"],
@@ -392,7 +392,7 @@ from rustybt.data.sources import DataSourceRegistry
 async def main():
     source = DataSourceRegistry.get_source("yfinance")
     symbols = ["AAPL", "MSFT", "GOOGL"]
-    
+
     for symbol in symbols:
         await source.ingest_to_bundle(
             bundle_name=f"bundle-{symbol}",

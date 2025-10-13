@@ -1,8 +1,9 @@
 """Unit tests for DecimalLedger."""
 
-import pytest
 from decimal import Decimal
+
 import pandas as pd
+import pytest
 
 from rustybt.finance.decimal import (
     DecimalLedger,
@@ -152,7 +153,9 @@ class TestDecimalLedger:
         position = ledger.positions[asset]
         assert position.amount == Decimal("100")
         # Cost basis should include commission: (15000 + 5) / 100 = 150.05
-        expected_cost_basis = (Decimal("100") * Decimal("150.00") + Decimal("5.00")) / Decimal("100")
+        expected_cost_basis = (Decimal("100") * Decimal("150.00") + Decimal("5.00")) / Decimal(
+            "100"
+        )
         assert position.cost_basis == expected_cost_basis
 
     def test_process_transaction_sell(self):

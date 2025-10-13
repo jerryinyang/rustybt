@@ -220,9 +220,7 @@ class ParallelOptimizer:
         """
         # Validate inputs
         if backend not in ("multiprocessing", "ray"):
-            raise ValueError(
-                f"backend must be 'multiprocessing' or 'ray', got '{backend}'"
-            )
+            raise ValueError(f"backend must be 'multiprocessing' or 'ray', got '{backend}'")
 
         if backend == "ray":
             try:
@@ -299,9 +297,7 @@ class ParallelOptimizer:
         else:
             raise ValueError(f"Unsupported backend: {self.backend}")
 
-    def _run_multiprocessing(
-        self, objective_function: Callable[[dict[str, Any]], Decimal]
-    ) -> None:
+    def _run_multiprocessing(self, objective_function: Callable[[dict[str, Any]], Decimal]) -> None:
         """Run optimization using multiprocessing backend.
 
         Args:
@@ -393,9 +389,7 @@ class ParallelOptimizer:
 
                             except Exception as e:  # noqa: BLE001 - Catch worker crash/timeout
                                 # Worker crashed
-                                logger.error(
-                                    "worker_crashed", params=params, error=str(e)
-                                )
+                                logger.error("worker_crashed", params=params, error=str(e))
                                 result = TaskResult(
                                     params=params,
                                     score=Decimal("-Infinity"),
@@ -596,9 +590,7 @@ class ParallelOptimizer:
             self.algorithm.update(result.params, result.score)
 
             # Track best result
-            if result.is_success and (
-                self._best_score is None or result.score > self._best_score
-            ):
+            if result.is_success and (self._best_score is None or result.score > self._best_score):
                 self._best_score = result.score
                 self._best_params = result.params.copy()
                 logger.info(
@@ -639,19 +631,14 @@ class ParallelOptimizer:
     def _log_final_statistics(self) -> None:
         """Log final optimization statistics."""
         # Calculate overall throughput
-        total_duration = sum(
-            ws.total_duration_seconds for ws in self._worker_stats.values()
-        )
+        total_duration = sum(ws.total_duration_seconds for ws in self._worker_stats.values())
         overall_throughput = (
-            Decimal(self._total_evaluations) / total_duration
-            if total_duration > 0
-            else Decimal(0)
+            Decimal(self._total_evaluations) / total_duration if total_duration > 0 else Decimal(0)
         )
 
         # Calculate success rate
         success_rate = (
-            (self._total_evaluations - self._failed_evaluations)
-            / self._total_evaluations
+            (self._total_evaluations - self._failed_evaluations) / self._total_evaluations
             if self._total_evaluations > 0
             else 0.0
         )

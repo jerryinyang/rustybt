@@ -11,13 +11,13 @@ This module contains comprehensive tests for latency models including:
 import json
 from decimal import Decimal
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
-from typing import Dict
+from tempfile import NamedTemporaryFile
 
 import pandas as pd
 import pytest
 import yaml
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from rustybt.finance.execution import (
     BrokerLatencyProfile,
@@ -127,9 +127,7 @@ class TestRandomLatencyModel:
             assert Decimal("1.0") <= latency.broker_processing_ms <= Decimal("10.0")
             assert Decimal("0.1") <= latency.exchange_matching_ms <= Decimal("5.0")
             assert latency.total_ms == (
-                latency.network_ms
-                + latency.broker_processing_ms
-                + latency.exchange_matching_ms
+                latency.network_ms + latency.broker_processing_ms + latency.exchange_matching_ms
             )
 
     def test_normal_latency_within_range(self) -> None:
@@ -687,9 +685,7 @@ def test_total_latency_equals_sum_of_components(
     network_ms: Decimal, broker_ms: Decimal, exchange_ms: Decimal
 ) -> None:
     """Total latency always equals sum of component latencies."""
-    model = FixedLatencyModel(
-        network_ms=network_ms, broker_ms=broker_ms, exchange_ms=exchange_ms
-    )
+    model = FixedLatencyModel(network_ms=network_ms, broker_ms=broker_ms, exchange_ms=exchange_ms)
 
     latency = model.calculate_latency(
         order=None, current_time=pd.Timestamp("2024-01-01"), broker_name="test"
@@ -766,9 +762,7 @@ def test_random_latency_respects_ranges(network_range: tuple) -> None:
         st.decimals(min_value=Decimal("0"), max_value=Decimal("10"), places=2),
     ),
 )
-def test_network_latency_with_jitter_property(
-    base_latency: Decimal, jitter_range: tuple
-) -> None:
+def test_network_latency_with_jitter_property(base_latency: Decimal, jitter_range: tuple) -> None:
     """Network latency with jitter produces values in expected range."""
     model = NetworkLatency(
         base_latency_ms=base_latency,

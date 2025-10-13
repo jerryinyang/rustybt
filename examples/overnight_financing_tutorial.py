@@ -14,17 +14,17 @@ Topics covered:
 
 from decimal import Decimal
 from pathlib import Path
+
 import pandas as pd
 
 from rustybt.finance.costs import (
     AssetClass,
-    DictFinancingRateProvider,
     CSVFinancingRateProvider,
+    DictFinancingRateProvider,
     OvernightFinancingModel,
 )
 from rustybt.finance.decimal.ledger import DecimalLedger
 from rustybt.finance.decimal.position import DecimalPosition
-
 
 # ===========================================================================
 # Example 1: Equity Margin Interest (Long Leverage)
@@ -55,13 +55,13 @@ daily_financing, annual_rate = model.calculate_daily_financing(
     current_time=pd.Timestamp("2023-01-01"),
 )
 
-print(f"\nPosition Details:")
-print(f"  Symbol: AAPL")
-print(f"  Position Value: $100,000")
-print(f"  Cash Used: $50,000")
+print("\nPosition Details:")
+print("  Symbol: AAPL")
+print("  Position Value: $100,000")
+print("  Cash Used: $50,000")
 print(f"  Leveraged Amount: ${leveraged_exposure:,.2f}")
-print(f"  Leverage Ratio: 2.0x")
-print(f"\nFinancing Costs:")
+print("  Leverage Ratio: 2.0x")
+print("\nFinancing Costs:")
 print(f"  Annual Rate: {float(annual_rate) * 100:.2f}%")
 print(f"  Daily Cost: ${daily_financing:.2f}")
 print(f"  Monthly Cost (30 days): ${daily_financing * 30:.2f}")
@@ -101,15 +101,15 @@ eur_financing, eur_rate = forex_model.calculate_daily_financing(
     current_time=pd.Timestamp("2023-01-01"),
 )
 
-print(f"\nPosition Details:")
-print(f"  Symbol: EUR/USD")
-print(f"  Position: Short €100,000 at 1.10")
-print(f"  USD Equivalent: $110,000")
-print(f"\nSwap Costs:")
+print("\nPosition Details:")
+print("  Symbol: EUR/USD")
+print("  Position: Short €100,000 at 1.10")
+print("  USD Equivalent: $110,000")
+print("\nSwap Costs:")
 print(f"  Swap Rate: {float(eur_rate) * 100:.3f}%")
 print(f"  Daily Cost: ${abs(eur_financing):.2f}")
 print(f"  Annual Cost: ${abs(eur_financing) * 360:.2f}")
-print(f"  Note: Negative swap rate = trader pays to hold short")
+print("  Note: Negative swap rate = trader pays to hold short")
 
 
 # ===========================================================================
@@ -144,15 +144,15 @@ jpy_financing, jpy_rate = jpy_model.calculate_daily_financing(
     current_time=pd.Timestamp("2023-01-01"),
 )
 
-print(f"\nPosition Details:")
-print(f"  Symbol: USD/JPY")
-print(f"  Position: Short ¥10,000,000 at 110")
-print(f"  USD Equivalent: $90,909")
-print(f"\nSwap Income:")
+print("\nPosition Details:")
+print("  Symbol: USD/JPY")
+print("  Position: Short ¥10,000,000 at 110")
+print("  USD Equivalent: $90,909")
+print("\nSwap Income:")
 print(f"  Swap Rate: +{float(jpy_rate) * 100:.2f}%")
 print(f"  Daily Calculation: ${jpy_financing:.2f}")
 print(f"  Annual Benefit: ${jpy_financing * 360:.2f}")
-print(f"  Note: Positive swap rate on short = trader profits from interest differential")
+print("  Note: Positive swap rate on short = trader profits from interest differential")
 
 
 # ===========================================================================
@@ -162,6 +162,7 @@ print(f"  Note: Positive swap rate on short = trader profits from interest diffe
 print("\n" + "=" * 70)
 print("Example 4: Overnight Financing with DecimalLedger")
 print("=" * 70)
+
 
 # Create a simple mock asset class for this example
 class MockAsset:
@@ -191,7 +192,7 @@ aapl_position = DecimalPosition(
 aapl_position.cash_used = Decimal("50000.00")  # 50% cash, 50% margin
 ledger.positions[aapl] = aapl_position
 
-print(f"\nInitial Ledger State:")
+print("\nInitial Ledger State:")
 print(f"  Cash: ${ledger.cash:,.2f}")
 print(f"  Position: {aapl_position.amount} shares of AAPL @ ${aapl_position.last_sale_price}")
 print(f"  Position Value: ${abs(aapl_position.market_value):,.2f}")
@@ -199,7 +200,7 @@ print(f"  Cash Used: ${aapl_position.cash_used:,.2f}")
 print(f"  Leveraged Amount: ${abs(aapl_position.market_value) - aapl_position.cash_used:,.2f}")
 
 # Apply overnight financing for 30 days
-print(f"\nApplying overnight financing for 30 days...")
+print("\nApplying overnight financing for 30 days...")
 
 equity_provider = DictFinancingRateProvider(long_rates={AssetClass.EQUITY: Decimal("0.05")})
 equity_model = OvernightFinancingModel(equity_provider, days_in_year=365)
@@ -209,7 +210,7 @@ for day in range(30):
     current_time = start_date + pd.Timedelta(days=day)
     result = equity_model.apply_financing(ledger, current_time)
 
-print(f"\nAfter 30 Days:")
+print("\nAfter 30 Days:")
 print(f"  Cash: ${ledger.cash:,.2f}")
 print(f"  Cash Debited: ${Decimal('100000.00') - ledger.cash:,.2f}")
 print(f"  Accumulated Financing: ${aapl_position.accumulated_financing:,.2f}")
@@ -225,14 +226,16 @@ print("Example 5: CSV-Based Financing Rates")
 print("=" * 70)
 
 print("\nExample CSV format (config/financing_rates/default_rates.csv):")
-print("""
+print(
+    """
 symbol,asset_class,long_rate,short_rate,description
 AAPL,equity,0.05,0.00,Standard margin interest for equities
 MSFT,equity,0.05,0.00,Standard margin interest for equities
 EUR/USD,forex,0.00,-0.005,Negative carry on EUR/USD short
 USD/JPY,forex,0.00,0.012,Positive carry on USD/JPY short
 BTC-USD,crypto,0.10,-0.02,Funding rate for BTC perpetuals
-""")
+"""
+)
 
 csv_path = Path("config/financing_rates/default_rates.csv")
 if csv_path.exists():

@@ -18,8 +18,8 @@ This module provides the DecimalMetricsTracker class for tracking and
 calculating performance metrics with Decimal precision over time.
 """
 
+from collections.abc import Callable
 from decimal import Decimal
-from typing import Callable, Dict, List, Optional
 
 import polars as pl
 import structlog
@@ -60,7 +60,7 @@ class DecimalMetricsTracker:
         strategy_name: str = "Strategy",
         risk_free_rate: Decimal = Decimal("0.02"),
         annualization_factor: int = 252,
-        config: Optional[DecimalConfig] = None,
+        config: DecimalConfig | None = None,
     ):
         """Initialize DecimalMetricsTracker.
 
@@ -76,27 +76,27 @@ class DecimalMetricsTracker:
         self.config = config or DecimalConfig.get_instance()
 
         # Returns history
-        self._returns: List[Decimal] = []
-        self._cumulative_returns: List[Decimal] = [Decimal("1")]  # Start at 1.0
+        self._returns: list[Decimal] = []
+        self._cumulative_returns: list[Decimal] = [Decimal("1")]  # Start at 1.0
 
         # Trade history
-        self._trade_returns: List[Decimal] = []
+        self._trade_returns: list[Decimal] = []
 
         # Benchmark data (optional)
-        self._benchmark_returns: List[Decimal] = []
+        self._benchmark_returns: list[Decimal] = []
 
         # Custom metrics registry
-        self._custom_metrics: Dict[str, Callable[[pl.Series], Decimal]] = {}
+        self._custom_metrics: dict[str, Callable[[pl.Series], Decimal]] = {}
 
         # Cached metrics
-        self._metrics_cache: Optional[Dict[str, Decimal]] = None
+        self._metrics_cache: dict[str, Decimal] | None = None
         self._cache_valid = False
 
     def update(
         self,
         returns: pl.Series,
-        trade_returns: Optional[pl.Series] = None,
-        benchmark_returns: Optional[pl.Series] = None,
+        trade_returns: pl.Series | None = None,
+        benchmark_returns: pl.Series | None = None,
     ) -> None:
         """Update tracker with new returns data.
 
@@ -155,7 +155,7 @@ class DecimalMetricsTracker:
         self._custom_metrics[name] = metric_func
         logger.info("custom_metric_registered", metric_name=name, strategy=self.strategy_name)
 
-    def calculate_all_metrics(self, force_recalculate: bool = False) -> Dict[str, Decimal]:
+    def calculate_all_metrics(self, force_recalculate: bool = False) -> dict[str, Decimal]:
         """Calculate full suite of performance metrics.
 
         Args:
@@ -171,7 +171,7 @@ class DecimalMetricsTracker:
         if self._cache_valid and not force_recalculate:
             return self._metrics_cache  # type: ignore
 
-        metrics: Dict[str, Decimal] = {}
+        metrics: dict[str, Decimal] = {}
 
         if len(self._returns) < 2:
             logger.warning("insufficient_data_for_metrics", returns_count=len(self._returns))
@@ -179,7 +179,9 @@ class DecimalMetricsTracker:
 
         # Create Polars series
         returns_series = pl.Series("returns", self._returns)
-        cumulative_series = pl.Series("cumulative", self._cumulative_returns[1:])  # Skip initial 1.0
+        cumulative_series = pl.Series(
+            "cumulative", self._cumulative_returns[1:]
+        )  # Skip initial 1.0
 
         # Risk-adjusted return metrics
         try:
@@ -282,9 +284,9 @@ class DecimalMetricsTracker:
             num_periods = Decimal(str(len(self._returns)))
             years = num_periods / Decimal(str(self.annualization_factor))
             if years > Decimal("0"):
-                metrics["annual_return"] = (
-                    (Decimal("1") + total_return) ** (Decimal("1") / years) - Decimal("1")
-                )
+                metrics["annual_return"] = (Decimal("1") + total_return) ** (
+                    Decimal("1") / years
+                ) - Decimal("1")
             else:
                 metrics["annual_return"] = Decimal("0")
         else:
@@ -304,7 +306,7 @@ class DecimalMetricsTracker:
 
         return metrics
 
-    def get_metrics_summary(self, precision_map: Optional[Dict[str, int]] = None) -> str:
+    def get_metrics_summary(self, precision_map: dict[str, int] | None = None) -> str:
         """Get formatted summary of metrics.
 
         Args:

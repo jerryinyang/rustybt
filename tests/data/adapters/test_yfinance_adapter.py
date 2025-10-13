@@ -31,9 +31,7 @@ def test_adapter_initialization() -> None:
 
 def test_adapter_custom_initialization() -> None:
     """YFinanceAdapter accepts custom initialization parameters."""
-    adapter = YFinanceAdapter(
-        request_delay=2.0, fetch_dividends=False, fetch_splits=False
-    )
+    adapter = YFinanceAdapter(request_delay=2.0, fetch_dividends=False, fetch_splits=False)
 
     assert adapter.request_delay == 2.0
     assert adapter.fetch_dividends_flag is False

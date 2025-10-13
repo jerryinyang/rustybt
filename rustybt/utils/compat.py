@@ -1,7 +1,7 @@
 import functools
 import inspect
-from collections import namedtuple  # noqa: compatibility with python 3.11
-from contextlib import contextmanager, ExitStack
+from collections import namedtuple  # noqa: F401 - compatibility with python 3.11
+from contextlib import ExitStack, contextmanager
 from html import escape as escape_html
 from math import ceil
 from types import MappingProxyType as mappingproxy
@@ -21,7 +21,7 @@ wraps = functools.wraps
 def getargspec(f):
     ArgSpec = namedtuple(
         "ArgSpec", "args varargs keywords defaults"
-    )  # noqa: compatibility with python 3.11
+    )  # noqa: PYI024 - compatibility with python 3.11
     full_argspec = inspect.getfullargspec(f)
     return ArgSpec(
         args=full_argspec.args,
@@ -31,7 +31,7 @@ def getargspec(f):
     )
 
 
-unicode = type("")
+unicode = str
 
 __all__ = [
     "ExitStack",

@@ -13,12 +13,12 @@ def from_tuple(tup):
     tup : tuple (len 2 or 3)
         The tuple to turn into a range.
 
-    Returns
+    Returns:
     -------
     range : range
         The range from the tuple.
 
-    Raises
+    Raises:
     ------
     ValueError
         Raised when the tuple length is not 2 or 3.
@@ -46,12 +46,12 @@ def maybe_from_tuple(tup_or_range):
     tup_or_range : tuple or range
         A tuple to pass to from_tuple or a range to return.
 
-    Returns
+    Returns:
     -------
     range : range
         The input to convert to a range.
 
-    Raises
+    Raises:
     ------
     ValueError
         Raised when the input is not a tuple or a range. ValueError is also
@@ -81,7 +81,7 @@ def _check_steps(a, b):
     b : range
         The second range to check.
 
-    Raises
+    Raises:
     ------
     ValueError
         Raised when either step is not 1.
@@ -102,12 +102,12 @@ def overlap(a, b):
     b : range
         The second range.
 
-    Returns
+    Returns:
     -------
     overlaps : bool
         Do these ranges overlap.
 
-    Notes
+    Notes:
     -----
     This function does not support ranges with step != 1.
     """
@@ -130,7 +130,7 @@ def merge(a, b):
 
 
 def _combine(n, rs):
-    """helper for ``_group_ranges``"""
+    """Helper for ``_group_ranges``"""
     try:
         r, rs = peek(rs)
     except StopIteration:
@@ -156,7 +156,7 @@ def group_ranges(ranges):
     ranges : iterable[ranges]
         A sorted sequence of ranges to group.
 
-    Returns
+    Returns:
     -------
     grouped : iterable[ranges]
         A sorted sequence of ranges with overlapping ranges merged together.
@@ -199,12 +199,12 @@ def intersecting_ranges(ranges):
     ranges : iterable[ranges]
         A sequence of ranges to check for intersections.
 
-    Returns
+    Returns:
     -------
     intersections : iterable[ranges]
         A sequence of all of the ranges that intersected in ``ranges``.
 
-    Examples
+    Examples:
     --------
     >>> ranges = [range(0, 1), range(2, 5), range(4, 7)]
     >>> list(intersecting_ranges(ranges))

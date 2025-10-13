@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import warnings
+
 from rustybt.utils.compat import wraps
 
 
@@ -30,7 +31,7 @@ def deprecated(msg=None, stacklevel=2):
         How far up the stack the warning needs to go, before
         showing the relevant calling lines.
 
-    Examples
+    Examples:
     --------
     @deprecated(msg='function_a is deprecated! Use function_b instead.')
     def function_a(*args, **kwargs):

@@ -97,7 +97,7 @@ class NoiseInfusionResult:
 
         lines = [
             f"Noise Infusion Test ({self.n_simulations} simulations, "
-            f"{self.noise_model} noise, {float(self.std_pct)*100:.1f}% amplitude)",
+            f"{self.noise_model} noise, {float(self.std_pct) * 100:.1f}% amplitude)",
             f"Metric: {metric}",
             f"Original (noise-free): {original:.4f}",
             f"Noisy mean: {mean:.4f} ± {std:.4f}",
@@ -109,9 +109,7 @@ class NoiseInfusionResult:
 
         # Interpretation
         if self.is_fragile[metric]:
-            lines.append(
-                "❌ FRAGILE: Strategy highly sensitive to noise (likely overfit)"
-            )
+            lines.append("❌ FRAGILE: Strategy highly sensitive to noise (likely overfit)")
         elif degradation > Decimal("25"):
             lines.append("⚠️  MODERATE: Strategy shows moderate noise sensitivity")
         elif self.is_robust[metric]:
@@ -209,7 +207,7 @@ class NoiseInfusionResult:
         ax.set_title(
             f"Noise Infusion Test: {metric.replace('_', ' ').title()}\n"
             f"({self.n_simulations} simulations, {self.noise_model} noise, "
-            f"{float(self.std_pct)*100:.1f}% amplitude)",
+            f"{float(self.std_pct) * 100:.1f}% amplitude)",
             fontsize=14,
             fontweight="bold",
         )
@@ -464,9 +462,7 @@ class NoiseInfusionSimulator:
         )
 
         if len(violations) > 0:
-            raise ValueError(
-                f"Data violates OHLCV constraints in {len(violations)} rows"
-            )
+            raise ValueError(f"Data violates OHLCV constraints in {len(violations)} rows")
 
     def _run_simulations(
         self,
@@ -638,9 +634,7 @@ class NoiseInfusionSimulator:
 
         return fixed_data
 
-    def _calculate_means(
-        self, distributions: dict[str, list[Decimal]]
-    ) -> dict[str, Decimal]:
+    def _calculate_means(self, distributions: dict[str, list[Decimal]]) -> dict[str, Decimal]:
         """Calculate mean for each metric distribution.
 
         Args:
@@ -655,9 +649,7 @@ class NoiseInfusionSimulator:
             means[metric_name] = Decimal(str(mean_val))
         return means
 
-    def _calculate_stds(
-        self, distributions: dict[str, list[Decimal]]
-    ) -> dict[str, Decimal]:
+    def _calculate_stds(self, distributions: dict[str, list[Decimal]]) -> dict[str, Decimal]:
         """Calculate standard deviation for each metric distribution.
 
         Args:
@@ -695,18 +687,12 @@ class NoiseInfusionSimulator:
             noisy = noisy_mean[metric_name]
 
             # Calculate degradation (handle zero division)
-            deg = (
-                (orig - noisy) / abs(orig) * Decimal("100")
-                if orig != 0
-                else Decimal("0")
-            )
+            deg = (orig - noisy) / abs(orig) * Decimal("100") if orig != 0 else Decimal("0")
             degradation[metric_name] = deg
 
         return degradation
 
-    def _calculate_worst_case(
-        self, distributions: dict[str, list[Decimal]]
-    ) -> dict[str, Decimal]:
+    def _calculate_worst_case(self, distributions: dict[str, list[Decimal]]) -> dict[str, Decimal]:
         """Calculate worst-case (5th percentile) metrics.
 
         Args:

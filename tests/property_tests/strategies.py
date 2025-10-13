@@ -5,7 +5,6 @@ valid test data for financial calculations with Decimal precision.
 """
 
 from decimal import Decimal
-from typing import Optional
 
 import polars as pl
 from hypothesis import strategies as st

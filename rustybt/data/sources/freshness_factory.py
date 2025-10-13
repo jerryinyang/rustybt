@@ -5,7 +5,7 @@ data frequency, and configuration.
 """
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
@@ -43,7 +43,7 @@ class FreshnessPolicyFactory:
     def create(
         adapter: DataSource,
         frequency: str,
-        config: Optional[dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
     ) -> CacheFreshnessPolicy:
         """Create freshness policy for adapter and frequency.
 
@@ -118,7 +118,7 @@ class FreshnessPolicyFactory:
         return TTLFreshnessPolicy(ttl_seconds=3600)
 
     @staticmethod
-    def load_config(config_path: Optional[str | Path] = None) -> dict[str, Any]:
+    def load_config(config_path: str | Path | None = None) -> dict[str, Any]:
         """Load freshness configuration from YAML file.
 
         Args:

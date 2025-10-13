@@ -7,7 +7,7 @@ to pure Python when Rust extensions are not installed.
 
 Usage:
     from rustybt.rust_optimizations import rust_sma, rust_ema
-    
+
     prices = [100.0, 102.0, 101.0, 103.0, 105.0]
     sma = rust_sma(prices, window=3)
 """
@@ -16,33 +16,70 @@ import logging
 import math
 from collections.abc import Sequence
 from decimal import Decimal, getcontext
-from typing import Iterable, List, Union
+from typing import Union
 
 logger = logging.getLogger(__name__)
 
 # Try to import Rust extensions
 try:
     from rustybt._rustybt import (
-        rust_sma as _rust_sma,
-        rust_ema as _rust_ema,
         rust_array_sum as _rust_array_sum,
-        rust_mean as _rust_mean,
-        rust_rolling_sum as _rust_rolling_sum,
-        rust_window_slice as _rust_window_slice,
+    )
+    from rustybt._rustybt import (
         rust_create_columns as _rust_create_columns,
-        rust_index_select as _rust_index_select,
-        rust_fillna as _rust_fillna,
-        rust_pairwise_op as _rust_pairwise_op,
-        rust_decimal_window_slice as _rust_decimal_window_slice,
-        rust_decimal_index_select as _rust_decimal_index_select,
-        rust_decimal_sum as _rust_decimal_sum,
-        rust_decimal_mean as _rust_decimal_mean,
-        rust_decimal_sma as _rust_decimal_sma,
+    )
+    from rustybt._rustybt import (
         rust_decimal_ema as _rust_decimal_ema,
-        rust_decimal_rolling_sum as _rust_decimal_rolling_sum,
-        rust_decimal_pairwise_op as _rust_decimal_pairwise_op,
+    )
+    from rustybt._rustybt import (
         rust_decimal_fillna as _rust_decimal_fillna,
     )
+    from rustybt._rustybt import (
+        rust_decimal_index_select as _rust_decimal_index_select,
+    )
+    from rustybt._rustybt import (
+        rust_decimal_mean as _rust_decimal_mean,
+    )
+    from rustybt._rustybt import (
+        rust_decimal_pairwise_op as _rust_decimal_pairwise_op,
+    )
+    from rustybt._rustybt import (
+        rust_decimal_rolling_sum as _rust_decimal_rolling_sum,
+    )
+    from rustybt._rustybt import (
+        rust_decimal_sma as _rust_decimal_sma,
+    )
+    from rustybt._rustybt import (
+        rust_decimal_sum as _rust_decimal_sum,
+    )
+    from rustybt._rustybt import (
+        rust_decimal_window_slice as _rust_decimal_window_slice,
+    )
+    from rustybt._rustybt import (
+        rust_ema as _rust_ema,
+    )
+    from rustybt._rustybt import (
+        rust_fillna as _rust_fillna,
+    )
+    from rustybt._rustybt import (
+        rust_index_select as _rust_index_select,
+    )
+    from rustybt._rustybt import (
+        rust_mean as _rust_mean,
+    )
+    from rustybt._rustybt import (
+        rust_pairwise_op as _rust_pairwise_op,
+    )
+    from rustybt._rustybt import (
+        rust_rolling_sum as _rust_rolling_sum,
+    )
+    from rustybt._rustybt import (
+        rust_sma as _rust_sma,
+    )
+    from rustybt._rustybt import (
+        rust_window_slice as _rust_window_slice,
+    )
+
     RUST_AVAILABLE = True
     logger.info("Rust optimizations available and loaded")
 except ImportError as e:
@@ -89,7 +126,7 @@ def _decimal_nan() -> Decimal:
     return Decimal("NaN")
 
 
-def _python_float_sma(values: Sequence[float], window: int) -> List[float]:
+def _python_float_sma(values: Sequence[float], window: int) -> list[float]:
     if window <= 0:
         raise ValueError("Window size must be greater than 0")
     if not values:
@@ -111,14 +148,14 @@ def _python_float_sma(values: Sequence[float], window: int) -> List[float]:
     return result
 
 
-def _python_decimal_sma(values: Sequence[Decimal], window: int) -> List[Decimal]:
+def _python_decimal_sma(values: Sequence[Decimal], window: int) -> list[Decimal]:
     if window <= 0:
         raise ValueError("Window size must be greater than 0")
     if not values:
         return []
 
     nan_value = _decimal_nan()
-    result: List[Decimal] = [nan_value] * len(values)
+    result: list[Decimal] = [nan_value] * len(values)
     if len(values) < window:
         return result
 
@@ -135,7 +172,7 @@ def _python_decimal_sma(values: Sequence[Decimal], window: int) -> List[Decimal]
     return result
 
 
-def _python_float_ema(values: Sequence[float], span: int) -> List[float]:
+def _python_float_ema(values: Sequence[float], span: int) -> list[float]:
     if span <= 0:
         raise ValueError("Span must be greater than 0")
     if not values:
@@ -149,7 +186,7 @@ def _python_float_ema(values: Sequence[float], span: int) -> List[float]:
     return result
 
 
-def _python_decimal_ema(values: Sequence[Decimal], span: int) -> List[Decimal]:
+def _python_decimal_ema(values: Sequence[Decimal], span: int) -> list[Decimal]:
     if span <= 0:
         raise ValueError("Span must be greater than 0")
     if not values:
@@ -160,7 +197,7 @@ def _python_decimal_ema(values: Sequence[Decimal], span: int) -> List[Decimal]:
     alpha = ctx.divide(two, Decimal(span + 1))
     one_minus_alpha = Decimal(1) - alpha
 
-    result: List[Decimal] = []
+    result: list[Decimal] = []
     ema = values[0]
     result.append(ema)
 
@@ -171,7 +208,7 @@ def _python_decimal_ema(values: Sequence[Decimal], span: int) -> List[Decimal]:
     return result
 
 
-def _python_float_rolling_sum(values: Sequence[float], window: int) -> List[float]:
+def _python_float_rolling_sum(values: Sequence[float], window: int) -> list[float]:
     if window <= 0:
         raise ValueError("Window size must be greater than 0")
     if not values:
@@ -192,14 +229,14 @@ def _python_float_rolling_sum(values: Sequence[float], window: int) -> List[floa
     return result
 
 
-def _python_decimal_rolling_sum(values: Sequence[Decimal], window: int) -> List[Decimal]:
+def _python_decimal_rolling_sum(values: Sequence[Decimal], window: int) -> list[Decimal]:
     if window <= 0:
         raise ValueError("Window size must be greater than 0")
     if not values:
         return []
 
     nan_value = _decimal_nan()
-    result: List[Decimal] = [nan_value] * len(values)
+    result: list[Decimal] = [nan_value] * len(values)
     if len(values) < window:
         return result
 
@@ -217,22 +254,23 @@ def _python_decimal_rolling_sum(values: Sequence[Decimal], window: int) -> List[
 def _validate_window_bounds(sequence: Sequence[Number], start: int, end: int) -> None:
     length = len(sequence)
     if start >= length or end > length or start >= end:
-        raise IndexError(
-            f"Invalid window bounds: start={start}, end={end}, len={length}"
-        )
+        raise IndexError(f"Invalid window bounds: start={start}, end={end}, len={length}")
+
+
 # Technical Indicators
 
-def rust_sma(values: Sequence[Number], window: int) -> List[Number]:
+
+def rust_sma(values: Sequence[Number], window: int) -> list[Number]:
     """
     Calculate Simple Moving Average (SMA).
-    
+
     Args:
         values: List of price values
         window: Window size for the moving average
-        
+
     Returns:
         List of SMA values (first window-1 elements are NaN)
-        
+
     Example:
         >>> rust_sma([1.0, 2.0, 3.0, 4.0, 5.0], 3)
         [nan, nan, 2.0, 3.0, 4.0]
@@ -259,17 +297,17 @@ def rust_sma(values: Sequence[Number], window: int) -> List[Number]:
     return _python_float_sma(values_list, window)
 
 
-def rust_ema(values: Sequence[Number], span: int) -> List[Number]:
+def rust_ema(values: Sequence[Number], span: int) -> list[Number]:
     """
     Calculate Exponential Moving Average (EMA).
-    
+
     Args:
         values: List of price values
         span: Span for the EMA (higher span = more smoothing)
-        
+
     Returns:
         List of EMA values (uses first value as initial EMA)
-        
+
     Example:
         >>> rust_ema([1.0, 2.0, 3.0, 4.0, 5.0], 3)
         [1.0, 1.5, 2.25, 3.125, 4.0625]
@@ -298,16 +336,17 @@ def rust_ema(values: Sequence[Number], span: int) -> List[Number]:
 
 # Array Operations
 
+
 def rust_array_sum(values: Sequence[Number]) -> Number:
     """
     Calculate sum of array values (optimized).
-    
+
     Args:
         values: List of numeric values
-        
+
     Returns:
         Sum of all values
-        
+
     Example:
         >>> rust_array_sum([1.0, 2.0, 3.0, 4.0, 5.0])
         15.0
@@ -329,7 +368,9 @@ def rust_array_sum(values: Sequence[Number]) -> Number:
                 # Fall back to Python for extreme values outside rust-decimal range
                 logger.debug(f"Rust sum failed ({e}), falling back to Python Decimal")
                 # Normalize all values to Decimal for fallback
-                decimal_values = [v if isinstance(v, Decimal) else Decimal(str(v)) for v in values_list]
+                decimal_values = [
+                    v if isinstance(v, Decimal) else Decimal(str(v)) for v in values_list
+                ]
                 return sum(decimal_values, Decimal(0))
         # Normalize all values to Decimal for fallback
         decimal_values = [v if isinstance(v, Decimal) else Decimal(str(v)) for v in values_list]
@@ -344,13 +385,13 @@ def rust_array_sum(values: Sequence[Number]) -> Number:
 def rust_mean(values: Sequence[Number]) -> Number:
     """
     Calculate array mean (optimized).
-    
+
     Args:
         values: List of numeric values
-        
+
     Returns:
         Mean of all values, or NaN if array is empty
-        
+
     Example:
         >>> rust_mean([1.0, 2.0, 3.0, 4.0, 5.0])
         3.0
@@ -369,7 +410,9 @@ def rust_mean(values: Sequence[Number]) -> Number:
                 logger.debug(f"Rust mean failed ({e}), falling back to Python Decimal")
                 ctx = getcontext()
                 # Normalize all values to Decimal for fallback
-                decimal_values = [v if isinstance(v, Decimal) else Decimal(str(v)) for v in values_list]
+                decimal_values = [
+                    v if isinstance(v, Decimal) else Decimal(str(v)) for v in values_list
+                ]
                 total = sum(decimal_values, Decimal(0))
                 return ctx.divide(total, Decimal(len(values_list)))
         ctx = getcontext()
@@ -384,17 +427,17 @@ def rust_mean(values: Sequence[Number]) -> Number:
     return float(sum(values_list) / len(values_list))
 
 
-def rust_rolling_sum(values: Sequence[Number], window: int) -> List[Number]:
+def rust_rolling_sum(values: Sequence[Number], window: int) -> list[Number]:
     """
     Calculate rolling window sum.
-    
+
     Args:
         values: List of numeric values
         window: Window size
-        
+
     Returns:
         List of rolling sums (first window-1 elements are NaN)
-        
+
     Example:
         >>> rust_rolling_sum([1.0, 2.0, 3.0, 4.0, 5.0], 3)
         [nan, nan, 6.0, 9.0, 12.0]
@@ -423,15 +466,16 @@ def rust_rolling_sum(values: Sequence[Number], window: int) -> List[Number]:
 
 # Data Operations (Rust-only, no fallback needed for now)
 
-def rust_window_slice(data: Sequence[Number], start: int, end: int) -> List[Number]:
+
+def rust_window_slice(data: Sequence[Number], start: int, end: int) -> list[Number]:
     """
     Extract a window slice from data.
-    
+
     Args:
         data: Input data array
         start: Start index
         end: End index (exclusive)
-        
+
     Returns:
         Sliced data
     """
@@ -457,51 +501,51 @@ def rust_window_slice(data: Sequence[Number], start: int, end: int) -> List[Numb
     return data_list[start:end]
 
 
-def rust_create_columns(data: List[List[float]]):
+def rust_create_columns(data: list[list[float]]):
     """
     Create column-major data structure from column vectors.
-    
+
     Args:
         data: List of column vectors
-        
+
     Returns:
         Tuple of (flattened_data, n_rows, n_cols) - flattened in column-major order
-        
+
     Example:
         >>> rust_create_columns([[1.0, 2.0], [3.0, 4.0]])
         ([1.0, 2.0, 3.0, 4.0], 2, 2)
     """
     if RUST_AVAILABLE and _rust_create_columns is not None:
         return _rust_create_columns(data)
-    
+
     # Pure Python fallback - match Rust signature
     if not data:
         return ([], 0, 0)
-    
+
     n_cols = len(data)
     n_rows = len(data[0])
-    
+
     # Validate all columns have same length
     for i, col in enumerate(data):
         if len(col) != n_rows:
             raise ValueError(f"Column {i} has length {len(col)}, expected {n_rows}")
-    
+
     # Flatten in column-major order (same as Rust)
     flattened = []
     for col in data:
         flattened.extend(col)
-    
+
     return (flattened, n_rows, n_cols)
 
 
-def rust_index_select(data: Sequence[Number], indices: Sequence[int]) -> List[Number]:
+def rust_index_select(data: Sequence[Number], indices: Sequence[int]) -> list[Number]:
     """
     Select elements by indices.
-    
+
     Args:
         data: Input data array
         indices: List of indices to select
-        
+
     Returns:
         Selected elements
     """
@@ -521,7 +565,7 @@ def rust_index_select(data: Sequence[Number], indices: Sequence[int]) -> List[Nu
         return _rust_index_select(data_list, index_list)
 
     length = len(data_list)
-    result: List[Number] = []
+    result: list[Number] = []
     for idx in index_list:
         if idx >= length:
             raise IndexError(f"Index {idx} out of bounds for array of length {length}")
@@ -529,14 +573,14 @@ def rust_index_select(data: Sequence[Number], indices: Sequence[int]) -> List[Nu
     return result
 
 
-def rust_fillna(data: Sequence[Number], fill_value: Number) -> List[Number]:
+def rust_fillna(data: Sequence[Number], fill_value: Number) -> list[Number]:
     """
     Fill NaN values with a specified value.
-    
+
     Args:
         data: Input data array
         fill_value: Value to replace NaN with
-        
+
     Returns:
         Data with NaN values filled
     """
@@ -549,14 +593,14 @@ def rust_fillna(data: Sequence[Number], fill_value: Number) -> List[Number]:
             except ValueError as e:
                 # Fall back to Python for extreme values outside rust-decimal range
                 logger.debug(f"Rust fillna failed ({e}), falling back to Python Decimal")
-                result: List[Number] = []
+                result: list[Number] = []
                 for value in data_list:
                     if isinstance(value, Decimal) and value.is_nan():
                         result.append(fill_value)
                     else:
                         result.append(value)
                 return result
-        result: List[Number] = []
+        result: list[Number] = []
         for value in data_list:
             if isinstance(value, Decimal) and value.is_nan():
                 result.append(fill_value)
@@ -570,16 +614,16 @@ def rust_fillna(data: Sequence[Number], fill_value: Number) -> List[Number]:
     return [fill_value if math.isnan(x) else x for x in data_list]
 
 
-def rust_pairwise_op(a: Sequence[Number], b: Sequence[Number], op: str) -> List[Number]:
+def rust_pairwise_op(a: Sequence[Number], b: Sequence[Number], op: str) -> list[Number]:
     """
     Perform pairwise operation on two arrays.
-    
+
     Args:
         a: First array
         b: Second array
         op: Operation: 'add', 'sub', 'mul', 'div' (Rust names)
             or 'subtract', 'multiply', 'divide' (Python aliases)
-        
+
     Returns:
         Result of pairwise operation
     """
@@ -597,8 +641,8 @@ def rust_pairwise_op(a: Sequence[Number], b: Sequence[Number], op: str) -> List[
                 # Fall back to Python for extreme values outside rust-decimal range
                 logger.debug(f"Rust pairwise_op failed ({e}), falling back to Python Decimal")
 
-        result: List[Number] = []
-        for lhs, rhs in zip(a_list, b_list):
+        result: list[Number] = []
+        for lhs, rhs in zip(a_list, b_list, strict=False):
             lhs_dec = lhs if isinstance(lhs, Decimal) else Decimal(str(lhs))
             rhs_dec = rhs if isinstance(rhs, Decimal) else Decimal(str(rhs))
             if op in ("add", "+"):
@@ -621,14 +665,14 @@ def rust_pairwise_op(a: Sequence[Number], b: Sequence[Number], op: str) -> List[
         return _rust_pairwise_op(a_list, b_list, rust_op)
 
     if op in ("add", "+"):
-        return [x + y for x, y in zip(a_list, b_list)]
+        return [x + y for x, y in zip(a_list, b_list, strict=False)]
     if op in ("sub", "-", "subtract"):
-        return [x - y for x, y in zip(a_list, b_list)]
+        return [x - y for x, y in zip(a_list, b_list, strict=False)]
     if op in ("mul", "*", "multiply"):
-        return [x * y for x, y in zip(a_list, b_list)]
+        return [x * y for x, y in zip(a_list, b_list, strict=False)]
     if op in ("div", "/", "divide"):
-        result: List[Number] = []
-        for lhs, rhs in zip(a_list, b_list):
+        result: list[Number] = []
+        for lhs, rhs in zip(a_list, b_list, strict=False):
             if rhs == 0:
                 raise ZeroDivisionError("Division by zero")
             result.append(lhs / rhs)
@@ -638,15 +682,15 @@ def rust_pairwise_op(a: Sequence[Number], b: Sequence[Number], op: str) -> List[
 
 
 __all__ = [
-    'RUST_AVAILABLE',
-    'rust_sma',
-    'rust_ema',
-    'rust_array_sum',
-    'rust_mean',
-    'rust_rolling_sum',
-    'rust_window_slice',
-    'rust_create_columns',
-    'rust_index_select',
-    'rust_fillna',
-    'rust_pairwise_op',
+    "RUST_AVAILABLE",
+    "rust_array_sum",
+    "rust_create_columns",
+    "rust_ema",
+    "rust_fillna",
+    "rust_index_select",
+    "rust_mean",
+    "rust_pairwise_op",
+    "rust_rolling_sum",
+    "rust_sma",
+    "rust_window_slice",
 ]

@@ -12,8 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from decimal import Decimal
 import math
+from decimal import Decimal
 
 from numpy import isnan
 
@@ -32,11 +32,11 @@ def tolerant_equals(a, b, atol=10e-7, rtol=10e-7, equal_nan=False):
     equal_nan : bool, optional
         Should NaN compare equal?
 
-    See Also
+    See Also:
     --------
     numpy.isclose
 
-    Notes
+    Notes:
     -----
     This function is just a scalar version of numpy.isclose for performance.
     See the docstring of ``isclose`` for more information about ``atol`` and
@@ -89,7 +89,7 @@ def number_of_decimal_places(n):
     """
     Compute the number of decimal places in a number.
 
-    Examples
+    Examples:
     --------
     >>> number_of_decimal_places(1)
     0

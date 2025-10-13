@@ -3,6 +3,7 @@ Technical Analysis Factors
 --------------------------
 """
 
+from numexpr import evaluate
 from numpy import (
     abs,
     average,
@@ -11,7 +12,6 @@ from numpy import (
     dstack,
     inf,
 )
-from numexpr import evaluate
 
 from rustybt.pipeline.data import EquityPricing
 from rustybt.pipeline.factors import CustomFactor
@@ -22,20 +22,20 @@ from rustybt.utils.math_utils import (
     nanargmin,
     nanmax,
     nanmean,
-    nanstd,
     nanmin,
+    nanstd,
 )
 from rustybt.utils.numpy_utils import rolling_window
 
-from .basic import exponential_weights
 from .basic import (  # noqa reexport
+    VWAP,
     # These are re-exported here for backwards compatibility with the old
     # definition site.
     LinearWeightedMovingAverage,
     MaxDrawdown,
     SimpleMovingAverage,
-    VWAP,
     WeightedAverageValue,
+    exponential_weights,
 )
 
 
@@ -149,7 +149,7 @@ class FastStochasticOscillator(CustomFactor):
 
     **Default Window Length:** 14
 
-    Returns
+    Returns:
     -------
     out: %K oscillator
     """
@@ -159,7 +159,6 @@ class FastStochasticOscillator(CustomFactor):
     window_length = 14
 
     def compute(self, today, assets, out, closes, lows, highs):
-
         highest_highs = nanmax(highs, axis=0)
         lowest_lows = nanmin(lows, axis=0)
         today_closes = closes[-1]
@@ -238,7 +237,6 @@ class IchimokuKinkoHyo(CustomFactor):
         kijun_sen_length,
         chikou_span_length,
     ):
-
         out.tenkan_sen = tenkan_sen = (
             high[-tenkan_sen_length:].max(axis=0) + low[-tenkan_sen_length:].min(axis=0)
         ) / 2
@@ -330,7 +328,7 @@ class MovingAverageConvergenceDivergenceSignal(CustomFactor):
     signal_period : int > 0, < fast_period, optional
         The window length for the signal line. Default is 9.
 
-    Notes
+    Notes:
     -----
     Unlike most pipeline expressions, this factor does not accept a
     ``window_length`` parameter. ``window_length`` is inferred from
@@ -350,14 +348,10 @@ class MovingAverageConvergenceDivergenceSignal(CustomFactor):
         signal_period=(1, None),
     )
     def __new__(cls, fast_period=12, slow_period=26, signal_period=9, *args, **kwargs):
-
         if slow_period <= fast_period:
             raise ValueError(
                 "'slow_period' must be greater than 'fast_period', but got\n"
-                "slow_period={slow}, fast_period={fast}".format(
-                    slow=slow_period,
-                    fast=fast_period,
-                )
+                f"slow_period={slow_period}, fast_period={fast_period}"
             )
 
         return super(MovingAverageConvergenceDivergenceSignal, cls).__new__(
@@ -374,13 +368,9 @@ class MovingAverageConvergenceDivergenceSignal(CustomFactor):
         decay_rate = 1.0 - (2.0 / (1.0 + length))
         return average(data, axis=1, weights=exponential_weights(length, decay_rate))
 
-    def compute(
-        self, today, assets, out, close, fast_period, slow_period, signal_period
-    ):
+    def compute(self, today, assets, out, close, fast_period, slow_period, signal_period):
         slow_EWMA = self._ewma(rolling_window(close, slow_period), slow_period)
-        fast_EWMA = self._ewma(
-            rolling_window(close, fast_period)[-signal_period:], fast_period
-        )
+        fast_EWMA = self._ewma(rolling_window(close, fast_period)[-signal_period:], fast_period)
         macd = fast_EWMA - slow_EWMA
         out[:] = self._ewma(macd.T, signal_period)
 

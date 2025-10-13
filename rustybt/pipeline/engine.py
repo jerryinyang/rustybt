@@ -93,7 +93,7 @@ class PipelineEngine(ABC):
         hooks : list[implements(PipelineHooks)], optional
             Hooks for instrumenting Pipeline execution.
 
-        Returns
+        Returns:
         -------
         result : pd.DataFrame
             A frame of computed results.
@@ -110,9 +110,7 @@ class PipelineEngine(ABC):
         raise NotImplementedError("run_pipeline")
 
     @abstractmethod
-    def run_chunked_pipeline(
-        self, pipeline, start_date, end_date, chunksize, hooks=None
-    ):
+    def run_chunked_pipeline(self, pipeline, start_date, end_date, chunksize, hooks=None):
         """Compute values for ``pipeline`` from ``start_date`` to ``end_date``, in
         date chunks of size ``chunksize``.
 
@@ -132,7 +130,7 @@ class PipelineEngine(ABC):
         hooks : list[implements(PipelineHooks)], optional
             Hooks for instrumenting Pipeline execution.
 
-        Returns
+        Returns:
         -------
         result : pd.DataFrame
             A frame of computed results.
@@ -146,7 +144,7 @@ class PipelineEngine(ABC):
             A screen of ``None`` indicates that a row should be returned for
             each asset that existed each day.
 
-        See Also
+        See Also:
         --------
         :meth:`zipline.pipeline.engine.PipelineEngine.run_pipeline`
         """
@@ -164,15 +162,12 @@ class ExplodingPipelineEngine(PipelineEngine):
 
     def run_pipeline(self, pipeline, start_date, end_date, hooks=None):
         raise NoEngineRegistered(
-            "Attempted to run a pipeline but no pipeline " "resources were registered."
+            "Attempted to run a pipeline but no pipeline resources were registered."
         )
 
-    def run_chunked_pipeline(
-        self, pipeline, start_date, end_date, chunksize, hooks=None
-    ):
+    def run_chunked_pipeline(self, pipeline, start_date, end_date, chunksize, hooks=None):
         raise NoEngineRegistered(
-            "Attempted to run a chunked pipeline but no pipeline "
-            "resources were registered."
+            "Attempted to run a chunked pipeline but no pipeline resources were registered."
         )
 
 
@@ -199,7 +194,7 @@ def default_populate_initial_workspace(
     assets : pd.Int64Index
         All of the assets that exist for the window being computed.
 
-    Returns
+    Returns:
     -------
     populated_initial_workspace : dict[term, array-like]
         The workspace to begin computations with.
@@ -227,17 +222,17 @@ class SimplePipelineEngine(PipelineEngine):
         List of hooks that should be used to instrument all pipelines executed
         by this engine.
 
-    See Also
+    See Also:
     --------
     :func:`zipline.pipeline.engine.default_populate_initial_workspace`
     """
 
     __slots__ = (
-        "_get_loader",
         "_finder",
-        "_root_mask_term",
-        "_root_mask_dates_term",
+        "_get_loader",
         "_populate_initial_workspace",
+        "_root_mask_dates_term",
+        "_root_mask_term",
     )
 
     @expect_types(
@@ -268,9 +263,7 @@ class SimplePipelineEngine(PipelineEngine):
         else:
             self._default_hooks = list(default_hooks)
 
-    def run_chunked_pipeline(
-        self, pipeline, start_date, end_date, chunksize, hooks=None
-    ):
+    def run_chunked_pipeline(self, pipeline, start_date, end_date, chunksize, hooks=None):
         """Compute values for ``pipeline`` from ``start_date`` to ``end_date``, in
         date chunks of size ``chunksize``.
 
@@ -290,7 +283,7 @@ class SimplePipelineEngine(PipelineEngine):
         hooks : list[implements(PipelineHooks)], optional
             Hooks for instrumenting Pipeline execution.
 
-        Returns
+        Returns:
         -------
         result : pd.DataFrame
             A frame of computed results.
@@ -304,7 +297,7 @@ class SimplePipelineEngine(PipelineEngine):
             A screen of ``None`` indicates that a row should be returned for
             each asset that existed each day.
 
-        See Also
+        See Also:
         --------
         :meth:`zipline.pipeline.engine.PipelineEngine.run_pipeline`
         """
@@ -345,7 +338,7 @@ class SimplePipelineEngine(PipelineEngine):
         hooks : list[implements(PipelineHooks)], optional
             Hooks for instrumenting Pipeline execution.
 
-        Returns
+        Returns:
         -------
         result : pd.DataFrame
             A frame of computed results.
@@ -445,7 +438,7 @@ class SimplePipelineEngine(PipelineEngine):
             Extra rows are needed by terms like moving averages that require a
             trailing window of data.
 
-        Returns
+        Returns:
         -------
         lifetimes : pd.DataFrame
             Frame of dtype `bool` containing dates from `extra_rows` days
@@ -458,14 +451,12 @@ class SimplePipelineEngine(PipelineEngine):
 
         if start_date not in sessions:
             raise ValueError(
-                f"Pipeline start date ({start_date}) is not a trading session for "
-                f"domain {domain}."
+                f"Pipeline start date ({start_date}) is not a trading session for domain {domain}."
             )
 
         elif end_date not in sessions:
             raise ValueError(
-                f"Pipeline end date {end_date} is not a trading session for "
-                f"domain {domain}."
+                f"Pipeline end date {end_date} is not a trading session for domain {domain}."
             )
 
         start_idx, end_idx = sessions.slice_locs(start_date, end_date)
@@ -502,14 +493,10 @@ class SimplePipelineEngine(PipelineEngine):
 
         if num_assets == 0:
             raise ValueError(
-                "Failed to find any assets with country_code {!r} that traded "
-                "between {} and {}.\n"
+                f"Failed to find any assets with country_code {domain.country_code!r} that traded "
+                f"between {start_date} and {end_date}.\n"
                 "This probably means that your asset db is old or that it has "
-                "incorrect country/exchange metadata.".format(
-                    domain.country_code,
-                    start_date,
-                    end_date,
-                )
+                "incorrect country/exchange metadata."
             )
 
         return ret
@@ -563,9 +550,7 @@ class SimplePipelineEngine(PipelineEngine):
                 out.append(input_data)
         return out
 
-    def compute_chunk(
-        self, graph, dates, sids, workspace, refcounts, execution_order, hooks
-    ):
+    def compute_chunk(self, graph, dates, sids, workspace, refcounts, execution_order, hooks):
         """Compute the Pipeline terms in the graph for the requested start and end
         dates.
 
@@ -593,7 +578,7 @@ class SimplePipelineEngine(PipelineEngine):
         hooks : implements(PipelineHooks)
             Hooks to instrument pipeline execution.
 
-        Returns
+        Returns:
         -------
         results : dict
             Dictionary mapping requested results to outputs.
@@ -654,9 +639,7 @@ class SimplePipelineEngine(PipelineEngine):
 
             if isinstance(term, LoadableTerm):
                 loader = get_loader(term)
-                to_load = sorted(
-                    loader_groups[loader_group_key(term)], key=lambda t: t.dataset
-                )
+                to_load = sorted(loader_groups[loader_group_key(term)], key=lambda t: t.dataset)
                 self._ensure_can_load(loader, to_load)
                 with hooks.loading_terms(to_load):
                     loaded = loader.load_adjusted_array(
@@ -725,7 +708,7 @@ class SimplePipelineEngine(PipelineEngine):
         assets : ndarray[int64, ndim=2]
             Column index for arrays `data` and `mask`
 
-        Returns
+        Returns:
         -------
         results : pd.DataFrame
             The indices of `results` are as follows:
@@ -764,9 +747,7 @@ class SimplePipelineEngine(PipelineEngine):
 
         resolved_assets = array(self._finder.retrieve_all(assets))
         index = _pipeline_output_index(dates, resolved_assets, mask)
-        return pd.DataFrame(
-            data=final_columns, index=index, columns=final_columns.keys()
-        )
+        return pd.DataFrame(data=final_columns, index=index, columns=final_columns.keys())
 
     def _validate_compute_chunk_params(self, graph, dates, sids, initial_workspace):
         """
@@ -779,22 +760,14 @@ class SimplePipelineEngine(PipelineEngine):
         # the name without updating this line.
         compute_chunk_name = self.compute_chunk.__name__
         if root not in initial_workspace:
-            raise AssertionError(
-                "root_mask values not supplied to {cls}.{method}".format(
-                    cls=clsname,
-                    method=compute_chunk_name,
-                )
-            )
+            raise AssertionError(f"root_mask values not supplied to {clsname}.{compute_chunk_name}")
 
         shape = initial_workspace[root].shape
         implied_shape = len(dates), len(sids)
         if shape != implied_shape:
             raise AssertionError(
-                "root_mask shape is {shape}, but received dates/assets "
-                "imply that shape should be {implied}".format(
-                    shape=shape,
-                    implied=implied_shape,
-                )
+                f"root_mask shape is {shape}, but received dates/assets "
+                f"imply that shape should be {implied_shape}"
             )
 
         for term in initial_workspace:
@@ -833,17 +806,13 @@ class SimplePipelineEngine(PipelineEngine):
                 if isinstance(term, LoadableTerm):
                     raise ValueError(
                         "Loadable workspace terms must be specialized to a "
-                        "domain, but got generic term {}".format(term)
+                        f"domain, but got generic term {term}"
                     )
 
             elif term.domain != graph.domain:
                 raise ValueError(
-                    "Initial workspace term {} has domain {}. "
-                    "Does not match pipeline domain {}".format(
-                        term,
-                        term.domain,
-                        graph.domain,
-                    )
+                    f"Initial workspace term {term} has domain {term.domain}. "
+                    f"Does not match pipeline domain {graph.domain}"
                 )
 
     def resolve_domain(self, pipeline):
@@ -872,7 +841,7 @@ class SimplePipelineEngine(PipelineEngine):
             if bad:
                 raise ValueError(
                     "Requested currency conversion is not supported for the "
-                    "following terms:\n{}".format(bulleted_list(bad))
+                    f"following terms:\n{bulleted_list(bad)}"
                 )
 
 
@@ -890,7 +859,7 @@ def _pipeline_output_index(dates, assets, mask):
         Mask array indicating date/asset pairs that should be included in
         output index.
 
-    Returns
+    Returns:
     -------
     index : pd.MultiIndex
         MultiIndex  containing (date,  asset) pairs  corresponding to  ``True``

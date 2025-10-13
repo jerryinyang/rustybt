@@ -42,17 +42,17 @@ async def main():
         starting_cash=Decimal("100000"),  # Start with $100k
         commission_model=PerShareCommission(
             rate=Decimal("0.005"),  # $0.005 per share
-            minimum=Decimal("1.00")  # $1 minimum per order
+            minimum=Decimal("1.00"),  # $1 minimum per order
         ),
         slippage_model=FixedBasisPointsSlippage(
             basis_points=Decimal("5")  # 5 bps (0.05%) slippage
         ),
         order_latency_ms=100,  # 100ms order latency
-        volume_limit_pct=Decimal("0.025")  # Max 2.5% of bar volume
+        volume_limit_pct=Decimal("0.025"),  # Max 2.5% of bar volume
     )
     print(f"  Starting cash: ${broker.starting_cash}")
-    print(f"  Commission: PerShareCommission($0.005/share, $1 min)")
-    print(f"  Slippage: FixedBasisPointsSlippage(5 bps)")
+    print("  Commission: PerShareCommission($0.005/share, $1 min)")
+    print("  Slippage: FixedBasisPointsSlippage(5 bps)")
     print()
 
     # Connect to paper broker
@@ -78,7 +78,7 @@ async def main():
             "close": Decimal("151.00"),
             "volume": Decimal("50000000"),  # 50M shares volume
             "timestamp": datetime.now(),
-        }
+        },
     )
     broker._update_market_data(
         spy,
@@ -89,7 +89,7 @@ async def main():
             "close": Decimal("451.00"),
             "volume": Decimal("100000000"),  # 100M shares volume
             "timestamp": datetime.now(),
-        }
+        },
     )
     print(f"  AAPL: ${await broker.get_current_price(aapl)}")
     print(f"  SPY: ${await broker.get_current_price(spy)}")
@@ -101,9 +101,9 @@ async def main():
     order_id_1 = await broker.submit_order(
         asset=aapl,
         amount=Decimal("100"),  # Buy 100 shares
-        order_type="market"
+        order_type="market",
     )
-    print(f"  Submitted market buy: 100 shares AAPL")
+    print("  Submitted market buy: 100 shares AAPL")
     print(f"  Order ID: {order_id_1}")
 
     # Wait for fill
@@ -130,9 +130,9 @@ async def main():
         asset=spy,
         amount=Decimal("50"),  # Buy 50 shares
         order_type="limit",
-        limit_price=Decimal("452.00")  # Limit at $452 (above current price)
+        limit_price=Decimal("452.00"),  # Limit at $452 (above current price)
     )
-    print(f"  Submitted limit buy: 50 shares SPY @ $452")
+    print("  Submitted limit buy: 50 shares SPY @ $452")
     print(f"  Order ID: {order_id_2}")
 
     # Wait for fill
@@ -155,16 +155,16 @@ async def main():
             "close": Decimal("155.00"),  # Price increased
             "volume": Decimal("50000000"),
             "timestamp": datetime.now(),
-        }
+        },
     )
     print(f"  AAPL price updated to: ${await broker.get_current_price(aapl)}")
 
     order_id_3 = await broker.submit_order(
         asset=aapl,
         amount=Decimal("-50"),  # Sell 50 shares
-        order_type="market"
+        order_type="market",
     )
-    print(f"  Submitted market sell: 50 shares AAPL")
+    print("  Submitted market sell: 50 shares AAPL")
     print(f"  Order ID: {order_id_3}")
 
     # Wait for fill
@@ -185,7 +185,7 @@ async def main():
     positions = await broker.get_positions()
     print("Current Positions:")
     for pos in positions:
-        symbol = pos['asset'].symbol if hasattr(pos['asset'], 'symbol') else str(pos['asset'])
+        symbol = pos["asset"].symbol if hasattr(pos["asset"], "symbol") else str(pos["asset"])
         print(f"  {symbol}: {pos['amount']} shares @ ${pos['cost_basis']:.2f}")
         print(f"    Market value: ${pos['market_value']:.2f}")
         print(f"    Unrealized P&L: ${pos['unrealized_pnl']:.2f}")
@@ -195,9 +195,11 @@ async def main():
     print("Transaction History:")
     print(f"  Total transactions: {len(broker.transactions)}")
     for i, txn in enumerate(broker.transactions, 1):
-        symbol = txn.asset.symbol if hasattr(txn.asset, 'symbol') else str(txn.asset)
+        symbol = txn.asset.symbol if hasattr(txn.asset, "symbol") else str(txn.asset)
         side = "BUY" if txn.amount > Decimal("0") else "SELL"
-        print(f"  {i}. {side} {abs(txn.amount)} {symbol} @ ${txn.price:.2f} (commission: ${txn.commission:.2f})")
+        print(
+            f"  {i}. {side} {abs(txn.amount)} {symbol} @ ${txn.price:.2f} (commission: ${txn.commission:.2f})"
+        )
     print()
 
     # Disconnect

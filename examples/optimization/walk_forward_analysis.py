@@ -4,7 +4,6 @@ Demonstrates walk-forward optimization to validate strategy robustness
 across multiple time windows and detect overfitting.
 """
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
@@ -39,9 +38,7 @@ def create_synthetic_price_data(n_days: int = 730, seed: int = 42) -> pl.DataFra
     start_date = datetime(2021, 1, 1)
     end_date = start_date + timedelta(days=n_days - 1)
 
-    dates = pl.date_range(
-        start=start_date, end=end_date, interval="1d", eager=True
-    )
+    dates = pl.date_range(start=start_date, end=end_date, interval="1d", eager=True)
 
     # Generate returns with regime changes
     # First 250 days: low volatility, positive drift
@@ -126,9 +123,7 @@ def simple_ma_strategy_backtest(params: dict, data: pl.DataFrame) -> dict:
     mean_return = strategy_returns.mean()
     std_return = strategy_returns.std()
 
-    sharpe = (
-        (mean_return / std_return * np.sqrt(252)) if std_return > 0 else 0.0
-    )  # Annualized
+    sharpe = (mean_return / std_return * np.sqrt(252)) if std_return > 0 else 0.0  # Annualized
     total_return = (1 + strategy_returns).prod() - 1
 
     # Calculate max drawdown
@@ -195,9 +190,7 @@ def main():
     print("4. Creating walk-forward optimizer...")
     optimizer = WalkForwardOptimizer(
         parameter_space=param_space,
-        search_algorithm_factory=lambda: RandomSearchAlgorithm(
-            param_space, n_iter=20, seed=42
-        ),
+        search_algorithm_factory=lambda: RandomSearchAlgorithm(param_space, n_iter=20, seed=42),
         objective_function=ObjectiveFunction(metric="sharpe_ratio"),
         backtest_function=simple_ma_strategy_backtest,
         config=config,
@@ -248,13 +241,13 @@ def main():
         print(f"\n{param_name}:")
         print(f"  Mean: {float(stability_stats['mean']):.2f}")
         print(f"  Std: {float(stability_stats['std']):.2f}")
-        print(f"  Range: [{float(stability_stats['min']):.2f}, {float(stability_stats['max']):.2f}]")
+        print(
+            f"  Range: [{float(stability_stats['min']):.2f}, {float(stability_stats['max']):.2f}]"
+        )
         print(
             f"  Coefficient of Variation: {float(stability_stats['coefficient_of_variation']):.2%}"
         )
-        print(
-            f"  Stable: {'✓ Yes' if stability_stats['is_stable'] else '✗ No (high drift)'}"
-        )
+        print(f"  Stable: {'✓ Yes' if stability_stats['is_stable'] else '✗ No (high drift)'}")
 
     # Individual window results
     print()
@@ -263,15 +256,9 @@ def main():
     for window_result in result.window_results:
         print(f"\nWindow {window_result.window_id}:")
         print(f"  Best params: {window_result.best_params}")
-        print(
-            f"  Train Sharpe: {float(window_result.train_metrics.get('score', 0)):.3f}"
-        )
-        print(
-            f"  Validation Sharpe: {float(window_result.validation_metrics.get('score', 0)):.3f}"
-        )
-        print(
-            f"  Test Sharpe: {float(window_result.test_metrics.get('score', 0)):.3f}"
-        )
+        print(f"  Train Sharpe: {float(window_result.train_metrics.get('score', 0)):.3f}")
+        print(f"  Validation Sharpe: {float(window_result.validation_metrics.get('score', 0)):.3f}")
+        print(f"  Test Sharpe: {float(window_result.test_metrics.get('score', 0)):.3f}")
 
         # Check for overfitting
         val_score = float(window_result.validation_metrics.get("score", 0))
@@ -290,9 +277,7 @@ def main():
     ax1 = axes[0, 0]
     window_ids = [wr.window_id for wr in result.window_results]
     train_sharpes = [float(wr.train_metrics.get("score", 0)) for wr in result.window_results]
-    val_sharpes = [
-        float(wr.validation_metrics.get("score", 0)) for wr in result.window_results
-    ]
+    val_sharpes = [float(wr.validation_metrics.get("score", 0)) for wr in result.window_results]
     test_sharpes = [float(wr.test_metrics.get("score", 0)) for wr in result.window_results]
 
     ax1.plot(window_ids, train_sharpes, "b-o", label="Train", linewidth=2)
@@ -333,9 +318,7 @@ def main():
     # Distribution of test performance
     ax4 = axes[1, 1]
     ax4.hist(test_sharpes, bins=10, alpha=0.7, edgecolor="black")
-    ax4.axvline(
-        np.mean(test_sharpes), color="r", linestyle="--", linewidth=2, label="Mean"
-    )
+    ax4.axvline(np.mean(test_sharpes), color="r", linestyle="--", linewidth=2, label="Mean")
     ax4.set_xlabel("Test Sharpe Ratio")
     ax4.set_ylabel("Frequency")
     ax4.set_title("Distribution of Out-of-Sample Performance")

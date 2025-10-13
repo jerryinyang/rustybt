@@ -81,9 +81,7 @@ def simple_backtest_fn():
         if len(returns_array) > 1:
             mean_return = np.mean(returns_array)
             std_return = np.std(returns_array, ddof=1)
-            sharpe = (
-                mean_return / std_return * np.sqrt(252) if std_return > 0 else 0.0
-            )
+            sharpe = mean_return / std_return * np.sqrt(252) if std_return > 0 else 0.0
         else:
             sharpe = 0.0
 
@@ -149,9 +147,7 @@ class TestNoiseInfusionSimulator:
         """Test data validation fails with empty DataFrame."""
         sim = NoiseInfusionSimulator(seed=42)
 
-        empty_data = pl.DataFrame(
-            {"open": [], "high": [], "low": [], "close": [], "volume": []}
-        )
+        empty_data = pl.DataFrame({"open": [], "high": [], "low": [], "close": [], "volume": []})
 
         with pytest.raises(ValueError, match="cannot be empty"):
             sim._validate_data(empty_data)
@@ -305,10 +301,7 @@ class TestNoiseInfusionSimulator:
 
         # Check metrics are identical
         assert result1.mean_metrics["sharpe_ratio"] == result2.mean_metrics["sharpe_ratio"]
-        assert (
-            result1.degradation_pct["sharpe_ratio"]
-            == result2.degradation_pct["sharpe_ratio"]
-        )
+        assert result1.degradation_pct["sharpe_ratio"] == result2.degradation_pct["sharpe_ratio"]
 
 
 class TestNoiseInfusionResult:
@@ -424,12 +417,12 @@ class TestNoiseInfusionProperties:
         noisy2 = sim2.add_noise(test_data, sim_seed=43)
 
         # Calculate variance of noise
-        diff1 = (
-            noisy1["close"].to_numpy() - test_data["close"].to_numpy()
-        ) / test_data["close"].to_numpy()
-        diff2 = (
-            noisy2["close"].to_numpy() - test_data["close"].to_numpy()
-        ) / test_data["close"].to_numpy()
+        diff1 = (noisy1["close"].to_numpy() - test_data["close"].to_numpy()) / test_data[
+            "close"
+        ].to_numpy()
+        diff2 = (noisy2["close"].to_numpy() - test_data["close"].to_numpy()) / test_data[
+            "close"
+        ].to_numpy()
 
         var1 = np.var(diff1)
         var2 = np.var(diff2)
@@ -493,15 +486,11 @@ class TestNoiseInfusionIntegration:
             # Simple metrics, not overfit
             mean_return = np.mean(returns_array)
             std_return = np.std(returns_array, ddof=1)
-            sharpe = (
-                mean_return / std_return * np.sqrt(252) if std_return > 0 else 0.0
-            )
+            sharpe = mean_return / std_return * np.sqrt(252) if std_return > 0 else 0.0
 
             return {"sharpe_ratio": Decimal(str(sharpe))}
 
-        sim = NoiseInfusionSimulator(
-            n_simulations=100, std_pct=0.01, seed=42
-        )
+        sim = NoiseInfusionSimulator(n_simulations=100, std_pct=0.01, seed=42)
         result = sim.run(sample_ohlcv_data, robust_strategy_backtest)
 
         # Robust strategy should have low degradation
@@ -516,9 +505,7 @@ class TestNoiseInfusionIntegration:
         degradations = []
 
         for std_pct in noise_levels:
-            sim = NoiseInfusionSimulator(
-                n_simulations=100, std_pct=std_pct, seed=42
-            )
+            sim = NoiseInfusionSimulator(n_simulations=100, std_pct=std_pct, seed=42)
             result = sim.run(sample_ohlcv_data, simple_backtest_fn)
             degradations.append(float(result.degradation_pct["sharpe_ratio"]))
 
@@ -527,9 +514,7 @@ class TestNoiseInfusionIntegration:
         # Just check that max degradation > min degradation
         assert max(degradations) >= min(degradations)
 
-    def test_gaussian_vs_bootstrap_comparison(
-        self, sample_ohlcv_data, simple_backtest_fn
-    ):
+    def test_gaussian_vs_bootstrap_comparison(self, sample_ohlcv_data, simple_backtest_fn):
         """Test both noise models produce valid results."""
         sim_gaussian = NoiseInfusionSimulator(
             n_simulations=100, std_pct=0.01, noise_model="gaussian", seed=42
@@ -554,9 +539,7 @@ class TestNoiseInfusionIntegration:
         assert abs(result_gaussian.degradation_pct["sharpe_ratio"]) < Decimal("1000")
         assert abs(result_bootstrap.degradation_pct["sharpe_ratio"]) < Decimal("1000")
 
-    def test_confidence_intervals_coverage(
-        self, sample_ohlcv_data, simple_backtest_fn
-    ):
+    def test_confidence_intervals_coverage(self, sample_ohlcv_data, simple_backtest_fn):
         """Test confidence intervals contain expected proportion of values."""
         sim = NoiseInfusionSimulator(
             n_simulations=1000, std_pct=0.01, confidence_level=0.95, seed=42
@@ -566,18 +549,14 @@ class TestNoiseInfusionIntegration:
         # Count how many values fall within 95% CI
         ci_lower, ci_upper = result.confidence_intervals["sharpe_ratio"]
         within_ci = sum(
-            1
-            for v in result.noisy_metrics["sharpe_ratio"]
-            if ci_lower <= v <= ci_upper
+            1 for v in result.noisy_metrics["sharpe_ratio"] if ci_lower <= v <= ci_upper
         )
         proportion = within_ci / len(result.noisy_metrics["sharpe_ratio"])
 
         # Should be approximately 0.95 (allow some tolerance)
         assert 0.90 <= proportion <= 1.0  # At least 90% should be within CI
 
-    def test_worst_case_is_5th_percentile(
-        self, sample_ohlcv_data, simple_backtest_fn
-    ):
+    def test_worst_case_is_5th_percentile(self, sample_ohlcv_data, simple_backtest_fn):
         """Test worst-case metric is approximately 5th percentile."""
         sim = NoiseInfusionSimulator(n_simulations=1000, std_pct=0.01, seed=42)
         result = sim.run(sample_ohlcv_data, simple_backtest_fn)

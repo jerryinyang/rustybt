@@ -15,13 +15,13 @@
 # import array
 # import binascii
 # import struct
+import logging
 from abc import ABC
 from collections import deque, namedtuple
 from functools import partial
 from numbers import Integral
-from operator import attrgetter, itemgetter
+from operator import attrgetter
 
-import logging
 import numpy as np
 import pandas as pd
 import sqlalchemy as sa
@@ -63,6 +63,8 @@ from .asset_writer import (
     asset_db_table_names,
     check_version_info,
     split_delimited_symbol,
+)
+from .asset_writer import (
     symbol_columns as SYMBOL_COLUMNS,
 )
 from .continuous_futures import (
@@ -173,7 +175,6 @@ def build_grouped_ownership_map(conn, table, key_from_row, value_from_row, group
     """Builds a dict mapping group keys to maps of keys to lists of
     OwnershipPeriods, from a db table.
     """
-
     grouped_rows = groupby(
         group_key,
         conn.execute(sa.select(table.c)).fetchall(),
@@ -199,7 +200,7 @@ def _filter_kwargs(names, dict_):
     dict_ : dict[str, any]
         The dictionary to select from.
 
-    Returns
+    Returns:
     -------
     kwargs : dict[str, any]
         ``dict_`` where the keys intersect with ``names`` and the values are
@@ -271,7 +272,7 @@ class AssetFinder:
     a contract as a parameter and returns whether or not the contract should be
     included in the chain.
 
-    See Also
+    See Also:
     --------
     :class:`zipline.assets.AssetDBWriter`
     """
@@ -403,7 +404,7 @@ class AssetFinder:
         ----------
         sids : list[int]
 
-        Returns
+        Returns:
         -------
         types : dict[sid -> str or None]
             Asset types for the provided sids.
@@ -443,7 +444,7 @@ class AssetFinder:
         ----------
         sids : list[int]
 
-        Returns
+        Returns:
         -------
         types : dict[str or None -> list[int]]
             A dict mapping unique asset types to lists of sids drawn from sids.
@@ -474,13 +475,13 @@ class AssetFinder:
             If True, return None for failed lookups.
             If False, raise `SidsNotFound`.
 
-        Returns
+        Returns:
         -------
         assets : list[Asset or None]
             A list of the same length as `sids` containing Assets (or Nones)
             corresponding to the requested sids.
 
-        Raises
+        Raises:
         ------
         SidsNotFound
             When a requested sid is not found and default_none=False.
@@ -508,7 +509,7 @@ class AssetFinder:
         type_to_assets = self.group_by_type(missing)
 
         # Handle failures
-        failures = {failure: None for failure in type_to_assets.pop(None, ())}
+        failures = dict.fromkeys(type_to_assets.pop(None, ()))
         update_hits(failures)
         self._asset_cache.update(failures)
 
@@ -537,11 +538,11 @@ class AssetFinder:
         ----------
         sids : iterable[int]
 
-        Returns
+        Returns:
         -------
         equities : dict[int -> Equity]
 
-        Raises
+        Raises:
         ------
         EquitiesNotFound
             When any requested asset isn't found.
@@ -562,11 +563,11 @@ class AssetFinder:
         ----------
         sids : iterable[int]
 
-        Returns
+        Returns:
         -------
         equities : dict[int -> Equity]
 
-        Raises
+        Raises:
         ------
         EquitiesNotFound
             When any requested asset isn't found.
@@ -591,13 +592,13 @@ class AssetFinder:
             or equal to SQLITE_MAX_VARIABLE_NUMBER because the sids will be
             passed in as sql bind params.
 
-        Returns
+        Returns:
         -------
         sel : Selectable
             The sqlalchemy selectable that will query for the most recent
             symbol for each sid.
 
-        Notes
+        Notes:
         -----
         This is implemented as an inner select of the columns of interest
         ordered by the end date of the (sid, symbol) mapping. We then group
@@ -614,22 +615,12 @@ class AssetFinder:
         # on the value associated with the max end_date.
         # to_select = data_cols + (sa.func.max(cols.end_date),)
         func_rank = (
-            sa.func.rank()
-            .over(order_by=cols.end_date.desc(), partition_by=cols.sid)
-            .label("rnk")
+            sa.func.rank().over(order_by=cols.end_date.desc(), partition_by=cols.sid).label("rnk")
         )
         to_select = data_cols + (func_rank,)
 
-        subquery = (
-            sa.select(*to_select)
-            .where(cols.sid.in_(map(int, sid_group)))
-            .subquery("sq")
-        )
-        query = (
-            sa.select(subquery.columns)
-            .filter(subquery.c.rnk == 1)
-            .select_from(subquery)
-        )
+        subquery = sa.select(*to_select).where(cols.sid.in_(map(int, sid_group))).subquery("sq")
+        query = sa.select(subquery.columns).filter(subquery.c.rnk == 1).select_from(subquery)
         return query
 
     def _lookup_most_recent_symbols(self, sids):
@@ -691,7 +682,7 @@ class AssetFinder:
         asset_type : type
             Type of asset to be constructed.
 
-        Returns
+        Returns:
         -------
         assets : dict[int -> Asset]
             Dict mapping requested sids to the retrieved assets.
@@ -704,9 +695,7 @@ class AssetFinder:
         hits = {}
 
         querying_equities = issubclass(asset_type, Equity)
-        filter_kwargs = (
-            _filter_equity_kwargs if querying_equities else _filter_future_kwargs
-        )
+        filter_kwargs = _filter_equity_kwargs if querying_equities else _filter_future_kwargs
 
         rows = self._retrieve_asset_dicts(sids, asset_tbl, querying_equities)
         for row in rows:
@@ -743,12 +732,12 @@ class AssetFinder:
             sids have held the ticker, then a MultipleSymbolsFound error will
             be raised.
 
-        Returns
+        Returns:
         -------
         asset : Asset
             The asset that held the given symbol.
 
-        Raises
+        Raises:
         ------
         SymbolNotFound
             Raised when the symbol or symbol as_of_date pair do not map to
@@ -759,7 +748,7 @@ class AssetFinder:
             ``as_of_date`` is None, or if multiple assets held the symbol at
             the same time and``multi_country`` is True.
 
-        Notes
+        Notes:
         -----
         The resolution algorithm is as follows:
 
@@ -808,7 +797,7 @@ class AssetFinder:
 
                 if len(set(country_codes)) > 1:
                     raise SameSymbolUsedAcrossCountries(
-                        symbol=symbol, options=dict(zip(country_codes, options))
+                        symbol=symbol, options=dict(zip(country_codes, options, strict=False))
                     )
 
             # more than one equity has held this ticker, this
@@ -841,7 +830,7 @@ class AssetFinder:
         # if there's more than one option given the asof date, a country code
         # must be passed to resolve the symbol to an asset
         raise SameSymbolUsedAcrossCountries(
-            symbol=symbol, options=dict(zip(country_codes, options))
+            symbol=symbol, options=dict(zip(country_codes, options, strict=False))
         )
 
     def _lookup_symbol_fuzzy(self, ownership_map, multi_country, symbol, as_of_date):
@@ -949,13 +938,13 @@ class AssetFinder:
             span all countries which increases the likelihood of an ambiguous
             lookup.
 
-        Returns
+        Returns:
         -------
         equity : Equity
             The equity that held ``symbol`` on the given ``as_of_date``, or the
             only equity to hold ``symbol`` if ``as_of_date`` is None.
 
-        Raises
+        Raises:
         ------
         SymbolNotFound
             Raised when no equity has ever held the given symbol.
@@ -968,8 +957,7 @@ class AssetFinder:
         """
         if symbol is None:
             raise TypeError(
-                "Cannot lookup asset for symbol of None for "
-                "as of date %s." % as_of_date
+                "Cannot lookup asset for symbol of None for as of date %s." % as_of_date
             )
 
         if fuzzy:
@@ -1010,7 +998,7 @@ class AssetFinder:
             span all countries which increases the likelihood of an ambiguous
             lookup.
 
-        Returns
+        Returns:
         -------
         equities : list[Equity]
         """
@@ -1052,12 +1040,12 @@ class AssetFinder:
         symbol : str
             The symbol of the desired contract.
 
-        Returns
+        Returns:
         -------
         future : Future
             The future contract referenced by ``symbol``.
 
-        Raises
+        Raises:
         ------
         SymbolNotFound
             Raised when no contract named 'symbol' is found.
@@ -1065,9 +1053,7 @@ class AssetFinder:
         """
         with self.engine.connect() as conn:
             data = (
-                conn.execute(
-                    self._select_asset_by_symbol(self.futures_contracts, symbol)
-                )
+                conn.execute(self._select_asset_by_symbol(self.futures_contracts, symbol))
                 .mappings()
                 .fetchone()
             )
@@ -1132,7 +1118,7 @@ class AssetFinder:
             this sid. If None and we've had multiple values,
             MultipleValuesFoundForSid is raised.
 
-        Raises
+        Raises:
         ------
         NoValueForSid
             If we have no values for this asset, or no values was known
@@ -1182,8 +1168,7 @@ class AssetFinder:
                         fc_cols.sid,
                     )
                     .where(
-                        (fc_cols.root_symbol == root_symbol)
-                        & (fc_cols.start_date != pd.NaT.value)
+                        (fc_cols.root_symbol == root_symbol) & (fc_cols.start_date != pd.NaT.value)
                     )
                     .order_by(fc_cols.sid)
                 )
@@ -1254,9 +1239,7 @@ class AssetFinder:
         def _(self):
             with self.engine.connect() as conn:
                 return tuple(
-                    conn.execute(sa.select(getattr(self, tblattr).c.sid))
-                    .scalars()
-                    .fetchall()
+                    conn.execute(sa.select(getattr(self, tblattr).c.sid)).scalars().fetchall()
                 )
 
         return _
@@ -1339,7 +1322,7 @@ class AssetFinder:
             ISO-3166 country code to use to disambiguate ticker lookups. Has
             the same semantics as in `lookup_symbol`.
 
-        Returns
+        Returns:
         -------
         matches, missing : tuple
             ``matches`` is the result of the conversion. ``missing`` is a list
@@ -1391,9 +1374,9 @@ class AssetFinder:
         equities_cols = self.equities.c
         exchanges_cols = self.exchanges.c
         if len(kwargs) == 1:
-            if "country_codes" in kwargs.keys():
+            if "country_codes" in kwargs:
                 condt = exchanges_cols.country_code.in_(kwargs["country_codes"])
-            if "exchange_names" in kwargs.keys():
+            if "exchange_names" in kwargs:
                 condt = exchanges_cols.exchange.in_(kwargs["exchange_names"])
 
             with self.engine.connect() as conn:
@@ -1402,12 +1385,10 @@ class AssetFinder:
                         equities_cols.sid,
                         equities_cols.start_date,
                         equities_cols.end_date,
-                    ).where(
-                        (exchanges_cols.exchange == equities_cols.exchange) & (condt)
-                    )
+                    ).where((exchanges_cols.exchange == equities_cols.exchange) & (condt))
                 ).fetchall()
             if results:
-                sids, starts, ends = zip(*results)
+                sids, starts, ends = zip(*results, strict=False)
 
         sid = np.array(sids, dtype="i8")
         start = np.array(starts, dtype="f8")
@@ -1435,7 +1416,7 @@ class AssetFinder:
         country_codes : iterable[str]
             The country codes to get lifetimes for.
 
-        Returns
+        Returns:
         -------
         lifetimes : pd.DataFrame
             A frame of dtype bool with `dates` as index and an Int64Index of
@@ -1444,15 +1425,15 @@ class AssetFinder:
             False, then lifetimes.loc[date, asset] will be false when date ==
             asset.start_date.
 
-        See Also
+        See Also:
         --------
         numpy.putmask
         zipline.pipeline.engine.SimplePipelineEngine._compute_root_mask
         """
         if isinstance(country_codes, str):
             raise TypeError(
-                "Got string {!r} instead of an iterable of strings in "
-                "AssetFinder.lifetimes.".format(country_codes),
+                f"Got string {country_codes!r} instead of an iterable of strings in "
+                "AssetFinder.lifetimes.",
             )
 
         # normalize to a cache-key so that we can memoize results.
@@ -1460,8 +1441,8 @@ class AssetFinder:
 
         lifetimes = self._asset_lifetimes.get(country_codes)
         if lifetimes is None:
-            self._asset_lifetimes[country_codes] = lifetimes = (
-                self._compute_asset_lifetimes(country_codes=country_codes)
+            self._asset_lifetimes[country_codes] = lifetimes = self._compute_asset_lifetimes(
+                country_codes=country_codes
             )
 
         raw_dates = as_column(dates.asi8)
@@ -1481,7 +1462,7 @@ class AssetFinder:
         country_code : str
             An ISO 3166 alpha-2 country code.
 
-        Returns
+        Returns:
         -------
         tuple[int]
             The sids whose exchanges are in this country.
@@ -1496,7 +1477,7 @@ class AssetFinder:
         ----------
         exchange_name : str
 
-        Returns
+        Returns:
         -------
         tuple[int]
             The sids whose exchanges are in this country.
@@ -1552,7 +1533,7 @@ def was_active(reference_date_value, asset):
     asset : Asset
         The asset object to check.
 
-    Returns
+    Returns:
     -------
     was_active : bool
         Whether or not the `asset` existed at the specified time.
@@ -1573,7 +1554,7 @@ def only_active_assets(reference_date_value, assets):
     assets : iterable[Asset]
         The assets to filter.
 
-    Returns
+    Returns:
     -------
     active_assets : list
         List of the active assets from `assets` on the requested date.

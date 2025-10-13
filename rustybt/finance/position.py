@@ -31,12 +31,13 @@ Position Tracking
 
 """
 
-from math import copysign
-import numpy as np
 import logging
+from math import copysign
 
-from rustybt.assets import Future
+import numpy as np
+
 import rustybt.protocol as zp
+from rustybt.assets import Future
 
 log = logging.getLogger("Performance")
 
@@ -44,9 +45,7 @@ log = logging.getLogger("Performance")
 class Position:
     __slots__ = "inner_position", "protocol_position"
 
-    def __init__(
-        self, asset, amount=0, cost_basis=0.0, last_sale_price=0.0, last_sale_date=None
-    ):
+    def __init__(self, asset, amount=0, cost_basis=0.0, last_sale_price=0.0, last_sale_date=None):
         inner = zp.InnerPosition(
             asset=asset,
             amount=amount,
@@ -122,7 +121,7 @@ class Position:
 
     def update(self, txn):
         if self.asset != txn.asset:
-            raise Exception("updating position with txn for a " "different asset")
+            raise Exception("updating position with txn for a different asset")
 
         total_shares = self.amount + txn.amount
 
@@ -162,7 +161,6 @@ class Position:
         currently spread an externally-delivered commission charge across
         all shares in a position.
         """
-
         if asset != self.asset:
             raise Exception("Updating a commission for a different asset?")
         if cost == 0.0:
@@ -235,7 +233,7 @@ last_sale_price: {last_sale_price}"
 
         html = f"""
         <div style="padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin: 5px 0;">
-            <h4 style="margin: 0 0 10px 0;">Position: {self.asset.symbol if hasattr(self.asset, 'symbol') else self.asset}</h4>
+            <h4 style="margin: 0 0 10px 0;">Position: {self.asset.symbol if hasattr(self.asset, "symbol") else self.asset}</h4>
             <table style="width: 100%; border-collapse: collapse;">
                 <tr style="border-bottom: 1px solid #eee;">
                     <td style="padding: 5px; font-weight: bold;">Type</td>

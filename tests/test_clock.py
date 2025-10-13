@@ -1,16 +1,16 @@
 from datetime import time
+
 import pandas as pd
-from rustybt.utils.calendar_utils import get_calendar, days_at_time
+import pytest
 
 from rustybt.gens.sim_engine import (
-    MinuteSimulationClock,
-    SESSION_START,
-    BEFORE_TRADING_START_BAR,
     BAR,
+    BEFORE_TRADING_START_BAR,
     SESSION_END,
+    SESSION_START,
+    MinuteSimulationClock,
 )
-
-import pytest
+from rustybt.utils.calendar_utils import days_at_time, get_calendar
 
 
 @pytest.fixture(scope="class")
@@ -23,9 +23,7 @@ def set_session(request):
     )
 
     request.cls.opens = request.cls.nyse_calendar.first_minutes[request.cls.sessions]
-    request.cls.closes = request.cls.nyse_calendar.schedule.loc[
-        request.cls.sessions, "close"
-    ]
+    request.cls.closes = request.cls.nyse_calendar.schedule.loc[request.cls.sessions, "close"]
 
 
 @pytest.mark.usefixtures("set_session")
@@ -49,7 +47,7 @@ class TestClock:
         def _check_session_bts_first(session_label, events, bts_dt):
             minutes = self.nyse_calendar.session_minutes(session_label)
 
-            assert 393 == len(events)
+            assert len(events) == 393
 
             assert events[0] == (session_label.tz_localize("UTC"), SESSION_START)
             assert events[1] == (bts_dt, BEFORE_TRADING_START_BAR)
@@ -112,7 +110,7 @@ class TestClock:
         def _check_session_bts_during(session_label, events, bts_dt):
             minutes = self.nyse_calendar.session_minutes(session_label)
 
-            assert 393 == len(events)
+            assert len(events) == 393
 
             assert events[0] == (session_label.tz_localize("UTC"), SESSION_START)
 
@@ -136,17 +134,11 @@ class TestClock:
 
         all_events = list(clock)
 
-        _check_session_bts_during(
-            self.sessions[0], all_events[0:393], bts_session_times[0]
-        )
+        _check_session_bts_during(self.sessions[0], all_events[0:393], bts_session_times[0])
 
-        _check_session_bts_during(
-            self.sessions[1], all_events[393:786], bts_session_times[1]
-        )
+        _check_session_bts_during(self.sessions[1], all_events[393:786], bts_session_times[1])
 
-        _check_session_bts_during(
-            self.sessions[2], all_events[786:], bts_session_times[2]
-        )
+        _check_session_bts_during(self.sessions[2], all_events[786:], bts_session_times[2])
 
     def test_bts_after_session(self):
         clock = MinuteSimulationClock(
@@ -166,7 +158,7 @@ class TestClock:
         def _check_session_bts_after(session_label, events):
             minutes = self.nyse_calendar.session_minutes(session_label)
 
-            assert 392 == len(events)
+            assert len(events) == 392
             assert events[0] == (session_label.tz_localize("UTC"), SESSION_START)
 
             for i in range(1, 391):
@@ -175,6 +167,4 @@ class TestClock:
             assert events[-1] == (minutes[389], SESSION_END)
 
         for i in range(0, 2):
-            _check_session_bts_after(
-                self.sessions[i], all_events[(i * 392) : ((i + 1) * 392)]
-            )
+            _check_session_bts_after(self.sessions[i], all_events[(i * 392) : ((i + 1) * 392)])

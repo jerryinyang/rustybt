@@ -325,15 +325,11 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
             except ccxt.NetworkError as e:
                 raise NetworkError(f"CCXT network error for {self.exchange_id}: {e}") from e
             except ccxt.ExchangeNotAvailable as e:
-                raise NetworkError(
-                    f"Exchange {self.exchange_id} unavailable: {e}"
-                ) from e
+                raise NetworkError(f"Exchange {self.exchange_id} unavailable: {e}") from e
             except ccxt.BadSymbol as e:
                 raise InvalidDataError(f"Invalid symbol {symbol}: {e}") from e
             except ccxt.RateLimitExceeded as e:
-                raise RateLimitError(
-                    f"Rate limit exceeded on {self.exchange_id}: {e}"
-                ) from e
+                raise RateLimitError(f"Rate limit exceeded on {self.exchange_id}: {e}") from e
             except Exception as e:
                 # Catch-all for unexpected CCXT errors
                 logger.error(
@@ -343,9 +339,7 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
                     error_type=type(e).__name__,
                     error=str(e),
                 )
-                raise NetworkError(
-                    f"Unexpected CCXT error for {self.exchange_id}: {e}"
-                ) from e
+                raise NetworkError(f"Unexpected CCXT error for {self.exchange_id}: {e}") from e
 
         logger.info(
             "ccxt_pagination_complete",
@@ -543,7 +537,9 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
                 "exchange_id": self.exchange_id,
                 "testnet": self.testnet,
                 "markets_count": len(self.exchange.markets) if self.exchange.markets else 0,
-                "has_websocket": self.exchange.has.get("ws", False) if hasattr(self.exchange, "has") else False,
+                "has_websocket": (
+                    self.exchange.has.get("ws", False) if hasattr(self.exchange, "has") else False
+                ),
             },
         )
 

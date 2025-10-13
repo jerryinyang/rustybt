@@ -5,10 +5,10 @@ with Decimal types for financial-grade precision.
 """
 
 import asyncio
-from decimal import Decimal
 import threading
 import warnings
-from typing import TYPE_CHECKING, Awaitable, Optional, TypeVar
+from collections.abc import Awaitable
+from typing import TYPE_CHECKING, Optional, TypeVar
 
 import pandas as pd
 import polars as pl
@@ -19,8 +19,8 @@ from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader
 from rustybt.data.polars.parquet_minute_bars import PolarsParquetMinuteReader
 
 if TYPE_CHECKING:
-    from rustybt.data.sources.base import DataSource
     from rustybt.data.polars.validation import DataValidator
+    from rustybt.data.sources.base import DataSource
 
 logger = structlog.get_logger(__name__)
 
@@ -66,8 +66,8 @@ class PolarsDataPortal:
         data_source: Optional["DataSource"] = None,
         use_cache: bool = True,
         *,
-        asset_finder: Optional[object] = None,
-        calendar: Optional[object] = None,
+        asset_finder: object | None = None,
+        calendar: object | None = None,
         validator: Optional["DataValidator"] = None,
     ):
         """Initialize PolarsDataPortal with readers or DataSource.
@@ -210,7 +210,9 @@ class PolarsDataPortal:
         if self.data_source is not None:
             return await self._fetch_spot_value_unified(assets, field, dt, data_frequency)
 
-        return await asyncio.to_thread(self._get_spot_value_legacy, assets, field, dt, data_frequency)
+        return await asyncio.to_thread(
+            self._get_spot_value_legacy, assets, field, dt, data_frequency
+        )
 
     def get_history_window(
         self,
@@ -430,11 +432,13 @@ class PolarsDataPortal:
         if data_frequency == "daily":
             start_date = (end_dt - pd.Timedelta(days=bar_count * 2)).date()
         else:
-            start_date = (end_dt - pd.Timedelta(minutes=bar_count * 2))
+            start_date = end_dt - pd.Timedelta(minutes=bar_count * 2)
 
         try:
             if data_frequency == "daily":
-                df = reader.load_daily_bars(sids=sids, start_date=start_date, end_date=end_dt.date())
+                df = reader.load_daily_bars(
+                    sids=sids, start_date=start_date, end_date=end_dt.date()
+                )
             else:
                 start_dt = end_dt - pd.Timedelta(minutes=bar_count * 2)
                 df = reader.load_minute_bars(sids=sids, start_dt=start_dt, end_dt=end_dt)
@@ -480,13 +484,13 @@ class PolarsDataPortal:
         bar_count: int,
     ) -> pl.DataFrame:
         """Build history tail frame using Polars (already Rust-optimized).
-        
+
         Note: We intentionally use pure Polars here instead of our custom Rust
         integration because:
         1. Polars is already Rust-backed and highly optimized for these operations
         2. Python↔Rust conversion overhead outweighs computation time for simple ops
         3. Benchmarks show 25x slowdown when adding custom Rust layer (see AC5)
-        
+
         Our Rust optimizations are beneficial for complex operations (SMA, EMA) on
         large datasets, but not for DataFrame operations that Polars already handles.
         """
@@ -506,8 +510,6 @@ class PolarsDataPortal:
             .explode(pl.all().exclude(identifier))
             .select([pl.col(time_col), pl.col(identifier), pl.col(field)])
         )
-
-
 
     def _resolve_reader(self, data_frequency: str):
         if data_frequency == "daily":

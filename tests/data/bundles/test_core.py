@@ -1,17 +1,16 @@
 import os
-import pytest
 import re
 
-from parameterized import parameterized
 import numpy as np
 import pandas as pd
+import pytest
 import sqlalchemy as sa
-from toolz import valmap
 import toolz.curried.operator as op
-from rustybt.utils.calendar_utils import TradingCalendar, get_calendar
-from tests.conftest import ON_WINDOWS_CI
-from rustybt.assets import ASSET_DB_VERSION
+from parameterized import parameterized
+from toolz import valmap
 
+import rustybt.utils.paths as pth
+from rustybt.assets import ASSET_DB_VERSION
 from rustybt.assets.asset_writer import check_version_info
 from rustybt.assets.synthetic import make_simple_equity_info
 from rustybt.data.bundles import (
@@ -20,29 +19,30 @@ from rustybt.data.bundles import (
     ingestions_for_bundle,
 )
 from rustybt.data.bundles.core import (
-    _make_bundle_core,
     BadClean,
-    to_bundle_ingest_dirname,
+    _make_bundle_core,
     asset_db_path,
+    to_bundle_ingest_dirname,
 )
 from rustybt.lib.adjustment import Float64Multiply
 from rustybt.pipeline.loaders.synthetic import (
-    make_bar_data,
     expected_bar_values_2d,
+    make_bar_data,
 )
 from rustybt.testing import (
-    subtest,
     str_to_seconds,
+    subtest,
 )
 from rustybt.testing.fixtures import (
+    WithDefaultDateBounds,
     WithInstanceTmpDir,
     ZiplineTestCase,
-    WithDefaultDateBounds,
 )
 from rustybt.testing.github_actions import skip_on
 from rustybt.utils.cache import dataframe_cache
+from rustybt.utils.calendar_utils import TradingCalendar, get_calendar
 from rustybt.utils.functional import apply
-import rustybt.utils.paths as pth
+from tests.conftest import ON_WINDOWS_CI
 
 _1_ns = pd.Timedelta(1, unit="ns")
 
@@ -87,9 +87,7 @@ class BundleCoreTestCase(WithInstanceTmpDir, WithDefaultDateBounds, ZiplineTestC
             assert name in self.bundles
             assert self.bundles[name].ingest is ingest
 
-        assert valmap(op.attrgetter("ingest"), self.bundles) == {
-            k: ingest for k in "abcde"
-        }
+        assert valmap(op.attrgetter("ingest"), self.bundles) == dict.fromkeys("abcde", ingest)
         self._check_bundles(set("abcde"))
 
     def _check_bundles(self, names):
@@ -206,7 +204,7 @@ class BundleCoreTestCase(WithInstanceTmpDir, WithDefaultDateBounds, ZiplineTestC
                 sids,
             )
 
-            for actual_column, colname in zip(actual, columns):
+            for actual_column, colname in zip(actual, columns, strict=False):
                 np.testing.assert_array_equal(
                     actual_column,
                     expected_bar_values_2d(minutes, sids, equities, colname),
@@ -219,7 +217,7 @@ class BundleCoreTestCase(WithInstanceTmpDir, WithDefaultDateBounds, ZiplineTestC
                 self.END_DATE,
                 sids,
             )
-            for actual_column, colname in zip(actual, columns):
+            for actual_column, colname in zip(actual, columns, strict=False):
                 np.testing.assert_array_equal(
                     actual_column,
                     expected_bar_values_2d(sessions, sids, equities, colname),
@@ -231,7 +229,7 @@ class BundleCoreTestCase(WithInstanceTmpDir, WithDefaultDateBounds, ZiplineTestC
                 sessions,
                 pd.Index(sids),
             )
-            for column, adjustments in zip(columns, adjs_for_cols[:-1]):
+            for column, adjustments in zip(columns, adjs_for_cols[:-1], strict=False):
                 # iterate over all the adjustments but `volume`
                 assert adjustments == {
                     2: [
@@ -358,9 +356,7 @@ class BundleCoreTestCase(WithInstanceTmpDir, WithDefaultDateBounds, ZiplineTestC
 
     @parameterized.expand([("clean",), ("load",)])
     def test_bundle_doesnt_exist(self, fnname):
-        with pytest.raises(
-            UnknownBundle, match="No bundle registered with the name 'ayy'"
-        ):
+        with pytest.raises(UnknownBundle, match="No bundle registered with the name 'ayy'"):
             getattr(self, fnname)("ayy", environ=self.environ)
 
     def test_load_no_data(self):
@@ -428,9 +424,7 @@ class BundleCoreTestCase(WithInstanceTmpDir, WithDefaultDateBounds, ZiplineTestC
         second = self._empty_ingest()
         assert self._list_bundle() == {first, second}, "two ingestions are not present"
         assert self.clean("bundle", keep_last=1, environ=self.environ) == {first}
-        assert self._list_bundle() == {
-            second
-        }, "first ingestion was not removed with keep_last=2"
+        assert self._list_bundle() == {second}, "first ingestion was not removed with keep_last=2"
 
         third = self._empty_ingest()
         fourth = self._empty_ingest()
@@ -484,9 +478,7 @@ class BundleCoreTestCase(WithInstanceTmpDir, WithDefaultDateBounds, ZiplineTestC
             )
             == set()
         )
-        assert self._list_bundle() == {
-            first
-        }, "directory should not have changed (before)"
+        assert self._list_bundle() == {first}, "directory should not have changed (before)"
 
         assert (
             self.clean(
@@ -497,9 +489,7 @@ class BundleCoreTestCase(WithInstanceTmpDir, WithDefaultDateBounds, ZiplineTestC
             == set()
         )
 
-        assert self._list_bundle() == {
-            first
-        }, "directory should not have changed (after)"
+        assert self._list_bundle() == {first}, "directory should not have changed (after)"
 
         assert self.clean(
             "bundle",

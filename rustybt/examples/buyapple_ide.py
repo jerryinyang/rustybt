@@ -14,12 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rustybt.api import order, record, symbol
-from rustybt.finance import commission, slippage
-from rustybt import run_algorithm
+import matplotlib.pyplot as plt
 import pandas as pd
 import pandas_datareader.data as web
-import matplotlib.pyplot as plt
+
+from rustybt import run_algorithm
+from rustybt.api import order, record, symbol
+from rustybt.finance import commission, slippage
 
 
 def initialize(context):

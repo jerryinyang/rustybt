@@ -3,9 +3,8 @@
 Tests IB adapter functionality with mocked ib_async library.
 """
 
-import asyncio
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pandas as pd
 import pytest
@@ -351,7 +350,11 @@ async def test_get_account_info(mock_ib):
     mock_summary_item3.tag = "BuyingPower"
     mock_summary_item3.value = "400000.00"
 
-    mock_ib.accountSummary.return_value = [mock_summary_item, mock_summary_item2, mock_summary_item3]
+    mock_ib.accountSummary.return_value = [
+        mock_summary_item,
+        mock_summary_item2,
+        mock_summary_item3,
+    ]
 
     # Get account info
     account_info = await adapter.get_account_info()

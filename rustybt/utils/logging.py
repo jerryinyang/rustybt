@@ -69,18 +69,14 @@ def configure_logging(
     valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     log_level_upper = log_level.upper()
     if log_level_upper not in valid_levels:
-        raise ValueError(
-            f"Invalid log level: {log_level}. Must be one of {valid_levels}"
-        )
+        raise ValueError(f"Invalid log level: {log_level}. Must be one of {valid_levels}")
 
     # Ensure log directory exists
     if log_to_file:
         try:
             log_dir.mkdir(parents=True, exist_ok=True)
         except OSError as e:
-            raise OSError(
-                f"Failed to create log directory '{log_dir}': {e}"
-            ) from e
+            raise OSError(f"Failed to create log directory '{log_dir}': {e}") from e
 
     # Configure handlers
     handlers: list[logging.Handler] = []
@@ -114,9 +110,7 @@ def configure_logging(
             mask_sensitive_data,  # Custom processor to mask secrets
             structlog.processors.JSONRenderer(),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(
-            getattr(logging, log_level_upper)
-        ),
+        wrapper_class=structlog.make_filtering_bound_logger(getattr(logging, log_level_upper)),
         context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,

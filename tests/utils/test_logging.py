@@ -7,11 +7,9 @@ audit logging with JSON output format.
 import json
 import logging
 import tempfile
-from decimal import Decimal
 from pathlib import Path
 
 import pytest
-import structlog
 
 from rustybt.utils.logging import configure_logging, get_logger, mask_sensitive_data
 

@@ -9,7 +9,7 @@ import hashlib
 import threading
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 import polars as pl
@@ -61,8 +61,8 @@ class CachedDataSource(DataSource):
         self,
         adapter: DataSource,
         cache_dir: str | Path = "~/.rustybt/cache",
-        config: Optional[dict[str, Any]] = None,
-        freshness_policy: Optional[Any] = None,
+        config: dict[str, Any] | None = None,
+        freshness_policy: Any | None = None,
     ):
         """Initialize cached data source wrapper.
 

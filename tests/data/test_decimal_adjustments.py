@@ -4,18 +4,18 @@ Tests cover split and dividend adjustments with various edge cases
 and precision scenarios.
 """
 
-import pytest
-import polars as pl
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+
+import polars as pl
+import pytest
 
 from rustybt.data.decimal_adjustments import (
-    apply_split_adjustment,
-    apply_dividend_adjustment,
-    apply_split_adjustment_to_dataframe,
-    apply_dividend_adjustment_to_dataframe,
     NegativePriceError,
-    AdjustmentError,
+    apply_dividend_adjustment,
+    apply_dividend_adjustment_to_dataframe,
+    apply_split_adjustment,
+    apply_split_adjustment_to_dataframe,
 )
 
 
@@ -199,9 +199,7 @@ class TestDividendAdjustment:
         )
         dividend = Decimal("15.00")
 
-        adjusted = apply_dividend_adjustment(
-            prices, dividend, validate_non_negative=False
-        )
+        adjusted = apply_dividend_adjustment(prices, dividend, validate_non_negative=False)
 
         assert adjusted[0] == Decimal("-5.00")
 
@@ -248,15 +246,17 @@ class TestSplitAdjustmentDataFrame:
 
     def test_split_adjustment_all_ohlc_columns(self):
         """Test split adjustment applies to all OHLC columns."""
-        df = pl.DataFrame({
-            "date": [date(2023, 1, 1), date(2023, 1, 2)],
-            "sid": [1, 1],
-            "open": [Decimal("100.00"), Decimal("102.00")],
-            "high": [Decimal("105.00"), Decimal("107.00")],
-            "low": [Decimal("98.00"), Decimal("100.00")],
-            "close": [Decimal("103.00"), Decimal("105.00")],
-            "volume": [Decimal("1000000"), Decimal("1500000")],
-        })
+        df = pl.DataFrame(
+            {
+                "date": [date(2023, 1, 1), date(2023, 1, 2)],
+                "sid": [1, 1],
+                "open": [Decimal("100.00"), Decimal("102.00")],
+                "high": [Decimal("105.00"), Decimal("107.00")],
+                "low": [Decimal("98.00"), Decimal("100.00")],
+                "close": [Decimal("103.00"), Decimal("105.00")],
+                "volume": [Decimal("1000000"), Decimal("1500000")],
+            }
+        )
 
         split_ratio = Decimal("2.0")
         adjusted = apply_split_adjustment_to_dataframe(df, split_ratio)
@@ -272,16 +272,16 @@ class TestSplitAdjustmentDataFrame:
 
     def test_split_adjustment_custom_columns(self):
         """Test split adjustment with custom column selection."""
-        df = pl.DataFrame({
-            "date": [date(2023, 1, 1)],
-            "price": [Decimal("100.00")],
-            "other": [Decimal("50.00")],
-        })
+        df = pl.DataFrame(
+            {
+                "date": [date(2023, 1, 1)],
+                "price": [Decimal("100.00")],
+                "other": [Decimal("50.00")],
+            }
+        )
 
         split_ratio = Decimal("2.0")
-        adjusted = apply_split_adjustment_to_dataframe(
-            df, split_ratio, price_columns=["price"]
-        )
+        adjusted = apply_split_adjustment_to_dataframe(df, split_ratio, price_columns=["price"])
 
         # Only "price" column is adjusted
         assert adjusted["price"][0] == Decimal("50.00")
@@ -289,15 +289,15 @@ class TestSplitAdjustmentDataFrame:
 
     def test_missing_column_raises_error(self):
         """Test that missing price column raises KeyError."""
-        df = pl.DataFrame({
-            "date": [date(2023, 1, 1)],
-            "open": [Decimal("100.00")],
-        })
+        df = pl.DataFrame(
+            {
+                "date": [date(2023, 1, 1)],
+                "open": [Decimal("100.00")],
+            }
+        )
 
         with pytest.raises(KeyError, match="Price columns not found"):
-            apply_split_adjustment_to_dataframe(
-                df, Decimal("2.0"), price_columns=["open", "close"]
-            )
+            apply_split_adjustment_to_dataframe(df, Decimal("2.0"), price_columns=["open", "close"])
 
 
 class TestDividendAdjustmentDataFrame:
@@ -305,15 +305,17 @@ class TestDividendAdjustmentDataFrame:
 
     def test_dividend_adjustment_all_ohlc_columns(self):
         """Test dividend adjustment applies to all OHLC columns."""
-        df = pl.DataFrame({
-            "date": [date(2023, 1, 1), date(2023, 1, 2)],
-            "sid": [1, 1],
-            "open": [Decimal("100.00"), Decimal("102.00")],
-            "high": [Decimal("105.00"), Decimal("107.00")],
-            "low": [Decimal("98.00"), Decimal("100.00")],
-            "close": [Decimal("103.00"), Decimal("105.00")],
-            "volume": [Decimal("1000000"), Decimal("1500000")],
-        })
+        df = pl.DataFrame(
+            {
+                "date": [date(2023, 1, 1), date(2023, 1, 2)],
+                "sid": [1, 1],
+                "open": [Decimal("100.00"), Decimal("102.00")],
+                "high": [Decimal("105.00"), Decimal("107.00")],
+                "low": [Decimal("98.00"), Decimal("100.00")],
+                "close": [Decimal("103.00"), Decimal("105.00")],
+                "volume": [Decimal("1000000"), Decimal("1500000")],
+            }
+        )
 
         dividend = Decimal("2.50")
         adjusted = apply_dividend_adjustment_to_dataframe(df, dividend)
@@ -329,16 +331,16 @@ class TestDividendAdjustmentDataFrame:
 
     def test_dividend_adjustment_custom_columns(self):
         """Test dividend adjustment with custom column selection."""
-        df = pl.DataFrame({
-            "date": [date(2023, 1, 1)],
-            "price": [Decimal("100.00")],
-            "other": [Decimal("50.00")],
-        })
+        df = pl.DataFrame(
+            {
+                "date": [date(2023, 1, 1)],
+                "price": [Decimal("100.00")],
+                "other": [Decimal("50.00")],
+            }
+        )
 
         dividend = Decimal("2.50")
-        adjusted = apply_dividend_adjustment_to_dataframe(
-            df, dividend, price_columns=["price"]
-        )
+        adjusted = apply_dividend_adjustment_to_dataframe(df, dividend, price_columns=["price"])
 
         # Only "price" column is adjusted
         assert adjusted["price"][0] == Decimal("97.50")
@@ -346,12 +348,14 @@ class TestDividendAdjustmentDataFrame:
 
     def test_negative_price_validation_in_dataframe(self):
         """Test that negative prices raise error in DataFrame adjustment."""
-        df = pl.DataFrame({
-            "open": [Decimal("10.00")],
-            "high": [Decimal("15.00")],
-            "low": [Decimal("9.00")],
-            "close": [Decimal("12.00")],
-        })
+        df = pl.DataFrame(
+            {
+                "open": [Decimal("10.00")],
+                "high": [Decimal("15.00")],
+                "low": [Decimal("9.00")],
+                "close": [Decimal("12.00")],
+            }
+        )
 
         dividend = Decimal("15.00")
 
@@ -360,27 +364,29 @@ class TestDividendAdjustmentDataFrame:
 
     def test_negative_price_allowed_when_validation_disabled(self):
         """Test negative prices allowed in DataFrame when validation disabled."""
-        df = pl.DataFrame({
-            "open": [Decimal("10.00")],
-            "high": [Decimal("15.00")],
-            "low": [Decimal("9.00")],
-            "close": [Decimal("12.00")],
-        })
+        df = pl.DataFrame(
+            {
+                "open": [Decimal("10.00")],
+                "high": [Decimal("15.00")],
+                "low": [Decimal("9.00")],
+                "close": [Decimal("12.00")],
+            }
+        )
 
         dividend = Decimal("15.00")
-        adjusted = apply_dividend_adjustment_to_dataframe(
-            df, dividend, validate_non_negative=False
-        )
+        adjusted = apply_dividend_adjustment_to_dataframe(df, dividend, validate_non_negative=False)
 
         assert adjusted["open"][0] == Decimal("-5.00")
         assert adjusted["close"][0] == Decimal("-3.00")
 
     def test_missing_column_raises_error(self):
         """Test that missing price column raises KeyError."""
-        df = pl.DataFrame({
-            "date": [date(2023, 1, 1)],
-            "open": [Decimal("100.00")],
-        })
+        df = pl.DataFrame(
+            {
+                "date": [date(2023, 1, 1)],
+                "open": [Decimal("100.00")],
+            }
+        )
 
         with pytest.raises(KeyError, match="Price columns not found"):
             apply_dividend_adjustment_to_dataframe(

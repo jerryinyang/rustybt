@@ -23,11 +23,27 @@ def alter_columns(op, name, *columns, **kwargs):
         The string to use in the selection. If not provided, it will select all
         of the new columns from the old table.
 
-    Notes
+    Notes:
     -----
     The columns are passed explicitly because this should only be used in a
     downgrade where ``zipline.assets.asset_db_schema`` could change.
     """
+    # SECURITY: SQL f-strings in migration code
+    # THREAT MODEL:
+    # - Input source: Database migration code (internal, not user input)
+    # - Trust level: Trusted (migration-defined table/column names)
+    # - Use case: Alembic database schema migrations
+    # GUARDRAILS:
+    # - Table and column names come from migration definitions, not external input
+    # - Alembic Operations API provides DDL abstraction
+    # - Identifier validation below ensures SQL-safe names
+    # SQL INJECTION RISK: Low (controlled identifiers only)
+    # MITIGATION: Whitelist validation of identifiers
+
+    # Validate table name is SQL-safe identifier
+    if not name.replace("_", "").isalnum():
+        raise ValueError(f"Invalid table name for migration: {name!r}")
+
     selection_string = kwargs.pop("selection_string", None)
     if kwargs:
         raise TypeError(
@@ -35,6 +51,11 @@ def alter_columns(op, name, *columns, **kwargs):
         )
     if selection_string is None:
         selection_string = ", ".join(column.name for column in columns)
+
+    # Validate column names are SQL-safe identifiers
+    for column in columns:
+        if not column.name.replace("_", "").isalnum():
+            raise ValueError(f"Invalid column name for migration: {column.name!r}")
 
     tmp_name = "_alter_columns_" + name
     op.rename_table(name, tmp_name)
@@ -46,16 +67,19 @@ def alter_columns(op, name, *columns, **kwargs):
         # will just get recreated.
         for table in (name, tmp_name):
             try:
+                # nosec B608 - table and column names validated as SQL identifiers above
                 op.execute(f"DROP INDEX IF EXISTS ix_{table}_{column.name}")
             except sa.exc.OperationalError:
                 pass
 
     op.create_table(name, *columns)
+    # nosec B608 - table name validated, selection_string from internal column names
     op.execute(
         f"INSERT INTO {name} SELECT {selection_string} FROM {tmp_name}",
     )
 
     if op.impl.dialect.name == "postgresql":
+        # nosec B608 - tmp_name is internally generated with validated base name
         op.execute(f"ALTER TABLE {tmp_name} DISABLE TRIGGER ALL;")
         op.execute(f"DROP TABLE {tmp_name} CASCADE;")
     else:
@@ -73,16 +97,13 @@ def downgrade(engine, desired_version):
     desired_version : int
         The desired resulting version for the assets database.
     """
-
     # Check the version of the db at the engine
     with engine.begin() as conn:
         metadata_obj = sa.MetaData()
         metadata_obj.reflect(conn)
         version_info_table = metadata_obj.tables["version_info"]
         # starting_version = sa.select((version_info_table.c.version,)).scalar()
-        starting_version = conn.execute(
-            sa.select(version_info_table.c.version)
-        ).scalar()
+        starting_version = conn.execute(sa.select(version_info_table.c.version)).scalar()
 
         # Check for accidental upgrade
         if starting_version < desired_version:
@@ -149,7 +170,7 @@ def downgrades(src):
     src : int
         The version this downgrades from.
 
-    Returns
+    Returns:
     -------
     decorator : callable[(callable) -> callable]
         The decorator to apply.
@@ -184,9 +205,7 @@ def _downgrade_v1(op):
     # Execute batch op to allow column modification in SQLite
     with op.batch_alter_table("futures_contracts") as batch_op:
         # Rename 'multiplier'
-        batch_op.alter_column(
-            column_name="multiplier", new_column_name="contract_multiplier"
-        )
+        batch_op.alter_column(column_name="multiplier", new_column_name="contract_multiplier")
 
         # Delete 'tick_size'
         batch_op.drop_column("tick_size")
@@ -220,12 +239,8 @@ def _downgrade_v2(op):
         batch_op.drop_column("auto_close_date")
 
     # Recreate indices after batch
-    op.create_index(
-        "ix_equities_fuzzy_symbol", table_name="equities", columns=["fuzzy_symbol"]
-    )
-    op.create_index(
-        "ix_equities_company_symbol", table_name="equities", columns=["company_symbol"]
-    )
+    op.create_index("ix_equities_fuzzy_symbol", table_name="equities", columns=["fuzzy_symbol"])
+    op.create_index("ix_equities_company_symbol", table_name="equities", columns=["company_symbol"])
 
 
 @downgrades(3)
@@ -290,12 +305,8 @@ def _downgrade_v4(op):
     with op.batch_alter_table("equities") as batch_op:
         batch_op.drop_column("exchange_full")
 
-    op.create_index(
-        "ix_equities_fuzzy_symbol", table_name="equities", columns=["fuzzy_symbol"]
-    )
-    op.create_index(
-        "ix_equities_company_symbol", table_name="equities", columns=["company_symbol"]
-    )
+    op.create_index("ix_equities_fuzzy_symbol", table_name="equities", columns=["fuzzy_symbol"])
+    op.create_index("ix_equities_company_symbol", table_name="equities", columns=["company_symbol"])
 
 
 @downgrades(5)
@@ -584,7 +595,6 @@ def _downgrade_v8(op):
 @downgrades(9)
 def _downgrade_v9(op):
     """Downgrade assets db by restoring legacy bundle metadata schema."""
-
     # Backup unified quality fields prior to altering table structure
     op.execute(
         """
@@ -640,7 +650,9 @@ def _downgrade_v9(op):
 
     # Recreate legacy indexes
     op.create_index("idx_bundle_metadata_name", "bundle_metadata", ["bundle_name"], unique=False)
-    op.create_index("idx_bundle_metadata_fetch", "bundle_metadata", ["fetch_timestamp"], unique=False)
+    op.create_index(
+        "idx_bundle_metadata_fetch", "bundle_metadata", ["fetch_timestamp"], unique=False
+    )
 
     # Restore legacy data_quality_metrics table
     op.create_table(
@@ -660,7 +672,9 @@ def _downgrade_v9(op):
         sa.Column("outlier_count", sa.Integer, nullable=False, server_default="0"),
         sa.Column("ohlcv_violations", sa.Integer, nullable=False, server_default="0"),
         sa.Column("validation_timestamp", sa.Integer, nullable=False),
-        sa.Column("validation_passed", sa.Boolean, nullable=False, server_default=sa.sql.expression.true()),
+        sa.Column(
+            "validation_passed", sa.Boolean, nullable=False, server_default=sa.sql.expression.true()
+        ),
     )
 
     # Populate legacy quality metrics table from backup (skip rows without row_count)
@@ -698,5 +712,12 @@ def _downgrade_v9(op):
     op.execute("DROP TABLE _bundle_quality_backup")
 
     # Recreate legacy indexes for quality metrics
-    op.create_index("idx_quality_metrics_bundle", "data_quality_metrics", ["bundle_name"], unique=False)
-    op.create_index("idx_quality_metrics_validation", "data_quality_metrics", ["validation_timestamp"], unique=False)
+    op.create_index(
+        "idx_quality_metrics_bundle", "data_quality_metrics", ["bundle_name"], unique=False
+    )
+    op.create_index(
+        "idx_quality_metrics_validation",
+        "data_quality_metrics",
+        ["validation_timestamp"],
+        unique=False,
+    )

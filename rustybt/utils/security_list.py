@@ -1,17 +1,15 @@
+import os.path
 import warnings
 from datetime import datetime
 from os import listdir
-import os.path
 
 import pandas as pd
 
 # import pytz
 import rustybt
-
 from rustybt.errors import SymbolNotFound
 from rustybt.finance.asset_restrictions import SecurityListRestrictions
 from rustybt.zipline_warnings import ZiplineDeprecationWarning
-
 
 DATE_FORMAT = "%Y%m%d"
 rustybt_dir = os.path.dirname(rustybt.__file__)
@@ -66,13 +64,9 @@ class SecurityList:
                 continue
 
             for effective_date, changes in iter(self.data[kd].items()):
-                self.update_current(
-                    effective_date, changes["add"], self._current_set.add
-                )
+                self.update_current(effective_date, changes["add"], self._current_set.add)
 
-                self.update_current(
-                    effective_date, changes["delete"], self._current_set.remove
-                )
+                self.update_current(effective_date, changes["delete"], self._current_set.remove)
 
             self._cache[kd] = self._current_set
         return self._current_set
@@ -80,9 +74,7 @@ class SecurityList:
     def update_current(self, effective_date, symbols, change_func):
         for symbol in symbols:
             try:
-                asset = self.asset_finder.lookup_symbol(
-                    symbol, as_of_date=effective_date
-                )
+                asset = self.asset_finder.lookup_symbol(symbol, as_of_date=effective_date)
             # Pass if no Asset exists for the symbol
             except SymbolNotFound:
                 continue

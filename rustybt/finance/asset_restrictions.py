@@ -1,14 +1,15 @@
 import abc
-from numpy import vectorize
-from functools import partial, reduce
 import operator
-import pandas as pd
 from collections import namedtuple
+from enum import IntEnum
+from functools import partial, reduce
+
+import pandas as pd
+from numpy import vectorize
 from toolz import groupby
 
-from enum import IntEnum
-from rustybt.utils.numpy_utils import vectorized_is_element
 from rustybt.assets import Asset
+from rustybt.utils.numpy_utils import vectorized_is_element
 
 Restriction = namedtuple("Restriction", ["asset", "effective_date", "state"])
 
@@ -38,7 +39,7 @@ class Restrictions(metaclass=abc.ABCMeta):
         dt : pd.Timestamp
             The timestamp of the restriction query
 
-        Returns
+        Returns:
         -------
         is_restricted : bool or pd.Series[bool] indexed by asset
             Is the asset or assets restricted on this dt?
@@ -64,7 +65,7 @@ class _UnionRestrictions(Restrictions):
     sub_restrictions : iterable of Restrictions (but not _UnionRestrictions)
         The Restrictions to be added together
 
-    Notes
+    Notes:
     -----
     - Consumers should not construct instances of this class directly, but
       instead use the `|` operator to combine restrictions
@@ -73,9 +74,7 @@ class _UnionRestrictions(Restrictions):
     def __new__(cls, sub_restrictions):
         # Filter out NoRestrictions and deal with resulting cases involving
         # one or zero sub_restrictions
-        sub_restrictions = [
-            r for r in sub_restrictions if not isinstance(r, NoRestrictions)
-        ]
+        sub_restrictions = [r for r in sub_restrictions if not isinstance(r, NoRestrictions)]
         if len(sub_restrictions) == 0:
             return NoRestrictions()
         elif len(sub_restrictions) == 1:
@@ -91,9 +90,7 @@ class _UnionRestrictions(Restrictions):
         """
         # Flatten the underlying sub restrictions of _UnionRestrictions
         if isinstance(other_restriction, _UnionRestrictions):
-            new_sub_restrictions = (
-                self.sub_restrictions + other_restriction.sub_restrictions
-            )
+            new_sub_restrictions = self.sub_restrictions + other_restriction.sub_restrictions
         else:
             new_sub_restrictions = self.sub_restrictions + [other_restriction]
 
@@ -156,9 +153,7 @@ class HistoricalRestrictions(Restrictions):
         # ascending order of effective_date
         self._restrictions_by_asset = {
             asset: sorted(restrictions_for_asset, key=lambda x: x.effective_date)
-            for asset, restrictions_for_asset in groupby(
-                lambda x: x.asset, restrictions
-            ).items()
+            for asset, restrictions_for_asset in groupby(lambda x: x.asset, restrictions).items()
         }
 
     def is_restricted(self, assets, dt):

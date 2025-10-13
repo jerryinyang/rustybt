@@ -2,10 +2,9 @@
 
 import hashlib
 from pathlib import Path
-from typing import Union
 
 
-def calculate_checksum(file_path: Union[str, Path]) -> str:
+def calculate_checksum(file_path: str | Path) -> str:
     """Calculate SHA256 checksum of a file.
 
     Args:
@@ -33,7 +32,7 @@ def calculate_checksum(file_path: Union[str, Path]) -> str:
     return sha256_hash.hexdigest()
 
 
-def calculate_checksum_multiple(file_paths: list[Union[str, Path]]) -> str:
+def calculate_checksum_multiple(file_paths: list[str | Path]) -> str:
     """Calculate combined SHA256 checksum for multiple files.
 
     Args:

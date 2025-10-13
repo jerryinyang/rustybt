@@ -16,17 +16,15 @@ Currently, this means that a domain defines two things:
 """
 
 import datetime
-from textwrap import dedent
-
 from abc import ABC, abstractmethod
+from textwrap import dedent
 
 import numpy as np
 import pandas as pd
 import pytz
 
-from rustybt.utils.calendar_utils import get_calendar
-
 from rustybt.country import CountryCode
+from rustybt.utils.calendar_utils import get_calendar
 from rustybt.utils.formatting import bulleted_list
 from rustybt.utils.input_validation import expect_types, optional
 from rustybt.utils.memoize import lazyval
@@ -43,7 +41,7 @@ class IDomain(ABC):
         This determines the row labels of Pipeline outputs for pipelines run on
         this domain.
 
-        Returns
+        Returns:
         -------
         sessions : pd.DatetimeIndex
             An array of all session labels for this domain.
@@ -54,7 +52,7 @@ class IDomain(ABC):
     def country_code(self):
         """The country code for this domain.
 
-        Returns
+        Returns:
         -------
         code : str
             The two-character country iso3166 country code for this domain.
@@ -70,7 +68,7 @@ class IDomain(ABC):
             The sessions to get the data query cutoff times for. This index
             will contain all midnight UTC values.
 
-        Returns
+        Returns:
         -------
         data_query_cutoff : pd.DatetimeIndex
             Timestamp of the last minute for which data should be considered
@@ -84,7 +82,7 @@ class IDomain(ABC):
         ----------
         dt : pd.Timestamp
 
-        Returns
+        Returns:
         -------
         pd.Timestamp
         """
@@ -167,9 +165,7 @@ class EquityCalendarDomain(Domain):
         calendar_name=str,
         __funcname="EquityCountryDomain",
     )
-    def __init__(
-        self, country_code, calendar_name, data_query_offset=-np.timedelta64(45, "m")
-    ):
+    def __init__(self, country_code, calendar_name, data_query_offset=-np.timedelta64(45, "m")):
         self._country_code = country_code
         self.calendar_name = calendar_name
         self._data_query_offset = (
@@ -207,10 +203,7 @@ class EquityCalendarDomain(Domain):
         return pd.DatetimeIndex(opens) + self._data_query_offset
 
     def __repr__(self):
-        return "EquityCalendarDomain({!r}, {!r})".format(
-            self.country_code,
-            self.calendar_name,
-        )
+        return f"EquityCalendarDomain({self.country_code!r}, {self.calendar_name!r})"
 
 
 AR_EQUITIES = EquityCalendarDomain(CountryCode.ARGENTINA, "XBUE")
@@ -322,11 +315,11 @@ def infer_domain(terms):
     ----------
     terms : iterable[zipline.pipeline.Term]
 
-    Returns
+    Returns:
     -------
     inferred : Domain or NotSpecified
 
-    Raises
+    Raises:
     ------
     AmbiguousDomain
         Raised if more than one concrete domain is present in the input terms.

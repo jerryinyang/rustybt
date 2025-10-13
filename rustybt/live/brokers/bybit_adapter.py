@@ -7,7 +7,7 @@ supporting both spot and derivatives markets via the pybit SDK.
 import asyncio
 import time
 from decimal import Decimal
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 import structlog
 from pybit.unified_trading import HTTP
@@ -110,15 +110,15 @@ class BybitBrokerAdapter(BrokerAdapter):
         )
 
         self._connected = False
-        self._market_data_queue: asyncio.Queue[Dict] = asyncio.Queue()
+        self._market_data_queue: asyncio.Queue[dict] = asyncio.Queue()
 
         # Rate limiting tracking
-        self._request_timestamps: List[float] = []
-        self._order_timestamps: Dict[str, List[float]] = {}
+        self._request_timestamps: list[float] = []
+        self._order_timestamps: dict[str, list[float]] = {}
 
         # WebSocket streaming components
-        self._ws_adapter: Optional[BybitWebSocketAdapter] = None
-        self._bar_buffer: Optional[BarBuffer] = None
+        self._ws_adapter: BybitWebSocketAdapter | None = None
+        self._bar_buffer: BarBuffer | None = None
 
         logger.info(
             "bybit_adapter_initialized",
@@ -196,8 +196,8 @@ class BybitBrokerAdapter(BrokerAdapter):
         asset: Asset,
         amount: Decimal,
         order_type: str,
-        limit_price: Optional[Decimal] = None,
-        stop_price: Optional[Decimal] = None,
+        limit_price: Decimal | None = None,
+        stop_price: Decimal | None = None,
         post_only: bool = False,
         reduce_only: bool = False,
     ) -> str:
@@ -365,7 +365,7 @@ class BybitBrokerAdapter(BrokerAdapter):
             logger.error("order_cancellation_failed", order_id=broker_order_id, error=str(e))
             raise BybitOrderRejectError(f"Failed to cancel order {broker_order_id}: {e}") from e
 
-    async def get_account_info(self) -> Dict[str, Decimal]:
+    async def get_account_info(self) -> dict[str, Decimal]:
         """Get account information.
 
         Returns:
@@ -435,7 +435,7 @@ class BybitBrokerAdapter(BrokerAdapter):
             logger.error("get_account_info_failed", error=str(e))
             raise BybitConnectionError(f"Failed to get account info: {e}") from e
 
-    async def get_positions(self) -> List[Dict]:
+    async def get_positions(self) -> list[dict]:
         """Get current positions.
 
         Returns:
@@ -481,14 +481,16 @@ class BybitBrokerAdapter(BrokerAdapter):
                 # Convert side to signed amount
                 amount = size if side == "Buy" else -size
 
-                positions.append({
-                    "symbol": symbol,
-                    "amount": amount,
-                    "entry_price": entry_price,
-                    "mark_price": mark_price,
-                    "unrealized_pnl": unrealized_pnl,
-                    "market_value": size * mark_price,
-                })
+                positions.append(
+                    {
+                        "symbol": symbol,
+                        "amount": amount,
+                        "entry_price": entry_price,
+                        "mark_price": mark_price,
+                        "unrealized_pnl": unrealized_pnl,
+                        "market_value": size * mark_price,
+                    }
+                )
 
             logger.debug("positions_fetched", count=len(positions))
 
@@ -498,7 +500,7 @@ class BybitBrokerAdapter(BrokerAdapter):
             logger.error("get_positions_failed", error=str(e))
             raise BybitConnectionError(f"Failed to get positions: {e}") from e
 
-    async def get_open_orders(self) -> List[Dict]:
+    async def get_open_orders(self) -> list[dict]:
         """Get open/pending orders.
 
         Returns:
@@ -524,15 +526,17 @@ class BybitBrokerAdapter(BrokerAdapter):
 
             orders = []
             for order_data in orders_data:
-                orders.append({
-                    "order_id": f"{order_data['symbol']}:{order_data['orderId']}",
-                    "symbol": order_data["symbol"],
-                    "side": order_data["side"],
-                    "type": order_data["orderType"],
-                    "quantity": Decimal(order_data["qty"]),
-                    "price": Decimal(order_data["price"]) if order_data.get("price") else None,
-                    "status": order_data["orderStatus"],
-                })
+                orders.append(
+                    {
+                        "order_id": f"{order_data['symbol']}:{order_data['orderId']}",
+                        "symbol": order_data["symbol"],
+                        "side": order_data["side"],
+                        "type": order_data["orderType"],
+                        "quantity": Decimal(order_data["qty"]),
+                        "price": Decimal(order_data["price"]) if order_data.get("price") else None,
+                        "status": order_data["orderStatus"],
+                    }
+                )
 
             return orders
 
@@ -540,7 +544,7 @@ class BybitBrokerAdapter(BrokerAdapter):
             logger.error("get_open_orders_failed", error=str(e))
             raise BybitConnectionError(f"Failed to get open orders: {e}") from e
 
-    async def subscribe_market_data(self, assets: List[Asset]) -> None:
+    async def subscribe_market_data(self, assets: list[Asset]) -> None:
         """Subscribe to real-time market data via WebSocket.
 
         Args:
@@ -571,7 +575,7 @@ class BybitBrokerAdapter(BrokerAdapter):
             logger.error("market_data_subscription_failed", symbols=symbols, error=str(e))
             raise BybitConnectionError(f"Failed to subscribe to market data: {e}") from e
 
-    async def unsubscribe_market_data(self, assets: List[Asset]) -> None:
+    async def unsubscribe_market_data(self, assets: list[Asset]) -> None:
         """Unsubscribe from market data via WebSocket.
 
         Args:
@@ -602,7 +606,7 @@ class BybitBrokerAdapter(BrokerAdapter):
             logger.error("market_data_unsubscription_failed", symbols=symbols, error=str(e))
             raise BybitConnectionError(f"Failed to unsubscribe from market data: {e}") from e
 
-    async def get_next_market_data(self) -> Optional[Dict]:
+    async def get_next_market_data(self) -> dict | None:
         """Get next market data update.
 
         Returns:
@@ -610,7 +614,7 @@ class BybitBrokerAdapter(BrokerAdapter):
         """
         try:
             return await asyncio.wait_for(self._market_data_queue.get(), timeout=0.1)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
 
     async def get_current_price(self, asset: Asset) -> Decimal:
@@ -681,8 +685,12 @@ class BybitBrokerAdapter(BrokerAdapter):
 
         # Check if we're at limit
         if len(self._request_timestamps) >= self.REQUESTS_PER_MINUTE:
-            logger.error("bybit_rate_limit_exceeded", requests_in_window=len(self._request_timestamps))
-            raise BybitRateLimitError(f"Rate limit exceeded: {len(self._request_timestamps)} requests in last minute")
+            logger.error(
+                "bybit_rate_limit_exceeded", requests_in_window=len(self._request_timestamps)
+            )
+            raise BybitRateLimitError(
+                f"Rate limit exceeded: {len(self._request_timestamps)} requests in last minute"
+            )
 
         # Warn at 80% of limit
         if len(self._request_timestamps) >= int(self.REQUESTS_PER_MINUTE * 0.8):

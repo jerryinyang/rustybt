@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
-
 from toolz import groupby, merge
 
-from .base import PipelineLoader
 from rustybt.pipeline.common import (
     EVENT_DATE_FIELD_NAME,
     SID_FIELD_NAME,
@@ -14,6 +12,8 @@ from rustybt.pipeline.loaders.utils import (
     next_event_indexer,
     previous_event_indexer,
 )
+
+from .base import PipelineLoader
 
 
 def required_event_fields(next_value_columns, previous_value_columns):
@@ -45,13 +45,9 @@ def validate_column_specs(events, next_value_columns, previous_value_columns):
     missing = required - received
     if missing:
         raise ValueError(
-            "EventsLoader missing required columns {missing}.\n"
-            "Got Columns: {received}\n"
-            "Expected Columns: {required}".format(
-                missing=sorted(missing),
-                received=sorted(received),
-                required=sorted(required),
-            )
+            f"EventsLoader missing required columns {sorted(missing)}.\n"
+            f"Got Columns: {sorted(received)}\n"
+            f"Expected Columns: {sorted(required)}"
         )
 
 
@@ -118,7 +114,7 @@ class EventsLoader(PipelineLoader):
         ----------
         requested_columns : iterable[BoundColumn]
 
-        Returns
+        Returns:
         -------
         next_cols, previous_cols : iterable[BoundColumn], iterable[BoundColumn]
             ``requested_columns``, partitioned into sub-sequences based on
@@ -132,11 +128,7 @@ class EventsLoader(PipelineLoader):
             elif c in self.previous_value_columns:
                 return "previous"
 
-            raise ValueError(
-                "{c} not found in next_value_columns or previous_value_columns".format(
-                    c=c
-                )
-            )
+            raise ValueError(f"{c} not found in next_value_columns or previous_value_columns")
 
         groups = groupby(next_or_previous, requested_columns)
         return groups.get("next", ()), groups.get("previous", ())

@@ -1,8 +1,8 @@
 # Python Implementation Profiling Results
 
-**Story**: 7.1 - Profile Python Implementation to Identify Bottlenecks  
-**Date**: 2025-01-08  
-**Profiler**: cProfile (deterministic profiling)  
+**Story**: 7.1 - Profile Python Implementation to Identify Bottlenecks
+**Date**: 2025-01-08
+**Profiler**: cProfile (deterministic profiling)
 **Scenario**: Daily data backtest (252 trading days, 10 symbols, SMA crossover strategy)
 
 ## Executive Summary
@@ -297,7 +297,7 @@ Based on memory spike correlation with code execution patterns:
    - **Optimization**: Use memory-mapped files or Polars (less overhead)
 
 2. **History Loader Arrays** (estimated ~30-40 MiB)
-   - **Source**: Sliding window cache for technical indicators  
+   - **Source**: Sliding window cache for technical indicators
    - **Size**: Pre-allocated arrays for 200-day SMA windows
    - **Optimization**: Lazy allocation, smaller window sizes, or Rust-native arrays
 
@@ -312,7 +312,7 @@ Based on memory spike correlation with code execution patterns:
 
 **1.1 Bundle Data Loading (89 MiB spike) ⭐⭐⭐⭐⭐**
 - **Current**: Load full 752-day dataset into memory as pandas DataFrame
-- **Target**: 
+- **Target**:
   - Use Polars (50% less memory overhead vs pandas)
   - Memory-map Parquet files (zero-copy reads)
   - Load only required date range (252 days instead of 752)
@@ -544,6 +544,6 @@ python scripts/profiling/compare_profiles.py docs/performance/profiles/baseline/
 
 ---
 
-**Report Generated**: 2025-01-08  
-**Profiler**: Quinn (Test Architect) + cProfile  
+**Report Generated**: 2025-01-08
+**Profiler**: Quinn (Test Architect) + cProfile
 **Story**: 7.1 - Profile Python Implementation

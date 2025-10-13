@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from rustybt.utils.compat import contextmanager as _contextmanager
 
+from rustybt.utils.compat import contextmanager as _contextmanager
 
 # Keep track of which methods of PipelineHooks are contextmanagers. Used by
 # DelegatingHooks to properly delegate to sub-hooks.
@@ -26,7 +26,7 @@ class PipelineHooks(ABC):
     Methods with names like 'doing_thing()' should be context managers. They
     will be entered by the engine around the corresponding event.
 
-    Methods
+    Methods:
     -------
     running_pipeline(self, pipeline, start_date, end_date, chunked)
     computing_chunk(self, terms, start_date, end_date)

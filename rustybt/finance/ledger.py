@@ -120,7 +120,7 @@ class PositionTracker:
         splits: list
             A list of splits.  Each split is a tuple of (asset, ratio).
 
-        Returns
+        Returns:
         -------
         int: The leftover cash from fractional shares after modifying each
             position.
@@ -167,9 +167,7 @@ class PositionTracker:
         for stock_dividend in stock_dividends:
             self._dirty_stats = True  # only mark dirty if we pay a dividend
 
-            div_owed = self.positions[stock_dividend.asset].earn_stock_dividend(
-                stock_dividend
-            )
+            div_owed = self.positions[stock_dividend.asset].earn_stock_dividend(stock_dividend)
             try:
                 self._unpaid_stock_dividends[stock_dividend.pay_date].append(
                     div_owed,
@@ -252,9 +250,7 @@ class PositionTracker:
         return positions
 
     def get_position_list(self):
-        return [
-            pos.to_dict() for asset, pos in self.positions.items() if pos.amount != 0
-        ]
+        return [pos.to_dict() for asset, pos in self.positions.items() if pos.amount != 0]
 
     def sync_last_sale_prices(self, dt, data_portal, handle_non_market_minutes=False):
         self._dirty_stats = True
@@ -283,12 +279,12 @@ class PositionTracker:
     def stats(self):
         """The current status of the positions.
 
-        Returns
+        Returns:
         -------
         stats : PositionStats
             The current stats position stats.
 
-        Notes
+        Notes:
         -----
         This is cached, repeated access will not recompute the stats until
         the stats may have changed.
@@ -317,7 +313,7 @@ class Ledger:
     """The ledger tracks all orders and transactions as well as the current
     state of the portfolio and positions.
 
-    Attributes
+    Attributes:
     ----------
     portfolio : zipline.protocol.Portfolio
         The updated portfolio being managed.
@@ -392,14 +388,14 @@ class Ledger:
         # space to work even when we have capital changes
         returns = self.portfolio.returns
         prev_returns = self._previous_total_returns
-        
+
         # Handle Decimal/float mixing for backward compatibility
         if isinstance(returns, Decimal) or isinstance(prev_returns, Decimal):
             if not isinstance(returns, Decimal):
                 returns = Decimal(str(returns))
             if not isinstance(prev_returns, Decimal):
                 prev_returns = Decimal(str(prev_returns))
-        
+
         return (returns + 1) / (prev_returns + 1) - 1
 
     @property
@@ -623,18 +619,14 @@ class Ledger:
             or None is explicitly passed, all of the transactions will be
             returned.
 
-        Returns
+        Returns:
         -------
         transactions : list[dict]
             The transaction information.
         """
         if dt is None:
             # flatten the by-day transactions
-            return [
-                txn
-                for by_day in self._processed_transactions.values()
-                for txn in by_day
-            ]
+            return [txn for by_day in self._processed_transactions.values() for txn in by_day]
 
         return self._processed_transactions.get(dt, [])
 
@@ -648,7 +640,7 @@ class Ledger:
             The particular datetime to look up order for. If not passed, or
             None is explicitly passed, all of the orders will be returned.
 
-        Returns
+        Returns:
         -------
         orders : list[dict]
             The order information.
@@ -731,7 +723,7 @@ class Ledger:
     def portfolio(self):
         """Compute the current portfolio.
 
-        Notes
+        Notes:
         -----
         This is cached, repeated access will not recompute the portfolio until
         the portfolio may have changed.
@@ -749,13 +741,13 @@ class Ledger:
             # Handle Decimal/float mixing for backward compatibility
             gross_exposure = position_stats.gross_exposure
             net_exposure = position_stats.net_exposure
-            
+
             if isinstance(portfolio_value, Decimal):
                 if not isinstance(gross_exposure, Decimal):
                     gross_exposure = Decimal(str(gross_exposure))
                 if not isinstance(net_exposure, Decimal):
                     net_exposure = Decimal(str(net_exposure))
-            
+
             gross_leverage = gross_exposure / portfolio_value
             net_leverage = net_exposure / portfolio_value
 

@@ -13,16 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import datetime
-from functools import partial
 import operator as op
+from functools import partial
 
-from dateutil.relativedelta import relativedelta
 import empyrical as ep
 import numpy as np
 import pandas as pd
+from dateutil.relativedelta import relativedelta
 
-from rustybt.utils.exploding_object import NamedExplodingObject
 from rustybt.finance._finance_ext import minute_annual_volatility
+from rustybt.utils.exploding_object import NamedExplodingObject
 
 
 class SimpleLedgerField:
@@ -77,14 +77,14 @@ class DailyLedgerField:
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
         field = self._packet_field
-        packet["cumulative_perf"][field] = packet["minute_perf"][field] = (
-            self._get_ledger_field(ledger)
+        packet["cumulative_perf"][field] = packet["minute_perf"][field] = self._get_ledger_field(
+            ledger
         )
 
     def end_of_session(self, packet, ledger, session, session_ix, data_portal):
         field = self._packet_field
-        packet["cumulative_perf"][field] = packet["daily_perf"][field] = (
-            self._get_ledger_field(ledger)
+        packet["cumulative_perf"][field] = packet["daily_perf"][field] = self._get_ledger_field(
+            ledger
         )
 
 
@@ -133,9 +133,7 @@ class Returns:
     def _end_of_period(field, packet, ledger, dt, session_ix, data_portal):
         packet[field]["returns"] = ledger.todays_returns
         packet["cumulative_perf"]["returns"] = ledger.portfolio.returns
-        packet["cumulative_risk_metrics"][
-            "algorithm_period_return"
-        ] = ledger.portfolio.returns
+        packet["cumulative_risk_metrics"]["algorithm_period_return"] = ledger.portfolio.returns
 
     end_of_bar = partial(_end_of_period, "minute_perf")
     end_of_session = partial(_end_of_period, "daily_perf")
@@ -232,7 +230,7 @@ class PNL:
 class CashFlow:
     """Tracks daily and cumulative cash flow.
 
-    Notes
+    Notes:
     -----
     For historical reasons, this field is named 'capital_used' in the packets.
     """
@@ -380,7 +378,7 @@ class NumTradingDays:
 class _ConstantCumulativeRiskMetric:
     """A metric which does not change, ever.
 
-    Notes
+    Notes:
     -----
     This exists to maintain the existing structure of the perf packets. We
     should kill this as soon as possible.
@@ -446,7 +444,7 @@ class _ClassicRiskMetrics:
             Series of algorithm leverages as of the end of each session
 
 
-        Returns
+        Returns:
         -------
         risk_metric : dict[str, any]
             Dict of metrics that with fields like:
@@ -467,10 +465,8 @@ class _ClassicRiskMetrics:
                     'max_leverage': 0.0,
                 }
         """
-
         algorithm_returns = algorithm_returns[
-            (algorithm_returns.index >= start_session)
-            & (algorithm_returns.index <= end_session)
+            (algorithm_returns.index >= start_session) & (algorithm_returns.index <= end_session)
         ]
 
         # Benchmark needs to be masked to the same dates as the algo returns
@@ -528,8 +524,7 @@ class _ClassicRiskMetrics:
         # check if a field in rval is nan or inf, and replace it with None
         # except period_label which is always a str
         return {
-            k: (None if k != "period_label" and not np.isfinite(v) else v)
-            for k, v in rval.items()
+            k: (None if k != "period_label" and not np.isfinite(v) else v) for k, v in rval.items()
         }
 
     @classmethod
@@ -549,9 +544,7 @@ class _ClassicRiskMetrics:
         tzinfo = end_date.tzinfo
         end_date = end_date
         for period_timestamp in months:
-            period = period_timestamp.tz_localize(None).to_period(
-                freq="%dM" % months_per
-            )
+            period = period_timestamp.tz_localize(None).to_period(freq="%dM" % months_per)
             if period.end_time > end_date:
                 break
 

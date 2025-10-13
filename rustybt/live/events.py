@@ -7,7 +7,7 @@ OrderReject > ScheduledTrigger > MarketData.
 
 from decimal import Decimal
 from enum import IntEnum
-from typing import Any, Dict, Optional
+from typing import Any
 
 import pandas as pd
 from pydantic import BaseModel, Field
@@ -45,7 +45,9 @@ class Event(BaseModel):
 
     def __le__(self, other: "Event") -> bool:
         """Less than or equal comparison."""
-        return self < other or (self.priority == other.priority and self.timestamp == other.timestamp)
+        return self < other or (
+            self.priority == other.priority and self.timestamp == other.timestamp
+        )
 
     def __gt__(self, other: "Event") -> bool:
         """Greater than comparison."""
@@ -78,7 +80,7 @@ class OrderFillEvent(Event):
     """Order fill notification event."""
 
     order_id: str
-    broker_order_id: Optional[str] = None
+    broker_order_id: str | None = None
     asset_symbol: str
     filled_amount: Decimal
     fill_price: Decimal
@@ -96,7 +98,7 @@ class OrderRejectEvent(Event):
     """Order rejection event."""
 
     order_id: str
-    broker_order_id: Optional[str] = None
+    broker_order_id: str | None = None
     asset_symbol: str
     amount: Decimal
     reason: str
@@ -113,7 +115,7 @@ class ScheduledTriggerEvent(Event):
     """Scheduled callback trigger event."""
 
     callback_name: str
-    callback_args: Dict[str, Any] = Field(default_factory=dict)
+    callback_args: dict[str, Any] = Field(default_factory=dict)
     trigger_timestamp: pd.Timestamp
 
     def __init__(self, **data: Any) -> None:
@@ -128,7 +130,7 @@ class SystemErrorEvent(Event):
 
     error_type: str
     error_message: str
-    exception_details: Optional[str] = None
+    exception_details: str | None = None
     error_timestamp: pd.Timestamp
 
     def __init__(self, **data: Any) -> None:

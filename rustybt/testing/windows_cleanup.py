@@ -4,9 +4,9 @@ Windows-specific cleanup utilities for handling file locking issues.
 
 import gc
 import os
+import shutil
 import sys
 import time
-import shutil
 from contextlib import contextmanager
 from functools import wraps
 
@@ -87,7 +87,6 @@ class WindowsSafeTempDirectory:
                         time.sleep(0.2 * (attempt + 1))
                     else:
                         # Skip cleanup on final failure to not fail the test
-                        print(f"Warning: Could not clean up {self.temp_directory.path}")
                         return True  # Suppress the exception
         else:
             return self.temp_directory.__exit__(exc_type, exc_val, exc_tb)

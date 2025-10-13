@@ -22,20 +22,23 @@ Provides:
 """
 
 import asyncio
-from typing import Optional, Callable, Any
+from collections.abc import Callable
 from functools import wraps
+from typing import Any
 
 import pandas as pd
 from tqdm.auto import tqdm
 
 try:
     import nest_asyncio
+
     NEST_ASYNCIO_AVAILABLE = True
 except ImportError:
     NEST_ASYNCIO_AVAILABLE = False
 
 try:
     from IPython import get_ipython
+
     IPYTHON_AVAILABLE = True
 except ImportError:
     IPYTHON_AVAILABLE = False
@@ -63,25 +66,23 @@ def setup_notebook() -> None:
         )
 
     if not NEST_ASYNCIO_AVAILABLE:
-        raise ImportError(
-            "nest-asyncio not found. Install with: pip install nest-asyncio"
-        )
+        raise ImportError("nest-asyncio not found. Install with: pip install nest-asyncio")
 
     # Enable nested event loops for async support
     nest_asyncio.apply()
 
     # Configure pandas display options
-    pd.set_option('display.max_columns', None)
-    pd.set_option('display.max_rows', 100)
-    pd.set_option('display.width', None)
-    pd.set_option('display.float_format', '{:.6f}'.format)
+    pd.set_option("display.max_columns", None)
+    pd.set_option("display.max_rows", 100)
+    pd.set_option("display.width", None)
+    pd.set_option("display.float_format", "{:.6f}".format)
 
     # Check if we're in a Jupyter notebook
     ipython = get_ipython()
     if ipython is not None:
         # Load tqdm extension for better progress bars
-        ipython.magic('load_ext autoreload')
-        ipython.magic('autoreload 2')
+        ipython.magic("load_ext autoreload")
+        ipython.magic("autoreload 2")
 
     print("✅ Notebook environment configured successfully")
     print("   - Async/await support enabled")
@@ -119,8 +120,7 @@ async def async_backtest(
     """
     if not NEST_ASYNCIO_AVAILABLE:
         raise ImportError(
-            "nest-asyncio required for async backtests. "
-            "Install with: pip install nest-asyncio"
+            "nest-asyncio required for async backtests. Install with: pip install nest-asyncio"
         )
 
     # Ensure nest_asyncio is applied
@@ -149,8 +149,8 @@ async def async_backtest(
 
 
 def with_progress(
-    desc: Optional[str] = None,
-    total: Optional[int] = None,
+    desc: str | None = None,
+    total: int | None = None,
     unit: str = "it",
 ) -> Callable:
     """Decorator to add progress bar to any function.
@@ -170,13 +170,14 @@ def with_progress(
         ...         # Process item
         ...         yield item
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
             # Determine if function is generator
             result = func(*args, **kwargs)
 
-            if hasattr(result, '__iter__') and not isinstance(result, (str, bytes, pd.DataFrame)):
+            if hasattr(result, "__iter__") and not isinstance(result, (str, bytes, pd.DataFrame)):
                 # Wrap iterable with tqdm
                 return tqdm(result, desc=desc or func.__name__, total=total, unit=unit)
             else:
@@ -184,6 +185,7 @@ def with_progress(
                 return result
 
         return wrapper
+
     return decorator
 
 
@@ -251,7 +253,7 @@ class ProgressCallback:
 def create_progress_iterator(
     iterable,
     desc: str = "Processing",
-    total: Optional[int] = None,
+    total: int | None = None,
     unit: str = "it",
 ):
     """Create progress bar iterator for any iterable.

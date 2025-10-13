@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import random
+
 import numpy as np
 import pandas as pd
 
@@ -24,7 +25,6 @@ from rustybt.utils.calendar_utils import get_calendar
 def generate_daily_test_data(
     first_day, last_day, starting_open, starting_volume, multipliers_list, path
 ):
-
     cal = get_calendar("XNYS")
     days = cal.days_in_range(first_day, last_day)
 

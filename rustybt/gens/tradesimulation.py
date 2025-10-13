@@ -12,20 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from copy import copy
 import logging
+from copy import copy
+
 from rustybt.finance.order import ORDER_STATUS
+from rustybt.gens.sim_engine import (
+    BAR,
+    BEFORE_TRADING_START_BAR,
+    MINUTE_END,
+    SESSION_END,
+    SESSION_START,
+)
 from rustybt.protocol import BarData
 from rustybt.utils.api_support import ZiplineAPI
 from rustybt.utils.compat import ExitStack
-
-from rustybt.gens.sim_engine import (
-    BAR,
-    SESSION_START,
-    SESSION_END,
-    MINUTE_END,
-    BEFORE_TRADING_START_BAR,
-)
 
 log = logging.getLogger("Trade Simulation")
 
@@ -42,7 +42,6 @@ class AlgorithmSimulator:
         benchmark_source,
         restrictions,
     ):
-
         # ==============
         # Simulation
         # Param Setup
@@ -95,7 +94,6 @@ class AlgorithmSimulator:
         )
 
     # TODO: simplify
-    # flake8: noqa: C901
     def transform(self):
         """
         Main generator work loop.
@@ -277,9 +275,7 @@ class AlgorithmSimulator:
             return acd is not None and acd <= dt
 
         # Remove positions in any sids that have reached their auto_close date.
-        assets_to_clear = [
-            asset for asset in position_assets if past_auto_close_date(asset)
-        ]
+        assets_to_clear = [asset for asset in position_assets if past_auto_close_date(asset)]
         metrics_tracker = algo.metrics_tracker
         data_portal = self.data_portal
         for asset in assets_to_clear:
@@ -289,9 +285,7 @@ class AlgorithmSimulator:
         # date. These orders get processed immediately because otherwise they
         # would not be processed until the first bar of the next day.
         blotter = algo.blotter
-        assets_to_cancel = [
-            asset for asset in blotter.open_orders if past_auto_close_date(asset)
-        ]
+        assets_to_cancel = [asset for asset in blotter.open_orders if past_auto_close_date(asset)]
         for asset in assets_to_cancel:
             blotter.cancel_all_orders_for_asset(asset)
 

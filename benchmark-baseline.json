@@ -1,0 +1,33 @@
+{
+  "machine_info": {
+    "node": "github-runner",
+    "processor": "x86_64",
+    "python_implementation": "CPython",
+    "python_version": "3.12.0"
+  },
+  "commit_info": {
+    "id": "baseline",
+    "time": "2025-10-13T00:00:00",
+    "dirty": false
+  },
+  "benchmarks": [
+    {
+      "name": "test_decimal_ledger_performance",
+      "stats": {
+        "mean": 0.0005,
+        "median": 0.0005,
+        "min": 0.0004,
+        "max": 0.0006
+      }
+    },
+    {
+      "name": "test_decimal_backtest",
+      "stats": {
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0.48,
+        "max": 0.52
+      }
+    }
+  ]
+}

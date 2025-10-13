@@ -7,7 +7,7 @@ live trading to validate signal alignment and execution quality.
 import asyncio
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import structlog
 
@@ -16,11 +16,11 @@ from rustybt.assets import Asset
 from rustybt.finance.decimal.blotter import DecimalBlotter
 from rustybt.finance.decimal.ledger import DecimalLedger
 from rustybt.finance.decimal.order import DecimalOrder
+from rustybt.live.shadow.alignment_breaker import AlignmentCircuitBreaker
 from rustybt.live.shadow.config import ShadowTradingConfig
+from rustybt.live.shadow.execution_tracker import ExecutionQualityTracker
 from rustybt.live.shadow.models import SignalRecord
 from rustybt.live.shadow.signal_validator import SignalAlignmentValidator
-from rustybt.live.shadow.execution_tracker import ExecutionQualityTracker
-from rustybt.live.shadow.alignment_breaker import AlignmentCircuitBreaker
 
 logger = structlog.get_logger()
 
@@ -87,7 +87,7 @@ class ShadowBacktestEngine:
 
         # Shadow engine state
         self._running = False
-        self._current_timestamp: Optional[datetime] = None
+        self._current_timestamp: datetime | None = None
         self._signal_queue: asyncio.Queue = asyncio.Queue()
 
         logger.info(
@@ -126,10 +126,10 @@ class ShadowBacktestEngine:
 
         # Call initialize() on the cloned strategy if it hasn't been called yet
         # This ensures the strategy is properly set up with its attributes
-        if hasattr(shadow_strategy, 'initialize') and callable(shadow_strategy.initialize):
+        if hasattr(shadow_strategy, "initialize") and callable(shadow_strategy.initialize):
             try:
                 # Check if initialize() has already been called by looking for a marker attribute
-                if not hasattr(shadow_strategy, '_initialized'):
+                if not hasattr(shadow_strategy, "_initialized"):
                     shadow_strategy.initialize()
                     shadow_strategy._initialized = True
             except Exception as e:
@@ -149,7 +149,7 @@ class ShadowBacktestEngine:
     async def process_market_data(
         self,
         timestamp: datetime,
-        market_data: Dict[Asset, Dict],
+        market_data: dict[Asset, dict],
     ) -> None:
         """Process market data event in shadow backtest.
 
@@ -207,16 +207,19 @@ class ShadowBacktestEngine:
                 # Set datetime on strategy for compatibility with TradingAlgorithm properties
                 self._strategy.datetime = timestamp
 
-                # Create a mock metrics_tracker that has a no-op sync_last_sale_prices method
+                # Create a no-op metrics_tracker for shadow mode
                 # This is needed because TradingAlgorithm properties (account, portfolio) call this
-                class MockMetricsTracker:
+                class NoOpMetricsTracker:
                     def sync_last_sale_prices(self, dt, data_portal):
                         pass  # No-op for shadow mode
 
-                # Save original and set mock
+                # Save original and set no-op tracker
                 original_metrics_tracker = getattr(self._strategy, "metrics_tracker", None)
-                if not hasattr(self._strategy, "metrics_tracker") or self._strategy.metrics_tracker is None:
-                    self._strategy.metrics_tracker = MockMetricsTracker()
+                if (
+                    not hasattr(self._strategy, "metrics_tracker")
+                    or self._strategy.metrics_tracker is None
+                ):
+                    self._strategy.metrics_tracker = NoOpMetricsTracker()
 
                 # Create simple context for strategy
                 context = ShadowContext(self._ledger, self._strategy)
@@ -255,7 +258,7 @@ class ShadowBacktestEngine:
     async def _simulate_fill(
         self,
         signal: SignalRecord,
-        market_data: Dict,
+        market_data: dict,
     ) -> None:
         """Simulate order fill using slippage and commission models.
 
@@ -286,7 +289,6 @@ class ShadowBacktestEngine:
         commission = self._commission_model.calculate(order, fill_price, signal.quantity)
 
         # Update shadow ledger (simplified - real implementation would use full transaction flow)
-        position_change = signal.quantity if signal.side == "BUY" else -signal.quantity
         cost = fill_price * signal.quantity + commission
 
         if signal.side == "BUY":
@@ -307,7 +309,7 @@ class ShadowBacktestEngine:
         asset: Asset,
         side: str,
         quantity: Decimal,
-        price: Optional[Decimal],
+        price: Decimal | None,
         order_type: str,
         timestamp: datetime,
     ) -> None:
@@ -422,7 +424,7 @@ class ShadowBacktestEngine:
 
         return is_aligned
 
-    def get_alignment_metrics(self) -> Dict:
+    def get_alignment_metrics(self) -> dict:
         """Get current alignment metrics for monitoring/dashboard.
 
         Returns:
@@ -474,7 +476,7 @@ class ShadowBarData:
     current market data without full DataPortal infrastructure.
     """
 
-    def __init__(self, market_data: Dict[Asset, Dict], timestamp: datetime):
+    def __init__(self, market_data: dict[Asset, dict], timestamp: datetime):
         """Initialize shadow bar data.
 
         Args:
@@ -535,7 +537,7 @@ class ShadowContext:
 
         # Copy any context variables from strategy (excluding properties that require data_portal)
         # Properties like 'account' and 'portfolio' trigger _sync_last_sale_prices() which needs data_portal
-        excluded_attrs = {'account', 'portfolio', 'datetime', 'data_portal', 'metrics_tracker'}
+        excluded_attrs = {"account", "portfolio", "datetime", "data_portal", "metrics_tracker"}
 
         for attr in dir(strategy):
             if attr in excluded_attrs:

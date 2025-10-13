@@ -1,6 +1,7 @@
-import warnings
-import sys
 import os
+import sys
+import warnings
+
 import pandas as pd
 import pytest
 
@@ -34,9 +35,9 @@ settings.load_profile(os.getenv("HYPOTHESIS_PROFILE", "quick"))
 
 # BACKWARDS COMPATIBILITY: Create module alias for unpickling old zipline data
 import rustybt
-sys.modules['zipline'] = rustybt
 
-from rustybt.utils.calendar_utils import get_calendar
+sys.modules["zipline"] = rustybt
+
 import sqlalchemy as sa
 
 from rustybt.assets import (
@@ -45,7 +46,7 @@ from rustybt.assets import (
     Equity,
     Future,
 )
-
+from rustybt.utils.calendar_utils import get_calendar
 
 # More robust CI detection
 ON_GHA = (
@@ -156,7 +157,7 @@ def with_trading_calendars(request):
         }:
             # Set name to allow aliasing.
             calendar = get_calendar(cal_str)
-            setattr(request.cls, "{0}_calendar".format(cal_str.lower()), calendar)
+            setattr(request.cls, f"{cal_str.lower()}_calendar", calendar)
             request.cls.trading_calendars[cal_str] = calendar
 
         type_to_cal = request.cls.TRADING_CALENDAR_FOR_ASSET_TYPE.items()
@@ -209,8 +210,8 @@ def with_asset_finder(sql_db_class):
 @pytest.fixture(scope="class")
 def with_benchmark_returns(request):
     from rustybt.testing.fixtures import (
-        read_checked_in_benchmark_data,
         STATIC_BENCHMARK_PATH,
+        read_checked_in_benchmark_data,
     )
 
     START_DATE = DEFAULT_DATE_BOUNDS["START_DATE"].date()
@@ -231,17 +232,11 @@ def with_benchmark_returns(request):
     static_end_date = benchmark_returns.index[-1].date()
     warning_message = (
         "The WithBenchmarkReturns fixture uses static data between "
-        "{static_start} and {static_end}. To use a start and end date "
-        "of {given_start} and {given_end} you will have to update the "
-        "file in {benchmark_path} to include the missing dates.".format(
-            static_start=static_start_date,
-            static_end=static_end_date,
-            given_start=START_DATE,
-            given_end=END_DATE,
-            benchmark_path=STATIC_BENCHMARK_PATH,
-        )
+        f"{static_start_date} and {static_end_date}. To use a start and end date "
+        f"of {START_DATE} and {END_DATE} you will have to update the "
+        f"file in {STATIC_BENCHMARK_PATH} to include the missing dates."
     )
-    if START_DATE < static_start_date or END_DATE > static_end_date:
+    if static_start_date > START_DATE or static_end_date < END_DATE:
         raise AssertionError(warning_message)
 
     request.cls.BENCHMARK_RETURNS = benchmark_returns

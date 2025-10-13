@@ -143,6 +143,7 @@ class TestRetryAsync:
 
         # Monkey-patch asyncio.sleep to track delays
         original_sleep = asyncio.sleep
+
         async def mock_sleep(delay: float) -> None:
             delays.append(delay)
             await original_sleep(0.001)  # Minimal actual delay
@@ -182,6 +183,7 @@ class TestRetryAsync:
 
         # Monkey-patch asyncio.sleep to track delays
         original_sleep = asyncio.sleep
+
         async def mock_sleep(delay: float) -> None:
             delays.append(delay)
             await original_sleep(0.001)
@@ -219,6 +221,7 @@ class TestRetryAsync:
 
         # Monkey-patch asyncio.sleep to track delays
         original_sleep = asyncio.sleep
+
         async def mock_sleep(delay: float) -> None:
             delays.append(delay)
             await original_sleep(0.001)
@@ -269,6 +272,7 @@ class TestRetryAsync:
     @pytest.mark.asyncio
     async def test_invalid_max_attempts(self) -> None:
         """Test ValueError for invalid max_attempts."""
+
         async def dummy() -> str:
             return "dummy"
 
@@ -388,11 +392,7 @@ class TestFlattenExceptions:
 
     def test_flatten_preserves_context(self) -> None:
         """Test context is preserved in flattened output."""
-        exc = BrokerRateLimitError(
-            "Rate limited",
-            broker="Kraken",
-            reset_after=60.0
-        )
+        exc = BrokerRateLimitError("Rate limited", broker="Kraken", reset_after=60.0)
         result = flatten_exceptions([exc])
 
         assert result["error_1_broker"] == "Kraken"
@@ -428,10 +428,7 @@ class TestErrorHandlingPatterns:
 
     def test_user_vs_developer_messages(self) -> None:
         """Test different messages for users vs developers."""
-        exc = BrokerConnectionError(
-            "Connection failed",
-            broker="Binance"
-        )
+        exc = BrokerConnectionError("Connection failed", broker="Binance")
 
         # User sees clean message (without technical details in context)
         user_msg = render_user_message(exc)

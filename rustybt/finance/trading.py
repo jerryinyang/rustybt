@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import logging
+
 import pandas as pd
 
 from rustybt.utils.memoize import remember_last
@@ -65,9 +66,7 @@ class SimulationParameters:
         if not trading_calendar.is_session(self._start_session.tz_localize(None)):
             # if the start date is not a valid session in this calendar,
             # push it forward to the first valid session
-            self._start_session = trading_calendar.minute_to_session(
-                self._start_session
-            )
+            self._start_session = trading_calendar.minute_to_session(self._start_session)
 
         if not trading_calendar.is_session(self._end_session.tz_localize(None)):
             # if the end date is not a valid session in this calendar,
@@ -80,9 +79,7 @@ class SimulationParameters:
         self._first_open = trading_calendar.session_first_minute(
             self._start_session.tz_localize(None)
         )
-        self._last_close = trading_calendar.session_close(
-            self._end_session.tz_localize(None)
-        )
+        self._last_close = trading_calendar.session_close(self._end_session.tz_localize(None))
 
     @property
     def capital_base(self):
@@ -131,9 +128,7 @@ class SimulationParameters:
     @property
     @remember_last
     def sessions(self):
-        return self._trading_calendar.sessions_in_range(
-            self.start_session, self.end_session
-        )
+        return self._trading_calendar.sessions_in_range(self.start_session, self.end_session)
 
     def create_new(self, start_session, end_session, data_frequency=None):
         if data_frequency is None:
@@ -150,25 +145,15 @@ class SimulationParameters:
         )
 
     def __repr__(self):
-        return """
-{class_name}(
-    start_session={start_session},
-    end_session={end_session},
-    capital_base={capital_base},
-    data_frequency={data_frequency},
-    emission_rate={emission_rate},
-    first_open={first_open},
-    last_close={last_close},
-    trading_calendar={trading_calendar}
+        return f"""
+{self.__class__.__name__}(
+    start_session={self.start_session},
+    end_session={self.end_session},
+    capital_base={self.capital_base},
+    data_frequency={self.data_frequency},
+    emission_rate={self.emission_rate},
+    first_open={self.first_open},
+    last_close={self.last_close},
+    trading_calendar={self._trading_calendar}
 )\
-""".format(
-            class_name=self.__class__.__name__,
-            start_session=self.start_session,
-            end_session=self.end_session,
-            capital_base=self.capital_base,
-            data_frequency=self.data_frequency,
-            emission_rate=self.emission_rate,
-            first_open=self.first_open,
-            last_close=self.last_close,
-            trading_calendar=self._trading_calendar,
-        )
+"""

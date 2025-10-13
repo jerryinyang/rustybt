@@ -1,17 +1,19 @@
-from collections import namedtuple
 import datetime
+import re
+from collections import namedtuple
 from textwrap import dedent
 
 import numpy as np
 import pandas as pd
+import pytest
 import pytz
 
+import rustybt.testing.fixtures as zf
 from rustybt.country import CountryCode
 from rustybt.pipeline import Pipeline
 from rustybt.pipeline.data import Column, DataSet
 from rustybt.pipeline.data.testing import TestingDataSet
 from rustybt.pipeline.domain import (
-    AmbiguousDomain,
     AR_EQUITIES,
     AT_EQUITIES,
     AU_EQUITIES,
@@ -26,8 +28,6 @@ from rustybt.pipeline.domain import (
     CZ_EQUITIES,
     DE_EQUITIES,
     DK_EQUITIES,
-    EquityCalendarDomain,
-    EquitySessionDomain,
     ES_EQUITIES,
     FI_EQUITIES,
     FR_EQUITIES,
@@ -39,7 +39,6 @@ from rustybt.pipeline.domain import (
     ID_EQUITIES,
     IE_EQUITIES,
     IN_EQUITIES,
-    infer_domain,
     IT_EQUITIES,
     JP_EQUITIES,
     KR_EQUITIES,
@@ -61,14 +60,15 @@ from rustybt.pipeline.domain import (
     TW_EQUITIES,
     US_EQUITIES,
     ZA_EQUITIES,
+    AmbiguousDomain,
+    EquityCalendarDomain,
+    EquitySessionDomain,
+    infer_domain,
 )
 from rustybt.pipeline.factors import CustomFactor
-import rustybt.testing.fixtures as zf
 from rustybt.testing.core import powerset
 from rustybt.testing.predicates import assert_equal, assert_messages_equal
 from rustybt.utils.pandas_utils import days_at_time
-import pytest
-import re
 
 EXPECTED_CUTOFF_TIMES = {
     AR_EQUITIES: datetime.time(10, 15),
@@ -121,9 +121,7 @@ LIST_EXPECTED_CUTOFF_TIMES = list(EXPECTED_CUTOFF_TIMES.items())
 # KR is expected to fail
 LIST_EXPECTED_CUTOFF_TIMES[25] = pytest.param(
     *LIST_EXPECTED_CUTOFF_TIMES[25],
-    marks=pytest.mark.xfail(
-        reason="The KR calendar is expected to fail TOFIX or remove"
-    ),
+    marks=pytest.mark.xfail(reason="The KR calendar is expected to fail TOFIX or remove"),
 )
 
 
@@ -184,7 +182,6 @@ class TestSpecialize:
             col4 = Column(dtype=float)
 
         def do_checks(cls, colnames):
-
             specialized = cls.specialize(domain)
 
             # Specializations should be memoized.
@@ -284,9 +281,9 @@ class TestSpecialize:
             assert generic_non_root.specialize(domain_param) is cls
             for name in colnames:
                 # Same deal for columns.
-                assert getattr(generic_non_root, name).specialize(
-                    domain_param
-                ) is getattr(cls, name)
+                assert getattr(generic_non_root, name).specialize(domain_param) is getattr(
+                    cls, name
+                )
 
             # Don't allow specializing to any other domain.
             with pytest.raises(ValueError):
@@ -418,13 +415,9 @@ class TestDataQueryCutoffForSession:
     @pytest.mark.parametrize(
         "domain, expected_cutoff_time",
         LIST_EXPECTED_CUTOFF_TIMES,
-        ids=[
-            f"{x[0].calendar_name} {x[1]}" for x in list(EXPECTED_CUTOFF_TIMES.items())
-        ],
+        ids=[f"{x[0].calendar_name} {x[1]}" for x in list(EXPECTED_CUTOFF_TIMES.items())],
     )
-    def test_built_in_equity_calendar_domain_defaults(
-        self, domain, expected_cutoff_time
-    ):
+    def test_built_in_equity_calendar_domain_defaults(self, domain, expected_cutoff_time):
         self._test_equity_calendar_domain(domain, expected_cutoff_time)
 
     def test_equity_calendar_domain(self):
@@ -557,14 +550,9 @@ class TestRollForward:
 
         # passing a date before the first session should return the
         # first session
-        before_first_session = JP_EQUITIES.calendar.first_session - pd.Timedelta(
-            days=20
-        )
+        before_first_session = JP_EQUITIES.calendar.first_session - pd.Timedelta(days=20)
 
-        assert (
-            JP_EQUITIES.roll_forward(before_first_session)
-            == JP_EQUITIES.calendar.first_session
-        )
+        assert JP_EQUITIES.roll_forward(before_first_session) == JP_EQUITIES.calendar.first_session
 
         # requesting a session beyond the last session raises an ValueError
         after_last_session = JP_EQUITIES.calendar.last_session + pd.Timedelta(days=20)
@@ -579,9 +567,7 @@ class TestRollForward:
 
         # test that a roll_forward works with an EquitySessionDomain,
         # not just calendar domains
-        sessions = pd.DatetimeIndex(
-            ["2000-01-01", "2000-02-01", "2000-04-01", "2000-06-01"]
-        )
+        sessions = pd.DatetimeIndex(["2000-01-01", "2000-02-01", "2000-04-01", "2000-06-01"])
 
         session_domain = EquitySessionDomain(sessions, CountryCode.UNITED_STATES)
 

@@ -2,8 +2,8 @@
 Loaders for zipline.pipeline.data.testing datasets.
 """
 
-from .synthetic import EyeLoader, SeededRandomLoader
 from ..data.testing import TestingDataSet
+from .synthetic import EyeLoader, SeededRandomLoader
 
 
 def make_eye_loader(dates, sids):

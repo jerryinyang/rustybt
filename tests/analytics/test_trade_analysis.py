@@ -27,24 +27,20 @@ Test coverage:
 
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import polars as pl
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from rustybt.analytics.trade_analysis import (
     InsufficientTradeDataError,
-    Trade,
-    TradeAnalysisError,
     TradeAnalyzer,
 )
 from rustybt.assets import Equity, ExchangeInfo
 from rustybt.finance.decimal.transaction import DecimalTransaction
-
 
 # ============================================================================
 # Fixtures and Test Helpers
@@ -167,9 +163,7 @@ def sample_price_data(sample_asset):
 @pytest.fixture
 def sample_backtest_result(sample_transactions, sample_price_data):
     """Create sample backtest result."""
-    return MockBacktestResult(
-        transactions=sample_transactions, price_data=sample_price_data
-    )
+    return MockBacktestResult(transactions=sample_transactions, price_data=sample_price_data)
 
 
 @pytest.fixture
@@ -583,7 +577,7 @@ def test_win_rate_calculation():
         transactions.append(
             DecimalTransaction(
                 timestamp=base_time + timedelta(hours=i * 4),
-                order_id=f"order_{i*2}",
+                order_id=f"order_{i * 2}",
                 asset=asset,
                 amount=Decimal("100"),
                 price=Decimal("100.00"),
@@ -596,7 +590,7 @@ def test_win_rate_calculation():
         transactions.append(
             DecimalTransaction(
                 timestamp=base_time + timedelta(hours=i * 4 + 2),
-                order_id=f"order_{i*2+1}",
+                order_id=f"order_{i * 2 + 1}",
                 asset=asset,
                 amount=Decimal("-100"),
                 price=exit_price,
@@ -745,7 +739,7 @@ def test_property_trade_pnl_sum(num_trades, price_range):
             [
                 DecimalTransaction(
                     timestamp=base_time + timedelta(hours=i * 4),
-                    order_id=f"order_{i*2}",
+                    order_id=f"order_{i * 2}",
                     asset=asset,
                     amount=Decimal("100"),
                     price=entry_price,
@@ -754,7 +748,7 @@ def test_property_trade_pnl_sum(num_trades, price_range):
                 ),
                 DecimalTransaction(
                     timestamp=base_time + timedelta(hours=i * 4 + 2),
-                    order_id=f"order_{i*2+1}",
+                    order_id=f"order_{i * 2 + 1}",
                     asset=asset,
                     amount=Decimal("-100"),
                     price=exit_price,
@@ -858,7 +852,7 @@ def test_all_winning_trades():
             [
                 DecimalTransaction(
                     timestamp=base_time + timedelta(hours=i * 4),
-                    order_id=f"order_{i*2}",
+                    order_id=f"order_{i * 2}",
                     asset=asset,
                     amount=Decimal("100"),
                     price=Decimal("100.00"),
@@ -867,7 +861,7 @@ def test_all_winning_trades():
                 ),
                 DecimalTransaction(
                     timestamp=base_time + timedelta(hours=i * 4 + 2),
-                    order_id=f"order_{i*2+1}",
+                    order_id=f"order_{i * 2 + 1}",
                     asset=asset,
                     amount=Decimal("-100"),
                     price=Decimal("110.00"),  # All winners
@@ -903,7 +897,7 @@ def test_all_losing_trades():
             [
                 DecimalTransaction(
                     timestamp=base_time + timedelta(hours=i * 4),
-                    order_id=f"order_{i*2}",
+                    order_id=f"order_{i * 2}",
                     asset=asset,
                     amount=Decimal("100"),
                     price=Decimal("100.00"),
@@ -912,7 +906,7 @@ def test_all_losing_trades():
                 ),
                 DecimalTransaction(
                     timestamp=base_time + timedelta(hours=i * 4 + 2),
-                    order_id=f"order_{i*2+1}",
+                    order_id=f"order_{i * 2 + 1}",
                     asset=asset,
                     amount=Decimal("-100"),
                     price=Decimal("90.00"),  # All losers
@@ -1005,7 +999,7 @@ def test_performance_large_trade_set():
             [
                 DecimalTransaction(
                     timestamp=base_time + timedelta(minutes=i * 10),
-                    order_id=f"order_{i*2}",
+                    order_id=f"order_{i * 2}",
                     asset=asset,
                     amount=Decimal("100"),
                     price=entry_price,
@@ -1014,7 +1008,7 @@ def test_performance_large_trade_set():
                 ),
                 DecimalTransaction(
                     timestamp=base_time + timedelta(minutes=i * 10 + 5),
-                    order_id=f"order_{i*2+1}",
+                    order_id=f"order_{i * 2 + 1}",
                     asset=asset,
                     amount=Decimal("-100"),
                     price=exit_price,

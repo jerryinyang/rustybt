@@ -20,7 +20,7 @@ with appropriate precision and formatting conventions.
 
 import json
 from decimal import Decimal
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 def format_percentage(value: Decimal, precision: int = 2, include_sign: bool = False) -> str:
@@ -155,8 +155,8 @@ def format_scientific(value: Decimal, precision: int = 2) -> str:
 
 
 def create_metrics_summary_table(
-    metrics: Dict[str, Decimal],
-    precision_map: Optional[Dict[str, int]] = None,
+    metrics: dict[str, Decimal],
+    precision_map: dict[str, int] | None = None,
 ) -> str:
     """Create formatted summary table of metrics.
 
@@ -198,7 +198,7 @@ def create_metrics_summary_table(
 
     # Format metrics
     formatted_metrics = []
-    max_name_len = max(len(name) for name in metrics.keys())
+    max_name_len = max(len(name) for name in metrics)
 
     for name, value in sorted(metrics.items()):
         precision = precision_map.get(name, default_precision.get(name, 4))
@@ -232,7 +232,7 @@ def create_metrics_summary_table(
     return "\n".join(lines)
 
 
-def metrics_to_json(metrics: Dict[str, Decimal]) -> str:
+def metrics_to_json(metrics: dict[str, Decimal]) -> str:
     """Convert metrics dictionary to JSON with Decimal as string.
 
     Args:
@@ -260,9 +260,7 @@ def metrics_to_json(metrics: Dict[str, Decimal]) -> str:
     return json.dumps(metrics, default=decimal_encoder, indent=2)
 
 
-def metrics_to_csv_row(
-    metrics: Dict[str, Decimal], include_header: bool = False
-) -> str:
+def metrics_to_csv_row(metrics: dict[str, Decimal], include_header: bool = False) -> str:
     """Convert metrics dictionary to CSV row.
 
     Args:
@@ -299,7 +297,7 @@ def metrics_to_csv_row(
     return "\n".join(csv_lines)
 
 
-def format_metrics_html(metrics: Dict[str, Decimal]) -> str:
+def format_metrics_html(metrics: dict[str, Decimal]) -> str:
     """Format metrics as HTML table.
 
     Args:

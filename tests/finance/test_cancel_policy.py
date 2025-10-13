@@ -14,9 +14,9 @@
 # limitations under the License.
 
 import pytest
-from rustybt.finance.cancel_policy import NeverCancel, EODCancel
-from rustybt.gens.sim_engine import BAR, SESSION_END
 
+from rustybt.finance.cancel_policy import EODCancel, NeverCancel
+from rustybt.gens.sim_engine import BAR, SESSION_END
 
 TEST_INPUT = [SESSION_END, BAR]
 

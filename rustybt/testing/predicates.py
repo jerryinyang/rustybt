@@ -1,19 +1,18 @@
-from collections import OrderedDict
-
 # from contextlib import contextmanager
 import datetime
+from collections import OrderedDict
 from functools import partial
+from itertools import zip_longest
 
 import numpy as np
 import pandas as pd
+import toolz.curried.operator as op
 from pandas.testing import (
     assert_frame_equal,
-    assert_series_equal,
     assert_index_equal,
+    assert_series_equal,
 )
-from itertools import zip_longest
 from toolz import keyfilter
-import toolz.curried.operator as op
 
 from rustybt.assets import Asset
 from rustybt.dispatch import dispatch
@@ -38,7 +37,7 @@ class wildcard:
     This is useful when using :func:`~zipline.testing.predicates.assert_equal`
     with a large recursive structure and some fields to be ignored.
 
-    Examples
+    Examples:
     --------
     >>> wildcard == 5
     True
@@ -113,7 +112,7 @@ def keywords(func):
     >>> keywords(f)
     ['x', 'y']
 
-    Notes
+    Notes:
     -----
     Taken from odo.utils
     """
@@ -127,7 +126,7 @@ def keywords(func):
 def filter_kwargs(f, kwargs):
     """Return a dict of valid kwargs for `f` from a subset of `kwargs`
 
-    Examples
+    Examples:
     --------
     >>> def f(a, b=1, c=2):
     ...     return a + b + c
@@ -141,7 +140,7 @@ def filter_kwargs(f, kwargs):
     >>> f(**kwargs)
     6
 
-    Notes
+    Notes:
     -----
     Taken from odo.utils
     """
@@ -156,7 +155,7 @@ def _fmt_path(path):
     path : iterable of str
         The path to the values that are not equal.
 
-    Returns
+    Returns:
     -------
     fmtd : str
         The formatted path to put into the error message.
@@ -174,7 +173,7 @@ def _fmt_msg(msg):
     msg : str
         The message to show to the user to provide additional context.
 
-    returns
+    Returns:
     -------
     fmtd : str
         The formatted message to put into the error message.
@@ -196,12 +195,12 @@ def make_assert_equal_assertion_error(assertion_message, path, msg):
     msg : str
         The user supplied message.
 
-    Returns
+    Returns:
     -------
     exception_instance : AssertionError
         The new exception instance.
 
-    Notes
+    Notes:
     -----
     This doesn't raise the exception, it only returns it.
     """
@@ -226,7 +225,7 @@ def assert_equal(result, expected, path=(), msg="", **kwargs):
     expected : object
         The expected result.
 
-    Raises
+    Raises:
     ------
     AssertionError
         Raised when ``result`` is not equal to ``expected``.
@@ -366,9 +365,7 @@ def asssert_mappingproxy_equal(result, expected, path=(), msg="", **kwargs):
 
 @assert_equal.register(OrderedDict, OrderedDict)
 def assert_ordereddict_equal(result, expected, path=(), **kwargs):
-    assert_sequence_equal(
-        result.items(), expected.items(), path=path + (".items()",), **kwargs
-    )
+    assert_sequence_equal(result.items(), expected.items(), path=path + (".items()",), **kwargs)
 
 
 @assert_equal.register(list, list)
@@ -383,7 +380,7 @@ def assert_sequence_equal(result, expected, path=(), msg="", **kwargs):
         expected_len,
         _fmt_path(path),
     )
-    for n, (resultv, expectedv) in enumerate(zip(result, expected)):
+    for n, (resultv, expectedv) in enumerate(zip(result, expected, strict=False)):
         assert_equal(resultv, expectedv, path=path + ("[%d]" % n,), msg=msg, **kwargs)
 
 
@@ -468,7 +465,7 @@ def _register_assert_equal_wrapper(type_, assert_eq):
     assert_eq : callable[type_, type_]
         The function which checks that if the two ndframes are equal.
 
-    Returns
+    Returns:
     -------
     assert_ndframe_equal : callable[type_, type_]
         The wrapped function registered with ``assert_equal``.
@@ -509,9 +506,7 @@ def assert_categorical_equal(result, expected, path=(), msg="", **kwargs):
         msg=msg,
         **kwargs,
     )
-    assert_equal(
-        result.codes, expected.codes, path=path + (".codes",), msg=msg, **kwargs
-    )
+    assert_equal(result.codes, expected.codes, path=path + (".codes",), msg=msg, **kwargs)
 
 
 @assert_equal.register(Adjustment, Adjustment)
@@ -544,15 +539,13 @@ def assert_timestamp_and_datetime_equal(
 
     Returns raises unless ``allow_datetime_coercions`` is passed as True.
     """
-    assert allow_datetime_coercions or type(result) is type(expected), (
-        "%sdatetime types (%s, %s) don't match and "
-        "allow_datetime_coercions was not set.\n%s"
-        % (
-            _fmt_msg(msg),
-            type(result),
-            type(expected),
-            _fmt_path(path),
-        )
+    assert allow_datetime_coercions or type(result) is type(
+        expected
+    ), "%sdatetime types (%s, %s) don't match and allow_datetime_coercions was not set.\n%s" % (
+        _fmt_msg(msg),
+        type(result),
+        type(expected),
+        _fmt_path(path),
     )
 
     if isinstance(result, pd.Timestamp) and isinstance(expected, pd.Timestamp):
@@ -563,9 +556,7 @@ def assert_timestamp_and_datetime_equal(
     if compare_nat_equal and pd.isnull(result) and pd.isnull(expected):
         return
 
-    assert_equal.dispatch(object, object)(
-        result, expected, path=path, msg=msg, **kwargs
-    )
+    assert_equal.dispatch(object, object)(result, expected, path=path, msg=msg, **kwargs)
 
 
 @assert_equal.register(slice, slice)
@@ -634,10 +625,7 @@ def assert_messages_equal(result, expected, msg=""):
         if ll != rl:
             col = index_of_first_difference(ll, rl)
             raise AssertionError(
-                "{msg}Messages differ on line {line}, col {col}:"
-                "\n{ll!r}\n!=\n{rl!r}".format(
-                    msg=_fmt_msg(msg), line=line, col=col, ll=ll, rl=rl
-                )
+                f"{_fmt_msg(msg)}Messages differ on line {line}, col {col}:\n{ll!r}\n!=\n{rl!r}"
             )
 
 

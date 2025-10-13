@@ -1,13 +1,3 @@
-import collections
-from zipline.assets import Asset, Equity, Future
-from zipline.assets.futures import FutureChain
-from zipline.finance.asset_restrictions import Restrictions
-from zipline.finance.cancel_policy import CancelPolicy
-from zipline.pipeline import Pipeline
-from zipline.protocol import Order
-from zipline.utils.events import EventRule
-from zipline.utils.security_list import SecurityList
-
 def attach_pipeline(pipeline, name, chunks=None, eager=True):
     """Register a pipeline to be computed at the start of each day.
 
@@ -27,12 +17,12 @@ def attach_pipeline(pipeline, name, chunks=None, eager=True):
         Whether or not to compute this pipeline prior to
         before_trading_start.
 
-    Returns
+    Returns:
     -------
     pipeline : Pipeline
         Returns the pipeline that was attached unchanged.
 
-    See Also
+    See Also:
     --------
     :func:`zipline.api.pipeline_output`
     """
@@ -45,7 +35,7 @@ def batch_market_order(share_counts):
     share_counts : pd.Series[Asset -> int]
         Map from asset to number of shares to order for that asset.
 
-    Returns
+    Returns:
     -------
     order_ids : pd.Index[str]
         Index of ids for newly-created orders.
@@ -78,7 +68,7 @@ def continuous_future(root_symbol_str, offset=0, roll="volume", adjustment="mul"
         Method for adjusting lookback prices between rolls. Options are
         'mul', 'add', and None. Default is 'mul'.
 
-    Returns
+    Returns:
     -------
     continuous_future : zipline.assets.ContinuousFuture
         The continuous future specifier.
@@ -137,7 +127,7 @@ def fetch_csv(
     **kwargs
         Forwarded to :func:`pandas.read_csv`.
 
-    Returns
+    Returns:
     -------
     csv_data_source : zipline.sources.requests_csv.PandasRequestsCSV
         A requests source that will pull data from the url specified.
@@ -151,12 +141,12 @@ def future_symbol(symbol):
     symbol : str
         The symbol of the desired contract.
 
-    Returns
+    Returns:
     -------
     future : zipline.assets.Future
         The future that trades with the name ``symbol``.
 
-    Raises
+    Raises:
     ------
     SymbolNotFound
         Raised when no contract named 'symbol' is found.
@@ -170,7 +160,7 @@ def get_datetime(tz=None):
     tz : tzinfo or str, optional
         The timezone to return the datetime in. This defaults to utc.
 
-    Returns
+    Returns:
     -------
     dt : datetime
         The current simulation datetime converted to ``tz``.
@@ -204,12 +194,12 @@ def get_environment(field="platform"):
           * : dict[str -> any]
               Returns all of the fields in a dictionary.
 
-    Returns
+    Returns:
     -------
     val : any
         The value for the field queried. See above for more information.
 
-    Raises
+    Raises:
     ------
     ValueError
         Raised when ``field`` is not a valid option.
@@ -224,7 +214,7 @@ def get_open_orders(asset=None):
         If passed and not None, return only the open orders for the given
         asset instead of all open orders.
 
-    Returns
+    Returns:
     -------
     open_orders : dict[list[Order]] or list[Order]
         If no asset is passed this will return a dict mapping Assets
@@ -242,7 +232,7 @@ def get_order(order_id):
     order_id : str
         The unique identifier for the order.
 
-    Returns
+    Returns:
     -------
     order : Order
         The order object.
@@ -269,13 +259,13 @@ def order(asset, amount, limit_price=None, stop_price=None, style=None):
     style : ExecutionStyle, optional
         The execution style for the order.
 
-    Returns
+    Returns:
     -------
     order_id : str or None
         The unique identifier for this order, or None if no order was
         placed.
 
-    Notes
+    Notes:
     -----
     The ``limit_price`` and ``stop_price`` arguments provide shorthands for
     passing common execution styles. Passing ``limit_price=N`` is
@@ -285,7 +275,7 @@ def order(asset, amount, limit_price=None, stop_price=None, style=None):
     ``style=StopLimitOrder(N, M)``. It is an error to pass both a ``style``
     and ``limit_price`` or ``stop_price``.
 
-    See Also
+    See Also:
     --------
     :class:`zipline.finance.execution.ExecutionStyle`
     :func:`zipline.api.order_value`
@@ -310,17 +300,17 @@ def order_percent(asset, percent, limit_price=None, stop_price=None, style=None)
     style : ExecutionStyle
         The execution style for the order.
 
-    Returns
+    Returns:
     -------
     order_id : str
         The unique identifier for this order.
 
-    Notes
+    Notes:
     -----
     See :func:`zipline.api.order` for more information about
     ``limit_price``, ``stop_price``, and ``style``
 
-    See Also
+    See Also:
     --------
     :class:`zipline.finance.execution.ExecutionStyle`
     :func:`zipline.api.order`
@@ -347,13 +337,13 @@ def order_target(asset, target, limit_price=None, stop_price=None, style=None):
     style : ExecutionStyle
         The execution style for the order.
 
-    Returns
+    Returns:
     -------
     order_id : str
         The unique identifier for this order.
 
 
-    Notes
+    Notes:
     -----
     ``order_target`` does not take into account any open orders. For
     example:
@@ -370,7 +360,7 @@ def order_target(asset, target, limit_price=None, stop_price=None, style=None):
     See :func:`zipline.api.order` for more information about
     ``limit_price``, ``stop_price``, and ``style``
 
-    See Also
+    See Also:
     --------
     :class:`zipline.finance.execution.ExecutionStyle`
     :func:`zipline.api.order`
@@ -400,12 +390,12 @@ def order_target_percent(asset, target, limit_price=None, stop_price=None, style
     style : ExecutionStyle
         The execution style for the order.
 
-    Returns
+    Returns:
     -------
     order_id : str
         The unique identifier for this order.
 
-    Notes
+    Notes:
     -----
     ``order_target_value`` does not take into account any open orders. For
     example:
@@ -422,7 +412,7 @@ def order_target_percent(asset, target, limit_price=None, stop_price=None, style
     See :func:`zipline.api.order` for more information about
     ``limit_price``, ``stop_price``, and ``style``
 
-    See Also
+    See Also:
     --------
     :class:`zipline.finance.execution.ExecutionStyle`
     :func:`zipline.api.order`
@@ -452,12 +442,12 @@ def order_target_value(asset, target, limit_price=None, stop_price=None, style=N
     style : ExecutionStyle
         The execution style for the order.
 
-    Returns
+    Returns:
     -------
     order_id : str
         The unique identifier for this order.
 
-    Notes
+    Notes:
     -----
     ``order_target_value`` does not take into account any open orders. For
     example:
@@ -474,7 +464,7 @@ def order_target_value(asset, target, limit_price=None, stop_price=None, style=N
     See :func:`zipline.api.order` for more information about
     ``limit_price``, ``stop_price``, and ``style``
 
-    See Also
+    See Also:
     --------
     :class:`zipline.finance.execution.ExecutionStyle`
     :func:`zipline.api.order`
@@ -501,17 +491,17 @@ def order_value(asset, value, limit_price=None, stop_price=None, style=None):
     style : ExecutionStyle
         The execution style for the order.
 
-    Returns
+    Returns:
     -------
     order_id : str
         The unique identifier for this order.
 
-    Notes
+    Notes:
     -----
     See :func:`zipline.api.order` for more information about
     ``limit_price``, ``stop_price``, and ``style``
 
-    See Also
+    See Also:
     --------
     :class:`zipline.finance.execution.ExecutionStyle`
     :func:`zipline.api.order`
@@ -526,18 +516,18 @@ def pipeline_output(name):
     name : str
         Name of the pipeline from which to fetch results.
 
-    Returns
+    Returns:
     -------
     results : pd.DataFrame
         DataFrame containing the results of the requested pipeline for
         the current simulation date.
 
-    Raises
+    Raises:
     ------
     NoSuchPipeline
         Raised when no pipeline with the name `name` has been registered.
 
-    See Also
+    See Also:
     --------
     :func:`zipline.api.attach_pipeline`
     :meth:`zipline.pipeline.engine.PipelineEngine.run_pipeline`
@@ -551,16 +541,14 @@ def record(*args, **kwargs):
     **kwargs
         The names and values to record.
 
-    Notes
+    Notes:
     -----
     These values will appear in the performance packets and the performance
     dataframe passed to ``analyze`` and returned from
     :func:`~zipline.run_algorithm`.
     """
 
-def schedule_function(
-    func, date_rule=None, time_rule=None, half_days=True, calendar=None
-):
+def schedule_function(func, date_rule=None, time_rule=None, half_days=True, calendar=None):
     """Schedule a function to be called repeatedly in the future.
 
     Parameters
@@ -580,7 +568,7 @@ def schedule_function(
     calendar : Sentinel, optional
         Calendar used to compute rules that depend on the trading calendar.
 
-    See Also
+    See Also:
     --------
     :class:`zipline.api.date_rules`
     :class:`zipline.api.time_rules`
@@ -594,7 +582,7 @@ def set_asset_restrictions(restrictions, on_error="fail"):
     restricted_list : Restrictions
         An object providing information about restricted assets.
 
-    See Also
+    See Also:
     --------
     zipline.finance.asset_restrictions.Restrictions
     """
@@ -607,7 +595,7 @@ def set_benchmark(benchmark):
     benchmark : zipline.assets.Asset
         The asset to set as the new benchmark.
 
-    Notes
+    Notes:
     -----
     Any dividends payed out for that new benchmark asset will be
     automatically reinvested.
@@ -621,7 +609,7 @@ def set_cancel_policy(cancel_policy):
     cancel_policy : CancelPolicy
         The cancellation policy to use.
 
-    See Also
+    See Also:
     --------
     :class:`zipline.api.EODCancel`
     :class:`zipline.api.NeverCancel`
@@ -637,12 +625,12 @@ def set_commission(us_equities=None, us_futures=None):
     us_futures : FutureCommissionModel
         The commission model to use for trading US futures.
 
-    Notes
+    Notes:
     -----
     This function can only be called during
     :func:`~zipline.api.initialize`.
 
-    See Also
+    See Also:
     --------
     :class:`zipline.finance.commission.PerShare`
     :class:`zipline.finance.commission.PerTrade`
@@ -702,9 +690,7 @@ def set_max_order_size(asset=None, max_shares=None, max_notional=None, on_error=
         The maximum value that can be ordered at one time.
     """
 
-def set_max_position_size(
-    asset=None, max_shares=None, max_notional=None, on_error="fail"
-):
+def set_max_position_size(asset=None, max_shares=None, max_notional=None, on_error="fail"):
     """Set a limit on the number of shares and/or dollar value held for the
     given sid. Limits are treated as absolute values and are enforced at
     the time that the algo attempts to place an order for sid. This means
@@ -748,12 +734,12 @@ def set_slippage(us_equities=None, us_futures=None):
     us_futures : FutureSlippageModel
         The slippage model to use for trading US futures.
 
-    Notes
+    Notes:
     -----
     This function can only be called during
     :func:`~zipline.api.initialize`.
 
-    See Also
+    See Also:
     --------
     :class:`zipline.finance.slippage.SlippageModel`
     """
@@ -777,12 +763,12 @@ def sid(sid):
     sid : int
         The unique integer that identifies an asset.
 
-    Returns
+    Returns:
     -------
     asset : zipline.assets.Asset
         The asset with the given ``sid``.
 
-    Raises
+    Raises:
     ------
     SidsNotFound
         When a requested ``sid`` does not map to any asset.
@@ -798,18 +784,18 @@ def symbol(symbol_str, country_code=None):
     country_code : str or None, optional
         A country to limit symbol searches to.
 
-    Returns
+    Returns:
     -------
     equity : zipline.assets.Equity
         The equity that held the ticker symbol on the current
         symbol lookup date.
 
-    Raises
+    Raises:
     ------
     SymbolNotFound
         Raised when the symbols was not held on the current lookup date.
 
-    See Also
+    See Also:
     --------
     :func:`zipline.api.set_symbol_lookup_date`
     """
@@ -824,19 +810,19 @@ def symbols(*args, **kwargs):
     country_code : str or None, optional
         A country to limit symbol searches to.
 
-    Returns
+    Returns:
     -------
     equities : list[zipline.assets.Equity]
         The equities that held the given ticker symbols on the current
         symbol lookup date.
 
-    Raises
+    Raises:
     ------
     SymbolNotFound
         Raised when one of the symbols was not held on the current
         lookup date.
 
-    See Also
+    See Also:
     --------
     :func:`zipline.api.set_symbol_lookup_date`
     """

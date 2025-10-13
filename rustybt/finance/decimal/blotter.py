@@ -7,14 +7,13 @@ and management system.
 from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, List, Optional
 
 import structlog
 
 from rustybt.assets import Asset
 from rustybt.finance.decimal.commission import DecimalCommissionModel, NoCommission
 from rustybt.finance.decimal.config import DecimalConfig
-from rustybt.finance.decimal.order import DecimalOrder, InvalidQuantityError, OrderError
+from rustybt.finance.decimal.order import DecimalOrder, InvalidQuantityError
 from rustybt.finance.decimal.slippage import DecimalSlippageModel, NoSlippage
 from rustybt.finance.decimal.transaction import DecimalTransaction, create_decimal_transaction
 
@@ -45,9 +44,9 @@ class DecimalBlotter:
 
     def __init__(
         self,
-        commission_model: Optional[DecimalCommissionModel] = None,
-        slippage_model: Optional[DecimalSlippageModel] = None,
-        config: Optional[DecimalConfig] = None,
+        commission_model: DecimalCommissionModel | None = None,
+        slippage_model: DecimalSlippageModel | None = None,
+        config: DecimalConfig | None = None,
     ) -> None:
         """Initialize DecimalBlotter.
 
@@ -61,15 +60,15 @@ class DecimalBlotter:
         self.config = config or DecimalConfig.get_instance()
 
         # Order tracking
-        self.open_orders: Dict[Asset, List[DecimalOrder]] = defaultdict(list)
-        self.orders: Dict[str, DecimalOrder] = {}
-        self.new_orders: List[DecimalOrder] = []
+        self.open_orders: dict[Asset, list[DecimalOrder]] = defaultdict(list)
+        self.orders: dict[str, DecimalOrder] = {}
+        self.new_orders: list[DecimalOrder] = []
 
         # Transactions history
-        self.transactions: List[DecimalTransaction] = []
+        self.transactions: list[DecimalTransaction] = []
 
         # Current datetime
-        self.current_dt: Optional[datetime] = None
+        self.current_dt: datetime | None = None
 
         logger.info(
             "decimal_blotter_initialized",
@@ -90,9 +89,9 @@ class DecimalBlotter:
         asset: Asset,
         amount: Decimal,
         order_type: str = "market",
-        limit_price: Optional[Decimal] = None,
-        stop_price: Optional[Decimal] = None,
-        order_id: Optional[str] = None,
+        limit_price: Decimal | None = None,
+        stop_price: Decimal | None = None,
+        order_id: str | None = None,
     ) -> str:
         """Submit an order.
 
@@ -174,8 +173,8 @@ class DecimalBlotter:
         self,
         order: DecimalOrder,
         market_price: Decimal,
-        fill_amount: Optional[Decimal] = None,
-    ) -> Optional[DecimalTransaction]:
+        fill_amount: Decimal | None = None,
+    ) -> DecimalTransaction | None:
         """Process order execution.
 
         Args:
@@ -200,9 +199,7 @@ class DecimalBlotter:
             fill_amount = order.remaining
         else:
             if abs(fill_amount) > abs(order.remaining):
-                raise ValueError(
-                    f"Fill amount {fill_amount} exceeds remaining {order.remaining}"
-                )
+                raise ValueError(f"Fill amount {fill_amount} exceeds remaining {order.remaining}")
 
         # Calculate execution price with slippage
         execution_price = self.slippage_model.calculate(order, market_price)
@@ -258,9 +255,7 @@ class DecimalBlotter:
             ValueError: If fill_amount exceeds remaining quantity
         """
         if abs(fill_amount) > abs(order.remaining):
-            raise ValueError(
-                f"Fill amount {fill_amount} exceeds remaining {order.remaining}"
-            )
+            raise ValueError(f"Fill amount {fill_amount} exceeds remaining {order.remaining}")
 
         # Calculate commission for this fill
         commission = self.commission_model.calculate(order, fill_price, fill_amount)
@@ -333,7 +328,7 @@ class DecimalBlotter:
 
             logger.info("order_fully_filled", order_id=order.id)
 
-    def get_order(self, order_id: str) -> Optional[DecimalOrder]:
+    def get_order(self, order_id: str) -> DecimalOrder | None:
         """Get order by ID.
 
         Args:
@@ -344,7 +339,7 @@ class DecimalBlotter:
         """
         return self.orders.get(order_id)
 
-    def get_open_orders(self, asset: Optional[Asset] = None) -> List[DecimalOrder]:
+    def get_open_orders(self, asset: Asset | None = None) -> list[DecimalOrder]:
         """Get open orders.
 
         Args:
@@ -361,7 +356,7 @@ class DecimalBlotter:
                 all_orders.extend(orders)
             return all_orders
 
-    def get_transactions(self) -> List[DecimalTransaction]:
+    def get_transactions(self) -> list[DecimalTransaction]:
         """Get all transactions.
 
         Returns:

@@ -116,6 +116,7 @@ class TestBaseWebSocketAdapter:
     @pytest.mark.asyncio
     async def test_connect_success(self, adapter: MockWebSocketAdapter) -> None:
         """Test successful connection."""
+
         async def async_connect(*args, **kwargs):
             return AsyncMock()
 
@@ -158,6 +159,7 @@ class TestBaseWebSocketAdapter:
     @pytest.mark.asyncio
     async def test_subscribe(self, adapter: MockWebSocketAdapter) -> None:
         """Test subscription."""
+
         async def async_connect(*args, **kwargs):
             return AsyncMock()
 
@@ -178,6 +180,7 @@ class TestBaseWebSocketAdapter:
     @pytest.mark.asyncio
     async def test_unsubscribe(self, adapter: MockWebSocketAdapter) -> None:
         """Test unsubscription."""
+
         async def async_connect(*args, **kwargs):
             return AsyncMock()
 
@@ -235,9 +238,7 @@ class TestBaseWebSocketAdapter:
         assert "ETHUSDT" not in adapter._subscriptions
 
     @pytest.mark.asyncio
-    async def test_reconnect_exponential_backoff(
-        self, adapter: MockWebSocketAdapter
-    ) -> None:
+    async def test_reconnect_exponential_backoff(self, adapter: MockWebSocketAdapter) -> None:
         """Test reconnect uses exponential backoff on repeated failures."""
         with (
             patch(
@@ -309,10 +310,9 @@ class TestBaseWebSocketAdapter:
                     )
 
     @pytest.mark.asyncio
-    async def test_connect_when_already_connected(
-        self, adapter: MockWebSocketAdapter
-    ) -> None:
+    async def test_connect_when_already_connected(self, adapter: MockWebSocketAdapter) -> None:
         """Test connect when already connected returns early."""
+
         async def async_connect(*args, **kwargs):
             return AsyncMock()
 
@@ -345,9 +345,7 @@ class TestBaseWebSocketAdapter:
         assert adapter.state == ConnectionState.DISCONNECTED
 
     @pytest.mark.asyncio
-    async def test_reconnect_when_already_reconnecting(
-        self, adapter: MockWebSocketAdapter
-    ) -> None:
+    async def test_reconnect_when_already_reconnecting(self, adapter: MockWebSocketAdapter) -> None:
         """Test reconnect when already reconnecting returns early."""
         adapter._state = ConnectionState.RECONNECTING
 
@@ -363,9 +361,10 @@ class TestBaseWebSocketAdapter:
         async def async_connect(*args, **kwargs):
             return mock_ws
 
-        with patch("rustybt.live.streaming.base.websockets.connect", side_effect=async_connect), \
-             patch("asyncio.sleep"):
-
+        with (
+            patch("rustybt.live.streaming.base.websockets.connect", side_effect=async_connect),
+            patch("asyncio.sleep"),
+        ):
             # Connect and subscribe
             await adapter.connect()
             await adapter.subscribe(["BTCUSDT", "ETHUSDT"], ["trade"])
@@ -395,10 +394,7 @@ class TestBaseWebSocketAdapter:
                 await adapter.reconnect()
 
             # Check that reconnect attempt was made and state is correct
-            assert (
-                adapter._reconnect_count > 0
-                or adapter.state == ConnectionState.DISCONNECTED
-            )
+            assert adapter._reconnect_count > 0 or adapter.state == ConnectionState.DISCONNECTED
 
     @pytest.mark.asyncio
     async def test_listen_without_websocket(self, adapter: MockWebSocketAdapter) -> None:
@@ -548,9 +544,7 @@ class TestBaseWebSocketAdapter:
         from datetime import timedelta
 
         adapter._state = ConnectionState.CONNECTED
-        adapter._last_message_time = datetime.utcnow() - timedelta(
-            seconds=120
-        )  # 2 minutes ago
+        adapter._last_message_time = datetime.utcnow() - timedelta(seconds=120)  # 2 minutes ago
         adapter._websocket = AsyncMock()
 
         with patch.object(adapter, "reconnect"):
@@ -568,9 +562,7 @@ class TestBaseWebSocketAdapter:
                     await task
 
     @pytest.mark.asyncio
-    async def test_heartbeat_monitor_sends_ping(
-        self, adapter: MockWebSocketAdapter
-    ) -> None:
+    async def test_heartbeat_monitor_sends_ping(self, adapter: MockWebSocketAdapter) -> None:
         """Test heartbeat monitor sends ping."""
         adapter._state = ConnectionState.CONNECTED
         adapter._last_message_time = datetime.utcnow()
@@ -617,9 +609,7 @@ class TestBaseWebSocketAdapter:
                 await task
 
     @pytest.mark.asyncio
-    async def test_heartbeat_websocket_exception(
-        self, adapter: MockWebSocketAdapter
-    ) -> None:
+    async def test_heartbeat_websocket_exception(self, adapter: MockWebSocketAdapter) -> None:
         """Test heartbeat handles WebSocket exceptions."""
         from websockets.exceptions import WebSocketException
 

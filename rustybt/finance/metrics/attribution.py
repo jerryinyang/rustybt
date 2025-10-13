@@ -19,12 +19,10 @@ portfolio returns into contributions from individual positions.
 """
 
 from decimal import Decimal
-from typing import Dict, Optional
 
 import polars as pl
 import structlog
 
-from rustybt.finance.decimal.config import DecimalConfig
 from rustybt.finance.metrics.decimal_metrics import InsufficientDataError, InvalidMetricError
 
 logger = structlog.get_logger(__name__)
@@ -34,7 +32,7 @@ def calculate_position_attribution(
     position_values: pl.DataFrame,
     position_returns: pl.DataFrame,
     portfolio_value: Decimal,
-) -> Dict[str, Decimal]:
+) -> dict[str, Decimal]:
     """Calculate attribution of returns to individual positions.
 
     Args:
@@ -69,7 +67,7 @@ def calculate_position_attribution(
     attribution_df = position_values.join(position_returns, on="asset", how="inner")
 
     # Calculate attribution for each position
-    attributions: Dict[str, Decimal] = {}
+    attributions: dict[str, Decimal] = {}
 
     for row in attribution_df.iter_rows(named=True):
         asset = row["asset"]
@@ -103,9 +101,9 @@ def calculate_position_attribution(
 def calculate_sector_attribution(
     position_values: pl.DataFrame,
     position_returns: pl.DataFrame,
-    position_sectors: Dict[str, str],
+    position_sectors: dict[str, str],
     portfolio_value: Decimal,
-) -> Dict[str, Decimal]:
+) -> dict[str, Decimal]:
     """Calculate attribution grouped by sector.
 
     Args:
@@ -122,10 +120,12 @@ def calculate_sector_attribution(
         >>> attr = calculate_sector_attribution(values, returns, sectors, portfolio_value)
     """
     # Get position-level attribution
-    position_attr = calculate_position_attribution(position_values, position_returns, portfolio_value)
+    position_attr = calculate_position_attribution(
+        position_values, position_returns, portfolio_value
+    )
 
     # Aggregate by sector
-    sector_attr: Dict[str, Decimal] = {}
+    sector_attr: dict[str, Decimal] = {}
 
     for asset, attribution in position_attr.items():
         sector = position_sectors.get(asset, "Unknown")

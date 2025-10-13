@@ -15,6 +15,9 @@ Output:
 import cProfile
 import pstats
 import random
+
+# Test fixture for exchange info
+from collections import namedtuple
 from decimal import Decimal
 from pathlib import Path
 
@@ -26,12 +29,7 @@ from rustybt.finance.decimal.ledger import DecimalLedger
 from rustybt.finance.decimal.order import DecimalOrder
 from rustybt.finance.decimal.position import DecimalPosition
 
-# Test fixture for exchange info
-from collections import namedtuple
-
-ExchangeInfo = namedtuple(
-    "ExchangeInfo", ["canonical_name", "name", "country_code"]
-)
+ExchangeInfo = namedtuple("ExchangeInfo", ["canonical_name", "name", "country_code"])
 TEST_EXCHANGE = ExchangeInfo(
     canonical_name="NYSE", name="New York Stock Exchange", country_code="US"
 )
@@ -41,9 +39,7 @@ class DecimalMetrics:
     """Decimal-based metrics calculator."""
 
     @staticmethod
-    def sharpe_ratio(
-        returns: pl.Series, risk_free_rate: Decimal = Decimal("0")
-    ) -> Decimal:
+    def sharpe_ratio(returns: pl.Series, risk_free_rate: Decimal = Decimal("0")) -> Decimal:
         """Calculate Sharpe ratio with Decimal precision."""
         if len(returns) < 2:
             return Decimal("0")
@@ -92,18 +88,12 @@ def run_decimal_backtest():
         for asset, price in prices.items():
             current_position = ledger.positions.get(asset)
 
-            if price > Decimal("50") and (
-                current_position is None or current_position.amount == 0
-            ):
+            if price > Decimal("50") and (current_position is None or current_position.amount == 0):
                 # Buy signal
-                order = DecimalOrder(
-                    dt=None, asset=asset, amount=Decimal("100"), limit=price
-                )
+                order = DecimalOrder(dt=None, asset=asset, amount=Decimal("100"), limit=price)
 
                 fill_value = abs(order.amount) * order.limit
-                commission = commission_model.calculate(
-                    order, order.limit, order.amount
-                )
+                commission = commission_model.calculate(order, order.limit, order.amount)
 
                 # Update portfolio
                 ledger.cash -= fill_value + commission
@@ -128,9 +118,7 @@ def run_decimal_backtest():
                     )
 
                     fill_value = abs(order.amount) * order.limit
-                    commission = commission_model.calculate(
-                        order, order.limit, order.amount
-                    )
+                    commission = commission_model.calculate(order, order.limit, order.amount)
 
                     # Update portfolio
                     ledger.cash += fill_value - commission
@@ -142,9 +130,7 @@ def run_decimal_backtest():
             # Calculate return based on portfolio value change
             prev_value = Decimal("1000000") if day == 1 else portfolio_value
             daily_return = (
-                (portfolio_value - prev_value) / prev_value
-                if prev_value != 0
-                else Decimal("0")
+                (portfolio_value - prev_value) / prev_value if prev_value != 0 else Decimal("0")
             )
             daily_returns.append(daily_return)
         else:
@@ -177,7 +163,7 @@ def main():
 
     profiler.disable()
 
-    print(f"\nBacktest completed:")
+    print("\nBacktest completed:")
     print(f"  Final portfolio value: ${result['final_portfolio_value']}")
     print(f"  Sharpe ratio: {result['sharpe_ratio']}")
     print(f"  Final positions: {result['total_positions']}")
@@ -210,9 +196,7 @@ def main():
         f.write("# Decimal Implementation Hotspots\n\n")
         f.write("**Generated:** Profiling run of 252-day backtest with 10 assets\n\n")
         f.write("## Purpose\n\n")
-        f.write(
-            "Identify top time-consuming functions for Rust optimization in Epic 7.\n\n"
-        )
+        f.write("Identify top time-consuming functions for Rust optimization in Epic 7.\n\n")
         f.write("## Top 20 Functions (by cumulative time)\n\n")
         f.write("| Rank | Function | Cumulative Time (s) | Calls | Time/Call (ms) |\n")
         f.write("|------|----------|--------------------:|------:|---------------:|\n")
@@ -242,15 +226,11 @@ def main():
         f.write(
             "1. **Decimal arithmetic operations** (if in top 10) - Implement in Rust with rust-decimal\n"
         )
-        f.write(
-            "2. **Metrics calculations** (Sharpe, drawdown) - Vectorize with SIMD in Rust\n"
-        )
+        f.write("2. **Metrics calculations** (Sharpe, drawdown) - Vectorize with SIMD in Rust\n")
         f.write(
             "3. **Data aggregation** (Polars operations on Decimal) - Optimize type conversions\n"
         )
-        f.write(
-            "4. **Commission calculations** - Batch processing in Rust if hot path\n"
-        )
+        f.write("4. **Commission calculations** - Batch processing in Rust if hot path\n")
         f.write("\n---\n\n")
         f.write(f"*Profile data: {profile_path}*\n")
 

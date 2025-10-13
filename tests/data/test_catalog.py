@@ -412,6 +412,7 @@ class TestBundleIngestionIntegration:
     def test_csv_bundle_ingestion_with_metadata(self, temp_catalog_db, tmp_path):
         """Integration test: CSV bundle ingestion records metadata and quality metrics."""
         from exchange_calendars import get_calendar
+
         from rustybt.data.metadata_tracker import BundleMetadataTracker
 
         # Create test CSV data

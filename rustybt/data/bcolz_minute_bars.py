@@ -88,7 +88,7 @@ def _sid_subdir_path(sid):
     sid : int
         Asset identifier.
 
-    Returns
+    Returns:
     -------
     out : string
         A path for the bcolz rootdir, including subdirectory prefixes based on
@@ -102,7 +102,7 @@ def _sid_subdir_path(sid):
         padded_sid[0:2],
         # subdir 2 XX/00
         padded_sid[2:4],
-        "{0}.bcolz".format(str(padded_sid)),
+        f"{padded_sid!s}.bcolz",
     )
 
 
@@ -299,7 +299,6 @@ class BcolzMinuteBarMetadata:
             'YYYY-MM-DD' formatted representation of the last trading
             session in the data set.
         """
-
         metadata = {
             "version": self.version,
             "ohlc_ratio": self.default_ohlc_ratio,
@@ -356,7 +355,7 @@ class BcolzMinuteBarWriter:
         If False, no metadata is written (existing metadata is
         retained). Default is True.
 
-    Notes
+    Notes:
     -----
     Writes a bcolz directory for each individual sid, all contained within
     a root directory which also contains metadata about the entire dataset.
@@ -397,7 +396,7 @@ class BcolzMinuteBarWriter:
     The datetimes which correspond to each position are written in the metadata
     as integer nanoseconds since the epoch into the `minute_index` key.
 
-    See Also
+    See Also:
     --------
     zipline.data.minute_bars.BcolzMinuteBarReader
     """
@@ -416,14 +415,11 @@ class BcolzMinuteBarWriter:
         expectedlen=DEFAULT_EXPECTEDLEN,
         write_metadata=True,
     ):
-
         self._rootdir = rootdir
         self._start_session = start_session
         self._end_session = end_session
         self._calendar = calendar
-        slicer = calendar.schedule.index.slice_indexer(
-            self._start_session, self._end_session
-        )
+        slicer = calendar.schedule.index.slice_indexer(self._start_session, self._end_session)
         self._schedule = calendar.schedule[slicer]
         self._session_labels = self._schedule.index
         self._minutes_per_day = minutes_per_day
@@ -490,7 +486,7 @@ class BcolzMinuteBarWriter:
         sid : int
             Asset identifier.
 
-        Returns
+        Returns:
         -------
         out : string
             Full path to the bcolz rootdir for the given sid.
@@ -506,16 +502,16 @@ class BcolzMinuteBarWriter:
         sid : int
             Asset identifier.
 
-        Returns
+        Returns:
         -------
         out : pd.Timestamp
             The midnight of the last date written in to the output for the
             given sid.
         """
-        sizes_path = "{0}/close/meta/sizes".format(self.sidpath(sid))
+        sizes_path = f"{self.sidpath(sid)}/close/meta/sizes"
         if not os.path.exists(sizes_path):
             return pd.NaT
-        with open(sizes_path, mode="r") as f:
+        with open(sizes_path) as f:
             sizes = f.read()
         data = json.loads(sizes)
         # use integer division so that the result is an int
@@ -609,16 +605,12 @@ class BcolzMinuteBarWriter:
             # desired days are written to the correct slots.
             days_to_zerofill = tds[tds.slice_indexer(end=date)]
         else:
-            days_to_zerofill = tds[
-                tds.slice_indexer(start=last_date + tds.freq, end=date)
-            ]
+            days_to_zerofill = tds[tds.slice_indexer(start=last_date + tds.freq, end=date)]
 
         self._zerofill(table, len(days_to_zerofill))
 
         new_last_date = self.last_date_in_output_for_sid(sid)
-        assert new_last_date == date, "new_last_date={0} != date={1}".format(
-            new_last_date, date
-        )
+        assert new_last_date == date, f"new_last_date={new_last_date} != date={date}"
 
     def set_sid_attrs(self, sid, **kwargs):
         """Write all the supplied kwargs as attributes of the sid's file."""
@@ -714,10 +706,7 @@ class BcolzMinuteBarWriter:
             raise BcolzMinuteWriterColumnMismatch(
                 "Length of dts={0} should match cols: {1}".format(
                     len(dts),
-                    " ".join(
-                        "{0}={1}".format(name, len(cols[name]))
-                        for name in self.COL_NAMES
-                    ),
+                    " ".join(f"{name}={len(cols[name])}" for name in self.COL_NAMES),
                 )
             )
         self._write_cols(sid, dts, cols, invalid_data_behavior)
@@ -829,7 +818,7 @@ class BcolzMinuteBarWriter:
 
             try:
                 table = bcolz.open(rootdir=sid_path)
-            except IOError:
+            except OSError:
                 continue
             if table.len <= truncate_slice_end:
                 logger.info("{0} not past truncate date={1}.", file_name, date)
@@ -854,7 +843,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
         The root directory containing the metadata and asset bcolz
         directories.
 
-    See Also
+    See Also:
     --------
     zipline.data.minute_bars.BcolzMinuteBarWriter
     """
@@ -877,7 +866,6 @@ class BcolzMinuteBarReader(MinuteBarReader):
     _default_proxy = mappingproxy(DEFAULT_MINUTELY_SID_CACHE_SIZES)
 
     def __init__(self, rootdir, sid_cache_sizes=_default_proxy):
-
         self._rootdir = rootdir
 
         metadata = self._get_metadata()
@@ -892,13 +880,13 @@ class BcolzMinuteBarReader(MinuteBarReader):
         )
         self._schedule = self.calendar.schedule[slicer]
         self._market_opens = self.calendar.first_minutes[slicer]
-        self._market_open_values = self._market_opens.values.astype(
-            "datetime64[m]"
-        ).astype(np.int64)
+        self._market_open_values = self._market_opens.values.astype("datetime64[m]").astype(
+            np.int64
+        )
         self._market_closes = self._schedule.close
-        self._market_close_values = self._market_closes.values.astype(
-            "datetime64[m]"
-        ).astype(np.int64)
+        self._market_close_values = self._market_closes.values.astype("datetime64[m]").astype(
+            np.int64
+        )
 
         self._default_ohlc_inverse = 1.0 / metadata.default_ohlc_ratio
         ohlc_ratios = metadata.ohlc_ratios_per_sid
@@ -955,7 +943,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
         based on the regular period of minutes per day and the market close
         do not match.
 
-        Returns
+        Returns:
         -------
         List of DatetimeIndex representing the minutes to exclude because
         of early closes.
@@ -968,7 +956,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
         early_closes = self._market_closes[early_indices]
         minutes = [
             (market_open, early_close)
-            for market_open, early_close in zip(early_opens, early_closes)
+            for market_open, early_close in zip(early_opens, early_closes, strict=False)
         ]
         return minutes
 
@@ -984,7 +972,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
         The data is stored as such in support of a fast answer to the question,
         does a given start and end position overlap any of the exclusion spans?
 
-        Returns
+        Returns:
         -------
         IntervalTree containing nodes which represent the minutes to exclude
         because of early closes.
@@ -992,9 +980,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
         itree = IntervalTree()
         for market_open, early_close in self._minutes_to_exclude():
             start_pos = self._find_position_of_minute(early_close) + 1
-            end_pos = (
-                self._find_position_of_minute(market_open) + self._minutes_per_day - 1
-            )
+            end_pos = self._find_position_of_minute(market_open) + self._minutes_per_day - 1
             data = (start_pos, end_pos)
             itree[start_pos : end_pos + 1] = data
         return itree
@@ -1002,7 +988,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
     def _exclusion_indices_for_range(self, start_idx, end_idx):
         """
 
-        Returns
+        Returns:
         -------
         List of tuples of (start, stop) which represent the ranges of minutes
         which should be excluded when a market minute window is requested.
@@ -1033,8 +1019,8 @@ class BcolzMinuteBarReader(MinuteBarReader):
                     rootdir=self._get_carray_path(sid, field),
                     mode="r",
                 )
-            except IOError as exc:
-                raise NoDataForSid("No minute data for sid {}.".format(sid)) from exc
+            except OSError as exc:
+                raise NoDataForSid(f"No minute data for sid {sid}.") from exc
 
         return carray
 
@@ -1064,7 +1050,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
             The type of pricing data to retrieve.
             ('open', 'high', 'low', 'close', 'volume')
 
-        Returns
+        Returns:
         -------
         out : float|int
 
@@ -1146,9 +1132,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
         return pos
 
     def _pos_to_minute(self, pos):
-        minute_epoch = minute_value(
-            self._market_open_values, pos, self._minutes_per_day
-        )
+        minute_epoch = minute_value(self._market_open_values, pos, self._minutes_per_day)
 
         return pd.Timestamp(minute_epoch, tz="UTC", unit="m")
 
@@ -1165,7 +1149,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
         minute_dt: pd.Timestamp
             The minute whose position should be calculated.
 
-        Returns
+        Returns:
         -------
         int: The position of the given minute in the list of all trading
         minutes since market open on the first trading day.
@@ -1192,7 +1176,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
         sids : list of int
            The asset identifiers in the window.
 
-        Returns
+        Returns:
         -------
         list of np.ndarray
             A list with an entry per field of ndarrays with shape
@@ -1225,18 +1209,16 @@ class BcolzMinuteBarReader(MinuteBarReader):
                 values = carray[start_idx : end_idx + 1]
                 if indices_to_exclude is not None:
                     for excl_start, excl_stop in indices_to_exclude[::-1]:
-                        excl_slice = np.s_[
-                            excl_start - start_idx : excl_stop - start_idx + 1
-                        ]
+                        excl_slice = np.s_[excl_start - start_idx : excl_stop - start_idx + 1]
                         values = np.delete(values, excl_slice)
 
                 where = values != 0
                 # first slice down to len(where) because we might not have
                 # written data for all the minutes requested
                 if field != "volume":
-                    out[: len(where), i][where] = values[
-                        where
-                    ] * self._ohlc_ratio_inverse_for_sid(sid)
+                    out[: len(where), i][where] = values[where] * self._ohlc_ratio_inverse_for_sid(
+                        sid
+                    )
                 else:
                     out[: len(where), i][where] = values[where]
 
@@ -1258,7 +1240,7 @@ class MinuteBarUpdateReader(ABC):
         sids : iter[int]
             The sids for which to read the pricing updates.
 
-        Returns
+        Returns:
         -------
         data : iter[(int, DataFrame)]
             Returns an iterable of ``sid`` to the corresponding OHLCV data.
@@ -1299,10 +1281,7 @@ class H5MinuteBarUpdateWriter:
             An iterable or other mapping of sid to the corresponding OHLCV
             pricing data.
         """
-
-        with HDFStore(
-            self._path, "w", complevel=self._complevel, complib=self._complib
-        ) as store:
+        with HDFStore(self._path, "w", complevel=self._complevel, complib=self._complib) as store:
             data = pd.concat(frames, keys=frames.keys()).sort_index()
             data.index.set_names(["sid", "date_time"], inplace=True)
             store.append("updates", data)

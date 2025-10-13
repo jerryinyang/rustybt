@@ -12,11 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from enum import IntEnum
+
 import pandas as pd
 
+from ._protocol import BarData, InnerPosition
 from .assets import Asset
-from enum import IntEnum
-from ._protocol import BarData, InnerPosition  # noqa
 
 
 class MutableView:
@@ -42,7 +43,7 @@ class MutableView:
         vars(self._mutable_view_ob)[attr] = value
 
     def __repr__(self):
-        return "%s(%r)" % (type(self).__name__, self._mutable_view_ob)
+        return f"{type(self).__name__}({self._mutable_view_ob!r})"
 
 
 # Datasource type should completely determine the other fields of a
@@ -102,7 +103,7 @@ class Event:
         return name in self.__dict__
 
     def __repr__(self):
-        return "Event({0})".format(self.__dict__)
+        return f"Event({self.__dict__})"
 
     def to_series(self, index=None):
         return pd.Series(self.__dict__, index=index)
@@ -123,7 +124,7 @@ class Portfolio:
         The starting value for the portfolio. This will be used as the starting
         cash, current cash, and portfolio value.
 
-    Attributes
+    Attributes:
     ----------
     positions : zipline.protocol.Positions
         Dict-like object containing information about currently-held positions.
@@ -157,7 +158,7 @@ class Portfolio:
         raise AttributeError("cannot mutate Portfolio objects")
 
     def __repr__(self):
-        return "Portfolio({0})".format(self.__dict__)
+        return f"Portfolio({self.__dict__})"
 
     @property
     def current_portfolio_weights(self):
@@ -171,9 +172,7 @@ class Portfolio:
         """
         position_values = pd.Series(
             {
-                asset: (
-                    position.last_sale_price * position.amount * asset.price_multiplier
-                )
+                asset: (position.last_sale_price * position.amount * asset.price_multiplier)
                 for asset, position in self.positions.items()
             },
             dtype=float,
@@ -213,14 +212,14 @@ class Account:
         raise AttributeError("cannot mutate Account objects")
 
     def __repr__(self):
-        return "Account({0})".format(self.__dict__)
+        return f"Account({self.__dict__})"
 
 
 class Position:
     """
     A position held by an algorithm.
 
-    Attributes
+    Attributes:
     ----------
     asset : zipline.assets.Asset
         The held asset.
@@ -272,6 +271,5 @@ class Positions(dict):
             return Position(InnerPosition(key))
 
         raise ValueError(
-            "Position lookup expected a value of type Asset"
-            f" but got {type(key).__name__} instead"
+            f"Position lookup expected a value of type Asset but got {type(key).__name__} instead"
         )

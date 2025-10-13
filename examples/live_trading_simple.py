@@ -23,14 +23,12 @@ Strategy:
 
 import argparse
 import asyncio
-import logging
 from decimal import Decimal
 
 import pandas as pd
 import structlog
 
 from rustybt.algorithm import TradingAlgorithm
-from rustybt.assets import Equity
 
 # Configure logging
 structlog.configure(
@@ -96,9 +94,7 @@ class SimpleMovingAverageCrossStrategy(TradingAlgorithm):
 
         # Get historical prices
         try:
-            prices = data.history(
-                context.asset, "close", self.sma_slow, "1d"
-            )
+            prices = data.history(context.asset, "close", self.sma_slow, "1d")
         except Exception as e:
             logger.warning("history_fetch_failed", error=str(e))
             return
@@ -108,10 +104,7 @@ class SimpleMovingAverageCrossStrategy(TradingAlgorithm):
         slow_mavg = prices.mean()
 
         # Generate signal
-        if fast_mavg > slow_mavg:
-            signal = "buy"
-        else:
-            signal = "sell"
+        signal = "buy" if fast_mavg > slow_mavg else "sell"
 
         # Detect crossover
         if context.previous_signal != signal:
@@ -232,9 +225,7 @@ async def run_live(strategy, broker_type="paper"):
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Simple Moving Average Crossover Strategy"
-    )
+    parser = argparse.ArgumentParser(description="Simple Moving Average Crossover Strategy")
     parser.add_argument(
         "--mode",
         choices=["backtest", "paper", "live"],
@@ -246,9 +237,7 @@ def main():
         default="2023-01-01",
         help="Start date for backtest (YYYY-MM-DD)",
     )
-    parser.add_argument(
-        "--end", default="2023-12-31", help="End date for backtest (YYYY-MM-DD)"
-    )
+    parser.add_argument("--end", default="2023-12-31", help="End date for backtest (YYYY-MM-DD)")
     parser.add_argument(
         "--capital",
         type=float,
@@ -279,9 +268,7 @@ def main():
 
     elif args.mode in ("paper", "live"):
         # Run in live/paper mode
-        asyncio.run(
-            run_live(strategy=strategy, broker_type=args.broker)
-        )
+        asyncio.run(run_live(strategy=strategy, broker_type=args.broker))
 
     else:
         print(f"Unknown mode: {args.mode}")

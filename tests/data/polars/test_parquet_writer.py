@@ -9,20 +9,21 @@ Tests cover:
 - Atomic write operations
 """
 
-import pytest
 import tempfile
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 
 import polars as pl
-from hypothesis import given, strategies as st, settings
+import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
+from rustybt.data.polars.parquet_schema import DAILY_BARS_SCHEMA, MINUTE_BARS_SCHEMA
 from rustybt.data.polars.parquet_writer import (
     ParquetWriter,
     get_compression_stats,
 )
-from rustybt.data.polars.parquet_schema import DAILY_BARS_SCHEMA, MINUTE_BARS_SCHEMA
 
 
 @pytest.fixture
@@ -94,9 +95,7 @@ class TestDailyBarsWriting:
         path_snappy = writer.write_daily_bars(sample_daily_df, compression="snappy")
         assert path_snappy.exists()
 
-    def test_write_daily_bars_preserves_decimal_precision(
-        self, temp_bundle_path, sample_daily_df
-    ):
+    def test_write_daily_bars_preserves_decimal_precision(self, temp_bundle_path, sample_daily_df):
         """Test Decimal precision is preserved in roundtrip."""
         writer = ParquetWriter(str(temp_bundle_path), enable_metadata_catalog=False)
 
@@ -175,7 +174,7 @@ class TestMetadataCatalogIntegration:
         )
 
         # Write with dataset_id
-        output_path = writer.write_daily_bars(
+        writer.write_daily_bars(
             sample_daily_df,
             compression="zstd",
             dataset_id=dataset_id,
@@ -239,6 +238,7 @@ class TestCompressionStatistics:
 
         # Generate varied data to test compression
         import random
+
         random.seed(42)  # Deterministic for reproducibility
 
         large_df = pl.DataFrame(
@@ -262,11 +262,17 @@ class TestCompressionStatistics:
         assert "space_saved_percent" in stats
 
         # ZSTD should achieve good compression on realistic dataset
-        assert stats["compression_ratio"] < 1.0, f"Expected compression ratio < 1.0, got {stats['compression_ratio']}"
-        assert stats["space_saved_percent"] > 0, f"Expected space saved > 0%, got {stats['space_saved_percent']}%"
+        assert (
+            stats["compression_ratio"] < 1.0
+        ), f"Expected compression ratio < 1.0, got {stats['compression_ratio']}"
+        assert (
+            stats["space_saved_percent"] > 0
+        ), f"Expected space saved > 0%, got {stats['space_saved_percent']}%"
 
         # With 100 rows, should achieve at least 10% compression
-        assert stats["space_saved_percent"] > 10, f"Expected at least 10% compression, got {stats['space_saved_percent']}%"
+        assert (
+            stats["space_saved_percent"] > 10
+        ), f"Expected at least 10% compression, got {stats['space_saved_percent']}%"
 
     def test_compression_ratio_calculation(self, sample_daily_df):
         """Test compression ratio is calculated correctly."""
@@ -359,7 +365,9 @@ class TestPropertyBasedOHLCVRoundtrip:
                     places=8,
                     allow_nan=False,
                     allow_infinity=False,
-                ).map(str),  # Convert to string for Decimal construction
+                ).map(
+                    str
+                ),  # Convert to string for Decimal construction
                 st.decimals(
                     min_value=Decimal("0.00000001"),
                     max_value=Decimal("1000000.00000000"),
@@ -383,7 +391,9 @@ class TestPropertyBasedOHLCVRoundtrip:
                 ).map(str),
                 st.decimals(
                     min_value=Decimal("0.00000000"),
-                    max_value=Decimal("9999999999.99999999"),  # Max for Decimal(18,8): 10 digits before decimal
+                    max_value=Decimal(
+                        "9999999999.99999999"
+                    ),  # Max for Decimal(18,8): 10 digits before decimal
                     places=8,
                     allow_nan=False,
                     allow_infinity=False,
@@ -507,6 +517,7 @@ class TestPropertyBasedOHLCVRoundtrip:
         # Generate timestamps for trading day (9:30 AM to 4:00 PM = 390 minutes)
         base_time = datetime(2023, 1, 1, 9, 30)
         from datetime import timedelta
+
         timestamps = [base_time + timedelta(minutes=i % 390) for i in range(len(ohlcv_data))]
         sids = [1] * len(ohlcv_data)
         opens = [Decimal(o) for o, h, l, c, v in ohlcv_data]
@@ -553,7 +564,6 @@ class TestPropertyBasedOHLCVRoundtrip:
                 assert df_read["volume"][i] == df["volume"][i], f"Volume mismatch at row {i}"
 
 
-
 @pytest.mark.benchmark
 class TestPerformanceBenchmarks:
     """Performance benchmark tests for lazy loading and write operations."""
@@ -562,6 +572,7 @@ class TestPerformanceBenchmarks:
         """Benchmark writing large dataset (1000 rows) to Parquet."""
         # Create large dataset
         import random
+
         random.seed(42)
 
         dates = [date(2023, 1, 1)] * 1000
@@ -592,6 +603,7 @@ class TestPerformanceBenchmarks:
         """Benchmark lazy loading read with partition pruning."""
         # First, write a large partitioned dataset
         import random
+
         random.seed(42)
 
         # Create multi-month dataset
@@ -634,6 +646,7 @@ class TestPerformanceBenchmarks:
     def test_batch_write_performance(self, benchmark, temp_bundle_path):
         """Benchmark batch write operations."""
         import random
+
         random.seed(42)
 
         # Create multiple DataFrames
@@ -665,7 +678,6 @@ class TestPerformanceBenchmarks:
         assert len(result) == 10
 
 
-
 @pytest.mark.integration
 class TestConcurrentWrites:
     """Integration tests for concurrent atomic write operations."""
@@ -673,7 +685,6 @@ class TestConcurrentWrites:
     def test_concurrent_writes_no_corruption(self, temp_bundle_path):
         """Test that concurrent writes to different partitions dont corrupt data."""
         import threading
-        import time
 
         writer = ParquetWriter(str(temp_bundle_path), enable_metadata_catalog=False)
         errors = []
@@ -726,11 +737,13 @@ class TestConcurrentWrites:
         writer = ParquetWriter(str(temp_bundle_path), enable_metadata_catalog=False)
 
         # Create invalid DataFrame to trigger error during write
-        invalid_df = pl.DataFrame({
-            "date": [date(2023, 1, 1)],
-            "sid": [1],
-            # Missing required columns to trigger error
-        })
+        invalid_df = pl.DataFrame(
+            {
+                "date": [date(2023, 1, 1)],
+                "sid": [1],
+                # Missing required columns to trigger error
+            }
+        )
 
         # Attempt write (should fail)
         try:
@@ -744,4 +757,3 @@ class TestConcurrentWrites:
         if daily_bars_path.exists():
             temp_files = list(daily_bars_path.rglob(".*.tmp.*"))
             assert len(temp_files) == 0, f"Found {len(temp_files)} temp files after failed write"
-

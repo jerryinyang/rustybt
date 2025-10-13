@@ -26,11 +26,10 @@ Example:
 """
 
 import polars as pl
-from typing import Dict
 
 # Daily bars schema
 # Used for daily OHLCV data storage in Parquet format
-DAILY_BARS_SCHEMA: Dict[str, pl.DataType] = {
+DAILY_BARS_SCHEMA: dict[str, pl.DataType] = {
     "date": pl.Date,  # Trading date (local timezone)
     "sid": pl.Int64,  # Security ID (asset identifier)
     "open": pl.Decimal(precision=18, scale=8),  # Opening price
@@ -42,7 +41,7 @@ DAILY_BARS_SCHEMA: Dict[str, pl.DataType] = {
 
 # Minute bars schema
 # Used for intraday minute-level OHLCV data storage
-MINUTE_BARS_SCHEMA: Dict[str, pl.DataType] = {
+MINUTE_BARS_SCHEMA: dict[str, pl.DataType] = {
     "timestamp": pl.Datetime("us"),  # Timestamp with microsecond precision (UTC)
     "sid": pl.Int64,  # Security ID (asset identifier)
     "open": pl.Decimal(precision=18, scale=8),  # Opening price
@@ -54,7 +53,7 @@ MINUTE_BARS_SCHEMA: Dict[str, pl.DataType] = {
 
 # Adjustments schema
 # Used for corporate actions (splits, dividends)
-ADJUSTMENTS_SCHEMA: Dict[str, pl.DataType] = {
+ADJUSTMENTS_SCHEMA: dict[str, pl.DataType] = {
     "date": pl.Date,  # Effective date of adjustment
     "sid": pl.Int64,  # Security ID (asset identifier)
     "adjustment_type": pl.Utf8,  # Type: "split" or "dividend"
@@ -63,7 +62,7 @@ ADJUSTMENTS_SCHEMA: Dict[str, pl.DataType] = {
 }
 
 
-def get_schema_for_frequency(frequency: str) -> Dict[str, pl.DataType]:
+def get_schema_for_frequency(frequency: str) -> dict[str, pl.DataType]:
     """Get appropriate schema for data frequency.
 
     Args:
@@ -85,12 +84,10 @@ def get_schema_for_frequency(frequency: str) -> Dict[str, pl.DataType]:
     elif frequency == "minute":
         return MINUTE_BARS_SCHEMA
     else:
-        raise ValueError(
-            f"Unsupported frequency: {frequency}. Must be 'daily' or 'minute'"
-        )
+        raise ValueError(f"Unsupported frequency: {frequency}. Must be 'daily' or 'minute'")
 
 
-def validate_schema(df: pl.DataFrame, expected_schema: Dict[str, pl.DataType]) -> None:
+def validate_schema(df: pl.DataFrame, expected_schema: dict[str, pl.DataType]) -> None:
     """Validate DataFrame schema matches expected schema.
 
     Args:
@@ -104,7 +101,7 @@ def validate_schema(df: pl.DataFrame, expected_schema: Dict[str, pl.DataType]) -
         >>> df = pl.DataFrame({"date": [pl.Date(2023, 1, 1)], "sid": [1]})
         >>> validate_schema(df, {"date": pl.Date, "sid": pl.Int64})
     """
-    df_schema = dict(zip(df.columns, df.dtypes))
+    df_schema = dict(zip(df.columns, df.dtypes, strict=False))
 
     # Check for missing columns
     missing_cols = set(expected_schema.keys()) - set(df_schema.keys())
@@ -121,6 +118,5 @@ def validate_schema(df: pl.DataFrame, expected_schema: Dict[str, pl.DataType]) -
         actual_dtype = df_schema[col]
         if actual_dtype != expected_dtype:
             raise ValueError(
-                f"Column '{col}' has incorrect type. "
-                f"Expected {expected_dtype}, got {actual_dtype}"
+                f"Column '{col}' has incorrect type. Expected {expected_dtype}, got {actual_dtype}"
             )

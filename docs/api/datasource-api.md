@@ -15,7 +15,7 @@ import polars as pl
 
 class DataSource(ABC):
     """Abstract base class for data sources."""
-    
+
     @abstractmethod
     async def fetch(
         self,
@@ -25,13 +25,13 @@ class DataSource(ABC):
         frequency: str
     ) -> pl.DataFrame:
         """Fetch OHLCV data for symbols.
-        
+
         Args:
             symbols: List of ticker symbols
             start: Start timestamp (inclusive)
             end: End timestamp (inclusive)
             frequency: Data frequency ("daily", "hourly", "minute")
-        
+
         Returns:
             Polars DataFrame with columns:
             - symbol: str
@@ -43,7 +43,7 @@ class DataSource(ABC):
             - volume: Decimal
         """
         pass
-    
+
     @abstractmethod
     def ingest_to_bundle(
         self,
@@ -55,7 +55,7 @@ class DataSource(ABC):
         **kwargs
     ) -> Path:
         """Ingest data and create bundle.
-        
+
         Args:
             bundle_name: Name for the bundle
             symbols: Symbols to ingest
@@ -63,17 +63,17 @@ class DataSource(ABC):
             end: End date
             frequency: Data frequency
             **kwargs: Adapter-specific options
-        
+
         Returns:
             Path to created bundle directory
         """
         pass
-    
+
     @abstractmethod
     def get_metadata(self) -> DataSourceMetadata:
         """Get data source metadata."""
         pass
-    
+
     @abstractmethod
     def supports_live(self) -> bool:
         """Whether this source supports live streaming."""
@@ -291,11 +291,11 @@ import polars as pl
 
 class MyCustomDataSource(DataSource):
     """Custom data source adapter."""
-    
+
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.base_url = "https://api.example.com"
-    
+
     async def fetch(
         self,
         symbols: list[str],
@@ -315,9 +315,9 @@ class MyCustomDataSource(DataSource):
                 },
                 headers={"X-API-Key": self.api_key}
             )
-            
+
             data = response.json()
-            
+
             # Convert to Polars DataFrame
             return pl.DataFrame({
                 "symbol": data["symbols"],
@@ -328,12 +328,12 @@ class MyCustomDataSource(DataSource):
                 "close": pl.Series("close", [Decimal(str(x)) for x in data["close"]], dtype=pl.Decimal(18, 8)),
                 "volume": pl.Series("volume", [Decimal(str(x)) for x in data["volume"]], dtype=pl.Decimal(18, 8)),
             })
-    
+
     def ingest_to_bundle(self, bundle_name: str, **kwargs) -> Path:
         """Use default ingest implementation."""
         from rustybt.data.bundles.adapter_bundles import ingest_from_datasource
         return ingest_from_datasource(self, bundle_name, **kwargs)
-    
+
     def get_metadata(self) -> DataSourceMetadata:
         return DataSourceMetadata(
             source_type="my_custom",
@@ -342,7 +342,7 @@ class MyCustomDataSource(DataSource):
             supports_live=False,
             supported_frequencies=["daily", "hourly"]
         )
-    
+
     def supports_live(self) -> bool:
         return False
 

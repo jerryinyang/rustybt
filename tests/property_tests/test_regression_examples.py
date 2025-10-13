@@ -266,9 +266,7 @@ def test_regression_fractional_shares() -> None:
     amount = Decimal("0.123")
     price = Decimal("50000")
 
-    position = DecimalPosition(
-        asset=asset, amount=amount, cost_basis=price, last_sale_price=price
-    )
+    position = DecimalPosition(asset=asset, amount=amount, cost_basis=price, last_sale_price=price)
     ledger.positions[asset] = position
 
     expected_position_value = amount * price  # 0.123 * 50000 = 6150

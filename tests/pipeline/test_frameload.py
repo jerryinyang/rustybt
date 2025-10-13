@@ -3,10 +3,11 @@ Tests for zipline.pipeline.loaders.frame.DataFrameLoader.
 """
 
 from unittest import mock
+
 import numpy as np
 import pandas as pd
+import pytest
 from numpy.testing import assert_array_equal
-from rustybt.utils.calendar_utils import get_calendar
 
 from rustybt.lib.adjustment import (
     AdjustmentKind,
@@ -17,8 +18,7 @@ from rustybt.lib.adjustment import (
 from rustybt.pipeline.data import USEquityPricing
 from rustybt.pipeline.domain import US_EQUITIES
 from rustybt.pipeline.loaders.frame import DataFrameLoader
-
-import pytest
+from rustybt.utils.calendar_utils import get_calendar
 
 
 @pytest.fixture(scope="class")
@@ -32,9 +32,7 @@ def frame_loader(request):
         freq=request.cls.trading_day,
         periods=request.cls.ndates,
     )
-    request.cls.mask = np.ones(
-        (len(request.cls.dates), len(request.cls.sids)), dtype=bool
-    )
+    request.cls.mask = np.ones((len(request.cls.dates), len(request.cls.sids)), dtype=bool)
 
 
 @pytest.mark.usefixtures("frame_loader")

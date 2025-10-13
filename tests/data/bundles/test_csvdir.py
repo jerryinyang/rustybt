@@ -1,17 +1,16 @@
-import pytest
-import numpy as np
-import pandas as pd
 from os.path import (
     dirname,
     join,
     realpath,
 )
 
-from rustybt.utils.calendar_utils import get_calendar
+import numpy as np
+import pandas as pd
 
-from rustybt.data.bundles import ingest, load, bundles
-from rustybt.utils.functional import apply
+from rustybt.data.bundles import bundles, ingest, load
 from rustybt.testing.github_actions import skip_on
+from rustybt.utils.calendar_utils import get_calendar
+from rustybt.utils.functional import apply
 
 TEST_RESOURCE_PATH = join(
     dirname(dirname(dirname(realpath(__file__)))),
@@ -65,11 +64,7 @@ class TestCSVDIRBundle:
             df["sid"] = sids[symbol]
             return df
 
-        all_ = (
-            pd.concat(map(per_symbol, self.symbols))
-            .set_index("sid", append=True)
-            .unstack()
-        )
+        all_ = pd.concat(map(per_symbol, self.symbols)).set_index("sid", append=True).unstack()
 
         # fancy list comprehension with statements
         @list

@@ -6,7 +6,6 @@ for accurate price impact simulation in order execution.
 
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import Optional
 
 import structlog
 
@@ -78,9 +77,7 @@ class FixedSlippage(DecimalSlippageModel):
         Decimal('100.10')  # Pay 10 cents more
     """
 
-    def __init__(
-        self, slippage: Decimal, config: Optional[DecimalConfig] = None
-    ) -> None:
+    def __init__(self, slippage: Decimal, config: DecimalConfig | None = None) -> None:
         """Initialize fixed slippage model.
 
         Args:
@@ -143,9 +140,7 @@ class FixedBasisPointsSlippage(DecimalSlippageModel):
         Decimal('100.10')  # 100 × 1.001 = 100.10
     """
 
-    def __init__(
-        self, basis_points: Decimal, config: Optional[DecimalConfig] = None
-    ) -> None:
+    def __init__(self, basis_points: Decimal, config: DecimalConfig | None = None) -> None:
         """Initialize fixed basis points slippage model.
 
         Args:
@@ -218,7 +213,7 @@ class VolumeShareSlippage(DecimalSlippageModel):
         self,
         volume_limit: Decimal = Decimal("0.025"),
         impact_factor: Decimal = Decimal("0.1"),
-        config: Optional[DecimalConfig] = None,
+        config: DecimalConfig | None = None,
     ) -> None:
         """Initialize volume share slippage model.
 
@@ -324,7 +319,7 @@ class AsymmetricSlippage(DecimalSlippageModel):
         self,
         buy_model: DecimalSlippageModel,
         sell_model: DecimalSlippageModel,
-        config: Optional[DecimalConfig] = None,
+        config: DecimalConfig | None = None,
     ) -> None:
         """Initialize asymmetric slippage model.
 
@@ -372,6 +367,4 @@ class AsymmetricSlippage(DecimalSlippageModel):
         return result
 
     def __repr__(self) -> str:
-        return (
-            f"AsymmetricSlippage(buy_model={self.buy_model}, sell_model={self.sell_model})"
-        )
+        return f"AsymmetricSlippage(buy_model={self.buy_model}, sell_model={self.sell_model})"

@@ -37,9 +37,7 @@ def load_profile_stats(profile_file: Path) -> pstats.Stats:
     return pstats.Stats(str(profile_file))
 
 
-def extract_top_functions(
-    stats: pstats.Stats, n: int = 50
-) -> list[tuple[str, float, int, float]]:
+def extract_top_functions(stats: pstats.Stats, n: int = 50) -> list[tuple[str, float, int, float]]:
     """Extract top N functions by cumulative time.
 
     Args:
@@ -100,9 +98,7 @@ def compare_function_stats(
         # Calculate deltas
         cumtime_delta = after_cumtime - before_cumtime
         cumtime_pct = (
-            ((after_cumtime - before_cumtime) / before_cumtime * 100)
-            if before_cumtime > 0
-            else 0
+            ((after_cumtime - before_cumtime) / before_cumtime * 100) if before_cumtime > 0 else 0
         )
 
         comparisons[func] = {
@@ -286,9 +282,7 @@ def main() -> None:
         sys.exit(1)
 
     # Select scenarios
-    scenarios = (
-        ["daily", "hourly", "minute"] if args.scenario == "all" else [args.scenario]
-    )
+    scenarios = ["daily", "hourly", "minute"] if args.scenario == "all" else [args.scenario]
 
     # Generate comparison reports
     for scenario in scenarios:

@@ -493,11 +493,7 @@ class TestGridSearchAlgorithm:
 class TestGridSearchPropertyTests:
     """Property-based tests for grid search."""
 
-    @given(
-        param_counts=st.lists(
-            st.integers(min_value=2, max_value=5), min_size=1, max_size=4
-        )
-    )
+    @given(param_counts=st.lists(st.integers(min_value=2, max_value=5), min_size=1, max_size=4))
     @settings(max_examples=50, deadline=None)
     def test_grid_size_invariant(self, param_counts):
         """Grid size must equal product of parameter value counts."""
@@ -505,11 +501,7 @@ class TestGridSearchPropertyTests:
         # Note: min_value=2 because DiscreteParameter requires max > min
         parameters = []
         for i, count in enumerate(param_counts):
-            parameters.append(
-                DiscreteParameter(
-                    name=f"p{i}", min_value=1, max_value=count, step=1
-                )
-            )
+            parameters.append(DiscreteParameter(name=f"p{i}", min_value=1, max_value=count, step=1))
 
         param_space = ParameterSpace(parameters=parameters)
         grid = GridSearchAlgorithm(param_space)

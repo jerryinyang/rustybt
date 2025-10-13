@@ -1,13 +1,13 @@
 """Tests for CSV bundle ingestion with Decimal precision."""
 
-import pytest
-import polars as pl
+import tempfile
 from decimal import Decimal
 from pathlib import Path
-import tempfile
+
+import polars as pl
+import pytest
 
 from rustybt.data.bundles.csvdir import convert_csv_to_decimal_parquet
-from rustybt.finance.decimal.config import DecimalConfig
 from rustybt.data.polars.validation import ValidationError
 
 
@@ -29,10 +29,7 @@ class TestCSVDecimalIngestion:
 
             # Ingest with equity precision
             summary = convert_csv_to_decimal_parquet(
-                str(csv_path),
-                str(parquet_path),
-                asset_class="equity",
-                frequency="daily"
+                str(csv_path), str(parquet_path), asset_class="equity", frequency="daily"
             )
 
             # Verify summary
@@ -65,10 +62,7 @@ class TestCSVDecimalIngestion:
 
             # Ingest with crypto precision
             summary = convert_csv_to_decimal_parquet(
-                str(csv_path),
-                str(parquet_path),
-                asset_class="crypto",
-                frequency="daily"
+                str(csv_path), str(parquet_path), asset_class="crypto", frequency="daily"
             )
 
             # Verify summary
@@ -101,10 +95,7 @@ class TestCSVDecimalIngestion:
             # Should raise ValueError for negative prices
             with pytest.raises(ValueError, match="Negative values detected"):
                 convert_csv_to_decimal_parquet(
-                    str(csv_path),
-                    str(parquet_path),
-                    asset_class="equity",
-                    frequency="daily"
+                    str(csv_path), str(parquet_path), asset_class="equity", frequency="daily"
                 )
 
     def test_convert_csv_rejects_scientific_notation(self):
@@ -121,10 +112,7 @@ class TestCSVDecimalIngestion:
             # Should raise ValueError for scientific notation
             with pytest.raises(ValueError, match="Scientific notation detected"):
                 convert_csv_to_decimal_parquet(
-                    str(csv_path),
-                    str(parquet_path),
-                    asset_class="equity",
-                    frequency="daily"
+                    str(csv_path), str(parquet_path), asset_class="equity", frequency="daily"
                 )
 
     def test_convert_csv_validates_ohlcv_relationships(self):
@@ -141,10 +129,7 @@ class TestCSVDecimalIngestion:
             # Should raise ValidationError for invalid OHLCV (high < low)
             with pytest.raises(ValidationError, match="Invalid OHLCV"):
                 convert_csv_to_decimal_parquet(
-                    str(csv_path),
-                    str(parquet_path),
-                    asset_class="equity",
-                    frequency="daily"
+                    str(csv_path), str(parquet_path), asset_class="equity", frequency="daily"
                 )
 
     def test_convert_csv_handles_missing_file(self):
@@ -156,10 +141,7 @@ class TestCSVDecimalIngestion:
             # Should raise FileNotFoundError
             with pytest.raises(FileNotFoundError):
                 convert_csv_to_decimal_parquet(
-                    str(csv_path),
-                    str(parquet_path),
-                    asset_class="equity",
-                    frequency="daily"
+                    str(csv_path), str(parquet_path), asset_class="equity", frequency="daily"
                 )
 
     def test_convert_csv_minute_data(self):
@@ -176,10 +158,7 @@ class TestCSVDecimalIngestion:
 
             # Ingest as minute data
             summary = convert_csv_to_decimal_parquet(
-                str(csv_path),
-                str(parquet_path),
-                asset_class="equity",
-                frequency="minute"
+                str(csv_path), str(parquet_path), asset_class="equity", frequency="minute"
             )
 
             # Verify summary
@@ -202,11 +181,8 @@ class TestCSVDecimalIngestion:
             parquet_path = Path(tmpdir) / "test_satoshi.parquet"
 
             # Ingest with crypto precision
-            summary = convert_csv_to_decimal_parquet(
-                str(csv_path),
-                str(parquet_path),
-                asset_class="crypto",
-                frequency="daily"
+            convert_csv_to_decimal_parquet(
+                str(csv_path), str(parquet_path), asset_class="crypto", frequency="daily"
             )
 
             # Read Parquet and verify precision
@@ -228,11 +204,8 @@ class TestCSVDecimalIngestion:
             parquet_path = Path(tmpdir) / "test_large.parquet"
 
             # Ingest with equity precision
-            summary = convert_csv_to_decimal_parquet(
-                str(csv_path),
-                str(parquet_path),
-                asset_class="equity",
-                frequency="daily"
+            convert_csv_to_decimal_parquet(
+                str(csv_path), str(parquet_path), asset_class="equity", frequency="daily"
             )
 
             # Read Parquet and verify values

@@ -6,17 +6,20 @@ ledger operations.
 Run with: pytest benchmarks/decimal_ledger_benchmark.py --benchmark-only
 """
 
-import pytest
-from decimal import Decimal
 from collections import namedtuple
+from decimal import Decimal
 
+import pytest
+
+from rustybt.assets import Equity
 from rustybt.finance.decimal.ledger import DecimalLedger
 from rustybt.finance.decimal.position import DecimalPosition
-from rustybt.assets import Equity
 
 # Test fixture for exchange info
-ExchangeInfo = namedtuple('ExchangeInfo', ['canonical_name', 'name', 'country_code'])
-TEST_EXCHANGE = ExchangeInfo(canonical_name='NYSE', name='New York Stock Exchange', country_code='US')
+ExchangeInfo = namedtuple("ExchangeInfo", ["canonical_name", "name", "country_code"])
+TEST_EXCHANGE = ExchangeInfo(
+    canonical_name="NYSE", name="New York Stock Exchange", country_code="US"
+)
 
 
 @pytest.fixture
@@ -129,6 +132,7 @@ def test_cash_updates_1000_operations(benchmark):
     Simulates 1000 cash flow operations.
     Expected: ~100-200 microseconds per 1000 operations
     """
+
     def cash_flow_operations():
         ledger = DecimalLedger(starting_cash=Decimal("1000000"))
 
@@ -173,6 +177,7 @@ def test_iterate_all_positions_100(benchmark, large_portfolio):
     Tests performance of iterating position dictionary.
     Expected: ~100-200 microseconds for 100 positions
     """
+
     def iterate_positions():
         total_value = Decimal("0")
         for asset, position in large_portfolio.positions.items():

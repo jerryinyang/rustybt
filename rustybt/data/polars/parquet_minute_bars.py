@@ -17,16 +17,14 @@ Parquet Structure:
         └── ...
 """
 
+from datetime import date, datetime, time
+from pathlib import Path
+
 import polars as pl
 import structlog
-from datetime import datetime, date, time
-from decimal import Decimal
-from pathlib import Path
-from typing import List, Optional
 
-from rustybt.data.polars.parquet_schema import MINUTE_BARS_SCHEMA
-from rustybt.data.polars.validation import validate_ohlcv_relationships, DataError
 from rustybt.data.polars.metadata_catalog import ParquetMetadataCatalog
+from rustybt.data.polars.validation import DataError, validate_ohlcv_relationships
 
 logger = structlog.get_logger(__name__)
 
@@ -71,15 +69,15 @@ class PolarsParquetMinuteReader:
         self.bundle_path = Path(bundle_path)
         self.minute_bars_path = self.bundle_path / "minute_bars"
         self.enable_cache = enable_cache
-        self._cache: Optional[pl.DataFrame] = None
-        self._cache_date: Optional[date] = None
+        self._cache: pl.DataFrame | None = None
+        self._cache_date: date | None = None
 
         # Initialize metadata catalog
         self.enable_metadata_catalog = enable_metadata_catalog
         if enable_metadata_catalog:
             metadata_db_path = self.bundle_path / "metadata.db"
-            self.metadata_catalog: Optional[ParquetMetadataCatalog] = (
-                ParquetMetadataCatalog(str(metadata_db_path))
+            self.metadata_catalog: ParquetMetadataCatalog | None = ParquetMetadataCatalog(
+                str(metadata_db_path)
             )
         else:
             self.metadata_catalog = None
@@ -94,10 +92,10 @@ class PolarsParquetMinuteReader:
 
     def load_minute_bars(
         self,
-        sids: List[int],
+        sids: list[int],
         start_dt: datetime,
         end_dt: datetime,
-        fields: Optional[List[str]] = None,
+        fields: list[str] | None = None,
     ) -> pl.DataFrame:
         """Load minute bars for assets in datetime range.
 
@@ -139,9 +137,7 @@ class PolarsParquetMinuteReader:
 
         # Check if data exists
         if not self.minute_bars_path.exists():
-            raise FileNotFoundError(
-                f"Minute bars directory not found: {self.minute_bars_path}"
-            )
+            raise FileNotFoundError(f"Minute bars directory not found: {self.minute_bars_path}")
 
         # Check cache for single-day queries
         if self._use_cache(start_dt.date(), end_dt.date()):
@@ -158,23 +154,16 @@ class PolarsParquetMinuteReader:
             parquet_pattern = str(self.minute_bars_path / "**" / "*.parquet")
             df = (
                 pl.scan_parquet(parquet_pattern)
-                .filter(
-                    pl.col("timestamp").is_between(start_dt, end_dt, closed="both")
-                )
+                .filter(pl.col("timestamp").is_between(start_dt, end_dt, closed="both"))
                 .filter(pl.col("sid").is_in(sids))
                 .select(["timestamp", "sid"] + fields)
                 .collect()
             )
         except Exception as e:
-            raise DataError(
-                f"Failed to load minute bars from {self.minute_bars_path}: {e}"
-            ) from e
+            raise DataError(f"Failed to load minute bars from {self.minute_bars_path}: {e}") from e
 
         if len(df) == 0:
-            raise DataError(
-                f"No data found for {len(sids)} assets "
-                f"between {start_dt} and {end_dt}"
-            )
+            raise DataError(f"No data found for {len(sids)} assets between {start_dt} and {end_dt}")
 
         # Validate OHLCV relationships
         validate_ohlcv_relationships(df)
@@ -194,7 +183,7 @@ class PolarsParquetMinuteReader:
         return df
 
     def load_trading_day(
-        self, sids: List[int], target_date: date, fields: Optional[List[str]] = None
+        self, sids: list[int], target_date: date, fields: list[str] | None = None
     ) -> pl.DataFrame:
         """Load all minute bars for a trading day.
 
@@ -215,7 +204,7 @@ class PolarsParquetMinuteReader:
 
         return self.load_minute_bars(sids, start_dt, end_dt, fields)
 
-    def get_last_available_datetime(self, sid: int) -> Optional[datetime]:
+    def get_last_available_datetime(self, sid: int) -> datetime | None:
         """Get the last available timestamp for an asset.
 
         Args:
@@ -245,7 +234,7 @@ class PolarsParquetMinuteReader:
             logger.error("get_last_datetime_failed", sid=sid, error=str(e))
             return None
 
-    def get_first_available_datetime(self, sid: int) -> Optional[datetime]:
+    def get_first_available_datetime(self, sid: int) -> datetime | None:
         """Get the first available timestamp for an asset.
 
         Args:
@@ -277,7 +266,7 @@ class PolarsParquetMinuteReader:
 
     def load_spot_value(
         self,
-        sids: List[int],
+        sids: list[int],
         target_dt: datetime,
         field: str = "close",
     ) -> pl.DataFrame:
@@ -295,9 +284,7 @@ class PolarsParquetMinuteReader:
             >>> reader = PolarsParquetMinuteReader("data/bundles/binance")
             >>> df = reader.load_spot_value([1], datetime(2023, 1, 1, 10, 30), "close")
         """
-        df = self.load_minute_bars(
-            sids=sids, start_dt=target_dt, end_dt=target_dt, fields=[field]
-        )
+        df = self.load_minute_bars(sids=sids, start_dt=target_dt, end_dt=target_dt, fields=[field])
 
         return df.select(["sid", field])
 
@@ -327,10 +314,10 @@ class PolarsParquetMinuteReader:
 
     def _filter_cached_data(
         self,
-        sids: List[int],
+        sids: list[int],
         start_dt: datetime,
         end_dt: datetime,
-        fields: List[str],
+        fields: list[str],
     ) -> pl.DataFrame:
         """Filter cached data for query.
 
@@ -347,9 +334,7 @@ class PolarsParquetMinuteReader:
             raise DataError("Cache is None but _use_cache returned True")
 
         df = (
-            self._cache.filter(
-                pl.col("timestamp").is_between(start_dt, end_dt, closed="both")
-            )
+            self._cache.filter(pl.col("timestamp").is_between(start_dt, end_dt, closed="both"))
             .filter(pl.col("sid").is_in(sids))
             .select(["timestamp", "sid"] + fields)
         )

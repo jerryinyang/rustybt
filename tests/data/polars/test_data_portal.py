@@ -1,17 +1,18 @@
 """Tests for PolarsDataPortal."""
 
-import pytest
-import polars as pl
-import pandas as pd
-from decimal import Decimal
-from pathlib import Path
 import tempfile
 from datetime import date
+from decimal import Decimal
+from pathlib import Path
+
+import pandas as pd
+import polars as pl
+import pytest
 
 from rustybt.data.polars.data_portal import (
-    PolarsDataPortal,
-    NoDataAvailableError,
     LookaheadError,
+    NoDataAvailableError,
+    PolarsDataPortal,
 )
 from rustybt.data.sources.base import DataSource, DataSourceMetadata
 
@@ -67,9 +68,11 @@ class DummyDataSource(DataSource):
 
     def supports_live(self) -> bool:
         return self._supports_live
-from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader
+
+
 from rustybt.assets import Equity
 from rustybt.assets.exchange_info import ExchangeInfo
+from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader
 
 
 @pytest.fixture
@@ -77,20 +80,53 @@ def sample_daily_data():
     """Create sample daily OHLCV data for testing."""
     from rustybt.data.polars.parquet_schema import DAILY_BARS_SCHEMA
 
-    return pl.DataFrame({
-        "date": [date(2023, 1, 1), date(2023, 1, 2), date(2023, 1, 3)] * 2,
-        "sid": [1, 1, 1, 2, 2, 2],
-        "open": [Decimal("100.00"), Decimal("102.00"), Decimal("104.00"),
-                 Decimal("50.00"), Decimal("51.00"), Decimal("52.00")],
-        "high": [Decimal("101.00"), Decimal("103.00"), Decimal("105.00"),
-                 Decimal("51.00"), Decimal("52.00"), Decimal("53.00")],
-        "low": [Decimal("99.00"), Decimal("101.00"), Decimal("103.00"),
-                Decimal("49.00"), Decimal("50.00"), Decimal("51.00")],
-        "close": [Decimal("100.50"), Decimal("102.50"), Decimal("104.50"),
-                  Decimal("50.50"), Decimal("51.50"), Decimal("52.50")],
-        "volume": [Decimal("1000000"), Decimal("1500000"), Decimal("1200000"),
-                   Decimal("500000"), Decimal("600000"), Decimal("550000")],
-    }, schema=DAILY_BARS_SCHEMA)
+    return pl.DataFrame(
+        {
+            "date": [date(2023, 1, 1), date(2023, 1, 2), date(2023, 1, 3)] * 2,
+            "sid": [1, 1, 1, 2, 2, 2],
+            "open": [
+                Decimal("100.00"),
+                Decimal("102.00"),
+                Decimal("104.00"),
+                Decimal("50.00"),
+                Decimal("51.00"),
+                Decimal("52.00"),
+            ],
+            "high": [
+                Decimal("101.00"),
+                Decimal("103.00"),
+                Decimal("105.00"),
+                Decimal("51.00"),
+                Decimal("52.00"),
+                Decimal("53.00"),
+            ],
+            "low": [
+                Decimal("99.00"),
+                Decimal("101.00"),
+                Decimal("103.00"),
+                Decimal("49.00"),
+                Decimal("50.00"),
+                Decimal("51.00"),
+            ],
+            "close": [
+                Decimal("100.50"),
+                Decimal("102.50"),
+                Decimal("104.50"),
+                Decimal("50.50"),
+                Decimal("51.50"),
+                Decimal("52.50"),
+            ],
+            "volume": [
+                Decimal("1000000"),
+                Decimal("1500000"),
+                Decimal("1200000"),
+                Decimal("500000"),
+                Decimal("600000"),
+                Decimal("550000"),
+            ],
+        },
+        schema=DAILY_BARS_SCHEMA,
+    )
 
 
 @pytest.fixture
@@ -146,10 +182,7 @@ class TestPolarsDataPortal:
 
         # Get spot value
         prices = portal.get_spot_value(
-            assets=assets,
-            field="close",
-            dt=pd.Timestamp("2023-01-01"),
-            data_frequency="daily"
+            assets=assets, field="close", dt=pd.Timestamp("2023-01-01"), data_frequency="daily"
         )
 
         # Verify result
@@ -169,7 +202,7 @@ class TestPolarsDataPortal:
                 assets=assets,
                 field="invalid_field",
                 dt=pd.Timestamp("2023-01-01"),
-                data_frequency="daily"
+                data_frequency="daily",
             )
 
     def test_get_spot_value_validates_frequency(self, temp_bundle_with_data, test_assets):
@@ -181,18 +214,14 @@ class TestPolarsDataPortal:
 
         with pytest.raises(ValueError, match="Unsupported frequency"):
             portal.get_spot_value(
-                assets=assets,
-                field="close",
-                dt=pd.Timestamp("2023-01-01"),
-                data_frequency="hourly"
+                assets=assets, field="close", dt=pd.Timestamp("2023-01-01"), data_frequency="hourly"
             )
 
     def test_get_spot_value_prevents_lookahead(self, temp_bundle_with_data, test_assets):
         """Test get_spot_value prevents lookahead bias."""
         reader = PolarsParquetDailyReader(temp_bundle_with_data)
         portal = PolarsDataPortal(
-            daily_reader=reader,
-            current_simulation_time=pd.Timestamp("2023-01-01")
+            daily_reader=reader, current_simulation_time=pd.Timestamp("2023-01-01")
         )
 
         assets = [test_assets[0]]
@@ -200,28 +229,21 @@ class TestPolarsDataPortal:
         # Attempting to access future data should raise LookaheadError
         with pytest.raises(LookaheadError, match="Attempted to access future data"):
             portal.get_spot_value(
-                assets=assets,
-                field="close",
-                dt=pd.Timestamp("2023-01-02"),
-                data_frequency="daily"
+                assets=assets, field="close", dt=pd.Timestamp("2023-01-02"), data_frequency="daily"
             )
 
     def test_get_spot_value_allows_current_time(self, temp_bundle_with_data, test_assets):
         """Test get_spot_value allows access to current simulation time."""
         reader = PolarsParquetDailyReader(temp_bundle_with_data)
         portal = PolarsDataPortal(
-            daily_reader=reader,
-            current_simulation_time=pd.Timestamp("2023-01-01")
+            daily_reader=reader, current_simulation_time=pd.Timestamp("2023-01-01")
         )
 
         assets = [test_assets[0]]
 
         # Accessing current time should succeed
         prices = portal.get_spot_value(
-            assets=assets,
-            field="close",
-            dt=pd.Timestamp("2023-01-01"),
-            data_frequency="daily"
+            assets=assets, field="close", dt=pd.Timestamp("2023-01-01"), data_frequency="daily"
         )
 
         assert prices[0] == Decimal("100.50")
@@ -236,10 +258,7 @@ class TestPolarsDataPortal:
         # Requesting data for a date that doesn't exist
         with pytest.raises(NoDataAvailableError, match="No data found"):
             portal.get_spot_value(
-                assets=assets,
-                field="close",
-                dt=pd.Timestamp("2025-01-01"),
-                data_frequency="daily"
+                assets=assets, field="close", dt=pd.Timestamp("2025-01-01"), data_frequency="daily"
             )
 
     def test_get_spot_value_multiple_assets(self, temp_bundle_with_data, test_assets):
@@ -251,10 +270,7 @@ class TestPolarsDataPortal:
         assets = test_assets
 
         prices = portal.get_spot_value(
-            assets=assets,
-            field="close",
-            dt=pd.Timestamp("2023-01-01"),
-            data_frequency="daily"
+            assets=assets, field="close", dt=pd.Timestamp("2023-01-01"), data_frequency="daily"
         )
 
         assert len(prices) == 2
@@ -275,7 +291,7 @@ class TestPolarsDataPortal:
             bar_count=2,
             frequency="1d",
             field="close",
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Verify result
@@ -299,7 +315,7 @@ class TestPolarsDataPortal:
             bar_count=2,
             frequency="1d",
             field="close",
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Should return 2 bars for 1 asset
@@ -313,8 +329,7 @@ class TestPolarsDataPortal:
         """Test get_history_window prevents lookahead bias."""
         reader = PolarsParquetDailyReader(temp_bundle_with_data)
         portal = PolarsDataPortal(
-            daily_reader=reader,
-            current_simulation_time=pd.Timestamp("2023-01-01")
+            daily_reader=reader, current_simulation_time=pd.Timestamp("2023-01-01")
         )
 
         assets = [test_assets[0]]
@@ -327,25 +342,21 @@ class TestPolarsDataPortal:
                 bar_count=2,
                 frequency="1d",
                 field="close",
-                data_frequency="daily"
+                data_frequency="daily",
             )
 
     def test_set_simulation_time_updates_current_time(self, temp_bundle_with_data, test_assets):
         """Test set_simulation_time updates current simulation time."""
         reader = PolarsParquetDailyReader(temp_bundle_with_data)
         portal = PolarsDataPortal(
-            daily_reader=reader,
-            current_simulation_time=pd.Timestamp("2023-01-01")
+            daily_reader=reader, current_simulation_time=pd.Timestamp("2023-01-01")
         )
 
         # Initially, can't access 2023-01-02
         assets = [test_assets[0]]
         with pytest.raises(LookaheadError):
             portal.get_spot_value(
-                assets=assets,
-                field="close",
-                dt=pd.Timestamp("2023-01-02"),
-                data_frequency="daily"
+                assets=assets, field="close", dt=pd.Timestamp("2023-01-02"), data_frequency="daily"
             )
 
         # Update simulation time
@@ -353,10 +364,7 @@ class TestPolarsDataPortal:
 
         # Now can access 2023-01-02
         prices = portal.get_spot_value(
-            assets=assets,
-            field="close",
-            dt=pd.Timestamp("2023-01-02"),
-            data_frequency="daily"
+            assets=assets, field="close", dt=pd.Timestamp("2023-01-02"), data_frequency="daily"
         )
         assert prices[0] == Decimal("102.50")
 
@@ -391,7 +399,9 @@ class TestPolarsDataPortal:
         )
 
         assert not async_df.is_empty()
-        async_close = dict(zip(async_df["symbol"].to_list(), async_df["close"].to_list()))
+        async_close = dict(
+            zip(async_df["symbol"].to_list(), async_df["close"].to_list(), strict=False)
+        )
         assert async_close == {"AAPL": Decimal("101.10"), "GOOG": Decimal("55.55")}
 
         sync_df = portal.get_history_window(
@@ -402,17 +412,19 @@ class TestPolarsDataPortal:
             field="close",
             data_frequency="daily",
         )
-        sync_close = dict(zip(sync_df["symbol"].to_list(), sync_df["close"].to_list()))
+        sync_close = dict(
+            zip(sync_df["symbol"].to_list(), sync_df["close"].to_list(), strict=False)
+        )
         assert sync_close == {"AAPL": Decimal("101.10"), "GOOG": Decimal("55.55")}
 
     def test_history_window_polars_path(self, temp_bundle_with_data, test_assets):
         """History retrieval uses pure Polars (already Rust-optimized).
-        
+
         Note: We intentionally use Polars for DataFrame operations because:
         1. Polars is already Rust-backed and highly optimized
         2. Python↔Rust conversion overhead outweighs computation time for simple ops
         3. Benchmarks showed 25x slowdown when adding custom Rust layer
-        
+
         This test verifies that history retrieval works correctly with pure Polars.
         """
         reader = PolarsParquetDailyReader(temp_bundle_with_data)

@@ -46,11 +46,13 @@ getcontext().prec = 28
 
 class AttributionError(Exception):
     """Base exception for attribution analysis errors."""
+
     pass
 
 
 class InsufficientDataError(AttributionError):
     """Raised when insufficient data for attribution analysis."""
+
     pass
 
 
@@ -152,15 +154,13 @@ class PerformanceAttribution:
 
         if not has_value:
             raise ValueError(
-                f"DataFrame must have one of {value_cols}. "
-                f"Found columns: {list(self.data.columns)}"
+                f"DataFrame must have one of {value_cols}. Found columns: {list(self.data.columns)}"
             )
 
         # Check for datetime index
         if not isinstance(self.data.index, pd.DatetimeIndex):
             raise ValueError(
-                "DataFrame index must be DatetimeIndex. "
-                f"Found: {type(self.data.index)}"
+                f"DataFrame index must be DatetimeIndex. Found: {type(self.data.index)}"
             )
 
     def _prepare_returns(self) -> None:
@@ -287,10 +287,9 @@ class PerformanceAttribution:
             - tracking_error: Standard deviation of excess returns
         """
         # Align returns
-        aligned = pd.DataFrame({
-            "portfolio": self.portfolio_returns,
-            "benchmark": self.benchmark_returns
-        }).dropna()
+        aligned = pd.DataFrame(
+            {"portfolio": self.portfolio_returns, "benchmark": self.benchmark_returns}
+        ).dropna()
 
         if len(aligned) < 3:
             raise InsufficientDataError(
@@ -334,7 +333,8 @@ class PerformanceAttribution:
             "alpha_tstat": alpha_tstat,
             "alpha_significant": alpha_pvalue < 0.05,
             "information_ratio": information_ratio,
-            "information_ratio_annualized": information_ratio * Decimal(str(np.sqrt(periods_per_year))),
+            "information_ratio_annualized": information_ratio
+            * Decimal(str(np.sqrt(periods_per_year))),
             "r_squared": Decimal(str(model.rsquared)),
             "tracking_error": tracking_error,
             "tracking_error_annualized": tracking_error * Decimal(str(np.sqrt(periods_per_year))),
@@ -358,10 +358,9 @@ class PerformanceAttribution:
             - alpha_pvalue: P-value for alpha significance
         """
         # Align returns with factors
-        aligned = pd.concat([
-            self.portfolio_returns.rename("portfolio"),
-            self.factor_returns
-        ], axis=1, join="inner").dropna()
+        aligned = pd.concat(
+            [self.portfolio_returns.rename("portfolio"), self.factor_returns], axis=1, join="inner"
+        ).dropna()
 
         # Need at least 2 * (n_factors + 1) observations for reasonable estimates
         min_obs = max(10, 2 * (len(self.factor_returns.columns) + 1))
@@ -425,10 +424,9 @@ class PerformanceAttribution:
             - correlation: Correlation between position changes and subsequent returns
         """
         # Align returns
-        aligned = pd.DataFrame({
-            "portfolio": self.portfolio_returns,
-            "benchmark": self.benchmark_returns
-        }).dropna()
+        aligned = pd.DataFrame(
+            {"portfolio": self.portfolio_returns, "benchmark": self.benchmark_returns}
+        ).dropna()
 
         if len(aligned) < 4:
             raise InsufficientDataError(
@@ -451,13 +449,17 @@ class PerformanceAttribution:
         if "gross_leverage" in self.data.columns:
             position_changes = self.data["gross_leverage"].diff()
             # Align position changes with subsequent benchmark returns
-            timing_df = pd.DataFrame({
-                "position_change": position_changes,
-                "next_return": self.benchmark_returns.shift(-1)
-            }).dropna()
+            timing_df = pd.DataFrame(
+                {
+                    "position_change": position_changes,
+                    "next_return": self.benchmark_returns.shift(-1),
+                }
+            ).dropna()
 
             if len(timing_df) >= 3:
-                timing_correlation = Decimal(str(timing_df["position_change"].corr(timing_df["next_return"])))
+                timing_correlation = Decimal(
+                    str(timing_df["position_change"].corr(timing_df["next_return"]))
+                )
 
         return {
             "timing_coefficient": timing_coefficient,
@@ -489,19 +491,17 @@ class PerformanceAttribution:
         # This requires detailed holdings data with asset-level returns
         # For now, return a basic implementation
         warnings.warn(
-            "Selection attribution requires detailed holdings data. "
-            "Returning basic analysis.",
-            UserWarning
+            "Selection attribution requires detailed holdings data. Returning basic analysis.",
+            UserWarning,
         )
 
         # If we have asset-level data, calculate selection effect
         if "positions" in self.data.columns:
             # Calculate selection as residual returns not explained by benchmark
             if self.benchmark_returns is not None:
-                aligned = pd.DataFrame({
-                    "portfolio": self.portfolio_returns,
-                    "benchmark": self.benchmark_returns
-                }).dropna()
+                aligned = pd.DataFrame(
+                    {"portfolio": self.portfolio_returns, "benchmark": self.benchmark_returns}
+                ).dropna()
 
                 # Selection = portfolio return - benchmark return (simplified)
                 selection_returns = aligned["portfolio"] - aligned["benchmark"]
@@ -511,7 +511,9 @@ class PerformanceAttribution:
                 return {
                     "average_selection_return": avg_selection,
                     "selection_volatility": selection_vol,
-                    "selection_information_ratio": avg_selection / selection_vol if selection_vol > 0 else Decimal("0"),
+                    "selection_information_ratio": (
+                        avg_selection / selection_vol if selection_vol > 0 else Decimal("0")
+                    ),
                 }
 
         return {
@@ -535,7 +537,7 @@ class PerformanceAttribution:
         warnings.warn(
             "Interaction attribution requires detailed holdings and sector data. "
             "Returning basic analysis.",
-            UserWarning
+            UserWarning,
         )
 
         # Brinson-Fachler model requires:
@@ -550,9 +552,7 @@ class PerformanceAttribution:
         }
 
     def _calculate_rolling_attribution(
-        self,
-        window: int = 30,
-        min_periods: int | None = None
+        self, window: int = 30, min_periods: int | None = None
     ) -> dict[str, Any]:
         """Calculate rolling attribution over time windows.
 
@@ -570,10 +570,9 @@ class PerformanceAttribution:
             min_periods = window
 
         # Align returns
-        aligned = pd.DataFrame({
-            "portfolio": self.portfolio_returns,
-            "benchmark": self.benchmark_returns
-        }).dropna()
+        aligned = pd.DataFrame(
+            {"portfolio": self.portfolio_returns, "benchmark": self.benchmark_returns}
+        ).dropna()
 
         if len(aligned) < window:
             raise InsufficientDataError(
@@ -593,14 +592,19 @@ class PerformanceAttribution:
         rolling_beta = rolling_results.params["benchmark"]
 
         # Calculate rolling tracking error using predicted vs actual
-        y_pred = rolling_results.params["const"] + rolling_results.params["benchmark"] * aligned["benchmark"]
+        y_pred = (
+            rolling_results.params["const"]
+            + rolling_results.params["benchmark"] * aligned["benchmark"]
+        )
         rolling_residuals = y - y_pred
 
         # Calculate rolling std of residuals
         rolling_tracking_error = rolling_residuals.rolling(window, min_periods=min_periods).std()
 
         # Calculate information ratio
-        rolling_information_ratio = rolling_alpha / rolling_tracking_error.reindex(rolling_alpha.index)
+        rolling_information_ratio = rolling_alpha / rolling_tracking_error.reindex(
+            rolling_alpha.index
+        )
 
         return {
             "rolling_alpha": rolling_alpha,
@@ -627,10 +631,9 @@ class PerformanceAttribution:
             beta = float(results["alpha_beta"]["beta"])
 
             # Calculate beta * benchmark return
-            aligned = pd.DataFrame({
-                "portfolio": self.portfolio_returns,
-                "benchmark": self.benchmark_returns
-            }).dropna()
+            aligned = pd.DataFrame(
+                {"portfolio": self.portfolio_returns, "benchmark": self.benchmark_returns}
+            ).dropna()
 
             avg_benchmark_return = aligned["benchmark"].mean()
             predicted_return = alpha + beta * avg_benchmark_return
@@ -647,7 +650,7 @@ class PerformanceAttribution:
                     f"Predicted return ({predicted_return:.6f}) differs from "
                     f"actual return ({actual_return:.6f}) by {difference:.6f}. "
                     f"This is expected due to regression residuals.",
-                    UserWarning
+                    UserWarning,
                 )
 
         # Mark as reconciled
@@ -657,7 +660,7 @@ class PerformanceAttribution:
         self,
         results: dict[str, Any],
         figsize: tuple[float, float] = (10, 6),
-        title: str = "Performance Attribution Waterfall"
+        title: str = "Performance Attribution Waterfall",
     ) -> plt.Figure:
         """Create waterfall chart showing attribution decomposition.
 
@@ -711,7 +714,7 @@ class PerformanceAttribution:
         self,
         results: dict[str, Any],
         figsize: tuple[float, float] = (12, 8),
-        title: str = "Rolling Attribution Analysis"
+        title: str = "Rolling Attribution Analysis",
     ) -> plt.Figure:
         """Create chart showing rolling attribution over time.
 
@@ -742,7 +745,9 @@ class PerformanceAttribution:
         axes[0].legend()
 
         # Plot rolling beta
-        axes[1].plot(rolling["rolling_beta"].index, rolling["rolling_beta"], label="Beta", color="orange")
+        axes[1].plot(
+            rolling["rolling_beta"].index, rolling["rolling_beta"], label="Beta", color="orange"
+        )
         axes[1].axhline(y=1, color="black", linestyle="--", linewidth=0.5)
         axes[1].set_ylabel("Beta")
         axes[1].set_title("Rolling Beta")
@@ -754,7 +759,7 @@ class PerformanceAttribution:
             rolling["rolling_information_ratio"].index,
             rolling["rolling_information_ratio"],
             label="Information Ratio",
-            color="green"
+            color="green",
         )
         axes[2].axhline(y=0, color="black", linestyle="--", linewidth=0.5)
         axes[2].set_ylabel("Information Ratio")
@@ -776,7 +781,7 @@ class PerformanceAttribution:
         self,
         results: dict[str, Any],
         figsize: tuple[float, float] = (10, 6),
-        title: str = "Factor Exposures"
+        title: str = "Factor Exposures",
     ) -> plt.Figure:
         """Create bar chart of factor loadings.
 

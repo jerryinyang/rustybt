@@ -22,7 +22,6 @@ What requires full backtest integration (deferred):
 import asyncio
 from datetime import datetime
 from decimal import Decimal
-from typing import List, Tuple
 
 import pytest
 
@@ -60,7 +59,7 @@ class SimulatedBacktestExecution:
         amount: Decimal,
         market_price: Decimal,
         volume: Decimal,
-    ) -> Tuple[Decimal, Decimal, Decimal]:
+    ) -> tuple[Decimal, Decimal, Decimal]:
         """Execute order in simulated backtest.
 
         Returns:
@@ -76,6 +75,7 @@ class SimulatedBacktestExecution:
         # Calculate commission (same as PaperBroker)
         # Create a mock order object for commission calculation
         from types import SimpleNamespace
+
         mock_order = SimpleNamespace(
             id="mock-order",
             asset=asset,
@@ -102,8 +102,9 @@ class SimulatedBacktestExecution:
             if current_amount == Decimal("0"):
                 # New position
                 self.cost_basis[asset] = fill_price
-            elif (current_amount > Decimal("0") and amount > Decimal("0")) or \
-                 (current_amount < Decimal("0") and amount < Decimal("0")):
+            elif (current_amount > Decimal("0") and amount > Decimal("0")) or (
+                current_amount < Decimal("0") and amount < Decimal("0")
+            ):
                 # Adding to position - weighted average
                 total_cost = current_basis * abs(current_amount) + fill_price * abs(amount)
                 self.cost_basis[asset] = total_cost / abs(new_amount)
@@ -140,11 +141,9 @@ async def test_paper_broker_matches_simulated_backtest():
     starting_cash = Decimal("100000")
     commission_model = PerShareCommission(
         rate=Decimal("0.005"),  # $0.005 per share
-        minimum=Decimal("1.00")  # $1 minimum
+        minimum=Decimal("1.00"),  # $1 minimum
     )
-    slippage_model = FixedBasisPointsSlippage(
-        basis_points=Decimal("5")  # 5 bps
-    )
+    slippage_model = FixedBasisPointsSlippage(basis_points=Decimal("5"))  # 5 bps
 
     # Create assets
     exchange = ExchangeInfo("NASDAQ", "NASDAQ", "US")
@@ -172,7 +171,7 @@ async def test_paper_broker_matches_simulated_backtest():
     test_orders = [
         # (asset, amount, market_price, volume)
         (aapl, Decimal("100"), Decimal("150.00"), Decimal("50000000")),  # Buy 100 AAPL
-        (spy, Decimal("50"), Decimal("450.00"), Decimal("100000000")),   # Buy 50 SPY
+        (spy, Decimal("50"), Decimal("450.00"), Decimal("100000000")),  # Buy 50 SPY
         (aapl, Decimal("-50"), Decimal("155.00"), Decimal("50000000")),  # Sell 50 AAPL
     ]
 
@@ -184,32 +183,35 @@ async def test_paper_broker_matches_simulated_backtest():
         fill_price_bt, commission_bt, cash_impact_bt = backtest.execute_order(
             asset, amount, market_price, volume
         )
-        backtest_results.append({
-            "fill_price": fill_price_bt,
-            "commission": commission_bt,
-            "cash_impact": cash_impact_bt,
-        })
+        backtest_results.append(
+            {
+                "fill_price": fill_price_bt,
+                "commission": commission_bt,
+                "cash_impact": cash_impact_bt,
+            }
+        )
 
         # Execute in PaperBroker
-        broker._update_market_data(asset, {
-            "close": market_price,
-            "volume": volume,
-            "timestamp": datetime.now(),
-        })
-        order_id = await broker.submit_order(
-            asset=asset,
-            amount=amount,
-            order_type="market"
+        broker._update_market_data(
+            asset,
+            {
+                "close": market_price,
+                "volume": volume,
+                "timestamp": datetime.now(),
+            },
         )
+        await broker.submit_order(asset=asset, amount=amount, order_type="market")
         await asyncio.sleep(0.01)  # Wait for fill
 
         # Get fill details from transaction history
         txn = broker.transactions[-1]
-        paper_results.append({
-            "fill_price": txn.price,
-            "commission": txn.commission,
-            "cash_impact": -(txn.amount * txn.price + txn.commission),
-        })
+        paper_results.append(
+            {
+                "fill_price": txn.price,
+                "commission": txn.commission,
+                "cash_impact": -(txn.amount * txn.price + txn.commission),
+            }
+        )
 
     # Compare results
     print("\n=== Backtest vs Paper Broker Comparison ===")
@@ -217,14 +219,18 @@ async def test_paper_broker_matches_simulated_backtest():
     print("-" * 75)
 
     all_match = True
-    for i, (bt_result, paper_result) in enumerate(zip(backtest_results, paper_results)):
-        order_num = f"Order {i+1}"
+    for i, (bt_result, paper_result) in enumerate(
+        zip(backtest_results, paper_results, strict=False)
+    ):
+        order_num = f"Order {i + 1}"
         for metric in ["fill_price", "commission", "cash_impact"]:
             bt_value = bt_result[metric]
             paper_value = paper_result[metric]
             match = abs(bt_value - paper_value) < Decimal("0.01")  # 1 cent tolerance
             match_str = "✓" if match else "✗"
-            print(f"{order_num:<10} {metric:<15} {float(bt_value):<20.2f} {float(paper_value):<20.2f} {match_str:<10}")
+            print(
+                f"{order_num:<10} {metric:<15} {float(bt_value):<20.2f} {float(paper_value):<20.2f} {match_str:<10}"
+            )
             if not match:
                 all_match = False
         print()
@@ -244,10 +250,16 @@ async def test_paper_broker_matches_simulated_backtest():
     print("=== Final Portfolio Comparison ===")
     print(f"Backtest portfolio value: ${float(backtest_portfolio_value):.2f}")
     print(f"Paper portfolio value:    ${float(paper_portfolio_value):.2f}")
-    print(f"Difference:              ${float(abs(backtest_portfolio_value - paper_portfolio_value)):.2f}")
+    print(
+        f"Difference:              ${float(abs(backtest_portfolio_value - paper_portfolio_value)):.2f}"
+    )
 
     # Calculate correlation (using relative difference)
-    difference_pct = abs(backtest_portfolio_value - paper_portfolio_value) / backtest_portfolio_value * Decimal("100")
+    difference_pct = (
+        abs(backtest_portfolio_value - paper_portfolio_value)
+        / backtest_portfolio_value
+        * Decimal("100")
+    )
     correlation_pct = Decimal("100") - difference_pct
 
     print(f"Correlation:             {float(correlation_pct):.4f}%")
@@ -255,7 +267,9 @@ async def test_paper_broker_matches_simulated_backtest():
 
     # Assertions for AC9
     assert all_match, "Individual order executions must match between backtest and paper"
-    assert correlation_pct > Decimal("99"), f"Portfolio value correlation must be >99% (got {correlation_pct}%)"
+    assert correlation_pct > Decimal(
+        "99"
+    ), f"Portfolio value correlation must be >99% (got {correlation_pct}%)"
 
     await broker.disconnect()
 
@@ -270,10 +284,7 @@ async def test_commission_model_consistency():
     Tests that PaperBroker applies commission models exactly as they would
     be applied in backtest execution.
     """
-    commission_model = PerShareCommission(
-        rate=Decimal("0.005"),
-        minimum=Decimal("1.00")
-    )
+    commission_model = PerShareCommission(rate=Decimal("0.005"), minimum=Decimal("1.00"))
 
     exchange = ExchangeInfo("NASDAQ", "NASDAQ", "US")
     asset = Equity(1, exchange, symbol="TEST")
@@ -301,6 +312,7 @@ async def test_commission_model_consistency():
     for amount, price, expected_commission in test_cases:
         # Manual calculation (backtest-style)
         from types import SimpleNamespace
+
         mock_order = SimpleNamespace(
             id="mock-order",
             asset=asset,
@@ -311,11 +323,14 @@ async def test_commission_model_consistency():
         manual_commission = commission_model.calculate(mock_order, price, amount)
 
         # PaperBroker calculation
-        broker._update_market_data(asset, {
-            "close": price,
-            "volume": Decimal("1000000"),
-            "timestamp": datetime.now(),
-        })
+        broker._update_market_data(
+            asset,
+            {
+                "close": price,
+                "volume": Decimal("1000000"),
+                "timestamp": datetime.now(),
+            },
+        )
         await broker.submit_order(asset=asset, amount=amount, order_type="market")
         await asyncio.sleep(0.01)
 
@@ -324,12 +339,16 @@ async def test_commission_model_consistency():
         match = abs(manual_commission - paper_commission) < Decimal("0.001")
         match_str = "✓" if match else "✗"
 
-        print(f"{float(amount):<10.0f} ${float(price):<9.2f} ${float(expected_commission):<14.2f} ${float(paper_commission):<14.2f} {match_str:<10}")
+        print(
+            f"{float(amount):<10.0f} ${float(price):<9.2f} ${float(expected_commission):<14.2f} ${float(paper_commission):<14.2f} {match_str:<10}"
+        )
 
-        assert manual_commission == expected_commission, \
-            f"Manual commission calculation incorrect: {manual_commission} != {expected_commission}"
-        assert abs(manual_commission - paper_commission) < Decimal("0.001"), \
-            f"PaperBroker commission doesn't match: {paper_commission} != {manual_commission}"
+        assert (
+            manual_commission == expected_commission
+        ), f"Manual commission calculation incorrect: {manual_commission} != {expected_commission}"
+        assert abs(manual_commission - paper_commission) < Decimal(
+            "0.001"
+        ), f"PaperBroker commission doesn't match: {paper_commission} != {manual_commission}"
 
     await broker.disconnect()
     print("\n✓ Commission model consistency VALIDATED")
@@ -350,10 +369,10 @@ async def test_slippage_model_consistency():
 
     # Test cases: (amount, market_price)
     test_cases = [
-        (Decimal("100"), Decimal("100.00")),   # Buy
+        (Decimal("100"), Decimal("100.00")),  # Buy
         (Decimal("-100"), Decimal("100.00")),  # Sell
-        (Decimal("1000"), Decimal("50.50")),   # Buy
-        (Decimal("-500"), Decimal("75.25")),   # Sell
+        (Decimal("1000"), Decimal("50.50")),  # Buy
+        (Decimal("-500"), Decimal("75.25")),  # Sell
     ]
 
     # Create fresh broker for this test
@@ -366,7 +385,9 @@ async def test_slippage_model_consistency():
     await broker.subscribe_market_data([asset])
 
     print("\n=== Slippage Model Consistency Test ===")
-    print(f"{'Side':<10} {'Amount':<10} {'Market Price':<15} {'Expected Fill':<15} {'Paper Fill':<15} {'Match':<10}")
+    print(
+        f"{'Side':<10} {'Amount':<10} {'Market Price':<15} {'Expected Fill':<15} {'Paper Fill':<15} {'Match':<10}"
+    )
     print("-" * 75)
 
     for amount, market_price in test_cases:
@@ -380,11 +401,14 @@ async def test_slippage_model_consistency():
             side = "SELL"
 
         # PaperBroker calculation
-        broker._update_market_data(asset, {
-            "close": market_price,
-            "volume": Decimal("1000000"),
-            "timestamp": datetime.now(),
-        })
+        broker._update_market_data(
+            asset,
+            {
+                "close": market_price,
+                "volume": Decimal("1000000"),
+                "timestamp": datetime.now(),
+            },
+        )
         await broker.submit_order(asset=asset, amount=amount, order_type="market")
         await asyncio.sleep(0.01)
 
@@ -393,10 +417,13 @@ async def test_slippage_model_consistency():
         match = abs(expected_fill - paper_fill) < Decimal("0.001")
         match_str = "✓" if match else "✗"
 
-        print(f"{side:<10} {float(abs(amount)):<10.0f} ${float(market_price):<14.2f} ${float(expected_fill):<14.2f} ${float(paper_fill):<14.2f} {match_str:<10}")
+        print(
+            f"{side:<10} {float(abs(amount)):<10.0f} ${float(market_price):<14.2f} ${float(expected_fill):<14.2f} ${float(paper_fill):<14.2f} {match_str:<10}"
+        )
 
-        assert abs(expected_fill - paper_fill) < Decimal("0.001"), \
-            f"PaperBroker fill price doesn't match expected: {paper_fill} != {expected_fill}"
+        assert abs(expected_fill - paper_fill) < Decimal(
+            "0.001"
+        ), f"PaperBroker fill price doesn't match expected: {paper_fill} != {expected_fill}"
 
     await broker.disconnect()
     print("\n✓ Slippage model consistency VALIDATED")

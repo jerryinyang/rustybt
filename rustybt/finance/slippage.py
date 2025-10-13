@@ -12,26 +12,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from abc import abstractmethod
 import abc
+import math
+from abc import abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal as D
 from enum import Enum
-import math
+from typing import Any
+
 import numpy as np
-from pandas import isnull
 import pandas as pd
 import structlog
+from pandas import isnull
 from toolz import merge
-from typing import Any, Dict, Optional
 
 from rustybt.assets import Equity, Future
 from rustybt.errors import HistoryWindowStartsBeforeData
-from rustybt.finance.constants import ROOT_SYMBOL_TO_ETA, DEFAULT_ETA
+from rustybt.finance.constants import DEFAULT_ETA, ROOT_SYMBOL_TO_ETA
 from rustybt.finance.shared import AllowedAssetMarker, FinancialModelMeta
 from rustybt.finance.transaction import create_transaction
 from rustybt.utils.cache import ExpiringCache
-from rustybt.utils.dummy import DummyMapping
+from rustybt.utils.dummy import SingleValueMapping
 from rustybt.utils.input_validation import (
     expect_bounded,
     expect_strictly_bounded,
@@ -63,7 +64,7 @@ def fill_price_worse_than_limit_price(fill_price, order):
     order: zipline.finance.order.Order
         The order whose limit price to check.
 
-    Returns
+    Returns:
     -------
     bool: Whether the fill price is above the limit price (for a buy) or below
     the limit price (for a sell).
@@ -95,11 +96,11 @@ class SlippageModel(metaclass=FinancialModelMeta):
     :class:`~zipline.finance.slippage.SlippageModel` and implement
     :meth:`process_order`.
 
-    Methods
+    Methods:
     -------
     process_order(data, order)
 
-    Attributes
+    Attributes:
     ----------
     volume_for_bar : int
         Number of shares that have already been filled for the
@@ -108,7 +109,7 @@ class SlippageModel(metaclass=FinancialModelMeta):
         subclasses to keep track of the total amount filled if there are
         multiple open orders for a single asset.
 
-    Notes
+    Notes:
     -----
     Subclasses that define their own constructors should call
     ``super(<subclass name>, self).__init__()`` before performing other
@@ -137,7 +138,7 @@ class SlippageModel(metaclass=FinancialModelMeta):
         order : zipline.finance.order.Order
             The order to simulate.
 
-        Returns
+        Returns:
         -------
         execution_price : float
             The price of the fill.
@@ -147,13 +148,13 @@ class SlippageModel(metaclass=FinancialModelMeta):
             than the amount remaining, ``order`` will remain open and will be
             passed again to this method in the next minute.
 
-        Raises
+        Raises:
         ------
         zipline.finance.slippage.LiquidityExceeded
             May be raised if no more orders should be processed for the current
             asset during the current bar.
 
-        Notes
+        Notes:
         -----
         Before this method is called, :attr:`volume_for_bar` will be set to the
         number of shares that have already been filled for ``order.asset`` in
@@ -220,7 +221,7 @@ class NoSlippage(SlippageModel):
     """A slippage model where all orders fill immediately and completely at the
     current close price.
 
-    Notes
+    Notes:
     -----
     This is primarily used for testing.
     """
@@ -348,7 +349,7 @@ class FixedSlippage(SlippageModel):
         Orders to buy will be filled at ``close + (spread / 2)``.
         Orders to sell will be filled at ``close - (spread / 2)``.
 
-    Notes
+    Notes:
     -----
     This model does not impose limits on the size of fills. An order for an
     asset will always be filled as soon as any trading activity occurs in the
@@ -361,10 +362,7 @@ class FixedSlippage(SlippageModel):
         self.spread = spread
 
     def __repr__(self):
-        return "{class_name}(spread={spread})".format(
-            class_name=self.__class__.__name__,
-            spread=self.spread,
-        )
+        return f"{self.__class__.__name__}(spread={self.spread})"
 
     def process_order(self, data, order):
         price = data.current(order.asset, "close")
@@ -392,7 +390,7 @@ class MarketImpactBase(SlippageModel):
         data : BarData
         order : Order
 
-        Return
+        Return:
         ------
         int : the number of shares
         """
@@ -419,7 +417,7 @@ class MarketImpactBase(SlippageModel):
         mean_volume : Trailing ADV of the asset.
         volatility : Annualized daily volatility of returns.
 
-        Return
+        Return:
         ------
         int : impact on the current price.
         """
@@ -479,7 +477,7 @@ class MarketImpactBase(SlippageModel):
         window_length : Number of days of history used to calculate the mean
             volume and close price volatility.
 
-        Returns
+        Returns:
         -------
         (mean volume, volatility)
         """
@@ -560,7 +558,7 @@ class VolatilityVolumeShare(MarketImpactBase):
         # NOTE: This dictionary does not handle unknown root symbols, so it may
         # be worth revisiting this behavior.
         if isinstance(eta, (int, float)):
-            self._eta = DummyMapping(float(eta))
+            self._eta = SingleValueMapping(float(eta))
         else:
             # Eta is a dictionary. If the user's dictionary does not provide a
             # value for a certain contract, fall back on the pre-defined eta
@@ -568,16 +566,12 @@ class VolatilityVolumeShare(MarketImpactBase):
             self._eta = merge(ROOT_SYMBOL_TO_ETA, eta)
 
     def __repr__(self):
-        if isinstance(self._eta, DummyMapping):
+        if isinstance(self._eta, SingleValueMapping):
             # Eta is a constant, so extract it.
             eta = self._eta["dummy key"]
         else:
             eta = "<varies>"
-        return "{class_name}(volume_limit={volume_limit}, eta={eta})".format(
-            class_name=self.__class__.__name__,
-            volume_limit=self.volume_limit,
-            eta=eta,
-        )
+        return f"{self.__class__.__name__}(volume_limit={self.volume_limit}, eta={eta})"
 
     def get_simulated_impact(
         self,
@@ -634,7 +628,7 @@ class FixedBasisPointsSlippage(SlippageModel):
         Fraction of trading volume that can be filled each minute. Default is
         10% of trading volume.
 
-    Notes
+    Notes:
     -----
     - A basis point is one one-hundredth of a percent.
     - This class, default-constructed, is zipline's default slippage model for
@@ -692,6 +686,7 @@ logger_decimal = structlog.get_logger()
 
 class OrderSide(Enum):
     """Order side for directional slippage."""
+
     BUY = "buy"
     SELL = "sell"
 
@@ -699,10 +694,11 @@ class OrderSide(Enum):
 @dataclass(frozen=True)
 class SlippageResult:
     """Result of slippage calculation with Decimal precision."""
+
     slippage_amount: D  # Absolute slippage in price units
     slippage_bps: D  # Slippage in basis points
     model_name: str  # Name of slippage model used
-    metadata: Dict[str, Any]  # Additional model-specific data
+    metadata: dict[str, Any]  # Additional model-specific data
 
     @property
     def slippage_percentage(self) -> D:
@@ -721,10 +717,7 @@ class DecimalSlippageModel(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def calculate_slippage(
-        self,
-        order: Any,
-        bar_data: Dict[str, Any],
-        current_time: pd.Timestamp
+        self, order: Any, bar_data: dict[str, Any], current_time: pd.Timestamp
     ) -> SlippageResult:
         """Calculate slippage for an order.
 
@@ -743,10 +736,7 @@ class DecimalSlippageModel(metaclass=abc.ABCMeta):
         return OrderSide.BUY if order.amount > 0 else OrderSide.SELL
 
     def _apply_directional_slippage(
-        self,
-        base_price: D,
-        slippage_amount: D,
-        order_side: OrderSide
+        self, base_price: D, slippage_amount: D, order_side: OrderSide
     ) -> D:
         """Apply slippage directionally to price.
 
@@ -786,7 +776,7 @@ class VolumeShareSlippageDecimal(DecimalSlippageModel):
         volume_limit: D = D("0.025"),  # 2.5% of bar volume
         price_impact: D = D("0.10"),  # 10% impact coefficient
         power_factor: D = D("0.5"),  # Square root of volume ratio
-        volatility_window: int = 20  # Days for volatility calculation
+        volatility_window: int = 20,  # Days for volatility calculation
     ):
         """Initialize volume-share slippage model.
 
@@ -802,15 +792,12 @@ class VolumeShareSlippageDecimal(DecimalSlippageModel):
         self.volatility_window = volatility_window
 
     def calculate_slippage(
-        self,
-        order: Any,
-        bar_data: Dict[str, Any],
-        current_time: pd.Timestamp
+        self, order: Any, bar_data: dict[str, Any], current_time: pd.Timestamp
     ) -> SlippageResult:
         """Calculate volume-share slippage with volatility adjustment."""
         # Extract data
-        bar_volume = D(str(bar_data.get('volume', 0)))
-        bar_price = D(str(bar_data.get('close', 0)))
+        bar_volume = D(str(bar_data.get("volume", 0)))
+        bar_price = D(str(bar_data.get("close", 0)))
 
         # Get order details
         order_size = abs(order.amount)
@@ -824,8 +811,8 @@ class VolumeShareSlippageDecimal(DecimalSlippageModel):
             logger_decimal.warning(
                 "volume_unavailable_using_default",
                 order_id=order.id,
-                asset=order.asset.symbol if hasattr(order.asset, 'symbol') else str(order.asset),
-                default_ratio=str(volume_ratio)
+                asset=order.asset.symbol if hasattr(order.asset, "symbol") else str(order.asset),
+                default_ratio=str(volume_ratio),
             )
 
         # Get volatility (from bar_data or calculate)
@@ -847,30 +834,27 @@ class VolumeShareSlippageDecimal(DecimalSlippageModel):
             "volatility": str(volatility),
             "volume_impact": str(volume_impact),
             "bar_volume": str(bar_volume),
-            "order_size": str(order_size)
+            "order_size": str(order_size),
         }
 
         logger_decimal.info(
             "volume_share_slippage_calculated",
             order_id=order.id,
-            asset=order.asset.symbol if hasattr(order.asset, 'symbol') else str(order.asset),
+            asset=order.asset.symbol if hasattr(order.asset, "symbol") else str(order.asset),
             slippage_bps=str(slippage_bps),
             volume_ratio=str(volume_ratio),
-            volatility=str(volatility)
+            volatility=str(volatility),
         )
 
         return SlippageResult(
             slippage_amount=slippage_amount,
             slippage_bps=slippage_bps,
             model_name="VolumeShareSlippageDecimal",
-            metadata=metadata
+            metadata=metadata,
         )
 
     def _get_volatility(
-        self,
-        asset: Any,
-        bar_data: Dict[str, Any],
-        current_time: pd.Timestamp
+        self, asset: Any, bar_data: dict[str, Any], current_time: pd.Timestamp
     ) -> D:
         """Get or calculate asset volatility.
 
@@ -883,8 +867,8 @@ class VolumeShareSlippageDecimal(DecimalSlippageModel):
             Annualized volatility as decimal (e.g., 0.20 = 20%)
         """
         # Check if volatility provided in bar_data
-        if 'volatility' in bar_data:
-            return D(str(bar_data['volatility']))
+        if "volatility" in bar_data:
+            return D(str(bar_data["volatility"]))
 
         # Default volatility if unavailable (conservative estimate)
         # In production, this would fetch from data portal
@@ -892,8 +876,8 @@ class VolumeShareSlippageDecimal(DecimalSlippageModel):
 
         logger_decimal.debug(
             "using_default_volatility",
-            asset=asset.symbol if hasattr(asset, 'symbol') else str(asset),
-            volatility=str(default_volatility)
+            asset=asset.symbol if hasattr(asset, "symbol") else str(asset),
+            volatility=str(default_volatility),
         )
 
         return default_volatility
@@ -911,7 +895,7 @@ class FixedBasisPointSlippageDecimal(DecimalSlippageModel):
     def __init__(
         self,
         basis_points: D = D("5.0"),  # 5 bps = 0.05%
-        min_slippage: D = D("0.01")  # Minimum $0.01
+        min_slippage: D = D("0.01"),  # Minimum $0.01
     ):
         """Initialize fixed basis point slippage model.
 
@@ -923,14 +907,11 @@ class FixedBasisPointSlippageDecimal(DecimalSlippageModel):
         self.min_slippage = min_slippage
 
     def calculate_slippage(
-        self,
-        order: Any,
-        bar_data: Dict[str, Any],
-        current_time: pd.Timestamp
+        self, order: Any, bar_data: dict[str, Any], current_time: pd.Timestamp
     ) -> SlippageResult:
         """Calculate fixed basis point slippage."""
         # Extract price
-        bar_price = D(str(bar_data.get('close', 0)))
+        bar_price = D(str(bar_data.get("close", 0)))
 
         # Calculate slippage
         slippage_amount = bar_price * (self.basis_points / D("10000"))
@@ -947,22 +928,22 @@ class FixedBasisPointSlippageDecimal(DecimalSlippageModel):
         metadata = {
             "configured_bps": str(self.basis_points),
             "actual_bps": str(actual_bps),
-            "min_slippage_applied": slippage_amount == self.min_slippage
+            "min_slippage_applied": slippage_amount == self.min_slippage,
         }
 
         logger_decimal.info(
             "fixed_bps_slippage_calculated",
             order_id=order.id,
-            asset=order.asset.symbol if hasattr(order.asset, 'symbol') else str(order.asset),
+            asset=order.asset.symbol if hasattr(order.asset, "symbol") else str(order.asset),
             slippage_bps=str(actual_bps),
-            slippage_amount=str(slippage_amount)
+            slippage_amount=str(slippage_amount),
         )
 
         return SlippageResult(
             slippage_amount=slippage_amount,
             slippage_bps=actual_bps,
             model_name="FixedBasisPointSlippageDecimal",
-            metadata=metadata
+            metadata=metadata,
         )
 
 
@@ -978,8 +959,8 @@ class BidAskSpreadSlippageDecimal(DecimalSlippageModel):
 
     def __init__(
         self,
-        spread_estimate: Optional[D] = None,  # Default spread if bid/ask unavailable
-        spread_factor: D = D("1.0")  # Multiplier for spread (e.g., 1.5x for conservative)
+        spread_estimate: D | None = None,  # Default spread if bid/ask unavailable
+        spread_factor: D = D("1.0"),  # Multiplier for spread (e.g., 1.5x for conservative)
     ):
         """Initialize bid-ask spread slippage model.
 
@@ -991,16 +972,13 @@ class BidAskSpreadSlippageDecimal(DecimalSlippageModel):
         self.spread_factor = spread_factor
 
     def calculate_slippage(
-        self,
-        order: Any,
-        bar_data: Dict[str, Any],
-        current_time: pd.Timestamp
+        self, order: Any, bar_data: dict[str, Any], current_time: pd.Timestamp
     ) -> SlippageResult:
         """Calculate bid-ask spread slippage."""
         # Try to get bid/ask from bar data
-        bid_price = bar_data.get('bid')
-        ask_price = bar_data.get('ask')
-        close_price = D(str(bar_data.get('close', 0)))
+        bid_price = bar_data.get("bid")
+        ask_price = bar_data.get("ask")
+        close_price = D(str(bar_data.get("close", 0)))
 
         order_side = self._get_order_side(order)
 
@@ -1018,7 +996,7 @@ class BidAskSpreadSlippageDecimal(DecimalSlippageModel):
                 "bid": str(bid_price),
                 "ask": str(ask_price),
                 "spread": str(spread),
-                "spread_source": "real"
+                "spread_source": "real",
             }
         else:
             # Estimate spread from close price
@@ -1029,14 +1007,14 @@ class BidAskSpreadSlippageDecimal(DecimalSlippageModel):
             metadata = {
                 "estimated_spread": str(estimated_spread),
                 "spread_estimate_pct": str(self.spread_estimate * D("100")),
-                "spread_source": "estimated"
+                "spread_source": "estimated",
             }
 
             logger_decimal.warning(
                 "bid_ask_unavailable_using_estimate",
                 order_id=order.id,
-                asset=order.asset.symbol if hasattr(order.asset, 'symbol') else str(order.asset),
-                estimated_spread_bps=str(self.spread_estimate * D("10000"))
+                asset=order.asset.symbol if hasattr(order.asset, "symbol") else str(order.asset),
+                estimated_spread_bps=str(self.spread_estimate * D("10000")),
             )
 
         # Calculate basis points
@@ -1048,31 +1026,30 @@ class BidAskSpreadSlippageDecimal(DecimalSlippageModel):
         logger_decimal.info(
             "bid_ask_slippage_calculated",
             order_id=order.id,
-            asset=order.asset.symbol if hasattr(order.asset, 'symbol') else str(order.asset),
+            asset=order.asset.symbol if hasattr(order.asset, "symbol") else str(order.asset),
             slippage_bps=str(slippage_bps),
-            spread_source=metadata["spread_source"]
+            spread_source=metadata["spread_source"],
         )
 
         return SlippageResult(
             slippage_amount=slippage_amount,
             slippage_bps=slippage_bps,
             model_name="BidAskSpreadSlippageDecimal",
-            metadata=metadata
+            metadata=metadata,
         )
 
 
 # Export new Decimal-based models
 __all_decimal__ = [
-    'OrderSide',
-    'SlippageResult',
-    'DecimalSlippageModel',
-    'VolumeShareSlippageDecimal',
-    'FixedBasisPointSlippageDecimal',
-    'BidAskSpreadSlippageDecimal',
+    "OrderSide",
+    "SlippageResult",
+    "DecimalSlippageModel",
+    "VolumeShareSlippageDecimal",
+    "FixedBasisPointSlippageDecimal",
+    "BidAskSpreadSlippageDecimal",
 ]
 
 
 if __name__ == "__main__":
     f = EquitySlippageModel()
     # print(f.__meta__)
-    print(f.__class__)

@@ -3,9 +3,9 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
+from rustybt.lib._factorize import factorize_strings
 from rustybt.utils.date_utils import make_utc_aware
 from rustybt.utils.sentinel import sentinel
-from rustybt.lib._factorize import factorize_strings
 
 DEFAULT_FX_RATE = sentinel("DEFAULT_FX_RATE")
 
@@ -75,7 +75,7 @@ class FXRateReader(ABC):
             Datetimes for which to load rates. Must be sorted in ascending
             order and localized to UTC.
 
-        Returns
+        Returns:
         -------
         rates : np.array
             Array of shape ``(len(dts), len(bases))`` containing foreign
@@ -100,7 +100,7 @@ class FXRateReader(ABC):
         dt : np.datetime64 or pd.Timestamp
             Datetime on which to load rate.
 
-        Returns
+        Returns:
         -------
         rate : np.float64
             Exchange rate from base -> quote on dt.
@@ -131,9 +131,7 @@ class FXRateReader(ABC):
             multiple times. Datetimes do not need to be sorted.
         """
         if len(bases) != len(dts):
-            raise ValueError(
-                "len(bases) ({}) != len(dts) ({})".format(len(bases), len(dts))
-            )
+            raise ValueError(f"len(bases) ({len(bases)}) != len(dts) ({len(dts)})")
 
         bases_ix, unique_bases, _ = factorize_strings(
             bases,
@@ -144,7 +142,5 @@ class FXRateReader(ABC):
         # NOTE: np.unique returns unique_dts in sorted order, which is required
         # for calling get_rates.
         unique_dts, dts_ix = np.unique(dts.values, return_inverse=True)
-        rates_2d = self.get_rates(
-            rate, quote, unique_bases, pd.DatetimeIndex(unique_dts, tz="utc")
-        )
+        rates_2d = self.get_rates(rate, quote, unique_bases, pd.DatetimeIndex(unique_dts, tz="utc"))
         return rates_2d[dts_ix, bases_ix]

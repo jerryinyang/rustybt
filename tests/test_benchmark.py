@@ -86,14 +86,10 @@ def set_test_benchmark_spec(request, with_asset_finder):
             }
         )
 
-    request.cls.asset_finder = with_asset_finder(
-        **dict(equities=equities, exchanges=exchanges)
-    )
+    request.cls.asset_finder = with_asset_finder(**dict(equities=equities, exchanges=exchanges))
 
 
-class TestBenchmark(
-    WithDataPortal, WithSimParams, WithTradingCalendars, ZiplineTestCase
-):
+class TestBenchmark(WithDataPortal, WithSimParams, WithTradingCalendars, ZiplineTestCase):
     START_DATE = pd.Timestamp("2006-01-03")
     END_DATE = pd.Timestamp("2006-12-29")
 
@@ -195,9 +191,7 @@ class TestBenchmark(
             f"Equity(3 [C]) does not exist on {self.sim_params.sessions[1]}. "
             f"It started trading on {benchmark_start}."
         )
-        with pytest.raises(
-            BenchmarkAssetNotAvailableTooEarly, match=re.escape(expected_msg)
-        ):
+        with pytest.raises(BenchmarkAssetNotAvailableTooEarly, match=re.escape(expected_msg)):
             BenchmarkSource(
                 benchmark,
                 self.trading_calendar,
@@ -209,9 +203,7 @@ class TestBenchmark(
             f"Equity(3 [C]) does not exist on {self.sim_params.sessions[-1]}. "
             f"It stopped trading on {benchmark_end}."
         )
-        with pytest.raises(
-            BenchmarkAssetNotAvailableTooLate, match=re.escape(expected_msg)
-        ):
+        with pytest.raises(BenchmarkAssetNotAvailableTooLate, match=re.escape(expected_msg)):
             BenchmarkSource(
                 benchmark,
                 self.trading_calendar,

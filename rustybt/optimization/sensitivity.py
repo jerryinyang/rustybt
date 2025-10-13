@@ -405,8 +405,7 @@ class SensitivityAnalyzer:
         """
         if not self._sensitivity_results:
             return (
-                "# Sensitivity Analysis Report\n\n"
-                "No analysis performed yet. Run analyze() first."
+                "# Sensitivity Analysis Report\n\nNo analysis performed yet. Run analyze() first."
             )
 
         lines = [
@@ -436,11 +435,13 @@ class SensitivityAnalyzer:
             )
 
         # Robustness assessment
-        lines.extend([
-            "",
-            "## Robustness Assessment",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Robustness Assessment",
+                "",
+            ]
+        )
 
         robustness_pct = (robust_count / total_count * 100) if total_count > 0 else 0
         if robustness_pct >= 80:
@@ -459,18 +460,19 @@ class SensitivityAnalyzer:
         lines.append("")
 
         # Detailed recommendations
-        lines.extend([
-            "## Recommendations",
-            "",
-        ])
+        lines.extend(
+            [
+                "## Recommendations",
+                "",
+            ]
+        )
 
         for i, (param_name, result) in enumerate(sorted(self._sensitivity_results.items()), 1):
             if result.classification == "robust":
                 pct = self.perturbation_pct * 100
                 range_desc = f"performance stable across ±{pct:.0f}% range"
                 lines.append(
-                    f"{i}. **{param_name}={result.base_value:.4g}**: "
-                    f"Robust parameter, {range_desc}"
+                    f"{i}. **{param_name}={result.base_value:.4g}**: Robust parameter, {range_desc}"
                 )
             elif result.classification == "moderate":
                 lines.append(
@@ -485,11 +487,13 @@ class SensitivityAnalyzer:
 
         # Interaction analysis
         if self._interaction_results:
-            lines.extend([
-                "",
-                "## Parameter Interactions",
-                "",
-            ])
+            lines.extend(
+                [
+                    "",
+                    "## Parameter Interactions",
+                    "",
+                ]
+            )
 
             for (param1, param2), result in sorted(self._interaction_results.items()):
                 if result.has_interaction:
@@ -506,14 +510,17 @@ class SensitivityAnalyzer:
                     lines.append("  → Can optimize independently")
 
         # Overfitting indicators
-        lines.extend([
-            "",
-            "## Overfitting Indicators",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Overfitting Indicators",
+                "",
+            ]
+        )
 
         sensitive_params = [
-            name for name, result in self._sensitivity_results.items()
+            name
+            for name, result in self._sensitivity_results.items()
             if result.classification == "sensitive"
         ]
 
@@ -523,8 +530,7 @@ class SensitivityAnalyzer:
             for param in sensitive_params:
                 result = self._sensitivity_results[param]
                 lines.append(
-                    f"- **{param}**: High sensitivity "
-                    f"(score: {result.stability_score:.3f})"
+                    f"- **{param}**: High sensitivity (score: {result.stability_score:.3f})"
                 )
                 lines.append(f"  - Variance: {result.variance:.4f}")
                 lines.append(f"  - Max gradient: {result.max_gradient:.4f}")

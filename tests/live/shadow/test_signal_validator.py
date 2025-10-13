@@ -1,9 +1,10 @@
 """Unit tests for SignalAlignmentValidator."""
 
-import pytest
-import pytz
 from datetime import datetime, timedelta
 from decimal import Decimal
+
+import pytest
+import pytz
 
 from rustybt.assets import Equity, ExchangeInfo
 from rustybt.live.shadow.config import ShadowTradingConfig

@@ -5,20 +5,20 @@ for order execution with Decimal calculations. Tests run with 1000+ examples
 to ensure financial calculations never lose precision across edge cases.
 """
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
-from hypothesis import given, strategies as st, settings, assume, HealthCheck
+
+from hypothesis import HealthCheck, assume, given, settings
+from hypothesis import strategies as st
 
 from rustybt.finance.decimal import (
+    CryptoCommission,
     DecimalOrder,
     DecimalTransaction,
+    FixedBasisPointsSlippage,
+    FixedSlippage,
     PerShareCommission,
     PerTradeCommission,
-    PerDollarCommission,
-    CryptoCommission,
-    FixedSlippage,
-    FixedBasisPointsSlippage,
 )
 
 
@@ -26,13 +26,15 @@ from rustybt.finance.decimal import (
 @st.composite
 def decimal_prices(draw, min_value="0.01", max_value="100000.00", places=2):
     """Generate Decimal prices with specified precision."""
-    value = draw(st.decimals(
-        min_value=Decimal(min_value),
-        max_value=Decimal(max_value),
-        places=places,
-        allow_nan=False,
-        allow_infinity=False
-    ))
+    value = draw(
+        st.decimals(
+            min_value=Decimal(min_value),
+            max_value=Decimal(max_value),
+            places=places,
+            allow_nan=False,
+            allow_infinity=False,
+        )
+    )
     assume(value > Decimal("0"))
     return value
 
@@ -40,13 +42,15 @@ def decimal_prices(draw, min_value="0.01", max_value="100000.00", places=2):
 @st.composite
 def decimal_quantities(draw, min_value="0.00000001", max_value="1000000.00", places=8):
     """Generate Decimal quantities with specified precision."""
-    value = draw(st.decimals(
-        min_value=Decimal(min_value),
-        max_value=Decimal(max_value),
-        places=places,
-        allow_nan=False,
-        allow_infinity=False
-    ))
+    value = draw(
+        st.decimals(
+            min_value=Decimal(min_value),
+            max_value=Decimal(max_value),
+            places=places,
+            allow_nan=False,
+            allow_infinity=False,
+        )
+    )
     assume(value > Decimal("0"))
     return value
 
@@ -54,21 +58,22 @@ def decimal_quantities(draw, min_value="0.00000001", max_value="1000000.00", pla
 @st.composite
 def commission_rates(draw):
     """Generate commission rates (0 to 1% as Decimal)."""
-    return draw(st.decimals(
-        min_value=Decimal("0"),
-        max_value=Decimal("0.01"),
-        places=4,
-        allow_nan=False,
-        allow_infinity=False
-    ))
+    return draw(
+        st.decimals(
+            min_value=Decimal("0"),
+            max_value=Decimal("0.01"),
+            places=4,
+            allow_nan=False,
+            allow_infinity=False,
+        )
+    )
 
 
 # PROPERTY 1: Order value must equal price × quantity (exact equality)
-@settings(max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(
-    price=decimal_prices(),
-    quantity=decimal_quantities(max_value="10000.00", places=2)
+@settings(
+    max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
 )
+@given(price=decimal_prices(), quantity=decimal_quantities(max_value="10000.00", places=2))
 def test_property_order_value_exact(price, quantity, equity_asset):
     """Property: order_value = price × quantity (exact equality).
 
@@ -83,17 +88,20 @@ def test_property_order_value_exact(price, quantity, equity_asset):
     )
 
     expected_value = price * quantity
-    assert order.order_value == expected_value, \
-        f"Order value mismatch: {order.order_value} != {expected_value}"
+    assert (
+        order.order_value == expected_value
+    ), f"Order value mismatch: {order.order_value} != {expected_value}"
 
 
 # PROPERTY 2: Transaction total cost = value + commission + slippage
-@settings(max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+)
 @given(
     price=decimal_prices(max_value="10000.00"),
     quantity=decimal_quantities(max_value="1000.00", places=2),
     commission=decimal_prices(max_value="100.00"),
-    slippage=decimal_prices(max_value="10.00")
+    slippage=decimal_prices(max_value="10.00"),
 )
 def test_property_transaction_total_cost(price, quantity, commission, slippage, equity_asset):
     """Property: transaction_total_cost = value + commission + slippage.
@@ -113,16 +121,19 @@ def test_property_transaction_total_cost(price, quantity, commission, slippage, 
     value = abs(quantity) * price
     expected_total = value + commission + slippage
 
-    assert transaction.total_cost == expected_total, \
-        f"Total cost mismatch: {transaction.total_cost} != {expected_total}"
+    assert (
+        transaction.total_cost == expected_total
+    ), f"Total cost mismatch: {transaction.total_cost} != {expected_total}"
 
 
 # PROPERTY 3: Commission must be non-negative and reasonable
-@settings(max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+)
 @given(
     commission_rate=commission_rates(),
     quantity=decimal_quantities(max_value="10000.00", places=2),
-    price=decimal_prices(max_value="1000.00")
+    price=decimal_prices(max_value="1000.00"),
 )
 def test_property_commission_non_negative(commission_rate, quantity, price, equity_asset):
     """Property: commission >= 0 and commission <= order_value.
@@ -142,20 +153,21 @@ def test_property_commission_non_negative(commission_rate, quantity, price, equi
     assert commission >= Decimal("0"), f"Commission is negative: {commission}"
 
     order_value = abs(quantity) * price
-    assert commission <= order_value, \
-        f"Commission {commission} exceeds order value {order_value}"
+    assert commission <= order_value, f"Commission {commission} exceeds order value {order_value}"
 
 
 # PROPERTY 4: Sum of partial fills equals total filled (exact equality)
-@settings(max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+)
 @given(
     fills=st.lists(
         st.tuples(
             decimal_prices(max_value="1000.00"),  # price
-            decimal_quantities(max_value="100.00", places=2)  # amount
+            decimal_quantities(max_value="100.00", places=2),  # amount
         ),
         min_size=1,
-        max_size=10
+        max_size=10,
     )
 )
 def test_property_partial_fills_sum(fills, equity_asset):
@@ -166,7 +178,7 @@ def test_property_partial_fills_sum(fills, equity_asset):
     """
     total_amount = sum(amount for _, amount in fills)
 
-    order = DecimalOrder(
+    DecimalOrder(
         dt=datetime.now(),
         asset=equity_asset,
         amount=total_amount,
@@ -179,20 +191,22 @@ def test_property_partial_fills_sum(fills, equity_asset):
         total_filled += amount
 
     # Verify sum equals total
-    assert total_filled == total_amount, \
-        f"Partial fills sum {total_filled} != total amount {total_amount}"
+    assert (
+        total_filled == total_amount
+    ), f"Partial fills sum {total_filled} != total amount {total_amount}"
 
 
 # PROPERTY 5: Average fill price calculation maintains precision
-@settings(max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+)
 @given(
     fills=st.lists(
         st.tuples(
-            decimal_prices(max_value="1000.00"),
-            decimal_quantities(max_value="100.00", places=2)
+            decimal_prices(max_value="1000.00"), decimal_quantities(max_value="100.00", places=2)
         ),
         min_size=2,
-        max_size=10
+        max_size=10,
     )
 )
 def test_property_average_fill_price(fills, equity_asset):
@@ -236,15 +250,18 @@ def test_property_average_fill_price(fills, equity_asset):
         previous_filled += amount
 
     # Verify average matches expected
-    assert order.filled_price == expected_avg, \
-        f"Average fill price {order.filled_price} != expected {expected_avg}"
+    assert (
+        order.filled_price == expected_avg
+    ), f"Average fill price {order.filled_price} != expected {expected_avg}"
 
 
 # PROPERTY 6: Decimal operations maintain configured precision
-@settings(max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+)
 @given(
     price=decimal_prices(max_value="1000.00", places=2),
-    quantity=decimal_quantities(max_value="1000.00", places=2)
+    quantity=decimal_quantities(max_value="1000.00", places=2),
 )
 def test_property_decimal_precision_maintained(price, quantity, equity_asset):
     """Property: Decimal operations maintain configured precision.
@@ -277,11 +294,13 @@ def test_property_decimal_precision_maintained(price, quantity, equity_asset):
 
 
 # PROPERTY 7: Slippage must worsen execution (buy: higher, sell: lower)
-@settings(max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+)
 @given(
     market_price=decimal_prices(max_value="10000.00"),
     slippage_amount=decimal_prices(max_value="10.00", places=2),
-    is_buy=st.booleans()
+    is_buy=st.booleans(),
 )
 def test_property_slippage_worsens_execution(market_price, slippage_amount, is_buy, equity_asset):
     """Property: Slippage must make execution worse (buy higher, sell lower).
@@ -303,21 +322,25 @@ def test_property_slippage_worsens_execution(market_price, slippage_amount, is_b
 
     if is_buy:
         # Buy order: execution price must be higher (worse)
-        assert execution_price >= market_price, \
-            f"Buy execution {execution_price} < market {market_price}"
+        assert (
+            execution_price >= market_price
+        ), f"Buy execution {execution_price} < market {market_price}"
     else:
         # Sell order: execution price must be lower (worse)
-        assert execution_price <= market_price, \
-            f"Sell execution {execution_price} > market {market_price}"
+        assert (
+            execution_price <= market_price
+        ), f"Sell execution {execution_price} > market {market_price}"
 
 
 # PROPERTY 8: Commission + slippage never lose precision
-@settings(max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+)
 @given(
     price=decimal_prices(max_value="1000.00"),
     quantity=decimal_quantities(max_value="1000.00", places=2),
     commission_rate=commission_rates(),
-    basis_points=st.decimals(min_value=Decimal("1"), max_value=Decimal("100"), places=0)
+    basis_points=st.decimals(min_value=Decimal("1"), max_value=Decimal("100"), places=0),
 )
 def test_property_no_precision_loss(price, quantity, commission_rate, basis_points, equity_asset):
     """Property: Commission + slippage calculations never lose precision.
@@ -360,7 +383,7 @@ def test_property_no_precision_loss(price, quantity, commission_rate, basis_poin
         (commission, "commission"),
         (execution_price, "execution_price"),
         (slippage_cost, "slippage_cost"),
-        (total_cost, "total_cost")
+        (total_cost, "total_cost"),
     ]:
         assert value.is_finite(), f"{name} is not finite"
 
@@ -371,17 +394,18 @@ def test_property_no_precision_loss(price, quantity, commission_rate, basis_poin
 
 
 # PROPERTY 9: Per-trade commission charged exactly once
-@settings(max_examples=500, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=500, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+)
 @given(
     cost=decimal_prices(max_value="50.00"),
     fills=st.lists(
         st.tuples(
-            decimal_prices(max_value="1000.00"),
-            decimal_quantities(max_value="100.00", places=2)
+            decimal_prices(max_value="1000.00"), decimal_quantities(max_value="100.00", places=2)
         ),
         min_size=2,
-        max_size=5
-    )
+        max_size=5,
+    ),
 )
 def test_property_per_trade_commission_once(cost, fills, equity_asset):
     """Property: PerTradeCommission charged exactly once per order.
@@ -418,13 +442,15 @@ def test_property_per_trade_commission_once(cost, fills, equity_asset):
 
 
 # PROPERTY 10: Crypto commission respects maker/taker rates
-@settings(max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=1000, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+)
 @given(
     maker_rate=commission_rates(),
     taker_rate=commission_rates(),
     price=decimal_prices(max_value="100000.00"),
     quantity=decimal_quantities(max_value="10.00"),
-    is_limit_order=st.booleans()
+    is_limit_order=st.booleans(),
 )
 def test_property_crypto_commission_maker_taker(
     maker_rate, taker_rate, price, quantity, is_limit_order, crypto_asset
@@ -451,5 +477,6 @@ def test_property_crypto_commission_maker_taker(
     expected_rate = maker_rate if is_limit_order else taker_rate
     expected_commission = order_value * expected_rate
 
-    assert commission == expected_commission, \
-        f"Commission {commission} != expected {expected_commission}"
+    assert (
+        commission == expected_commission
+    ), f"Commission {commission} != expected {expected_commission}"

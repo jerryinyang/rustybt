@@ -206,9 +206,7 @@ class TestWalkForwardOptimizer:
             }
         )
 
-    def simple_backtest_function(
-        self, params: dict, data: pl.DataFrame
-    ) -> dict:
+    def simple_backtest_function(self, params: dict, data: pl.DataFrame) -> dict:
         """Simple backtest function for testing.
 
         Calculates score based on parameters and data characteristics.
@@ -317,9 +315,7 @@ class TestWalkForwardOptimizer:
 
         optimizer = WalkForwardOptimizer(
             parameter_space=param_space,
-            search_algorithm_factory=lambda: RandomSearchAlgorithm(
-                param_space, n_iter=10, seed=42
-            ),
+            search_algorithm_factory=lambda: RandomSearchAlgorithm(param_space, n_iter=10, seed=42),
             objective_function=ObjectiveFunction(metric="sharpe_ratio"),
             backtest_function=self.simple_backtest_function,
             config=config,
@@ -335,16 +331,12 @@ class TestWalkForwardOptimizer:
             parameters=[DiscreteParameter(name="lookback", min_value=10, max_value=50)]
         )
 
-        config = WindowConfig(
-            train_period=100, validation_period=20, test_period=20, step_size=20
-        )
+        config = WindowConfig(train_period=100, validation_period=20, test_period=20, step_size=20)
 
         with pytest.raises(ValueError, match="max_trials_per_window must be positive"):
             WalkForwardOptimizer(
                 parameter_space=param_space,
-                search_algorithm_factory=lambda: RandomSearchAlgorithm(
-                    param_space, n_trials=10
-                ),
+                search_algorithm_factory=lambda: RandomSearchAlgorithm(param_space, n_trials=10),
                 objective_function=ObjectiveFunction(metric="sharpe_ratio"),
                 backtest_function=self.simple_backtest_function,
                 config=config,
@@ -369,9 +361,7 @@ class TestWalkForwardOptimizer:
 
         optimizer = WalkForwardOptimizer(
             parameter_space=param_space,
-            search_algorithm_factory=lambda: RandomSearchAlgorithm(
-                param_space, n_iter=5
-            ),
+            search_algorithm_factory=lambda: RandomSearchAlgorithm(param_space, n_iter=5),
             objective_function=ObjectiveFunction(metric="sharpe_ratio"),
             backtest_function=self.simple_backtest_function,
             config=config,
@@ -421,9 +411,7 @@ class TestWalkForwardOptimizer:
 
         optimizer = WalkForwardOptimizer(
             parameter_space=param_space,
-            search_algorithm_factory=lambda: RandomSearchAlgorithm(
-                param_space, n_iter=5
-            ),
+            search_algorithm_factory=lambda: RandomSearchAlgorithm(param_space, n_iter=5),
             objective_function=ObjectiveFunction(metric="sharpe_ratio"),
             backtest_function=self.simple_backtest_function,
             config=config,
@@ -466,9 +454,7 @@ class TestWalkForwardOptimizer:
 
         optimizer = WalkForwardOptimizer(
             parameter_space=param_space,
-            search_algorithm_factory=lambda: RandomSearchAlgorithm(
-                param_space, n_iter=5
-            ),
+            search_algorithm_factory=lambda: RandomSearchAlgorithm(param_space, n_iter=5),
             objective_function=ObjectiveFunction(metric="sharpe_ratio"),
             backtest_function=self.simple_backtest_function,
             config=config,
@@ -499,9 +485,7 @@ class TestWalkForwardOptimizer:
 
         optimizer = WalkForwardOptimizer(
             parameter_space=param_space,
-            search_algorithm_factory=lambda: RandomSearchAlgorithm(
-                param_space, n_iter=10, seed=42
-            ),
+            search_algorithm_factory=lambda: RandomSearchAlgorithm(param_space, n_iter=10, seed=42),
             objective_function=ObjectiveFunction(metric="sharpe_ratio"),
             backtest_function=self.simple_backtest_function,
             config=config,
@@ -556,9 +540,7 @@ class TestWalkForwardOptimizer:
 
         optimizer = WalkForwardOptimizer(
             parameter_space=param_space,
-            search_algorithm_factory=lambda: RandomSearchAlgorithm(
-                param_space, n_iter=10, seed=42
-            ),
+            search_algorithm_factory=lambda: RandomSearchAlgorithm(param_space, n_iter=10, seed=42),
             objective_function=ObjectiveFunction(metric="sharpe_ratio"),
             backtest_function=self.simple_backtest_function,
             config=config,
@@ -569,9 +551,7 @@ class TestWalkForwardOptimizer:
 
         # Check expanding property in results
         assert result.num_windows >= 2
-        train_sizes = [
-            wr.train_end_idx - wr.train_start_idx + 1 for wr in result.window_results
-        ]
+        train_sizes = [wr.train_end_idx - wr.train_start_idx + 1 for wr in result.window_results]
 
         # Train sizes should be increasing
         for i in range(1, len(train_sizes)):
@@ -616,9 +596,7 @@ class TestLookaheadBiasPrevention:
             return {"performance_metrics": {"sharpe_ratio": 0.0}}
 
         returns = (prices[lookback:] - prices[:-lookback]) / prices[:-lookback]
-        sharpe = (
-            returns.mean() / returns.std() * (252**0.5) if returns.std() > 0 else 0.0
-        )
+        sharpe = returns.mean() / returns.std() * (252**0.5) if returns.std() > 0 else 0.0
 
         return {"performance_metrics": {"sharpe_ratio": float(sharpe)}}
 
@@ -630,9 +608,7 @@ class TestLookaheadBiasPrevention:
         """Property test: test window must always start after train window ends."""
         data = pl.DataFrame(
             {
-                "date": [
-                    datetime(2020, 1, 1) + timedelta(days=i) for i in range(300)
-                ],
+                "date": [datetime(2020, 1, 1) + timedelta(days=i) for i in range(300)],
                 "price": list(range(300)),
             }
         )
@@ -650,9 +626,7 @@ class TestLookaheadBiasPrevention:
 
         optimizer = WalkForwardOptimizer(
             parameter_space=param_space,
-            search_algorithm_factory=lambda: RandomSearchAlgorithm(
-                param_space, n_iter=5
-            ),
+            search_algorithm_factory=lambda: RandomSearchAlgorithm(param_space, n_iter=5),
             objective_function=ObjectiveFunction(metric="sharpe_ratio"),
             backtest_function=self.simple_backtest,
             config=config,
@@ -684,9 +658,7 @@ class TestLookaheadBiasPrevention:
 
         optimizer = WalkForwardOptimizer(
             parameter_space=param_space,
-            search_algorithm_factory=lambda: RandomSearchAlgorithm(
-                param_space, n_iter=10, seed=42
-            ),
+            search_algorithm_factory=lambda: RandomSearchAlgorithm(param_space, n_iter=10, seed=42),
             objective_function=ObjectiveFunction(metric="sharpe_ratio"),
             backtest_function=self.simple_backtest,
             config=config,

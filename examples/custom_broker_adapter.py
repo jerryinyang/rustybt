@@ -35,19 +35,18 @@ import asyncio
 import random
 import uuid
 from decimal import Decimal, getcontext
-from typing import Dict, List, Optional
 
 import pandas as pd
 import structlog
 
 from rustybt.assets import Asset, Equity
-from rustybt.live.brokers.base import BrokerAdapter
 from rustybt.exceptions import (
     BrokerError,
+    DataNotFoundError,
     InsufficientFundsError,
     OrderNotFoundError,
-    DataNotFoundError,
 )
+from rustybt.live.brokers.base import BrokerAdapter
 
 # Set decimal precision
 getcontext().prec = 28
@@ -83,12 +82,7 @@ class CustomBrokerAdapter(BrokerAdapter):
     """
 
     def __init__(
-        self,
-        api_url: str,
-        api_key: str,
-        api_secret: str,
-        testnet: bool = True,
-        timeout: int = 30
+        self, api_url: str, api_key: str, api_secret: str, testnet: bool = True, timeout: int = 30
     ):
         """Initialize custom broker adapter.
 
@@ -99,7 +93,7 @@ class CustomBrokerAdapter(BrokerAdapter):
             testnet: Use testnet/sandbox mode
             timeout: Request timeout in seconds
         """
-        self.api_url = api_url.rstrip('/')
+        self.api_url = api_url.rstrip("/")
         self.api_key = api_key
         self.api_secret = api_secret
         self.testnet = testnet
@@ -109,11 +103,11 @@ class CustomBrokerAdapter(BrokerAdapter):
         self._connected = False
 
         # Order tracking
-        self._orders: Dict[str, Dict] = {}
-        self._order_id_map: Dict[str, str] = {}  # internal_id -> broker_id
+        self._orders: dict[str, dict] = {}
+        self._order_id_map: dict[str, str] = {}  # internal_id -> broker_id
 
         # Position tracking
-        self._positions: Dict[str, Dict] = {}
+        self._positions: dict[str, dict] = {}
 
         # Account state
         self._account = {
@@ -126,11 +120,7 @@ class CustomBrokerAdapter(BrokerAdapter):
         # Market data queue (for mock data)
         self._market_data_queue = asyncio.Queue()
 
-        logger.info(
-            "custom_broker_initialized",
-            api_url=self.api_url,
-            testnet=self.testnet
-        )
+        logger.info("custom_broker_initialized", api_url=self.api_url, testnet=self.testnet)
 
     async def connect(self) -> None:
         """Establish connection to broker.
@@ -165,7 +155,7 @@ class CustomBrokerAdapter(BrokerAdapter):
             await self._load_positions()
 
             self._connected = True
-            logger.info("broker_connected", account_cash=float(self._account['cash']))
+            logger.info("broker_connected", account_cash=float(self._account["cash"]))
 
         except Exception as e:
             logger.error("connection_failed", error=str(e))
@@ -193,8 +183,8 @@ class CustomBrokerAdapter(BrokerAdapter):
         asset: Asset,
         amount: Decimal,
         order_type: str,
-        limit_price: Optional[Decimal] = None,
-        stop_price: Optional[Decimal] = None,
+        limit_price: Decimal | None = None,
+        stop_price: Decimal | None = None,
     ) -> str:
         """Submit order to broker.
 
@@ -216,10 +206,7 @@ class CustomBrokerAdapter(BrokerAdapter):
             raise BrokerError("Not connected to broker", adapter="custom_broker")
 
         logger.info(
-            "submitting_order",
-            asset=asset.symbol,
-            amount=float(amount),
-            order_type=order_type
+            "submitting_order", asset=asset.symbol, amount=float(amount), order_type=order_type
         )
 
         # Validate order
@@ -260,11 +247,7 @@ class CustomBrokerAdapter(BrokerAdapter):
 
             self._order_id_map[internal_id] = broker_order_id
 
-            logger.info(
-                "order_submitted",
-                internal_id=internal_id,
-                broker_order_id=broker_order_id
-            )
+            logger.info("order_submitted", internal_id=internal_id, broker_order_id=broker_order_id)
 
             return broker_order_id
 
@@ -310,7 +293,7 @@ class CustomBrokerAdapter(BrokerAdapter):
             logger.error("cancellation_failed", error=str(e))
             raise BrokerError(f"Order cancellation failed: {e}", adapter="custom_broker")
 
-    async def get_account_info(self) -> Dict[str, Decimal]:
+    async def get_account_info(self) -> dict[str, Decimal]:
         """Get account information.
 
         Returns:
@@ -339,7 +322,7 @@ class CustomBrokerAdapter(BrokerAdapter):
             logger.error("get_account_failed", error=str(e))
             raise BrokerError(f"Failed to get account info: {e}", adapter="custom_broker")
 
-    async def get_positions(self) -> List[Dict]:
+    async def get_positions(self) -> list[dict]:
         """Get current positions.
 
         Returns:
@@ -359,13 +342,15 @@ class CustomBrokerAdapter(BrokerAdapter):
             # Convert positions to standard format
             positions = []
             for symbol, pos in self._positions.items():
-                positions.append({
-                    "asset": symbol,
-                    "amount": pos["amount"],
-                    "cost_basis": pos["cost_basis"],
-                    "market_value": pos["market_value"],
-                    "unrealized_pnl": pos["unrealized_pnl"],
-                })
+                positions.append(
+                    {
+                        "asset": symbol,
+                        "amount": pos["amount"],
+                        "cost_basis": pos["cost_basis"],
+                        "market_value": pos["market_value"],
+                        "unrealized_pnl": pos["unrealized_pnl"],
+                    }
+                )
 
             return positions
 
@@ -373,7 +358,7 @@ class CustomBrokerAdapter(BrokerAdapter):
             logger.error("get_positions_failed", error=str(e))
             raise BrokerError(f"Failed to get positions: {e}", adapter="custom_broker")
 
-    async def get_open_orders(self) -> List[Dict]:
+    async def get_open_orders(self) -> list[dict]:
         """Get open/pending orders from broker.
 
         Returns:
@@ -392,17 +377,19 @@ class CustomBrokerAdapter(BrokerAdapter):
 
             # Filter open orders
             open_orders = []
-            for internal_id, order in self._orders.items():
+            for _internal_id, order in self._orders.items():
                 if order["status"] in ["open", "partially_filled"]:
-                    open_orders.append({
-                        "order_id": order["broker_order_id"],
-                        "asset": order["asset"].symbol,
-                        "amount": order["amount"],
-                        "status": order["status"],
-                        "order_type": order["order_type"],
-                        "limit_price": order.get("limit_price"),
-                        "stop_price": order.get("stop_price"),
-                    })
+                    open_orders.append(
+                        {
+                            "order_id": order["broker_order_id"],
+                            "asset": order["asset"].symbol,
+                            "amount": order["amount"],
+                            "status": order["status"],
+                            "order_type": order["order_type"],
+                            "limit_price": order.get("limit_price"),
+                            "stop_price": order.get("stop_price"),
+                        }
+                    )
 
             return open_orders
 
@@ -410,7 +397,7 @@ class CustomBrokerAdapter(BrokerAdapter):
             logger.error("get_open_orders_failed", error=str(e))
             raise BrokerError(f"Failed to get open orders: {e}", adapter="custom_broker")
 
-    async def subscribe_market_data(self, assets: List[Asset]) -> None:
+    async def subscribe_market_data(self, assets: list[Asset]) -> None:
         """Subscribe to real-time market data.
 
         Args:
@@ -426,7 +413,7 @@ class CustomBrokerAdapter(BrokerAdapter):
 
         logger.info("market_data_subscribed")
 
-    async def unsubscribe_market_data(self, assets: List[Asset]) -> None:
+    async def unsubscribe_market_data(self, assets: list[Asset]) -> None:
         """Unsubscribe from market data.
 
         Args:
@@ -442,7 +429,7 @@ class CustomBrokerAdapter(BrokerAdapter):
 
         logger.info("market_data_unsubscribed")
 
-    async def get_next_market_data(self) -> Optional[Dict]:
+    async def get_next_market_data(self) -> dict | None:
         """Get next market data update (blocking).
 
         Returns:
@@ -521,12 +508,7 @@ class CustomBrokerAdapter(BrokerAdapter):
         #     self._positions[pos['symbol']] = {...}
         pass
 
-    async def _validate_order(
-        self,
-        asset: Asset,
-        amount: Decimal,
-        order_type: str
-    ) -> None:
+    async def _validate_order(self, asset: Asset, amount: Decimal, order_type: str) -> None:
         """Validate order before submission.
 
         Raises:
@@ -546,7 +528,7 @@ class CustomBrokerAdapter(BrokerAdapter):
         if order_type not in valid_order_types:
             raise BrokerError(
                 f"Invalid order type: {order_type}. Valid types: {valid_order_types}",
-                adapter="custom_broker"
+                adapter="custom_broker",
             )
 
 
@@ -567,7 +549,7 @@ async def main():
         api_url="https://api.example.com",
         api_key="demo_api_key",
         api_secret="demo_api_secret",
-        testnet=True
+        testnet=True,
     )
     print("✓ Broker initialized")
 
@@ -587,7 +569,7 @@ async def main():
     asset = Equity(
         1,  # Asset ID
         exchange="NYSE",
-        symbol="AAPL"
+        symbol="AAPL",
     )
 
     # Submit order
@@ -595,7 +577,7 @@ async def main():
     order_id = await broker.submit_order(
         asset=asset,
         amount=Decimal("100"),  # Buy 100 shares
-        order_type="market"
+        order_type="market",
     )
     print(f"✓ Order submitted: {order_id}")
 

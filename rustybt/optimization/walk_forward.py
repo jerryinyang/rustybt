@@ -267,9 +267,9 @@ class WalkForwardOptimizer:
                     window_id=window_id,
                     validation_score=str(val_score),
                     test_score=str(test_score),
-                    degradation_pct=str((1 - test_score / val_score) * 100)
-                    if val_score != 0
-                    else "inf",
+                    degradation_pct=(
+                        str((1 - test_score / val_score) * 100) if val_score != 0 else "inf"
+                    ),
                 )
 
         # Aggregate results
@@ -287,12 +287,8 @@ class WalkForwardOptimizer:
         logger.info(
             "walk_forward_completed",
             num_windows=len(window_results),
-            test_sharpe_mean=str(
-                aggregate_metrics.get("test", {}).get("sharpe_ratio_mean", "N/A")
-            ),
-            test_sharpe_std=str(
-                aggregate_metrics.get("test", {}).get("sharpe_ratio_std", "N/A")
-            ),
+            test_sharpe_mean=str(aggregate_metrics.get("test", {}).get("sharpe_ratio_mean", "N/A")),
+            test_sharpe_std=str(aggregate_metrics.get("test", {}).get("sharpe_ratio_std", "N/A")),
         )
 
         return result
@@ -492,9 +488,7 @@ class WalkForwardOptimizer:
 
         # Collect metrics by phase (train, validation, test)
         train_scores = [Decimal(str(wr.train_metrics.get("score", 0))) for wr in window_results]
-        val_scores = [
-            Decimal(str(wr.validation_metrics.get("score", 0))) for wr in window_results
-        ]
+        val_scores = [Decimal(str(wr.validation_metrics.get("score", 0))) for wr in window_results]
         test_scores = [Decimal(str(wr.test_metrics.get("score", 0))) for wr in window_results]
 
         # Helper to calculate stats
@@ -508,9 +502,11 @@ class WalkForwardOptimizer:
             return {
                 f"{metric_name}_mean": Decimal(str(statistics.mean(float_values))),
                 f"{metric_name}_median": Decimal(str(statistics.median(float_values))),
-                f"{metric_name}_std": Decimal(str(statistics.stdev(float_values)))
-                if len(float_values) > 1
-                else Decimal(0),
+                f"{metric_name}_std": (
+                    Decimal(str(statistics.stdev(float_values)))
+                    if len(float_values) > 1
+                    else Decimal(0)
+                ),
                 f"{metric_name}_min": Decimal(str(min(float_values))),
                 f"{metric_name}_max": Decimal(str(max(float_values))),
             }

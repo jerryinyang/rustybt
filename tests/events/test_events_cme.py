@@ -13,10 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from unittest import TestCase
+
 import pandas as pd
 
-from .test_events import StatefulRulesTests, StatelessRulesTests, minutes_for_days
 from rustybt.utils.events import AfterOpen
+
+from .test_events import StatefulRulesTests, StatelessRulesTests, minutes_for_days
 
 
 class TestStatelessRulesCMES(StatelessRulesTests, TestCase):

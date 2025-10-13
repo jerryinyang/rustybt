@@ -15,9 +15,10 @@
 
 """A source to be used in testing."""
 
-from datetime import timedelta
 import itertools
-from rustybt.protocol import Event, DATASOURCE_TYPE
+from datetime import timedelta
+
+from rustybt.protocol import DATASOURCE_TYPE, Event
 
 
 def create_trade(sid, price, amount, datetime, source_id="test_factory"):
@@ -39,7 +40,6 @@ def create_trade(sid, price, amount, datetime, source_id="test_factory"):
 
 def date_gen(start, end, trading_calendar, delta=timedelta(minutes=1), repeats=None):
     """Utility to generate a stream of dates."""
-
     daily_delta = not (delta.total_seconds() % timedelta(days=1).total_seconds())
     cur = start
     if daily_delta:
@@ -49,7 +49,6 @@ def date_gen(start, end, trading_calendar, delta=timedelta(minutes=1), repeats=N
 
     def advance_current(cur):
         """Advances the current dt skipping non market days and minutes."""
-
         cur = cur + delta
 
         currently_executing = (daily_delta and (cur in trading_calendar.sessions)) or (
@@ -62,9 +61,9 @@ def date_gen(start, end, trading_calendar, delta=timedelta(minutes=1), repeats=N
             if daily_delta:
                 return trading_calendar.minute_to_session(cur).tz_localize(cur.tzinfo)
             else:
-                return trading_calendar.session_open_close(
-                    trading_calendar.minute_to_session(cur)
-                )[0]
+                return trading_calendar.session_open_close(trading_calendar.minute_to_session(cur))[
+                    0
+                ]
 
     # yield count trade events, all on trading days, and
     # during trading hours.
@@ -92,9 +91,7 @@ class SpecificEquityTrades:
     filter : filter to remove the sids
     """
 
-    def __init__(
-        self, trading_calendar, asset_finder, sids, start, end, delta, count=500
-    ):
+    def __init__(self, trading_calendar, asset_finder, sids, start, end, delta, count=500):
         self.trading_calendar = trading_calendar
 
         # Unpack config dictionary with default values.
@@ -136,7 +133,5 @@ class SpecificEquityTrades:
                 amount=(i * 50) % 900 + 100,
                 datetime=date,
             )
-            for (i, date), sid in itertools.product(
-                enumerate(date_generator), self.sids
-            )
+            for (i, date), sid in itertools.product(enumerate(date_generator), self.sids)
         )

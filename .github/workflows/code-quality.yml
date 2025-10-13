@@ -1,0 +1,104 @@
+name: Code Quality
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'rustybt/**/*.py'
+      - 'tests/**/*.py'
+      - 'scripts/**/*.py'
+      - 'pyproject.toml'
+      - '.github/workflows/code-quality.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'rustybt/**/*.py'
+      - 'tests/**/*.py'
+      - 'scripts/**/*.py'
+      - 'pyproject.toml'
+
+jobs:
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.local/share/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Run ruff linting (BLOCKING)
+        run: |
+          echo "Running ruff linting..."
+          uv run ruff check .
+        id: ruff
+
+      - name: Run black formatting check (BLOCKING)
+        run: |
+          echo "Running black formatting check..."
+          uv run black --check .
+        id: black
+
+      - name: Run mypy type checking (BLOCKING)
+        run: |
+          echo "Running mypy type checking..."
+          uv run python3 -m mypy rustybt --config-file pyproject.toml
+        id: mypy
+
+      - name: Install radon for complexity checking
+        run: |
+          uv pip install radon
+
+      - name: Check code complexity (BLOCKING)
+        run: |
+          echo "Checking cyclomatic complexity..."
+          uv run python scripts/check_complexity.py --max-complexity 10
+        id: complexity
+
+      - name: Code quality summary
+        if: always()
+        run: |
+          echo "=== Code Quality Results ==="
+          echo ""
+          echo "✅ Ruff linting: ${{ steps.ruff.outcome }}"
+          echo "✅ Black formatting: ${{ steps.black.outcome }}"
+          echo "✅ Mypy type checking: ${{ steps.mypy.outcome }}"
+          echo "✅ Complexity check: ${{ steps.complexity.outcome }}"
+          echo ""
+
+          if [[ "${{ steps.ruff.outcome }}" == "failure" ]] || \
+             [[ "${{ steps.black.outcome }}" == "failure" ]] || \
+             [[ "${{ steps.mypy.outcome }}" == "failure" ]] || \
+             [[ "${{ steps.complexity.outcome }}" == "failure" ]]; then
+            echo "❌ Code quality checks FAILED"
+            exit 1
+          else
+            echo "✅ Code quality checks PASSED"
+          fi

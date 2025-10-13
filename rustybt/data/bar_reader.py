@@ -61,7 +61,7 @@ class BarReader(ABC):
         assets : list of int
            The asset identifiers in the window.
 
-        Returns
+        Returns:
         -------
         list of np.ndarray
             A list with an entry per field of ndarrays with shape
@@ -74,7 +74,7 @@ class BarReader(ABC):
     @abstractmethod
     def last_available_dt(self):
         """
-        Returns
+        Returns:
         -------
         dt : pd.Timestamp
             The last session for which the reader can provide data.
@@ -94,7 +94,7 @@ class BarReader(ABC):
     @abstractmethod
     def first_trading_day(self):
         """
-        Returns
+        Returns:
         -------
         dt : pd.Timestamp
             The first trading day (session) for which the reader can provide
@@ -116,13 +116,13 @@ class BarReader(ABC):
         field : string
             The OHLVC name for the desired data point.
 
-        Returns
+        Returns:
         -------
         value : float|int
             The value at the given coordinates, ``float`` for OHLC, ``int``
             for 'volume'.
 
-        Raises
+        Raises:
         ------
         NoDataOnDate
             If the given dt is not a valid market minute (in minute mode) or
@@ -144,7 +144,7 @@ class BarReader(ABC):
         dt : pd.Timestamp
             The minute at which to start searching for the last traded minute.
 
-        Returns
+        Returns:
         -------
         last_traded : pd.Timestamp
             The dt of the last trade for the given asset, using the input

@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import abc
-
 from abc import abstractmethod
 
 from rustybt.gens.sim_engine import SESSION_END
@@ -35,7 +34,7 @@ class CancelPolicy(metaclass=abc.ABCMeta):
               - :data:`zipline.gens.sim_engine.DAY_END`
               - :data:`zipline.gens.sim_engine.MINUTE_END`
 
-        Returns
+        Returns:
         -------
         should_cancel : bool
             Should all open orders be cancelled?

@@ -95,7 +95,7 @@ source = DataSourceRegistry.get_source("yfinance")
 class MyStrategy(TradingAlgorithm):
     def initialize(self):
         self.symbols = ["AAPL", "MSFT"]
-    
+
     def handle_data(self, context, data):
         # This data comes from cache (fast!)
         prices = data.current(context.symbols, "close")
@@ -132,7 +132,7 @@ source = DataSourceRegistry.get_source(
 class MyStrategy(TradingAlgorithm):
     def initialize(self):
         self.symbols = ["AAPL", "MSFT"]
-    
+
     def handle_data(self, context, data):
         # This data comes directly from Alpaca API (real-time!)
         prices = data.current(context.symbols, "close")
@@ -151,20 +151,20 @@ algo.run()  # Runs indefinitely until stopped
 
 ### Use Backtesting Mode When:
 
-✅ Developing and testing strategies  
-✅ Optimizing parameters  
-✅ Validating historical performance  
-✅ Running Monte Carlo simulations  
-✅ Performance is critical (need fast iteration)  
+✅ Developing and testing strategies
+✅ Optimizing parameters
+✅ Validating historical performance
+✅ Running Monte Carlo simulations
+✅ Performance is critical (need fast iteration)
 ✅ You want deterministic, reproducible results
 
 ### Use Live Trading Mode When:
 
-✅ Deploying to production  
-✅ Paper trading with live data  
-✅ Real-time signal generation  
-✅ You need fresh market data  
-✅ Testing real-time execution latency  
+✅ Deploying to production
+✅ Paper trading with live data
+✅ Real-time signal generation
+✅ You need fresh market data
+✅ Testing real-time execution latency
 ✅ WebSocket streaming is required
 
 ## Data Freshness Considerations
@@ -357,16 +357,16 @@ if now >= market_open:
 def test_strategy_backtest():
     """Test strategy with cached data."""
     source = YFinanceDataSource()
-    
+
     algo = MyStrategy(
         data_source=source,
         live_trading=False,
         start=pd.Timestamp("2023-01-01"),
         end=pd.Timestamp("2023-12-31")
     )
-    
+
     results = algo.run()
-    
+
     assert results["total_return"] > 0
     assert algo.data_portal.cache_hit_rate > 80  # Cache working
 ```
@@ -381,15 +381,15 @@ def test_strategy_live_paper():
         api_secret=os.getenv("ALPACA_API_SECRET"),
         paper_trading=True  # ✓ Safe testing
     )
-    
+
     algo = MyStrategy(
         data_source=source,
         live_trading=True
     )
-    
+
     # Run for 5 minutes
     algo.run(duration=pd.Timedelta(minutes=5))
-    
+
     assert algo.data_portal.cache_hit_rate == 0  # No cache in live mode
     assert len(algo.blotter.orders) >= 0  # Orders executed
 ```

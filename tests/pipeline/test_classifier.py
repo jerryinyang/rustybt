@@ -1,9 +1,11 @@
-from functools import reduce
 import operator as op
+import re
+from functools import reduce
 
 import numpy as np
-from numpy import nan
 import pandas as pd
+import pytest
+from numpy import nan
 
 from rustybt.lib.labelarray import LabelArray
 from rustybt.pipeline import Classifier
@@ -17,8 +19,6 @@ from rustybt.utils.numpy_utils import (
 )
 
 from .base import BaseUSEquityPipelineTestCase
-import pytest
-import re
 
 bytes_dtype = np.dtype("S3")
 unicode_dtype = np.dtype("U3")
@@ -119,7 +119,6 @@ class ClassifierTestCase(BaseUSEquityPipelineTestCase):
         labelarray_dtype=(bytes_dtype, categorical_dtype, unicode_dtype),
     )
     def test_string_eq(self, compval, labelarray_dtype):
-
         compval = labelarray_dtype.type(compval)
 
         class C(Classifier):
@@ -171,12 +170,10 @@ class ClassifierTestCase(BaseUSEquityPipelineTestCase):
             window_length = 0
 
         expected_msg = (
-            "Comparison against self.missing_value ({v!r}) in C.eq().\n"
+            f"Comparison against self.missing_value ({missing!r}) in C.eq().\n"
             "Missing values have NaN semantics, so the requested comparison "
             "would always produce False.\nUse the isnull() method to check "
-            "for missing values.".format(
-                v=missing,
-            )
+            "for missing values."
         )
         with pytest.raises(ValueError, match=re.escape(expected_msg)):
             C().eq(missing)
@@ -216,7 +213,6 @@ class ClassifierTestCase(BaseUSEquityPipelineTestCase):
         labelarray_dtype=(bytes_dtype, unicode_dtype, categorical_dtype),
     )
     def test_string_not_equal(self, compval, missing, labelarray_dtype):
-
         compval = labelarray_dtype.type(compval)
 
         class C(Classifier):
@@ -330,7 +326,6 @@ class ClassifierTestCase(BaseUSEquityPipelineTestCase):
         labelarray_dtype=(categorical_dtype, bytes_dtype, unicode_dtype),
     )
     def test_element_of_strings(self, container_type, labelarray_dtype):
-
         missing = labelarray_dtype.type("not in the array")
 
         class C(Classifier):
@@ -436,7 +431,7 @@ class ClassifierTestCase(BaseUSEquityPipelineTestCase):
                 "Missing values have NaN semantics, so the requested"
                 " comparison would always produce False.\n"
                 "Use the isnull() method to check for missing values.\n"
-                "Received choices were {}.".format(bad_elems)
+                f"Received choices were {bad_elems}."
             )
             with pytest.raises(ValueError, match=re.escape(expected)):
                 c.element_of(bad_elems)
@@ -509,7 +504,6 @@ class ClassifierTestCase(BaseUSEquityPipelineTestCase):
         missing_value=[None, "M"],
     )
     def test_relabel_missing_value_interactions(self, missing_value):
-
         mv = missing_value
 
         class C(Classifier):

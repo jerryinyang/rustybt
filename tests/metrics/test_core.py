@@ -22,7 +22,7 @@ def metrics():
     metrics_set_core = MetricsCoreSet(*_make_metrics_set_core())
     # make sure this starts empty
     assert metrics_set_core.metrics_sets == mappingproxy({})
-    yield metrics_set_core
+    return metrics_set_core
 
 
 @pytest.mark.usefixtures("metrics")
@@ -37,7 +37,7 @@ class TestMetricsSetCore:
         metrics.register("b", set)
         metrics.register("a", set)
 
-        msg = "no metrics set registered as 'ayy-lmao', options are: " "['a', 'b', 'c']"
+        msg = "no metrics set registered as 'ayy-lmao', options are: ['a', 'b', 'c']"
         with pytest.raises(ValueError, match=re.escape(msg)):
             metrics.load("ayy-lmao")
 

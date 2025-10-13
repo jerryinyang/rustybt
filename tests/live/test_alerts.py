@@ -7,7 +7,6 @@ Tests AlertManager with different alert channels:
 """
 
 import os
-from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -508,10 +507,11 @@ class TestAlertManager:
         manager = AlertManager(config, "TestStrategy")
 
         # Mock all send methods
-        with patch.object(manager, "_send_email", new_callable=AsyncMock) as mock_email, patch.object(
-            manager, "_send_sms", new_callable=AsyncMock
-        ) as mock_sms, patch.object(manager, "_send_webhook", new_callable=AsyncMock) as mock_webhook:
-
+        with (
+            patch.object(manager, "_send_email", new_callable=AsyncMock) as mock_email,
+            patch.object(manager, "_send_sms", new_callable=AsyncMock) as mock_sms,
+            patch.object(manager, "_send_webhook", new_callable=AsyncMock) as mock_webhook,
+        ):
             await manager.send_alert(
                 event_type="circuit_breaker_tripped",
                 circuit_breaker_type="drawdown",

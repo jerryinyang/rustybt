@@ -1,9 +1,9 @@
 # Rust Optimizations Performance Benchmarks
 
-**Date**: 2025-01-09  
-**Platform**: macOS (Apple Silicon)  
-**Python**: 3.13.1  
-**Rust**: 1.90+  
+**Date**: 2025-01-09
+**Platform**: macOS (Apple Silicon)
+**Python**: 3.13.1
+**Rust**: 1.90+
 
 ## Summary
 
@@ -329,7 +329,7 @@ Operations where Rust shows **real speedups**:
 
 1. **SMA (Simple Moving Average)**:
    - Small (100 elements): 1.06× speedup
-   - Medium (1,000 elements): 1.38× speedup  
+   - Medium (1,000 elements): 1.38× speedup
    - **Large (10,000 elements): 1.47× speedup** ✅
 
 2. **EMA (Exponential Moving Average)**:
@@ -350,7 +350,7 @@ Operations where Rust shows **performance regressions**:
    - Python builtins (written in C) are faster than Rust when you factor in conversion
 
 2. **DataFrame Operations** (slice, fillna, create_columns):
-   - **0.05-0.51× speedup = 2-20× SLOWER** ❌  
+   - **0.05-0.51× speedup = 2-20× SLOWER** ❌
    - **Root cause**: Polars is already Rust-backed and optimized
    - Adding another Rust layer just adds overhead
 

@@ -161,9 +161,7 @@ class WithEstimates(WithTradingSessions, WithAdjustmentReader):
     def init_class_fixtures(cls):
         cls.events = cls.make_events()
         cls.ASSET_FINDER_EQUITY_SIDS = cls.get_sids()
-        cls.ASSET_FINDER_EQUITY_SYMBOLS = [
-            "s" + str(n) for n in cls.ASSET_FINDER_EQUITY_SIDS
-        ]
+        cls.ASSET_FINDER_EQUITY_SYMBOLS = ["s" + str(n) for n in cls.ASSET_FINDER_EQUITY_SIDS]
         # We need to instantiate certain constants needed by supers of
         # `WithEstimates` before we call their `init_class_fixtures`.
         super(WithEstimates, cls).init_class_fixtures()
@@ -244,12 +242,8 @@ class WithOneDayPipeline(WithEstimates):
 
         # type changes to datatime[ns] in pandas 2.0.0
         if Version(pd.__version__) >= Version("2"):
-            self.expected_out.event_date = self.expected_out.event_date.astype(
-                "datetime64[ns]"
-            )
-        assert_frame_equal(
-            results.sort_index(axis=1), self.expected_out.sort_index(axis=1)
-        )
+            self.expected_out.event_date = self.expected_out.event_date.astype("datetime64[ns]")
+        assert_frame_equal(results.sort_index(axis=1), self.expected_out.sort_index(axis=1))
 
 
 class PreviousWithOneDayPipeline(WithOneDayPipeline, ZiplineTestCase):
@@ -531,9 +525,7 @@ class WithEstimatesTimeZero(WithEstimates):
         sid_estimates = []
         sid_releases = []
         # We want all permutations of 2 knowledge dates per quarter.
-        it = enumerate(
-            itertools.permutations(cls.q1_knowledge_dates + cls.q2_knowledge_dates, 4)
-        )
+        it = enumerate(itertools.permutations(cls.q1_knowledge_dates + cls.q2_knowledge_dates, 4))
         for sid, (q1e1, q1e2, q2e1, q2e2) in it:
             # We're assuming that estimates must come before the relevant
             # release.
@@ -545,9 +537,7 @@ class WithEstimatesTimeZero(WithEstimates):
                 and q1e1 < cls.q1_release_dates[0]
                 and q1e2 < cls.q1_release_dates[0]
             ):
-                sid_estimates.append(
-                    cls.create_estimates_df(q1e1, q1e2, q2e1, q2e2, sid)
-                )
+                sid_estimates.append(cls.create_estimates_df(q1e1, q1e2, q2e1, q2e2, sid))
                 sid_releases.append(cls.create_releases_df(sid))
         return pd.concat(sid_estimates + sid_releases).reset_index(drop=True)
 
@@ -608,9 +598,9 @@ class WithEstimatesTimeZero(WithEstimates):
             if sid == max(self.ASSET_FINDER_EQUITY_SIDS):
                 assert sid_estimates.isnull().all().all()
             else:
-                ts_sorted_estimates = self.events[
-                    self.events[SID_FIELD_NAME] == sid
-                ].sort_values(TS_FIELD_NAME)
+                ts_sorted_estimates = self.events[self.events[SID_FIELD_NAME] == sid].sort_values(
+                    TS_FIELD_NAME
+                )
                 q1_knowledge = ts_sorted_estimates[
                     ts_sorted_estimates[FISCAL_QUARTER_FIELD_NAME] == 1
                 ]
@@ -620,12 +610,8 @@ class WithEstimatesTimeZero(WithEstimates):
                 all_expected = pd.concat(
                     [
                         self.get_expected_estimate(
-                            q1_knowledge[
-                                q1_knowledge[TS_FIELD_NAME] <= date.tz_localize(None)
-                            ],
-                            q2_knowledge[
-                                q2_knowledge[TS_FIELD_NAME] <= date.tz_localize(None)
-                            ],
+                            q1_knowledge[q1_knowledge[TS_FIELD_NAME] <= date.tz_localize(None)],
+                            q2_knowledge[q2_knowledge[TS_FIELD_NAME] <= date.tz_localize(None)],
                             date.tz_localize(None),
                         ).set_index([[date]])
                         for date in sid_estimates.index
@@ -739,9 +725,7 @@ class WithEstimateMultipleQuarters(WithEstimates):
             index=cls.trading_days,
         )
 
-        for (col, raw_name), suffix in itertools.product(
-            cls.columns.items(), ("1", "2")
-        ):
+        for (col, raw_name), suffix in itertools.product(cls.columns.items(), ("1", "2")):
             expected_name = raw_name + suffix
             if col.dtype == datetime64ns_dtype:
                 expected[expected_name] = pd.to_datetime(expected[expected_name])
@@ -772,9 +756,7 @@ class WithEstimateMultipleQuarters(WithEstimates):
 
         # We now expect a column for 1 quarter out and a column for 2
         # quarters out for each of the dataset columns.
-        assert_equal(
-            sorted(np.array(q1_columns + q2_columns)), sorted(results.columns.values)
-        )
+        assert_equal(sorted(np.array(q1_columns + q2_columns)), sorted(results.columns.values))
         assert_equal(
             self.expected_out.sort_index(axis=1),
             results.xs(0, level=1).sort_index(axis=1),
@@ -840,15 +822,15 @@ class PreviousEstimateMultipleQuarters(WithEstimateMultipleQuarters, ZiplineTest
                     "2015-01-12",
                 ) : pd.Timestamp("2015-01-19")
             ] = cls.events[raw_name].iloc[0]
-            expected[raw_name + "1"].loc[pd.Timestamp("2015-01-20") :] = cls.events[
-                raw_name
-            ].iloc[1]
+            expected[raw_name + "1"].loc[pd.Timestamp("2015-01-20") :] = cls.events[raw_name].iloc[
+                1
+            ]
 
         # Fill columns for 2 Q out
         for col_name in ["estimate", "event_date"]:
-            expected[col_name + "2"].loc[pd.Timestamp("2015-01-20") :] = cls.events[
-                col_name
-            ].iloc[0]
+            expected[col_name + "2"].loc[pd.Timestamp("2015-01-20") :] = cls.events[col_name].iloc[
+                0
+            ]
         expected[FISCAL_QUARTER_FIELD_NAME + "2"].loc[
             pd.Timestamp("2015-01-12") : pd.Timestamp("2015-01-20")
         ] = 4
@@ -1073,9 +1055,7 @@ class WithEstimateWindows(WithEstimates):
                 SID_FIELD_NAME: 20,
             }
         )
-        concatted = pd.concat(
-            [sid_0_timeline, sid_10_timeline, sid_20_timeline]
-        ).reset_index()
+        concatted = pd.concat([sid_0_timeline, sid_10_timeline, sid_20_timeline]).reset_index()
         np.random.seed(0)
         return concatted.reindex(np.random.permutation(concatted.index))
 
@@ -1084,9 +1064,9 @@ class WithEstimateWindows(WithEstimates):
         sids = sorted(cls.events[SID_FIELD_NAME].unique())
         # Add extra sids between sids in our data. We want to test that we
         # apply adjustments to the correct sids.
-        return [
-            sid for i in range(len(sids) - 1) for sid in range(sids[i], sids[i + 1])
-        ] + [sids[-1]]
+        return [sid for i in range(len(sids) - 1) for sid in range(sids[i], sids[i + 1])] + [
+            sids[-1]
+        ]
 
     @classmethod
     def make_expected_timelines(cls):
@@ -1103,9 +1083,7 @@ class WithEstimateWindows(WithEstimates):
         cls.timelines = cls.make_expected_timelines()
 
     @parameterized.expand(window_test_cases)
-    def test_estimate_windows_at_quarter_boundaries(
-        self, start_date, num_announcements_out
-    ):
+    def test_estimate_windows_at_quarter_boundaries(self, start_date, num_announcements_out):
         dataset = QuartersEstimates(num_announcements_out)
         trading_days = self.trading_days
         timelines = self.timelines
@@ -2296,23 +2274,15 @@ class PreviousWithSplitAdjustedMultipleEstimateColumns(
             },
             pd.Timestamp("2015-01-09"): {
                 "estimate1": np.array(
-                    [[np.nan, np.nan]]
-                    + [[np.nan, 1110.0 * 4]]
-                    + [[1100 * 3.0, 1110.0 * 4]]
+                    [[np.nan, np.nan]] + [[np.nan, 1110.0 * 4]] + [[1100 * 3.0, 1110.0 * 4]]
                 ),
                 "estimate2": np.array(
-                    [[np.nan, np.nan]]
-                    + [[np.nan, 2110.0 * 4]]
-                    + [[2100 * 3.0, 2110.0 * 4]]
+                    [[np.nan, np.nan]] + [[np.nan, 2110.0 * 4]] + [[2100 * 3.0, 2110.0 * 4]]
                 ),
             },
             pd.Timestamp("2015-01-12"): {
-                "estimate1": np.array(
-                    [[np.nan, np.nan]] * 2 + [[1200 * 3.0, 1210.0 * 4]]
-                ),
-                "estimate2": np.array(
-                    [[np.nan, np.nan]] * 2 + [[2200 * 3.0, 2210.0 * 4]]
-                ),
+                "estimate1": np.array([[np.nan, np.nan]] * 2 + [[1200 * 3.0, 1210.0 * 4]]),
+                "estimate2": np.array([[np.nan, np.nan]] * 2 + [[2200 * 3.0, 2210.0 * 4]]),
             },
         }
 
@@ -2324,9 +2294,7 @@ class PreviousWithSplitAdjustedMultipleEstimateColumns(
             pd.Timestamp("2015-01-08"): {"estimate2": np.array([[np.nan, np.nan]] * 3)},
             pd.Timestamp("2015-01-09"): {"estimate2": np.array([[np.nan, np.nan]] * 3)},
             pd.Timestamp("2015-01-12"): {
-                "estimate2": np.array(
-                    [[np.nan, np.nan]] * 2 + [[2100 * 3.0, 2110.0 * 4]]
-                )
+                "estimate2": np.array([[np.nan, np.nan]] * 2 + [[2100 * 3.0, 2110.0 * 4]])
             },
         }
 
@@ -2377,15 +2345,11 @@ class NextWithSplitAdjustedMultipleEstimateColumns(
     def make_expected_timelines_2q_out(cls):
         return {
             pd.Timestamp("2015-01-06"): {
-                "estimate2": np.array(
-                    [[np.nan, np.nan]] + [[2200 * 1 / 0.3, 2210.0 * 1 / 0.4]] * 2
-                )
+                "estimate2": np.array([[np.nan, np.nan]] + [[2200 * 1 / 0.3, 2210.0 * 1 / 0.4]] * 2)
             },
             pd.Timestamp("2015-01-07"): {"estimate2": np.array([[2200.0, 2210.0]] * 3)},
             pd.Timestamp("2015-01-08"): {"estimate2": np.array([[2200, 2210.0]] * 3)},
-            pd.Timestamp("2015-01-09"): {
-                "estimate2": np.array([[2200 * 3.0, np.nan]] * 3)
-            },
+            pd.Timestamp("2015-01-09"): {"estimate2": np.array([[2200 * 3.0, np.nan]] * 3)},
             pd.Timestamp("2015-01-12"): {"estimate2": np.array([[np.nan, np.nan]] * 3)},
         }
 
@@ -2568,9 +2532,7 @@ class WithAdjustmentBoundaries(WithEstimates):
             }
         )
 
-        return pd.concat(
-            [sid_0_splits, sid_1_splits, sid_2_splits, sid_3_splits, sid_4_splits]
-        )
+        return pd.concat([sid_0_splits, sid_1_splits, sid_2_splits, sid_3_splits, sid_4_splits])
 
     @parameterized.expand(split_adjusted_asof_dates)
     @pytest.mark.xfail(
@@ -2672,9 +2634,7 @@ class PreviousWithAdjustmentBoundaries(WithAdjustmentBoundaries, ZiplineTestCase
             SID_FIELD_NAME, append=True
         )
         split_adjusted_at_start_boundary = stack_future_compatible(
-            split_adjusted_at_start_boundary.unstack(SID_FIELD_NAME).reindex(
-                cls.trading_days
-            ),
+            split_adjusted_at_start_boundary.unstack(SID_FIELD_NAME).reindex(cls.trading_days),
             level=SID_FIELD_NAME,
             future_stack=True,
         )
@@ -2743,9 +2703,7 @@ class PreviousWithAdjustmentBoundaries(WithAdjustmentBoundaries, ZiplineTestCase
             SID_FIELD_NAME, append=True
         )
         split_adjusted_at_end_boundary = stack_future_compatible(
-            split_adjusted_at_end_boundary.unstack(SID_FIELD_NAME).reindex(
-                cls.trading_days
-            ),
+            split_adjusted_at_end_boundary.unstack(SID_FIELD_NAME).reindex(cls.trading_days),
             level=SID_FIELD_NAME,
             future_stack=True,
         )
@@ -2826,9 +2784,7 @@ class NextWithAdjustmentBoundaries(WithAdjustmentBoundaries, ZiplineTestCase):
             SID_FIELD_NAME, append=True
         )
         split_adjusted_at_start_boundary = stack_future_compatible(
-            split_adjusted_at_start_boundary.unstack(SID_FIELD_NAME).reindex(
-                cls.trading_days
-            ),
+            split_adjusted_at_start_boundary.unstack(SID_FIELD_NAME).reindex(cls.trading_days),
             level=SID_FIELD_NAME,
             future_stack=True,
         )
@@ -2885,9 +2841,7 @@ class NextWithAdjustmentBoundaries(WithAdjustmentBoundaries, ZiplineTestCase):
             SID_FIELD_NAME, append=True
         )
         split_adjusted_at_end_boundary = stack_future_compatible(
-            split_adjusted_at_end_boundary.unstack(SID_FIELD_NAME).reindex(
-                cls.trading_days
-            ),
+            split_adjusted_at_end_boundary.unstack(SID_FIELD_NAME).reindex(cls.trading_days),
             level=SID_FIELD_NAME,
             future_stack=True,
         )

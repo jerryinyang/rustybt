@@ -45,8 +45,7 @@ class MockBroker(BrokerAdapter):
         """Get account information."""
         return {
             "cash": self._cash,
-            "equity": self._cash
-            + sum(pos * Decimal("100") for pos in self._positions.values()),
+            "equity": self._cash + sum(pos * Decimal("100") for pos in self._positions.values()),
             "buying_power": self._cash,
         }
 
@@ -112,9 +111,7 @@ class MockBroker(BrokerAdapter):
 
     async def get_open_orders(self) -> list[dict]:
         """Get open/pending orders from broker."""
-        return [
-            order for order in self._orders if order["status"] in ("pending", "submitted")
-        ]
+        return [order for order in self._orders if order["status"] in ("pending", "submitted")]
 
     async def get_order_status(self, order_id: str) -> dict[str, Any]:
         """Get order status."""
@@ -188,9 +185,7 @@ class RebalancingStrategy:
 
             # Execute trade if rebalance needed (threshold: 1 share)
             if abs(shares_to_trade) > Decimal("1"):
-                await broker.submit_order(
-                    asset=symbol, amount=shares_to_trade, order_type="market"
-                )
+                await broker.submit_order(asset=symbol, amount=shares_to_trade, order_type="market")
 
 
 @pytest.fixture
@@ -344,9 +339,7 @@ class TestScheduledRebalancing:
         scheduler.shutdown()
 
     @pytest.mark.asyncio
-    async def test_callback_context_includes_scheduled_time(
-        self, scheduler, event_queue
-    ):
+    async def test_callback_context_includes_scheduled_time(self, scheduler, event_queue):
         """Test callback receives context with scheduled time.
 
         Verifies:
@@ -419,9 +412,7 @@ class TestScheduledRebalancing:
         scheduler.shutdown()
 
     @pytest.mark.asyncio
-    async def test_scheduler_list_jobs_shows_active_jobs(
-        self, scheduler, rebalancing_strategy
-    ):
+    async def test_scheduler_list_jobs_shows_active_jobs(self, scheduler, rebalancing_strategy):
         """Test list_jobs() returns active scheduled jobs.
 
         Verifies:
@@ -467,9 +458,7 @@ class TestSchedulerErrorHandling:
     """Test scheduler error handling and edge cases."""
 
     @pytest.mark.asyncio
-    async def test_callback_exception_does_not_stop_scheduling(
-        self, scheduler, event_queue
-    ):
+    async def test_callback_exception_does_not_stop_scheduling(self, scheduler, event_queue):
         """Test callback exceptions are logged but don't stop scheduler.
 
         Verifies:

@@ -16,13 +16,67 @@ import empyrical
 
 from rustybt.utils.deprecate import deprecated
 
+from .advanced import (
+    CalmarRatioMetric,
+    CVaRMetric,
+    TradeStatisticsMetric,
+    VaRMetric,
+    calmar_ratio,
+    conditional_value_at_risk,
+    profit_factor,
+    value_at_risk,
+    win_rate,
+)
+from .attribution import (
+    calculate_alpha_beta,
+    calculate_position_attribution,
+    calculate_sector_attribution,
+    calculate_time_period_attribution,
+)
 from .core import (
+    load,
     metrics_sets,
     register,
     unregister,
-    load,
+)
+
+# Decimal precision metrics (Story 2.4)
+from .decimal_metrics import (
+    InsufficientDataError,
+    InvalidMetricError,
+    MetricsError,
+    calculate_calmar_ratio,
+    calculate_cvar,
+    calculate_excess_return,
+    calculate_information_ratio,
+    calculate_max_drawdown,
+    calculate_profit_factor,
+    calculate_sharpe_ratio,
+    calculate_sortino_ratio,
+    calculate_tracking_error,
+    calculate_var,
+    calculate_win_rate,
+)
+from .decimal_tracker import DecimalMetricsTracker
+from .empyrical_adapter import (
+    EmpyricalAdapter,
+    compare_metrics,
+    from_float_value,
+    to_float_series,
+    validate_decimal_against_empyrical,
+)
+from .formatting import (
+    create_metrics_summary_table,
+    format_basis_points,
+    format_currency,
+    format_metrics_html,
+    format_percentage,
+    format_ratio,
+    metrics_to_csv_row,
+    metrics_to_json,
 )
 from .metric import (
+    PNL,
     AlphaBeta,
     BenchmarkReturnsAndVolatility,
     CashFlow,
@@ -31,70 +85,15 @@ from .metric import (
     NumTradingDays,
     Orders,
     PeriodLabel,
-    PNL,
     Returns,
     ReturnsStatistic,
     SimpleLedgerField,
     StartOfPeriodLedgerField,
     Transactions,
-    _ConstantCumulativeRiskMetric,
     _ClassicRiskMetrics,
-)
-from .advanced import (
-    VaRMetric,
-    CVaRMetric,
-    CalmarRatioMetric,
-    TradeStatisticsMetric,
-    calmar_ratio,
-    value_at_risk,
-    conditional_value_at_risk,
-    win_rate,
-    profit_factor,
+    _ConstantCumulativeRiskMetric,
 )
 from .tracker import MetricsTracker
-
-# Decimal precision metrics (Story 2.4)
-from .decimal_metrics import (
-    calculate_sharpe_ratio,
-    calculate_sortino_ratio,
-    calculate_max_drawdown,
-    calculate_calmar_ratio,
-    calculate_var,
-    calculate_cvar,
-    calculate_win_rate,
-    calculate_profit_factor,
-    calculate_excess_return,
-    calculate_information_ratio,
-    calculate_tracking_error,
-    MetricsError,
-    InsufficientDataError,
-    InvalidMetricError,
-)
-from .attribution import (
-    calculate_position_attribution,
-    calculate_sector_attribution,
-    calculate_alpha_beta,
-    calculate_time_period_attribution,
-)
-from .decimal_tracker import DecimalMetricsTracker
-from .formatting import (
-    format_percentage,
-    format_ratio,
-    format_currency,
-    format_basis_points,
-    create_metrics_summary_table,
-    metrics_to_json,
-    metrics_to_csv_row,
-    format_metrics_html,
-)
-from .empyrical_adapter import (
-    EmpyricalAdapter,
-    to_float_series,
-    from_float_value,
-    compare_metrics,
-    validate_decimal_against_empyrical,
-)
-
 
 __all__ = [
     "MetricsTracker",

@@ -1,19 +1,19 @@
+import datetime
+import hashlib
+import logging
+import warnings
 from abc import ABC, abstractmethod
 from collections import namedtuple
-import hashlib
+from io import StringIO
 from textwrap import dedent
-import warnings
 
-import logging
 import numpy
 import pandas as pd
-import datetime
-
 import requests
-from io import StringIO
+
+from rustybt.assets import Equity
 from rustybt.errors import MultipleSymbolsFound, SymbolNotFound, ZiplineError
 from rustybt.protocol import DATASOURCE_TYPE, Event
-from rustybt.assets import Equity
 
 logger = logging.getLogger("Requests Source Logger")
 
@@ -109,9 +109,7 @@ SHARED_REQUESTS_KWARGS = {
 
 
 def mask_requests_args(url, validating=False, params_checker=None, **kwargs):
-    requests_kwargs = {
-        key: val for (key, val) in kwargs.items() if key in ALLOWED_REQUESTS_KWARGS
-    }
+    requests_kwargs = {key: val for (key, val) in kwargs.items() if key in ALLOWED_REQUESTS_KWARGS}
     if params_checker is not None:
         url, s_params = params_checker(url)
         if s_params:
@@ -188,9 +186,7 @@ class PandasCSV(ABC):
         return
 
     @staticmethod
-    def parse_date_str_series(
-        format_str, tz, date_str_series, data_frequency, trading_day
-    ):
+    def parse_date_str_series(format_str, tz, date_str_series, data_frequency, trading_day):
         """
         Efficient parsing for a 1d Pandas/numpy object containing string
         representations of dates.
@@ -204,7 +200,6 @@ class PandasCSV(ABC):
         because we were incorrectly passing it as a positional.  For all these
         reasons, we ignore the format_str parameter when parsing datetimes.
         """
-
         # Explicitly ignoring this parameter.  See note above.
         if format_str is not None:
             logger.warning(
@@ -214,7 +209,7 @@ class PandasCSV(ABC):
             format_str = None
 
         tz_str = str(tz)
-        if tz_str == str(datetime.timezone.utc):
+        if tz_str == str(datetime.UTC):
             parsed = pd.to_datetime(
                 date_str_series.values,
                 # format=format_str,
@@ -486,9 +481,7 @@ class PandasRequestsCSV(PandasCSV):
             url, params_checker=special_params_checker, **kwargs
         )
 
-        remaining_kwargs = {
-            k: v for k, v in kwargs.items() if k not in self.requests_kwargs
-        }
+        remaining_kwargs = {k: v for k, v in kwargs.items() if k not in self.requests_kwargs}
 
         self.namestring = type(self).__name__
 
@@ -529,7 +522,7 @@ class PandasRequestsCSV(PandasCSV):
         # pandas logic for decoding content
         try:
             # SECURITY FIX (Story 8.10): Ensure timeout is set
-            kwargs = {'timeout': 30, **self.requests_kwargs}
+            kwargs = {"timeout": 30, **self.requests_kwargs}
             response = requests.get(url, **kwargs)
         except requests.exceptions.ConnectionError as exc:
             raise Exception("Could not connect to %s" % url) from exc
@@ -548,16 +541,12 @@ class PandasRequestsCSV(PandasCSV):
 
         content_length = 0
         logger.info(
-            "{} connection established in {:.1f} seconds".format(
-                url, response.elapsed.total_seconds()
-            )
+            f"{url} connection established in {response.elapsed.total_seconds():.1f} seconds"
         )
 
         # use the decode_unicode flag to ensure that the output of this is
         # a string, and not bytes.
-        for chunk in response.iter_content(
-            self.CONTENT_CHUNK_SIZE, decode_unicode=True
-        ):
+        for chunk in response.iter_content(self.CONTENT_CHUNK_SIZE, decode_unicode=True):
             if content_length > self.MAX_DOCUMENT_SIZE:
                 raise Exception("Document size too big.")
             if chunk:

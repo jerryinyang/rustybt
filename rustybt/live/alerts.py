@@ -118,9 +118,7 @@ class AlertConfig(BaseModel):
             twilio_auth_token=os.getenv("TWILIO_AUTH_TOKEN"),
             twilio_from_number=os.getenv("TWILIO_FROM_NUMBER"),
             twilio_to_numbers=(
-                os.getenv("ALERT_PHONE_TO", "").split(",")
-                if os.getenv("ALERT_PHONE_TO")
-                else []
+                os.getenv("ALERT_PHONE_TO", "").split(",") if os.getenv("ALERT_PHONE_TO") else []
             ),
             webhook_enabled=webhook_enabled,
             webhook_urls=(

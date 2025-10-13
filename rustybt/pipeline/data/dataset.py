@@ -1,5 +1,5 @@
 import abc
-from collections import namedtuple, OrderedDict
+from collections import OrderedDict, namedtuple
 from itertools import repeat
 from textwrap import dedent
 from weakref import WeakKeyDictionary
@@ -8,23 +8,22 @@ from toolz import first
 
 from rustybt.currency import Currency
 from rustybt.data.fx import DEFAULT_FX_RATE
-from rustybt.pipeline.classifiers import Classifier, Latest as LatestClassifier
-from rustybt.pipeline.domain import Domain, GENERIC
-from rustybt.pipeline.factors import Factor, Latest as LatestFactor
-from rustybt.pipeline.filters import Filter, Latest as LatestFilter
+from rustybt.pipeline.domain import GENERIC, Domain
 from rustybt.pipeline.sentinels import NotSpecified, sentinel
+
+# Avoid circular import: Classifier, Factor, Filter and Latest variants imported locally where needed
 from rustybt.pipeline.term import (
     AssetExists,
     LoadableTerm,
     validate_dtype,
 )
-from rustybt.utils.formatting import s, plural
+from rustybt.utils.formatting import plural, s
 from rustybt.utils.input_validation import (
     coerce_types,
     ensure_dtype,
     expect_types,
 )
-from rustybt.utils.numpy_utils import float64_dtype, NoDefaultMissingValue
+from rustybt.utils.numpy_utils import NoDefaultMissingValue, float64_dtype
 from rustybt.utils.preprocess import preprocess
 from rustybt.utils.string_formatting import bulleted_list
 
@@ -47,10 +46,8 @@ class Column:
     ):
         if currency_aware and dtype != float64_dtype:
             raise ValueError(
-                "Columns cannot be constructed with currency_aware={}, "
-                "dtype={}. Currency aware columns must have a float64 dtype.".format(
-                    currency_aware, dtype
-                )
+                f"Columns cannot be constructed with currency_aware={currency_aware}, "
+                f"dtype={dtype}. Currency aware columns must have a float64 dtype."
             )
 
         self.dtype = dtype
@@ -90,18 +87,18 @@ class _BoundColumnDescr:
         # points to the name of the failing column.
         try:
             self.dtype, self.missing_value = validate_dtype(
-                termname="Column(name={name!r})".format(name=name),
+                termname=f"Column(name={name!r})",
                 dtype=dtype,
                 missing_value=missing_value,
             )
         except NoDefaultMissingValue as exc:
             # Re-raise with a more specific message.
             raise NoDefaultMissingValue(
-                "Failed to create Column with name {name!r} and"
-                " dtype {dtype} because no missing_value was provided\n\n"
-                "Columns with dtype {dtype} require a missing_value.\n"
+                f"Failed to create Column with name {name!r} and"
+                f" dtype {dtype} because no missing_value was provided\n\n"
+                f"Columns with dtype {dtype} require a missing_value.\n"
                 "Please pass missing_value to Column() or use a different"
-                " dtype.".format(dtype=dtype, name=name)
+                " dtype."
             ) from exc
         self.name = name
         self.doc = doc
@@ -131,7 +128,7 @@ class BoundColumn(LoadableTerm):
     """
     A column of data that's been concretely bound to a particular dataset.
 
-    Attributes
+    Attributes:
     ----------
     dtype : numpy.dtype
         The dtype of data produced when this column is loaded.
@@ -149,7 +146,7 @@ class BoundColumn(LoadableTerm):
     currency_aware : bool
         Whether or not this column produces currency-denominated data.
 
-    Notes
+    Notes:
     -----
     Instances of this class are dynamically created upon access to attributes
     of :class:`~zipline.pipeline.data.DataSet`. For example,
@@ -174,14 +171,9 @@ class BoundColumn(LoadableTerm):
     ):
         if currency_aware and dtype != float64_dtype:
             raise AssertionError(
-                "The {} column on dataset {} cannot be constructed with "
-                "currency_aware={}, dtype={}. Currency aware columns must "
-                "have a float64 dtype.".format(
-                    name,
-                    dataset,
-                    currency_aware,
-                    dtype,
-                )
+                f"The {name} column on dataset {dataset} cannot be constructed with "
+                f"currency_aware={currency_aware}, dtype={dtype}. Currency aware columns must "
+                "have a float64 dtype."
             )
 
         return super(BoundColumn, cls).__new__(
@@ -285,7 +277,7 @@ class BoundColumn(LoadableTerm):
         currency : str or zipline.currency.Currency
             Currency into which to convert this column's data.
 
-        Returns
+        Returns:
         -------
         column : BoundColumn
             Column producing the same data as ``self``, but currency-converted
@@ -295,8 +287,8 @@ class BoundColumn(LoadableTerm):
 
         if not self._currency_aware:
             raise TypeError(
-                "The .fx() method cannot be called on {} because it does not "
-                "produce currency-denominated data.".format(self.qualname)
+                f"The .fx() method cannot be called on {self.qualname} because it does not "
+                "produce currency-denominated data."
             )
         elif conversion is not None and conversion.currency == currency:
             return self
@@ -347,11 +339,19 @@ class BoundColumn(LoadableTerm):
         out = ".".join([self.dataset.qualname, self.name])
         conversion = self._currency_conversion
         if conversion is not None:
-            out += ".fx({!r})".format(conversion.currency.code)
+            out += f".fx({conversion.currency.code!r})"
         return out
 
     @property
     def latest(self):
+        # Import locally to avoid circular import
+        from rustybt.pipeline.classifiers import Classifier
+        from rustybt.pipeline.classifiers import Latest as LatestClassifier
+        from rustybt.pipeline.factors import Factor
+        from rustybt.pipeline.factors import Latest as LatestFactor
+        from rustybt.pipeline.filters import Filter
+        from rustybt.pipeline.filters import Latest as LatestFilter
+
         dtype = self.dtype
         if dtype in Filter.ALLOWED_DTYPES:
             Latest = LatestFilter
@@ -369,17 +369,12 @@ class BoundColumn(LoadableTerm):
         )
 
     def __repr__(self):
-        return "{qualname}::{dtype}".format(
-            qualname=self.qualname,
-            dtype=self.dtype.name,
-        )
+        return f"{self.qualname}::{self.dtype.name}"
 
     def graph_repr(self):
         """Short repr to use when rendering Pipeline graphs."""
         # Graphviz interprets `\l` as "divide label into lines, left-justified"
-        return "BoundColumn:\\l  Dataset: {}\\l  Column: {}\\l".format(
-            self.dataset.__name__, self.name
-        )
+        return f"BoundColumn:\\l  Dataset: {self.dataset.__name__}\\l  Column: {self.name}\\l"
 
     def recursive_repr(self):
         """Short repr used to render in recursive contexts."""
@@ -395,7 +390,7 @@ class DataSetMeta(type):
     """
 
     def __new__(metacls, name, bases, dict_):
-        if len(bases) != 1:
+        if len(bases) > 1:
             # Disallowing multiple inheritance makes it easier for us to
             # determine whether a given dataset is the root for its family of
             # specializations.
@@ -408,16 +403,11 @@ class DataSetMeta(type):
 
         if not isinstance(newtype.domain, Domain):
             raise TypeError(
-                "Expected a Domain for {}.domain, but got {} instead.".format(
-                    newtype.__name__,
-                    type(newtype.domain),
-                )
+                f"Expected a Domain for {newtype.__name__}.domain, but got {type(newtype.domain)} instead."
             )
 
         # Collect all of the column names that we inherit from our parents.
-        column_names = set().union(
-            *(getattr(base, "_column_names", ()) for base in bases)
-        )
+        column_names = set().union(*(getattr(base, "_column_names", ()) for base in bases))
 
         # Collect any new columns from this dataset.
         for maybe_colname, maybe_column in dict_.items():
@@ -450,7 +440,7 @@ class DataSetMeta(type):
         domain : zipline.pipeline.domain.Domain
             Domain to which we should generate a specialization.
 
-        Returns
+        Returns:
         -------
         specialized : type
             A new :class:`~zipline.pipeline.data.DataSet` subclass with the
@@ -469,11 +459,7 @@ class DataSetMeta(type):
                 # of a root-specialized dataset, which we don't want to create
                 # new specializations of.
                 raise ValueError(
-                    "Can't specialize {dataset} from {current} to new domain {new}.".format(
-                        dataset=cls.__name__,
-                        current=cls.domain,
-                        new=domain,
-                    )
+                    f"Can't specialize {cls.__name__} from {cls.domain} to new domain {domain}."
                 ) from exc
             new_type = cls._create_specialization(domain)
             cls._domain_specializations[domain] = new_type
@@ -510,10 +496,7 @@ class DataSetMeta(type):
         if domain is not GENERIC:
             assert (
                 cls.domain is GENERIC
-            ), "Can't specialize dataset with domain {} to domain {}.".format(
-                cls.domain,
-                domain,
-            )
+            ), f"Can't specialize dataset with domain {cls.domain} to domain {domain}."
 
         # Create a new subclass of ``self`` with the given domain.
         # Mark that it's a specialization so that we know not to create a new
@@ -550,7 +533,7 @@ class DataSetMeta(type):
         return "<DataSet: %r, domain=%s>" % (cls.__name__, cls.domain)
 
 
-class DataSet(object, metaclass=DataSetMeta):
+class DataSet(metaclass=DataSetMeta):
     """
     Base class for Pipeline datasets.
 
@@ -581,7 +564,7 @@ class DataSet(object, metaclass=DataSetMeta):
     You can also define a domain-specific version of a generic DataSet by
     calling its ``specialize`` method with the domain of interest.
 
-    Examples
+    Examples:
     --------
     The built-in EquityPricing dataset is defined as follows::
 
@@ -620,7 +603,7 @@ class DataSet(object, metaclass=DataSetMeta):
             # value for bool-dtype columns is False.
             is_primary_share = Column(bool)
 
-    Notes
+    Notes:
     -----
     Because numpy has no native support for integers with missing values, users
     are strongly encouraged to use floats for any data that's semantically
@@ -640,12 +623,12 @@ class DataSet(object, metaclass=DataSetMeta):
         name : str
             Name of the column to look up.
 
-        Returns
+        Returns:
         -------
         column : zipline.pipeline.data.BoundColumn
             Column with the given name.
 
-        Raises
+        Raises:
         ------
         AttributeError
             If no column with the given name exists.
@@ -657,9 +640,7 @@ class DataSet(object, metaclass=DataSetMeta):
                 raise KeyError(name)
         except KeyError as exc:
             raise AttributeError(
-                "{dset} has no column {colname!r}:\n\n"
-                "Possible choices are:\n"
-                "{choices}".format(
+                "{dset} has no column {colname!r}:\n\nPossible choices are:\n{choices}".format(
                     dset=cls.qualname,
                     colname=name,
                     choices=bulleted_list(
@@ -699,16 +680,14 @@ class DataSetFamilyLookupError(AttributeError):
     def __str__(self):
         # NOTE: when ``aggregate`` is added, remember to update this message
         return dedent(
-            """\
-            Attempted to access column {c} from DataSetFamily {d}:
+            f"""\
+            Attempted to access column {self.column_name} from DataSetFamily {self.family_name}:
 
             To work with dataset families, you must first select a
             slice using the ``slice`` method:
 
-                {d}.slice(...).{c}
-            """.format(
-                c=self.column_name, d=self.family_name
-            )
+                {self.family_name}.slice(...).{self.column_name}
+            """
         )
 
 
@@ -908,7 +887,7 @@ class DataSetFamily(metaclass=DataSetFamilyMeta):
 
         missing = object()
         coords = OrderedDict(zip(extra_dims, repeat(missing)))
-        to_add = dict(zip(extra_dims, args))
+        to_add = dict(zip(extra_dims, args, strict=False))
         coords.update(to_add)
         added = set(to_add)
 
@@ -975,12 +954,12 @@ class DataSetFamily(metaclass=DataSetFamilyMeta):
         **kwargs
             The coordinates to fix along each extra dimension.
 
-        Returns
+        Returns:
         -------
         dataset : DataSet
             A regular pipeline dataset indexed by asset and date.
 
-        Notes
+        Notes:
         -----
         The extra dimensions coords used to produce the result are available
         under the ``extra_coords`` attribute.

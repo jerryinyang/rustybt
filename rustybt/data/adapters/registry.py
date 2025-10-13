@@ -6,7 +6,6 @@ dynamic registration and auto-discovery of adapter classes.
 
 import importlib
 import pkgutil
-from typing import Dict, List, Type
 
 import structlog
 
@@ -37,10 +36,10 @@ class AdapterRegistry:
         >>> adapter = adapter_class(name="my_adapter")
     """
 
-    _adapters: Dict[str, Type[BaseDataAdapter]] = {}
+    _adapters: dict[str, type[BaseDataAdapter]] = {}
 
     @classmethod
-    def register(cls, adapter_class: Type[BaseDataAdapter]) -> None:
+    def register(cls, adapter_class: type[BaseDataAdapter]) -> None:
         """Register adapter class.
 
         Args:
@@ -56,8 +55,7 @@ class AdapterRegistry:
         """
         if not issubclass(adapter_class, BaseDataAdapter):
             raise TypeError(
-                f"Adapter class must inherit from BaseDataAdapter, "
-                f"got {adapter_class.__name__}"
+                f"Adapter class must inherit from BaseDataAdapter, got {adapter_class.__name__}"
             )
 
         adapter_name = adapter_class.__name__
@@ -70,7 +68,7 @@ class AdapterRegistry:
         )
 
     @classmethod
-    def get_adapter(cls, name: str) -> Type[BaseDataAdapter]:
+    def get_adapter(cls, name: str) -> type[BaseDataAdapter]:
         """Get adapter class by name.
 
         Args:
@@ -88,13 +86,11 @@ class AdapterRegistry:
         """
         if name not in cls._adapters:
             available = ", ".join(cls._adapters.keys())
-            raise ValueError(
-                f"Adapter '{name}' not found. Available adapters: {available}"
-            )
+            raise ValueError(f"Adapter '{name}' not found. Available adapters: {available}")
         return cls._adapters[name]
 
     @classmethod
-    def list_adapters(cls) -> List[str]:
+    def list_adapters(cls) -> list[str]:
         """List all registered adapter names.
 
         Returns:
@@ -126,18 +122,14 @@ class AdapterRegistry:
 
         try:
             # Iterate through all modules in adapters package
-            for _, module_name, _ in pkgutil.iter_modules(
-                rustybt.data.adapters.__path__
-            ):
+            for _, module_name, _ in pkgutil.iter_modules(rustybt.data.adapters.__path__):
                 # Skip base and registry modules
                 if module_name in ("base", "registry", "api_provider_base"):
                     continue
 
                 try:
                     # Import module
-                    module = importlib.import_module(
-                        f"rustybt.data.adapters.{module_name}"
-                    )
+                    module = importlib.import_module(f"rustybt.data.adapters.{module_name}")
 
                     # Find adapter classes in module
                     for attr_name in dir(module):

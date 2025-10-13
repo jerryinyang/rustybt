@@ -5,8 +5,8 @@ Uses Hypothesis to test metric properties with randomly generated data.
 
 import numpy as np
 import pandas as pd
-import pytest
-from hypothesis import given, strategies as st, settings
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from rustybt.finance.metrics.advanced import (
     calmar_ratio,
@@ -38,9 +38,7 @@ def transactions_strategy(draw, min_size=5, max_size=100):
     size = draw(st.integers(min_value=min_size, max_value=max_size))
     pnl_values = draw(
         st.lists(
-            st.floats(
-                min_value=-1000.0, max_value=1000.0, allow_nan=False, allow_infinity=False
-            ),
+            st.floats(min_value=-1000.0, max_value=1000.0, allow_nan=False, allow_infinity=False),
             min_size=size,
             max_size=size,
         )

@@ -1,11 +1,11 @@
+from bcolz import ctable
 from numpy import (
     float64,
-    uint32,
     int64,
+    uint32,
 )
-from bcolz import ctable
 
-from rustybt.data.bcolz_daily_bars import BcolzDailyBarWriter, OHLC, UINT32_MAX
+from rustybt.data.bcolz_daily_bars import OHLC, UINT32_MAX, BcolzDailyBarWriter
 
 
 class DailyBarWriterFromDataFrames(BcolzDailyBarWriter):
@@ -40,6 +40,4 @@ class DailyBarWriterFromDataFrames(BcolzDailyBarWriter):
     @staticmethod
     def check_uint_safe(value, colname):
         if value >= UINT32_MAX:
-            raise ValueError(
-                "Value %s from column '%s' is too large" % (value, colname)
-            )
+            raise ValueError("Value %s from column '%s' is too large" % (value, colname))

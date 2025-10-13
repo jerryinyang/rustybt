@@ -6,7 +6,6 @@ and broker positions to detect and handle discrepancies during live trading.
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
 
 import structlog
 
@@ -63,9 +62,9 @@ class PositionReconciler:
 
     async def reconcile_all(
         self,
-        local_positions: List[PositionSnapshot],
+        local_positions: list[PositionSnapshot],
         local_cash: Decimal,
-        local_orders: Optional[List[OrderSnapshot]] = None,
+        local_orders: list[OrderSnapshot] | None = None,
     ) -> ReconciliationReport:
         """Perform comprehensive reconciliation of positions, cash, and orders.
 
@@ -125,8 +124,8 @@ class PositionReconciler:
             raise ReconciliationError(f"Reconciliation failed: {e}") from e
 
     async def _reconcile_positions(
-        self, local_positions: List[PositionSnapshot]
-    ) -> List[PositionDiscrepancy]:
+        self, local_positions: list[PositionSnapshot]
+    ) -> list[PositionDiscrepancy]:
         """Reconcile local positions with broker positions.
 
         Args:
@@ -196,7 +195,7 @@ class PositionReconciler:
 
         return discrepancies
 
-    async def _reconcile_cash(self, local_cash: Decimal) -> Optional[CashDiscrepancy]:
+    async def _reconcile_cash(self, local_cash: Decimal) -> CashDiscrepancy | None:
         """Reconcile local cash balance with broker cash balance.
 
         Args:
@@ -238,9 +237,7 @@ class PositionReconciler:
             severity=severity,
         )
 
-    async def _reconcile_orders(
-        self, local_orders: List[OrderSnapshot]
-    ) -> List[OrderDiscrepancy]:
+    async def _reconcile_orders(self, local_orders: list[OrderSnapshot]) -> list[OrderDiscrepancy]:
         """Reconcile local pending orders with broker open orders.
 
         Args:
@@ -315,9 +312,7 @@ class PositionReconciler:
 
         return discrepancies
 
-    def _normalize_broker_positions(
-        self, broker_positions_raw: List[Dict]
-    ) -> Dict[str, Decimal]:
+    def _normalize_broker_positions(self, broker_positions_raw: list[dict]) -> dict[str, Decimal]:
         """Normalize broker positions to {asset: amount} dict.
 
         Args:
@@ -347,8 +342,8 @@ class PositionReconciler:
     def _create_position_discrepancy(
         self,
         asset: str,
-        local_amount: Optional[Decimal],
-        broker_amount: Optional[Decimal],
+        local_amount: Decimal | None,
+        broker_amount: Decimal | None,
         discrepancy_type: DiscrepancyType,
     ) -> PositionDiscrepancy:
         """Create a position discrepancy with severity classification.
@@ -388,7 +383,7 @@ class PositionReconciler:
         )
 
     def _calculate_discrepancy_percentage(
-        self, local_value: Optional[Decimal], broker_value: Optional[Decimal]
+        self, local_value: Decimal | None, broker_value: Decimal | None
     ) -> float:
         """Calculate discrepancy percentage between local and broker values.
 
@@ -469,9 +464,9 @@ class PositionReconciler:
 
     def _generate_report(
         self,
-        position_discrepancies: List[PositionDiscrepancy],
-        cash_discrepancy: Optional[CashDiscrepancy],
-        order_discrepancies: List[OrderDiscrepancy],
+        position_discrepancies: list[PositionDiscrepancy],
+        cash_discrepancy: CashDiscrepancy | None,
+        order_discrepancies: list[OrderDiscrepancy],
     ) -> ReconciliationReport:
         """Generate reconciliation report.
 
@@ -485,18 +480,14 @@ class PositionReconciler:
         """
         # Generate summary
         total_count = (
-            len(position_discrepancies)
-            + (1 if cash_discrepancy else 0)
-            + len(order_discrepancies)
+            len(position_discrepancies) + (1 if cash_discrepancy else 0) + len(order_discrepancies)
         )
 
         if total_count == 0:
             summary = "No discrepancies detected"
         else:
             critical_positions = sum(
-                1
-                for d in position_discrepancies
-                if d.severity == DiscrepancySeverity.CRITICAL
+                1 for d in position_discrepancies if d.severity == DiscrepancySeverity.CRITICAL
             )
             critical_cash = (
                 1

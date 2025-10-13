@@ -14,31 +14,29 @@
 # limitations under the License.
 
 
-import pytz
 import numbers
-
-from hashlib import md5
 from datetime import datetime
+from hashlib import md5
+
+import pytz
+
 from rustybt.protocol import DATASOURCE_TYPE
 
 
 def hash_args(*args, **kwargs):
     """Define a unique string for any set of representable args."""
     arg_string = "_".join([str(arg) for arg in args])
-    kwarg_string = "_".join(
-        [str(key) + "=" + str(value) for key, value in kwargs.items()]
-    )
+    kwarg_string = "_".join([str(key) + "=" + str(value) for key, value in kwargs.items()])
     combined = ":".join([arg_string, kwarg_string])
 
     # SECURITY FIX (Story 8.10): MD5 used for checksums, not cryptography
     hasher = md5(usedforsecurity=False)
-    hasher.update(combined.encode('utf-8'))
+    hasher.update(combined.encode("utf-8"))
     return hasher.hexdigest()
 
 
 def assert_datasource_protocol(event):
     """Assert that an event meets the protocol for datasource outputs."""
-
     assert event.type in DATASOURCE_TYPE
 
     # Done packets have no dt.

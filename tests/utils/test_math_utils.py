@@ -1,4 +1,5 @@
 import pytest
+
 from rustybt.utils.math_utils import number_of_decimal_places
 
 fixt = [(1, 0), (3.14, 2), ("3.14", 2), (-3.14, 2)]

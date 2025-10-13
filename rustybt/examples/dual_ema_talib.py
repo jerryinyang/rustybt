@@ -23,7 +23,9 @@ its shares once the averages cross again (indicating downwards
 momentum).
 
 """
+
 import os
+
 from rustybt.api import order, record, symbol
 from rustybt.finance import commission, slippage
 
@@ -92,8 +94,9 @@ def handle_data(context, data):
 # Note: this function can be removed if running
 # this algorithm on quantopian.com
 def analyze(context=None, results=None):
-    import matplotlib.pyplot as plt
     import logging
+
+    import matplotlib.pyplot as plt
 
     logging.basicConfig(
         format="[%(asctime)s-%(levelname)s][%(name)s]\n %(message)s",

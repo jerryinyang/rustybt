@@ -1,7 +1,8 @@
 """Tests for objective function."""
 
-import pytest
 from decimal import Decimal
+
+import pytest
 
 from rustybt.optimization.objective import ObjectiveFunction
 

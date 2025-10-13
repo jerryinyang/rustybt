@@ -159,7 +159,7 @@ deferred_tasks:
       - "rustybt/data/adapters/csv_adapter.py"
     blocking: false
     rationale: "Direct implementation requires caching layer from Story X1.3 to avoid performance regression"
-  
+
   story_8_5_ac_1_5:
     description: "Integration tests for full fetch→ingest→load workflow"
     target_story: "8.5"

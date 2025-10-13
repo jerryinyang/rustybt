@@ -12,9 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from parameterized import parameterized
-
 import pandas as pd
+from parameterized import parameterized
 
 from rustybt.assets import Equity
 from rustybt.finance.blotter import SimulationBlotter
@@ -42,9 +41,7 @@ from rustybt.testing.fixtures import (
 from rustybt.utils.classproperty import classproperty
 
 
-class BlotterTestCase(
-    WithCreateBarData, WithDataPortal, WithSimParams, ZiplineTestCase
-):
+class BlotterTestCase(WithCreateBarData, WithDataPortal, WithSimParams, ZiplineTestCase):
     START_DATE = pd.Timestamp("2006-01-05")
     END_DATE = pd.Timestamp("2006-01-06")
     ASSET_FINDER_EQUITY_SIDS = 24, 25
@@ -58,25 +55,31 @@ class BlotterTestCase(
 
     @classmethod
     def make_equity_daily_bar_data(cls, country_code, sids):
-        yield 24, pd.DataFrame(
-            {
-                "open": [50, 50],
-                "high": [50, 50],
-                "low": [50, 50],
-                "close": [50, 50],
-                "volume": [100, 400],
-            },
-            index=cls.sim_params.sessions,
+        yield (
+            24,
+            pd.DataFrame(
+                {
+                    "open": [50, 50],
+                    "high": [50, 50],
+                    "low": [50, 50],
+                    "close": [50, 50],
+                    "volume": [100, 400],
+                },
+                index=cls.sim_params.sessions,
+            ),
         )
-        yield 25, pd.DataFrame(
-            {
-                "open": [50, 50],
-                "high": [50, 50],
-                "low": [50, 50],
-                "close": [50, 50],
-                "volume": [100, 400],
-            },
-            index=cls.sim_params.sessions,
+        yield (
+            25,
+            pd.DataFrame(
+                {
+                    "open": [50, 50],
+                    "high": [50, 50],
+                    "low": [50, 50],
+                    "close": [50, 50],
+                    "volume": [100, 400],
+                },
+                index=cls.sim_params.sessions,
+            ),
         )
 
     @classmethod
@@ -290,9 +293,7 @@ class BlotterTestCase(
             order_size = 100
             expected_filled = int(trade_amt * DEFAULT_EQUITY_VOLUME_SLIPPAGE_BAR_LIMIT)
             expected_open = order_size - expected_filled
-            expected_status = (
-                ORDER_STATUS.OPEN if expected_open else ORDER_STATUS.FILLED
-            )
+            expected_status = ORDER_STATUS.OPEN if expected_open else ORDER_STATUS.FILLED
 
             blotter = SimulationBlotter(equity_slippage=VolumeShareSlippage())
             open_id = blotter.order(self.asset_24, order_size, MarketOrder())
@@ -322,10 +323,10 @@ class BlotterTestCase(
         open_order = blotter.open_orders[self.asset_24][0]
 
         blotter.prune_orders([])
-        assert 1 == len(blotter.open_orders[self.asset_24])
+        assert len(blotter.open_orders[self.asset_24]) == 1
 
         blotter.prune_orders([open_order])
-        assert 0 == len(blotter.open_orders[self.asset_24])
+        assert len(blotter.open_orders[self.asset_24]) == 0
 
         # prune an order that isn't in our our open orders list, make sure
         # nothing blows up
@@ -356,11 +357,9 @@ class BlotterTestCase(
             assert len(blotter1.open_orders) == len(blotter2.open_orders)
 
             for (asset, _, _), order_batch_id, order_id in zip(
-                order_arg_lists, order_batch_ids, order_ids
+                order_arg_lists, order_batch_ids, order_ids, strict=False
             ):
-                assert len(blotter1.open_orders[asset]) == len(
-                    blotter2.open_orders[asset]
-                )
+                assert len(blotter1.open_orders[asset]) == len(blotter2.open_orders[asset])
                 assert order_batch_id == blotter1.open_orders[asset][i - 1].id
                 assert order_id == blotter2.open_orders[asset][i - 1].id
 

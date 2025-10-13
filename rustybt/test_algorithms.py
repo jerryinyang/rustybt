@@ -71,14 +71,16 @@ The algorithm must expose methods:
     and trade events.
 
 """
+
 import numpy as np
+import pytest
 
 from rustybt.algorithm import TradingAlgorithm
 from rustybt.api import (
     FixedSlippage,
     order,
-    set_slippage,
     record,
+    set_slippage,
     sid,
 )
 from rustybt.errors import UnsupportedOrderParameters
@@ -88,7 +90,6 @@ from rustybt.finance.execution import (
     StopLimitOrder,
     StopOrder,
 )
-import pytest
 
 
 class TestAlgorithm(TradingAlgorithm):
@@ -98,9 +99,7 @@ class TestAlgorithm(TradingAlgorithm):
     at the close of a simulation.
     """
 
-    def initialize(
-        self, sid, amount, order_count, sid_filter=None, slippage=None, commission=None
-    ):
+    def initialize(self, sid, amount, order_count, sid_filter=None, slippage=None, commission=None):
         self.count = order_count
         self.asset = self.sid(sid)
         self.amount = amount
@@ -192,15 +191,14 @@ class TALIBAlgorithm(TradingAlgorithm):
     """
 
     def initialize(self, *args, **kwargs):
-
         if "talib" not in kwargs:
-            raise KeyError("No TA-LIB transform specified " "(use keyword 'talib').")
+            raise KeyError("No TA-LIB transform specified (use keyword 'talib').")
         elif not isinstance(kwargs["talib"], (list, tuple)):
             self.talib_transforms = (kwargs["talib"],)
         else:
             self.talib_transforms = kwargs["talib"]
 
-        self.talib_results = dict((t, []) for t in self.talib_transforms)
+        self.talib_results = {t: [] for t in self.talib_transforms}
 
     def handle_data(self, data):
         for t in self.talib_transforms:
@@ -234,7 +232,7 @@ class EmptyPositionsAlgorithm(TradingAlgorithm):
         if not self.exited:
             amounts = [pos.amount for pos in self.portfolio.positions.values()]
 
-            if len(amounts) > 0 and all([(amount == 1) for amount in amounts]):
+            if len(amounts) > 0 and all((amount == 1) for amount in amounts):
                 for stock in self.portfolio.positions:
                     self.order(self.sid(stock), -1)
                 self.exited = True
@@ -267,7 +265,6 @@ class InvalidOrderAlgorithm(TradingAlgorithm):
             StopOrder(10),
             StopLimitOrder(10, 10, asset=self.asset),
         ]:
-
             with pytest.raises(UnsupportedOrderParameters):
                 order(self.asset, 10, limit_price=10, style=style)
 

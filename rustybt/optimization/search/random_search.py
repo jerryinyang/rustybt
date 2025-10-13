@@ -129,7 +129,7 @@ class RandomSearchAlgorithm(SearchAlgorithm):
                 raise ValueError("Random search is complete - reached n_iter samples")
 
             # Sample parameters with duplicate prevention
-            for retry in range(self.max_retries):
+            for _retry in range(self.max_retries):
                 params = self._sample_parameters()
                 params_tuple = self._params_to_hashable(params)
 
@@ -142,7 +142,9 @@ class RandomSearchAlgorithm(SearchAlgorithm):
                 self._duplicate_count += 1
 
             # Max retries exceeded - log warning and return last sample
-            duplicate_rate = self._duplicate_count / (len(self._seen_params) + self._duplicate_count)
+            duplicate_rate = self._duplicate_count / (
+                len(self._seen_params) + self._duplicate_count
+            )
             warnings.warn(
                 f"High duplicate rate ({duplicate_rate:.1%}) after {self.max_retries} retries. "
                 f"Allowing duplicate parameter combination. Consider increasing n_iter or "
@@ -200,9 +202,7 @@ class RandomSearchAlgorithm(SearchAlgorithm):
         elif param.prior == "log-uniform":
             # Log-uniform distribution (good for scale-variant parameters)
             if min_val <= 0:
-                raise ValueError(
-                    f"log-uniform prior requires positive bounds, got min={min_val}"
-                )
+                raise ValueError(f"log-uniform prior requires positive bounds, got min={min_val}")
             log_min = math.log(min_val)
             log_max = math.log(max_val)
             log_value = self._rng.uniform(log_min, log_max)
@@ -358,9 +358,7 @@ class RandomSearchAlgorithm(SearchAlgorithm):
             raise ValueError("No results available yet")
         return self._best_params.copy(), self._best_score
 
-    def get_results(
-        self, top_k: int | None = None
-    ) -> list[tuple[dict[str, Any], Decimal]]:
+    def get_results(self, top_k: int | None = None) -> list[tuple[dict[str, Any], Decimal]]:
         """Get optimization results sorted by score.
 
         Args:
@@ -425,9 +423,7 @@ class RandomSearchAlgorithm(SearchAlgorithm):
 
         # Restore best result
         self._best_params = state["best_params"]
-        self._best_score = (
-            Decimal(state["best_score"]) if state["best_score"] is not None else None
-        )
+        self._best_score = Decimal(state["best_score"]) if state["best_score"] is not None else None
 
         # Restore results
         self._results = [(params, Decimal(score)) for params, score in state["results"]]

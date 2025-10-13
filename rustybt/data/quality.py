@@ -1,7 +1,7 @@
 """Data quality metrics calculation for bundle validation."""
 
 import time
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 import polars as pl
@@ -9,14 +9,13 @@ from exchange_calendars import ExchangeCalendar
 
 from rustybt.utils.gap_detection import (
     detect_missing_days,
-    detect_missing_days_count,
     format_missing_days_list,
 )
 
 
 def calculate_quality_metrics(
     data: pl.DataFrame,
-    calendar: Optional[ExchangeCalendar] = None,
+    calendar: ExchangeCalendar | None = None,
     date_column: str = "date",
 ) -> dict[str, Any]:
     """Calculate data quality metrics for bundle data.
@@ -143,9 +142,7 @@ def _validate_ohlcv_relationships(data: pl.DataFrame) -> int:
     )
 
     # Check low <= min(open, close)
-    invalid_low = data.filter(
-        (pl.col("low") > pl.col("open")) | (pl.col("low") > pl.col("close"))
-    )
+    invalid_low = data.filter((pl.col("low") > pl.col("open")) | (pl.col("low") > pl.col("close")))
 
     # Check high >= low
     invalid_high_low = data.filter(pl.col("high") < pl.col("low"))
@@ -186,12 +183,12 @@ def generate_quality_report(metrics: dict[str, Any]) -> str:
     report = f"""
 Data Quality Report
 ===================
-Row Count: {metrics['row_count']:,}
+Row Count: {metrics["row_count"]:,}
 Date Range: {start_date} to {end_date}
-Missing Trading Days: {metrics['missing_days_count']}
-Outliers Detected: {metrics['outlier_count']}
-OHLCV Violations: {metrics['ohlcv_violations']}
-Validation Status: {'PASSED' if metrics['validation_passed'] else 'FAILED'}
+Missing Trading Days: {metrics["missing_days_count"]}
+Outliers Detected: {metrics["outlier_count"]}
+OHLCV Violations: {metrics["ohlcv_violations"]}
+Validation Status: {"PASSED" if metrics["validation_passed"] else "FAILED"}
 Validated At: {validation_time}
 """
 

@@ -22,7 +22,6 @@ from .core import (
     unregister,
 )
 
-
 __all__ = [
     "UnknownBundle",
     "bundles",

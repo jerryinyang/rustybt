@@ -1,6 +1,9 @@
-class DummyMapping:
+class SingleValueMapping:
     """
-    Dummy object used to provide a mapping interface for singular values.
+    Utility class that provides a mapping interface for singular values.
+
+    This class wraps a single value and returns it for any key access,
+    implementing the Null Object pattern for mapping-like interfaces.
     """
 
     def __init__(self, value):

@@ -1,11 +1,11 @@
 import pandas as pd
+import pytest
 
 from rustybt.testing.fixtures import (
     WithCreateBarData,
     WithMakeAlgo,
     ZiplineTestCase,
 )
-import pytest
 
 reference_missing_position_by_unexpected_type_algo = """
 def initialize(context):
@@ -17,7 +17,6 @@ def handle_data(context, data):
 
 
 class TestAPIShim(WithCreateBarData, WithMakeAlgo, ZiplineTestCase):
-
     START_DATE = pd.Timestamp("2016-01-05")
     END_DATE = pd.Timestamp("2016-01-28")
     SIM_PARAMS_DATA_FREQUENCY = "minute"
@@ -36,9 +35,7 @@ class TestAPIShim(WithCreateBarData, WithMakeAlgo, ZiplineTestCase):
         if sim_params is None:
             sim_params = self.sim_params
 
-        return self.make_algo(
-            script=code, sim_params=sim_params, algo_filename=filename
-        )
+        return self.make_algo(script=code, sim_params=sim_params, algo_filename=filename)
 
     def test_reference_empty_position_by_unexpected_type(self):
         algo = self.create_algo(reference_missing_position_by_unexpected_type_algo)

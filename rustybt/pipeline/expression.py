@@ -12,7 +12,8 @@ from numpy import (
     full,
     inf,
 )
-from rustybt.pipeline.term import Term, ComputableTerm
+
+from rustybt.pipeline.term import ComputableTerm, Term
 from rustybt.utils.numpy_utils import bool_dtype
 
 _VARIABLE_NAME_RE = re.compile("^(x_)([0-9]+)$")
@@ -120,11 +121,7 @@ class BadBinaryOperator(TypeError):
 
     def __init__(self, op, left, right):
         super(BadBinaryOperator, self).__init__(
-            "Can't compute {left} {op} {right}".format(
-                op=op,
-                left=type(left).__name__,
-                right=type(right).__name__,
-            )
+            f"Can't compute {type(left).__name__} {op} {type(right).__name__}"
         )
 
 
@@ -139,14 +136,14 @@ def method_name_for_op(op, commute=False):
     commute : bool
         Whether to return the name of an equivalent method after flipping args.
 
-    Returns
+    Returns:
     -------
     method_name : str
         The name of the Python magic method corresponding to `op`.
         If `commute` is True, returns the name of a method equivalent to `op`
         with inputs flipped.
 
-    Examples
+    Examples:
     --------
     >>> method_name_for_op('+')
     '__add__'
@@ -325,21 +322,12 @@ class NumericalExpression(ComputableTerm):
         return {"x_%d" % i: input_ for i, input_ in enumerate(self.inputs)}
 
     def __repr__(self):
-        return "{typename}(expr='{expr}', bindings={bindings})".format(
-            typename=type(self).__name__,
-            expr=self._expr,
-            bindings=self.bindings,
-        )
+        return f"{type(self).__name__}(expr='{self._expr}', bindings={self.bindings})"
 
     def graph_repr(self):
         """Short repr to use when rendering Pipeline graphs."""
-
         # Replace any floating point numbers in the expression
         # with their scientific notation
-        final = re.sub(
-            r"[-+]?\d*\.\d+", lambda x: format(float(x.group(0)), ".2E"), self._expr
-        )
+        final = re.sub(r"[-+]?\d*\.\d+", lambda x: format(float(x.group(0)), ".2E"), self._expr)
         # Graphviz interprets `\l` as "divide label into lines, left-justified"
-        return "Expression:\\l  {}\\l".format(
-            final,
-        )
+        return f"Expression:\\l  {final}\\l"

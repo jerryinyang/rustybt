@@ -2,19 +2,20 @@
 
 from unittest import mock
 
+import pytest
+
 from rustybt.pipeline import Factor, Filter, Pipeline
 from rustybt.pipeline.data import Column, DataSet, USEquityPricing
 from rustybt.pipeline.domain import (
-    AmbiguousDomain,
     CA_EQUITIES,
-    GENERIC,
     GB_EQUITIES,
+    GENERIC,
     US_EQUITIES,
+    AmbiguousDomain,
 )
 from rustybt.pipeline.graph import display_graph
 from rustybt.utils.compat import getargspec
 from rustybt.utils.numpy_utils import float64_dtype
-import pytest
 
 
 class SomeFactor(Factor):
@@ -59,7 +60,6 @@ class TestPipelineTestCase:
         assert p3.screen == screen
 
     def test_construction_bad_input_types(self):
-
         with pytest.raises(TypeError):
             Pipeline(1)
 
@@ -206,9 +206,7 @@ class TestPipelineTestCase:
         filter_US = D.c.specialize(US_EQUITIES).latest
         filter_CA = D.c.specialize(CA_EQUITIES).latest
 
-        assert (
-            Pipeline(screen=filter_generic).domain(default=GB_EQUITIES) == GB_EQUITIES
-        )
+        assert Pipeline(screen=filter_generic).domain(default=GB_EQUITIES) == GB_EQUITIES
         assert Pipeline(screen=filter_US).domain(default=GB_EQUITIES) == US_EQUITIES
         assert Pipeline(screen=filter_CA).domain(default=GB_EQUITIES) == CA_EQUITIES
 

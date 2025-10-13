@@ -27,5 +27,3 @@ Top 20 Hotspots (by cumulative time)
       476    0.000    0.000    0.004    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/yaml/scanner.py:113(check_token)
         1    0.004    0.004    0.004    0.004 {method 'cast' of 'builtins.PySeries' objects}
        84    0.000    0.000    0.003    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/yaml/scanner.py:156(fetch_more_tokens)
-
-

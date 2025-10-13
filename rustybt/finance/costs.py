@@ -202,9 +202,7 @@ class CSVBorrowRateProvider:
         GME,2021-01-15,0.80
     """
 
-    def __init__(
-        self, csv_path: Path, normalize_symbols: bool = True, cache_rates: bool = True
-    ):
+    def __init__(self, csv_path: Path, normalize_symbols: bool = True, cache_rates: bool = True):
         """Initialize CSV rate provider.
 
         Args:
@@ -256,17 +254,13 @@ class CSVBorrowRateProvider:
 
             # Convert date column if present (for time-varying rates)
             if "date" in df.columns:
-                df = df.with_columns(
-                    pl.col("date").str.strptime(pl.Date, "%Y-%m-%d").alias("date")
-                )
+                df = df.with_columns(pl.col("date").str.strptime(pl.Date, "%Y-%m-%d").alias("date"))
 
                 # Validate chronological date ordering per symbol
                 self._validate_chronological_dates(df)
 
             # Validate rate bounds (0% to 100%)
-            invalid_rates = df.filter(
-                (pl.col("annual_rate") < 0.0) | (pl.col("annual_rate") > 1.0)
-            )
+            invalid_rates = df.filter((pl.col("annual_rate") < 0.0) | (pl.col("annual_rate") > 1.0))
 
             if len(invalid_rates) > 0:
                 logger.warning(
@@ -275,16 +269,12 @@ class CSVBorrowRateProvider:
                     sample=invalid_rates.head(5).to_dicts(),
                 )
                 # Filter out invalid rates
-                df = df.filter(
-                    (pl.col("annual_rate") >= 0.0) & (pl.col("annual_rate") <= 1.0)
-                )
+                df = df.filter((pl.col("annual_rate") >= 0.0) & (pl.col("annual_rate") <= 1.0))
 
             return df
 
         except Exception as e:
-            logger.error(
-                "csv_load_failed", csv_path=str(self.csv_path), error=str(e)
-            )
+            logger.error("csv_load_failed", csv_path=str(self.csv_path), error=str(e))
             raise BorrowRateLoadError(f"Failed to load CSV: {e}") from e
 
     def _validate_chronological_dates(self, df: pl.DataFrame) -> None:
@@ -346,13 +336,9 @@ class CSVBorrowRateProvider:
         # Query CSV for rate
         if "date" in self.df.columns:
             # Time-varying rates: find most recent rate <= timestamp
-            filtered = (
-                self.df.filter(
-                    (pl.col("symbol") == lookup_symbol)
-                    & (pl.col("date") <= timestamp.date())
-                )
-                .sort("date", descending=True)
-            )
+            filtered = self.df.filter(
+                (pl.col("symbol") == lookup_symbol) & (pl.col("date") <= timestamp.date())
+            ).sort("date", descending=True)
 
             if len(filtered) > 0:
                 rate = Decimal(str(filtered[0, "annual_rate"]))
@@ -470,9 +456,7 @@ class BorrowCostModel:
                 default_rate=str(self.default_rate),
             )
         else:
-            logger.debug(
-                "using_symbol_borrow_rate", symbol=symbol, annual_rate=str(annual_rate)
-            )
+            logger.debug("using_symbol_borrow_rate", symbol=symbol, annual_rate=str(annual_rate))
 
         # Calculate daily rate
         daily_rate = annual_rate / Decimal(str(self.days_in_year))
@@ -482,9 +466,7 @@ class BorrowCostModel:
 
         return daily_cost, annual_rate
 
-    def accrue_costs(
-        self, ledger: Any, current_time: pd.Timestamp
-    ) -> BorrowCostResult:
+    def accrue_costs(self, ledger: Any, current_time: pd.Timestamp) -> BorrowCostResult:
         """Accrue borrow costs for all short positions.
 
         Debits cash from ledger and tracks accumulated costs per position.
@@ -724,9 +706,7 @@ class DictFinancingRateProvider:
         # Check for symbol-specific override
         if lookup_symbol in self.symbol_overrides:
             long_rate, _ = self.symbol_overrides[lookup_symbol]
-            logger.debug(
-                "using_symbol_override_long_rate", symbol=symbol, rate=str(long_rate)
-            )
+            logger.debug("using_symbol_override_long_rate", symbol=symbol, rate=str(long_rate))
             return long_rate
 
         # Use asset class default
@@ -750,9 +730,7 @@ class DictFinancingRateProvider:
         # Check for symbol-specific override
         if lookup_symbol in self.symbol_overrides:
             _, short_rate = self.symbol_overrides[lookup_symbol]
-            logger.debug(
-                "using_symbol_override_short_rate", symbol=symbol, rate=str(short_rate)
-            )
+            logger.debug("using_symbol_override_short_rate", symbol=symbol, rate=str(short_rate))
             return short_rate
 
         # Use asset class default (may be negative for forex/crypto)
@@ -787,9 +765,7 @@ class CSVFinancingRateProvider:
         >>> rate = provider.get_long_rate("AAPL", AssetClass.EQUITY, pd.Timestamp("2023-06-01"))
     """
 
-    def __init__(
-        self, csv_path: Path, normalize_symbols: bool = True, cache_rates: bool = True
-    ):
+    def __init__(self, csv_path: Path, normalize_symbols: bool = True, cache_rates: bool = True):
         """Initialize CSV financing rate provider.
 
         Args:
@@ -831,9 +807,7 @@ class CSVFinancingRateProvider:
 
             # Convert date column if present
             if "date" in df.columns:
-                df = df.with_columns(
-                    pl.col("date").str.strptime(pl.Date, "%Y-%m-%d").alias("date")
-                )
+                df = df.with_columns(pl.col("date").str.strptime(pl.Date, "%Y-%m-%d").alias("date"))
 
                 # Validate chronological date ordering per symbol
                 self._validate_chronological_dates(df)
@@ -912,19 +886,15 @@ class CSVFinancingRateProvider:
         # Query CSV for rate
         if "date" in self.df.columns:
             # Time-varying rates
-            filtered = (
-                self.df.filter(
-                    (pl.col("symbol") == lookup_symbol)
-                    & (pl.col("asset_class") == asset_class.value)
-                    & (pl.col("date") <= timestamp.date())
-                )
-                .sort("date", descending=True)
-            )
-        else:
-            # Static rates
             filtered = self.df.filter(
                 (pl.col("symbol") == lookup_symbol)
                 & (pl.col("asset_class") == asset_class.value)
+                & (pl.col("date") <= timestamp.date())
+            ).sort("date", descending=True)
+        else:
+            # Static rates
+            filtered = self.df.filter(
+                (pl.col("symbol") == lookup_symbol) & (pl.col("asset_class") == asset_class.value)
             )
 
         if len(filtered) > 0:
@@ -1000,9 +970,7 @@ class OvernightFinancingModel:
             provider_type=type(rate_provider).__name__,
         )
 
-    def calculate_leveraged_exposure(
-        self, position_value: Decimal, cash_used: Decimal
-    ) -> Decimal:
+    def calculate_leveraged_exposure(self, position_value: Decimal, cash_used: Decimal) -> Decimal:
         """Calculate leveraged exposure.
 
         Args:
@@ -1054,13 +1022,9 @@ class OvernightFinancingModel:
         """
         # Get appropriate rate
         if is_long:
-            annual_rate = self.rate_provider.get_long_rate(
-                symbol, asset_class, current_time
-            )
+            annual_rate = self.rate_provider.get_long_rate(symbol, asset_class, current_time)
         else:
-            annual_rate = self.rate_provider.get_short_rate(
-                symbol, asset_class, current_time
-            )
+            annual_rate = self.rate_provider.get_short_rate(symbol, asset_class, current_time)
 
         # Calculate daily rate
         daily_rate = annual_rate / Decimal(str(self.days_in_year))
@@ -1152,9 +1116,7 @@ class OvernightFinancingModel:
 
             # Determine direction for logging
             direction = (
-                FinancingDirection.DEBIT
-                if daily_financing > 0
-                else FinancingDirection.CREDIT
+                FinancingDirection.DEBIT if daily_financing > 0 else FinancingDirection.CREDIT
             )
 
             logger.info(

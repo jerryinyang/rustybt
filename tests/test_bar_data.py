@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from datetime import timedelta, time
+from datetime import time, timedelta
 from itertools import chain
 
 import numpy as np
@@ -22,12 +22,12 @@ from numpy import nan
 from numpy.testing import assert_almost_equal
 from parameterized import parameterized
 from toolz import concat
-from rustybt._protocol import handle_non_market_minutes
 
+from rustybt._protocol import handle_non_market_minutes
 from rustybt.finance.asset_restrictions import (
-    Restriction,
-    HistoricalRestrictions,
     RESTRICTION_STATES,
+    HistoricalRestrictions,
+    Restriction,
 )
 from rustybt.testing import (
     MockDailyBarReader,
@@ -40,7 +40,7 @@ from rustybt.testing.fixtures import (
     WithDataPortal,
     ZiplineTestCase,
 )
-from rustybt.utils.calendar_utils import get_calendar, days_at_time
+from rustybt.utils.calendar_utils import days_at_time, get_calendar
 
 OHLC = ["open", "high", "low", "close"]
 OHLCP = OHLC + ["price"]
@@ -126,9 +126,7 @@ class WithBarDataChecks:
                 getattr(bar_data, field)
 
 
-class TestMinuteBarData(
-    WithCreateBarData, WithBarDataChecks, WithDataPortal, ZiplineTestCase
-):
+class TestMinuteBarData(WithCreateBarData, WithBarDataChecks, WithDataPortal, ZiplineTestCase):
     START_DATE = pd.Timestamp("2016-01-05")
     END_DATE = ASSET_FINDER_EQUITY_END_DATE = pd.Timestamp("2016-01-07")
 
@@ -145,25 +143,34 @@ class TestMinuteBarData(
         # split_asset trades every minute
         # illiquid_split_asset trades every 10 minutes
         for sid in (1, cls.SPLIT_ASSET_SID):
-            yield sid, create_minute_df_for_asset(
-                cls.trading_calendar,
-                cls.equity_minute_bar_days[0],
-                cls.equity_minute_bar_days[-1],
+            yield (
+                sid,
+                create_minute_df_for_asset(
+                    cls.trading_calendar,
+                    cls.equity_minute_bar_days[0],
+                    cls.equity_minute_bar_days[-1],
+                ),
             )
 
         for sid in (2, cls.ILLIQUID_SPLIT_ASSET_SID):
-            yield sid, create_minute_df_for_asset(
+            yield (
+                sid,
+                create_minute_df_for_asset(
+                    cls.trading_calendar,
+                    cls.equity_minute_bar_days[0],
+                    cls.equity_minute_bar_days[-1],
+                    10,
+                ),
+            )
+
+        yield (
+            cls.HILARIOUSLY_ILLIQUID_ASSET_SID,
+            create_minute_df_for_asset(
                 cls.trading_calendar,
                 cls.equity_minute_bar_days[0],
                 cls.equity_minute_bar_days[-1],
-                10,
-            )
-
-        yield cls.HILARIOUSLY_ILLIQUID_ASSET_SID, create_minute_df_for_asset(
-            cls.trading_calendar,
-            cls.equity_minute_bar_days[0],
-            cls.equity_minute_bar_days[-1],
-            50,
+                50,
+            ),
         )
 
     @classmethod
@@ -249,21 +256,14 @@ class TestMinuteBarData(
         for minute in list(concat(all_minutes)):
             bar_data = self.create_bardata(lambda: minute)
 
-            assert (
-                self.trading_calendar.minute_to_session(minute)
-                == bar_data.current_session
-            )
+            assert self.trading_calendar.minute_to_session(minute) == bar_data.current_session
 
     def test_current_session_minutes(self):
-        first_day_minutes = self.trading_calendar.session_minutes(
-            self.equity_minute_bar_days[0]
-        )
+        first_day_minutes = self.trading_calendar.session_minutes(self.equity_minute_bar_days[0])
 
         for minute in first_day_minutes:
             bar_data = self.create_bardata(lambda: minute)
-            np.testing.assert_array_equal(
-                first_day_minutes, bar_data.current_session_minutes
-            )
+            np.testing.assert_array_equal(first_day_minutes, bar_data.current_session_minutes)
 
     def test_minute_before_assets_trading(self):
         # grab minutes that include the day before the asset start
@@ -291,7 +291,7 @@ class TestMinuteBarData(
                     if field in OHLCP:
                         assert np.isnan(asset_value)
                     elif field == "volume":
-                        assert 0 == asset_value
+                        assert asset_value == 0
                     elif field == "last_traded":
                         assert asset_value is pd.NaT
 
@@ -358,7 +358,7 @@ class TestMinuteBarData(
                         if asset2_has_data:
                             assert (idx + 1) * 100 == asset2_value
                         else:
-                            assert 0 == asset2_value
+                            assert asset2_value == 0
                     elif field == "price":
                         assert idx + 1 == asset1_value
 
@@ -379,10 +379,7 @@ class TestMinuteBarData(
                             assert minute == asset2_value
                         else:
                             last_traded_minute = minutes[(idx // 10) * 10]
-                            assert (
-                                last_traded_minute - timedelta(minutes=1)
-                                == asset2_value
-                            )
+                            assert last_traded_minute - timedelta(minutes=1) == asset2_value
 
     @handle_get_calendar_exception
     def test_minute_of_last_day(self):
@@ -429,17 +426,15 @@ class TestMinuteBarData(
                     if field in OHLCP:
                         assert np.isnan(asset_value)
                     elif field == "volume":
-                        assert 0 == asset_value
+                        assert asset_value == 0
                     elif field == "last_traded":
                         assert last_trading_minute == asset_value
 
     def test_get_value_is_unadjusted(self):
         # verify there is a split for SPLIT_ASSET
-        splits = self.adjustment_reader.get_adjustments_for_sid(
-            "splits", self.SPLIT_ASSET.sid
-        )
+        splits = self.adjustment_reader.get_adjustments_for_sid("splits", self.SPLIT_ASSET.sid)
 
-        assert 1 == len(splits)
+        assert len(splits) == 1
         split = splits[0]
         assert split[0] == pd.Timestamp("2016-01-06")
 
@@ -457,24 +452,20 @@ class TestMinuteBarData(
     def test_get_value_is_adjusted_if_needed(self):
         # on cls.days[1], the first 9 minutes of ILLIQUID_SPLIT_ASSET are
         # missing. let's get them.
-        day0_minutes = self.trading_calendar.session_minutes(
-            self.equity_minute_bar_days[0]
-        )
-        day1_minutes = self.trading_calendar.session_minutes(
-            self.equity_minute_bar_days[1]
-        )
+        day0_minutes = self.trading_calendar.session_minutes(self.equity_minute_bar_days[0])
+        day1_minutes = self.trading_calendar.session_minutes(self.equity_minute_bar_days[1])
 
         for _, minute in enumerate(day0_minutes[-10:-1]):
             bar_data = self.create_bardata(
                 lambda: minute,
             )
-            assert 380 == bar_data.current(self.ILLIQUID_SPLIT_ASSET, "price")
+            assert bar_data.current(self.ILLIQUID_SPLIT_ASSET, "price") == 380
 
         bar_data = self.create_bardata(
             lambda: day0_minutes[-1],
         )
 
-        assert 390 == bar_data.current(self.ILLIQUID_SPLIT_ASSET, "price")
+        assert bar_data.current(self.ILLIQUID_SPLIT_ASSET, "price") == 390
 
         for _, minute in enumerate(day1_minutes[0:9]):
             bar_data = self.create_bardata(
@@ -482,7 +473,7 @@ class TestMinuteBarData(
             )
 
             # should be half of 390, due to the split
-            assert 195 == bar_data.current(self.ILLIQUID_SPLIT_ASSET, "price")
+            assert bar_data.current(self.ILLIQUID_SPLIT_ASSET, "price") == 195
 
     def test_get_value_at_midnight(self):
         # make sure that if we try to get a minute price at a non-market
@@ -490,7 +481,7 @@ class TestMinuteBarData(
         day = self.equity_minute_bar_days[1]
 
         eight_fortyfive_am_eastern = pd.Timestamp(
-            "{0}-{1}-{2} 8:45".format(day.year, day.month, day.day), tz="US/Eastern"
+            f"{day.year}-{day.month}-{day.day} 8:45", tz="US/Eastern"
         )
 
         bar_data = self.create_bardata(
@@ -503,13 +494,13 @@ class TestMinuteBarData(
         with handle_non_market_minutes(bar_data), handle_non_market_minutes(bar_data2):
             for bd in [bar_data, bar_data2]:
                 for field in ["close", "price"]:
-                    assert 390 == bd.current(self.ASSET1, field)
+                    assert bd.current(self.ASSET1, field) == 390
 
                 # make sure that if the asset didn't trade at the previous
                 # close, we properly ffill (or not ffill)
-                assert 350 == bd.current(self.HILARIOUSLY_ILLIQUID_ASSET, "price")
+                assert bd.current(self.HILARIOUSLY_ILLIQUID_ASSET, "price") == 350
                 assert np.isnan(bd.current(self.HILARIOUSLY_ILLIQUID_ASSET, "high"))
-                assert 0 == bd.current(self.HILARIOUSLY_ILLIQUID_ASSET, "volume")
+                assert bd.current(self.HILARIOUSLY_ILLIQUID_ASSET, "volume") == 0
 
     def test_get_value_during_non_market_hours(self):
         # make sure that if we try to get the OHLCV values of ASSET1 during
@@ -523,21 +514,16 @@ class TestMinuteBarData(
         assert np.isnan(bar_data.current(self.ASSET1, "high"))
         assert np.isnan(bar_data.current(self.ASSET1, "low"))
         assert np.isnan(bar_data.current(self.ASSET1, "close"))
-        assert 0 == bar_data.current(self.ASSET1, "volume")
+        assert bar_data.current(self.ASSET1, "volume") == 0
 
         # price should still forward fill
-        assert 390 == bar_data.current(self.ASSET1, "price")
+        assert bar_data.current(self.ASSET1, "price") == 390
 
     def test_can_trade_equity_same_cal_outside_lifetime(self):
-
         # verify that can_trade returns False for the session before the
         # asset's first session
-        session_before_asset1_start = self.trading_calendar.previous_session(
-            self.ASSET1.start_date
-        )
-        minutes_for_session = self.trading_calendar.session_minutes(
-            session_before_asset1_start
-        )
+        session_before_asset1_start = self.trading_calendar.previous_session(self.ASSET1.start_date)
+        minutes_for_session = self.trading_calendar.session_minutes(session_before_asset1_start)
 
         # for good measure, check the minute before the session too
         minutes_to_check = chain(
@@ -552,12 +538,10 @@ class TestMinuteBarData(
             assert not bar_data.can_trade(self.ASSET1)
 
         # after asset lifetime
-        session_after_asset1_end = self.trading_calendar.next_session(
-            self.ASSET1.end_date
+        session_after_asset1_end = self.trading_calendar.next_session(self.ASSET1.end_date)
+        bts_after_asset1_end = session_after_asset1_end.replace(hour=8, minute=45).tz_localize(
+            "US/Eastern"
         )
-        bts_after_asset1_end = session_after_asset1_end.replace(
-            hour=8, minute=45
-        ).tz_localize("US/Eastern")
 
         minutes_to_check = chain(
             self.trading_calendar.session_minutes(session_after_asset1_end),
@@ -595,9 +579,7 @@ class TestMinuteBarData(
         # for all minutes in that session before the first trade, and true
         # for all minutes afterwards.
 
-        minutes_in_session = self.trading_calendar.session_minutes(
-            self.ASSET1.start_date
-        )
+        minutes_in_session = self.trading_calendar.session_minutes(self.ASSET1.start_date)
 
         for minute in minutes_in_session[0:49]:
             bar_data = self.create_bardata(
@@ -623,18 +605,16 @@ class TestMinuteBarData(
 
     def test_overnight_adjustments(self):
         # verify there is a split for SPLIT_ASSET
-        splits = self.adjustment_reader.get_adjustments_for_sid(
-            "splits", self.SPLIT_ASSET.sid
-        )
+        splits = self.adjustment_reader.get_adjustments_for_sid("splits", self.SPLIT_ASSET.sid)
 
-        assert 1 == len(splits)
+        assert len(splits) == 1
         split = splits[0]
         assert split[0] == pd.Timestamp("2016-01-06")
 
         # Current day is 1/06/16
         day = self.equity_daily_bar_days[1]
         eight_fortyfive_am_eastern = pd.Timestamp(
-            "{0}-{1}-{2} 8:45".format(day.year, day.month, day.day), tz="US/Eastern"
+            f"{day.year}-{day.month}-{day.day} 8:45", tz="US/Eastern"
         )
 
         bar_data = self.create_bardata(
@@ -675,12 +655,8 @@ class TestMinuteBarData(
             [
                 Restriction(1, str_to_ts("2016-01-05"), RESTRICTION_STATES.FROZEN),
                 Restriction(1, str_to_ts("2016-01-07"), RESTRICTION_STATES.ALLOWED),
-                Restriction(
-                    1, str_to_ts("2016-01-07 15:00"), RESTRICTION_STATES.FROZEN
-                ),
-                Restriction(
-                    1, str_to_ts("2016-01-07 15:30"), RESTRICTION_STATES.ALLOWED
-                ),
+                Restriction(1, str_to_ts("2016-01-07 15:00"), RESTRICTION_STATES.FROZEN),
+                Restriction(1, str_to_ts("2016-01-07 15:30"), RESTRICTION_STATES.ALLOWED),
             ]
         )
 
@@ -692,9 +668,7 @@ class TestMinuteBarData(
             assert bar_data.can_trade(self.ASSET1) == info[1]
 
 
-class TestMinuteBarDataFuturesCalendar(
-    WithCreateBarData, WithBarDataChecks, ZiplineTestCase
-):
+class TestMinuteBarDataFuturesCalendar(WithCreateBarData, WithBarDataChecks, ZiplineTestCase):
     START_DATE = pd.Timestamp("2016-01-05")
     END_DATE = ASSET_FINDER_EQUITY_END_DATE = pd.Timestamp("2016-01-07")
 
@@ -703,10 +677,13 @@ class TestMinuteBarDataFuturesCalendar(
     @classmethod
     def make_equity_minute_bar_data(cls):
         # asset1 has trades every minute
-        yield 1, create_minute_df_for_asset(
-            cls.trading_calendar,
-            cls.equity_minute_bar_days[0],
-            cls.equity_minute_bar_days[-1],
+        yield (
+            1,
+            create_minute_df_for_asset(
+                cls.trading_calendar,
+                cls.equity_minute_bar_days[0],
+                cls.equity_minute_bar_days[-1],
+            ),
         )
 
     @classmethod
@@ -815,9 +792,7 @@ class TestMinuteBarDataFuturesCalendar(
             assert bar_data.can_trade(auto_closing_asset) == info[1]
 
 
-class TestDailyBarData(
-    WithCreateBarData, WithBarDataChecks, WithDataPortal, ZiplineTestCase
-):
+class TestDailyBarData(WithCreateBarData, WithBarDataChecks, WithDataPortal, ZiplineTestCase):
     START_DATE = pd.Timestamp("2016-01-05")
     END_DATE = ASSET_FINDER_EQUITY_END_DATE = pd.Timestamp("2016-01-11")
     CREATE_BARDATA_DATA_FREQUENCY = "daily"
@@ -916,11 +891,14 @@ class TestDailyBarData(
     def make_equity_daily_bar_data(cls, country_code, sids):
         for sid in sids:
             asset = cls.asset_finder.retrieve_asset(sid)
-            yield sid, create_daily_df_for_asset(
-                cls.trading_calendar,
-                asset.start_date,
-                asset.end_date,
-                interval=2 - sid % 2,
+            yield (
+                sid,
+                create_daily_df_for_asset(
+                    cls.trading_calendar,
+                    asset.start_date,
+                    asset.end_date,
+                    interval=2 - sid % 2,
+                ),
             )
 
     @classmethod
@@ -986,7 +964,7 @@ class TestDailyBarData(
                 if field in OHLCP:
                     assert np.isnan(asset_value)
                 elif field == "volume":
-                    assert 0 == asset_value
+                    assert asset_value == 0
                 elif field == "last_traded":
                     assert asset_value is pd.NaT
 
@@ -1008,20 +986,18 @@ class TestDailyBarData(
         # because there has never been a trade bar yet
         assert not bar_data.is_stale(self.ASSET2)
 
-        assert 3 == bar_data.current(self.ASSET1, "open")
-        assert 4 == bar_data.current(self.ASSET1, "high")
-        assert 1 == bar_data.current(self.ASSET1, "low")
-        assert 2 == bar_data.current(self.ASSET1, "close")
-        assert 200 == bar_data.current(self.ASSET1, "volume")
-        assert 2 == bar_data.current(self.ASSET1, "price")
-        assert self.equity_daily_bar_days[0] == bar_data.current(
-            self.ASSET1, "last_traded"
-        )
+        assert bar_data.current(self.ASSET1, "open") == 3
+        assert bar_data.current(self.ASSET1, "high") == 4
+        assert bar_data.current(self.ASSET1, "low") == 1
+        assert bar_data.current(self.ASSET1, "close") == 2
+        assert bar_data.current(self.ASSET1, "volume") == 200
+        assert bar_data.current(self.ASSET1, "price") == 2
+        assert self.equity_daily_bar_days[0] == bar_data.current(self.ASSET1, "last_traded")
 
         for field in OHLCP:
             assert np.isnan(bar_data.current(self.ASSET2, field)), field
 
-        assert 0 == bar_data.current(self.ASSET2, "volume")
+        assert bar_data.current(self.ASSET2, "volume") == 0
         assert bar_data.current(self.ASSET2, "last_traded") is pd.NaT
 
     def test_fully_active_day(self):
@@ -1037,15 +1013,13 @@ class TestDailyBarData(
             assert bar_data.can_trade(asset)
             assert not bar_data.is_stale(asset)
 
-            assert 4 == bar_data.current(asset, "open")
-            assert 5 == bar_data.current(asset, "high")
-            assert 2 == bar_data.current(asset, "low")
-            assert 3 == bar_data.current(asset, "close")
-            assert 300 == bar_data.current(asset, "volume")
-            assert 3 == bar_data.current(asset, "price")
-            assert self.equity_daily_bar_days[1] == bar_data.current(
-                asset, "last_traded"
-            )
+            assert bar_data.current(asset, "open") == 4
+            assert bar_data.current(asset, "high") == 5
+            assert bar_data.current(asset, "low") == 2
+            assert bar_data.current(asset, "close") == 3
+            assert bar_data.current(asset, "volume") == 300
+            assert bar_data.current(asset, "price") == 3
+            assert self.equity_daily_bar_days[1] == bar_data.current(asset, "last_traded")
 
     def test_last_active_day(self):
         bar_data = self.create_bardata(
@@ -1070,12 +1044,12 @@ class TestDailyBarData(
                 assert_almost_equal(0, bar_data.current(asset, "volume"))
                 assert_almost_equal(nan, bar_data.current(asset, "price"))
             else:
-                assert 6 == bar_data.current(asset, "open")
-                assert 7 == bar_data.current(asset, "high")
-                assert 4 == bar_data.current(asset, "low")
-                assert 5 == bar_data.current(asset, "close")
-                assert 500 == bar_data.current(asset, "volume")
-                assert 5 == bar_data.current(asset, "price")
+                assert bar_data.current(asset, "open") == 6
+                assert bar_data.current(asset, "high") == 7
+                assert bar_data.current(asset, "low") == 4
+                assert bar_data.current(asset, "close") == 5
+                assert bar_data.current(asset, "volume") == 500
+                assert bar_data.current(asset, "price") == 5
 
     def test_after_assets_dead(self):
         session = self.END_DATE
@@ -1092,7 +1066,7 @@ class TestDailyBarData(
             for field in OHLCP:
                 assert np.isnan(bar_data.current(asset, field))
 
-            assert 0 == bar_data.current(asset, "volume")
+            assert bar_data.current(asset, "volume") == 0
 
             last_traded_dt = bar_data.current(asset, "last_traded")
 
@@ -1113,15 +1087,11 @@ class TestDailyBarData(
         """Test the behaviour of spot prices during adjustments."""
         table_name = adjustment_type + "s"
         liquid_asset = getattr(self, (adjustment_type.upper() + "_ASSET"))
-        illiquid_asset = getattr(
-            self, ("ILLIQUID_" + adjustment_type.upper() + "_ASSET")
-        )
+        illiquid_asset = getattr(self, ("ILLIQUID_" + adjustment_type.upper() + "_ASSET"))
         # verify there is an adjustment for liquid_asset
-        adjustments = self.adjustment_reader.get_adjustments_for_sid(
-            table_name, liquid_asset.sid
-        )
+        adjustments = self.adjustment_reader.get_adjustments_for_sid(table_name, liquid_asset.sid)
 
-        assert 1 == len(adjustments)
+        assert len(adjustments) == 1
         adjustment = adjustments[0]
         assert adjustment[0] == pd.Timestamp("2016-01-06")
 
@@ -1149,10 +1119,7 @@ class TestDailyBarData(
         # 3 (price from previous day) * 0.5 (split ratio)
         assert (
             round(
-                abs(
-                    illiquid_day_1_price_adjusted
-                    - bar_data.current(illiquid_asset, "price")
-                ),
+                abs(illiquid_day_1_price_adjusted - bar_data.current(illiquid_asset, "price")),
                 7,
             )
             == 0
@@ -1177,7 +1144,5 @@ class TestDailyBarData(
         )
 
         for info in minutes_to_check:
-            bar_data = self.create_bardata(
-                simulation_dt_func=lambda: info[0], restrictions=rlm
-            )
+            bar_data = self.create_bardata(simulation_dt_func=lambda: info[0], restrictions=rlm)
             assert bar_data.can_trade(self.ASSET1) == info[1]

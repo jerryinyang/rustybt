@@ -13,17 +13,17 @@ Phase: 2 (Migration Testing)
 """
 
 import json
-import tempfile
-import time
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 # Import migration components
 import sys
+import tempfile
+import time
+from pathlib import Path
+from unittest.mock import patch
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+from rustybt.data.bundles.metadata import BundleMetadata
 from scripts.migrate_catalog_to_unified import (
     BackupManifest,
     MigrationStats,
@@ -31,14 +31,11 @@ from scripts.migrate_catalog_to_unified import (
     calculate_checksum,
     create_backup,
     migrate_datacatalog,
-    migrate_parquet_catalogs,
     print_migration_summary,
     restore_from_backup,
     run_migration,
     validate_migration,
 )
-from rustybt.data.bundles.metadata import BundleMetadata
-from rustybt.data.catalog import DataCatalog
 
 
 class TestMigrationTransaction:
@@ -54,10 +51,20 @@ class TestMigrationTransaction:
             BundleMetadata._get_engine()
 
             with MigrationTransaction(db_path) as txn:
-                txn.execute("""
+                txn.execute(
+                    """
                     INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, ("test-bundle", "yfinance", "abc123", int(time.time()), int(time.time()), int(time.time())))
+                """,
+                    (
+                        "test-bundle",
+                        "yfinance",
+                        "abc123",
+                        int(time.time()),
+                        int(time.time()),
+                        int(time.time()),
+                    ),
+                )
 
             # Verify committed
             result = BundleMetadata.get("test-bundle")
@@ -74,10 +81,20 @@ class TestMigrationTransaction:
 
             try:
                 with MigrationTransaction(db_path) as txn:
-                    txn.execute("""
+                    txn.execute(
+                        """
                         INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp, created_at, updated_at)
                         VALUES (?, ?, ?, ?, ?, ?)
-                    """, ("test-bundle", "yfinance", "abc123", int(time.time()), int(time.time()), int(time.time())))
+                    """,
+                        (
+                            "test-bundle",
+                            "yfinance",
+                            "abc123",
+                            int(time.time()),
+                            int(time.time()),
+                            int(time.time()),
+                        ),
+                    )
 
                     # Simulate error
                     raise RuntimeError("Simulated error")
@@ -99,19 +116,25 @@ class TestMigrationTransaction:
             with MigrationTransaction(db_path) as txn:
                 # Insert first bundle
                 now = int(time.time())
-                txn.execute("""
+                txn.execute(
+                    """
                     INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, ("bundle-1", "yfinance", "abc", now, now, now))
+                """,
+                    ("bundle-1", "yfinance", "abc", now, now, now),
+                )
 
                 # Create savepoint
                 txn.savepoint("before_bundle2")
 
                 # Insert second bundle
-                txn.execute("""
+                txn.execute(
+                    """
                     INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, ("bundle-2", "ccxt", "def", now, now, now))
+                """,
+                    ("bundle-2", "ccxt", "def", now, now, now),
+                )
 
                 # Rollback to savepoint (removes bundle-2)
                 txn.rollback_to_savepoint("before_bundle2")
@@ -126,7 +149,7 @@ class TestBackupAndRestore:
 
     def test_calculate_checksum(self):
         """Calculate SHA256 checksum of file."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             f.write("test content")
             f.flush()
             file_path = Path(f.name)
@@ -152,7 +175,7 @@ class TestBackupAndRestore:
         assert manifest.bundle_count == 2
         assert len(manifest.parquet_catalogs) == 2
 
-    @patch('scripts.migrate_catalog_to_unified.Path.home')
+    @patch("scripts.migrate_catalog_to_unified.Path.home")
     def test_create_backup_with_checksums(self, mock_home):
         """Backup creation includes SHA256 checksums."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -226,8 +249,8 @@ class TestMigrationStats:
 class TestDryRunMode:
     """Test dry-run mode (AC 2.2)."""
 
-    @patch('scripts.migrate_catalog_to_unified.DataCatalog')
-    @patch('scripts.migrate_catalog_to_unified.ParquetMetadataCatalog')
+    @patch("scripts.migrate_catalog_to_unified.DataCatalog")
+    @patch("scripts.migrate_catalog_to_unified.ParquetMetadataCatalog")
     def test_dry_run_no_changes_committed(self, mock_parquet, mock_datacatalog):
         """Dry-run previews changes without committing."""
         # Mock DataCatalog
@@ -236,7 +259,7 @@ class TestDryRunMode:
         ]
         mock_datacatalog.return_value.get_quality_metrics.return_value = {
             "row_count": 1000,
-            "ohlcv_violations": 0
+            "ohlcv_violations": 0,
         }
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -252,14 +275,14 @@ class TestDryRunMode:
             result = BundleMetadata.get("test-bundle")
             assert result is None  # Nothing committed in dry-run
 
-    @patch('scripts.migrate_catalog_to_unified.console')
+    @patch("scripts.migrate_catalog_to_unified.console")
     def test_dry_run_prints_preview(self, mock_console):
         """Dry-run displays preview table."""
         stats = MigrationStats(
             bundles_migrated=10,
             symbols_migrated=50,
             cache_entries_migrated=5,
-            quality_records_migrated=8
+            quality_records_migrated=8,
         )
 
         print_migration_summary(stats, dry_run=True)
@@ -271,8 +294,8 @@ class TestDryRunMode:
 class TestValidationCheckpoints:
     """Test validation checkpoints (AC 2.5)."""
 
-    @patch('scripts.migrate_catalog_to_unified.DataCatalog')
-    @patch('scripts.migrate_catalog_to_unified.BundleMetadata.count_bundles')
+    @patch("scripts.migrate_catalog_to_unified.DataCatalog")
+    @patch("scripts.migrate_catalog_to_unified.BundleMetadata.count_bundles")
     def test_validation_detects_bundle_count_mismatch(self, mock_new_count, mock_datacatalog):
         """Validation fails when bundle counts don't match."""
         mock_datacatalog.return_value.list_bundles.return_value = [{}, {}, {}]  # 3 bundles
@@ -281,10 +304,12 @@ class TestValidationCheckpoints:
         result = validate_migration()
         assert result is False
 
-    @patch('scripts.migrate_catalog_to_unified.DataCatalog')
-    @patch('scripts.migrate_catalog_to_unified.BundleMetadata.count_bundles')
-    @patch('scripts.migrate_catalog_to_unified.BundleMetadata.count_quality_records')
-    def test_validation_passes_when_counts_match(self, mock_quality, mock_bundles, mock_datacatalog):
+    @patch("scripts.migrate_catalog_to_unified.DataCatalog")
+    @patch("scripts.migrate_catalog_to_unified.BundleMetadata.count_bundles")
+    @patch("scripts.migrate_catalog_to_unified.BundleMetadata.count_quality_records")
+    def test_validation_passes_when_counts_match(
+        self, mock_quality, mock_bundles, mock_datacatalog
+    ):
         """Validation passes when all counts match."""
         # Mock matching counts
         mock_datacatalog.return_value.list_bundles.return_value = [{}, {}]
@@ -294,7 +319,7 @@ class TestValidationCheckpoints:
         mock_quality.return_value = 2
 
         # Mock no bundle directories (skip symbol check)
-        with patch('scripts.migrate_catalog_to_unified.Path.home') as mock_home:
+        with patch("scripts.migrate_catalog_to_unified.Path.home") as mock_home:
             with tempfile.TemporaryDirectory() as tmpdir:
                 mock_home.return_value = Path(tmpdir)
                 data_dir = Path(tmpdir) / ".zipline" / "data"
@@ -327,11 +352,11 @@ class TestRollbackCommand:
                 backup_path=backup_path,
                 datacatalog_checksum="abc123",
                 parquet_catalogs={"test-bundle": "def456"},
-                bundle_count=1
+                bundle_count=1,
             )
 
             # Mock target directories
-            with patch('scripts.migrate_catalog_to_unified.Path.home') as mock_home:
+            with patch("scripts.migrate_catalog_to_unified.Path.home") as mock_home:
                 mock_home.return_value = Path(tmpdir)
 
                 # Create target directories
@@ -358,7 +383,7 @@ class TestRollbackCommand:
 class TestZeroDataLoss:
     """Test zero data loss guarantees (AC 2.5)."""
 
-    @patch('scripts.migrate_catalog_to_unified.DataCatalog')
+    @patch("scripts.migrate_catalog_to_unified.DataCatalog")
     def test_migration_preserves_all_bundle_data(self, mock_datacatalog):
         """Migration preserves all bundle metadata fields."""
         mock_bundle = {
@@ -398,16 +423,19 @@ class TestZeroDataLoss:
             BundleMetadata.set_db_path(str(db_path))
             BundleMetadata._get_engine()
 
-            stats = MigrationStats()
+            MigrationStats()
 
             try:
                 with MigrationTransaction(db_path) as txn:
                     # Insert some data
                     now = int(time.time())
-                    txn.execute("""
+                    txn.execute(
+                        """
                         INSERT INTO bundle_metadata (bundle_name, source_type, checksum, fetch_timestamp, created_at, updated_at)
                         VALUES (?, ?, ?, ?, ?, ?)
-                    """, ("bundle-1", "yfinance", "abc", now, now, now))
+                    """,
+                        ("bundle-1", "yfinance", "abc", now, now, now),
+                    )
 
                     # Simulate error
                     raise RuntimeError("Migration error")

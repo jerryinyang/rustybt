@@ -2,8 +2,9 @@
 Tests for slicing pipeline terms.
 """
 
-from numpy import where
 import pandas as pd
+import pytest
+from numpy import where
 from pandas.testing import assert_frame_equal
 
 from rustybt.assets import Asset, ExchangeInfo
@@ -13,7 +14,7 @@ from rustybt.errors import (
     NonWindowSafeInput,
     UnsupportedPipelineOutput,
 )
-from rustybt.pipeline import CustomFactor, Factor, Filter, Classifier, Pipeline
+from rustybt.pipeline import Classifier, CustomFactor, Factor, Filter, Pipeline
 from rustybt.pipeline.data import USEquityPricing
 from rustybt.pipeline.data.testing import TestingDataSet
 from rustybt.pipeline.domain import US_EQUITIES
@@ -27,8 +28,8 @@ from rustybt.pipeline.factors import (
 from rustybt.testing import (
     AssetID,
     AssetIDPlusDay,
-    check_arrays,
     OpenPrice,
+    check_arrays,
     parameter_space,
 )
 from rustybt.testing.fixtures import (
@@ -36,7 +37,6 @@ from rustybt.testing.fixtures import (
     ZiplineTestCase,
 )
 from rustybt.utils.numpy_utils import datetime64ns_dtype
-import pytest
 
 
 class SliceTestCase(WithSeededRandomPipelineEngine, ZiplineTestCase):
@@ -526,7 +526,7 @@ class SliceTestCase(WithSeededRandomPipelineEngine, ZiplineTestCase):
         my_asset = self.asset_finder.retrieve_asset(self.sids[0])
         slice_ = Returns(window_length=2)[my_asset]
         result = repr(slice_)
-        assert result == "Returns(...)[{}]".format(my_asset)
+        assert result == f"Returns(...)[{my_asset}]"
 
     def test_slice_subtypes(self):
         my_asset = self.asset_finder.retrieve_asset(self.sids[0])

@@ -12,15 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
+from functools import reduce
 from operator import mul
 
-import logging
-
 import numpy as np
-from numpy import float64, int64, nan
 import pandas as pd
+from numpy import float64, int64, nan
 from pandas import isnull
-from functools import reduce
 
 from rustybt.assets import (
     Asset,
@@ -30,32 +29,30 @@ from rustybt.assets import (
     PricingDataAssociable,
 )
 from rustybt.assets.continuous_futures import ContinuousFuture
-from rustybt.data.continuous_future_reader import (
-    ContinuousFutureSessionBarReader,
-    ContinuousFutureMinuteBarReader,
-)
 from rustybt.assets.roll_finder import (
     CalendarRollFinder,
     VolumeRollFinder,
 )
+from rustybt.data.bar_reader import NoDataOnDate
+from rustybt.data.continuous_future_reader import (
+    ContinuousFutureMinuteBarReader,
+    ContinuousFutureSessionBarReader,
+)
 from rustybt.data.dispatch_bar_reader import (
     AssetDispatchMinuteBarReader,
     AssetDispatchSessionBarReader,
+)
+from rustybt.data.history_loader import (
+    DailyHistoryLoader,
+    MinuteHistoryLoader,
 )
 from rustybt.data.resample import (
     DailyHistoryAggregator,
     ReindexMinuteBarReader,
     ReindexSessionBarReader,
 )
-from rustybt.data.history_loader import (
-    DailyHistoryLoader,
-    MinuteHistoryLoader,
-)
-from rustybt.data.bar_reader import NoDataOnDate
-
-from rustybt.utils.memoize import remember_last
 from rustybt.errors import HistoryWindowStartsBeforeData
-
+from rustybt.utils.memoize import remember_last
 
 log = logging.getLogger("DataPortal")
 
@@ -219,11 +216,9 @@ class DataPortal:
                 self.asset_finder,
                 aligned_future_session_reader,
             )
-            aligned_session_readers[ContinuousFuture] = (
-                ContinuousFutureSessionBarReader(
-                    aligned_future_session_reader,
-                    self._roll_finders,
-                )
+            aligned_session_readers[ContinuousFuture] = ContinuousFutureSessionBarReader(
+                aligned_future_session_reader,
+                self._roll_finders,
             )
 
         _dispatch_minute_reader = AssetDispatchMinuteBarReader(
@@ -397,9 +392,7 @@ class DataPortal:
         # at it if it's on something like palladium and not AAPL (since our
         # own price data always wins when dealing with assets).
 
-        return not (
-            field in BASE_FIELDS and (isinstance(asset, (Asset, ContinuousFuture)))
-        )
+        return not (field in BASE_FIELDS and (isinstance(asset, (Asset, ContinuousFuture))))
 
     def _get_fetcher_value(self, asset, field, dt):
         # TODO: FIX TZ MESS
@@ -470,7 +463,7 @@ class DataPortal:
             The frequency of the data to query; i.e. whether the data is
             'daily' or 'minute' bars
 
-        Returns
+        Returns:
         -------
         value : float, int, or pd.Timestamp
             The spot value of ``field`` for ``asset`` The return type is based
@@ -488,9 +481,7 @@ class DataPortal:
             try:
                 iter(assets)
             except TypeError as exc:
-                raise TypeError(
-                    "Unexpected 'assets' value of type {}.".format(type(assets))
-                ) from exc
+                raise TypeError(f"Unexpected 'assets' value of type {type(assets)}.") from exc
 
         session_label = self.trading_calendar.minute_to_session(dt)
 
@@ -533,7 +524,7 @@ class DataPortal:
             The frequency of the data to query; i.e. whether the data is
             'daily' or 'minute' bars
 
-        Returns
+        Returns:
         -------
         value : float, int, or pd.Timestamp
             The spot value of ``field`` for ``asset`` The return type is based
@@ -566,7 +557,7 @@ class DataPortal:
         perspective_dt : pd.Timestamp
             The timestamp from which the data is being viewed back from.
 
-        Returns
+        Returns:
         -------
         adjustments : list[Adjustment]
             The adjustments to that field.
@@ -581,9 +572,7 @@ class DataPortal:
 
         for asset in assets:
             adjustments_for_asset = []
-            split_adjustments = self._get_adjustment_list(
-                asset, self._splits_dict, "SPLITS"
-            )
+            split_adjustments = self._get_adjustment_list(asset, self._splits_dict, "SPLITS")
             for adj_dt, adj in split_adjustments:
                 if dt < adj_dt.tz_localize(dt.tzinfo) <= perspective_dt:
                     adjustments_for_asset.append(split_adj_factor(adj))
@@ -591,9 +580,7 @@ class DataPortal:
                     break
 
             if field != "volume":
-                merger_adjustments = self._get_adjustment_list(
-                    asset, self._mergers_dict, "MERGERS"
-                )
+                merger_adjustments = self._get_adjustment_list(asset, self._mergers_dict, "MERGERS")
                 for adj_dt, adj in merger_adjustments:
                     if dt < adj_dt <= perspective_dt:
                         adjustments_for_asset.append(adj)
@@ -616,9 +603,7 @@ class DataPortal:
 
         return adjustment_ratios_per_asset
 
-    def get_adjusted_value(
-        self, asset, field, dt, perspective_dt, data_frequency, spot_value=None
-    ):
+    def get_adjusted_value(self, asset, field, dt, perspective_dt, data_frequency, spot_value=None):
         """Returns a scalar value representing the value
         of the desired asset's field at the given dt with adjustments applied.
 
@@ -637,7 +622,7 @@ class DataPortal:
             The frequency of the data to query; i.e. whether the data is
             'daily' or 'minute' bars
 
-        Returns
+        Returns:
         -------
         value : float, int, or pd.Timestamp
             The value of the given ``field`` for ``asset`` at ``dt`` with any
@@ -652,9 +637,7 @@ class DataPortal:
             # because we want the new value as of midnight (fetcher only works
             # on a daily basis, all timestamps are on midnight)
             if self._is_extra_source(asset, field, self._augmented_sources_map):
-                spot_value = self.get_spot_value(
-                    asset, field, perspective_dt, data_frequency
-                )
+                spot_value = self.get_spot_value(asset, field, perspective_dt, data_frequency)
             else:
                 spot_value = self.get_spot_value(asset, field, dt, data_frequency)
 
@@ -704,9 +687,7 @@ class DataPortal:
 
         # the value we found came from a different day, so we have to
         # adjust the data if there are any adjustments on that day barrier
-        return self.get_adjusted_value(
-            asset, column, query_dt, dt, "minute", spot_value=result
-        )
+        return self.get_adjusted_value(asset, column, query_dt, dt, "minute", spot_value=result)
 
     def _get_daily_spot_value(self, asset, column, dt):
         reader = self._get_pricing_reader("daily")
@@ -754,9 +735,7 @@ class DataPortal:
             )
         return tds[start_loc : end_loc + 1]
 
-    def _get_history_daily_window(
-        self, assets, end_dt, bar_count, field_to_use, data_frequency
-    ):
+    def _get_history_daily_window(self, assets, end_dt, bar_count, field_to_use, data_frequency):
         """Internal method that returns a dataframe containing history bars
         of daily frequency for the given sids.
         """
@@ -784,9 +763,7 @@ class DataPortal:
             )
         else:
             # minute mode, requesting '1d'
-            daily_data = self._get_daily_window_data(
-                assets, field_to_use, days_for_window[0:-1]
-            )
+            daily_data = self._get_daily_window_data(assets, field_to_use, days_for_window[0:-1])
 
             if field_to_use == "open":
                 minute_value = self._daily_aggregator.opens(assets, end_dt)
@@ -799,9 +776,7 @@ class DataPortal:
             elif field_to_use == "volume":
                 minute_value = self._daily_aggregator.volumes(assets, end_dt)
             elif field_to_use == "sid":
-                minute_value = [
-                    int(self._get_current_contract(asset, end_dt)) for asset in assets
-                ]
+                minute_value = [int(self._get_current_contract(asset, end_dt)) for asset in assets]
 
             # append the partial day.
             daily_data[-1] = minute_value
@@ -833,9 +808,7 @@ class DataPortal:
         """
         # get all the minutes for this window
         try:
-            minutes_for_window = self.trading_calendar.minutes_window(
-                end_dt, -bar_count
-            )
+            minutes_for_window = self.trading_calendar.minutes_window(end_dt, -bar_count)
         except KeyError:
             self._handle_minute_history_out_of_bounds(bar_count)
 
@@ -878,7 +851,7 @@ class DataPortal:
             Forward-fill missing values. Only has effect if field
             is 'price'.
 
-        Returns
+        Returns:
         -------
         A dataframe containing the requested data.
         """
@@ -945,9 +918,7 @@ class DataPortal:
                     )
 
             # Set leading values for assets that were missing data, then ffill.
-            df.iloc[0, assets_with_leading_nan] = np.array(
-                initial_values, dtype=np.float64
-            )
+            df.iloc[0, assets_with_leading_nan] = np.array(initial_values, dtype=np.float64)
             df.ffill(inplace=True)
 
             # forward-filling will incorrectly produce values after the end of
@@ -983,13 +954,11 @@ class DataPortal:
             The list of minutes representing the desired window.  Each minute
             is a pd.Timestamp.
 
-        Returns
+        Returns:
         -------
         A numpy array with requested values.
         """
-        return self._minute_history_loader.history(
-            assets, minutes_for_window, field, False
-        )
+        return self._minute_history_loader.history(assets, minutes_for_window, field, False)
 
     def _get_daily_window_data(self, assets, field, days_in_window, extra_slot=True):
         """Internal method that gets a window of adjusted daily data for a sid
@@ -1016,7 +985,7 @@ class DataPortal:
             much better to create it here than to create a copy of the array
             later just to add a slot.
 
-        Returns
+        Returns:
         -------
         A numpy array with requested values.  Any missing slots filled with
         nan.
@@ -1036,9 +1005,7 @@ class DataPortal:
             return_array[:] = np.nan
 
         if bar_count != 0:
-            data = self._history_loader.history(
-                assets, days_in_window, field, extra_slot
-            )
+            data = self._history_loader.history(assets, days_in_window, field, extra_slot)
             if extra_slot:
                 return_array[: len(return_array) - 1, :] = data
             else:
@@ -1059,7 +1026,7 @@ class DataPortal:
         table_name: string
             The table that contains this data in the adjustments db.
 
-        Returns
+        Returns:
         -------
         adjustments: list
             A list of [multiplier, pd.Timestamp], earliest first
@@ -1073,8 +1040,8 @@ class DataPortal:
         try:
             adjustments = adjustments_dict[sid]
         except KeyError:
-            adjustments = adjustments_dict[sid] = (
-                self._adjustment_reader.get_adjustments_for_sid(table_name, sid)
+            adjustments = adjustments_dict[sid] = self._adjustment_reader.get_adjustments_for_sid(
+                table_name, sid
             )
 
         return adjustments
@@ -1090,7 +1057,7 @@ class DataPortal:
             The date for which we are checking for splits. Note: this is
             expected to be midnight UTC.
 
-        Returns
+        Returns:
         -------
         splits : list[(asset, float)]
             List of splits, where each split is a (asset, ratio) tuple.
@@ -1107,9 +1074,7 @@ class DataPortal:
         ).fetchall()
 
         splits = [split for split in splits if split[0] in assets]
-        splits = [
-            (self.asset_finder.retrieve_asset(split[0]), split[1]) for split in splits
-        ]
+        splits = [(self.asset_finder.retrieve_asset(split[0]), split[1]) for split in splits]
 
         return splits
 
@@ -1125,12 +1090,11 @@ class DataPortal:
         trading_days: pd.DatetimeIndex
             The trading range.
 
-        Returns
+        Returns:
         -------
         list: A list of objects with all relevant attributes populated.
         All timestamp fields are converted to pd.Timestamps.
         """
-
         if self._adjustment_reader is None:
             return []
 
@@ -1169,15 +1133,14 @@ class DataPortal:
 
     def contains(self, asset, field):
         return field in BASE_FIELDS or (
-            field in self._augmented_sources_map
-            and asset in self._augmented_sources_map[field]
+            field in self._augmented_sources_map and asset in self._augmented_sources_map[field]
         )
 
     def get_fetcher_assets(self, dt):
         """Returns a list of assets for the current date, as defined by the
         fetcher data.
 
-        Returns
+        Returns:
         -------
         list: a list of Asset objects.
         """
@@ -1203,9 +1166,8 @@ class DataPortal:
         """Retrieves the future chain for the contract at the given `dt` according
         the `continuous_future` specification.
 
-        Returns
+        Returns:
         -------
-
         future_chain : list[Future]
             A list of active futures, where the first index is the current
             contract specified by the continuous future definition, the second

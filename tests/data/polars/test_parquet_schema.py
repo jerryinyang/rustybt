@@ -1,14 +1,15 @@
 """Tests for Parquet schema definitions."""
 
-import pytest
-import polars as pl
+from datetime import date
 from decimal import Decimal
-from datetime import date, datetime
+
+import polars as pl
+import pytest
 
 from rustybt.data.polars.parquet_schema import (
+    ADJUSTMENTS_SCHEMA,
     DAILY_BARS_SCHEMA,
     MINUTE_BARS_SCHEMA,
-    ADJUSTMENTS_SCHEMA,
     get_schema_for_frequency,
     validate_schema,
 )

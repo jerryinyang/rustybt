@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+
 from rustybt.data.session_bars import SessionBarReader
 
 
@@ -22,7 +23,7 @@ class ContinuousFutureSessionBarReader(SessionBarReader):
         sids : list of int
            The asset identifiers in the window.
 
-        Returns
+        Returns:
         -------
         list of np.ndarray
             A list with an entry per field of ndarrays with shape
@@ -36,9 +37,7 @@ class ContinuousFutureSessionBarReader(SessionBarReader):
                 asset.root_symbol, start_date, end_date, asset.offset
             )
 
-        num_sessions = len(
-            self.trading_calendar.sessions_in_range(start_date, end_date)
-        )
+        num_sessions = len(self.trading_calendar.sessions_in_range(start_date, end_date))
         shape = num_sessions, len(assets)
 
         results = []
@@ -82,9 +81,9 @@ class ContinuousFutureSessionBarReader(SessionBarReader):
 
                 for sid, start, end, start_loc, end_loc in partitions:
                     if column != "sid":
-                        result = self._bar_reader.load_raw_arrays(
-                            [column], start, end, [sid]
-                        )[0][:, 0]
+                        result = self._bar_reader.load_raw_arrays([column], start, end, [sid])[0][
+                            :, 0
+                        ]
                     else:
                         result = int(sid)
                     out[start_loc : end_loc + 1, i] = result
@@ -97,7 +96,7 @@ class ContinuousFutureSessionBarReader(SessionBarReader):
     def last_available_dt(self):
         """
 
-        Returns
+        Returns:
         -------
         dt : pd.Timestamp
             The last session for which the reader can provide data.
@@ -115,7 +114,7 @@ class ContinuousFutureSessionBarReader(SessionBarReader):
     def first_trading_day(self):
         """
 
-        Returns
+        Returns:
         -------
         dt : pd.Timestamp
             The first trading day (session) for which the reader can provide
@@ -135,22 +134,20 @@ class ContinuousFutureSessionBarReader(SessionBarReader):
         field : string
             The OHLVC name for the desired data point.
 
-        Returns
+        Returns:
         -------
         value : float|int
             The value at the given coordinates, ``float`` for OHLC, ``int``
             for 'volume'.
 
-        Raises
+        Raises:
         ------
         NoDataOnDate
             If the given dt is not a valid market minute (in minute mode) or
             session (in daily mode) according to this reader's tradingcalendar.
         """
         rf = self._roll_finders[continuous_future.roll_style]
-        sid = rf.get_contract_center(
-            continuous_future.root_symbol, dt, continuous_future.offset
-        )
+        sid = rf.get_contract_center(continuous_future.root_symbol, dt, continuous_future.offset)
         return self._bar_reader.get_value(sid, dt, field)
 
     def get_last_traded_dt(self, asset, dt):
@@ -165,7 +162,7 @@ class ContinuousFutureSessionBarReader(SessionBarReader):
         dt : pd.Timestamp
             The minute at which to start searching for the last traded minute.
 
-        Returns
+        Returns:
         -------
         last_traded : pd.Timestamp
             The dt of the last trade for the given asset, using the input
@@ -182,7 +179,7 @@ class ContinuousFutureSessionBarReader(SessionBarReader):
     def sessions(self):
         """
 
-        Returns
+        Returns:
         -------
         sessions : DatetimeIndex
            All session labels (unioning the range for all assets) which the
@@ -209,7 +206,7 @@ class ContinuousFutureMinuteBarReader(SessionBarReader):
         sids : list of int
            The asset identifiers in the window.
 
-        Returns
+        Returns:
         -------
         list of np.ndarray
             A list with an entry per field of ndarrays with shape
@@ -257,9 +254,7 @@ class ContinuousFutureMinuteBarReader(SessionBarReader):
                     end_loc = len(minutes) - 1
                 partitions.append((sid, start, end, start_loc, end_loc))
                 if roll[-1] is not None:
-                    start = tc.session_first_minute(
-                        tc.minute_to_session(minutes[end_loc + 1])
-                    )
+                    start = tc.session_first_minute(tc.minute_to_session(minutes[end_loc + 1]))
 
         for column in columns:
             if column != "volume":
@@ -270,9 +265,9 @@ class ContinuousFutureMinuteBarReader(SessionBarReader):
                 partitions = partitions_by_asset[asset]
                 for sid, start, end, start_loc, end_loc in partitions:
                     if column != "sid":
-                        result = self._bar_reader.load_raw_arrays(
-                            [column], start, end, [sid]
-                        )[0][:, 0]
+                        result = self._bar_reader.load_raw_arrays([column], start, end, [sid])[0][
+                            :, 0
+                        ]
                     else:
                         result = int(sid)
                     out[start_loc : end_loc + 1, i] = result
@@ -282,7 +277,7 @@ class ContinuousFutureMinuteBarReader(SessionBarReader):
     @property
     def last_available_dt(self):
         """
-        Returns
+        Returns:
         -------
         dt : pd.Timestamp
             The last session for which the reader can provide data.
@@ -300,7 +295,7 @@ class ContinuousFutureMinuteBarReader(SessionBarReader):
     @property
     def first_trading_day(self):
         """
-        Returns
+        Returns:
         -------
         dt : pd.Timestamp
             The first trading day (session) for which the reader can provide
@@ -321,22 +316,20 @@ class ContinuousFutureMinuteBarReader(SessionBarReader):
         field : string
             The OHLVC name for the desired data point.
 
-        Returns
+        Returns:
         -------
         value : float|int
             The value at the given coordinates, ``float`` for OHLC, ``int``
             for 'volume'.
 
-        Raises
+        Raises:
         ------
         NoDataOnDate
             If the given dt is not a valid market minute (in minute mode) or
             session (in daily mode) according to this reader's tradingcalendar.
         """
         rf = self._roll_finders[continuous_future.roll_style]
-        sid = rf.get_contract_center(
-            continuous_future.root_symbol, dt, continuous_future.offset
-        )
+        sid = rf.get_contract_center(continuous_future.root_symbol, dt, continuous_future.offset)
         return self._bar_reader.get_value(sid, dt, field)
 
     def get_last_traded_dt(self, asset, dt):
@@ -352,7 +345,7 @@ class ContinuousFutureMinuteBarReader(SessionBarReader):
         dt : pd.Timestamp
             The minute at which to start searching for the last traded minute.
 
-        Returns
+        Returns:
         -------
         last_traded : pd.Timestamp
             The dt of the last trade for the given asset, using the input

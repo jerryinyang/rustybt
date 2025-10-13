@@ -93,15 +93,16 @@ Each column of the array contains exchange rates for a given date. The label
 for column i in a data node is the ith element of /index/dts.
 """
 
-import h5py
 import logging
+
+import h5py
 import numpy as np
 import pandas as pd
 
 from rustybt.utils.memoize import lazyval
 from rustybt.utils.numpy_utils import bytes_array_to_native_str_object_array
 
-from .base import FXRateReader, DEFAULT_FX_RATE
+from .base import DEFAULT_FX_RATE, FXRateReader
 from .utils import check_dts, is_sorted_ascending
 
 HDF5_FX_VERSION = 0
@@ -133,10 +134,7 @@ class HDF5FXRateReader(FXRateReader):
 
         if self.version != HDF5_FX_VERSION:
             raise ValueError(
-                "FX Reader version ({}) != File Version ({})".format(
-                    HDF5_FX_VERSION,
-                    self.version,
-                )
+                f"FX Reader version ({HDF5_FX_VERSION}) != File Version ({self.version})"
             )
 
     @classmethod
@@ -166,7 +164,7 @@ class HDF5FXRateReader(FXRateReader):
         """Column labels for rate groups."""
         raw_dts = self._group[INDEX][DTS][:].astype("M8[ns]")
         if not is_sorted_ascending(raw_dts):
-            raise ValueError("dts are not sorted for {}!".format(self._group))
+            raise ValueError(f"dts are not sorted for {self._group}!")
 
         return pd.DatetimeIndex(raw_dts, tz="UTC")
 
@@ -199,9 +197,7 @@ class HDF5FXRateReader(FXRateReader):
             dataset = self._group[DATA][rate][quote][RATES]
         except KeyError as exc:
             raise ValueError(
-                "FX rates not available for rate={}, quote_currency={}.".format(
-                    rate, quote
-                )
+                f"FX rates not available for rate={rate}, quote_currency={quote}."
             ) from exc
 
         # OPTIMIZATION: Column indices correspond to dates, which must be in
@@ -264,7 +260,6 @@ class HDF5FXRateWriter:
             contain a table of rates where each column is a timeseries of rates
             mapping its column label's currency to ``quote_currency``.
         """
-
         if len(currencies):
             chunks = (len(currencies), min(self._date_chunk_size, len(dts)))
         else:
@@ -286,7 +281,7 @@ class HDF5FXRateWriter:
 
         for c in currencies:
             if not isinstance(c, str) or len(c) != 3:
-                raise ValueError("Invalid currency: {!r}".format(c))
+                raise ValueError(f"Invalid currency: {c!r}")
 
         index_group = self._group.create_group(INDEX)
 
@@ -304,10 +299,8 @@ class HDF5FXRateWriter:
         for rate, quote, array in data:
             if array.shape != expected_shape:
                 raise ValueError(
-                    "Unexpected shape for rate={}, quote={}."
-                    "\nExpected shape: {}. Got {}.".format(
-                        rate, quote, expected_shape, array.shape
-                    )
+                    f"Unexpected shape for rate={rate}, quote={quote}."
+                    f"\nExpected shape: {expected_shape}. Got {array.shape}."
                 )
 
             self._log_writing(DATA, rate, quote)

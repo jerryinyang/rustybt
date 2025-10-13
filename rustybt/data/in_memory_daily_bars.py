@@ -1,10 +1,9 @@
 import pandas as pd
 from pandas import NaT
 
-from rustybt.utils.calendar_utils import TradingCalendar
-
-from rustybt.data.bar_reader import OHLCV, NoDataOnDate, NoDataForSid
+from rustybt.data.bar_reader import OHLCV, NoDataForSid, NoDataOnDate
 from rustybt.data.session_bars import CurrencyAwareSessionBarReader
+from rustybt.utils.calendar_utils import TradingCalendar
 from rustybt.utils.input_validation import expect_types, validate_keys
 from rustybt.utils.pandas_utils import check_indexes_all_same
 
@@ -93,7 +92,7 @@ class InMemoryDailyBarReader(CurrencyAwareSessionBarReader):
         field : string
             The price field. e.g. ('open', 'high', 'low', 'close', 'volume')
 
-        Returns
+        Returns:
         -------
         float
             The spot price for colname of the given sid on the given day.
@@ -113,7 +112,7 @@ class InMemoryDailyBarReader(CurrencyAwareSessionBarReader):
         dt : datetime64-like
             Midnight of the day for which data is requested.
 
-        Returns
+        Returns:
         -------
         pd.Timestamp : The last know dt for the asset and dt;
                        NaT if no trade is found before the given dt.
@@ -141,7 +140,7 @@ def verify_frames_aligned(frames, calendar):
     frames : list[pd.DataFrame]
     calendar : trading_calendars.TradingCalendar
 
-    Raises
+    Raises:
     ------
     ValueError
         If frames have different indexes/columns, or if frame indexes do not

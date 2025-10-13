@@ -25,12 +25,12 @@ import time
 import warnings
 from datetime import date, datetime
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import Any
 
 import sqlalchemy as sa
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, Text, ForeignKey, Index
-from sqlalchemy.orm import Session
 import structlog
+from sqlalchemy import Column, ForeignKey, Index, Integer, MetaData, Table, Text, create_engine
+from sqlalchemy.orm import Session
 
 logger = structlog.get_logger(__name__)
 
@@ -73,7 +73,7 @@ class ParquetMetadataCatalog:
             "ParquetMetadataCatalog is deprecated and will be removed in v2.0. "
             "Use BundleMetadata from rustybt.data.bundles.metadata instead.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
 
         self.db_path = Path(db_path)
@@ -241,8 +241,8 @@ class ParquetMetadataCatalog:
         self,
         dataset_id: int,
         symbol: str,
-        asset_type: Optional[str] = None,
-        exchange: Optional[str] = None,
+        asset_type: str | None = None,
+        exchange: str | None = None,
     ) -> int:
         """Add symbol to dataset.
 
@@ -413,7 +413,7 @@ class ParquetMetadataCatalog:
 
             return checksum_id
 
-    def get_dataset_info(self, dataset_id: int) -> Optional[Dict[str, Any]]:
+    def get_dataset_info(self, dataset_id: int) -> dict[str, Any] | None:
         """Get dataset metadata.
 
         Args:
@@ -427,9 +427,7 @@ class ParquetMetadataCatalog:
             >>> assert info["source"] == "yfinance"
         """
         with Session(self.engine) as session:
-            stmt = sa.select(self.datasets).where(
-                self.datasets.c.dataset_id == dataset_id
-            )
+            stmt = sa.select(self.datasets).where(self.datasets.c.dataset_id == dataset_id)
             result = session.execute(stmt).fetchone()
 
             if result is None:
@@ -444,7 +442,7 @@ class ParquetMetadataCatalog:
                 "updated_at": result.updated_at,
             }
 
-    def get_symbols(self, dataset_id: int) -> List[Dict[str, Any]]:
+    def get_symbols(self, dataset_id: int) -> list[dict[str, Any]]:
         """Get all symbols for dataset.
 
         Args:
@@ -458,9 +456,7 @@ class ParquetMetadataCatalog:
             >>> assert len(symbols) > 0
         """
         with Session(self.engine) as session:
-            stmt = sa.select(self.symbols).where(
-                self.symbols.c.dataset_id == dataset_id
-            )
+            stmt = sa.select(self.symbols).where(self.symbols.c.dataset_id == dataset_id)
             results = session.execute(stmt).fetchall()
 
             return [
@@ -474,7 +470,7 @@ class ParquetMetadataCatalog:
                 for row in results
             ]
 
-    def get_date_range(self, dataset_id: int) -> Optional[Dict[str, Any]]:
+    def get_date_range(self, dataset_id: int) -> dict[str, Any] | None:
         """Get date range for dataset.
 
         Args:
@@ -488,9 +484,7 @@ class ParquetMetadataCatalog:
             >>> assert "start_date" in date_range
         """
         with Session(self.engine) as session:
-            stmt = sa.select(self.date_ranges).where(
-                self.date_ranges.c.dataset_id == dataset_id
-            )
+            stmt = sa.select(self.date_ranges).where(self.date_ranges.c.dataset_id == dataset_id)
             result = session.execute(stmt).fetchone()
 
             if result is None:
@@ -509,9 +503,9 @@ class ParquetMetadataCatalog:
     def find_parquet_files(
         self,
         dataset_id: int,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-    ) -> List[str]:
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> list[str]:
         """Find Parquet file paths for dataset and date range.
 
         Args:
@@ -572,8 +566,7 @@ class ParquetMetadataCatalog:
 
             return is_valid
 
-
-    def get_all_symbols(self) -> List[Dict[str, Any]]:
+    def get_all_symbols(self) -> list[dict[str, Any]]:
         """Get all symbols across all datasets.
 
         Returns:
@@ -598,7 +591,7 @@ class ParquetMetadataCatalog:
                 for row in results
             ]
 
-    def get_cache_entries(self) -> List[Dict[str, Any]]:
+    def get_cache_entries(self) -> list[dict[str, Any]]:
         """Get all cache entries.
 
         Returns:

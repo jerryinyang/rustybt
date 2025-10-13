@@ -131,8 +131,7 @@ def run_grid_search_example() -> None:
         # Print progress every 10 trials
         if trial_num % 10 == 0:
             print(
-                f"Trial {trial_num}/{grid.total_combinations} "
-                f"({grid.progress * 100:.0f}% complete)"
+                f"Trial {trial_num}/{grid.total_combinations} ({grid.progress * 100:.0f}% complete)"
             )
 
     print("-" * 70)

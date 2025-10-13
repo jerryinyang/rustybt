@@ -2,8 +2,8 @@
 Tests for setting up an EventsLoader.
 """
 
-import re
 import os
+import re
 from datetime import time
 from itertools import product
 from unittest import skipIf
@@ -213,7 +213,7 @@ class TestEventIndexer:
             relevant_events.loc[ix2, ["event_date", "timestamp"]],
         )
 
-        for date, computed_index in zip(all_dates, indexer):
+        for date, computed_index in zip(all_dates, indexer, strict=False):
             if date >= event2_first_eligible:
                 # If we've seen event 2, it should win even if we've seen event
                 # 1, because events are sorted by event_date.
@@ -268,7 +268,7 @@ class TestEventIndexer:
         e1, e2 = relevant_events["event_date"]
         t1, t2 = relevant_events["timestamp"]
 
-        for date, computed_index in zip(all_dates, indexer):
+        for date, computed_index in zip(all_dates, indexer, strict=False):
             # An event is eligible to be the next event if it's between the
             # timestamp and the event_date, inclusive.
             if t1 <= date <= e1:
@@ -348,9 +348,7 @@ class EventsLoaderEmptyTestCase(WithAssetFinder, WithTradingSessions, ZiplineTes
         )
 
         results = engine.run_pipeline(
-            Pipeline(
-                {c.name: c.latest for c in EventDataSet_US.columns}, domain=US_EQUITIES
-            ),
+            Pipeline({c.name: c.latest for c in EventDataSet_US.columns}, domain=US_EQUITIES),
             start_date=self.trading_days[0],
             end_date=self.trading_days[-1],
         )
@@ -400,9 +398,7 @@ class EventsLoaderTestCase(WithAssetFinder, WithTradingSessions, ZiplineTestCase
             previous_value_columns=cls.previous_value_columns,
         )
         cls.ASSET_FINDER_EQUITY_SIDS = list(cls.raw_events["sid"].unique())
-        cls.ASSET_FINDER_EQUITY_SYMBOLS = [
-            "s" + str(n) for n in cls.ASSET_FINDER_EQUITY_SIDS
-        ]
+        cls.ASSET_FINDER_EQUITY_SYMBOLS = ["s" + str(n) for n in cls.ASSET_FINDER_EQUITY_SIDS]
         super(EventsLoaderTestCase, cls).init_class_fixtures()
 
         cls.engine = SimplePipelineEngine(
@@ -450,7 +446,6 @@ class EventsLoaderTestCase(WithAssetFinder, WithTradingSessions, ZiplineTestCase
         reason="Unresolved issues on GHA",
     )
     def test_load_properly_forward_fills(self):
-
         # Cut the dates in half so we need to forward fill some data which
         # is not in our window. The results should be computed the same as if
         # we had computed across the entire window and then sliced after the
@@ -506,11 +501,9 @@ class EventsLoaderTestCase(WithAssetFinder, WithTradingSessions, ZiplineTestCase
                 # integers, so 0 is still interpreted as a key.
                 relevant_events.iloc[0].loc[["event_date", "timestamp"]],
             )
-            event2_first_eligible = max(
-                relevant_events.iloc[1].loc[["event_date", "timestamp"]]
-            )
+            event2_first_eligible = max(relevant_events.iloc[1].loc[["event_date", "timestamp"]])
 
-            for date, computed_value in zip(dates, asset_result):
+            for date, computed_value in zip(dates, asset_result, strict=False):
                 if date >= event2_first_eligible:
                     # If we've seen event 2, it should win even if we've seen
                     # event 1, because events are sorted by event_date.
@@ -547,7 +540,7 @@ class EventsLoaderTestCase(WithAssetFinder, WithTradingSessions, ZiplineTestCase
             e1, e2 = relevant_events["event_date"]
             t1, t2 = relevant_events["timestamp"]
 
-            for date, computed_value in zip(dates, asset_result):
+            for date, computed_value in zip(dates, asset_result, strict=False):
                 if t1 <= date <= e1:
                     # If we've seen event 2, it should win even if we've seen
                     # event 1, because events are sorted by event_date.

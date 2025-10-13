@@ -181,17 +181,17 @@ cache:
   enabled: true
   directory: "/custom/cache/path"
   max_size_mb: 10240  # 10GB
-  
+
   freshness:
     daily:
       policy: "market_close"
       market_close_time: "16:00"
       timezone: "America/New_York"
-    
+
     hourly:
       policy: "ttl"
       ttl_seconds: 3600  # 1 hour
-    
+
     minute:
       policy: "ttl"
       ttl_seconds: 300  # 5 minutes
@@ -441,7 +441,7 @@ import pandas as pd
 
 class WeeklyFreshnessPolicy(CacheFreshnessPolicy):
     """Refresh data every Monday."""
-    
+
     def is_fresh(self, cached_time: pd.Timestamp, current_time: pd.Timestamp) -> bool:
         # Data is fresh if cached this week
         return cached_time.isocalendar()[1] == current_time.isocalendar()[1]

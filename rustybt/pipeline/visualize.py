@@ -2,17 +2,17 @@
 Tools for visualizing dependencies between Terms.
 """
 
-from contextlib import contextmanager
 import errno
+from contextlib import contextmanager
 from functools import partial
 from io import BytesIO
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 
 from networkx import topological_sort
 
-from rustybt.pipeline.data import BoundColumn
-from rustybt.pipeline import Filter, Factor, Classifier, Term
 from rustybt.pipeline.term import AssetExists
+
+# Avoid circular import: BoundColumn, Classifier, Factor, Filter, Term imported locally where needed
 
 
 class NoIPython(Exception):
@@ -39,13 +39,13 @@ bracket = partial(delimit, "[]")
 
 def begin_graph(f, name, **attrs):
     writeln(f, "strict digraph %s {" % name)
-    writeln(f, "graph {}".format(format_attrs(attrs)))
+    writeln(f, f"graph {format_attrs(attrs)}")
 
 
 def begin_cluster(f, name, **attrs):
     attrs.setdefault("label", quote(name))
     writeln(f, "subgraph cluster_%s {" % name)
-    writeln(f, "graph {}".format(format_attrs(attrs)))
+    writeln(f, f"graph {format_attrs(attrs)}")
 
 
 def end_graph(f):
@@ -67,7 +67,7 @@ def cluster(f, name, **attrs):
 
 
 def roots(g):
-    "Get nodes from graph G with indegree 0"
+    """Get nodes from graph G with indegree 0"""
     return set(n for n, d in g.in_degree().items() if d == 0)
 
 
@@ -99,7 +99,6 @@ def _render(g, out, format_, include_asset_exists=False):
 
     f = BytesIO()
     with graph(f, "G", **graph_attrs):
-
         # Write outputs cluster.
         with cluster(f, "Output", labelloc="b", **cluster_attrs):
             for term in filter_nodes(include_asset_exists, out_nodes):
@@ -137,9 +136,7 @@ def _render(g, out, format_, include_asset_exists=False):
     f.seek(0)
     proc_stdout, proc_stderr = proc.communicate(f.read())
     if proc_stderr:
-        raise RuntimeError(
-            "Error(s) while rendering graph: %s" % proc_stderr.decode("utf-8")
-        )
+        raise RuntimeError("Error(s) while rendering graph: %s" % proc_stderr.decode("utf-8"))
 
     out.write(proc_stdout)
 
@@ -168,6 +165,9 @@ def writeln(f, s):
 
 
 def fmt(obj):
+    # Import locally to avoid circular import
+    from rustybt.pipeline import Term
+
     if isinstance(obj, Term):
         r = obj.graph_repr()
     else:
@@ -180,14 +180,18 @@ def add_term_node(f, term):
 
 
 def declare_node(f, name, attributes):
-    writeln(f, "{0} {1};".format(name, format_attrs(attributes)))
+    writeln(f, f"{name} {format_attrs(attributes)};")
 
 
 def add_edge(f, source, dest):
-    writeln(f, "{0} -> {1};".format(source, dest))
+    writeln(f, f"{source} -> {dest};")
 
 
 def attrs_for_node(term, **overrides):
+    # Import locally to avoid circular import
+    from rustybt.pipeline import Classifier, Factor, Filter
+    from rustybt.pipeline.data import BoundColumn
+
     attrs = {
         "shape": "box",
         "colorscheme": "pastel19",
@@ -211,7 +215,7 @@ def format_attrs(attrs):
     """
     Format key, value pairs from attrs into graphviz attrs format
 
-    Examples
+    Examples:
     --------
     >>> format_attrs({'key1': 'value1', 'key2': 'value2'})  # doctest: +SKIP
     '[key1=value1, key2=value2]'

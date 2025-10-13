@@ -1,7 +1,8 @@
 import logging
-import pytest
+
 import numpy as np
 import pandas as pd
+import pytest
 
 from rustybt.data.adjustments import (
     SQLiteAdjustmentReader,
@@ -9,20 +10,18 @@ from rustybt.data.adjustments import (
 )
 from rustybt.data.in_memory_daily_bars import InMemoryDailyBarReader
 from rustybt.testing import parameter_space
-from rustybt.testing.predicates import (
-    assert_frame_equal,
-    assert_series_equal,
-)
 from rustybt.testing.fixtures import (
     WithInstanceTmpDir,
     WithTradingCalendars,
     ZiplineTestCase,
 )
+from rustybt.testing.predicates import (
+    assert_frame_equal,
+    assert_series_equal,
+)
 
 
-class TestSQLiteAdjustmentsWriter(
-    WithTradingCalendars, WithInstanceTmpDir, ZiplineTestCase
-):
+class TestSQLiteAdjustmentsWriter(WithTradingCalendars, WithInstanceTmpDir, ZiplineTestCase):
     @pytest.fixture(autouse=True)
     def inject_fixtures(self, caplog):
         self._caplog = caplog
@@ -50,7 +49,7 @@ class TestSQLiteAdjustmentsWriter(
             index=dates,
             columns=sids,
         )
-        frames = {key: nan_frame for key in ("open", "high", "low", "close", "volume")}
+        frames = dict.fromkeys(("open", "high", "low", "close", "volume"), nan_frame)
 
         return InMemoryDailyBarReader(
             frames,
@@ -98,10 +97,10 @@ class TestSQLiteAdjustmentsWriter(
 
         close = pd.DataFrame(
             [
-                [10.0, 0.5, 30.0],  # noqa
-                [9.5, 0.4, np.nan],  # noqa
+                [10.0, 0.5, 30.0],
+                [9.5, 0.4, np.nan],
                 [15.0, 0.6, np.nan],
-            ],  # noqa
+            ],
             columns=[0, 1, 2],
             index=dates,
         )

@@ -17,9 +17,7 @@ class TestAdjustment:
             ("overwrite", adj.AdjustmentKind.OVERWRITE),
         ],
     )
-    def test_make_float_adjustment(
-        self, name: str, adj_type: adj.AdjustmentKind
-    ) -> None:
+    def test_make_float_adjustment(self, name: str, adj_type: adj.AdjustmentKind) -> None:
         """Test creating float adjustments."""
         expected_types = {
             "add": adj.Float64Add,
@@ -117,8 +115,7 @@ class TestAdjustment:
             pass
 
         expected_msg = (
-            f"Don't know how to make overwrite adjustments "
-            f"for values of type {SomeClass!r}."
+            f"Don't know how to make overwrite adjustments for values of type {SomeClass!r}."
         )
         with pytest.raises(TypeError, match=expected_msg):
             adj.make_adjustment_from_indices(

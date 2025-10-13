@@ -2,25 +2,20 @@
 Module for building a complete dataset from local directory with csv files.
 """
 
-import os
-import sys
-
 import logging
+import os
+
 import numpy as np
 import pandas as pd
 import polars as pl
-from decimal import Decimal
-from pathlib import Path
-from typing import Optional
 
+from rustybt.data.polars.validation import validate_ohlcv_relationships
+from rustybt.finance.decimal.config import DecimalConfig
 from rustybt.utils.calendar_utils import register_calendar_alias
 from rustybt.utils.cli import maybe_show_progress
-from rustybt.finance.decimal.config import DecimalConfig
-from rustybt.data.polars.parquet_schema import DAILY_BARS_SCHEMA, MINUTE_BARS_SCHEMA
-from rustybt.data.polars.validation import validate_ohlcv_relationships
 
-from . import core as bundles
 from ..metadata_tracker import track_csv_bundle_metadata
+from . import core as bundles
 
 handler = logging.StreamHandler()
 # handler = logging.StreamHandler(sys.stdout, format_string=" | {record.message}")
@@ -48,12 +43,12 @@ def csvdir_equities(tframes=None, csvdir=None):
         <directory>/<timeframe2>/<symbol2>.csv
         <directory>/<timeframe2>/<symbol3>.csv
 
-    Returns
+    Returns:
     -------
     ingest : callable
         The bundle ingest function
 
-    Examples
+    Examples:
     --------
     This code should be added to ~/.zipline/extension.py
     .. code-block:: python
@@ -62,7 +57,6 @@ def csvdir_equities(tframes=None, csvdir=None):
                 csvdir_equities(["daily", "minute"],
                 '/full/path/to/the/csvdir/directory'))
     """
-
     return CSVDIRBundle(tframes, csvdir).ingest
 
 
@@ -138,9 +132,7 @@ def csvdir_bundle(
         tframes = set(["daily", "minute"]).intersection(os.listdir(csvdir))
 
         if not tframes:
-            raise ValueError(
-                "'daily' and 'minute' directories " "not found in '%s'" % csvdir
-            )
+            raise ValueError("'daily' and 'minute' directories not found in '%s'" % csvdir)
 
     divs_splits = {
         "divs": pd.DataFrame(
@@ -158,9 +150,7 @@ def csvdir_bundle(
     for tframe in tframes:
         ddir = os.path.join(csvdir, tframe)
 
-        symbols = sorted(
-            item.split(".csv")[0] for item in os.listdir(ddir) if ".csv" in item
-        )
+        symbols = sorted(item.split(".csv")[0] for item in os.listdir(ddir) if ".csv" in item)
         if not symbols:
             raise ValueError("no <symbol>.csv* files found in %s" % ddir)
 
@@ -191,9 +181,7 @@ def csvdir_bundle(
 
         divs_splits["divs"]["sid"] = divs_splits["divs"]["sid"].astype(int)
         divs_splits["splits"]["sid"] = divs_splits["splits"]["sid"].astype(int)
-        adjustment_writer.write(
-            splits=divs_splits["splits"], dividends=divs_splits["divs"]
-        )
+        adjustment_writer.write(splits=divs_splits["splits"], dividends=divs_splits["divs"])
 
     # Record bundle metadata and quality metrics
     try:
@@ -207,9 +195,7 @@ def csvdir_bundle(
             if "daily" in tframes:
                 daily_dir = os.path.join(csvdir, "daily")
                 daily_files = [
-                    os.path.join(daily_dir, f)
-                    for f in os.listdir(daily_dir)
-                    if f.endswith(".csv")
+                    os.path.join(daily_dir, f) for f in os.listdir(daily_dir) if f.endswith(".csv")
                 ]
                 # Load first file as sample for quality analysis
                 if daily_files:
@@ -241,7 +227,7 @@ def convert_csv_to_decimal_parquet(
     parquet_path: str,
     asset_class: str = "equity",
     frequency: str = "daily",
-    config: Optional[DecimalConfig] = None,
+    config: DecimalConfig | None = None,
 ) -> dict:
     """Convert CSV data to Parquet with Decimal precision.
 
@@ -266,11 +252,7 @@ def convert_csv_to_decimal_parquet(
     precision = config.get_precision(asset_class)
     scale = config.get_scale(asset_class)
 
-    summary = {
-        "rows_ingested": 0,
-        "precision_warnings": [],
-        "errors": []
-    }
+    summary = {"rows_ingested": 0, "precision_warnings": [], "errors": []}
 
     # Read CSV as string columns first to avoid float contamination
     try:
@@ -282,7 +264,7 @@ def convert_csv_to_decimal_parquet(
                 "low": pl.Utf8,
                 "close": pl.Utf8,
                 "volume": pl.Utf8,
-            }
+            },
         )
     except Exception as e:
         raise FileNotFoundError(f"Failed to read CSV file {csv_path}: {e}")
@@ -300,9 +282,9 @@ def convert_csv_to_decimal_parquet(
             if date_col is None:
                 raise ValueError("No date column found in CSV")
 
-            df = df.with_columns([
-                pl.col(date_col).str.strptime(pl.Date, "%Y-%m-%d", strict=False).alias("date")
-            ])
+            df = df.with_columns(
+                [pl.col(date_col).str.strptime(pl.Date, "%Y-%m-%d", strict=False).alias("date")]
+            )
 
             # Drop original date column if it had a different name
             if date_col != "date":
@@ -318,9 +300,13 @@ def convert_csv_to_decimal_parquet(
             if ts_col is None:
                 raise ValueError("No timestamp column found in CSV")
 
-            df = df.with_columns([
-                pl.col(ts_col).str.strptime(pl.Datetime("us"), "%Y-%m-%d %H:%M:%S", strict=False).alias("timestamp")
-            ])
+            df = df.with_columns(
+                [
+                    pl.col(ts_col)
+                    .str.strptime(pl.Datetime("us"), "%Y-%m-%d %H:%M:%S", strict=False)
+                    .alias("timestamp")
+                ]
+            )
 
             # Drop original timestamp column if it had a different name
             if ts_col != "timestamp":
@@ -345,13 +331,15 @@ def convert_csv_to_decimal_parquet(
     decimal_dtype = pl.Decimal(precision=precision, scale=scale)
 
     try:
-        df = df.with_columns([
-            pl.col("open").cast(decimal_dtype),
-            pl.col("high").cast(decimal_dtype),
-            pl.col("low").cast(decimal_dtype),
-            pl.col("close").cast(decimal_dtype),
-            pl.col("volume").cast(decimal_dtype),
-        ])
+        df = df.with_columns(
+            [
+                pl.col("open").cast(decimal_dtype),
+                pl.col("high").cast(decimal_dtype),
+                pl.col("low").cast(decimal_dtype),
+                pl.col("close").cast(decimal_dtype),
+                pl.col("volume").cast(decimal_dtype),
+            ]
+        )
     except Exception as e:
         raise ValueError(f"Failed to convert prices to Decimal: {e}")
 
@@ -360,8 +348,7 @@ def convert_csv_to_decimal_parquet(
         negative_values = df.filter(pl.col(col) < 0)
         if len(negative_values) > 0:
             raise ValueError(
-                f"Negative values detected in '{col}' column. "
-                f"Prices must be non-negative."
+                f"Negative values detected in '{col}' column. Prices must be non-negative."
             )
 
     # Validate OHLCV relationships
@@ -380,9 +367,7 @@ def convert_csv_to_decimal_parquet(
 
 
 def _pricing_iter(csvdir, symbols, metadata, divs_splits, show_progress):
-    with maybe_show_progress(
-        symbols, show_progress, label="Loading custom pricing data: "
-    ) as it:
+    with maybe_show_progress(symbols, show_progress, label="Loading custom pricing data: ") as it:
         # using scandir instead of listdir can be faster
         files = os.scandir(csvdir)
         # building a dictionary of filenames
@@ -391,7 +376,7 @@ def _pricing_iter(csvdir, symbols, metadata, divs_splits, show_progress):
 
         for sid, symbol in enumerate(it):
             logger.debug(f"{symbol}: sid {sid}")
-            fname = fnames.get(symbol, None)
+            fname = fnames.get(symbol)
 
             if fname is None:
                 raise ValueError(f"{symbol}.csv file is not in {csvdir}")
@@ -412,16 +397,12 @@ def _pricing_iter(csvdir, symbols, metadata, divs_splits, show_progress):
 
             if "split" in dfr.columns:
                 tmp = 1.0 / dfr[dfr["split"] != 1.0]["split"]
-                split = pd.DataFrame(
-                    data=tmp.index.tolist(), columns=["effective_date"]
-                )
+                split = pd.DataFrame(data=tmp.index.tolist(), columns=["effective_date"])
                 split["ratio"] = tmp.tolist()
                 split["sid"] = sid
 
                 splits = divs_splits["splits"]
-                index = pd.Index(
-                    range(splits.shape[0], splits.shape[0] + split.shape[0])
-                )
+                index = pd.Index(range(splits.shape[0], splits.shape[0] + split.shape[0]))
                 split.set_index(index, inplace=True)
                 divs_splits["splits"] = pd.concat([splits, split], axis=0)
 

@@ -1,0 +1,101 @@
+name: Security
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  security:
+    name: Security Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for truffleHog
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.local/share/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Install bandit
+        run: |
+          uv pip install bandit
+
+      - name: Run bandit SAST (BLOCKING)
+        run: |
+          echo "Running bandit security analysis..."
+          uv run bandit -r rustybt -ll -i
+        id: bandit
+
+      - name: Install truffleHog
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Run truffleHog secrets detection (BLOCKING)
+        run: |
+          echo "Running truffleHog secrets detection..."
+          trufflehog git file://. --since-commit HEAD~1 --fail
+        id: trufflehog
+
+      - name: Install detect-secrets
+        run: |
+          uv pip install detect-secrets
+
+      - name: Run detect-secrets (BLOCKING)
+        run: |
+          echo "Running detect-secrets scan..."
+          if [ -f .secrets.baseline ]; then
+            uv run detect-secrets scan --baseline .secrets.baseline
+          else
+            echo "No .secrets.baseline found, creating one..."
+            uv run detect-secrets scan > .secrets.baseline
+            echo "Baseline created. Please review and commit .secrets.baseline"
+          fi
+        id: detect-secrets
+
+      - name: Security summary
+        if: always()
+        run: |
+          echo "=== Security Scan Results ==="
+          echo ""
+          echo "✅ Bandit SAST: ${{ steps.bandit.outcome }}"
+          echo "✅ TruffleHog: ${{ steps.trufflehog.outcome }}"
+          echo "✅ Detect-secrets: ${{ steps.detect-secrets.outcome }}"
+          echo ""
+
+          if [[ "${{ steps.bandit.outcome }}" == "failure" ]] || \
+             [[ "${{ steps.trufflehog.outcome }}" == "failure" ]] || \
+             [[ "${{ steps.detect-secrets.outcome }}" == "failure" ]]; then
+            echo "❌ Security checks FAILED"
+            exit 1
+          else
+            echo "✅ Security checks PASSED"
+          fi

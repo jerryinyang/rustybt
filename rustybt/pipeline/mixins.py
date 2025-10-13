@@ -18,10 +18,10 @@ from numpy import (
 from pandas import NaT as pd_NaT
 
 from rustybt.errors import (
-    WindowLengthNotPositive,
-    UnsupportedDataType,
-    NonExistentAssetInTimeFrame,
     NoFurtherDataError,
+    NonExistentAssetInTimeFrame,
+    UnsupportedDataType,
+    WindowLengthNotPositive,
 )
 from rustybt.lib.labelarray import LabelArray, labelarray_where
 from rustybt.utils.context_tricks import nop_context
@@ -29,10 +29,9 @@ from rustybt.utils.input_validation import expect_dtypes, expect_types
 from rustybt.utils.numpy_utils import bool_dtype
 from rustybt.utils.pandas_utils import nearest_unequal_elements
 
-
 from .downsample_helpers import (
-    select_sampling_indices,
     expect_downsample_frequency,
+    select_sampling_indices,
 )
 from .sentinels import NotSpecified
 from .term import Term
@@ -59,10 +58,7 @@ class SingleInputMixin(Term):
         num_inputs = len(self.inputs)
         if num_inputs != 1:
             raise ValueError(
-                "{typename} expects only one input, "
-                "but received {num_inputs} instead.".format(
-                    typename=type(self).__name__, num_inputs=num_inputs
-                )
+                f"{type(self).__name__} expects only one input, but received {num_inputs} instead."
             )
 
 
@@ -75,11 +71,8 @@ class StandardOutputs(Term):
         super(StandardOutputs, self)._validate()
         if self.outputs is not NotSpecified:
             raise ValueError(
-                "{typename} does not support custom outputs,"
-                " but received custom outputs={outputs}.".format(
-                    typename=type(self).__name__,
-                    outputs=self.outputs,
-                )
+                f"{type(self).__name__} does not support custom outputs,"
+                f" but received custom outputs={self.outputs}."
             )
 
 
@@ -127,15 +120,11 @@ class CustomTermMixin(Term):
         ndim=NotSpecified,
         **kwargs,
     ):
-
         unexpected_keys = set(kwargs) - set(cls.params)
         if unexpected_keys:
             raise TypeError(
-                "{termname} received unexpected keyword "
-                "arguments {unexpected}".format(
-                    termname=cls.__name__,
-                    unexpected={k: kwargs[k] for k in unexpected_keys},
-                )
+                f"{cls.__name__} received unexpected keyword "
+                f"arguments { ({k: kwargs[k] for k in unexpected_keys}) }"
             )
 
         return super(CustomTermMixin, cls).__new__(
@@ -154,9 +143,7 @@ class CustomTermMixin(Term):
         """
         Override this method with a function that writes a value into `out`.
         """
-        raise NotImplementedError(
-            "{name} must define a compute method".format(name=type(self).__name__)
-        )
+        raise NotImplementedError(f"{type(self).__name__} must define a compute method")
 
     def _allocate_output(self, windows, shape):
         """
@@ -272,12 +259,8 @@ class LatestMixin(SingleInputMixin):
         super(LatestMixin, self)._validate()
         if self.inputs[0].dtype != self.dtype:
             raise TypeError(
-                "{name} expected an input of dtype {expected}, "
-                "but got {actual} instead.".format(
-                    name=type(self).__name__,
-                    expected=self.dtype,
-                    actual=self.inputs[0].dtype,
-                )
+                f"{type(self).__name__} expected an input of dtype {self.dtype}, "
+                f"but got {self.inputs[0].dtype} instead."
             )
 
     def graph_repr(self):
@@ -364,11 +347,7 @@ class AliasedMixin(SingleInputMixin, UniversalMixin):
         return inputs[0]
 
     def __repr__(self):
-        return "{type}({inner}, name={name!r})".format(
-            type=type(self).__name__,
-            inner=self.inputs[0].recursive_repr(),
-            name=self.name,
-        )
+        return f"{type(self).__name__}({self.inputs[0].recursive_repr()}, name={self.name!r})"
 
     def graph_repr(self):
         """Short repr to use when rendering Pipeline graphs."""
@@ -443,7 +422,7 @@ class DownsampledMixin(StandardOutputs, UniversalMixin):
             The minimum number of extra rows required of ``self``, as
             determined by other terms that depend on ``self``.
 
-        Returns
+        Returns:
         -------
         extra_rows : int
             The number of extra rows to compute.  This will be the minimum
@@ -462,13 +441,9 @@ class DownsampledMixin(StandardOutputs, UniversalMixin):
         except KeyError as exc:
             before, after = nearest_unequal_elements(all_dates, start_date)
             raise ValueError(
-                "Pipeline start_date {start_date} is not in calendar.\n"
-                "Latest date before start_date is {before}.\n"
-                "Earliest date after start_date is {after}.".format(
-                    start_date=start_date,
-                    before=before,
-                    after=after,
-                )
+                f"Pipeline start_date {start_date} is not in calendar.\n"
+                f"Latest date before start_date is {before}.\n"
+                f"Earliest date after start_date is {after}."
             ) from exc
 
         # Our possible target dates are all the dates on or before the current
@@ -498,9 +473,7 @@ class DownsampledMixin(StandardOutputs, UniversalMixin):
         On non-sample dates, forward-fill from previously-computed samples.
         """
         to_sample = dates[select_sampling_indices(dates, self._frequency)]
-        assert to_sample[0] == dates[0], (
-            "Misaligned sampling dates in %s." % type(self).__name__
-        )
+        assert to_sample[0] == dates[0], "Misaligned sampling dates in %s." % type(self).__name__
 
         real_compute = self._wrapped_term._compute
 
@@ -591,7 +564,7 @@ class SliceMixin(UniversalMixin):
     asset : zipline.assets.Asset
         The asset corresponding to the column of `term` to be extracted.
 
-    Notes
+    Notes:
     -----
     Users should rarely construct instances of `Slice` directly. Instead, they
     should construct instances via indexing, e.g. `MyFactor()[Asset(24)]`.
@@ -611,10 +584,7 @@ class SliceMixin(UniversalMixin):
         )
 
     def __repr__(self):
-        return "{parent_term}[{asset}]".format(
-            parent_term=self.inputs[0].recursive_repr(),
-            asset=self._asset,
-        )
+        return f"{self.inputs[0].recursive_repr()}[{self._asset}]"
 
     def _init(self, asset, *args, **kwargs):
         self._asset = asset

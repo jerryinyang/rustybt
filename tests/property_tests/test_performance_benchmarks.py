@@ -27,9 +27,7 @@ NYSE = ExchangeInfo("NYSE", "NYSE", "US")
 
 @pytest.mark.benchmark
 @given(
-    starting_cash=decimal_prices(
-        min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2
-    ),
+    starting_cash=decimal_prices(min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2),
     positions=decimal_portfolio_positions(min_positions=0, max_positions=20),
 )
 def test_portfolio_value_calculation_performance(
@@ -60,9 +58,7 @@ def test_portfolio_value_calculation_performance(
 
 @pytest.mark.benchmark
 @given(
-    start_value=decimal_prices(
-        min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2
-    ),
+    start_value=decimal_prices(min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2),
     end_value=decimal_prices(min_value=Decimal("1000"), max_value=Decimal("1000000"), scale=2),
 )
 def test_returns_calculation_performance(
@@ -86,9 +82,7 @@ def test_returns_calculation_performance(
 
 @pytest.mark.benchmark
 @given(returns_series=decimal_returns_series(min_size=252, max_size=252))
-def test_metrics_calculation_performance(
-    returns_series: list[Decimal], benchmark
-) -> None:
+def test_metrics_calculation_performance(returns_series: list[Decimal], benchmark) -> None:
     """Benchmark metrics calculation with 1-year return series.
 
     Ensures metrics calculation (Sharpe, drawdown, etc.) completes within
@@ -159,9 +153,7 @@ def test_decimal_arithmetic_performance(benchmark) -> None:
     price=decimal_prices(min_value=Decimal("10"), max_value=Decimal("500"), scale=2),
     quantity=decimal_quantities(min_value=Decimal("1"), max_value=Decimal("1000"), scale=2),
 )
-def test_transaction_execution_performance(
-    price: Decimal, quantity: Decimal, benchmark
-) -> None:
+def test_transaction_execution_performance(price: Decimal, quantity: Decimal, benchmark) -> None:
     """Benchmark transaction execution performance.
 
     Ensures buy/sell transaction execution completes within acceptable
@@ -201,6 +193,4 @@ PERFORMANCE_THRESHOLDS = {
 
 def pytest_configure(config):
     """Configure pytest with custom markers for benchmarks."""
-    config.addinivalue_line(
-        "markers", "benchmark: mark test as a performance benchmark"
-    )
+    config.addinivalue_line("markers", "benchmark: mark test as a performance benchmark")

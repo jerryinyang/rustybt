@@ -20,18 +20,17 @@ Example:
 """
 
 import time
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
-from typing import Optional, Literal, Dict, Any, List
+from typing import Any, Literal
 
 import pandas as pd
 import polars as pl
 import structlog
 
+from rustybt.data.polars.metadata_catalog import ParquetMetadataCatalog
 from rustybt.data.polars.parquet_writer import ParquetWriter
-from rustybt.data.polars.parquet_schema import DAILY_BARS_SCHEMA, MINUTE_BARS_SCHEMA
-from rustybt.data.polars.metadata_catalog import ParquetMetadataCatalog, calculate_file_checksum
 
 logger = structlog.get_logger(__name__)
 
@@ -88,10 +87,10 @@ class BundleMigrator:
     def migrate_daily_bars(
         self,
         source_format: SourceFormat = "hdf5",
-        compression: Literal["snappy", "zstd", "lz4", None] = "zstd",
+        compression: Literal["snappy", "zstd", "lz4"] | None = "zstd",
         validate: bool = True,
         batch_size: int = 100,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Migrate daily bars from legacy format to Parquet.
 
         Args:
@@ -179,11 +178,11 @@ class BundleMigrator:
     def migrate_minute_bars(
         self,
         source_format: SourceFormat = "bcolz",
-        compression: Literal["snappy", "zstd", "lz4", None] = "zstd",
+        compression: Literal["snappy", "zstd", "lz4"] | None = "zstd",
         validate: bool = True,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-    ) -> Dict[str, Any]:
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> dict[str, Any]:
         """Migrate minute bars from legacy format to Parquet.
 
         Args:
@@ -270,9 +269,7 @@ class BundleMigrator:
         """
         if source_format == "hdf5":
             if not self.legacy_daily_path.exists():
-                raise MigrationError(
-                    f"HDF5 daily bars file not found: {self.legacy_daily_path}"
-                )
+                raise MigrationError(f"HDF5 daily bars file not found: {self.legacy_daily_path}")
 
             try:
                 # Read HDF5 using pandas
@@ -287,18 +284,14 @@ class BundleMigrator:
                 return df
 
             except Exception as e:
-                raise MigrationError(
-                    f"Failed to read HDF5 daily bars: {e}"
-                ) from e
+                raise MigrationError(f"Failed to read HDF5 daily bars: {e}") from e
 
         elif source_format == "bcolz":
             # Implement bcolz daily bars migration
             try:
                 import bcolz
             except ImportError:
-                raise MigrationError(
-                    "bcolz package not installed. Install with: pip install bcolz"
-                )
+                raise MigrationError("bcolz package not installed. Install with: pip install bcolz")
 
             if not self.legacy_daily_path.exists():
                 # Try alternative path (Zipline bundles use different naming)
@@ -319,10 +312,10 @@ class BundleMigrator:
                 df = ctable.todataframe()
 
                 # Convert 'day' column to date if it's in epoch format
-                if 'day' in df.columns:
-                    df['date'] = pd.to_datetime(df['day'], unit='D', origin='unix')
-                    df = df.drop(columns=['day'])
-                elif 'date' not in df.columns:
+                if "day" in df.columns:
+                    df["date"] = pd.to_datetime(df["day"], unit="D", origin="unix")
+                    df = df.drop(columns=["day"])
+                elif "date" not in df.columns:
                     raise MigrationError("bcolz ctable missing date/day column")
 
                 logger.info(
@@ -345,8 +338,8 @@ class BundleMigrator:
     def _read_legacy_minute_bars(
         self,
         source_format: SourceFormat,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
     ) -> pd.DataFrame:
         """Read minute bars from legacy format.
 
@@ -366,9 +359,7 @@ class BundleMigrator:
             try:
                 import bcolz
             except ImportError:
-                raise MigrationError(
-                    "bcolz package not installed. Install with: pip install bcolz"
-                )
+                raise MigrationError("bcolz package not installed. Install with: pip install bcolz")
 
             # Try different possible paths for minute bars
             possible_paths = [
@@ -384,9 +375,7 @@ class BundleMigrator:
                     break
 
             if bcolz_path is None:
-                raise MigrationError(
-                    f"bcolz minute bars not found. Tried: {possible_paths}"
-                )
+                raise MigrationError(f"bcolz minute bars not found. Tried: {possible_paths}")
 
             try:
                 # Open bcolz ctable
@@ -397,27 +386,27 @@ class BundleMigrator:
 
                 # Handle timestamp column
                 # bcolz minute bars typically use 'minute' or 'timestamp' column
-                if 'minute' in df.columns:
-                    df['timestamp'] = pd.to_datetime(df['minute'], unit='s')
-                    df = df.drop(columns=['minute'])
-                elif 'timestamp' not in df.columns:
+                if "minute" in df.columns:
+                    df["timestamp"] = pd.to_datetime(df["minute"], unit="s")
+                    df = df.drop(columns=["minute"])
+                elif "timestamp" not in df.columns:
                     raise MigrationError("bcolz ctable missing timestamp/minute column")
 
                 # Apply date range filtering if requested
                 if start_date is not None:
                     start_ts = pd.Timestamp(start_date)
-                    df = df[df['timestamp'] >= start_ts]
+                    df = df[df["timestamp"] >= start_ts]
 
                 if end_date is not None:
                     end_ts = pd.Timestamp(end_date) + pd.Timedelta(days=1)
-                    df = df[df['timestamp'] < end_ts]
+                    df = df[df["timestamp"] < end_ts]
 
                 logger.info(
                     "legacy_data_loaded",
                     source_format="bcolz",
                     row_count=len(df),
-                    start_date=df['timestamp'].min() if len(df) > 0 else None,
-                    end_date=df['timestamp'].max() if len(df) > 0 else None,
+                    start_date=df["timestamp"].min() if len(df) > 0 else None,
+                    end_date=df["timestamp"].max() if len(df) > 0 else None,
                 )
 
                 return df
@@ -430,9 +419,7 @@ class BundleMigrator:
         elif source_format == "hdf5":
             # Implement HDF5 minute bars migration
             if not self.bundle_path.exists():
-                raise MigrationError(
-                    f"Bundle path not found: {self.bundle_path}"
-                )
+                raise MigrationError(f"Bundle path not found: {self.bundle_path}")
 
             # Try different possible HDF5 file names for minute bars
             possible_files = [
@@ -448,9 +435,7 @@ class BundleMigrator:
                     break
 
             if hdf5_path is None:
-                raise MigrationError(
-                    f"HDF5 minute bars file not found. Tried: {possible_files}"
-                )
+                raise MigrationError(f"HDF5 minute bars file not found. Tried: {possible_files}")
 
             try:
                 # Try different HDF5 keys that might contain minute bars
@@ -478,26 +463,26 @@ class BundleMigrator:
                 if isinstance(df.index, pd.DatetimeIndex):
                     df = df.reset_index()
                     df = df.rename(columns={"index": "timestamp"})
-                elif 'timestamp' not in df.columns and 'date' in df.columns:
+                elif "timestamp" not in df.columns and "date" in df.columns:
                     df = df.rename(columns={"date": "timestamp"})
-                elif 'timestamp' not in df.columns:
+                elif "timestamp" not in df.columns:
                     raise MigrationError("HDF5 data missing timestamp column")
 
                 # Apply date range filtering
                 if start_date is not None:
                     start_ts = pd.Timestamp(start_date)
-                    df = df[df['timestamp'] >= start_ts]
+                    df = df[df["timestamp"] >= start_ts]
 
                 if end_date is not None:
                     end_ts = pd.Timestamp(end_date) + pd.Timedelta(days=1)
-                    df = df[df['timestamp'] < end_ts]
+                    df = df[df["timestamp"] < end_ts]
 
                 logger.info(
                     "legacy_data_loaded",
                     source_format="hdf5",
                     row_count=len(df),
-                    start_date=df['timestamp'].min() if len(df) > 0 else None,
-                    end_date=df['timestamp'].max() if len(df) > 0 else None,
+                    start_date=df["timestamp"].min() if len(df) > 0 else None,
+                    end_date=df["timestamp"].max() if len(df) > 0 else None,
                 )
 
                 return df
@@ -549,9 +534,7 @@ class BundleMigrator:
 
         # Ensure date column is Date type
         if "date" in df_polars.columns:
-            df_polars = df_polars.with_columns(
-                pl.col("date").cast(pl.Date)
-            )
+            df_polars = df_polars.with_columns(pl.col("date").cast(pl.Date))
 
         logger.debug(
             "converted_to_polars_daily",
@@ -595,9 +578,7 @@ class BundleMigrator:
 
         # Ensure timestamp column is Datetime type
         if "timestamp" in df_polars.columns:
-            df_polars = df_polars.with_columns(
-                pl.col("timestamp").cast(pl.Datetime("us"))
-            )
+            df_polars = df_polars.with_columns(pl.col("timestamp").cast(pl.Datetime("us")))
 
         logger.debug(
             "converted_to_polars_minute",
@@ -629,8 +610,7 @@ class BundleMigrator:
         # Compare row counts
         if len(source_df) != len(df_parquet):
             raise MigrationError(
-                f"Row count mismatch: source={len(source_df)}, "
-                f"parquet={len(df_parquet)}"
+                f"Row count mismatch: source={len(source_df)}, parquet={len(df_parquet)}"
             )
 
         # Spot check random samples (convert Decimal to float for comparison)
@@ -667,11 +647,11 @@ class BundleMigrator:
 def migrate_bundle(
     bundle_path: str,
     source_format: SourceFormat = "hdf5",
-    compression: Literal["snappy", "zstd", "lz4", None] = "zstd",
+    compression: Literal["snappy", "zstd", "lz4"] | None = "zstd",
     migrate_daily: bool = True,
     migrate_minute: bool = False,
     validate: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Convenience function to migrate entire bundle.
 
     Args:

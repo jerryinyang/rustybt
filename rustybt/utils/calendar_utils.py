@@ -1,19 +1,14 @@
 import inspect
-from functools import partial
 
 import pandas as pd
-from exchange_calendars import ExchangeCalendar as TradingCalendar
-from exchange_calendars import clear_calendars
-from exchange_calendars import get_calendar as ec_get_calendar  # get_calendar,
-from exchange_calendars import (
-    get_calendar_names,
-    register_calendar,
+from exchange_calendars import get_calendar as ec_get_calendar
+from exchange_calendars.calendar_utils import (  # noqa: F401
+    global_calendar_dispatcher,
     register_calendar_alias,
 )
-from exchange_calendars.calendar_utils import global_calendar_dispatcher
+from exchange_calendars.utils.pandas_utils import days_at_time  # noqa: F401
 
 # from exchange_calendars.errors import InvalidCalendarName
-from exchange_calendars.utils.pandas_utils import days_at_time  # noqa: reexport
 
 
 # https://stackoverflow.com/questions/56753846/python-wrapping-function-with-signature

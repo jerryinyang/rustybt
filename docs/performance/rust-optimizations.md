@@ -1,7 +1,7 @@
 # Rust Optimizations in RustyBT
 
-**Version**: 1.0  
-**Last Updated**: 2025-01-09  
+**Version**: 1.0
+**Last Updated**: 2025-01-09
 **Status**: Production Ready
 
 ## Overview
@@ -198,15 +198,15 @@ from rustybt.rust_optimizations import rust_sma, rust_ema
 class MACrossStrategy(TradingAlgorithm):
     def initialize(self, context):
         context.asset = self.symbol('AAPL')
-        
+
     def handle_data(self, context, data):
         # Get price history as Decimal
         prices = data.history(context.asset, 'close', 50, '1d')
-        
+
         # Compute indicators with Rust acceleration
         sma_20 = rust_sma(prices, window=20)
         sma_50 = rust_sma(prices, window=50)
-        
+
         # Trading logic
         if sma_20[-1] > sma_50[-1]:
             self.order_target_percent(context.asset, 1.0)

@@ -4,42 +4,40 @@ Tests for Algorithms using the Pipeline API.
 
 from pathlib import Path
 
-from parameterized import parameterized
 import numpy as np
-from numpy.testing import assert_almost_equal
 import pandas as pd
-from rustybt.utils.calendar_utils import get_calendar
+import pytest
+from numpy.testing import assert_almost_equal
+from parameterized import parameterized
 
 from rustybt.api import (
     attach_pipeline,
-    pipeline_output,
     get_datetime,
+    pipeline_output,
 )
 from rustybt.errors import (
     AttachPipelineAfterInitialize,
-    PipelineOutputDuringInitialize,
-    NoSuchPipeline,
     DuplicatePipelineName,
+    NoSuchPipeline,
+    PipelineOutputDuringInitialize,
 )
 from rustybt.finance.trading import SimulationParameters
 from rustybt.lib.adjustment import AdjustmentKind
-from rustybt.pipeline import Pipeline, CustomFactor
-from rustybt.pipeline.factors import VWAP
+from rustybt.pipeline import CustomFactor, Pipeline
 from rustybt.pipeline.data import USEquityPricing
-from rustybt.pipeline.loaders.frame import DataFrameLoader
+from rustybt.pipeline.factors import VWAP
 from rustybt.pipeline.loaders.equity_pricing_loader import (
     USEquityPricingLoader,
 )
-from rustybt.testing import str_to_seconds
-from rustybt.testing import create_empty_splits_mergers_frame
+from rustybt.pipeline.loaders.frame import DataFrameLoader
+from rustybt.testing import create_empty_splits_mergers_frame, str_to_seconds
 from rustybt.testing.fixtures import (
-    WithMakeAlgo,
     WithAdjustmentReader,
     WithBcolzEquityDailyBarReaderFromCSVs,
+    WithMakeAlgo,
     ZiplineTestCase,
 )
-import pytest
-
+from rustybt.utils.calendar_utils import get_calendar
 
 # zipline_repo/tests/resources/pipeline_inputs
 TEST_RESOURCE_PATH = Path(__file__).parent.parent / "resources" / "pipeline_inputs"
@@ -300,8 +298,7 @@ class ClosesAndVolumes(WithMakeAlgo, ZiplineTestCase):
 
         if chunks == "all_but_one_day":
             chunks = (
-                self.dates.get_loc(self.last_asset_end)
-                - self.dates.get_loc(self.first_asset_start)
+                self.dates.get_loc(self.last_asset_end) - self.dates.get_loc(self.first_asset_start)
             ) - 1
         elif chunks == "custom_iter":
             chunks = []
@@ -363,12 +360,8 @@ class ClosesAndVolumes(WithMakeAlgo, ZiplineTestCase):
                 exists_today = self.exists(date, asset)
                 existed_yesterday = self.exists(date - self.trading_day, asset)
                 if exists_today and existed_yesterday:
-                    assert closes.loc[asset, "close"] == self.expected_close(
-                        date, asset
-                    )
-                    assert volumes.loc[asset, "volume"] == self.expected_volume(
-                        date, asset
-                    )
+                    assert closes.loc[asset, "close"] == self.expected_close(date, asset)
+                    assert volumes.loc[asset, "volume"] == self.expected_volume(date, asset)
                 else:
                     assert asset not in closes.index
                     assert asset not in volumes.index
@@ -556,8 +549,7 @@ class PipelineAlgorithmTestCase(
         assert_almost_equal(on_split, 645.5700 / split_ratio, decimal=2)
         assert_almost_equal(
             on_split,
-            raw[AAPL].loc[split_date - self.trading_calendar.day, "close"]
-            / split_ratio,
+            raw[AAPL].loc[split_date - self.trading_calendar.day, "close"] / split_ratio,
             decimal=2,
         )
 

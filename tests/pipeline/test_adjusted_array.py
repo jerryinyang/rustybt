@@ -8,36 +8,36 @@ from string import ascii_lowercase, ascii_uppercase
 from textwrap import dedent
 
 import numpy as np
+import pytest
 from toolz import curry
 
 from rustybt.errors import WindowLengthNotPositive, WindowLengthTooLong
+from rustybt.lib.adjusted_array import AdjustedArray
 from rustybt.lib.adjustment import (
     Boolean1DArrayOverwrite,
     BooleanOverwrite,
-    Datetime641DArrayOverwrite,
     Datetime64Overwrite,
-    Float641DArrayOverwrite,
+    Datetime641DArrayOverwrite,
     Float64Multiply,
     Float64Overwrite,
+    Float641DArrayOverwrite,
     Int64Overwrite,
     Object1DArrayOverwrite,
     ObjectOverwrite,
 )
-from rustybt.lib.adjusted_array import AdjustedArray
 from rustybt.lib.labelarray import LabelArray
 from rustybt.testing import check_arrays
 from rustybt.testing.predicates import assert_equal
 from rustybt.utils.compat import unicode
 from rustybt.utils.numpy_utils import (
+    bool_dtype,
     coerce_to_dtype,
     datetime64ns_dtype,
     default_missing_value_for_dtype,
-    bool_dtype,
     float64_dtype,
     int64_dtype,
     object_dtype,
 )
-import pytest
 
 
 def moving_window(array, nrows):
@@ -117,9 +117,7 @@ def _gen_unadjusted_cases(name, make_input, make_expected_output, missing_value)
     expected_output_array = make_expected_output(raw_data)
 
     for windowlen in valid_window_lengths(nrows):
-        num_legal_windows = num_windows_of_length_M_on_buffers_of_length_N(
-            windowlen, nrows
-        )
+        num_legal_windows = num_windows_of_length_M_on_buffers_of_length_N(windowlen, nrows)
 
         yield AdjustmentCase(
             name="%s_length_%d" % (name, windowlen),
@@ -320,9 +318,7 @@ def _gen_overwrite_1d_array_adjustment_case(dtype):
     vals1 = [1]
     # Note that row indices are inclusive!
     adjustments[1] = [
-        adjustment_type(
-            0, 0, 0, 0, np.array([coerce_to_dtype(dtype, val) for val in vals1])
-        )
+        adjustment_type(0, 0, 0, 0, np.array([coerce_to_dtype(dtype, val) for val in vals1]))
     ]
     buffer_as_of[1] = make_expected_dtype(
         [[1, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2]]
@@ -333,9 +329,7 @@ def _gen_overwrite_1d_array_adjustment_case(dtype):
 
     vals3 = [4, 4, 1]
     adjustments[3] = [
-        adjustment_type(
-            0, 2, 0, 0, np.array([coerce_to_dtype(dtype, val) for val in vals3])
-        )
+        adjustment_type(0, 2, 0, 0, np.array([coerce_to_dtype(dtype, val) for val in vals3]))
     ]
     buffer_as_of[3] = make_expected_dtype(
         [[4, 2, 2], [4, 2, 2], [1, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2]]
@@ -343,9 +337,7 @@ def _gen_overwrite_1d_array_adjustment_case(dtype):
 
     vals4 = [5] * 4
     adjustments[4] = [
-        adjustment_type(
-            0, 3, 2, 2, np.array([coerce_to_dtype(dtype, val) for val in vals4])
-        )
+        adjustment_type(0, 3, 2, 2, np.array([coerce_to_dtype(dtype, val) for val in vals4]))
     ]
     buffer_as_of[4] = make_expected_dtype(
         [[4, 2, 5], [4, 2, 5], [1, 2, 5], [2, 2, 5], [2, 2, 2], [2, 2, 2]]
@@ -353,9 +345,7 @@ def _gen_overwrite_1d_array_adjustment_case(dtype):
 
     vals5 = range(1, 6)
     adjustments[5] = [
-        adjustment_type(
-            0, 4, 1, 1, np.array([coerce_to_dtype(dtype, val) for val in vals5])
-        ),
+        adjustment_type(0, 4, 1, 1, np.array([coerce_to_dtype(dtype, val) for val in vals5])),
     ]
     buffer_as_of[5] = make_expected_dtype(
         [[4, 1, 5], [4, 2, 5], [1, 3, 5], [2, 4, 5], [2, 5, 2], [2, 2, 2]]
@@ -373,15 +363,11 @@ def _gen_overwrite_1d_array_adjustment_case(dtype):
 def _gen_expectations(
     baseline, missing_value, adjustments, buffer_as_of, nrows, perspective_offsets
 ):
-    for windowlen, perspective_offset in product(
-        valid_window_lengths(nrows), perspective_offsets
-    ):
+    for windowlen, perspective_offset in product(valid_window_lengths(nrows), perspective_offsets):
         # How long is an iterator of length-N windows on this buffer?
         # For example, for a window of length 3 on a buffer of length 6, there
         # are four valid windows.
-        num_legal_windows = num_windows_of_length_M_on_buffers_of_length_N(
-            windowlen, nrows
-        )
+        num_legal_windows = num_windows_of_length_M_on_buffers_of_length_N(windowlen, nrows)
 
         # Build the sequence of regions in the underlying buffer we expect to
         # see. For example, with a window length of 3 on a buffer of length 6,
@@ -396,9 +382,7 @@ def _gen_expectations(
         #  (buffer_as_of[3], buffer_as_of[4], buffer_as_of[5], buffer_as_of[5])
         #
         initial_perspective = windowlen + perspective_offset - 1
-        perspectives = range(
-            initial_perspective, initial_perspective + num_legal_windows
-        )
+        perspectives = range(initial_perspective, initial_perspective + num_legal_windows)
 
         def as_of(p):
             # perspective_offset can push us past the end of the underlying
@@ -410,13 +394,11 @@ def _gen_expectations(
 
         expected_iterator_results = [
             as_of(perspective)[slice_]
-            for slice_, perspective in zip(slices, perspectives)
+            for slice_, perspective in zip(slices, perspectives, strict=False)
         ]
 
-        test_name = "dtype_{}_length_{}_perpective_offset_{}".format(
-            baseline.dtype,
-            windowlen,
-            perspective_offset,
+        test_name = (
+            f"dtype_{baseline.dtype}_length_{windowlen}_perpective_offset_{perspective_offset}"
         )
 
         yield AdjustmentCase(
@@ -456,7 +438,7 @@ class TestAdjustedArray:
 
         a_it = adjusted_array.traverse(2, copy=False)
         b_it = traverse_copy.traverse(2, copy=False)
-        for a, b in zip(a_it, b_it):
+        for a, b in zip(a_it, b_it, strict=False):
             assert_equal(a, b)
 
         err_msg = "cannot copy invalidated AdjustedArray"
@@ -534,10 +516,9 @@ class TestAdjustedArray:
         perspective_offset,
         expected_output,
     ):
-
         array = AdjustedArray(data, adjustments, missing_value)
         for _ in range(2):  # Iterate 2x ensure adjusted_arrays are re-usable.
-            in_out = zip(array.traverse(lookback), expected_output)
+            in_out = zip(array.traverse(lookback), expected_output, strict=False)
             for yielded, expected_yield in in_out:
                 check_arrays(yielded, expected_yield)
 
@@ -556,7 +537,6 @@ class TestAdjustedArray:
         perspective_offset,
         expected,
     ):
-
         array = AdjustedArray(data, adjustments, missing_value)
         for _ in range(2):  # Iterate 2x ensure adjusted_arrays are re-usable.
             window_iter = array.traverse(
@@ -696,9 +676,7 @@ class TestAdjustedArray:
         check_arrays(window, expected)
 
         window = next(it)
-        full_expected[0:3, 1:3] = LabelArray(
-            [["~Ab", "~Ac"], ["~Bb", "~Bc"], ["~Cb", "~Cb"]], None
-        )
+        full_expected[0:3, 1:3] = LabelArray([["~Ab", "~Ac"], ["~Bb", "~Bc"], ["~Cb", "~Cb"]], None)
         expected = full_expected[2:5]
         check_arrays(window, expected)
 
@@ -708,7 +686,6 @@ class TestAdjustedArray:
         check_arrays(window, expected)
 
     def test_invalid_lookback(self):
-
         data = np.arange(30, dtype=float).reshape(6, 5)
         adj_array = AdjustedArray(data, {}, float("nan"))
 
@@ -722,7 +699,6 @@ class TestAdjustedArray:
             adj_array.traverse(-1)
 
     def test_array_views_arent_writable(self):
-
         data = np.arange(30, dtype=float).reshape(6, 5)
         adj_array = AdjustedArray(data, {}, float("nan"))
 
@@ -856,7 +832,7 @@ last_col=0, value=4.000000)]}
             expected_adjustments_with_prepend,
         ]
 
-        for method, expected_output in zip(methods, expected_outputs):
+        for method, expected_output in zip(methods, expected_outputs, strict=False):
             data = np.arange(30, dtype=float).reshape(6, 5)
             adjusted_array = AdjustedArray(data, initial_adjustments, float("nan"))
 

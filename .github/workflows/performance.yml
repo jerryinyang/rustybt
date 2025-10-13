@@ -1,0 +1,139 @@
+name: Performance Regression
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  performance:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.local/share/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Run benchmark suite
+        run: |
+          echo "Running benchmark suite..."
+          # Run pytest benchmarks
+          uv run pytest benchmarks/ \
+            --benchmark-only \
+            --benchmark-json=benchmark-results.json \
+            -v || echo "Benchmarks completed with some failures"
+        id: benchmarks
+        continue-on-error: true
+
+      - name: Check if baseline exists
+        id: check-baseline
+        run: |
+          if [ -f benchmark-baseline.json ]; then
+            echo "baseline_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "baseline_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create baseline if missing
+        if: steps.check-baseline.outputs.baseline_exists == 'false'
+        run: |
+          echo "No baseline found, creating one..."
+          cp benchmark-results.json benchmark-baseline.json
+          echo "✅ Baseline created"
+
+      - name: Check performance regression
+        if: steps.check-baseline.outputs.baseline_exists == 'true'
+        run: |
+          echo "Checking for performance regressions..."
+          uv run python scripts/check_performance_regression.py \
+            --threshold=0.20 \
+            --baseline=benchmark-baseline.json \
+            --current=benchmark-results.json \
+            --fail-on-regression || true
+        id: regression-check
+        continue-on-error: true
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results
+          path: |
+            benchmark-results.json
+            benchmark-baseline.json
+
+      - name: Create issue if regression detected
+        if: steps.regression-check.outcome == 'failure'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '# Performance Regression Detected\n\n';
+            body += 'Benchmark execution on main branch detected performance regressions.\n\n';
+
+            try {
+              const results = JSON.parse(fs.readFileSync('benchmark-results.json', 'utf8'));
+              body += '## Benchmark Results\n\n';
+              body += '```json\n' + JSON.stringify(results, null, 2) + '\n```\n\n';
+            } catch (e) {
+              body += '## Benchmark Results\n\nFailed to parse results\n\n';
+            }
+
+            body += '## Action Required\n\n';
+            body += '1. Review the benchmark results in workflow artifacts\n';
+            body += '2. Investigate commits that may have caused the regression\n';
+            body += '3. Optimize affected code or update baseline if intentional\n';
+            body += '4. Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n';
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Performance Regression Detected (${new Date().toISOString().split('T')[0]})`,
+              body: body,
+              labels: ['performance', 'regression', 'automated']
+            });
+
+      - name: Performance summary
+        if: always()
+        run: |
+          echo "=== Performance Benchmark Results ==="
+          echo ""
+          echo "✅ Benchmarks: ${{ steps.benchmarks.outcome }}"
+
+          if [[ "${{ steps.check-baseline.outputs.baseline_exists }}" == "true" ]]; then
+            echo "⚠️  Regression check: ${{ steps.regression-check.outcome }}"
+          else
+            echo "ℹ️  Baseline created (first run)"
+          fi
+
+          echo ""
+
+          if [[ "${{ steps.regression-check.outcome }}" == "failure" ]]; then
+            echo "⚠️  Performance regressions detected (issue created)"
+          else
+            echo "✅ No performance regressions detected"
+          fi

@@ -10,7 +10,7 @@ Tests cover:
 """
 
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -18,7 +18,6 @@ import polars as pl
 import pytest
 
 from rustybt.data.polars.cache_manager import CacheManager, LRUCache
-
 
 # Fixtures
 
@@ -399,7 +398,7 @@ def test_lru_eviction_removes_oldest_entry(cache_manager, sample_dataframe):
     cache_manager._check_cold_cache_eviction()
 
     # First key should be evicted
-    cache_entry = cache_manager.lookup_cache(keys[0])
+    cache_manager.lookup_cache(keys[0])
     # Note: May or may not be evicted depending on file sizes
     # Just verify eviction runs without error
 
@@ -712,7 +711,8 @@ def test_cache_hit_performance_cold_cache(cache_manager, sample_dataframe, bench
 @pytest.mark.hypothesis
 def test_cache_key_uniqueness_property():
     """Property: Different parameters always produce different cache keys."""
-    from hypothesis import given, strategies as st
+    from hypothesis import given
+    from hypothesis import strategies as st
 
     cache_manager_temp = CacheManager(
         db_path=":memory:",

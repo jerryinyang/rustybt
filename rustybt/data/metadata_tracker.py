@@ -2,9 +2,8 @@
 
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-import pandas as pd
 import polars as pl
 from exchange_calendars import ExchangeCalendar
 
@@ -16,7 +15,7 @@ from rustybt.utils.checksum import calculate_checksum, calculate_checksum_multip
 class BundleMetadataTracker:
     """Tracks metadata and quality metrics during bundle ingestion."""
 
-    def __init__(self, catalog: Optional[DataCatalog] = None):
+    def __init__(self, catalog: DataCatalog | None = None):
         """Initialize metadata tracker.
 
         Args:
@@ -29,11 +28,11 @@ class BundleMetadataTracker:
         bundle_name: str,
         source_type: str,
         data_files: list[Path],
-        data: Optional[pl.DataFrame] = None,
-        source_url: Optional[str] = None,
-        api_version: Optional[str] = None,
-        data_version: Optional[str] = None,
-        calendar: Optional[ExchangeCalendar] = None,
+        data: pl.DataFrame | None = None,
+        source_url: str | None = None,
+        api_version: str | None = None,
+        data_version: str | None = None,
+        calendar: ExchangeCalendar | None = None,
         timezone: str = "UTC",
     ) -> dict[str, Any]:
         """Record metadata and quality metrics for bundle ingestion.
@@ -88,8 +87,8 @@ class BundleMetadataTracker:
         self,
         bundle_name: str,
         csv_dir: Path,
-        data: Optional[pl.DataFrame] = None,
-        calendar: Optional[ExchangeCalendar] = None,
+        data: pl.DataFrame | None = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> dict[str, Any]:
         """Record metadata for CSV bundle ingestion.
 
@@ -121,11 +120,11 @@ class BundleMetadataTracker:
         bundle_name: str,
         source_type: str,
         data_file: Path,
-        data: Optional[pl.DataFrame] = None,
-        api_url: Optional[str] = None,
-        api_version: Optional[str] = None,
-        data_version: Optional[str] = None,
-        calendar: Optional[ExchangeCalendar] = None,
+        data: pl.DataFrame | None = None,
+        api_url: str | None = None,
+        api_version: str | None = None,
+        data_version: str | None = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> dict[str, Any]:
         """Record metadata for API-sourced bundle ingestion.
 
@@ -157,8 +156,8 @@ class BundleMetadataTracker:
 def track_csv_bundle_metadata(
     bundle_name: str,
     csv_dir: str,
-    data: Optional[pl.DataFrame] = None,
-    calendar: Optional[ExchangeCalendar] = None,
+    data: pl.DataFrame | None = None,
+    calendar: ExchangeCalendar | None = None,
 ) -> dict[str, Any]:
     """Convenience function to track CSV bundle metadata.
 
@@ -179,11 +178,11 @@ def track_api_bundle_metadata(
     bundle_name: str,
     source_type: str,
     data_file: str,
-    data: Optional[pl.DataFrame] = None,
-    api_url: Optional[str] = None,
-    api_version: Optional[str] = None,
-    data_version: Optional[str] = None,
-    calendar: Optional[ExchangeCalendar] = None,
+    data: pl.DataFrame | None = None,
+    api_url: str | None = None,
+    api_version: str | None = None,
+    data_version: str | None = None,
+    calendar: ExchangeCalendar | None = None,
 ) -> dict[str, Any]:
     """Convenience function to track API bundle metadata.
 

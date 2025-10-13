@@ -13,24 +13,28 @@ __all__ = [
 # Optional exchange adapters (require additional dependencies)
 try:
     from rustybt.live.brokers.binance_adapter import BinanceBrokerAdapter
+
     __all__.append("BinanceBrokerAdapter")
 except ImportError:
     pass
 
 try:
     from rustybt.live.brokers.bybit_adapter import BybitBrokerAdapter
+
     __all__.append("BybitBrokerAdapter")
 except ImportError:
     pass
 
 try:
     from rustybt.live.brokers.ccxt_adapter import CCXTBrokerAdapter
+
     __all__.append("CCXTBrokerAdapter")
 except ImportError:
     pass
 
 try:
     from rustybt.live.brokers.hyperliquid_adapter import HyperliquidBrokerAdapter
+
     __all__.append("HyperliquidBrokerAdapter")
 except ImportError:
     pass

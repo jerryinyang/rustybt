@@ -100,13 +100,13 @@ make rust-test
 The typical workflow for developing Rust extensions:
 
 1. **Edit Rust code** in `rust/src/`
-   
+
 2. **Rebuild the extension:**
    ```bash
    cd rust/
    maturin develop
    ```
-   
+
    Or from project root:
    ```bash
    make rust-dev
@@ -254,14 +254,14 @@ fn decimal_sum(py: Python, a: &PyAny, b: &PyAny) -> PyResult<PyObject> {
     // Import Python's Decimal
     let decimal_module = py.import_bound("decimal")?;
     let decimal_class = decimal_module.getattr("Decimal")?;
-    
+
     // Convert to Decimal if not already
     let a_dec = decimal_class.call1((a,))?;
     let b_dec = decimal_class.call1((b,))?;
-    
+
     // Perform addition
     let result = a_dec.call_method1("__add__", (b_dec,))?;
-    
+
     Ok(result.into())
 }
 ```

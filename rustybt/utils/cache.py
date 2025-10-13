@@ -1,15 +1,14 @@
 """Caching utilities for zipline"""
 
-from collections.abc import MutableMapping
 import errno
-from functools import partial
 import os
 import pickle
+from collections.abc import MutableMapping
+from functools import partial
 
 # from distutils import dir_util
-from shutil import copytree
-from shutil import rmtree, move
-from tempfile import mkdtemp, NamedTemporaryFile
+from shutil import copytree, move, rmtree
+from tempfile import NamedTemporaryFile, mkdtemp
 
 import pandas as pd
 
@@ -37,7 +36,7 @@ class CachedObject:
         Expiration date of `value`. The cache is considered invalid for dates
         **strictly greater** than `expires`.
 
-    Examples
+    Examples:
     --------
     >>> from pandas import Timestamp, Timedelta
     >>> expires = Timestamp('2014', tz='UTC')
@@ -66,12 +65,12 @@ class CachedObject:
         """
         Get the cached value.
 
-        Returns
+        Returns:
         -------
         value : object
             The cached value.
 
-        Raises
+        Raises:
         ------
         Expired
             Raised when `dt` is greater than self.expires.
@@ -102,7 +101,7 @@ class ExpiringCache:
         upon expiry of the cached object, prior to deleting the object. If not
         provided, defaults to a no-op.
 
-    Examples
+    Examples:
     --------
     >>> from pandas import Timestamp, Timedelta
     >>> expires = Timestamp('2014', tz='UTC')
@@ -135,12 +134,12 @@ class ExpiringCache:
         dt : datetime
             The time of the lookup.
 
-        Returns
+        Returns:
         -------
         result : any
             The value for ``key``.
 
-        Raises
+        Raises:
         ------
         KeyError
             Raised if the key is not in the cache or the value for the key
@@ -193,7 +192,7 @@ class dataframe_cache(MutableMapping):
         optional pickle protocol can be passed like: ``'pickle:3'`` which says
         to use pickle protocol 3.
 
-    Notes
+    Notes:
     -----
     The syntax ``cache[:]`` will load all key:value pairs into memory as a
     dictionary.
@@ -201,9 +200,7 @@ class dataframe_cache(MutableMapping):
     versions of zipline.
     """
 
-    def __init__(
-        self, path=None, lock=None, clean_on_failure=True, serialization="pickle"
-    ):
+    def __init__(self, path=None, lock=None, clean_on_failure=True, serialization="pickle"):
         self.path = path if path is not None else mkdtemp()
         self.lock = lock if lock is not None else nop_context
         self.clean_on_failure = clean_on_failure
@@ -251,7 +248,7 @@ class dataframe_cache(MutableMapping):
             try:
                 with open(self._keypath(key), "rb") as f:
                     return self.deserialize(f)
-            except IOError as exc:
+            except OSError as exc:
                 if exc.errno != errno.ENOENT:
                     raise
                 raise KeyError(key) from exc
@@ -295,7 +292,7 @@ class working_file:
     *args, **kwargs
         Forwarded to NamedTemporaryFile.
 
-    Notes
+    Notes:
     -----
     The file is moved on __exit__ if there are no exceptions.
     ``working_file`` uses :func:`shutil.move` to move the actual files,
@@ -338,7 +335,7 @@ class working_dir:
     *args, **kwargs
         Forwarded to tmp_dir.
 
-    Notes
+    Notes:
     -----
     The file is moved on __exit__ if there are no exceptions.
     ``working_dir`` uses :func:`dir_util.copy_tree` to move the actual files,

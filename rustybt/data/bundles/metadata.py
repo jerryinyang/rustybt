@@ -15,6 +15,8 @@ from rustybt.assets.asset_db_schema import (
     bundle_cache,
     bundle_metadata,
     bundle_symbols,
+)
+from rustybt.assets.asset_db_schema import (
     metadata as schema_metadata,
 )
 
@@ -96,6 +98,7 @@ class BundleMetadata:
         if cls._engine is None:
             if cls._db_path is None:
                 from rustybt.utils.paths import zipline_root
+
                 cls._db_path = str(Path(zipline_root()) / f"assets-{ASSET_DB_VERSION}.db")
 
             cls._engine = create_engine(f"sqlite:///{cls._db_path}")
@@ -122,7 +125,6 @@ class BundleMetadata:
     @classmethod
     def _normalize_metadata(cls, metadata: dict[str, Any]) -> dict[str, Any]:
         """Normalize metadata payload for storage."""
-
         normalized: dict[str, Any] = {}
 
         for key, value in metadata.items():
@@ -187,9 +189,7 @@ class BundleMetadata:
 
         with Session(engine) as session:
             stmt = (
-                select(bundle_metadata)
-                .where(bundle_metadata.c.bundle_name == bundle_name)
-                .limit(1)
+                select(bundle_metadata).where(bundle_metadata.c.bundle_name == bundle_name).limit(1)
             )
             existing = session.execute(stmt).fetchone()
 
@@ -205,7 +205,9 @@ class BundleMetadata:
                     )
             else:
                 if "source_type" not in normalized:
-                    raise ValueError("'source_type' is required when creating new bundle metadata entry")
+                    raise ValueError(
+                        "'source_type' is required when creating new bundle metadata entry"
+                    )
 
                 source_type = normalized.pop("source_type")
                 fetch_timestamp = normalized.pop("fetch_timestamp", current_time)
@@ -273,9 +275,7 @@ class BundleMetadata:
         with Session(engine) as session:
             # Get bundle metadata
             stmt = (
-                select(bundle_metadata)
-                .where(bundle_metadata.c.bundle_name == bundle_name)
-                .limit(1)
+                select(bundle_metadata).where(bundle_metadata.c.bundle_name == bundle_name).limit(1)
             )
             row = session.execute(stmt).mappings().fetchone()
 
@@ -376,9 +376,7 @@ class BundleMetadata:
 
         with Session(engine) as session:
             # Delete cache entries
-            delete_cache = bundle_cache.delete().where(
-                bundle_cache.c.bundle_name == bundle_name
-            )
+            delete_cache = bundle_cache.delete().where(bundle_cache.c.bundle_name == bundle_name)
             session.execute(delete_cache)
 
             # Delete associated symbols
@@ -407,7 +405,7 @@ class BundleMetadata:
         bundle_name: str,
         symbol: str,
         asset_type: str | None = None,
-        exchange: str | None = None
+        exchange: str | None = None,
     ) -> int:
         """Add symbol to bundle.
 
@@ -429,8 +427,7 @@ class BundleMetadata:
             # Check if symbol already exists
             stmt = select(bundle_symbols).where(
                 sa.and_(
-                    bundle_symbols.c.bundle_name == bundle_name,
-                    bundle_symbols.c.symbol == symbol
+                    bundle_symbols.c.bundle_name == bundle_name, bundle_symbols.c.symbol == symbol
                 )
             )
             existing = session.execute(stmt).fetchone()
@@ -442,7 +439,7 @@ class BundleMetadata:
                     .where(
                         sa.and_(
                             bundle_symbols.c.bundle_name == bundle_name,
-                            bundle_symbols.c.symbol == symbol
+                            bundle_symbols.c.symbol == symbol,
                         )
                     )
                     .values(asset_type=asset_type, exchange=exchange)
@@ -491,9 +488,7 @@ class BundleMetadata:
         engine = cls._get_engine()
 
         with Session(engine) as session:
-            stmt = select(bundle_symbols).where(
-                bundle_symbols.c.bundle_name == bundle_name
-            )
+            stmt = select(bundle_symbols).where(bundle_symbols.c.bundle_name == bundle_name)
             results = session.execute(stmt).fetchall()
 
             return [
@@ -513,11 +508,7 @@ class BundleMetadata:
 
     @classmethod
     def add_cache_entry(
-        cls,
-        cache_key: str,
-        bundle_name: str,
-        parquet_path: str,
-        size_bytes: int
+        cls, cache_key: str, bundle_name: str, parquet_path: str, size_bytes: int
     ) -> None:
         """Add cache entry for bundle.
 
@@ -573,9 +564,16 @@ class BundleMetadata:
 
         # Extract quality fields
         quality_fields = {
-            "bundle_name", "row_count", "start_date", "end_date",
-            "missing_days_count", "missing_days_list", "outlier_count",
-            "ohlcv_violations", "validation_timestamp", "validation_passed"
+            "bundle_name",
+            "row_count",
+            "start_date",
+            "end_date",
+            "missing_days_count",
+            "missing_days_list",
+            "outlier_count",
+            "ohlcv_violations",
+            "validation_timestamp",
+            "validation_passed",
         }
 
         return {k: v for k, v in metadata.items() if k in quality_fields}

@@ -2,19 +2,21 @@
 Module for building a complete daily dataset from Quandl's WIKI dataset.
 """
 
-from io import BytesIO
+import logging
+import pathlib
 import tarfile
+from io import BytesIO
+from urllib.parse import urlencode
 from zipfile import ZipFile
 
-from click import progressbar
-import logging
+import numpy as np
 import pandas as pd
 import requests
-from urllib.parse import urlencode
+from click import progressbar
+
 from rustybt.utils.calendar_utils import register_calendar_alias
 
 from . import core as bundles
-import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -95,9 +97,7 @@ def fetch_data_table(api_key, show_progress, retries):
             log.exception("Exception raised reading Quandl data. Retrying.")
 
     else:
-        raise ValueError(
-            "Failed to download Quandl data after %d attempts." % (retries)
-        )
+        raise ValueError("Failed to download Quandl data after %d attempts." % (retries))
 
 
 def gen_asset_metadata(data, show_progress):
@@ -150,9 +150,7 @@ def parse_dividends(data, show_progress):
 
 def parse_pricing_and_vol(data, sessions, symbol_map):
     for asset_id, symbol in symbol_map.items():
-        asset_data = (
-            data.xs(symbol, level=1).reindex(sessions.tz_localize(None)).fillna(0.0)
-        )
+        asset_data = data.xs(symbol, level=1).reindex(sessions.tz_localize(None)).fillna(0.0)
         yield asset_id, asset_data
 
 
@@ -178,13 +176,9 @@ def quandl_bundle(
     """
     api_key = environ.get("QUANDL_API_KEY")
     if api_key is None:
-        raise ValueError(
-            "Please set your QUANDL_API_KEY environment variable and retry."
-        )
+        raise ValueError("Please set your QUANDL_API_KEY environment variable and retry.")
 
-    raw_data = fetch_data_table(
-        api_key, show_progress, environ.get("QUANDL_DOWNLOAD_ATTEMPTS", 5)
-    )
+    raw_data = fetch_data_table(api_key, show_progress, environ.get("QUANDL_DOWNLOAD_ATTEMPTS", 5))
     asset_metadata = gen_asset_metadata(raw_data[["symbol", "date"]], show_progress)
 
     exchanges = pd.DataFrame(
@@ -243,7 +237,7 @@ def download_with_progress(url, chunk_size, **progress_kwargs):
     **progress_kwargs
         Forwarded to click.progressbar.
 
-    Returns
+    Returns:
     -------
     data : BytesIO
         A BytesIO containing the downloaded data.
@@ -272,7 +266,7 @@ def download_without_progress(url):
     url : str
         A URL that can be understood by ``requests.get``.
 
-    Returns
+    Returns:
     -------
     data : BytesIO
         A BytesIO containing the downloaded data.
@@ -319,9 +313,7 @@ def quantopian_quandl_bundle(
         for member in tar.getmembers():
             member_path = (output_path / member.name).resolve()
             if not str(member_path).startswith(str(output_path)):
-                raise ValueError(
-                    f"Attempted path traversal in tar file: {member.name}"
-                )
+                raise ValueError(f"Attempted path traversal in tar file: {member.name}")
 
         tar.extractall(output_dir)
 

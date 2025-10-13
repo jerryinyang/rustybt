@@ -7,29 +7,31 @@ Decimal data pipeline components.
 Run with: uv run pytest tests/benchmarks/test_decimal_data_performance.py -v --benchmark-only
 """
 
-import pytest
-import polars as pl
 import tempfile
-from pathlib import Path
-from decimal import Decimal
 from datetime import date, timedelta
+from decimal import Decimal
+from pathlib import Path
+
 import pandas as pd
+import polars as pl
+import pytest
 
 from rustybt.data.bundles.csvdir import convert_csv_to_decimal_parquet
-from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader
-from rustybt.data.polars.data_portal import PolarsDataPortal
 from rustybt.data.decimal_adjustments import (
-    apply_split_adjustment,
     apply_dividend_adjustment,
+    apply_split_adjustment,
 )
+from rustybt.data.polars.data_portal import PolarsDataPortal
+from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader
 from rustybt.pipeline.factors.decimal_factors import (
-    DecimalSimpleMovingAverage,
     DecimalReturns,
+    DecimalSimpleMovingAverage,
 )
 
 
 class MockAsset:
     """Mock Asset for benchmarking."""
+
     def __init__(self, sid, symbol="TEST"):
         self.sid = sid
         self.symbol = symbol
@@ -88,11 +90,7 @@ def benchmark_bundle():
         daily_bars_path.mkdir()
 
         parquet_path = daily_bars_path / "data.parquet"
-        convert_csv_to_decimal_parquet(
-            str(csv_path),
-            str(parquet_path),
-            asset_class="crypto"
-        )
+        convert_csv_to_decimal_parquet(str(csv_path), str(parquet_path), asset_class="crypto")
 
         yield bundle_path
 
@@ -113,10 +111,7 @@ class TestDataLoadingPerformance:
 
             # Benchmark the ingestion
             result = benchmark(
-                convert_csv_to_decimal_parquet,
-                str(csv_path),
-                str(parquet_path),
-                "crypto"
+                convert_csv_to_decimal_parquet, str(csv_path), str(parquet_path), "crypto"
             )
 
             # Verify ingestion succeeded
@@ -131,12 +126,7 @@ class TestDataLoadingPerformance:
         end = date(2023, 12, 31)
 
         # Benchmark the read operation
-        result = benchmark(
-            reader.load_daily_bars,
-            sids=sids,
-            start_date=start,
-            end_date=end
-        )
+        result = benchmark(reader.load_daily_bars, sids=sids, start_date=start, end_date=end)
 
         # Verify data loaded
         assert len(result) > 0
@@ -155,7 +145,7 @@ class TestDataLoadingPerformance:
             assets=assets,
             field="close",
             dt=pd.Timestamp("2023-06-15"),
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Verify result
@@ -177,7 +167,7 @@ class TestDataLoadingPerformance:
             bar_count=20,
             frequency="1d",
             field="close",
-            data_frequency="daily"
+            data_frequency="daily",
         )
 
         # Verify result
@@ -194,20 +184,14 @@ class TestAdjustmentPerformance:
 
         # Load 1 year of data for 1 asset
         df = reader.load_daily_bars(
-            sids=[1],
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=[1], start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         prices = df["close"]
         split_ratio = Decimal("2.0")
 
         # Benchmark split adjustment
-        result = benchmark(
-            apply_split_adjustment,
-            prices,
-            split_ratio
-        )
+        result = benchmark(apply_split_adjustment, prices, split_ratio)
 
         # Verify adjustment applied
         assert len(result) == len(prices)
@@ -219,20 +203,14 @@ class TestAdjustmentPerformance:
 
         # Load 1 year of data for 1 asset
         df = reader.load_daily_bars(
-            sids=[1],
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=[1], start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         prices = df["close"]
         dividend = Decimal("2.50")
 
         # Benchmark dividend adjustment
-        result = benchmark(
-            apply_dividend_adjustment,
-            prices,
-            dividend
-        )
+        result = benchmark(apply_dividend_adjustment, prices, dividend)
 
         # Verify adjustment applied
         assert len(result) == len(prices)
@@ -244,9 +222,7 @@ class TestAdjustmentPerformance:
 
         # Load 10 years of simulated data (repeat 1 year data 10 times for simplicity)
         df = reader.load_daily_bars(
-            sids=[1],
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=[1], start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         prices = df["close"]
@@ -256,7 +232,9 @@ class TestAdjustmentPerformance:
             # Split adjustment
             adjusted = apply_split_adjustment(prices, Decimal("2.0"))
             # Dividend adjustment
-            adjusted = apply_dividend_adjustment(adjusted, Decimal("1.50"), validate_non_negative=False)
+            adjusted = apply_dividend_adjustment(
+                adjusted, Decimal("1.50"), validate_non_negative=False
+            )
             # Another split
             adjusted = apply_split_adjustment(adjusted, Decimal("1.5"))
             return adjusted
@@ -277,9 +255,7 @@ class TestPipelineFactorPerformance:
 
         # Load 1 year of data for 1 asset
         df = reader.load_daily_bars(
-            sids=[1],
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=[1], start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         factor = DecimalSimpleMovingAverage(window_length=20)
@@ -297,9 +273,7 @@ class TestPipelineFactorPerformance:
 
         # Load 1 year of data for 1 asset
         df = reader.load_daily_bars(
-            sids=[1],
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=[1], start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         factor = DecimalReturns(window_length=1)
@@ -317,9 +291,7 @@ class TestPipelineFactorPerformance:
 
         # Load 1 year of data for 1 asset
         df = reader.load_daily_bars(
-            sids=[1],
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=[1], start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         def compute_multiple_factors(df):
@@ -346,19 +318,19 @@ class TestMemoryUsage:
 
         # Load data as Decimal
         df_decimal = reader.load_daily_bars(
-            sids=list(range(1, 101)),
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=list(range(1, 101)), start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         # Convert to float for comparison
-        df_float = df_decimal.with_columns([
-            pl.col("open").cast(pl.Float64),
-            pl.col("high").cast(pl.Float64),
-            pl.col("low").cast(pl.Float64),
-            pl.col("close").cast(pl.Float64),
-            pl.col("volume").cast(pl.Float64),
-        ])
+        df_float = df_decimal.with_columns(
+            [
+                pl.col("open").cast(pl.Float64),
+                pl.col("high").cast(pl.Float64),
+                pl.col("low").cast(pl.Float64),
+                pl.col("close").cast(pl.Float64),
+                pl.col("volume").cast(pl.Float64),
+            ]
+        )
 
         # Get memory estimates (Polars estimated_size)
         decimal_size = df_decimal.estimated_size()
@@ -368,7 +340,7 @@ class TestMemoryUsage:
         overhead_pct = ((decimal_size - float_size) / float_size) * 100
 
         # Print results (not assertions, just informational)
-        print(f"\nMemory Usage Comparison:")
+        print("\nMemory Usage Comparison:")
         print(f"Decimal DataFrame: {decimal_size / 1024 / 1024:.2f} MB")
         print(f"Float64 DataFrame: {float_size / 1024 / 1024:.2f} MB")
         print(f"Decimal overhead: {overhead_pct:.1f}%")
@@ -397,11 +369,7 @@ class TestEndToEndPerformance:
             def full_pipeline():
                 """Execute full pipeline flow."""
                 # 1. Ingest CSV to Parquet
-                convert_csv_to_decimal_parquet(
-                    str(csv_path),
-                    str(parquet_path),
-                    "crypto"
-                )
+                convert_csv_to_decimal_parquet(str(csv_path), str(parquet_path), "crypto")
 
                 # 2. Create reader and portal
                 reader = PolarsParquetDailyReader(str(bundle_path))
@@ -415,14 +383,11 @@ class TestEndToEndPerformance:
                     bar_count=20,
                     frequency="1d",
                     field="close",
-                    data_frequency="daily"
+                    data_frequency="daily",
                 )
 
                 # 4. Apply adjustment
-                adjusted = apply_split_adjustment(
-                    history["close"],
-                    Decimal("2.0")
-                )
+                adjusted = apply_split_adjustment(history["close"], Decimal("2.0"))
 
                 # 5. Calculate factor
                 factor_df = history.with_columns(close=adjusted)

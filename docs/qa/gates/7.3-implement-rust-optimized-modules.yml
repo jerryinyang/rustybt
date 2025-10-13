@@ -73,7 +73,7 @@ architectural_decisions:
     refs:
       - "docs/performance/rust-benchmarks.md"
       - "rustybt/data/polars/data_portal.py"
-  
+
   - decision: "Defer AC9/AC10 to Story 7.4"
     rationale: "Epic design separates implementation (7.3) from validation (7.4). Story 7.4 explicitly handles profiling comparison and performance target validation as dedicated validation phase."
     outcome: "Appropriate per epic workflow"
@@ -107,13 +107,13 @@ performance_analysis:
       speedup: "1.15×"
       python_time_ms: 0.6753
       rust_time_ms: 0.5866
-  
+
   regressions_explained:
     - operation: "Simple operations (sum, mean, index_select)"
       observed: "0.04-0.08× (12-25× SLOWER)"
       explanation: "Python↔Rust conversion overhead (Vec allocation + 2 full copies) >> computation cost for simple operations. Python builtins are C-optimized and faster when conversion overhead is considered."
       mitigation: "Documentation advises against using Rust for simple operations. Use Python builtins instead."
-    
+
     - operation: "Small datasets (<1000 elements)"
       observed: "Minimal or no speedup"
       explanation: "Conversion overhead dominates for small datasets"

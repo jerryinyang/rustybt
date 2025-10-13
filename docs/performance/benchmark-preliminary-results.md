@@ -1,22 +1,22 @@
 # Preliminary Benchmark Results - Story 7.4
 
-**Date**: 2025-01-09  
-**Status**: ⚠️ **BLOCKED** - Incomplete Decimal Implementation  
+**Date**: 2025-01-09
+**Status**: ⚠️ **BLOCKED** - Incomplete Decimal Implementation
 **Story**: 7.4 - Validate Performance Target Achievement
 
 ## Executive Summary
 
-**Benchmark Status**: Partially Complete  
-**Blocker Identified**: Type mismatch between Decimal and float in metrics tracker  
-**Float Baseline**: Successfully measured (1.084s ± 0.154s)  
+**Benchmark Status**: Partially Complete
+**Blocker Identified**: Type mismatch between Decimal and float in metrics tracker
+**Float Baseline**: Successfully measured (1.084s ± 0.154s)
 **Decimal + Rust**: Cannot be measured until Decimal migration is complete
 
 ## Results Summary
 
 ### Float Baseline (✅ Complete)
 
-**Scenario**: Daily backtest (10 symbols, 252 trading days, SMA crossover)  
-**Runs**: 3 iterations  
+**Scenario**: Daily backtest (10 symbols, 252 trading days, SMA crossover)
+**Runs**: 3 iterations
 **Hardware**: macOS (darwin 25.0.0), Python 3.13.1
 
 | Run | Execution Time | Note |
@@ -29,8 +29,8 @@
 
 ### Decimal + Rust (❌ Blocked)
 
-**Error**: `TypeError: unsupported operand type(s) for -: 'decimal.Decimal' and 'float'`  
-**Location**: `rustybt/finance/metrics/metric.py:251`  
+**Error**: `TypeError: unsupported operand type(s) for -: 'decimal.Decimal' and 'float'`
+**Location**: `rustybt/finance/metrics/metric.py:251`
 **Code**: `packet["daily_perf"]["capital_used"] = cash_flow - self._previous_cash_flow`
 
 **Root Cause**: Incomplete Decimal migration in metrics tracking system. The code is attempting to subtract a float from a Decimal, which is not supported in Python.
@@ -82,7 +82,7 @@ packet["daily_perf"]["capital_used"] = cash_flow - self._previous_cash_flow
 
 ### Story Status Update
 
-**Current Status**: In Progress - Blocked by incomplete Decimal implementation  
+**Current Status**: In Progress - Blocked by incomplete Decimal implementation
 **Next Steps**:
 1. Create task/story to complete Decimal migration in metrics system
 2. Fix type mismatches discovered during benchmarking
@@ -125,7 +125,7 @@ Strategy: Simple SMA crossover (50/200)
 ### Positive
 
 1. **Benchmark infrastructure works correctly** - Script successfully measures and reports timings
-2. **Float baseline is stable** - Low variance indicates reliable measurements  
+2. **Float baseline is stable** - Low variance indicates reliable measurements
 3. **Early detection** - Discovered blocker before committing to full benchmark suite
 
 ### Issues Discovered
@@ -178,6 +178,6 @@ python scripts/profiling/benchmark_overhead.py --scenario daily --runs 3 --outpu
 
 ---
 
-**Report Generated**: 2025-01-09  
-**Author**: James (Full Stack Developer)  
+**Report Generated**: 2025-01-09
+**Author**: James (Full Stack Developer)
 **Status**: Awaiting Decimal migration completion

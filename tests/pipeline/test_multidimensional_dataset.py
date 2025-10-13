@@ -1,16 +1,16 @@
-from collections import OrderedDict
 import itertools
+import re
+from collections import OrderedDict
 from textwrap import dedent
 
 import numpy as np
+import pytest
+
 from rustybt.pipeline.data import (
     Column,
     DataSetFamily,
     DataSetFamilySlice,
 )
-
-import pytest
-import re
 
 
 class TestDataSetFamily:
@@ -47,10 +47,7 @@ class TestDataSetFamily:
         assert MD1Slice is not MD2Slice
 
     def test_empty_extra_dims(self):
-        msg = (
-            "DataSetFamily must be defined with non-empty extra_dims,"
-            " or with `_abstract = True`"
-        )
+        msg = "DataSetFamily must be defined with non-empty extra_dims, or with `_abstract = True`"
         with pytest.raises(ValueError, match=msg):
 
             class NoExtraDims(DataSetFamily):
@@ -123,12 +120,12 @@ class TestDataSetFamily:
                 # all positional
                 MD.slice(*valid_combination),
                 # all keyword
-                MD.slice(**dict(zip(expected_dims.keys(), valid_combination))),
+                MD.slice(**dict(zip(expected_dims.keys(), valid_combination, strict=False))),
                 # mix keyword/positional
                 MD.slice(
                     *valid_combination[: len(valid_combination) // 2],
                     **dict(
-                        list(zip(expected_dims.keys(), valid_combination))[
+                        list(zip(expected_dims.keys(), valid_combination, strict=False))[
                             len(valid_combination) // 2 :
                         ],
                     ),
@@ -138,7 +135,7 @@ class TestDataSetFamily:
                 assert Slice is alt, "Slices are not properly memoized"
 
             expected_coords = OrderedDict(
-                zip(expected_dims, valid_combination),
+                zip(expected_dims, valid_combination, strict=False),
             )
             assert Slice.extra_coords == expected_coords
 
@@ -174,15 +171,12 @@ class TestDataSetFamily:
         # insufficient positional
         expect_slice_fails(
             expected_msg=(
-                "no coordinate provided to MD for the following dimensions:"
-                " dim_0, dim_1"
+                "no coordinate provided to MD for the following dimensions: dim_0, dim_1"
             ),
         )
         expect_slice_fails(
             "a",
-            expected_msg=(
-                "no coordinate provided to MD for the following dimension:" " dim_1"
-            ),
+            expected_msg=("no coordinate provided to MD for the following dimension: dim_1"),
         )
 
         # too many positional
@@ -309,16 +303,14 @@ class TestDataSetFamily:
 
         def make_expected_msg(ds, attr):
             return dedent(
-                """\
-                Attempted to access column {c} from DataSetFamily {d}:
+                f"""\
+                Attempted to access column {attr} from DataSetFamily {ds}:
 
                 To work with dataset families, you must first select a
                 slice using the ``slice`` method:
 
-                    {d}.slice(...).{c}
-                """.format(
-                    c=attr, d=ds
-                ),  # noqa
+                    {ds}.slice(...).{attr}
+                """,
             )
 
         expected_msg = make_expected_msg("Parent", "column_0")

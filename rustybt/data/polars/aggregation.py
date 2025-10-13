@@ -13,8 +13,6 @@ Aggregation Rules:
 
 import polars as pl
 import structlog
-from decimal import Decimal
-from typing import List, Optional
 
 from rustybt.data.polars.validation import validate_ohlcv_relationships
 
@@ -164,11 +162,7 @@ def resample_daily_to_weekly(daily_df: pl.DataFrame) -> pl.DataFrame:
     # Add week column (Monday as start of week)
     weekly_df = (
         daily_df.sort(["sid", "date"])
-        .with_columns(
-            pl.col("date")
-            .dt.truncate("1w", offset="0d")
-            .alias("week_start_date")
-        )
+        .with_columns(pl.col("date").dt.truncate("1w", offset="0d").alias("week_start_date"))
         .group_by(["week_start_date", "sid"])
         .agg(
             [
@@ -249,11 +243,7 @@ def resample_daily_to_monthly(daily_df: pl.DataFrame) -> pl.DataFrame:
     # Add month column (first day of month)
     monthly_df = (
         daily_df.sort(["sid", "date"])
-        .with_columns(
-            pl.col("date")
-            .dt.truncate("1mo")
-            .alias("month_start_date")
-        )
+        .with_columns(pl.col("date").dt.truncate("1mo").alias("month_start_date"))
         .group_by(["month_start_date", "sid"])
         .agg(
             [
@@ -336,11 +326,7 @@ def resample_custom_interval(
     # Resample to custom interval
     resampled_df = (
         df.sort(["sid", time_col])
-        .with_columns(
-            pl.col(time_col)
-            .dt.truncate(interval)
-            .alias("interval_start")
-        )
+        .with_columns(pl.col(time_col).dt.truncate(interval).alias("interval_start"))
         .group_by(["interval_start", "sid"])
         .agg(
             [

@@ -530,9 +530,8 @@ class CacheManager:
 
         with Session(self.metadata_catalog.engine) as session:
             # Get entries ordered by last_accessed (oldest first)
-            stmt = (
-                sa.select(self.metadata_catalog.cache_entries)
-                .order_by(self.metadata_catalog.cache_entries.c.last_accessed.asc())
+            stmt = sa.select(self.metadata_catalog.cache_entries).order_by(
+                self.metadata_catalog.cache_entries.c.last_accessed.asc()
             )
             entries = session.execute(stmt).fetchall()
 
@@ -557,9 +556,8 @@ class CacheManager:
 
         with Session(self.metadata_catalog.engine) as session:
             # Get entries ordered by size (largest first)
-            stmt = (
-                sa.select(self.metadata_catalog.cache_entries)
-                .order_by(self.metadata_catalog.cache_entries.c.size_bytes.desc())
+            stmt = sa.select(self.metadata_catalog.cache_entries).order_by(
+                self.metadata_catalog.cache_entries.c.size_bytes.desc()
             )
             entries = session.execute(stmt).fetchall()
 

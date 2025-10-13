@@ -348,7 +348,9 @@ class CCXTBrokerAdapter(BrokerAdapter):
             InvalidOrderError: If parameters are invalid for the broker
         """
         if not self._connected:
-            raise BrokerConnectionError(f"Not connected to {self.exchange_id}", broker=self.exchange_id)
+            raise BrokerConnectionError(
+                f"Not connected to {self.exchange_id}", broker=self.exchange_id
+            )
 
         # Validate parameters
         if amount == 0:
@@ -370,6 +372,7 @@ class CCXTBrokerAdapter(BrokerAdapter):
             params["stopPrice"] = float(stop_price)
 
         try:
+
             async def create_order() -> dict:
                 if ccxt_order_type in ("market", "limit"):
                     return await self.exchange.create_order(
@@ -474,7 +477,9 @@ class CCXTBrokerAdapter(BrokerAdapter):
             OrderRejectedError: If cancellation fails
         """
         if not self._connected:
-            raise BrokerConnectionError(f"Not connected to {self.exchange_id}", broker=self.exchange_id)
+            raise BrokerConnectionError(
+                f"Not connected to {self.exchange_id}", broker=self.exchange_id
+            )
 
         # Parse order ID
         if ":" not in broker_order_id:
@@ -523,7 +528,9 @@ class CCXTBrokerAdapter(BrokerAdapter):
             BrokerError: If request fails
         """
         if not self._connected:
-            raise BrokerConnectionError(f"Not connected to {self.exchange_id}", broker=self.exchange_id)
+            raise BrokerConnectionError(
+                f"Not connected to {self.exchange_id}", broker=self.exchange_id
+            )
 
         try:
             balance = await self._execute_with_retry(
@@ -549,7 +556,9 @@ class CCXTBrokerAdapter(BrokerAdapter):
                 broker=self.exchange_id,
                 cause=exc,
             )
-            log_exception(exc, extra={"exchange_id": self.exchange_id, "operation": "get_account_info"})
+            log_exception(
+                exc, extra={"exchange_id": self.exchange_id, "operation": "get_account_info"}
+            )
             raise error from exc
 
     async def get_positions(self) -> list[dict]:
@@ -562,7 +571,9 @@ class CCXTBrokerAdapter(BrokerAdapter):
             BrokerError: If request fails
         """
         if not self._connected:
-            raise BrokerConnectionError(f"Not connected to {self.exchange_id}", broker=self.exchange_id)
+            raise BrokerConnectionError(
+                f"Not connected to {self.exchange_id}", broker=self.exchange_id
+            )
 
         # Check if exchange supports positions
         if not self.exchange.has.get("fetchPositions"):
@@ -596,14 +607,16 @@ class CCXTBrokerAdapter(BrokerAdapter):
                 # Convert to signed amount
                 amount = Decimal(str(contracts)) if side == "long" else -Decimal(str(contracts))
 
-                positions.append({
-                    "symbol": symbol,
-                    "amount": amount,
-                    "entry_price": entry_price,
-                    "mark_price": mark_price,
-                    "market_value": notional,
-                    "unrealized_pnl": unrealized_pnl,
-                })
+                positions.append(
+                    {
+                        "symbol": symbol,
+                        "amount": amount,
+                        "entry_price": entry_price,
+                        "mark_price": mark_price,
+                        "market_value": notional,
+                        "unrealized_pnl": unrealized_pnl,
+                    }
+                )
 
             logger.debug("positions_fetched", exchange_id=self.exchange_id, count=len(positions))
 
@@ -615,7 +628,9 @@ class CCXTBrokerAdapter(BrokerAdapter):
                 broker=self.exchange_id,
                 cause=exc,
             )
-            log_exception(exc, extra={"exchange_id": self.exchange_id, "operation": "get_positions"})
+            log_exception(
+                exc, extra={"exchange_id": self.exchange_id, "operation": "get_positions"}
+            )
             raise error from exc
 
     async def get_open_orders(self) -> list[dict]:
@@ -628,7 +643,9 @@ class CCXTBrokerAdapter(BrokerAdapter):
             BrokerError: If request fails
         """
         if not self._connected:
-            raise BrokerConnectionError(f"Not connected to {self.exchange_id}", broker=self.exchange_id)
+            raise BrokerConnectionError(
+                f"Not connected to {self.exchange_id}", broker=self.exchange_id
+            )
 
         try:
             orders_data = await self._execute_with_retry(
@@ -641,15 +658,19 @@ class CCXTBrokerAdapter(BrokerAdapter):
                 symbol = order_data["symbol"]
                 order_id = str(order_data["id"])
 
-                orders.append({
-                    "order_id": f"{symbol}:{order_id}",
-                    "symbol": symbol,
-                    "side": order_data["side"],
-                    "type": order_data["type"],
-                    "quantity": Decimal(str(order_data["amount"])),
-                    "price": Decimal(str(order_data["price"])) if order_data.get("price") else None,
-                    "status": order_data["status"],
-                })
+                orders.append(
+                    {
+                        "order_id": f"{symbol}:{order_id}",
+                        "symbol": symbol,
+                        "side": order_data["side"],
+                        "type": order_data["type"],
+                        "quantity": Decimal(str(order_data["amount"])),
+                        "price": (
+                            Decimal(str(order_data["price"])) if order_data.get("price") else None
+                        ),
+                        "status": order_data["status"],
+                    }
+                )
 
             return orders
 
@@ -659,7 +680,9 @@ class CCXTBrokerAdapter(BrokerAdapter):
                 broker=self.exchange_id,
                 cause=exc,
             )
-            log_exception(exc, extra={"exchange_id": self.exchange_id, "operation": "get_open_orders"})
+            log_exception(
+                exc, extra={"exchange_id": self.exchange_id, "operation": "get_open_orders"}
+            )
             raise error from exc
 
     async def subscribe_market_data(self, assets: list[Asset]) -> None:
@@ -672,10 +695,14 @@ class CCXTBrokerAdapter(BrokerAdapter):
             BrokerError: If subscription fails
         """
         if not self._connected:
-            raise BrokerConnectionError(f"Not connected to {self.exchange_id}", broker=self.exchange_id)
+            raise BrokerConnectionError(
+                f"Not connected to {self.exchange_id}", broker=self.exchange_id
+            )
 
         if not self._ws_adapter:
-            raise BrokerConnectionError("WebSocket adapter not initialized", broker=self.exchange_id)
+            raise BrokerConnectionError(
+                "WebSocket adapter not initialized", broker=self.exchange_id
+            )
 
         symbols = [asset.symbol for asset in assets]
 
@@ -696,7 +723,9 @@ class CCXTBrokerAdapter(BrokerAdapter):
                 context={"broker": self.exchange_id, "operation": "subscribe", "symbols": symbols},
                 cause=exc,
             )
-            log_exception(exc, extra={"exchange_id": self.exchange_id, "operation": "subscribe_market_data"})
+            log_exception(
+                exc, extra={"exchange_id": self.exchange_id, "operation": "subscribe_market_data"}
+            )
             raise error from exc
 
     async def unsubscribe_market_data(self, assets: list[Asset]) -> None:
@@ -709,10 +738,14 @@ class CCXTBrokerAdapter(BrokerAdapter):
             BrokerError: If unsubscription fails
         """
         if not self._connected:
-            raise BrokerConnectionError(f"Not connected to {self.exchange_id}", broker=self.exchange_id)
+            raise BrokerConnectionError(
+                f"Not connected to {self.exchange_id}", broker=self.exchange_id
+            )
 
         if not self._ws_adapter:
-            raise BrokerConnectionError("WebSocket adapter not initialized", broker=self.exchange_id)
+            raise BrokerConnectionError(
+                "WebSocket adapter not initialized", broker=self.exchange_id
+            )
 
         symbols = [asset.symbol for asset in assets]
 
@@ -730,10 +763,16 @@ class CCXTBrokerAdapter(BrokerAdapter):
         except Exception as exc:  # pragma: no cover - websocket adapter handles most errors
             error = BrokerError(
                 f"Failed to unsubscribe from market data: {exc}",
-                context={"broker": self.exchange_id, "operation": "unsubscribe", "symbols": symbols},
+                context={
+                    "broker": self.exchange_id,
+                    "operation": "unsubscribe",
+                    "symbols": symbols,
+                },
                 cause=exc,
             )
-            log_exception(exc, extra={"exchange_id": self.exchange_id, "operation": "unsubscribe_market_data"})
+            log_exception(
+                exc, extra={"exchange_id": self.exchange_id, "operation": "unsubscribe_market_data"}
+            )
             raise error from exc
 
     async def get_next_market_data(self) -> dict | None:
@@ -760,7 +799,9 @@ class CCXTBrokerAdapter(BrokerAdapter):
             BrokerError: If price fetch fails
         """
         if not self._connected:
-            raise BrokerConnectionError(f"Not connected to {self.exchange_id}", broker=self.exchange_id)
+            raise BrokerConnectionError(
+                f"Not connected to {self.exchange_id}", broker=self.exchange_id
+            )
 
         try:
             ticker = await self._execute_with_retry(

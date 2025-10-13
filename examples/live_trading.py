@@ -11,8 +11,9 @@ Requirements:
 
 import os
 import sys
-import pandas as pd
 from decimal import Decimal
+
+import pandas as pd
 
 from rustybt import TradingAlgorithm
 from rustybt.data.sources import DataSourceRegistry
@@ -68,11 +69,10 @@ class MeanReversionStrategy(TradingAlgorithm):
                             print(f"🔴 SELL {symbol} @ {current_price} (z-score: {z_score:.2f})")
 
                 # Exit signal: price returns to mean
-                elif abs(z_score) < Decimal("0.5"):
-                    if symbol in self.positions:
-                        self.order(symbol, -100)
-                        del self.positions[symbol]
-                        print(f"↩️  EXIT {symbol} @ {current_price} (z-score: {z_score:.2f})")
+                elif abs(z_score) < Decimal("0.5") and symbol in self.positions:
+                    self.order(symbol, -100)
+                    del self.positions[symbol]
+                    print(f"↩️  EXIT {symbol} @ {current_price} (z-score: {z_score:.2f})")
 
 
 def main():

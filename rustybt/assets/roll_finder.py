@@ -55,7 +55,7 @@ class RollFinder(ABC):
             The offset from the primary contract.
             0 is the primary, 1 is the secondary, etc.
 
-        Returns
+        Returns:
         -------
         Future
             The active future contract at the given dt.
@@ -77,7 +77,7 @@ class RollFinder(ABC):
         offset : int
             Offset from the primary.
 
-        Returns
+        Returns:
         -------
         rolls - list[tuple(sid, roll_date)]
             A list of rolls, where first value is the first active `sid`,
@@ -96,9 +96,7 @@ class RollFinder(ABC):
         first_contract = oc.sid_to_contract[first]
         rolls = [((first_contract >> offset).contract.sid, None)]
         tc = self.trading_calendar
-        sessions = tc.sessions_in_range(
-            tc.minute_to_session(start), tc.minute_to_session(end)
-        )
+        sessions = tc.sessions_in_range(tc.minute_to_session(start), tc.minute_to_session(end))
         freq = sessions.freq
         if first == front:
             # This is a bit tricky to grasp. Once we have the active contract
@@ -203,13 +201,15 @@ class VolumeRollFinder(RollFinder):
         # of using 'dt' is because we need to get each contract's volume on the
         # previous day, so we need to make sure that each contract exists on
         # 'prev' in order to call 'get_value' below.
-        if dt > min(front_contract.auto_close_date, front_contract.end_date):
+        if (
+            dt > min(front_contract.auto_close_date, front_contract.end_date)
+            or front_contract.start_date > prev
+        ):
             return back
-        elif front_contract.start_date > prev:
-            return back
-        elif dt > min(back_contract.auto_close_date, back_contract.end_date):
-            return front
-        elif back_contract.start_date > prev:
+        elif (
+            dt > min(back_contract.auto_close_date, back_contract.end_date)
+            or back_contract.start_date > prev
+        ):
             return front
 
         front_vol = get_value(front, prev, "volume")
@@ -252,7 +252,7 @@ class VolumeRollFinder(RollFinder):
             The offset from the primary contract.
             0 is the primary, 1 is the secondary, etc.
 
-        Returns
+        Returns:
         -------
         Future
             The active future contract at the given dt.

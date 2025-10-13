@@ -89,7 +89,7 @@ class SQLiteAdjustmentReader:
     conn : str or sqlite3.Connection
         Connection from which to load data.
 
-    See Also
+    See Also:
     --------
     :class:`zipline.data.adjustments.SQLiteAdjustmentWriter`
     """
@@ -167,7 +167,7 @@ class SQLiteAdjustmentReader:
             Whether price adjustments, volume adjustments, or both, should be
             included in the output.
 
-        Returns
+        Returns:
         -------
         adjustments : dict[str -> dict[int -> Adjustment]]
             A dictionary containing price and/or volume adjustment mappings
@@ -204,8 +204,7 @@ class SQLiteAdjustmentReader:
         volume_adjustments = adjustments.get("volume")
 
         return [
-            volume_adjustments if column == "volume" else price_adjustments
-            for column in columns
+            volume_adjustments if column == "volume" else price_adjustments for column in columns
         ]
 
     def get_adjustments_for_sid(self, table_name, sid):
@@ -250,9 +249,7 @@ class SQLiteAdjustmentReader:
 
         stock_divs = []
         for chunk in group_into_chunks(assets):
-            query = UNPAID_STOCK_DIVIDEND_QUERY_TEMPLATE.format(
-                ",".join(["?" for _ in chunk])
-            )
+            query = UNPAID_STOCK_DIVIDEND_QUERY_TEMPLATE.format(",".join(["?" for _ in chunk]))
             t = (seconds,) + tuple(map(lambda x: int(x), chunk))
 
             c.execute(query, t)
@@ -282,7 +279,7 @@ class SQLiteAdjustmentReader:
             convert_dates is True, all ints in date columns will be converted
             to datetimes.
 
-        Returns
+        Returns:
         -------
         dfs : dict{str->DataFrame}
             Dictionary which maps table name to the corresponding DataFrame
@@ -350,7 +347,7 @@ class SQLiteAdjustmentWriter:
         If True and conn_or_path is a string, remove any existing files at the
         given path before connecting.
 
-    See Also
+    See Also:
     --------
     zipline.data.adjustments.SQLiteAdjustmentReader
     """
@@ -405,12 +402,8 @@ class SQLiteAdjustmentWriter:
                 actual = actual_dtypes[colname]
                 if not np.issubdtype(actual, expected):
                     raise TypeError(
-                        "Expected data of type {expected} for column"
-                        " '{colname}', but got '{actual}'.".format(
-                            expected=expected,
-                            colname=colname,
-                            actual=actual,
-                        ),
+                        f"Expected data of type {expected} for column"
+                        f" '{colname}', but got '{actual}'.",
                     )
 
         frame.to_sql(
@@ -422,9 +415,7 @@ class SQLiteAdjustmentWriter:
 
     def write_frame(self, tablename, frame):
         if tablename not in SQLITE_ADJUSTMENT_TABLENAMES:
-            raise ValueError(
-                f"Adjustment table {tablename} not in {SQLITE_ADJUSTMENT_TABLENAMES}"
-            )
+            raise ValueError(f"Adjustment table {tablename} not in {SQLITE_ADJUSTMENT_TABLENAMES}")
         if not (frame is None or frame.empty):
             frame = frame.copy()
             frame["effective_date"] = (
@@ -460,7 +451,7 @@ class SQLiteAdjustmentWriter:
         history so that the price is smoothed over the ex_date, when the market
         adjusts to the change in equity value due to upcoming dividend.
 
-        Returns
+        Returns:
         -------
         DataFrame
             A frame in the same format as splits and mergers, with keys
@@ -546,24 +537,16 @@ class SQLiteAdjustmentWriter:
             # TODO: Check if that's the right place for this fix for pandas > 1.2.5
             dividend_payouts.fillna(np.datetime64("NaT"), inplace=True)
             dividend_payouts["ex_date"] = (
-                dividend_payouts["ex_date"]
-                .values.astype("datetime64[s]")
-                .astype(int64_dtype)
+                dividend_payouts["ex_date"].values.astype("datetime64[s]").astype(int64_dtype)
             )
             dividend_payouts["record_date"] = (
-                dividend_payouts["record_date"]
-                .values.astype("datetime64[s]")
-                .astype(int64_dtype)
+                dividend_payouts["record_date"].values.astype("datetime64[s]").astype(int64_dtype)
             )
             dividend_payouts["declared_date"] = (
-                dividend_payouts["declared_date"]
-                .values.astype("datetime64[s]")
-                .astype(int64_dtype)
+                dividend_payouts["declared_date"].values.astype("datetime64[s]").astype(int64_dtype)
             )
             dividend_payouts["pay_date"] = (
-                dividend_payouts["pay_date"]
-                .values.astype("datetime64[s]")
-                .astype(int64_dtype)
+                dividend_payouts["pay_date"].values.astype("datetime64[s]").astype(int64_dtype)
             )
 
         self.write_dividend_payouts(dividend_payouts)
@@ -574,9 +557,7 @@ class SQLiteAdjustmentWriter:
         else:
             stock_dividend_payouts = stock_dividends.copy()
             stock_dividend_payouts["ex_date"] = (
-                stock_dividend_payouts["ex_date"]
-                .values.astype("datetime64[s]")
-                .astype(int64_dtype)
+                stock_dividend_payouts["ex_date"].values.astype("datetime64[s]").astype(int64_dtype)
             )
             stock_dividend_payouts["record_date"] = (
                 stock_dividend_payouts["record_date"]
@@ -597,7 +578,6 @@ class SQLiteAdjustmentWriter:
 
     def write_dividend_data(self, dividends, stock_dividends=None):
         """Write both dividend payouts and the derived price adjustment ratios."""
-
         # First write the dividend payouts.
         self._write_dividends(dividends)
         self._write_stock_dividends(stock_dividends)
@@ -674,7 +654,7 @@ class SQLiteAdjustmentWriter:
                   The ratio of currently held shares in the held sid that
                   should be paid with new shares of the payment_sid.
 
-        See Also
+        See Also:
         --------
         zipline.data.adjustments.SQLiteAdjustmentReader
         """
@@ -682,34 +662,26 @@ class SQLiteAdjustmentWriter:
         self.write_frame("mergers", mergers)
         self.write_dividend_data(dividends, stock_dividends)
         # Use IF NOT EXISTS here to allow multiple writes if desired.
-        self.conn.execute("CREATE INDEX IF NOT EXISTS splits_sids " "ON splits(sid)")
+        self.conn.execute("CREATE INDEX IF NOT EXISTS splits_sids ON splits(sid)")
         self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS splits_effective_date "
-            "ON splits(effective_date)"
+            "CREATE INDEX IF NOT EXISTS splits_effective_date ON splits(effective_date)"
         )
-        self.conn.execute("CREATE INDEX IF NOT EXISTS mergers_sids " "ON mergers(sid)")
+        self.conn.execute("CREATE INDEX IF NOT EXISTS mergers_sids ON mergers(sid)")
         self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS mergers_effective_date "
-            "ON mergers(effective_date)"
+            "CREATE INDEX IF NOT EXISTS mergers_effective_date ON mergers(effective_date)"
         )
+        self.conn.execute("CREATE INDEX IF NOT EXISTS dividends_sid ON dividends(sid)")
         self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS dividends_sid " "ON dividends(sid)"
-        )
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS dividends_effective_date "
-            "ON dividends(effective_date)"
+            "CREATE INDEX IF NOT EXISTS dividends_effective_date ON dividends(effective_date)"
         )
         self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS dividend_payouts_sid "
-            "ON dividend_payouts(sid)"
+            "CREATE INDEX IF NOT EXISTS dividend_payouts_sid ON dividend_payouts(sid)"
         )
         self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS dividends_payouts_ex_date "
-            "ON dividend_payouts(ex_date)"
+            "CREATE INDEX IF NOT EXISTS dividends_payouts_ex_date ON dividend_payouts(ex_date)"
         )
         self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS stock_dividend_payouts_sid "
-            "ON stock_dividend_payouts(sid)"
+            "CREATE INDEX IF NOT EXISTS stock_dividend_payouts_sid ON stock_dividend_payouts(sid)"
         )
         self.conn.execute(
             "CREATE INDEX IF NOT EXISTS stock_dividends_payouts_ex_date "

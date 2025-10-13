@@ -17,14 +17,16 @@
 """
 Factory functions to prepare useful data.
 """
-import pandas as pd
-import numpy as np
-from datetime import timedelta, datetime
-from rustybt.utils.calendar_utils import get_calendar
 
-from rustybt.sources import SpecificEquityTrades
+from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
+
 from rustybt.finance.trading import SimulationParameters
+from rustybt.sources import SpecificEquityTrades
 from rustybt.sources.test_source import create_trade
+from rustybt.utils.calendar_utils import get_calendar
 
 
 def create_simulation_parameters(
@@ -97,7 +99,7 @@ def create_trade_history(
 
     oneday = timedelta(days=1)
     use_midnight = interval >= oneday
-    for price, amount in zip(prices, amounts):
+    for price, amount in zip(prices, amounts, strict=False):
         if use_midnight:
             trade_dt = current.replace(hour=0, minute=0)
         else:
@@ -111,9 +113,7 @@ def create_trade_history(
 
 
 def create_returns_from_range(sim_params):
-    return pd.Series(
-        index=sim_params.sessions, data=np.random.rand(len(sim_params.sessions))
-    )
+    return pd.Series(index=sim_params.sessions, data=np.random.rand(len(sim_params.sessions)))
 
 
 def create_returns_from_list(returns, sim_params):
@@ -122,7 +122,7 @@ def create_returns_from_list(returns, sim_params):
 
 def create_daily_trade_source(sids, sim_params, asset_finder, trading_calendar):
     """
-    creates trade_count trades for each sid in sids list.
+    Creates trade_count trades for each sid in sids list.
     first trade will be on sim_params.start_session, and daily
     thereafter for each sid. Thus, two sids should result in two trades per
     day.
@@ -136,9 +136,7 @@ def create_daily_trade_source(sids, sim_params, asset_finder, trading_calendar):
     )
 
 
-def create_trade_source(
-    sids, trade_time_increment, sim_params, asset_finder, trading_calendar
-):
+def create_trade_source(sids, trade_time_increment, sim_params, asset_finder, trading_calendar):
     # If the sim_params define an end that is during market hours, that will be
     # used as the end of the data source
     if trading_calendar.is_open_on_minute(sim_params.end_session):

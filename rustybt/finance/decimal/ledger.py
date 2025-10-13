@@ -141,8 +141,7 @@ class DecimalLedger:
         new_cash = self.cash + cash_impact
         if new_cash < Decimal("0"):
             raise InsufficientFundsError(
-                f"Insufficient cash: have {self.cash}, need {-cash_impact}, "
-                f"shortfall {-new_cash}"
+                f"Insufficient cash: have {self.cash}, need {-cash_impact}, shortfall {-new_cash}"
             )
 
         # Update or create position

@@ -135,9 +135,7 @@ def set_test_ordered_futures_contracts(request, with_asset_finder):
     )
 
 
-class ContinuousFuturesTestCase(
-    zf.WithCreateBarData, zf.WithMakeAlgo, zf.ZiplineTestCase
-):
+class ContinuousFuturesTestCase(zf.WithCreateBarData, zf.WithMakeAlgo, zf.ZiplineTestCase):
     START_DATE = pd.Timestamp("2015-01-05")
     END_DATE = pd.Timestamp("2016-10-19")
 
@@ -364,13 +362,9 @@ class ContinuousFuturesTestCase(
         # session and Y.YYY representing the minute within the session.
         # e.g. the close of the 23rd session would be 231.440.
         r = 10.0
-        day_markers = np.repeat(
-            np.arange(r, r * len(sessions) + r, r), FUTURES_MINUTES_PER_DAY
-        )
+        day_markers = np.repeat(np.arange(r, r * len(sessions) + r, r), FUTURES_MINUTES_PER_DAY)
         r = 0.001
-        min_markers = np.tile(
-            np.arange(r, r * FUTURES_MINUTES_PER_DAY + r, r), len(sessions)
-        )
+        min_markers = np.tile(np.arange(r, r * FUTURES_MINUTES_PER_DAY + r, r), len(sessions))
 
         markers = day_markers + min_markers
 
@@ -442,15 +436,9 @@ class ContinuousFuturesTestCase(
                 df.volume.values[:end_loc] = 10
                 df.volume.values[end_loc:] = 0
             if i == 18:
-                cross_loc_1 = dts.searchsorted(
-                    pd.Timestamp("2016-02-09 23:01:00+00:00")
-                )
-                cross_loc_2 = dts.searchsorted(
-                    pd.Timestamp("2016-02-11 23:01:00+00:00")
-                )
-                cross_loc_3 = dts.searchsorted(
-                    pd.Timestamp("2016-02-15 23:01:00+00:00")
-                )
+                cross_loc_1 = dts.searchsorted(pd.Timestamp("2016-02-09 23:01:00+00:00"))
+                cross_loc_2 = dts.searchsorted(pd.Timestamp("2016-02-11 23:01:00+00:00"))
+                cross_loc_3 = dts.searchsorted(pd.Timestamp("2016-02-15 23:01:00+00:00"))
                 end_loc = dts.searchsorted(pd.Timestamp("2016-03-16 23:01:00+00:00"))
                 df.volume.values[:cross_loc_1] = 5
                 df.volume.values[cross_loc_1:cross_loc_2] = 15
@@ -458,12 +446,8 @@ class ContinuousFuturesTestCase(
                 df.volume.values[cross_loc_3:end_loc] = 15
                 df.volume.values[end_loc:] = 0
             if i == 19:
-                early_cross_1 = dts.searchsorted(
-                    pd.Timestamp("2016-03-01 23:01:00+00:00")
-                )
-                early_cross_2 = dts.searchsorted(
-                    pd.Timestamp("2016-03-03 23:01:00+00:00")
-                )
+                early_cross_1 = dts.searchsorted(pd.Timestamp("2016-03-01 23:01:00+00:00"))
+                early_cross_2 = dts.searchsorted(pd.Timestamp("2016-03-03 23:01:00+00:00"))
                 end_loc = dts.searchsorted(pd.Timestamp("2016-04-19 23:01:00+00:00"))
                 df.volume.values[:early_cross_1] = 1
                 df.volume.values[early_cross_1:early_cross_2] = 20
@@ -516,9 +500,7 @@ class ContinuousFuturesTestCase(
                 assert contract.symbol == "DFH16"
 
     def test_create_continuous_future(self):
-        cf_primary = self.asset_finder.create_continuous_future(
-            "FOOBAR", 0, "calendar", None
-        )
+        cf_primary = self.asset_finder.create_continuous_future("FOOBAR", 0, "calendar", None)
 
         assert cf_primary.root_symbol == "FOOBAR"
         assert cf_primary.offset == 0
@@ -530,9 +512,7 @@ class ContinuousFuturesTestCase(
 
         assert retrieved_primary == cf_primary
 
-        cf_secondary = self.asset_finder.create_continuous_future(
-            "FOOBAR", 1, "calendar", None
-        )
+        cf_secondary = self.asset_finder.create_continuous_future("FOOBAR", 1, "calendar", None)
 
         assert cf_secondary.root_symbol == "FOOBAR"
         assert cf_secondary.offset == 1
@@ -552,9 +532,7 @@ class ContinuousFuturesTestCase(
             self.asset_finder.create_continuous_future("NO", 0, "calendar", None)
 
     def test_current_contract(self):
-        cf_primary = self.asset_finder.create_continuous_future(
-            "FOOBAR", 0, "calendar", None
-        )
+        cf_primary = self.asset_finder.create_continuous_future("FOOBAR", 0, "calendar", None)
         bar_data = self.create_bardata(lambda: pd.Timestamp("2016-01-26"))
         contract = bar_data.current(cf_primary, "contract")
 
@@ -563,15 +541,12 @@ class ContinuousFuturesTestCase(
         bar_data = self.create_bardata(lambda: pd.Timestamp("2016-01-27"))
         contract = bar_data.current(cf_primary, "contract")
 
-        assert contract.symbol == "FOOBARG16", (
-            "Auto close at beginning of session so FOOBARG16 is now "
-            "the current contract."
-        )
+        assert (
+            contract.symbol == "FOOBARG16"
+        ), "Auto close at beginning of session so FOOBARG16 is now the current contract."
 
     def test_get_value_contract_daily(self):
-        cf_primary = self.asset_finder.create_continuous_future(
-            "FOOBAR", 0, "calendar", None
-        )
+        cf_primary = self.asset_finder.create_continuous_future("FOOBAR", 0, "calendar", None)
 
         contract = self.data_portal.get_spot_value(
             cf_primary,
@@ -589,10 +564,9 @@ class ContinuousFuturesTestCase(
             "daily",
         )
 
-        assert contract.symbol == "FOOBARG16", (
-            "Auto close at beginning of session so FOOBARG16 is now "
-            "the current contract."
-        )
+        assert (
+            contract.symbol == "FOOBARG16"
+        ), "Auto close at beginning of session so FOOBARG16 is now the current contract."
 
         # Test that the current contract outside of the continuous future's
         # start and end dates is None.
@@ -605,9 +579,7 @@ class ContinuousFuturesTestCase(
         assert contract is None
 
     def test_get_value_close_daily(self):
-        cf_primary = self.asset_finder.create_continuous_future(
-            "FOOBAR", 0, "calendar", None
-        )
+        cf_primary = self.asset_finder.create_continuous_future("FOOBAR", 0, "calendar", None)
 
         value = self.data_portal.get_spot_value(
             cf_primary, "close", pd.Timestamp("2016-01-26"), "daily"
@@ -619,10 +591,9 @@ class ContinuousFuturesTestCase(
             cf_primary, "close", pd.Timestamp("2016-01-27"), "daily"
         )
 
-        assert value == 115021.44, (
-            "Auto close at beginning of session so FOOBARG16 is now "
-            "the current contract."
-        )
+        assert (
+            value == 115021.44
+        ), "Auto close at beginning of session so FOOBARG16 is now the current contract."
 
         # Check a value which occurs after the end date of the last known
         # contract, to prevent a regression where the end date of the last
@@ -631,15 +602,12 @@ class ContinuousFuturesTestCase(
             cf_primary, "close", pd.Timestamp("2016-03-26"), "daily"
         )
 
-        assert value == 135441.44, (
-            "Value should be for FOOBARJ16, even though last "
-            "contract ends before query date."
-        )
+        assert (
+            value == 135441.44
+        ), "Value should be for FOOBARJ16, even though last contract ends before query date."
 
     def test_current_contract_volume_roll(self):
-        cf_primary = self.asset_finder.create_continuous_future(
-            "FOOBAR", 0, "volume", None
-        )
+        cf_primary = self.asset_finder.create_continuous_future("FOOBAR", 0, "volume", None)
         bar_data = self.create_bardata(lambda: pd.Timestamp("2016-01-26"))
         contract = bar_data.current(cf_primary, "contract")
 
@@ -648,10 +616,9 @@ class ContinuousFuturesTestCase(
         bar_data = self.create_bardata(lambda: pd.Timestamp("2016-01-27"))
         contract = bar_data.current(cf_primary, "contract")
 
-        assert contract.symbol == "FOOBARG16", (
-            "Auto close at beginning of session. FOOBARG16 is now "
-            "the current contract."
-        )
+        assert (
+            contract.symbol == "FOOBARG16"
+        ), "Auto close at beginning of session. FOOBARG16 is now the current contract."
 
         bar_data = self.create_bardata(lambda: pd.Timestamp("2016-02-29"))
         contract = bar_data.current(cf_primary, "contract")
@@ -683,9 +650,7 @@ class ContinuousFuturesTestCase(
         results = self.run_algorithm(script=code)
         result = results.iloc[0]
 
-        assert (
-            result.primary.symbol == "FOOBARF16"
-        ), "Primary should be FOOBARF16 on first session."
+        assert result.primary.symbol == "FOOBARF16", "Primary should be FOOBARF16 on first session."
         assert (
             result.secondary.symbol == "FOOBARG16"
         ), "Secondary should be FOOBARG16 on first session."
@@ -754,19 +719,19 @@ class ContinuousFuturesTestCase(
             "the primary on that date."
         )
 
-        assert result.primary_first == "FOOBARF16", (
-            "Front of primary chain should be FOOBARF16 on first " "session."
-        )
-        assert result.secondary_first == "FOOBARG16", (
-            "Front of secondary chain should be FOOBARG16 on first " "session."
-        )
+        assert (
+            result.primary_first == "FOOBARF16"
+        ), "Front of primary chain should be FOOBARF16 on first session."
+        assert (
+            result.secondary_first == "FOOBARG16"
+        ), "Front of secondary chain should be FOOBARG16 on first session."
 
-        assert result.primary_last == "FOOBARG22", (
-            "End of primary chain should be FOOBARK16 on first " "session."
-        )
-        assert result.secondary_last == "FOOBARG22", (
-            "End of secondary chain should be FOOBARK16 on first " "session."
-        )
+        assert (
+            result.primary_last == "FOOBARG22"
+        ), "End of primary chain should be FOOBARK16 on first session."
+        assert (
+            result.secondary_last == "FOOBARG22"
+        ), "End of secondary chain should be FOOBARK16 on first session."
 
         # Second day, primary should switch to FOOBARG
         result = results.iloc[1]
@@ -785,26 +750,24 @@ class ContinuousFuturesTestCase(
             "the second is the primary on that date."
         )
 
-        assert result.primary_first == "FOOBARG16", (
-            "Front of primary chain should be FOOBARG16 on second " "session."
-        )
-        assert result.secondary_first == "FOOBARH16", (
-            "Front of secondary chain should be FOOBARH16 on second " "session."
-        )
+        assert (
+            result.primary_first == "FOOBARG16"
+        ), "Front of primary chain should be FOOBARG16 on second session."
+        assert (
+            result.secondary_first == "FOOBARH16"
+        ), "Front of secondary chain should be FOOBARH16 on second session."
 
         # These values remain FOOBARJ16 because fixture data is not exhaustive
         # enough to move the end of the chain.
-        assert result.primary_last == "FOOBARG22", (
-            "End of primary chain should be FOOBARK16 on second " "session."
-        )
-        assert result.secondary_last == "FOOBARG22", (
-            "End of secondary chain should be FOOBARK16 on second " "session."
-        )
+        assert (
+            result.primary_last == "FOOBARG22"
+        ), "End of primary chain should be FOOBARK16 on second session."
+        assert (
+            result.secondary_last == "FOOBARG22"
+        ), "End of secondary chain should be FOOBARK16 on second session."
 
     def test_history_sid_session(self):
-        cf = self.data_portal.asset_finder.create_continuous_future(
-            "FOOBAR", 0, "calendar", None
-        )
+        cf = self.data_portal.asset_finder.create_continuous_future("FOOBAR", 0, "calendar", None)
         window = self.data_portal.get_history_window(
             [cf],
             pd.Timestamp("2016-03-04 18:01", tz="US/Eastern").tz_convert("UTC"),
@@ -814,25 +777,15 @@ class ContinuousFuturesTestCase(
             "minute",
         )
 
-        assert (
-            window.loc["2016-01-26", cf] == 0
-        ), "Should be FOOBARF16 at beginning of window."
+        assert window.loc["2016-01-26", cf] == 0, "Should be FOOBARF16 at beginning of window."
 
-        assert (
-            window.loc["2016-01-27", cf] == 1
-        ), "Should be FOOBARG16 after first roll."
+        assert window.loc["2016-01-27", cf] == 1, "Should be FOOBARG16 after first roll."
 
-        assert (
-            window.loc["2016-02-25", cf] == 1
-        ), "Should be FOOBARG16 on session before roll."
+        assert window.loc["2016-02-25", cf] == 1, "Should be FOOBARG16 on session before roll."
 
-        assert (
-            window.loc["2016-02-26", cf] == 2
-        ), "Should be FOOBARH16 on session with roll."
+        assert window.loc["2016-02-26", cf] == 2, "Should be FOOBARH16 on session with roll."
 
-        assert (
-            window.loc["2016-02-29", cf] == 2
-        ), "Should be FOOBARH16 on session after roll."
+        assert window.loc["2016-02-29", cf] == 2, "Should be FOOBARH16 on session after roll."
 
         # Advance the window a month.
         window = self.data_portal.get_history_window(
@@ -844,30 +797,18 @@ class ContinuousFuturesTestCase(
             "minute",
         )
 
-        assert (
-            window.loc["2016-02-25", cf] == 1
-        ), "Should be FOOBARG16 at beginning of window."
+        assert window.loc["2016-02-25", cf] == 1, "Should be FOOBARG16 at beginning of window."
 
-        assert (
-            window.loc["2016-02-26", cf] == 2
-        ), "Should be FOOBARH16 on session with roll."
+        assert window.loc["2016-02-26", cf] == 2, "Should be FOOBARH16 on session with roll."
 
-        assert (
-            window.loc["2016-02-29", cf] == 2
-        ), "Should be FOOBARH16 on session after roll."
+        assert window.loc["2016-02-29", cf] == 2, "Should be FOOBARH16 on session after roll."
 
-        assert (
-            window.loc["2016-03-24", cf] == 3
-        ), "Should be FOOBARJ16 on session with roll."
+        assert window.loc["2016-03-24", cf] == 3, "Should be FOOBARJ16 on session with roll."
 
-        assert (
-            window.loc["2016-03-28", cf] == 3
-        ), "Should be FOOBARJ16 on session after roll."
+        assert window.loc["2016-03-28", cf] == 3, "Should be FOOBARJ16 on session after roll."
 
     def test_history_sid_session_delivery_predicate(self):
-        cf = self.data_portal.asset_finder.create_continuous_future(
-            "BZ", 0, "calendar", None
-        )
+        cf = self.data_portal.asset_finder.create_continuous_future("BZ", 0, "calendar", None)
         window = self.data_portal.get_history_window(
             [cf],
             pd.Timestamp("2016-01-11 18:01", tz="US/Eastern").tz_convert("UTC"),
@@ -877,20 +818,16 @@ class ContinuousFuturesTestCase(
             "minute",
         )
 
-        assert (
-            window.loc["2016-01-08", cf] == 10
-        ), "Should be BZF16 at beginning of window."
+        assert window.loc["2016-01-08", cf] == 10, "Should be BZF16 at beginning of window."
 
-        assert window.loc["2016-01-11", cf] == 12, (
-            "Should be BZH16 after first roll, having skipped " "over BZG16."
-        )
+        assert (
+            window.loc["2016-01-11", cf] == 12
+        ), "Should be BZH16 after first roll, having skipped over BZG16."
 
         assert window.loc["2016-01-12", cf] == 12, "Should have remained BZG16"
 
     def test_history_sid_session_secondary(self):
-        cf = self.data_portal.asset_finder.create_continuous_future(
-            "FOOBAR", 1, "calendar", None
-        )
+        cf = self.data_portal.asset_finder.create_continuous_future("FOOBAR", 1, "calendar", None)
         window = self.data_portal.get_history_window(
             [cf],
             pd.Timestamp("2016-03-04 18:01", tz="US/Eastern").tz_convert("UTC"),
@@ -900,25 +837,15 @@ class ContinuousFuturesTestCase(
             "minute",
         )
 
-        assert (
-            window.loc["2016-01-26", cf] == 1
-        ), "Should be FOOBARG16 at beginning of window."
+        assert window.loc["2016-01-26", cf] == 1, "Should be FOOBARG16 at beginning of window."
 
-        assert (
-            window.loc["2016-01-27", cf] == 2
-        ), "Should be FOOBARH16 after first roll."
+        assert window.loc["2016-01-27", cf] == 2, "Should be FOOBARH16 after first roll."
 
-        assert (
-            window.loc["2016-02-25", cf] == 2
-        ), "Should be FOOBARH16 on session before roll."
+        assert window.loc["2016-02-25", cf] == 2, "Should be FOOBARH16 on session before roll."
 
-        assert (
-            window.loc["2016-02-26", cf] == 3
-        ), "Should be FOOBARJ16 on session with roll."
+        assert window.loc["2016-02-26", cf] == 3, "Should be FOOBARJ16 on session with roll."
 
-        assert (
-            window.loc["2016-02-29", cf] == 3
-        ), "Should be FOOBARJ16 on session after roll."
+        assert window.loc["2016-02-29", cf] == 3, "Should be FOOBARJ16 on session after roll."
 
         # Advance the window a month.
         window = self.data_portal.get_history_window(
@@ -930,30 +857,18 @@ class ContinuousFuturesTestCase(
             "minute",
         )
 
-        assert (
-            window.loc["2016-02-25", cf] == 2
-        ), "Should be FOOBARH16 at beginning of window."
+        assert window.loc["2016-02-25", cf] == 2, "Should be FOOBARH16 at beginning of window."
 
-        assert (
-            window.loc["2016-02-26", cf] == 3
-        ), "Should be FOOBARJ16 on session with roll."
+        assert window.loc["2016-02-26", cf] == 3, "Should be FOOBARJ16 on session with roll."
 
-        assert (
-            window.loc["2016-02-29", cf] == 3
-        ), "Should be FOOBARJ16 on session after roll."
+        assert window.loc["2016-02-29", cf] == 3, "Should be FOOBARJ16 on session after roll."
 
-        assert (
-            window.loc["2016-03-24", cf] == 4
-        ), "Should be FOOBARK16 on session with roll."
+        assert window.loc["2016-03-24", cf] == 4, "Should be FOOBARK16 on session with roll."
 
-        assert (
-            window.loc["2016-03-28", cf] == 4
-        ), "Should be FOOBARK16 on session after roll."
+        assert window.loc["2016-03-28", cf] == 4, "Should be FOOBARK16 on session after roll."
 
     def test_history_sid_session_volume_roll(self):
-        cf = self.data_portal.asset_finder.create_continuous_future(
-            "FOOBAR", 0, "volume", None
-        )
+        cf = self.data_portal.asset_finder.create_continuous_future("FOOBAR", 0, "volume", None)
         window = self.data_portal.get_history_window(
             [cf],
             pd.Timestamp("2016-03-04 18:01", tz="US/Eastern").tz_convert("UTC"),
@@ -964,23 +879,15 @@ class ContinuousFuturesTestCase(
         )
 
         # Volume cuts out for FOOBARF16 on 2016-01-25
-        assert (
-            window.loc["2016-01-26", cf] == 0
-        ), "Should be FOOBARF16 at beginning of window."
+        assert window.loc["2016-01-26", cf] == 0, "Should be FOOBARF16 at beginning of window."
 
         assert window.loc["2016-01-27", cf] == 1, "Should have rolled to FOOBARG16."
 
-        assert (
-            window.loc["2016-02-26", cf] == 1
-        ), "Should be FOOBARG16 on session before roll."
+        assert window.loc["2016-02-26", cf] == 1, "Should be FOOBARG16 on session before roll."
 
-        assert (
-            window.loc["2016-02-29", cf] == 2
-        ), "Should be FOOBARH16 on session with roll."
+        assert window.loc["2016-02-29", cf] == 2, "Should be FOOBARH16 on session with roll."
 
-        assert (
-            window.loc["2016-03-01", cf] == 2
-        ), "Should be FOOBARH16 on session after roll."
+        assert window.loc["2016-03-01", cf] == 2, "Should be FOOBARH16 on session after roll."
 
         # Advance the window a month.
         window = self.data_portal.get_history_window(
@@ -992,9 +899,7 @@ class ContinuousFuturesTestCase(
             "minute",
         )
 
-        assert (
-            window.loc["2016-02-26", cf] == 1
-        ), "Should be FOOBARG16 at beginning of window."
+        assert window.loc["2016-02-26", cf] == 1, "Should be FOOBARG16 at beginning of window."
 
         assert window.loc["2016-02-29", cf] == 2, "Should be FOOBARH16 on roll session."
 
@@ -1014,9 +919,7 @@ class ContinuousFuturesTestCase(
         assert window.loc["2016-03-28", cf] == 3, "Should have remained FOOBARJ16."
 
     def test_history_sid_minute(self):
-        cf = self.data_portal.asset_finder.create_continuous_future(
-            "FOOBAR", 0, "calendar", None
-        )
+        cf = self.data_portal.asset_finder.create_continuous_future("FOOBAR", 0, "calendar", None)
         window = self.data_portal.get_history_window(
             [cf.sid],
             pd.Timestamp("2016-01-26 18:01", tz="US/Eastern").tz_convert("UTC"),
@@ -1058,9 +961,7 @@ class ContinuousFuturesTestCase(
         ), "Should remain FOOBARG16 on next session."
 
     def test_history_close_session(self):
-        cf = self.data_portal.asset_finder.create_continuous_future(
-            "FOOBAR", 0, "calendar", None
-        )
+        cf = self.data_portal.asset_finder.create_continuous_future("FOOBAR", 0, "calendar", None)
         window = self.data_portal.get_history_window(
             [cf.sid], pd.Timestamp("2016-03-06"), 30, "1d", "close", "daily"
         )
@@ -1119,9 +1020,7 @@ class ContinuousFuturesTestCase(
         )
 
     def test_history_close_session_skip_volume(self):
-        cf = self.data_portal.asset_finder.create_continuous_future(
-            "MA", 0, "volume", None
-        )
+        cf = self.data_portal.asset_finder.create_continuous_future("MA", 0, "volume", None)
         window = self.data_portal.get_history_window(
             [cf.sid], pd.Timestamp("2016-03-06"), 30, "1d", "close", "daily"
         )
@@ -1168,9 +1067,7 @@ class ContinuousFuturesTestCase(
         )
 
     def test_history_close_session_adjusted(self):
-        cf = self.data_portal.asset_finder.create_continuous_future(
-            "FOOBAR", 0, "calendar", None
-        )
+        cf = self.data_portal.asset_finder.create_continuous_future("FOOBAR", 0, "calendar", None)
         cf_mul = self.data_portal.asset_finder.create_continuous_future(
             "FOOBAR", 0, "calendar", "mul"
         )
@@ -1192,30 +1089,26 @@ class ContinuousFuturesTestCase(
         assert_almost_equal(
             window.loc["2016-01-26", cf_mul],
             124992.348,
-            err_msg="At beginning of window, should be FOOBARG16's first value, "
-            "adjusted.",
+            err_msg="At beginning of window, should be FOOBARG16's first value, adjusted.",
         )
 
         # Difference of 7008.561
         assert_almost_equal(
             window.loc["2016-01-26", cf_add],
             125011.44,
-            err_msg="At beginning of window, should be FOOBARG16's first value, "
-            "adjusted.",
+            err_msg="At beginning of window, should be FOOBARG16's first value, adjusted.",
         )
 
         assert_almost_equal(
             window.loc["2016-02-26", cf_mul],
             125241.440,
-            err_msg="On session with roll, should be FOOBARH16's 24th value, "
-            "unadjusted.",
+            err_msg="On session with roll, should be FOOBARH16's 24th value, unadjusted.",
         )
 
         assert_almost_equal(
             window.loc["2016-02-26", cf_add],
             125241.440,
-            err_msg="On session with roll, should be FOOBARH16's 24th value, "
-            "unadjusted.",
+            err_msg="On session with roll, should be FOOBARH16's 24th value, unadjusted.",
         )
 
         assert_almost_equal(
@@ -1271,38 +1164,33 @@ class ContinuousFuturesTestCase(
         assert_almost_equal(
             window.loc["2016-02-26", cf_mul],
             135259.442,
-            err_msg="On session with roll, should be FOOBARH16's 24th value, "
-            "with one adjustment.",
+            err_msg="On session with roll, should be FOOBARH16's 24th value, with one adjustment.",
         )
 
         assert_almost_equal(
             window.loc["2016-02-26", cf_add],
             135271.44,
-            err_msg="On session with roll, should be FOOBARH16's 24th value, "
-            "with one adjustment.",
+            err_msg="On session with roll, should be FOOBARH16's 24th value, with one adjustment.",
         )
 
         # Unadjusted: 125251.44
         assert_almost_equal(
             window.loc["2016-02-29", cf_mul],
             135270.241,
-            err_msg="On session after roll, should be FOOBARH16's 25th value, "
-            "with one adjustment.",
+            err_msg="On session after roll, should be FOOBARH16's 25th value, with one adjustment.",
         )
 
         assert_almost_equal(
             window.loc["2016-02-29", cf_add],
             135281.44,
-            err_msg="On session after roll, should be FOOBARH16's 25th value, "
-            "unadjusted.",
+            err_msg="On session after roll, should be FOOBARH16's 25th value, unadjusted.",
         )
 
         # Unadjusted: 135431.44
         assert_almost_equal(
             window.loc["2016-03-24", cf_mul],
             135431.44,
-            err_msg="On session with roll, should be FOOBARJ16's 43rd value, "
-            "unadjusted.",
+            err_msg="On session with roll, should be FOOBARJ16's 43rd value, unadjusted.",
         )
 
         assert_almost_equal(
@@ -1325,9 +1213,7 @@ class ContinuousFuturesTestCase(
         )
 
     def test_history_close_minute(self):
-        cf = self.data_portal.asset_finder.create_continuous_future(
-            "FOOBAR", 0, "calendar", None
-        )
+        cf = self.data_portal.asset_finder.create_continuous_future("FOOBAR", 0, "calendar", None)
         window = self.data_portal.get_history_window(
             [cf.sid],
             pd.Timestamp("2016-02-25 18:01", tz="US/Eastern").tz_convert("UTC"),
@@ -1337,9 +1223,7 @@ class ContinuousFuturesTestCase(
             "minute",
         )
 
-        assert (
-            window.loc[pd.Timestamp("2016-02-25 22:32", tz="UTC"), cf.sid] == 115231.412
-        ), (
+        assert window.loc[pd.Timestamp("2016-02-25 22:32", tz="UTC"), cf.sid] == 115231.412, (
             "Should be FOOBARG16 at beginning of window. A minute "
             "which is in the 02-25 session, before the roll."
         )
@@ -1371,9 +1255,7 @@ class ContinuousFuturesTestCase(
         ), "Should remain FOOBARH16 on next session."
 
     def test_history_close_minute_adjusted(self):
-        cf = self.data_portal.asset_finder.create_continuous_future(
-            "FOOBAR", 0, "calendar", None
-        )
+        cf = self.data_portal.asset_finder.create_continuous_future("FOOBAR", 0, "calendar", None)
         cf_mul = self.data_portal.asset_finder.create_continuous_future(
             "FOOBAR", 0, "calendar", "mul"
         )
@@ -1408,13 +1290,13 @@ class ContinuousFuturesTestCase(
 
         # Unadjusted: 115231.44
         # Should use same ratios as above.
-        assert window.loc["2016-02-25 23:00", cf_mul] == 125231.44, (
-            "Should be FOOBARG16 on on minute before roll minute, " "adjusted."
-        )
+        assert (
+            window.loc["2016-02-25 23:00", cf_mul] == 125231.44
+        ), "Should be FOOBARG16 on on minute before roll minute, adjusted."
 
-        assert window.loc["2016-02-25 23:00", cf_add] == 125231.44, (
-            "Should be FOOBARG16 on on minute before roll minute, " "adjusted."
-        )
+        assert (
+            window.loc["2016-02-25 23:00", cf_add] == 125231.44
+        ), "Should be FOOBARG16 on on minute before roll minute, adjusted."
 
         assert (
             window.loc["2016-02-25 23:01", cf_mul] == 125240.001
@@ -1444,9 +1326,7 @@ class ContinuousFuturesTestCase(
         ), "Should remain FOOBARH16 on next session."
 
     def test_history_close_minute_adjusted_volume_roll(self):
-        cf = self.data_portal.asset_finder.create_continuous_future(
-            "FOOBAR", 0, "volume", None
-        )
+        cf = self.data_portal.asset_finder.create_continuous_future("FOOBAR", 0, "volume", None)
         cf_mul = self.data_portal.asset_finder.create_continuous_future(
             "FOOBAR", 0, "volume", "mul"
         )
@@ -1481,13 +1361,13 @@ class ContinuousFuturesTestCase(
 
         # Unadjusted: 115231.44
         # Should use same ratios as above.
-        assert window.loc["2016-02-26 23:00", cf_mul] == 125243.004, (
-            "Should be FOOBARG16 on minute before roll minute, " "adjusted."
-        )
+        assert (
+            window.loc["2016-02-26 23:00", cf_mul] == 125243.004
+        ), "Should be FOOBARG16 on minute before roll minute, adjusted."
 
-        assert window.loc["2016-02-26 23:00", cf_add] == 125242.879, (
-            "Should be FOOBARG16 on minute before roll minute, " "adjusted."
-        )
+        assert (
+            window.loc["2016-02-26 23:00", cf_add] == 125242.879
+        ), "Should be FOOBARG16 on minute before roll minute, adjusted."
 
         assert (
             window.loc["2016-02-28 23:01", cf_mul] == 125250.001
@@ -1725,9 +1605,7 @@ class RollFinderTestCase(zf.WithBcolzFutureDailyBarReader, zf.ZiplineTestCase):
         fourth_contract_data = create_contract_data(4000)
         yield (
             1003,
-            fourth_contract_data.copy().loc[
-                cls.fourth_start_date : cls.fourth_end_date
-            ],
+            fourth_contract_data.copy().loc[cls.fourth_start_date : cls.fourth_end_date],
         )
 
         # Make a copy because we are taking a slice of a data frame.
@@ -1843,12 +1721,8 @@ class RollFinderTestCase(zf.WithBcolzFutureDailyBarReader, zf.ZiplineTestCase):
         # so this test ensures that we do not fail to calculate the forward
         # looking rolls required for `VolumeRollFinder.get_contract_center`.
         near_end = self.END_DATE - self.trading_calendar.day
-        assert get_contract_center("FV", dt=near_end) == asset_finder.retrieve_asset(
-            2000
-        )
-        assert get_contract_center(
-            "FV", dt=self.END_DATE
-        ) == asset_finder.retrieve_asset(2000)
+        assert get_contract_center("FV", dt=near_end) == asset_finder.retrieve_asset(2000)
+        assert get_contract_center("FV", dt=self.END_DATE) == asset_finder.retrieve_asset(2000)
 
 
 @pytest.mark.usefixtures("set_test_ordered_futures_contracts")
@@ -1861,12 +1735,12 @@ class TestOrderedContracts:
 
         oc = OrderedContracts("FOOBAR", contracts)
 
-        assert 1 == oc.contract_at_offset(
-            1, 0, start_dates[-1].value
+        assert (
+            oc.contract_at_offset(1, 0, start_dates[-1].value) == 1
         ), "Offset of 0 should return provided sid"
 
-        assert 2 == oc.contract_at_offset(
-            1, 1, start_dates[-1].value
+        assert (
+            oc.contract_at_offset(1, 1, start_dates[-1].value) == 2
         ), "Offset of 1 should return next sid in chain."
 
         assert None is oc.contract_at_offset(
@@ -1884,33 +1758,30 @@ class TestOrderedContracts:
         # a contract should be added per day, until all defined contracts
         # are returned.
         chain = oc.active_chain(1, pd.Timestamp("2014-12-31").value)
-        assert [] == list(chain), (
-            "On session before first start date, no contracts "
-            "in chain should be active."
-        )
+        assert (
+            list(chain) == []
+        ), "On session before first start date, no contracts in chain should be active."
         chain = oc.active_chain(1, pd.Timestamp("2015-01-01").value)
-        assert [1] == list(chain), (
+        assert list(chain) == [1], (
             "[1] should be the active chain on 01-01, since all "
             "other start dates occur after 01-01."
         )
 
         chain = oc.active_chain(1, pd.Timestamp("2015-01-02").value)
-        assert [1, 2] == list(chain), "[1, 2] should be the active contracts on 01-02."
+        assert list(chain) == [1, 2], "[1, 2] should be the active contracts on 01-02."
 
         chain = oc.active_chain(1, pd.Timestamp("2015-01-03").value)
-        assert [1, 2, 3] == list(
-            chain
-        ), "[1, 2, 3] should be the active contracts on 01-03."
+        assert list(chain) == [1, 2, 3], "[1, 2, 3] should be the active contracts on 01-03."
 
         chain = oc.active_chain(1, pd.Timestamp("2015-01-04").value)
-        assert 4 == len(chain), (
+        assert len(chain) == 4, (
             "[1, 2, 3, 4] should be the active contracts on "
             "01-04, this is all defined contracts in the test "
             "case."
         )
 
         chain = oc.active_chain(1, pd.Timestamp("2015-01-05").value)
-        assert 4 == len(chain), (
+        assert len(chain) == 4, (
             "[1, 2, 3, 4] should be the active contracts on "
             "01-05. This tests the case where all start dates "
             "are before the query date."
@@ -1918,22 +1789,22 @@ class TestOrderedContracts:
 
         # Test querying each sid at a time when all should be alive.
         chain = oc.active_chain(2, pd.Timestamp("2015-01-05").value)
-        assert [2, 3, 4] == list(chain)
+        assert list(chain) == [2, 3, 4]
 
         chain = oc.active_chain(3, pd.Timestamp("2015-01-05").value)
-        assert [3, 4] == list(chain)
+        assert list(chain) == [3, 4]
 
         chain = oc.active_chain(4, pd.Timestamp("2015-01-05").value)
-        assert [4] == list(chain)
+        assert list(chain) == [4]
 
         # Test defined contract to check edge conditions.
         chain = oc.active_chain(4, pd.Timestamp("2015-01-03").value)
-        assert [] == list(chain), (
-            "No contracts should be active, since 01-03 is " "before 4's start date."
-        )
+        assert (
+            list(chain) == []
+        ), "No contracts should be active, since 01-03 is before 4's start date."
 
         chain = oc.active_chain(4, pd.Timestamp("2015-01-04").value)
-        assert [4] == list(chain), "[4] should be active beginning at its start date."
+        assert list(chain) == [4], "[4] should be active beginning at its start date."
 
     def test_delivery_predicate(self):
         contract_sids = range(5, 8)
@@ -1949,7 +1820,7 @@ class TestOrderedContracts:
         # a contract should be added per day, until all defined contracts
         # are returned.
         chain = oc.active_chain(5, pd.Timestamp("2015-01-05").value)
-        assert [5, 7] == list(chain), (
+        assert list(chain) == [5, 7], (
             "Contract BAG16 (sid=6) should be ommitted from chain, since "
             "it does not satisfy the roll predicate."
         )

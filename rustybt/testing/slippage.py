@@ -14,7 +14,7 @@ class TestingSlippage(SlippageModel):
         The number of shares to fill on each call to process_order. If
         TestingSlippage.ALL is passed, the entire order is filled.
 
-    See also
+    See Also:
     --------
     zipline.finance.slippage.SlippageModel
     """

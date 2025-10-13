@@ -13,42 +13,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import datetime
-from inspect import isabstract
 import random
 import warnings
+from inspect import isabstract
 
-from parameterized import parameterized
 import pandas as pd
-from rustybt.utils.calendar_utils import get_calendar
+import pytest
+from parameterized import parameterized
 
 import rustybt.utils.events
+from rustybt.utils.calendar_utils import get_calendar
 from rustybt.utils.events import (
-    EventRule,
-    StatelessRule,
-    Always,
-    Never,
-    AfterOpen,
-    ComposedRule,
-    BeforeClose,
-    NotHalfDay,
-    NthTradingDayOfWeek,
-    NDaysBeforeLastTradingDayOfWeek,
-    NthTradingDayOfMonth,
-    NDaysBeforeLastTradingDayOfMonth,
-    StatefulRule,
-    OncePerDay,
-    _build_offset,
-    _build_date,
-    _build_time,
-    EventManager,
-    Event,
     MAX_MONTH_RANGE,
     MAX_WEEK_RANGE,
+    AfterOpen,
+    Always,
+    BeforeClose,
+    ComposedRule,
+    Event,
+    EventManager,
+    EventRule,
+    NDaysBeforeLastTradingDayOfMonth,
+    NDaysBeforeLastTradingDayOfWeek,
+    Never,
+    NotHalfDay,
+    NthTradingDayOfMonth,
+    NthTradingDayOfWeek,
+    OncePerDay,
+    StatefulRule,
+    StatelessRule,
     TradingDayOfMonthRule,
     TradingDayOfWeekRule,
+    _build_date,
+    _build_offset,
+    _build_time,
 )
-
-import pytest
 
 
 def param_range(*args):
@@ -247,9 +246,7 @@ class RuleTestCase:
             and not isabstract(v)
         }
         ds = {k[5:] for k in dir(self) if k.startswith("test") and k[5:] in dem}
-        assert (
-            dem <= ds
-        ), "This suite is missing tests for the following classes:\n" + "\n".join(
+        assert dem <= ds, "This suite is missing tests for the following classes:\n" + "\n".join(
             map(repr, dem - ds)
         )
 

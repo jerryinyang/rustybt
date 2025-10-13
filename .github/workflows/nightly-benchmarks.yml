@@ -10,29 +10,29 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch all history for commit info
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      
+
       - name: Install uv
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      
+
       - name: Install dependencies
         run: |
           uv venv
           source .venv/bin/activate
           uv pip install -e ".[dev,test,benchmarks]"
-      
+
       - name: Build Rust extensions
         run: |
           source .venv/bin/activate
@@ -40,25 +40,25 @@ jobs:
           cargo build --release
           cd ..
           uv pip install -e .
-      
+
       - name: Generate benchmark fixtures
         run: |
           source .venv/bin/activate
           python scripts/benchmarks/generate_fixtures.py
-      
+
       - name: Run benchmark suite
         run: |
           source .venv/bin/activate
           pytest tests/benchmarks/test_backtest_performance.py --benchmark-only --benchmark-json=benchmark-results.json -v
         continue-on-error: true
-      
+
       - name: Store benchmark results
         if: always()
         run: |
           source .venv/bin/activate
           python scripts/benchmarks/store_results.py benchmark-results.json || echo "Failed to store results"
         continue-on-error: true
-      
+
       - name: Detect regressions
         id: regression
         run: |
@@ -66,21 +66,21 @@ jobs:
           python scripts/benchmarks/detect_regressions.py --output github > regression-report.md
           echo "regressions_detected=$?" >> $GITHUB_OUTPUT
         continue-on-error: true
-      
+
       - name: Generate performance graphs
         if: always()
         run: |
           source .venv/bin/activate
           python scripts/benchmarks/generate_graphs.py || echo "Failed to generate graphs"
         continue-on-error: true
-      
+
       - name: Generate dashboard
         if: always()
         run: |
           source .venv/bin/activate
           python scripts/benchmarks/generate_dashboard.py || echo "Failed to generate dashboard"
         continue-on-error: true
-      
+
       - name: Commit results to repository
         if: always()
         run: |
@@ -91,7 +91,7 @@ jobs:
           git add docs/performance/dashboard.html || true
           git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update benchmark results [skip ci]" && git push)
         continue-on-error: true
-      
+
       - name: Create regression issue
         if: steps.regression.outputs.regressions_detected == '1'
         uses: actions/github-script@v7
@@ -99,7 +99,7 @@ jobs:
           script: |
             const fs = require('fs');
             const reportBody = fs.readFileSync('regression-report.md', 'utf8');
-            
+
             github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -107,7 +107,7 @@ jobs:
               body: reportBody,
               labels: ['performance', 'regression', 'automated']
             });
-      
+
       - name: Upload benchmark artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -119,7 +119,7 @@ jobs:
             docs/performance/graphs/
             docs/performance/dashboard.html
           retention-days: 90
-      
+
       - name: Post summary
         if: always()
         run: |

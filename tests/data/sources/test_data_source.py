@@ -1,7 +1,7 @@
 """Unit tests for DataSource interface and adapters."""
 
 import pytest
-import pandas as pd
+
 from rustybt.data.sources.base import DataSource, DataSourceMetadata
 from rustybt.data.sources.registry import DataSourceRegistry
 
@@ -13,9 +13,10 @@ class TestDataSourceInterface:
     def adapter_classes(self):
         """Return all adapter classes that should implement DataSource."""
         import os
-        from rustybt.data.adapters.yfinance_adapter import YFinanceAdapter
+
         from rustybt.data.adapters.ccxt_adapter import CCXTAdapter
         from rustybt.data.adapters.csv_adapter import CSVAdapter
+        from rustybt.data.adapters.yfinance_adapter import YFinanceAdapter
 
         # Always include adapters that don't require API keys
         adapters = [YFinanceAdapter, CCXTAdapter, CSVAdapter]
@@ -24,6 +25,7 @@ class TestDataSourceInterface:
         try:
             if os.environ.get("POLYGON_API_KEY"):
                 from rustybt.data.adapters.polygon_adapter import PolygonAdapter
+
                 adapters.append(PolygonAdapter)
         except ImportError:
             pass
@@ -31,6 +33,7 @@ class TestDataSourceInterface:
         try:
             if os.environ.get("ALPACA_API_KEY"):
                 from rustybt.data.adapters.alpaca_adapter import AlpacaAdapter
+
                 adapters.append(AlpacaAdapter)
         except ImportError:
             pass
@@ -38,6 +41,7 @@ class TestDataSourceInterface:
         try:
             if os.environ.get("ALPHAVANTAGE_API_KEY"):
                 from rustybt.data.adapters.alphavantage_adapter import AlphaVantageAdapter
+
                 adapters.append(AlphaVantageAdapter)
         except ImportError:
             pass
@@ -47,23 +51,23 @@ class TestDataSourceInterface:
     def test_datasource_interface_compliance(self, adapter_classes):
         """All adapters must implement DataSource interface."""
         for adapter_class in adapter_classes:
-            assert issubclass(adapter_class, DataSource), (
-                f"{adapter_class.__name__} must inherit from DataSource"
-            )
+            assert issubclass(
+                adapter_class, DataSource
+            ), f"{adapter_class.__name__} must inherit from DataSource"
 
             # Check all required methods exist
-            assert hasattr(adapter_class, "fetch"), (
-                f"{adapter_class.__name__} missing fetch() method"
-            )
-            assert hasattr(adapter_class, "ingest_to_bundle"), (
-                f"{adapter_class.__name__} missing ingest_to_bundle() method"
-            )
-            assert hasattr(adapter_class, "get_metadata"), (
-                f"{adapter_class.__name__} missing get_metadata() method"
-            )
-            assert hasattr(adapter_class, "supports_live"), (
-                f"{adapter_class.__name__} missing supports_live() method"
-            )
+            assert hasattr(
+                adapter_class, "fetch"
+            ), f"{adapter_class.__name__} missing fetch() method"
+            assert hasattr(
+                adapter_class, "ingest_to_bundle"
+            ), f"{adapter_class.__name__} missing ingest_to_bundle() method"
+            assert hasattr(
+                adapter_class, "get_metadata"
+            ), f"{adapter_class.__name__} missing get_metadata() method"
+            assert hasattr(
+                adapter_class, "supports_live"
+            ), f"{adapter_class.__name__} missing supports_live() method"
 
     def test_metadata_structure(self, adapter_classes):
         """All adapters return valid DataSourceMetadata."""
@@ -75,14 +79,13 @@ class TestDataSourceInterface:
                 elif adapter_class.__name__ == "CSVAdapter":
                     # CSV adapter expects CSVConfig object
                     import tempfile
+
                     from rustybt.data.adapters.csv_adapter import CSVConfig, SchemaMapping
-                    temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
+
+                    temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False)
                     temp_file.write("date,open,high,low,close,volume\n")
                     temp_file.close()
-                    config = CSVConfig(
-                        file_path=temp_file.name,
-                        schema_mapping=SchemaMapping()
-                    )
+                    config = CSVConfig(file_path=temp_file.name, schema_mapping=SchemaMapping())
                     adapter = adapter_class(config)
                 else:
                     adapter = adapter_class()
@@ -90,9 +93,9 @@ class TestDataSourceInterface:
                 metadata = adapter.get_metadata()
 
                 # Verify metadata is correct type
-                assert isinstance(metadata, DataSourceMetadata), (
-                    f"{adapter_class.__name__}.get_metadata() must return DataSourceMetadata"
-                )
+                assert isinstance(
+                    metadata, DataSourceMetadata
+                ), f"{adapter_class.__name__}.get_metadata() must return DataSourceMetadata"
 
                 # Verify required fields are populated
                 assert metadata.source_type, "source_type must be non-empty"
@@ -101,9 +104,9 @@ class TestDataSourceInterface:
                 assert isinstance(metadata.supports_live, bool), "supports_live must be bool"
 
                 # Verify supported_frequencies is a list
-                assert isinstance(metadata.supported_frequencies, list), (
-                    "supported_frequencies must be a list"
-                )
+                assert isinstance(
+                    metadata.supported_frequencies, list
+                ), "supported_frequencies must be a list"
 
             except (ImportError, AttributeError) as e:
                 pytest.skip(f"Cannot test {adapter_class.__name__}: {e}")
@@ -116,14 +119,13 @@ class TestDataSourceInterface:
                     adapter = adapter_class(exchange_id="binance")
                 elif adapter_class.__name__ == "CSVAdapter":
                     import tempfile
+
                     from rustybt.data.adapters.csv_adapter import CSVConfig, SchemaMapping
-                    temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
+
+                    temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False)
                     temp_file.write("date,open,high,low,close,volume\n")
                     temp_file.close()
-                    config = CSVConfig(
-                        file_path=temp_file.name,
-                        schema_mapping=SchemaMapping()
-                    )
+                    config = CSVConfig(file_path=temp_file.name, schema_mapping=SchemaMapping())
                     adapter = adapter_class(config)
                 else:
                     adapter = adapter_class()
@@ -146,14 +148,12 @@ class TestDataSourceInterface:
         adapter = YFinanceAdapter()
 
         # Verify fetch_ohlcv method exists for backwards compatibility
-        assert hasattr(adapter, "fetch_ohlcv"), (
-            "YFinanceAdapter must have fetch_ohlcv() for backwards compatibility"
-        )
+        assert hasattr(
+            adapter, "fetch_ohlcv"
+        ), "YFinanceAdapter must have fetch_ohlcv() for backwards compatibility"
 
         # Verify it's a callable method
-        assert callable(adapter.fetch_ohlcv), (
-            "fetch_ohlcv must be callable"
-        )
+        assert callable(adapter.fetch_ohlcv), "fetch_ohlcv must be callable"
 
 
 class TestDataSourceRegistry:
@@ -180,22 +180,20 @@ class TestDataSourceRegistry:
         assert isinstance(source, DataSource), "Instance must implement DataSource"
 
         from rustybt.data.adapters.yfinance_adapter import YFinanceAdapter
-        assert isinstance(source, YFinanceAdapter), (
-            "get_source('yfinance') must return YFinanceAdapter instance"
-        )
+
+        assert isinstance(
+            source, YFinanceAdapter
+        ), "get_source('yfinance') must return YFinanceAdapter instance"
 
     def test_registry_factory_with_config(self):
         """Registry passes configuration to adapter constructors."""
-        source = DataSourceRegistry.get_source(
-            "ccxt",
-            exchange_id="binance"
-        )
+        source = DataSourceRegistry.get_source("ccxt", exchange_id="binance")
 
         assert source is not None
         assert hasattr(source, "exchange_id")
-        assert source.exchange_id == "binance", (
-            "Configuration must be passed to adapter constructor"
-        )
+        assert (
+            source.exchange_id == "binance"
+        ), "Configuration must be passed to adapter constructor"
 
     def test_registry_unknown_source(self):
         """Registry raises ValueError for unknown sources."""
@@ -232,35 +230,27 @@ class TestDataSourceLiveSupport:
         from rustybt.data.adapters.yfinance_adapter import YFinanceAdapter
 
         adapter = YFinanceAdapter()
-        assert adapter.supports_live() is False, (
-            "YFinance has 15-minute delay, not live"
-        )
+        assert adapter.supports_live() is False, "YFinance has 15-minute delay, not live"
 
     def test_ccxt_supports_live(self):
         """CCXT supports live streaming."""
         from rustybt.data.adapters.ccxt_adapter import CCXTAdapter
 
         adapter = CCXTAdapter(exchange_id="binance")
-        assert adapter.supports_live() is True, (
-            "CCXT supports WebSocket streaming"
-        )
+        assert adapter.supports_live() is True, "CCXT supports WebSocket streaming"
 
     def test_csv_no_live(self):
         """CSV adapter does not support live streaming."""
-        from rustybt.data.adapters.csv_adapter import CSVAdapter, CSVConfig, SchemaMapping
         import tempfile
 
-        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
+        from rustybt.data.adapters.csv_adapter import CSVAdapter, CSVConfig, SchemaMapping
+
+        temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False)
         temp_file.write("date,open,high,low,close,volume\n")
         temp_file.close()
-        config = CSVConfig(
-            file_path=temp_file.name,
-            schema_mapping=SchemaMapping()
-        )
+        config = CSVConfig(file_path=temp_file.name, schema_mapping=SchemaMapping())
         adapter = CSVAdapter(config)
-        assert adapter.supports_live() is False, (
-            "CSV is static file data, not live"
-        )
+        assert adapter.supports_live() is False, "CSV is static file data, not live"
 
     def test_polygon_supports_live(self):
         """Polygon supports live streaming."""
@@ -275,9 +265,7 @@ class TestDataSourceLiveSupport:
 
             # Use DataSourceRegistry to avoid constructor issues
             source = DataSourceRegistry.get_source("polygon")
-            assert source.supports_live() is True, (
-                "Polygon supports WebSocket streaming"
-            )
+            assert source.supports_live() is True, "Polygon supports WebSocket streaming"
         except (ImportError, ValueError) as e:
             pytest.skip(f"Polygon adapter not available: {e}")
 
@@ -294,9 +282,7 @@ class TestDataSourceLiveSupport:
 
             # Use DataSourceRegistry to avoid constructor issues
             source = DataSourceRegistry.get_source("alpaca")
-            assert source.supports_live() is True, (
-                "Alpaca supports WebSocket streaming"
-            )
+            assert source.supports_live() is True, "Alpaca supports WebSocket streaming"
         except (ImportError, ValueError, TypeError) as e:
             pytest.skip(f"Alpaca adapter not available: {e}")
 
@@ -315,7 +301,7 @@ class TestDataSourceMetadata:
             auth_required=True,
             data_delay=0,
             supported_frequencies=["1m", "1h", "1d"],
-            additional_info={"test": "data"}
+            additional_info={"test": "data"},
         )
 
         assert metadata.source_type == "test"

@@ -1,16 +1,17 @@
 """Unit tests for Decimal commission models."""
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
 
+import pytest
+
 from rustybt.finance.decimal import (
+    CryptoCommission,
     DecimalOrder,
     NoCommission,
+    PerDollarCommission,
     PerShareCommission,
     PerTradeCommission,
-    PerDollarCommission,
-    CryptoCommission,
 )
 
 
@@ -152,9 +153,7 @@ def test_crypto_commission_fractional_crypto(market_order):
 
     # 0.00000001 BTC × $50,000 = $0.0005
     # Commission: $0.0005 × 0.002 = $0.000001
-    commission = model.calculate(
-        market_order, Decimal("50000.00"), Decimal("0.00000001")
-    )
+    commission = model.calculate(market_order, Decimal("50000.00"), Decimal("0.00000001"))
     assert commission == Decimal("0.000001")
 
 

@@ -151,17 +151,17 @@ async def verify_binance():
         api_secret=os.getenv('BINANCE_API_SECRET'),
         testnet=True
     )
-    
+
     await broker.connect()
-    
+
     # Check account info
     account = await broker.get_account_info()
     print(f"✅ Connected! Balance: ${account['cash']}")
-    
+
     # Check positions
     positions = await broker.get_positions()
     print(f"✅ Current positions: {len(positions)}")
-    
+
     await broker.disconnect()
 
 asyncio.run(verify_binance())
@@ -372,13 +372,13 @@ from rustybt.live.brokers import IBBrokerAdapter
 
 async def verify_ib():
     broker = IBBrokerAdapter(host='127.0.0.1', port=7497, client_id=1)
-    
+
     await broker.connect()
     print("✅ Connected to Interactive Brokers!")
-    
+
     account = await broker.get_account_info()
     print(f"Account value: ${account['equity']}")
-    
+
     await broker.disconnect()
 
 asyncio.run(verify_ib())

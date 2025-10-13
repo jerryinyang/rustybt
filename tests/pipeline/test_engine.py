@@ -2,21 +2,20 @@
 Tests for SimplePipelineEngine
 """
 
-from collections import OrderedDict
+from collections import ChainMap, OrderedDict
 from itertools import product
 from operator import add, sub
 from unittest import skipIf
 
-from parameterized import parameterized
 import numpy as np
-
-from numpy.testing import assert_almost_equal
 import pandas as pd
-from collections import ChainMap
-
+import pytest
+from numpy.testing import assert_almost_equal
 from pandas.testing import assert_frame_equal
+from parameterized import parameterized
 from toolz import merge
 
+import rustybt.testing.fixtures as zf
 from rustybt.assets.synthetic import make_rotating_equity_info
 from rustybt.errors import NoFurtherDataError
 from rustybt.lib.adjustment import AdjustmentKind
@@ -30,16 +29,16 @@ from rustybt.pipeline.data import (
 )
 from rustybt.pipeline.data.testing import TestingDataSet
 from rustybt.pipeline.domain import (
-    EquitySessionDomain,
     GENERIC,
     JP_EQUITIES,
     US_EQUITIES,
+    EquitySessionDomain,
 )
 from rustybt.pipeline.engine import SimplePipelineEngine
 from rustybt.pipeline.factors import (
-    AverageDollarVolume,
     EWMA,
     EWMSTD,
+    AverageDollarVolume,
     ExponentialWeightedMovingAverage,
     ExponentialWeightedMovingStdDev,
     MaxDrawdown,
@@ -52,29 +51,27 @@ from rustybt.pipeline.loaders.equity_pricing_loader import (
 from rustybt.pipeline.loaders.frame import DataFrameLoader
 from rustybt.pipeline.loaders.synthetic import (
     PrecomputedLoader,
-    make_bar_data,
     expected_bar_values_2d,
+    make_bar_data,
 )
 from rustybt.pipeline.sentinels import NotSpecified
 from rustybt.pipeline.term import InputDates
 from rustybt.testing import (
     AssetID,
     AssetIDPlusDay,
+    OpenPrice,
     check_arrays,
     make_alternating_boolean_array,
     make_cascading_boolean_array,
-    OpenPrice,
     parameter_space,
     product_upper_triangle,
 )
-import rustybt.testing.fixtures as zf
-from rustybt.utils.exploding_object import NamedExplodingObject
 from rustybt.testing.core import create_simple_domain
 from rustybt.testing.predicates import assert_equal
+from rustybt.utils.exploding_object import NamedExplodingObject
 from rustybt.utils.memoize import lazyval
 from rustybt.utils.numpy_utils import bool_dtype, datetime64ns_dtype
 from rustybt.utils.pandas_utils import new_pandas, skip_pipeline_new_pandas
-import pytest
 
 
 class RollingSumDifference(CustomFactor):
@@ -430,7 +427,7 @@ class ConstantInputTestCase(
             expected_cascading_mask_result,
             expected_alternating_mask_result,
         )
-        for mask, expected_mask in zip(masks, expected_mask_results):
+        for mask, expected_mask in zip(masks, expected_mask_results, strict=False):
             # Test running a pipeline with a single masked factor.
             columns = {"factor1": OpenPrice(mask=mask), "mask": mask}
             pipeline = Pipeline(columns=columns)
@@ -542,8 +539,8 @@ class ConstantInputTestCase(
         # The instance `single_output` itself will compute a numpy.recarray
         # when added as a column to our pipeline, so we expect its output
         # values to be 1-tuples.
-        open_instance_expected = {asset: open_values_as_tuple for asset in assets}
-        open_attribute_expected = {asset: open_values for asset in assets}
+        open_instance_expected = dict.fromkeys(assets, open_values_as_tuple)
+        open_attribute_expected = dict.fromkeys(assets, open_values)
 
         for colname, expected_values in (
             ("open_instance", open_instance_expected),
@@ -595,7 +592,7 @@ class ConstantInputTestCase(
             expected_alternating_mask_result,
             expected_no_mask_result,
         )
-        for mask, expected_mask in zip(masks, expected_mask_results):
+        for mask, expected_mask in zip(masks, expected_mask_results, strict=False):
             open_price, close_price = MultipleOutputs(mask=mask)
             pipeline = Pipeline(
                 columns={"open_price": open_price, "close_price": close_price},
@@ -629,7 +626,7 @@ class ConstantInputTestCase(
 
         open_values = [constants[EquityPricing.open]] * num_assets
         close_values = [constants[EquityPricing.close]] * num_assets
-        expected_values = [list(zip(open_values, close_values))] * num_dates
+        expected_values = [list(zip(open_values, close_values, strict=False))] * num_dates
         expected_results = pd.DataFrame(
             expected_values,
             index=dates,
@@ -738,9 +735,7 @@ class ConstantInputTestCase(
         min_window = min(pip_col.window_length for pip_col in columns.values())
         col_to_val = ChainMap(constants1, constants2)
         vals = {
-            name: (
-                sum(col_to_val[col] for col in pipe_col.inputs) * pipe_col.window_length
-            )
+            name: (sum(col_to_val[col] for col in pipe_col.inputs) * pipe_col.window_length)
             for name, pipe_col in columns.items()
         }
 
@@ -783,9 +778,7 @@ class ConstantInputTestCase(
 HUGE_SID = np.iinfo("int32").max + 1
 
 
-class FrameInputTestCase(
-    zf.WithAssetFinder, zf.WithTradingCalendars, zf.ZiplineTestCase
-):
+class FrameInputTestCase(zf.WithAssetFinder, zf.WithTradingCalendars, zf.ZiplineTestCase):
     asset_ids = ASSET_FINDER_EQUITY_SIDS = range(HUGE_SID, HUGE_SID + 3)
     start = START_DATE = pd.Timestamp("2015-01-01")
     end = END_DATE = pd.Timestamp("2015-01-31")
@@ -893,9 +886,7 @@ class FrameInputTestCase(
                 assert_frame_equal(high_results, high_base.iloc[iloc_bounds])
 
 
-class SyntheticBcolzTestCase(
-    zf.WithAdjustmentReader, zf.WithAssetFinder, zf.ZiplineTestCase
-):
+class SyntheticBcolzTestCase(zf.WithAdjustmentReader, zf.WithAssetFinder, zf.ZiplineTestCase):
     first_asset_start = pd.Timestamp("2015-04-01")
     START_DATE = pd.Timestamp("2015-01-01")
     END_DATE = pd.Timestamp("2015-08-01")
@@ -1056,9 +1047,7 @@ class SyntheticBcolzTestCase(
         assert_frame_equal(expected, result)
 
 
-class ParameterizedFactorTestCase(
-    zf.WithAssetFinder, zf.WithTradingCalendars, zf.ZiplineTestCase
-):
+class ParameterizedFactorTestCase(zf.WithAssetFinder, zf.WithTradingCalendars, zf.ZiplineTestCase):
     sids = ASSET_FINDER_EQUITY_SIDS = pd.Index([1, 2, 3], dtype="int64")
     START_DATE = pd.Timestamp("2015-01-31")
     END_DATE = pd.Timestamp("2015-03-01")
@@ -1269,10 +1258,7 @@ class ParameterizedFactorTestCase(
         assert_frame_equal(results["dv1_nan"].unstack(), expected_1_nan)
 
         expected_5_nan = (
-            (self.raw_data_with_nans * self.raw_data * 2)
-            .fillna(0)
-            .rolling(5)
-            .mean()[5:]
+            (self.raw_data_with_nans * self.raw_data * 2).fillna(0).rolling(5).mean()[5:]
         )
 
         assert_frame_equal(results["dv5_nan"].unstack(), expected_5_nan)
@@ -1310,9 +1296,7 @@ class StringColumnTestCase(zf.WithSeededRandomPipelineEngine, zf.ZiplineTestCase
         assert_frame_equal(result.c.unstack(), expected_final_result)
 
 
-class WindowSafetyPropagationTestCase(
-    zf.WithSeededRandomPipelineEngine, zf.ZiplineTestCase
-):
+class WindowSafetyPropagationTestCase(zf.WithSeededRandomPipelineEngine, zf.ZiplineTestCase):
     ASSET_FINDER_COUNTRY_CODE = "US"
     SEEDED_RANDOM_PIPELINE_DEFAULT_DOMAIN = US_EQUITIES
     SEEDED_RANDOM_PIPELINE_SEED = 5
@@ -1606,12 +1590,8 @@ class TestResolveDomain:
             "at construction time. Update this test if it now does.",
         )
 
-        engine_generic = SimplePipelineEngine(
-            get_loader, asset_finder, default_domain=GENERIC
-        )
-        engine_jp = SimplePipelineEngine(
-            get_loader, asset_finder, default_domain=JP_EQUITIES
-        )
+        engine_generic = SimplePipelineEngine(get_loader, asset_finder, default_domain=GENERIC)
+        engine_jp = SimplePipelineEngine(get_loader, asset_finder, default_domain=JP_EQUITIES)
 
         pipe_generic = Pipeline()
         pipe_us = Pipeline(domain=US_EQUITIES)

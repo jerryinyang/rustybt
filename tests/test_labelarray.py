@@ -1,15 +1,15 @@
+import warnings
 from itertools import product
 from operator import eq, ne
-import warnings
 
 import numpy as np
+import pytest
 from toolz import take
 
 from rustybt.lib.labelarray import LabelArray
 from rustybt.testing import check_arrays
 from rustybt.testing.predicates import assert_equal
 from rustybt.utils.compat import unicode
-import pytest
 
 
 def rotN(a_list, N):
@@ -35,9 +35,7 @@ def all_ufuncs():
 @pytest.fixture(scope="class")
 def label_array(request):
     request.cls.rowvalues = ["", "a", "b", "ab", "a", "", "b", "ab", "z"]
-    request.cls.strs = np.array(
-        [rotN(request.cls.rowvalues, i) for i in range(3)], dtype=object
-    )
+    request.cls.strs = np.array([rotN(request.cls.rowvalues, i) for i in range(3)], dtype=object)
 
 
 @pytest.mark.usefixtures("label_array")
@@ -54,7 +52,6 @@ class TestLabelArray:
     @pytest.mark.parametrize("array_astype", (bytes, unicode, object))
     @pytest.mark.parametrize("missing_value", ("", "a", "not in the array", None))
     def test_compare_to_str(self, compval, shape, array_astype, missing_value):
-
         strs = self.strs.reshape(shape).astype(array_astype)
         if missing_value is None:
             # As of numpy 1.9.2, object array != None returns just False
@@ -153,7 +150,6 @@ class TestLabelArray:
             la.map(f)
 
     def test_map_can_only_return_none_if_missing_value_is_none(self):
-
         # Should work.
         la = LabelArray(self.strs, missing_value=None)
         result = la.map(lambda x: None)
@@ -328,9 +324,7 @@ class TestLabelArray:
         arr = LabelArray(self.strs, missing_value=missing_value)
 
         if not arr.has_label(val):
-            assert (val == "not in the array") or (
-                val is None and missing_value is not None
-            )
+            assert (val == "not in the array") or (val is None and missing_value is not None)
             for slicer in [(0, 0), (0, 1), 1]:
                 with pytest.raises(ValueError):
                     arr[slicer] = val
@@ -368,18 +362,17 @@ class TestLabelArray:
         orig_arr = arr.copy()
 
         # Write a row.
-        assert not (arr[0] == arr[1]).all(), (
-            "This test doesn't test anything because rows 0" " and 1 are already equal!"
-        )
+        assert not (
+            arr[0] == arr[1]
+        ).all(), "This test doesn't test anything because rows 0 and 1 are already equal!"
         arr[0] = arr[1]
         for i in range(arr.shape[1]):
             assert arr[0, i] == arr[1, i]
 
         # Write a column.
-        assert not (arr[:, 0] == arr[:, 1]).all(), (
-            "This test doesn't test anything because columns 0"
-            " and 1 are already equal!"
-        )
+        assert not (
+            arr[:, 0] == arr[:, 1]
+        ).all(), "This test doesn't test anything because columns 0 and 1 are already equal!"
         arr[:, 0] = arr[:, 1]
         for i in range(arr.shape[0]):
             assert arr[i, 0] == arr[i, 1]
@@ -589,7 +582,6 @@ class TestLabelArray:
         assert_equal(categories, ["a", "b", "c"])
 
     def test_fortran_contiguous_input(self):
-
         strs = np.array(
             [["a", "b", "c", "d"], ["a", "b", "c", "d"], ["a", "b", "c", "d"]],
             dtype=object,

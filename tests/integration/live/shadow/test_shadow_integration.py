@@ -14,10 +14,8 @@ in realistic scenarios.
 
 import asyncio
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from pathlib import Path
-from typing import Any, Dict, List
 from unittest.mock import Mock
 
 import pandas as pd
@@ -25,19 +23,17 @@ import pytest
 import pytz
 
 from rustybt.algorithm import TradingAlgorithm
-from rustybt.assets import Asset, Equity
+from rustybt.assets import Equity
 from rustybt.finance.decimal.commission import PerShareCommission
 from rustybt.finance.decimal.slippage import FixedBasisPointsSlippage
-from rustybt.live.brokers.paper_broker import PaperBroker
-from rustybt.live.engine import LiveTradingEngine
 from rustybt.live.models import StateCheckpoint
 from rustybt.live.shadow.config import ShadowTradingConfig
 from rustybt.live.shadow.engine import ShadowBacktestEngine
 from rustybt.live.shadow.models import SignalRecord
 from rustybt.live.state_manager import StateManager
 
-
 # ==================== Fixtures ====================
+
 
 @pytest.fixture
 def test_asset():
@@ -73,13 +69,8 @@ def mock_asset_finder(test_asset):
 @pytest.fixture
 def execution_models():
     """Create execution models (commission + slippage)."""
-    commission = PerShareCommission(
-        rate=Decimal("0.005"),
-        minimum=Decimal("1.00")
-    )
-    slippage = FixedBasisPointsSlippage(
-        basis_points=Decimal("5")  # 5 bps = 0.05%
-    )
+    commission = PerShareCommission(rate=Decimal("0.005"), minimum=Decimal("1.00"))
+    slippage = FixedBasisPointsSlippage(basis_points=Decimal("5"))  # 5 bps = 0.05%
     return commission, slippage
 
 
@@ -148,6 +139,7 @@ def test_strategy(mock_sim_params, mock_asset_finder):
 
 
 # ==================== Test 1: Parallel Execution with Matching Signals ====================
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -268,6 +260,7 @@ async def test_parallel_execution_matching_signals(
 
 # ==================== Test 2: Signal Divergence Detection ====================
 
+
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_signal_divergence_detection(
@@ -299,8 +292,7 @@ async def test_signal_divergence_detection(
     # Simulate divergent signals by alternating prices to create buy/sell patterns
     # We'll generate 20 signals where 2 live signals are missing (90% match rate < 95%)
     # Use recent timestamp to ensure signals fall within the match rate calculation window
-    from datetime import timezone
-    timestamp = datetime.now(timezone.utc) - timedelta(minutes=30)
+    timestamp = datetime.now(UTC) - timedelta(minutes=30)
 
     for i in range(20):
         current_timestamp = timestamp + timedelta(minutes=i)
@@ -312,8 +304,6 @@ async def test_signal_divergence_detection(
         else:
             price = Decimal("165")  # Triggers SELL
             expected_side = "SELL"
-
-        market_data = {test_asset: {"close": price, "volume": 1000000}}
 
         # Manually add backtest signal for each iteration
         backtest_signal = SignalRecord(
@@ -346,12 +336,14 @@ async def test_signal_divergence_detection(
 
     # Assertions
     assert not is_aligned, "Should detect signal divergence"
-    assert metrics["signal_match_rate"] < shadow_config.signal_match_rate_min, \
-        f"Match rate {metrics['signal_match_rate']} should be < {shadow_config.signal_match_rate_min}"
+    assert (
+        metrics["signal_match_rate"] < shadow_config.signal_match_rate_min
+    ), f"Match rate {metrics['signal_match_rate']} should be < {shadow_config.signal_match_rate_min}"
     assert shadow.circuit_breaker.is_tripped, "Circuit breaker should trip"
     breach_summary = shadow.circuit_breaker.get_breach_summary()
-    assert "signal_match_rate" in breach_summary, \
-        f"Breach summary should mention signal_match_rate: {breach_summary}"
+    assert (
+        "signal_match_rate" in breach_summary
+    ), f"Breach summary should mention signal_match_rate: {breach_summary}"
 
     await shadow.stop()
 
@@ -359,6 +351,7 @@ async def test_signal_divergence_detection(
 
 
 # ==================== Test 3: Execution Quality Degradation ====================
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -389,10 +382,8 @@ async def test_execution_quality_degradation(
     await shadow.start()
 
     # Simulate market event - use recent timestamp for match rate calculation
-    from datetime import timezone
-    timestamp = datetime.now(timezone.utc) - timedelta(minutes=5)
+    timestamp = datetime.now(UTC) - timedelta(minutes=5)
     signal_price = Decimal("140")
-    market_data = {test_asset: {"close": signal_price, "volume": 1000000}}
 
     # Manually add backtest signal
     backtest_signal = SignalRecord(
@@ -464,12 +455,14 @@ async def test_execution_quality_degradation(
     assert not is_aligned, "Should detect execution quality degradation"
     # Actual slippage error = 100 bps - 5 bps = 95 bps (> 50 bps threshold)
     slippage_error = Decimal(str(metrics["execution_quality"]["slippage_error_bps"]))
-    assert slippage_error > shadow_config.slippage_error_bps_max, \
-        f"Slippage error {slippage_error} should be > {shadow_config.slippage_error_bps_max}"
+    assert (
+        slippage_error > shadow_config.slippage_error_bps_max
+    ), f"Slippage error {slippage_error} should be > {shadow_config.slippage_error_bps_max}"
     assert shadow.circuit_breaker.is_tripped, "Circuit breaker should trip"
     breach_summary = shadow.circuit_breaker.get_breach_summary()
-    assert "slippage_error_bps" in breach_summary, \
-        f"Breach summary should mention slippage_error_bps: {breach_summary}"
+    assert (
+        "slippage_error_bps" in breach_summary
+    ), f"Breach summary should mention slippage_error_bps: {breach_summary}"
 
     await shadow.stop()
 
@@ -477,6 +470,7 @@ async def test_execution_quality_degradation(
 
 
 # ==================== Test 4: State Persistence Across Restart ====================
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -543,7 +537,7 @@ async def test_state_persistence_across_restart(
     await asyncio.sleep(0.1)
 
     # Get metrics before save
-    metrics_before = shadow.get_alignment_metrics()
+    shadow.get_alignment_metrics()
 
     # Create StateCheckpoint with alignment metrics
     strategy_name = "test_shadow_strategy"
@@ -554,7 +548,11 @@ async def test_state_persistence_across_restart(
         positions=[],
         pending_orders=[],
         cash_balance="100000.00",
-        alignment_metrics=shadow.signal_tracker.calculate_alignment_metrics() if hasattr(shadow, 'signal_tracker') else None,
+        alignment_metrics=(
+            shadow.signal_tracker.calculate_alignment_metrics()
+            if hasattr(shadow, "signal_tracker")
+            else None
+        ),
     )
 
     # Save checkpoint (synchronous method)
@@ -564,7 +562,7 @@ async def test_state_persistence_across_restart(
     await shadow.stop()
 
     # Create NEW shadow engine (simulates restart)
-    shadow_new = ShadowBacktestEngine(
+    ShadowBacktestEngine(
         strategy=test_strategy,
         config=shadow_config,
         commission_model=commission,
@@ -589,6 +587,7 @@ async def test_state_persistence_across_restart(
 
 # ==================== Test 5: Performance Overhead Validation ====================
 
+
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_performance_overhead_validation(
@@ -612,10 +611,12 @@ async def test_performance_overhead_validation(
     base_time = datetime(2024, 1, 1, 9, 30, tzinfo=pytz.UTC)
 
     for i in range(num_events):
-        market_events.append({
-            "timestamp": base_time + timedelta(seconds=i),
-            "data": {test_asset: {"close": Decimal("140"), "volume": 1000000}},
-        })
+        market_events.append(
+            {
+                "timestamp": base_time + timedelta(seconds=i),
+                "data": {test_asset: {"close": Decimal("140"), "volume": 1000000}},
+            }
+        )
 
     # Benchmark 1: WITHOUT shadow engine - simulate realistic event processing
     # We need a more realistic baseline that includes actual work, not just async sleep
@@ -666,8 +667,9 @@ async def test_performance_overhead_validation(
     # We'll check that the overhead is reasonable (< 0.5 seconds for 100 events)
     max_acceptable_overhead = 0.5  # 0.5 seconds for 100 events = 5ms per event
 
-    assert overhead_seconds < max_acceptable_overhead, \
-        f"Shadow overhead {overhead_seconds:.3f}s exceeds {max_acceptable_overhead}s threshold"
+    assert (
+        overhead_seconds < max_acceptable_overhead
+    ), f"Shadow overhead {overhead_seconds:.3f}s exceeds {max_acceptable_overhead}s threshold"
 
     # Also calculate percentage for reporting
     if baseline_duration > 0:
@@ -675,13 +677,16 @@ async def test_performance_overhead_validation(
     else:
         overhead_pct = 0
 
-    print(f"✓ Test 5 passed: Performance overhead {overhead_seconds:.3f}s (approx {overhead_pct:.1f}%)")
+    print(
+        f"✓ Test 5 passed: Performance overhead {overhead_seconds:.3f}s (approx {overhead_pct:.1f}%)"
+    )
     print(f"  Baseline: {baseline_duration:.4f}s")
     print(f"  With shadow: {shadow_duration:.4f}s")
-    print(f"  Per-event overhead: {(overhead_seconds/num_events)*1000:.2f}ms")
+    print(f"  Per-event overhead: {(overhead_seconds / num_events) * 1000:.2f}ms")
 
 
 # ==================== Test Summary ====================
+
 
 @pytest.mark.integration
 def test_integration_suite_summary():

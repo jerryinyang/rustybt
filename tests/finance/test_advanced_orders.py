@@ -1,23 +1,23 @@
 """
 Tests for advanced order types: Trailing Stop, OCO, and Bracket orders.
 """
-import pytest
-import pandas as pd
-from decimal import Decimal
 
-from rustybt.finance.execution import (
-    TrailingStopOrder,
-    OCOOrder,
-    BracketOrder,
-    MarketOrder,
-    LimitOrder,
-    StopOrder,
-)
-from rustybt.finance.order import Order, ORDER_STATUS
-from rustybt.finance.blotter.simulation_blotter import SimulationBlotter
+import pandas as pd
+import pytest
+
 from rustybt.assets import Equity
 from rustybt.assets.exchange_info import ExchangeInfo
 from rustybt.errors import BadOrderParameters
+from rustybt.finance.blotter.simulation_blotter import SimulationBlotter
+from rustybt.finance.execution import (
+    BracketOrder,
+    LimitOrder,
+    MarketOrder,
+    OCOOrder,
+    StopOrder,
+    TrailingStopOrder,
+)
+from rustybt.finance.order import ORDER_STATUS, Order
 
 
 class TestTrailingStopOrder:
@@ -25,7 +25,9 @@ class TestTrailingStopOrder:
 
     def test_trailing_stop_requires_trail_param(self):
         """TrailingStopOrder must have either trail_amount or trail_percent."""
-        with pytest.raises(BadOrderParameters, match="requires either trail_amount or trail_percent"):
+        with pytest.raises(
+            BadOrderParameters, match="requires either trail_amount or trail_percent"
+        ):
             TrailingStopOrder()
 
     def test_trailing_stop_cannot_have_both_params(self):
@@ -177,11 +179,7 @@ class TestBracketOrder:
     def test_bracket_requires_valid_entry_style(self):
         """BracketOrder entry_style must be an ExecutionStyle instance."""
         with pytest.raises(BadOrderParameters, match="must be an ExecutionStyle instance"):
-            BracketOrder(
-                entry_style="not_a_style",
-                stop_loss_price=95.0,
-                take_profit_price=105.0
-            )
+            BracketOrder(entry_style="not_a_style", stop_loss_price=95.0, take_profit_price=105.0)
 
     def test_bracket_validates_stop_loss_price(self):
         """BracketOrder validates stop_loss_price."""
@@ -189,7 +187,7 @@ class TestBracketOrder:
             BracketOrder(
                 entry_style=MarketOrder(),
                 stop_loss_price=-1.0,  # Invalid negative price
-                take_profit_price=105.0
+                take_profit_price=105.0,
             )
 
     def test_bracket_validates_take_profit_price(self):
@@ -198,15 +196,13 @@ class TestBracketOrder:
             BracketOrder(
                 entry_style=MarketOrder(),
                 stop_loss_price=95.0,
-                take_profit_price=-1.0  # Invalid negative price
+                take_profit_price=-1.0,  # Invalid negative price
             )
 
     def test_bracket_creation_with_market_entry(self):
         """BracketOrder can be created with MarketOrder entry."""
         bracket = BracketOrder(
-            entry_style=MarketOrder(),
-            stop_loss_price=95.0,
-            take_profit_price=105.0
+            entry_style=MarketOrder(), stop_loss_price=95.0, take_profit_price=105.0
         )
         assert bracket.stop_loss_price == 95.0
         assert bracket.take_profit_price == 105.0
@@ -215,9 +211,7 @@ class TestBracketOrder:
     def test_bracket_creation_with_limit_entry(self):
         """BracketOrder can be created with LimitOrder entry."""
         bracket = BracketOrder(
-            entry_style=LimitOrder(100.0),
-            stop_loss_price=95.0,
-            take_profit_price=105.0
+            entry_style=LimitOrder(100.0), stop_loss_price=95.0, take_profit_price=105.0
         )
         assert bracket.get_limit_price(True) == 100.0
 
@@ -225,9 +219,7 @@ class TestBracketOrder:
         """BracketOrder delegates limit/stop prices to entry order."""
         entry_style = LimitOrder(100.0)
         bracket = BracketOrder(
-            entry_style=entry_style,
-            stop_loss_price=95.0,
-            take_profit_price=105.0
+            entry_style=entry_style, stop_loss_price=95.0, take_profit_price=105.0
         )
         assert bracket.get_limit_price(True) == entry_style.get_limit_price(True)
         assert bracket.get_stop_price(True) == entry_style.get_stop_price(True)
@@ -358,9 +350,7 @@ class TestBlotterIntegration:
     def test_blotter_creates_trailing_stop_order(self):
         """Blotter creates trailing stop order correctly."""
         order_id = self.blotter.order(
-            asset=self.equity,
-            amount=100,
-            style=TrailingStopOrder(trail_amount=5.0)
+            asset=self.equity, amount=100, style=TrailingStopOrder(trail_amount=5.0)
         )
 
         assert order_id is not None
@@ -374,11 +364,7 @@ class TestBlotterIntegration:
         stop_style = StopOrder(95.0)
         oco_style = OCOOrder(order1_style=limit_style, order2_style=stop_style)
 
-        parent_id = self.blotter.order(
-            asset=self.equity,
-            amount=100,
-            style=oco_style
-        )
+        parent_id = self.blotter.order(asset=self.equity, amount=100, style=oco_style)
 
         assert parent_id is not None
         order1 = self.blotter.orders[parent_id]
@@ -391,19 +377,13 @@ class TestBlotterIntegration:
     def test_blotter_creates_bracket_order(self):
         """Blotter creates bracket order entry."""
         bracket_style = BracketOrder(
-            entry_style=MarketOrder(),
-            stop_loss_price=95.0,
-            take_profit_price=105.0
+            entry_style=MarketOrder(), stop_loss_price=95.0, take_profit_price=105.0
         )
 
-        entry_id = self.blotter.order(
-            asset=self.equity,
-            amount=100,
-            style=bracket_style
-        )
+        entry_id = self.blotter.order(asset=self.equity, amount=100, style=bracket_style)
 
         assert entry_id is not None
-        assert hasattr(self.blotter, '_bracket_orders')
+        assert hasattr(self.blotter, "_bracket_orders")
         assert entry_id in self.blotter._bracket_orders
 
     def test_cancel_linked_orders_on_fill(self):
@@ -412,11 +392,7 @@ class TestBlotterIntegration:
         stop_style = StopOrder(95.0)
         oco_style = OCOOrder(order1_style=limit_style, order2_style=stop_style)
 
-        parent_id = self.blotter.order(
-            asset=self.equity,
-            amount=100,
-            style=oco_style
-        )
+        parent_id = self.blotter.order(asset=self.equity, amount=100, style=oco_style)
 
         order1 = self.blotter.orders[parent_id]
         order2_id = order1.linked_order_ids[0]
@@ -431,24 +407,17 @@ class TestBlotterIntegration:
     def test_bracket_order_creates_children_on_fill(self):
         """Bracket order creates stop-loss and take-profit on entry fill."""
         bracket_style = BracketOrder(
-            entry_style=MarketOrder(),
-            stop_loss_price=95.0,
-            take_profit_price=105.0
+            entry_style=MarketOrder(), stop_loss_price=95.0, take_profit_price=105.0
         )
 
-        entry_id = self.blotter.order(
-            asset=self.equity,
-            amount=100,
-            style=bracket_style
-        )
+        entry_id = self.blotter.order(asset=self.equity, amount=100, style=bracket_style)
 
         # Simulate entry fill
         self.blotter.process_bracket_fill(entry_id)
 
         # Find child orders
         child_orders = [
-            order for order in self.blotter.orders.values()
-            if order.parent_order_id == entry_id
+            order for order in self.blotter.orders.values() if order.parent_order_id == entry_id
         ]
 
         assert len(child_orders) == 2

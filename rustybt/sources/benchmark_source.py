@@ -16,9 +16,9 @@
 import pandas as pd
 
 from rustybt.errors import (
-    InvalidBenchmarkAsset,
     BenchmarkAssetNotAvailableTooEarly,
     BenchmarkAssetNotAvailableTooLate,
+    InvalidBenchmarkAsset,
 )
 
 
@@ -64,9 +64,7 @@ class BenchmarkSource:
             else:
                 self._precalculated_series = daily_series
         else:
-            raise Exception(
-                "Must provide either benchmark_asset or " "benchmark_returns."
-            )
+            raise Exception("Must provide either benchmark_asset or benchmark_returns.")
 
     def get_value(self, dt):
         """Look up the returns for a given dt.
@@ -76,12 +74,12 @@ class BenchmarkSource:
         dt : datetime
             The label to look up.
 
-        Returns
+        Returns:
         -------
         returns : float
             The returns at the given dt or session.
 
-        See Also
+        See Also:
         --------
         :class:`zipline.sources.benchmark_source.BenchmarkSource.daily_returns`
 
@@ -102,12 +100,12 @@ class BenchmarkSource:
         end_dt : datetime
             The inclusive end label.
 
-        Returns
+        Returns:
         -------
         returns : pd.Series
             The series of returns.
 
-        See Also
+        See Also:
         --------
         :class:`zipline.sources.benchmark_source.BenchmarkSource.daily_returns`
 
@@ -129,7 +127,7 @@ class BenchmarkSource:
             The inclusive ending session label. If not provided, treat
             ``start`` as a scalar key.
 
-        Returns
+        Returns:
         -------
         returns : pd.Series or float
             The returns in the given period. The index will be the trading
@@ -145,9 +143,7 @@ class BenchmarkSource:
         # check if this security has a stock dividend.  if so, raise an
         # error suggesting that the user pick a different asset to use
         # as benchmark.
-        stock_dividends = self.data_portal.get_stock_dividends(
-            self.benchmark_asset, self.sessions
-        )
+        stock_dividends = self.data_portal.get_stock_dividends(self.benchmark_asset, self.sessions)
 
         if len(stock_dividends) > 0:
             raise InvalidBenchmarkAsset(
@@ -184,9 +180,7 @@ class BenchmarkSource:
         daily_returns.index = closes.index
         return daily_returns.iloc[1:]
 
-    def _initialize_precalculated_series(
-        self, asset, trading_calendar, trading_days, data_portal
-    ):
+    def _initialize_precalculated_series(self, asset, trading_calendar, trading_days, data_portal):
         """
         Internal method that pre-calculates the benchmark return series for
         use in the simulation.
@@ -201,7 +195,7 @@ class BenchmarkSource:
 
         data_portal: DataPortal
 
-        Notes
+        Notes:
         -----
         If the benchmark asset started trading after the simulation start,
         or finished trading before the simulation end, exceptions are raised.
@@ -214,7 +208,7 @@ class BenchmarkSource:
         as of the look-back date (the last day of the simulation).  Prices are
         fully adjusted for dividends, splits, and mergers.
 
-        Returns
+        Returns:
         -------
         returns : pd.Series
             indexed by trading day, whose values represent the %
@@ -223,9 +217,7 @@ class BenchmarkSource:
             the partial daily returns for each minute
         """
         if self.emission_rate == "minute":
-            minutes = trading_calendar.sessions_minutes(
-                self.sessions[0], self.sessions[-1]
-            )
+            minutes = trading_calendar.sessions_minutes(self.sessions[0], self.sessions[-1])
             benchmark_series = data_portal.get_history_window(
                 [asset],
                 minutes[-1],

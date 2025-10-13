@@ -15,10 +15,10 @@ def debug_mro_failure(name, bases):
         output_file = None
 
     # Return a nicely formatted error describing the cycle.
-    lines = ["Cycle found when trying to compute MRO for {}:\n".format(name)]
-    for source, dest in list(zip(cycle, cycle[1:])) + [(cycle[-1], cycle[0])]:
+    lines = [f"Cycle found when trying to compute MRO for {name}:\n"]
+    for source, dest in list(zip(cycle, cycle[1:], strict=False)) + [(cycle[-1], cycle[0])]:
         label = verbosify_label(graph.get_edge_data(source, dest)["label"])
-        lines.append("{} comes before {}: cause={}".format(source, dest, label))
+        lines.append(f"{source} comes before {dest}: cause={label}")
 
     # Either graphviz graph and tell the user where it went, or tell people how
     # to enable that feature.
@@ -34,7 +34,7 @@ def debug_mro_failure(name, bases):
             subprocess.check_call(["dot", "-T", "svg", "-O", output_file])
             lines.append("GraphViz rendering written to " + output_file + ".svg")
         except Exception as e:
-            lines.append("Failed to write GraphViz graph. Error was {}".format(e))
+            lines.append(f"Failed to write GraphViz graph. Error was {e}")
 
     return "\n".join(lines)
 

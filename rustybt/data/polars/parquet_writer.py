@@ -3,31 +3,30 @@
 import hashlib
 import tempfile
 import time
-from datetime import date, datetime, time as dtime, timezone, timedelta
-from decimal import Decimal
+from datetime import UTC, date, datetime, timedelta
+from datetime import time as dtime
 from pathlib import Path
-from typing import Optional, Literal, Any
+from typing import Any, Literal
 
 import polars as pl
-import pyarrow as pa
 import pyarrow.parquet as pq
 import structlog
 
+from rustybt.data.bundles.metadata import BundleMetadata
+from rustybt.data.polars.metadata_catalog import (
+    ParquetMetadataCatalog,
+    calculate_file_checksum,
+)
 from rustybt.data.polars.parquet_schema import (
     DAILY_BARS_SCHEMA,
     MINUTE_BARS_SCHEMA,
     validate_schema,
 )
-from rustybt.data.polars.metadata_catalog import (
-    ParquetMetadataCatalog,
-    calculate_file_checksum,
-)
-from rustybt.data.bundles.metadata import BundleMetadata
 
 logger = structlog.get_logger(__name__)
 
 
-CompressionType = Literal["snappy", "zstd", "lz4", None]
+CompressionType = Literal["snappy", "zstd", "lz4"] | None
 
 
 class ParquetWriter:
@@ -86,9 +85,9 @@ class ParquetWriter:
         self,
         df: pl.DataFrame,
         compression: CompressionType = "zstd",
-        dataset_id: Optional[int] = None,
-        source_metadata: Optional[dict] = None,
-        bundle_name: Optional[str] = None,
+        dataset_id: int | None = None,
+        source_metadata: dict | None = None,
+        bundle_name: str | None = None,
     ) -> Path:
         """Write daily bars to Parquet with partitioning and auto-populate metadata.
 
@@ -123,10 +122,12 @@ class ParquetWriter:
         validate_schema(df_cast, DAILY_BARS_SCHEMA)
 
         # Extract year/month for partitioning
-        df_with_partitions = df_cast.with_columns([
-            pl.col("date").dt.year().alias("year"),
-            pl.col("date").dt.month().alias("month"),
-        ])
+        df_with_partitions = df_cast.with_columns(
+            [
+                pl.col("date").dt.year().alias("year"),
+                pl.col("date").dt.month().alias("month"),
+            ]
+        )
 
         # Write with Hive partitioning
         output_path = self._write_partitioned_parquet(
@@ -166,7 +167,7 @@ class ParquetWriter:
         self,
         df: pl.DataFrame,
         compression: CompressionType = "zstd",
-        dataset_id: Optional[int] = None,
+        dataset_id: int | None = None,
     ) -> Path:
         """Write minute bars to Parquet with year/month/day partitioning.
 
@@ -197,11 +198,13 @@ class ParquetWriter:
         validate_schema(df_cast, MINUTE_BARS_SCHEMA)
 
         # Extract year/month/day for partitioning
-        df_with_partitions = df_cast.with_columns([
-            pl.col("timestamp").dt.year().alias("year"),
-            pl.col("timestamp").dt.month().alias("month"),
-            pl.col("timestamp").dt.day().alias("day"),
-        ])
+        df_with_partitions = df_cast.with_columns(
+            [
+                pl.col("timestamp").dt.year().alias("year"),
+                pl.col("timestamp").dt.month().alias("month"),
+                pl.col("timestamp").dt.day().alias("day"),
+            ]
+        )
 
         # Write with Hive partitioning
         output_path = self._write_partitioned_parquet(
@@ -262,7 +265,7 @@ class ParquetWriter:
         first_row = df.row(0, named=True)
         partition_values = [first_row[col] for col in partition_cols]
         partition_path = base_path / "/".join(
-            f"{col}={val}" for col, val in zip(partition_cols, partition_values)
+            f"{col}={val}" for col, val in zip(partition_cols, partition_values, strict=False)
         )
         partition_path.mkdir(parents=True, exist_ok=True)
 
@@ -295,9 +298,7 @@ class ParquetWriter:
             # Clean up temp file on error
             if temp_file.exists():
                 temp_file.unlink()
-            raise RuntimeError(
-                f"Failed to write Parquet file to {output_file}: {e}"
-            ) from e
+            raise RuntimeError(f"Failed to write Parquet file to {output_file}: {e}") from e
 
     def _update_metadata_catalog(
         self,
@@ -358,7 +359,7 @@ class ParquetWriter:
         dataframes: list[pl.DataFrame],
         resolution: Literal["daily", "minute"],
         compression: CompressionType = "zstd",
-        dataset_id: Optional[int] = None,
+        dataset_id: int | None = None,
     ) -> list[Path]:
         """Write multiple DataFrames in batch.
 
@@ -404,7 +405,6 @@ class ParquetWriter:
         source_metadata: dict[str, Any],
     ) -> None:
         """Populate unified metadata after successful write."""
-
         current_time = int(time.time())
 
         row_count = len(df)
@@ -432,8 +432,8 @@ class ParquetWriter:
                 start_date = normalized_dates[0]
                 end_date = normalized_dates[-1]
 
-                start_dt = datetime.combine(start_date, dtime.min, tzinfo=timezone.utc)
-                end_dt = datetime.combine(end_date, dtime.min, tzinfo=timezone.utc)
+                start_dt = datetime.combine(start_date, dtime.min, tzinfo=UTC)
+                end_dt = datetime.combine(end_date, dtime.min, tzinfo=UTC)
                 start_timestamp = int(start_dt.timestamp())
                 end_timestamp = int(end_dt.timestamp())
 
@@ -510,7 +510,6 @@ class ParquetWriter:
         source_metadata: dict[str, Any],
     ) -> list[dict[str, Any]]:
         """Resolve symbol entries from DataFrame and metadata."""
-
         entries: list[dict[str, Any]] = []
         unique_symbols: list[Any] = []
 
@@ -524,11 +523,13 @@ class ParquetWriter:
                     if isinstance(symbol_data, str):
                         entries.append({"symbol": symbol_data})
                     elif isinstance(symbol_data, dict):
-                        entries.append({
-                            "symbol": symbol_data.get("symbol"),
-                            "asset_type": symbol_data.get("asset_type"),
-                            "exchange": symbol_data.get("exchange"),
-                        })
+                        entries.append(
+                            {
+                                "symbol": symbol_data.get("symbol"),
+                                "asset_type": symbol_data.get("asset_type"),
+                                "exchange": symbol_data.get("exchange"),
+                            }
+                        )
             else:
                 symbol_map = source_metadata.get("symbol_map")
                 if symbol_map and "sid" in df.columns:
@@ -540,11 +541,13 @@ class ParquetWriter:
                         if isinstance(mapping, str):
                             entries.append({"symbol": mapping})
                         elif isinstance(mapping, dict):
-                            entries.append({
-                                "symbol": mapping.get("symbol"),
-                                "asset_type": mapping.get("asset_type"),
-                                "exchange": mapping.get("exchange"),
-                            })
+                            entries.append(
+                                {
+                                    "symbol": mapping.get("symbol"),
+                                    "asset_type": mapping.get("asset_type"),
+                                    "exchange": mapping.get("exchange"),
+                                }
+                            )
 
         if not entries and "sid" in df.columns:
             unique_sids = df["sid"].unique().to_list()
@@ -635,8 +638,6 @@ def get_compression_stats(
         >>> stats = get_compression_stats(df, "zstd")
         >>> assert stats["compression_ratio"] < 0.5  # >50% compression
     """
-    import os
-
     # Write uncompressed
     with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as tmp:
         uncompressed_path = Path(tmp.name)

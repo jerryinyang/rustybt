@@ -2,19 +2,18 @@
 Tests for our testing utilities.
 """
 
-from itertools import product
-import pytest  # Add pytest back
 import os
+from itertools import product
+
+import pytest  # Add pytest back
 
 # import logging # No longer needed if logger is removed
 # import sys # No longer used
-
 from numpy import array, empty
 
 from rustybt._protocol import BarData
 from rustybt.finance.asset_restrictions import NoRestrictions
 from rustybt.finance.order import Order
-
 from rustybt.testing import (
     check_arrays,
     make_alternating_boolean_array,
@@ -26,8 +25,8 @@ from rustybt.testing.fixtures import (  # Assuming this is where ZiplineTestCase
     WithDataPortal,
     ZiplineTestCase,  # Add back ZiplineTestCase import
 )
+from rustybt.testing.predicates import instance_of, wildcard
 from rustybt.testing.slippage import TestingSlippage
-from rustybt.testing.predicates import wildcard, instance_of
 from rustybt.utils.numpy_utils import bool_dtype
 
 ON_GHA = os.getenv("GITHUB_ACTIONS") == "true"
@@ -48,12 +47,8 @@ def invocations_state(request):
     actual_xy_invocations = sorted(request.cls.xy_invocations)
     actual_yx_invocations = sorted(request.cls.yx_invocations)
 
-    expected_xy = sorted(
-        list(product(request.cls.x_args_vals, request.cls.y_args_vals))
-    )
-    expected_yx = sorted(
-        list(product(request.cls.y_args_vals, request.cls.x_args_vals))
-    )
+    expected_xy = sorted(list(product(request.cls.x_args_vals, request.cls.y_args_vals)))
+    expected_yx = sorted(list(product(request.cls.y_args_vals, request.cls.x_args_vals)))
 
     worker = os.environ.get("PYTEST_XDIST_WORKER", "main")
 
@@ -205,10 +200,10 @@ class TestPredicates:
             assert {"foo": wildcard} == {"foo": wildcard}
 
     def test_instance_of(self):
-        assert 1 == instance_of(int)
-        assert 1 != instance_of(str)
-        assert 1 == instance_of((str, int))
-        assert "foo" == instance_of((str, int))
+        assert instance_of(int) == 1
+        assert instance_of(str) != 1
+        assert instance_of((str, int)) == 1
+        assert instance_of((str, int)) == "foo"
 
     def test_instance_of_exact(self):
         class Foo:

@@ -35,7 +35,6 @@ import asyncio
 import os
 from collections import deque
 from decimal import Decimal
-from typing import Dict, Deque
 
 import pandas as pd
 import structlog
@@ -46,12 +45,14 @@ from rustybt.live.streaming.models import StreamingBar
 # Try to import specific WebSocket adapters (may not all be available)
 try:
     from rustybt.live.streaming.binance_stream import BinanceWebSocketAdapter
+
     BINANCE_AVAILABLE = True
 except ImportError:
     BINANCE_AVAILABLE = False
 
 try:
     from rustybt.live.streaming.ccxt_stream import CCXTWebSocketAdapter
+
     CCXT_AVAILABLE = True
 except ImportError:
     CCXT_AVAILABLE = False
@@ -142,12 +143,12 @@ class MockWebSocketAdapter(BaseWebSocketAdapter):
                 # Create streaming bar
                 bar = StreamingBar(
                     symbol=symbol,
-                    timestamp=pd.Timestamp.now(tz='UTC'),
+                    timestamp=pd.Timestamp.now(tz="UTC"),
                     open=new_price,
                     high=new_price + Decimal("0.5"),
                     low=new_price - Decimal("0.5"),
                     close=new_price,
-                    volume=Decimal(str(random.randint(1000, 10000)))
+                    volume=Decimal(str(random.randint(1000, 10000))),
                 )
 
                 await queue.put(bar)
@@ -172,8 +173,8 @@ class StreamingDataAggregator:
             window_seconds: Time window for aggregation (default: 60s)
         """
         self.window_seconds = window_seconds
-        self._ticks: Dict[str, Deque[StreamingBar]] = {}
-        self._current_bars: Dict[str, Dict] = {}
+        self._ticks: dict[str, deque[StreamingBar]] = {}
+        self._current_bars: dict[str, dict] = {}
 
     def process_tick(self, bar: StreamingBar) -> None:
         """Process incoming tick.
@@ -187,12 +188,12 @@ class StreamingDataAggregator:
         if symbol not in self._ticks:
             self._ticks[symbol] = deque(maxlen=1000)
             self._current_bars[symbol] = {
-                'open': bar.open,
-                'high': bar.high,
-                'low': bar.low,
-                'close': bar.close,
-                'volume': bar.volume,
-                'start_time': bar.timestamp
+                "open": bar.open,
+                "high": bar.high,
+                "low": bar.low,
+                "close": bar.close,
+                "volume": bar.volume,
+                "start_time": bar.timestamp,
             }
 
         # Add tick
@@ -200,13 +201,13 @@ class StreamingDataAggregator:
 
         # Update current bar
         current = self._current_bars[symbol]
-        current['high'] = max(current['high'], bar.high)
-        current['low'] = min(current['low'], bar.low)
-        current['close'] = bar.close
-        current['volume'] += bar.volume
+        current["high"] = max(current["high"], bar.high)
+        current["low"] = min(current["low"], bar.low)
+        current["close"] = bar.close
+        current["volume"] += bar.volume
 
         # Check if window elapsed
-        elapsed = (bar.timestamp - current['start_time']).total_seconds()
+        elapsed = (bar.timestamp - current["start_time"]).total_seconds()
         if elapsed >= self.window_seconds:
             self._finalize_bar(symbol, bar.timestamp)
 
@@ -218,23 +219,21 @@ class StreamingDataAggregator:
             timestamp: Current timestamp
         """
         logger.debug(
-            "bar_finalized",
-            symbol=symbol,
-            close=float(self._current_bars[symbol]['close'])
+            "bar_finalized", symbol=symbol, close=float(self._current_bars[symbol]["close"])
         )
 
         # Start new bar
-        last_close = self._current_bars[symbol]['close']
+        last_close = self._current_bars[symbol]["close"]
         self._current_bars[symbol] = {
-            'open': last_close,
-            'high': last_close,
-            'low': last_close,
-            'close': last_close,
-            'volume': Decimal("0"),
-            'start_time': timestamp
+            "open": last_close,
+            "high": last_close,
+            "low": last_close,
+            "close": last_close,
+            "volume": Decimal("0"),
+            "start_time": timestamp,
         }
 
-    def get_bar(self, symbol: str) -> Dict:
+    def get_bar(self, symbol: str) -> dict:
         """Get current aggregated bar for symbol.
 
         Args:
@@ -278,7 +277,7 @@ async def example_basic_streaming():
             if count % 5 == 0:  # Print every 5th bar
                 print(f"  {bar.symbol}: ${bar.close:.2f} (volume: {int(bar.volume)})")
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             continue
 
     print(f"✓ Received {count} bars")
@@ -322,20 +321,22 @@ async def example_data_aggregation():
 
             # Check if bar completed (price changed significantly)
             current_bar = aggregator.get_bar(tick.symbol)
-            if last_bar_close and abs(float(current_bar['close'] - last_bar_close)) < 0.01:
+            if last_bar_close and abs(float(current_bar["close"] - last_bar_close)) < 0.01:
                 # Bar completed
                 bars_completed += 1
-                print(f"  Bar {bars_completed}: "
-                      f"O={current_bar['open']:.2f} "
-                      f"H={current_bar['high']:.2f} "
-                      f"L={current_bar['low']:.2f} "
-                      f"C={current_bar['close']:.2f} "
-                      f"V={int(current_bar['volume'])}")
+                print(
+                    f"  Bar {bars_completed}: "
+                    f"O={current_bar['open']:.2f} "
+                    f"H={current_bar['high']:.2f} "
+                    f"L={current_bar['low']:.2f} "
+                    f"C={current_bar['close']:.2f} "
+                    f"V={int(current_bar['volume'])}"
+                )
                 last_bar_close = None
             else:
-                last_bar_close = current_bar['close']
+                last_bar_close = current_bar["close"]
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             continue
 
     print(f"\n✓ Processed {count} ticks into {bars_completed} bars")
@@ -358,11 +359,7 @@ async def example_multiple_streams():
     adapter3 = MockWebSocketAdapter(symbols=["GOOGL"])
 
     print("\n[1/3] Connecting to multiple WebSockets...")
-    await asyncio.gather(
-        adapter1.connect(),
-        adapter2.connect(),
-        adapter3.connect()
-    )
+    await asyncio.gather(adapter1.connect(), adapter2.connect(), adapter3.connect())
     print("✓ All connections established")
 
     # Start all streams
@@ -382,9 +379,9 @@ async def example_multiple_streams():
 
         while asyncio.get_event_loop().time() - start < duration:
             try:
-                bar = await asyncio.wait_for(queue.get(), timeout=2.0)
+                await asyncio.wait_for(queue.get(), timeout=2.0)
                 count += 1
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
 
         print(f"  {name}: Received {count} bars")
@@ -393,15 +390,11 @@ async def example_multiple_streams():
     await asyncio.gather(
         process_stream("Stream 1 (AAPL)", queue1, 10),
         process_stream("Stream 2 (MSFT)", queue2, 10),
-        process_stream("Stream 3 (GOOGL)", queue3, 10)
+        process_stream("Stream 3 (GOOGL)", queue3, 10),
     )
 
     # Disconnect all
-    await asyncio.gather(
-        adapter1.disconnect(),
-        adapter2.disconnect(),
-        adapter3.disconnect()
-    )
+    await asyncio.gather(adapter1.disconnect(), adapter2.disconnect(), adapter3.disconnect())
     print("\n✓ All streams disconnected")
 
 
@@ -417,8 +410,8 @@ async def example_binance_realtime():
     print("\n⚠️  This example requires Binance API credentials")
     print("Set BINANCE_API_KEY and BINANCE_API_SECRET environment variables")
 
-    api_key = os.getenv('BINANCE_API_KEY')
-    api_secret = os.getenv('BINANCE_API_SECRET')
+    api_key = os.getenv("BINANCE_API_KEY")
+    api_secret = os.getenv("BINANCE_API_SECRET")
 
     if not api_key or not api_secret:
         print("\n⚠️  Credentials not found (skipping real Binance example)")
@@ -426,11 +419,7 @@ async def example_binance_realtime():
 
     try:
         # Create Binance adapter
-        adapter = BinanceWebSocketAdapter(
-            api_key=api_key,
-            api_secret=api_secret,
-            testnet=True
-        )
+        adapter = BinanceWebSocketAdapter(api_key=api_key, api_secret=api_secret, testnet=True)
 
         # Connect
         print("\n[1/3] Connecting to Binance WebSocket...")
@@ -456,7 +445,7 @@ async def example_binance_realtime():
                 if count % 10 == 0:
                     print(f"  {bar.symbol}: ${bar.close:.2f}")
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
 
         print(f"\n✓ Received {count} real-time bars")

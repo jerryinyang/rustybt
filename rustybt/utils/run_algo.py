@@ -1,34 +1,35 @@
-import click
 import os
 import sys
 import warnings
 
+import click
+
 try:
     from pygments import highlight
-    from pygments.lexers import PythonLexer
     from pygments.formatters import TerminalFormatter
+    from pygments.lexers import PythonLexer
 
     PYGMENTS = True
 except ImportError:
     PYGMENTS = False
 import logging
+
 import pandas as pd
 from toolz import concatv
-from rustybt.utils.calendar_utils import get_calendar
 
+import rustybt.utils.paths as pth
+from rustybt.algorithm import NoBenchmark, TradingAlgorithm
 from rustybt.data import bundles
 from rustybt.data.benchmarks import get_benchmark_returns_from_file
 from rustybt.data.data_portal import DataPortal
+from rustybt.errors import SymbolNotFound
+from rustybt.extensions import load
 from rustybt.finance import metrics
+from rustybt.finance.blotter import Blotter
 from rustybt.finance.trading import SimulationParameters
 from rustybt.pipeline.data import USEquityPricing
 from rustybt.pipeline.loaders import USEquityPricingLoader
-
-import rustybt.utils.paths as pth
-from rustybt.extensions import load
-from rustybt.errors import SymbolNotFound
-from rustybt.algorithm import TradingAlgorithm, NoBenchmark
-from rustybt.finance.blotter import Blotter
+from rustybt.utils.calendar_utils import get_calendar
 
 log = logging.getLogger(__name__)
 
@@ -60,7 +61,6 @@ class _RunAlgoError(click.ClickException, ValueError):
 
 
 # TODO: simplify
-# flake8: noqa: C901
 def _run(
     handle_data,
     initialize,
@@ -89,7 +89,6 @@ def _run(
 
     This is shared between the cli and :func:`zipline.run_algo`.
     """
-
     bundle_data = bundles.load(
         bundle,
         environ,
@@ -130,9 +129,20 @@ def _run(
                     "invalid define %r, should be of the form name=value" % assign,
                 )
             try:
-                # evaluate in the same namespace so names may refer to
-                # eachother
-                namespace[name] = eval(value, namespace)
+                # SECURITY: eval() used for CLI parameter definitions (-D flag)
+                # THREAT MODEL:
+                # - Input source: Command-line arguments from user running RustyBT
+                # - Trust level: Trusted (user has shell access already)
+                # - Use case: Define strategy parameters (e.g., -D threshold=0.5)
+                # GUARDRAILS:
+                # - eval() allows references to previously defined names
+                # - Restricted to namespace defined by algorithm context
+                # - Exception handling catches and reports errors
+                # ALTERNATIVE CONSIDERED:
+                # - ast.literal_eval: Too restrictive (only literals, no expressions)
+                # - Users need ability to define complex values (e.g., pd.Timestamp('2020-01-01'))
+                # - Current approach is appropriate for CLI tool used by code owners
+                namespace[name] = eval(value, namespace)  # nosec B307 - trusted CLI input
             except Exception as e:
                 raise ValueError(
                     "failed to execute definition for name %r: %s" % (name, e),
@@ -284,11 +294,25 @@ def load_extensions(default, extensions, strict, environ, reload=False):
         if ext in _loaded_extensions and not reload:
             continue
         try:
-            # load all of the zipline extensionss
+            # SECURITY: exec() used for loading user-specified extension modules
+            # THREAT MODEL:
+            # - Input source: Extension file paths from config or CLI
+            # - Trust level: Trusted (user controls extension files)
+            # - Use case: Load custom trading indicators, data adapters, etc.
+            # GUARDRAILS:
+            # - Extensions are explicitly configured by user
+            # - File paths are not derived from untrusted input
+            # - Exception handling prevents malformed extensions from crashing
+            # - Isolated namespace prevents pollution of global scope
+            # VALIDATION:
+            # - File must end with .py or be valid Python module name
+            # - Errors are logged with warnings
             if ext.endswith(".py"):
                 with open(ext) as f:
                     ns = {}
-                    exec(compile(f.read(), ext, "exec"), ns, ns)
+                    exec(
+                        compile(f.read(), ext, "exec"), ns, ns
+                    )  # nosec B102 - trusted extension file
             else:
                 __import__(ext)
         except Exception as e:
@@ -383,12 +407,12 @@ def run_algorithm(
         Default is a :class:`zipline.finance.blotter.SimulationBlotter` that
         never cancels orders.
 
-    Returns
+    Returns:
     -------
     perf : pd.DataFrame
         The daily performance of the algorithm.
 
-    See Also
+    See Also:
     --------
     zipline.data.bundles.bundles : The available data bundles.
     """
@@ -452,7 +476,6 @@ class BenchmarkSpec:
         benchmark_symbol,
         no_benchmark,
     ):
-
         self.benchmark_returns = benchmark_returns
         self.benchmark_file = benchmark_file
         self.benchmark_sid = benchmark_sid
@@ -460,10 +483,7 @@ class BenchmarkSpec:
         self.no_benchmark = no_benchmark
 
     @classmethod
-    def from_cli_params(
-        cls, benchmark_sid, benchmark_symbol, benchmark_file, no_benchmark
-    ):
-
+    def from_cli_params(cls, benchmark_sid, benchmark_symbol, benchmark_file, no_benchmark):
         return cls(
             benchmark_returns=None,
             benchmark_sid=benchmark_sid,
@@ -499,7 +519,7 @@ class BenchmarkSpec:
         end_date : pd.Timestamp
             End date of the algorithm to be run.
 
-        Returns
+        Returns:
         -------
         benchmark_sid : int
             Sid to use as benchmark.
@@ -527,8 +547,7 @@ class BenchmarkSpec:
                 benchmark_returns = None
             except SymbolNotFound:
                 raise _RunAlgoError(
-                    "Symbol %r as a benchmark not found in this bundle."
-                    % self.benchmark_symbol
+                    "Symbol %r as a benchmark not found in this bundle." % self.benchmark_symbol
                 )
         elif self.no_benchmark:
             benchmark_sid = None
@@ -537,15 +556,13 @@ class BenchmarkSpec:
                 end_date=end_date,
             )
         else:
-            log.warning(
-                "No benchmark configured. " "Assuming algorithm calls set_benchmark."
-            )
+            log.warning("No benchmark configured. Assuming algorithm calls set_benchmark.")
             log.warning(
                 "Pass --benchmark-sid, --benchmark-symbol, or"
                 " --benchmark-file to set a source of benchmark returns."
             )
             log.warning(
-                "Pass --no-benchmark to use a dummy benchmark " "of zero returns.",
+                "Pass --no-benchmark to use a dummy benchmark of zero returns.",
             )
             benchmark_sid = None
             benchmark_returns = None

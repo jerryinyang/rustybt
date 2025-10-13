@@ -38,7 +38,7 @@ examples:
         severity: high  # ONLY: low|medium|high
         finding: "No rate limiting on login endpoint"
         suggested_action: "Add rate limiting middleware before production"
-      - id: "TEST-001"  
+      - id: "TEST-001"
         severity: medium
         finding: "Missing integration tests for auth flow"
         suggested_action: "Add test coverage for critical paths"
@@ -77,7 +77,7 @@ optional_fields_examples:
       - at: "2025-01-12T10:00:00Z"
         gate: FAIL
         note: "Initial review - missing tests"
-      - at: "2025-01-12T15:00:00Z"  
+      - at: "2025-01-12T15:00:00Z"
         gate: CONCERNS
         note: "Tests added but rate limiting still missing"
 

@@ -14,21 +14,21 @@
 # limitations under the License.
 from collections import OrderedDict
 
-from numpy import array, append, nan, full
-from numpy.testing import assert_almost_equal
 import pandas as pd
+from numpy import append, array, full, nan
+from numpy.testing import assert_almost_equal
 
 from rustybt.assets import Equity, Future
-from rustybt.data.data_portal import HISTORY_FREQUENCIES, OHLCV_FIELDS
 from rustybt.data.bcolz_minute_bars import (
     FUTURES_MINUTES_PER_DAY,
     US_EQUITIES_MINUTES_PER_DAY,
 )
+from rustybt.data.data_portal import HISTORY_FREQUENCIES, OHLCV_FIELDS
 from rustybt.testing import parameter_space
 from rustybt.testing.fixtures import (
-    ZiplineTestCase,
-    WithTradingSessions,
     WithDataPortal,
+    WithTradingSessions,
+    ZiplineTestCase,
     alias,
 )
 from rustybt.testing.predicates import assert_equal
@@ -36,7 +36,6 @@ from rustybt.utils.numpy_utils import float64_dtype
 
 
 class DataPortalTestBase(WithDataPortal, WithTradingSessions):
-
     ASSET_FINDER_EQUITY_SIDS = (1, 2, 3)
     DIVIDEND_ASSET_SID = 3
     START_DATE = pd.Timestamp("2016-08-01")
@@ -291,9 +290,7 @@ class DataPortalTestBase(WithDataPortal, WithTradingSessions):
         # Case: Missing data at front of data set, and request dt is before
         # first value.
         asset = self.asset_finder.retrieve_asset(1)
-        assert pd.isnull(
-            self.data_portal.get_last_traded_dt(asset, self.trading_days[0], "daily")
-        )
+        assert pd.isnull(self.data_portal.get_last_traded_dt(asset, self.trading_days[0], "daily"))
 
         # Case: Data on requested dt.
         assert self.trading_days[1] == self.data_portal.get_last_traded_dt(
@@ -323,8 +320,7 @@ class DataPortalTestBase(WithDataPortal, WithTradingSessions):
             }
         )
         result = [
-            self.data_portal.get_spot_value(asset, field, dt, "minute")
-            for field in expected.keys()
+            self.data_portal.get_spot_value(asset, field, dt, "minute") for field in expected.keys()
         ]
         assert_almost_equal(array(list(expected.values())), result)
 
@@ -341,8 +337,7 @@ class DataPortalTestBase(WithDataPortal, WithTradingSessions):
             }
         )
         result = [
-            self.data_portal.get_spot_value(asset, field, dt, "minute")
-            for field in expected.keys()
+            self.data_portal.get_spot_value(asset, field, dt, "minute") for field in expected.keys()
         ]
         assert_almost_equal(array(list(expected.values())), result)
 
@@ -364,8 +359,7 @@ class DataPortalTestBase(WithDataPortal, WithTradingSessions):
             }
         )
         result = [
-            self.data_portal.get_spot_value(asset, field, dt, "minute")
-            for field in expected.keys()
+            self.data_portal.get_spot_value(asset, field, dt, "minute") for field in expected.keys()
         ]
         assert_almost_equal(array(list(expected.values())), result)
 
@@ -382,8 +376,7 @@ class DataPortalTestBase(WithDataPortal, WithTradingSessions):
             }
         )
         result = [
-            self.data_portal.get_spot_value(asset, field, dt, "minute")
-            for field in expected.keys()
+            self.data_portal.get_spot_value(asset, field, dt, "minute") for field in expected.keys()
         ]
         assert_almost_equal(array(list(expected.values())), result)
 
@@ -435,7 +428,6 @@ class DataPortalTestBase(WithDataPortal, WithTradingSessions):
         )
 
         for (dt, perspective_dt), expected in cases.items():
-
             if data_frequency == "minute":
                 dt = calendar.session_open(dt)
                 perspective_dt = calendar.session_open(perspective_dt)
@@ -449,7 +441,7 @@ class DataPortalTestBase(WithDataPortal, WithTradingSessions):
             assert_almost_equal(
                 val,
                 expected,
-                err_msg="at dt={} perspective={}".format(dt, perspective_dt),
+                err_msg=f"at dt={dt} perspective={perspective_dt}",
             )
 
     def test_get_last_traded_dt_minute(self):
@@ -485,7 +477,7 @@ class DataPortalTestBase(WithDataPortal, WithTradingSessions):
 
     def test_get_empty_splits(self):
         splits = self.data_portal.get_splits([], self.trading_days[2])
-        assert [] == splits
+        assert splits == []
 
     @parameter_space(frequency=HISTORY_FREQUENCIES, field=OHLCV_FIELDS)
     def test_price_rounding(self, frequency, field):

@@ -774,7 +774,7 @@ from rustybt.data.polars import PolarsDataPortal
 class MyStrategy(TradingAlgorithm):
     def initialize(self):
         self.symbols = ['BTC/USDT']
-        
+
     def handle_data(self, context, data):
         price = data.current(self.symbols[0], 'close')
         # Trading logic here
@@ -787,16 +787,16 @@ async def main():
         api_secret=os.getenv('BINANCE_API_SECRET'),
         testnet=True
     )
-    
+
     # Create data portal
     portal = PolarsDataPortal(bundle_name='crypto-data')
-    
+
     # Configure shadow trading
     shadow_config = ShadowTradingConfig(
         tolerance_percent=Decimal("0.02"),
         alert_on_divergence=True
     )
-    
+
     # Create engine
     engine = LiveTradingEngine(
         strategy=MyStrategy(),
@@ -808,7 +808,7 @@ async def main():
         shadow_mode=True,
         shadow_config=shadow_config
     )
-    
+
     # Run engine
     try:
         await engine.run()

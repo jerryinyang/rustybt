@@ -5,9 +5,6 @@ This module defines the abstract interface that all broker adapters must impleme
 
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import Dict, List, Optional
-
-import pandas as pd
 
 from rustybt.assets import Asset
 
@@ -35,8 +32,8 @@ class BrokerAdapter(ABC):
         asset: Asset,
         amount: Decimal,
         order_type: str,
-        limit_price: Optional[Decimal] = None,
-        stop_price: Optional[Decimal] = None,
+        limit_price: Decimal | None = None,
+        stop_price: Decimal | None = None,
     ) -> str:
         """Submit order to broker.
 
@@ -68,7 +65,7 @@ class BrokerAdapter(ABC):
         pass
 
     @abstractmethod
-    async def get_account_info(self) -> Dict[str, Decimal]:
+    async def get_account_info(self) -> dict[str, Decimal]:
         """Get account information.
 
         Returns:
@@ -80,7 +77,7 @@ class BrokerAdapter(ABC):
         pass
 
     @abstractmethod
-    async def get_positions(self) -> List[Dict]:
+    async def get_positions(self) -> list[dict]:
         """Get current positions.
 
         Returns:
@@ -92,7 +89,7 @@ class BrokerAdapter(ABC):
         pass
 
     @abstractmethod
-    async def get_open_orders(self) -> List[Dict]:
+    async def get_open_orders(self) -> list[dict]:
         """Get open/pending orders from broker.
 
         Returns:
@@ -104,7 +101,7 @@ class BrokerAdapter(ABC):
         pass
 
     @abstractmethod
-    async def subscribe_market_data(self, assets: List[Asset]) -> None:
+    async def subscribe_market_data(self, assets: list[Asset]) -> None:
         """Subscribe to real-time market data.
 
         Args:
@@ -116,7 +113,7 @@ class BrokerAdapter(ABC):
         pass
 
     @abstractmethod
-    async def unsubscribe_market_data(self, assets: List[Asset]) -> None:
+    async def unsubscribe_market_data(self, assets: list[Asset]) -> None:
         """Unsubscribe from market data.
 
         Args:
@@ -128,7 +125,7 @@ class BrokerAdapter(ABC):
         pass
 
     @abstractmethod
-    async def get_next_market_data(self) -> Optional[Dict]:
+    async def get_next_market_data(self) -> dict | None:
         """Get next market data update (blocking).
 
         Returns:

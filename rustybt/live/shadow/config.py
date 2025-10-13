@@ -4,9 +4,8 @@ This module defines configuration for shadow trading validation thresholds
 and operational parameters.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from decimal import Decimal
-from typing import Optional
 
 import structlog
 
@@ -55,8 +54,8 @@ class ShadowTradingConfig:
 
     # Alert configuration
     alert_on_divergence: bool = True
-    alert_email: Optional[str] = None
-    alert_webhook: Optional[str] = None
+    alert_email: str | None = None
+    alert_webhook: str | None = None
 
     def __post_init__(self):
         """Validate configuration parameters."""
@@ -68,9 +67,7 @@ class ShadowTradingConfig:
 
         # Validate sampling rate
         if not (Decimal("0") < self.sampling_rate <= Decimal("1")):
-            raise ValueError(
-                f"sampling_rate must be between 0 and 1, got {self.sampling_rate}"
-            )
+            raise ValueError(f"sampling_rate must be between 0 and 1, got {self.sampling_rate}")
 
         # Validate time tolerance
         if self.time_tolerance_ms < 0:

@@ -25,12 +25,12 @@ Note: Uses ib_insync library (not ib_async) for Pythonic async interface.
 
 import asyncio
 from decimal import Decimal
-from typing import Dict, List, Optional
 
 import structlog
-from ib_insync import IB, Contract, Order, Stock, Future, Trade
+from ib_insync import IB, Contract, Future, Order, Stock, Trade
 
-from rustybt.assets import Asset, Equity, Future as RustyBTFuture
+from rustybt.assets import Asset, Equity
+from rustybt.assets import Future as RustyBTFuture
 from rustybt.live.brokers.base import BrokerAdapter
 
 logger = structlog.get_logger(__name__)
@@ -75,15 +75,15 @@ class IBBrokerAdapter(BrokerAdapter):
         self._client_id = client_id
         self._auto_reconnect = auto_reconnect
 
-        self._ib: Optional[IB] = None
+        self._ib: IB | None = None
         self._connected = False
 
         # Order tracking
         self._order_id_counter = 1
-        self._pending_orders: Dict[int, Trade] = {}  # order_id -> Trade
+        self._pending_orders: dict[int, Trade] = {}  # order_id -> Trade
 
         # Market data subscriptions
-        self._subscribed_contracts: Dict[Asset, Contract] = {}
+        self._subscribed_contracts: dict[Asset, Contract] = {}
         self._market_data_queue: asyncio.Queue = asyncio.Queue()
 
         # Reconnection settings
@@ -143,8 +143,8 @@ class IBBrokerAdapter(BrokerAdapter):
         asset: Asset,
         amount: Decimal,
         order_type: str,
-        limit_price: Optional[Decimal] = None,
-        stop_price: Optional[Decimal] = None,
+        limit_price: Decimal | None = None,
+        stop_price: Decimal | None = None,
     ) -> str:
         """Submit order to IB.
 
@@ -224,7 +224,7 @@ class IBBrokerAdapter(BrokerAdapter):
             logger.error("order_cancellation_failed", order_id=broker_order_id, error=str(e))
             raise IBOrderRejectError(f"Failed to cancel order {broker_order_id}: {e}") from e
 
-    async def get_account_info(self) -> Dict[str, Decimal]:
+    async def get_account_info(self) -> dict[str, Decimal]:
         """Get account information from IB.
 
         Returns:
@@ -271,7 +271,7 @@ class IBBrokerAdapter(BrokerAdapter):
             logger.error("account_info_retrieval_failed", error=str(e))
             raise IBConnectionError(f"Failed to retrieve account info: {e}") from e
 
-    async def get_positions(self) -> List[Dict]:
+    async def get_positions(self) -> list[dict]:
         """Get current positions from IB.
 
         Returns:
@@ -310,7 +310,7 @@ class IBBrokerAdapter(BrokerAdapter):
             logger.error("position_retrieval_failed", error=str(e))
             raise IBConnectionError(f"Failed to retrieve positions: {e}") from e
 
-    async def get_open_orders(self) -> List[Dict]:
+    async def get_open_orders(self) -> list[dict]:
         """Get open/pending orders from IB.
 
         Returns:
@@ -344,7 +344,7 @@ class IBBrokerAdapter(BrokerAdapter):
             logger.error("open_orders_retrieval_failed", error=str(e))
             raise IBConnectionError(f"Failed to retrieve open orders: {e}") from e
 
-    async def subscribe_market_data(self, assets: List[Asset]) -> None:
+    async def subscribe_market_data(self, assets: list[Asset]) -> None:
         """Subscribe to real-time market data.
 
         Args:
@@ -375,7 +375,7 @@ class IBBrokerAdapter(BrokerAdapter):
             logger.error("market_data_subscription_failed", error=str(e))
             raise IBConnectionError(f"Failed to subscribe to market data: {e}") from e
 
-    async def unsubscribe_market_data(self, assets: List[Asset]) -> None:
+    async def unsubscribe_market_data(self, assets: list[Asset]) -> None:
         """Unsubscribe from market data.
 
         Args:
@@ -400,7 +400,7 @@ class IBBrokerAdapter(BrokerAdapter):
             logger.error("market_data_unsubscription_failed", error=str(e))
             raise IBConnectionError(f"Failed to unsubscribe from market data: {e}") from e
 
-    async def get_next_market_data(self) -> Optional[Dict]:
+    async def get_next_market_data(self) -> dict | None:
         """Get next market data update (blocking).
 
         Returns:
@@ -509,8 +509,8 @@ class IBBrokerAdapter(BrokerAdapter):
         self,
         amount: Decimal,
         order_type: str,
-        limit_price: Optional[Decimal] = None,
-        stop_price: Optional[Decimal] = None,
+        limit_price: Decimal | None = None,
+        stop_price: Decimal | None = None,
     ) -> Order:
         """Create IB order from parameters.
 

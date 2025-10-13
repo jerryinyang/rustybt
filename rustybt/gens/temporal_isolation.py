@@ -18,7 +18,7 @@ Temporal isolation validation to prevent lookahead bias.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -68,7 +68,7 @@ class TemporalValidator:
         self.current_time = new_time
 
     def validate_access(
-        self, requested_time: pd.Timestamp, data_type: str, asset: Optional[Any] = None
+        self, requested_time: pd.Timestamp, data_type: str, asset: Any | None = None
     ):
         """
         Validate data access does not look ahead.

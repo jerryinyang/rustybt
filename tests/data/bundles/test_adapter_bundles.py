@@ -9,29 +9,28 @@ Tests cover:
 - Integration with DataPortal
 """
 
-import pytest
+from unittest.mock import Mock, patch
+
 import pandas as pd
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime, timedelta
+import pytest
 
 from rustybt.data.bundles.adapter_bundles import (
     _create_bundle_from_adapter,
     _track_api_bundle_metadata,
-    yfinance_profiling_bundle,
     ccxt_hourly_profiling_bundle,
     ccxt_minute_profiling_bundle,
     csv_profiling_bundle,
-    list_profiling_bundles,
     get_profiling_bundle_info,
+    list_profiling_bundles,
+    yfinance_profiling_bundle,
 )
-from rustybt.data.metadata_tracker import track_api_bundle_metadata, track_csv_bundle_metadata
 
 
 @pytest.fixture(scope="function")
 def init_catalog_db(tmp_path):
     """Initialize unified metadata schema for testing."""
     import sqlalchemy as sa
+
     from rustybt.assets.asset_db_schema import metadata
 
     # Create temporary database
@@ -92,13 +91,16 @@ def bundle_params():
 # ============================================================================
 
 
-def test_create_bundle_from_adapter_daily(mock_adapter, mock_writers, bundle_params, init_catalog_db):
+def test_create_bundle_from_adapter_daily(
+    mock_adapter, mock_writers, bundle_params, init_catalog_db
+):
     """Test bridge function creates daily bundle correctly."""
     engine, db_path = init_catalog_db
 
     # Mock DataCatalog to use test database
     with patch("rustybt.data.metadata_tracker.DataCatalog") as mock_catalog_class:
         from rustybt.data.catalog import DataCatalog
+
         mock_catalog_class.return_value = DataCatalog(db_path)
 
         _create_bundle_from_adapter(
@@ -120,7 +122,9 @@ def test_create_bundle_from_adapter_daily(mock_adapter, mock_writers, bundle_par
     mock_writers["minute_bar_writer"].write.assert_not_called()
 
 
-def test_create_bundle_from_adapter_minute(mock_adapter, mock_writers, bundle_params, init_catalog_db):
+def test_create_bundle_from_adapter_minute(
+    mock_adapter, mock_writers, bundle_params, init_catalog_db
+):
     """Test bridge function creates minute bundle correctly."""
     engine, db_path = init_catalog_db
     bundle_params["frequency"] = "1m"
@@ -128,6 +132,7 @@ def test_create_bundle_from_adapter_minute(mock_adapter, mock_writers, bundle_pa
     # Mock DataCatalog to use test database
     with patch("rustybt.data.metadata_tracker.DataCatalog") as mock_catalog_class:
         from rustybt.data.catalog import DataCatalog
+
         mock_catalog_class.return_value = DataCatalog(db_path)
 
         _create_bundle_from_adapter(
@@ -357,7 +362,9 @@ def test_ccxt_minute_profiling_bundle(mock_create, mock_adapter_class, zipline_b
 @patch("rustybt.data.bundles.adapter_bundles.CSVAdapter")
 @patch("rustybt.data.bundles.adapter_bundles._create_bundle_from_adapter")
 @patch("rustybt.data.bundles.adapter_bundles.track_csv_bundle_metadata")
-def test_csv_profiling_bundle(mock_track_csv, mock_create, mock_adapter_class, zipline_bundle_args, tmp_path, init_catalog_db):
+def test_csv_profiling_bundle(
+    mock_track_csv, mock_create, mock_adapter_class, zipline_bundle_args, tmp_path, init_catalog_db
+):
     """Test CSV profiling bundle wrapper."""
     engine, db_path = init_catalog_db
 
@@ -377,6 +384,7 @@ def test_csv_profiling_bundle(mock_track_csv, mock_create, mock_adapter_class, z
     # Mock DataCatalog in track_csv_bundle_metadata
     with patch("rustybt.data.metadata_tracker.DataCatalog") as mock_catalog_class:
         from rustybt.data.catalog import DataCatalog
+
         mock_catalog_class.return_value = DataCatalog(db_path)
 
         with pytest.warns(DeprecationWarning):
@@ -443,7 +451,9 @@ def test_get_profiling_bundle_info_invalid():
 @pytest.mark.integration
 @pytest.mark.slow
 @patch("rustybt.data.bundles.adapter_bundles.YFinanceAdapter")
-def test_yfinance_bundle_end_to_end(mock_adapter_class, zipline_bundle_args, tmp_path, init_catalog_db):
+def test_yfinance_bundle_end_to_end(
+    mock_adapter_class, zipline_bundle_args, tmp_path, init_catalog_db
+):
     """Integration test: YFinance bundle → DataPortal read."""
     engine, db_path = init_catalog_db
 
@@ -465,6 +475,7 @@ def test_yfinance_bundle_end_to_end(mock_adapter_class, zipline_bundle_args, tmp
     # Mock DataCatalog to use test database
     with patch("rustybt.data.metadata_tracker.DataCatalog") as mock_catalog_class:
         from rustybt.data.catalog import DataCatalog
+
         mock_catalog_class.return_value = DataCatalog(db_path)
 
         # Create bundle

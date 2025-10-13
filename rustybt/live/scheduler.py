@@ -186,9 +186,7 @@ class TradingScheduler:
             # Parse cron expression: minute hour day month day_of_week
             parts = cron_expr.split()
             if len(parts) != 5:
-                raise SchedulerError(
-                    f"Invalid cron expression: {cron_expr} (expected 5 fields)"
-                )
+                raise SchedulerError(f"Invalid cron expression: {cron_expr} (expected 5 fields)")
             minute, hour, day, month, day_of_week = parts
             apscheduler_trigger = CronTrigger(
                 minute=minute,

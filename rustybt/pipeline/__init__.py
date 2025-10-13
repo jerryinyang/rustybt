@@ -1,26 +1,26 @@
 from .classifiers import Classifier, CustomClassifier
 from .domain import Domain
-from .factors import Factor, CustomFactor
-from .filters import Filter, CustomFilter
-from .term import Term, LoadableTerm, ComputableTerm
-from .graph import ExecutionPlan, TermGraph
 
 # NOTE: this needs to come after the import of `graph`, or else we get circular
 # dependencies.
 from .engine import SimplePipelineEngine
+from .factors import CustomFactor, Factor
+from .filters import CustomFilter, Filter
+from .graph import ExecutionPlan, TermGraph
 from .pipeline import Pipeline
+from .term import ComputableTerm, LoadableTerm, Term
 
 __all__ = (
     "Classifier",
+    "ComputableTerm",
+    "CustomClassifier",
     "CustomFactor",
     "CustomFilter",
-    "CustomClassifier",
     "Domain",
     "ExecutionPlan",
     "Factor",
     "Filter",
     "LoadableTerm",
-    "ComputableTerm",
     "Pipeline",
     "SimplePipelineEngine",
     "Term",

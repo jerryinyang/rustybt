@@ -1,5 +1,7 @@
 from datetime import timedelta
+
 import pandas as pd
+import pytest
 from parameterized import parameterized
 
 from rustybt.algorithm import TradingAlgorithm
@@ -17,7 +19,6 @@ from rustybt.utils.security_list import (
     SecurityListSet,
     load_from_directory,
 )
-import pytest
 
 LEVERAGED_ETFS = load_from_directory("leveraged_etf_list")
 
@@ -31,9 +32,7 @@ class RestrictedAlgoWithCheck(TradingAlgorithm):
 
     def handle_data(self, data):
         if not self.order_count:
-            if self.sid not in self.rl.leveraged_etf_list.current_securities(
-                self.get_datetime()
-            ):
+            if self.sid not in self.rl.leveraged_etf_list.current_securities(self.get_datetime()):
                 self.order(self.sid, 100)
                 self.order_count += 1
 
@@ -80,7 +79,7 @@ class SecurityListTestCase(WithMakeAlgo, ZiplineTestCase):
     # XXX: This suite uses way more than it probably needs.
     START_DATE = pd.Timestamp("2002-01-03")
     assert (
-        START_DATE == sorted(list(LEVERAGED_ETFS.keys()))[0]
+        sorted(list(LEVERAGED_ETFS.keys()))[0] == START_DATE
     ), "START_DATE should match start of LEVERAGED_ETF data."
 
     END_DATE = pd.Timestamp("2015-02-17")
@@ -115,9 +114,7 @@ class SecurityListTestCase(WithMakeAlgo, ZiplineTestCase):
         should_exist = [
             asset.sid
             for asset in [
-                self.asset_finder.lookup_symbol(
-                    symbol, as_of_date=self.extra_knowledge_date
-                )
+                self.asset_finder.lookup_symbol(symbol, as_of_date=self.extra_knowledge_date)
                 for symbol in ["BZQ", "URTY", "JFT"]
             ]
         ]
@@ -128,9 +125,7 @@ class SecurityListTestCase(WithMakeAlgo, ZiplineTestCase):
         shouldnt_exist = [
             asset.sid
             for asset in [
-                self.asset_finder.lookup_symbol(
-                    symbol, as_of_date=self.extra_knowledge_date
-                )
+                self.asset_finder.lookup_symbol(symbol, as_of_date=self.extra_knowledge_date)
                 for symbol in ["AAPL", "GOOG"]
             ]
         ]
@@ -147,9 +142,7 @@ class SecurityListTestCase(WithMakeAlgo, ZiplineTestCase):
             should_exist = [
                 asset.sid
                 for asset in [
-                    self.asset_finder.lookup_symbol(
-                        symbol, as_of_date=self.extra_knowledge_date
-                    )
+                    self.asset_finder.lookup_symbol(symbol, as_of_date=self.extra_knowledge_date)
                     for symbol in ["AAPL", "GOOG", "BZQ", "URTY"]
                 ]
             ]
@@ -164,9 +157,7 @@ class SecurityListTestCase(WithMakeAlgo, ZiplineTestCase):
 
             rl = SecurityListSet(get_datetime, self.asset_finder)
             assert "BZQ" not in rl.leveraged_etf_list.current_securities(get_datetime())
-            assert "URTY" not in rl.leveraged_etf_list.current_securities(
-                get_datetime()
-            )
+            assert "URTY" not in rl.leveraged_etf_list.current_securities(get_datetime())
 
     def test_algo_without_rl_violation_via_check(self):
         self.run_algorithm(algo_class=RestrictedAlgoWithCheck, symbol="BZQ")

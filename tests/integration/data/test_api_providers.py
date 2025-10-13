@@ -22,7 +22,6 @@ import pytest
 
 from rustybt.data.adapters import AlpacaAdapter, AlphaVantageAdapter, PolygonAdapter
 
-
 # ============================================================================
 # Test Fixtures
 # ============================================================================

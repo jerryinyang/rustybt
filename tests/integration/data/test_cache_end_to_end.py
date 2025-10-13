@@ -5,19 +5,15 @@ to ensure caching works correctly in real backtest scenarios.
 """
 
 import asyncio
-import tempfile
 import time
 from decimal import Decimal
-from pathlib import Path
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 import pandas as pd
 import polars as pl
 import pytest
 
 from rustybt.data.catalog import DataCatalog
-from rustybt.data.polars.data_portal import PolarsDataPortal
-from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader
 from rustybt.data.sources.base import DataSource, DataSourceMetadata
 from rustybt.data.sources.cached_source import CachedDataSource
 from rustybt.data.sources.freshness import NeverStaleFreshnessPolicy
@@ -129,9 +125,7 @@ def mock_data_adapter():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_cached_source_with_data_portal(
-    mock_data_adapter, temp_dirs, test_catalog
-):
+async def test_cached_source_with_data_portal(mock_data_adapter, temp_dirs, test_catalog):
     """Test CachedDataSource integration with PolarsDataPortal.
 
     Validates:
@@ -187,9 +181,7 @@ async def test_cached_source_with_data_portal(
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_cache_hit_rate_multiple_queries(
-    mock_data_adapter, temp_dirs, test_catalog
-):
+async def test_cache_hit_rate_multiple_queries(mock_data_adapter, temp_dirs, test_catalog):
     """Test cache hit rate exceeds 80% for repeated backtest queries.
 
     Simulates running multiple backtests with overlapping data requests.
@@ -229,9 +221,7 @@ async def test_cache_hit_rate_multiple_queries(
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_concurrent_backtest_cache_sharing(
-    mock_data_adapter, temp_dirs, test_catalog
-):
+async def test_concurrent_backtest_cache_sharing(mock_data_adapter, temp_dirs, test_catalog):
     """Test multiple concurrent backtests share cache correctly.
 
     Simulates parallel strategy execution with shared data cache.
@@ -250,10 +240,7 @@ async def test_concurrent_backtest_cache_sharing(
     symbols = ["AAPL"]
 
     # Simulate 5 concurrent backtest requests
-    tasks = [
-        cached_source.fetch(symbols, start, end, "1d")
-        for _ in range(5)
-    ]
+    tasks = [cached_source.fetch(symbols, start, end, "1d") for _ in range(5)]
 
     results = await asyncio.gather(*tasks)
 
@@ -271,9 +258,7 @@ async def test_concurrent_backtest_cache_sharing(
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_cache_persistence_across_sessions(
-    mock_data_adapter, temp_dirs, test_catalog
-):
+async def test_cache_persistence_across_sessions(mock_data_adapter, temp_dirs, test_catalog):
     """Test cache persists across different CachedDataSource instances.
 
     Simulates stopping and restarting backtests with cache reuse.
@@ -352,9 +337,7 @@ def test_cache_integration_with_polars_data_portal(temp_dirs, test_catalog):
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_cache_with_different_frequencies(
-    mock_data_adapter, temp_dirs, test_catalog
-):
+async def test_cache_with_different_frequencies(mock_data_adapter, temp_dirs, test_catalog):
     """Test cache correctly handles different data frequencies.
 
     Validates cache keys are unique per frequency to avoid conflicts.

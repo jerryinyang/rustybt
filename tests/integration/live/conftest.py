@@ -16,7 +16,8 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     """Configure pytest markers."""
     config.addinivalue_line(
-        "markers", "ib_integration: mark test as IB integration test (requires --run-ib-integration)"
+        "markers",
+        "ib_integration: mark test as IB integration test (requires --run-ib-integration)",
     )
 
 

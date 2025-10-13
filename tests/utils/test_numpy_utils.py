@@ -3,23 +3,22 @@ Tests for zipline.utils.numpy_utils.
 """
 
 from datetime import datetime
-import pytest
 
 import numpy as np
+import pytest
 from pandas import Timestamp
-from toolz import concat, keyfilter
-from toolz import curry
+from toolz import concat, curry, keyfilter
 
 from rustybt.utils.functional import mapall as lazy_mapall
 from rustybt.utils.numpy_utils import (
+    NaTD,
+    NaTns,
     bytes_array_to_native_str_object_array,
+    is_datetime,
     is_float,
     is_int,
-    is_datetime,
     make_datetime64D,
     make_datetime64ns,
-    NaTns,
-    NaTD,
 )
 
 
@@ -34,9 +33,7 @@ def make_array(dtype, value):
 
 
 CASES = {
-    (int, is_int): mapall(
-        (int, np.int16, np.int32, np.int64, make_array(int)), [0, 1, -1]
-    ),
+    (int, is_int): mapall((int, np.int16, np.int32, np.int64, make_array(int)), [0, 1, -1]),
     (float, is_float): mapall(
         (np.float16, np.float32, np.float64, float, make_array(float)),
         [0.0, 1.0, -1.0, float("nan"), float("inf"), -float("inf")],
@@ -64,7 +61,7 @@ def everything_but(k, d):
 
 # TypeCheckTestCase
 fixt = [(k, x) for k, v in CASES.items() for x in v]
-not_fixt = [(k, x) for k in CASES.keys() for x in everything_but(k, CASES)]
+not_fixt = [(k, x) for k in CASES for x in everything_but(k, CASES)]
 
 
 @pytest.mark.parametrize(
@@ -80,7 +77,7 @@ def test_check_data_type_is_true(data_type, value):
 @pytest.mark.parametrize(
     "data_type, value",
     not_fixt,
-    ids=[f"{str(k[0])} is not {x}" for k, x in not_fixt],
+    ids=[f"{k[0]!s} is not {x}" for k, x in not_fixt],
 )
 def test_check_is_not_data_type(data_type, value):
     is_data_type = data_type[1]

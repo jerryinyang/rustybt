@@ -1,12 +1,13 @@
 """Unit tests for Hyperliquid broker adapter."""
 
 import os
+from datetime import UTC
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from rustybt.assets import Asset, Equity
+from rustybt.assets import Equity
 from rustybt.live.brokers.hyperliquid_adapter import (
     HyperliquidBrokerAdapter,
     HyperliquidConnectionError,
@@ -25,10 +26,11 @@ def test_private_key():
 def hyperliquid_adapter(test_private_key):
     """Create Hyperliquid adapter with test credentials."""
     with patch.dict(os.environ, {"HYPERLIQUID_PRIVATE_KEY": test_private_key}):
-        with patch("rustybt.live.brokers.hyperliquid_adapter.Info"), \
-             patch("rustybt.live.brokers.hyperliquid_adapter.Exchange"), \
-             patch("rustybt.live.brokers.hyperliquid_adapter.Account") as mock_account:
-
+        with (
+            patch("rustybt.live.brokers.hyperliquid_adapter.Info"),
+            patch("rustybt.live.brokers.hyperliquid_adapter.Exchange"),
+            patch("rustybt.live.brokers.hyperliquid_adapter.Account") as mock_account,
+        ):
             # Mock wallet account
             mock_wallet = MagicMock()
             mock_wallet.address = "0x1234567890abcdef1234567890abcdef12345678"
@@ -65,10 +67,11 @@ class TestHyperliquidAdapter:
     def test_load_private_key_from_env(self, test_private_key):
         """Test loading private key from environment variable."""
         with patch.dict(os.environ, {"HYPERLIQUID_PRIVATE_KEY": test_private_key}):
-            with patch("rustybt.live.brokers.hyperliquid_adapter.Info"), \
-                 patch("rustybt.live.brokers.hyperliquid_adapter.Exchange"), \
-                 patch("rustybt.live.brokers.hyperliquid_adapter.Account") as mock_account:
-
+            with (
+                patch("rustybt.live.brokers.hyperliquid_adapter.Info"),
+                patch("rustybt.live.brokers.hyperliquid_adapter.Exchange"),
+                patch("rustybt.live.brokers.hyperliquid_adapter.Account") as mock_account,
+            ):
                 mock_wallet = MagicMock()
                 mock_account.from_key.return_value = mock_wallet
 
@@ -126,13 +129,7 @@ class TestHyperliquidAdapter:
         # Mock order response
         hyperliquid_adapter.exchange.market_open.return_value = {
             "status": "ok",
-            "response": {
-                "data": {
-                    "statuses": [
-                        {"resting": {"oid": 123456}}
-                    ]
-                }
-            },
+            "response": {"data": {"statuses": [{"resting": {"oid": 123456}}]}},
         }
 
         # Submit order
@@ -153,13 +150,7 @@ class TestHyperliquidAdapter:
         # Mock order response
         hyperliquid_adapter.exchange.order.return_value = {
             "status": "ok",
-            "response": {
-                "data": {
-                    "statuses": [
-                        {"resting": {"oid": 123457}}
-                    ]
-                }
-            },
+            "response": {"data": {"statuses": [{"resting": {"oid": 123457}}]}},
         }
 
         # Submit limit order
@@ -263,9 +254,7 @@ class TestHyperliquidAdapter:
         hyperliquid_adapter._connected = True
 
         # Mock all_mids response
-        hyperliquid_adapter.info.all_mids.return_value = {
-            "BTC": "51000.50"
-        }
+        hyperliquid_adapter.info.all_mids.return_value = {"BTC": "51000.50"}
 
         # Get price
         price = await hyperliquid_adapter.get_current_price(test_asset)
@@ -315,10 +304,7 @@ class TestHyperliquidWebSocketIntegration:
         await hyperliquid_adapter.subscribe_market_data([test_asset])
 
         # Verify WebSocket subscribe was called with trades channel
-        mock_ws.subscribe.assert_called_once_with(
-            symbols=["BTC"],
-            channels=["trades"]
-        )
+        mock_ws.subscribe.assert_called_once_with(symbols=["BTC"], channels=["trades"])
 
     @pytest.mark.asyncio
     @pytest.mark.websocket_integration
@@ -334,10 +320,7 @@ class TestHyperliquidWebSocketIntegration:
         await hyperliquid_adapter.unsubscribe_market_data([test_asset])
 
         # Verify WebSocket unsubscribe was called
-        mock_ws.unsubscribe.assert_called_once_with(
-            symbols=["BTC"],
-            channels=["trades"]
-        )
+        mock_ws.unsubscribe.assert_called_once_with(symbols=["BTC"], channels=["trades"])
 
     @pytest.mark.asyncio
     @pytest.mark.websocket_integration
@@ -399,7 +382,8 @@ class TestHyperliquidWebSocketIntegration:
     @pytest.mark.websocket_integration
     async def test_tick_handling_from_websocket(self, hyperliquid_adapter):
         """Test tick data handling from WebSocket to BarBuffer (AC 5)."""
-        from datetime import datetime, timezone
+        from datetime import datetime
+
         from rustybt.live.streaming.models import TickData, TickSide
 
         # Setup connected adapter with bar buffer
@@ -410,10 +394,10 @@ class TestHyperliquidWebSocketIntegration:
         # Create a tick
         tick = TickData(
             symbol="BTC",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             price=Decimal("50000.50"),
             volume=Decimal("0.1"),
-            side=TickSide.BUY
+            side=TickSide.BUY,
         )
 
         # Call the tick handler (simulates WebSocket callback)
@@ -439,13 +423,7 @@ class TestHyperliquidAdvancedOrderTypes:
         # Mock order response
         hyperliquid_adapter.exchange.order.return_value = {
             "status": "ok",
-            "response": {
-                "data": {
-                    "statuses": [
-                        {"resting": {"oid": 999888}}
-                    ]
-                }
-            },
+            "response": {"data": {"statuses": [{"resting": {"oid": 999888}}]}},
         }
 
         # Submit Post-Only limit order
@@ -454,7 +432,7 @@ class TestHyperliquidAdvancedOrderTypes:
             amount=Decimal("0.1"),
             order_type="limit",
             limit_price=Decimal("50000"),
-            post_only=True
+            post_only=True,
         )
 
         # Verify order was submitted with ALO time-in-force
@@ -470,10 +448,7 @@ class TestHyperliquidAdvancedOrderTypes:
         # Should raise ValueError when combining post_only with market order
         with pytest.raises(ValueError, match="Post-Only mode is incompatible with Market orders"):
             await hyperliquid_adapter.submit_order(
-                asset=test_asset,
-                amount=Decimal("0.1"),
-                order_type="market",
-                post_only=True
+                asset=test_asset, amount=Decimal("0.1"), order_type="market", post_only=True
             )
 
     @pytest.mark.asyncio
@@ -484,13 +459,7 @@ class TestHyperliquidAdvancedOrderTypes:
         # Mock order response
         hyperliquid_adapter.exchange.market_close.return_value = {
             "status": "ok",
-            "response": {
-                "data": {
-                    "statuses": [
-                        {"resting": {"oid": 777666}}
-                    ]
-                }
-            },
+            "response": {"data": {"statuses": [{"resting": {"oid": 777666}}]}},
         }
 
         # Submit Reduce-Only market order
@@ -498,7 +467,7 @@ class TestHyperliquidAdvancedOrderTypes:
             asset=test_asset,
             amount=Decimal("-0.1"),  # Sell to reduce position
             order_type="market",
-            reduce_only=True
+            reduce_only=True,
         )
 
         # Verify reduce_only parameter was sent to SDK
@@ -514,13 +483,7 @@ class TestHyperliquidAdvancedOrderTypes:
         # Mock order response
         hyperliquid_adapter.exchange.order.return_value = {
             "status": "ok",
-            "response": {
-                "data": {
-                    "statuses": [
-                        {"resting": {"oid": 555444}}
-                    ]
-                }
-            },
+            "response": {"data": {"statuses": [{"resting": {"oid": 555444}}]}},
         }
 
         # Submit order with both Post-Only and Reduce-Only
@@ -530,7 +493,7 @@ class TestHyperliquidAdvancedOrderTypes:
             order_type="limit",
             limit_price=Decimal("51000"),
             post_only=True,
-            reduce_only=True
+            reduce_only=True,
         )
 
         # Verify both params were sent

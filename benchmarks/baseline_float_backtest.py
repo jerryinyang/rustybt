@@ -9,9 +9,8 @@ not a full Zipline backtest, to isolate Decimal overhead.
 Run with: pytest benchmarks/baseline_float_backtest.py --benchmark-only
 """
 
-import pytest
 import numpy as np
-from typing import Sequence
+import pytest
 
 
 class FloatPortfolio:
@@ -49,9 +48,7 @@ class FloatPortfolio:
         Returns:
             Total portfolio value (cash + positions)
         """
-        positions_value = sum(
-            pos["amount"] * pos["last_price"] for pos in self.positions.values()
-        )
+        positions_value = sum(pos["amount"] * pos["last_price"] for pos in self.positions.values())
         return self.cash + positions_value
 
     def calculate_returns(self, prices: np.ndarray) -> np.ndarray:
@@ -69,9 +66,7 @@ class FloatPortfolio:
 class FloatOrder:
     """Simplified float-based order for baseline measurement."""
 
-    def __init__(
-        self, asset_id: int, amount: float, price: float, commission_rate: float = 0.001
-    ):
+    def __init__(self, asset_id: int, amount: float, price: float, commission_rate: float = 0.001):
         """Initialize float order.
 
         Args:
@@ -192,9 +187,7 @@ def test_float_portfolio_value_scalability(benchmark):
 
     # Add 1000 positions for scalability test
     for asset_id in range(1, 1001):
-        portfolio.add_position(
-            asset_id=asset_id, amount=100.0, cost_basis=50.0, last_price=55.0
-        )
+        portfolio.add_position(asset_id=asset_id, amount=100.0, cost_basis=50.0, last_price=55.0)
 
     result = benchmark(portfolio.portfolio_value)
 
@@ -348,10 +341,7 @@ def test_float_simplified_backtest(benchmark):
             # Calculate daily return
             portfolio_value = portfolio.portfolio_value()
             if len(daily_returns) > 0:
-                prev_value = (
-                    1000000.0
-                    + sum((1 + r) for r in daily_returns) * 10000
-                )
+                prev_value = 1000000.0 + sum((1 + r) for r in daily_returns) * 10000
                 daily_return = (portfolio_value - prev_value) / prev_value
                 daily_returns.append(daily_return)
             else:

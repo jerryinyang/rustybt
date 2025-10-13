@@ -1,7 +1,8 @@
 """Unit tests for DecimalConfig class."""
 
-from decimal import ROUND_DOWN, ROUND_HALF_EVEN, ROUND_HALF_UP, ROUND_UP, Decimal
+from decimal import ROUND_DOWN, ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal
 from pathlib import Path
+
 import pytest
 
 from rustybt.finance.decimal import (
@@ -371,7 +372,7 @@ class TestDecimalConfigContext:
         config.load_from_yaml(str(default_config_path))
 
         # Save original context
-        original_prec = getcontext().prec
+        getcontext().prec
 
         # Use context manager
         with config.with_precision("crypto") as ctx:

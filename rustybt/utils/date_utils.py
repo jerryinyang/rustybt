@@ -15,20 +15,17 @@ def compute_date_range_chunks(sessions, start_date, end_date, chunksize):
     chunksize : int or None
         The size of the chunks to run. Setting this to None returns one chunk.
 
-    Returns
+    Returns:
     -------
     ranges : iterable[(np.datetime64, np.datetime64)]
         A sequence of start and end dates to run the pipeline for.
     """
     if start_date not in sessions:
         raise KeyError(
-            "Start date %s is not found in calendar."
-            % (start_date.strftime("%Y-%m-%d"),)
+            "Start date %s is not found in calendar." % (start_date.strftime("%Y-%m-%d"),)
         )
     if end_date not in sessions:
-        raise KeyError(
-            "End date %s is not found in calendar." % (end_date.strftime("%Y-%m-%d"),)
-        )
+        raise KeyError("End date %s is not found in calendar." % (end_date.strftime("%Y-%m-%d"),))
     if end_date < start_date:
         raise ValueError(
             "End date %s cannot precede start date %s."

@@ -12,10 +12,10 @@ Benefits:
 """
 
 import asyncio
-import pandas as pd
-from decimal import Decimal
 
-from rustybt.data.sources import DataSourceRegistry, CachedDataSource
+import pandas as pd
+
+from rustybt.data.sources import CachedDataSource, DataSourceRegistry
 from rustybt.utils.calendar_utils import get_calendar
 
 
@@ -54,7 +54,7 @@ async def warm_cache_for_symbols(
 
     # Print cache statistics
     stats = cached_source.get_stats()
-    print(f"\n✅ Cache warming complete!")
+    print("\n✅ Cache warming complete!")
     print(f"   Cache size: {stats['size_mb']:.2f} MB")
     print(f"   Entries: {stats['entries']}")
 

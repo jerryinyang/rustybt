@@ -50,10 +50,7 @@ class MonteCarloResult:
         Returns:
             Dictionary mapping metric name to significance boolean
         """
-        return {
-            metric: p_value < Decimal("0.05")
-            for metric, p_value in self.p_values.items()
-        }
+        return {metric: p_value < Decimal("0.05") for metric, p_value in self.p_values.items()}
 
     @property
     def is_robust(self) -> dict[str, bool]:
@@ -346,9 +343,7 @@ class MonteCarloSimulator:
         simulated_distributions = self._run_simulations(trade_data, initial_capital)
 
         # Calculate statistical metrics
-        confidence_intervals = self._calculate_confidence_intervals(
-            simulated_distributions
-        )
+        confidence_intervals = self._calculate_confidence_intervals(simulated_distributions)
         p_values = self._calculate_p_values(simulated_distributions, observed_metrics)
         percentile_ranks = self._calculate_percentile_ranks(
             simulated_distributions, observed_metrics
@@ -429,9 +424,7 @@ class MonteCarloSimulator:
                 sim_returns, sim_pnl = self._bootstrap_trades(trade_data)
 
             # Reconstruct equity curve from shuffled trades
-            equity_curve = self._reconstruct_equity_curve(
-                sim_pnl, float(initial_capital)
-            )
+            equity_curve = self._reconstruct_equity_curve(sim_pnl, float(initial_capital))
 
             # Calculate metrics from simulated equity curve
             metrics = self._calculate_metrics(sim_returns, equity_curve)
@@ -442,9 +435,7 @@ class MonteCarloSimulator:
 
         return simulated_metrics
 
-    def _permute_trades(
-        self, trade_data: dict[str, np.ndarray]
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def _permute_trades(self, trade_data: dict[str, np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
         """Permute trade order (shuffle without replacement).
 
         Args:
@@ -461,9 +452,7 @@ class MonteCarloSimulator:
             trade_data["pnl"][indices],
         )
 
-    def _bootstrap_trades(
-        self, trade_data: dict[str, np.ndarray]
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def _bootstrap_trades(self, trade_data: dict[str, np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
         """Bootstrap trade sample (sample with replacement).
 
         Args:
@@ -594,9 +583,7 @@ class MonteCarloSimulator:
                 continue
 
             observed = float(observed_metrics[metric_name])
-            distribution = np.array(
-                [float(v) for v in simulated_distributions[metric_name]]
-            )
+            distribution = np.array([float(v) for v in simulated_distributions[metric_name]])
 
             # For max_drawdown (lower is better), calculate opposite tail
             if metric_name == "max_drawdown":
@@ -630,9 +617,7 @@ class MonteCarloSimulator:
                 continue
 
             observed = float(observed_metrics[metric_name])
-            distribution = np.array(
-                [float(v) for v in simulated_distributions[metric_name]]
-            )
+            distribution = np.array([float(v) for v in simulated_distributions[metric_name]])
 
             # Calculate percentile rank using scipy
             percentile = stats.percentileofscore(distribution, observed, kind="rank")

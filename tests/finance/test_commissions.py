@@ -114,8 +114,8 @@ class TestCommissionUnit:
 
         order.commission = expected_commission
 
-        assert 0 == model.calculate(order, txns[1])
-        assert 0 == model.calculate(order, txns[2])
+        assert model.calculate(order, txns[1]) == 0
+        assert model.calculate(order, txns[2]) == 0
 
     def test_allowed_asset_types(self):
         # Custom equities model.
@@ -198,8 +198,8 @@ class TestCommissionUnit:
             fill_amounts,
             expected_commissions,
             txns,
+            strict=False,
         ):
-
             commission = model.calculate(order, txn)
             assert round(abs(expected_commission - commission), 7) == 0
             order.filled += fill_amount
@@ -216,9 +216,8 @@ class TestCommissionUnit:
 
         # make sure each commission is positive and pro-rated
         for fill_amount, expected_commission, txn in zip(
-            fill_amounts, expected_commissions, txns
+            fill_amounts, expected_commissions, txns, strict=False
         ):
-
             commission = model.calculate(order, txn)
             assert round(abs(expected_commission - commission), 7) == 0
             order.filled += fill_amount
@@ -398,15 +397,18 @@ class CommissionAlgorithmTests(WithMakeAlgo, ZiplineTestCase):
             cls.END_DATE,
         )
         for sid in sids:
-            yield sid, pd.DataFrame(
-                index=sessions,
-                data={
-                    "open": 10.0,
-                    "high": 10.0,
-                    "low": 10.0,
-                    "close": 10.0,
-                    "volume": 100.0,
-                },
+            yield (
+                sid,
+                pd.DataFrame(
+                    index=sessions,
+                    data={
+                        "open": 10.0,
+                        "high": 10.0,
+                        "low": 10.0,
+                        "close": 10.0,
+                        "volume": 100.0,
+                    },
+                ),
             )
 
     def get_results(self, algo_code):
@@ -425,7 +427,7 @@ class CommissionAlgorithmTests(WithMakeAlgo, ZiplineTestCase):
         # one order split among 3 days, each copy of the order should have a
         # commission of one dollar
         for orders in results.orders[1:4]:
-            assert 1 == orders[0]["commission"]
+            assert orders[0]["commission"] == 1
 
         self.verify_capital_used(results, [-1001, -1000, -1000])
 
@@ -487,9 +489,9 @@ class CommissionAlgorithmTests(WithMakeAlgo, ZiplineTestCase):
         )
 
         # commissions should be 8, 10, 15
-        assert 8 == results.orders[1][0]["commission"]
-        assert 10 == results.orders[2][0]["commission"]
-        assert 15 == results.orders[3][0]["commission"]
+        assert results.orders[1][0]["commission"] == 8
+        assert results.orders[2][0]["commission"] == 10
+        assert results.orders[3][0]["commission"] == 15
 
         self.verify_capital_used(results, [-1008, -1002, -1005])
 
@@ -503,9 +505,9 @@ class CommissionAlgorithmTests(WithMakeAlgo, ZiplineTestCase):
         )
 
         # commissions should be 12, 12, 15
-        assert 12 == results.orders[1][0]["commission"]
-        assert 12 == results.orders[2][0]["commission"]
-        assert 15 == results.orders[3][0]["commission"]
+        assert results.orders[1][0]["commission"] == 12
+        assert results.orders[2][0]["commission"] == 12
+        assert results.orders[3][0]["commission"] == 15
 
         self.verify_capital_used(results, [-1012, -1000, -1003])
 
@@ -519,9 +521,9 @@ class CommissionAlgorithmTests(WithMakeAlgo, ZiplineTestCase):
         )
 
         # commissions should be 18, 18, 18
-        assert 18 == results.orders[1][0]["commission"]
-        assert 18 == results.orders[2][0]["commission"]
-        assert 18 == results.orders[3][0]["commission"]
+        assert results.orders[1][0]["commission"] == 18
+        assert results.orders[2][0]["commission"] == 18
+        assert results.orders[3][0]["commission"] == 18
 
         self.verify_capital_used(results, [-1018, -1000, -1000])
 
@@ -542,8 +544,8 @@ class CommissionAlgorithmTests(WithMakeAlgo, ZiplineTestCase):
             self.code.format(
                 commission=(
                     "set_commission(us_futures=commission.PerContract("
-                    "cost=0.05, exchange_fee=1.3, min_trade_cost={}))"
-                ).format(min_trade_cost),
+                    f"cost=0.05, exchange_fee=1.3, min_trade_cost={min_trade_cost}))"
+                ),
                 sid=1000,
                 amount=10,
             ),

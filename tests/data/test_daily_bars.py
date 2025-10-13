@@ -12,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import re
 from itertools import cycle, islice
 from sys import maxsize
-import re
 
-from parameterized import parameterized
 import numpy as np
 import pandas as pd
+import pytest
+from parameterized import parameterized
 from toolz import merge
-from rustybt.utils.calendar_utils import get_calendar
 
 from rustybt.data.bar_reader import (
     NoDataAfterDate,
@@ -37,34 +37,34 @@ from rustybt.data.hdf5_daily_bars import (
     VOLUME,
     coerce_to_uint32,
 )
+from rustybt.pipeline.loaders.synthetic import (
+    OHLCV,
+    asset_end,
+    asset_start,
+    expected_bar_value_with_holes,
+    expected_bar_values_2d,
+    make_bar_data,
+)
 from rustybt.testing import (
-    seconds_to_timestamp,
     powerset,
+    seconds_to_timestamp,
+)
+from rustybt.testing.fixtures import (
+    WithAssetFinder,
+    WithBcolzEquityDailyBarReader,
+    WithEquityDailyBarData,
+    WithHDF5EquityMultiCountryDailyBarReader,
+    WithSeededRandomState,
+    WithTmpDir,
+    WithTradingCalendars,
+    ZiplineTestCase,
 )
 from rustybt.testing.predicates import (
     assert_equal,
     assert_sequence_equal,
 )
-from rustybt.testing.fixtures import (
-    WithAssetFinder,
-    WithBcolzEquityDailyBarReader,
-    WithHDF5EquityMultiCountryDailyBarReader,
-    WithTmpDir,
-    WithTradingCalendars,
-    ZiplineTestCase,
-    WithEquityDailyBarData,
-    WithSeededRandomState,
-)
+from rustybt.utils.calendar_utils import get_calendar
 from rustybt.utils.classproperty import classproperty
-from rustybt.pipeline.loaders.synthetic import (
-    OHLCV,
-    expected_bar_value_with_holes,
-    make_bar_data,
-    asset_start,
-    asset_end,
-    expected_bar_values_2d,
-)
-import pytest
 
 # NOTE: All sids here are odd, so we can test querying for unknown sids
 #       with evens.
@@ -213,7 +213,7 @@ class _DailyBarsTestCase(
             assets,
         )
         dates = self.trading_days_between(start_date, end_date)
-        for column, result in zip(columns, results):
+        for column, result in zip(columns, results, strict=False):
             assert_equal(
                 result,
                 expected_bar_values_2d(
@@ -439,9 +439,7 @@ class BcolzDailyBarTestCase(WithBcolzEquityDailyBarReader, _DailyBarsTestCase):
         reader = self.daily_bar_reader
 
         def make_failure_msg(asset, date, field):
-            return "Unexpected value for sid={}; date={}; field={}.".format(
-                asset, date.date(), field
-            )
+            return f"Unexpected value for sid={asset}; date={date.date()}; field={field}."
 
         for asset in self.assets:
             # Dates to check.
@@ -509,9 +507,7 @@ class BcolzDailyBarTestCase(WithBcolzEquityDailyBarReader, _DailyBarsTestCase):
         reader = self.daily_bar_reader
 
         for asset in self.assets:
-            before_start = self.trading_calendar.previous_session(
-                self.asset_start(asset)
-            )
+            before_start = self.trading_calendar.previous_session(self.asset_start(asset))
             after_end = self.trading_calendar.next_session(self.asset_end(asset))
 
             # Attempting to get data for an asset before its start date
@@ -535,17 +531,17 @@ class BcolzDailyBarTestCase(WithBcolzEquityDailyBarReader, _DailyBarsTestCase):
                     reader.get_value(asset, date, CLOSE),
                     np.nan,
                     msg=(
-                        "Expected a hole for sid={}; date={}, but got a"
+                        f"Expected a hole for sid={asset}; date={date.date()}, but got a"
                         " non-nan value for close."
-                    ).format(asset, date.date()),
+                    ),
                 )
                 assert_equal(
                     reader.get_value(asset, date, VOLUME),
                     0.0,
                     msg=(
-                        "Expected a hole for sid={}; date={}, but got a"
+                        f"Expected a hole for sid={asset}; date={date.date()}, but got a"
                         " non-zero value for volume."
-                    ).format(asset, date.date()),
+                    ),
                 )
 
     def test_get_last_traded_dt(self):
@@ -691,9 +687,7 @@ class BcolzDailyBarWriterMissingDataTestCase(
             writer.write(bar_data)
 
 
-class _HDF5DailyBarTestCase(
-    WithHDF5EquityMultiCountryDailyBarReader, _DailyBarsTestCase
-):
+class _HDF5DailyBarTestCase(WithHDF5EquityMultiCountryDailyBarReader, _DailyBarsTestCase):
     @classmethod
     def init_class_fixtures(cls):
         super(_HDF5DailyBarTestCase, cls).init_class_fixtures()
@@ -713,9 +707,7 @@ class _HDF5DailyBarTestCase(
             assert_equal(
                 self.single_country_reader.asset_end_dates[ix],
                 self.asset_end(sid).asm8,
-                msg=("asset_end_dates value for sid={} differs from expected").format(
-                    sid
-                ),
+                msg=(f"asset_end_dates value for sid={sid} differs from expected"),
             )
 
     def test_read_first_trading_day(self):
@@ -728,9 +720,7 @@ class _HDF5DailyBarTestCase(
             assert_equal(
                 self.single_country_reader.asset_start_dates[ix],
                 self.asset_start(sid).asm8,
-                msg=("asset_start_dates value for sid={} differs from expected").format(
-                    sid
-                ),
+                msg=(f"asset_start_dates value for sid={sid} differs from expected"),
             )
 
     def test_sessions(self):
@@ -893,9 +883,7 @@ class _HDF5DailyBarTestCase(
         reader = self.daily_bar_reader
 
         def make_failure_msg(asset, date, field):
-            return "Unexpected value for sid={}; date={}; field={}.".format(
-                asset, date.date(), field
-            )
+            return f"Unexpected value for sid={asset}; date={date.date()}; field={field}."
 
         for asset in self.assets:
             # Dates to check.
@@ -963,9 +951,7 @@ class _HDF5DailyBarTestCase(
         reader = self.daily_bar_reader
 
         for asset in self.assets:
-            before_start = self.trading_calendar.previous_session(
-                self.asset_start(asset)
-            )
+            before_start = self.trading_calendar.previous_session(self.asset_start(asset))
             after_end = self.trading_calendar.next_session(self.asset_end(asset))
 
             # Attempting to get data for an asset before its start date
@@ -989,17 +975,17 @@ class _HDF5DailyBarTestCase(
                     reader.get_value(asset, date, CLOSE),
                     np.nan,
                     msg=(
-                        "Expected a hole for sid={}; date={}, but got a"
+                        f"Expected a hole for sid={asset}; date={date.date()}, but got a"
                         " non-nan value for close."
-                    ).format(asset, date.date()),
+                    ),
                 )
                 assert_equal(
                     reader.get_value(asset, date, VOLUME),
                     0.0,
                     msg=(
-                        "Expected a hole for sid={}; date={}, but got a"
+                        f"Expected a hole for sid={asset}; date={date.date()}, but got a"
                         " non-zero value for volume."
-                    ).format(asset, date.date()),
+                    ),
                 )
 
     def test_get_last_traded_dt(self):

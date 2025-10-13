@@ -25,12 +25,12 @@ def apply(f: Callable[..., T], *args: Any, **kwargs: Any) -> T:
     **kwargs
         Arguments to feed to the callable.
 
-    Returns
+    Returns:
     -------
     a : any
         The result of ``f(*args, **kwargs)``
 
-    Examples
+    Examples:
     --------
     >>> from toolz.curried.operator import add, sub
     >>> fs = add(1), sub(1)
@@ -53,7 +53,7 @@ def apply(f: Callable[..., T], *args: Any, **kwargs: Any) -> T:
     >>> isinstance(obj, type)
     False
 
-    See Also
+    See Also:
     --------
     unpack_apply
     mapply
@@ -74,12 +74,12 @@ def mapall(funcs: Iterable[Callable[[T], Any]], seq: Iterable[T]) -> Iterator[An
     seq : iterable
         Sequence over which to map funcs.
 
-    Yields
+    Yields:
     ------
     elem : object
         Concatenated result of mapping each ``func`` over ``seq``.
 
-    Examples
+    Examples:
     --------
     >>> list(mapall([lambda x: x + 1, lambda x: x - 1], [1, 2, 3]))
     [2, 3, 4, 0, 1, 2]
@@ -95,7 +95,7 @@ def same(*values: Any) -> bool:
 
     Returns True on empty sequences.
 
-    Examples
+    Examples:
     --------
     >>> same(1, 1, 1, 1)
     True
@@ -121,19 +121,19 @@ def dzip_exact(*dicts: dict[T, Any]) -> dict[T, tuple[Any, ...]]:
     *dicts : iterable[dict]
         A sequence of dicts all sharing the same keys.
 
-    Returns
+    Returns:
     -------
     zipped : dict
         A dict whose keys are the union of all keys in *dicts, and whose values
         are tuples of length len(dicts) containing the result of looking up
         each key in each dict.
 
-    Raises
+    Raises:
     ------
     ValueError
         If dicts don't all have the same keys.
 
-    Examples
+    Examples:
     --------
     >>> result = dzip_exact({'a': 1, 'b': 2}, {'a': 3, 'b': 4})
     >>> result == {'a': (1, 3), 'b': (2, 4)}
@@ -154,11 +154,13 @@ def _gen_unzip(it, elem_len):
     elem_len : int or None
         The expected element length. If this is None it is infered from the
         length of the first element.
-    Yields
+
+    Yields:
     ------
     elem : tuple
         Each element of ``it``.
-    Raises
+
+    Raises:
     ------
     ValueError
         Raised when the lengths do not match the ``elem_len``.
@@ -207,17 +209,20 @@ def unzip(seq, elem_len=None):
         will be infered from the length of the first element of ``seq``. This
         can be used to ensure that code like: ``a, b = unzip(seq)`` does not
         fail even when ``seq`` is empty.
-    Returns
+
+    Returns:
     -------
     seqs : iterable[iterable]
         The new sequences pulled out of the first iterable.
-    Raises
+
+    Raises:
     ------
     ValueError
         Raised when ``seq`` is empty and ``elem_len`` is not provided.
         Raised when elements of ``seq`` do not match the given ``elem_len`` or
         the length of the first element of ``seq``.
-    Examples
+
+    Examples:
     --------
     >>> seq = [('a', 1), ('b', 2), ('c', 3)]
     >>> cs, ns = unzip(seq)
@@ -245,11 +250,11 @@ def unzip(seq, elem_len=None):
     >>> cs == ns == ()
     True
 
-    Notes
+    Notes:
     -----
     This function will force ``seq`` to completion.
     """
-    ret = tuple(zip(*_gen_unzip(map(tuple, seq), elem_len)))
+    ret = tuple(zip(*_gen_unzip(map(tuple, seq), elem_len), strict=False))
     if ret:
         return ret
 
@@ -277,12 +282,12 @@ def getattrs(value, attrs, default=_no_default):
     default : object, optional
         Value to return if any of the lookups fail.
 
-    Returns
+    Returns:
     -------
     result : object
         Result of the lookup sequence.
 
-    Examples
+    Examples:
     --------
     >>> class EmptyObject:
     ...     pass
@@ -318,7 +323,7 @@ def set_attribute(name, value):
 
     Doesn't change the behavior of the wrapped function.
 
-    Examples
+    Examples:
     --------
     >>> @set_attribute('__name__', 'foo')
     ... def bar():
@@ -359,12 +364,12 @@ def foldr(f, seq, default=_no_default):
         The starting value to reduce with. If not provided, the sequence
         cannot be empty, and the last value of the sequence will be used.
 
-    Returns
+    Returns:
     -------
     folded : any
         The folded value.
 
-    Notes
+    Notes:
     -----
     This functions works by reducing the list in a right associative way.
 
@@ -391,14 +396,12 @@ def foldr(f, seq, default=_no_default):
        For performance reasons is is best to pass a strict (non-lazy) sequence,
        for example, a list.
 
-    See Also
+    See Also:
     --------
     :func:`functools.reduce`
     :func:`sum`
     """
-    return reduce(
-        flip(f), reversed(seq), *(default,) if default is not _no_default else ()
-    )
+    return reduce(flip(f), reversed(seq), *(default,) if default is not _no_default else ())
 
 
 def invert(d):
@@ -420,7 +423,7 @@ def invert(d):
 def keysorted(d):
     """Get the items from a dict, sorted by key.
 
-    Example
+    Example:
     -------
     >>> keysorted({'c': 1, 'b': 2, 'a': 3})
     [('a', 3), ('b', 2), ('c', 1)]

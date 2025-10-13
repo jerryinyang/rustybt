@@ -1,5 +1,5 @@
-from numexpr import evaluate
 import numpy as np
+from numexpr import evaluate
 from numpy import broadcast_arrays
 from scipy.stats import (
     linregress,
@@ -24,9 +24,7 @@ from rustybt.utils.numpy_utils import (
     int64_dtype,
 )
 
-
 from .basic import Returns
-
 
 ALLOWED_DTYPES = (float64_dtype, int64_dtype)
 
@@ -69,13 +67,13 @@ class RollingPearson(_RollingCorrelation):
         A Filter describing which assets (columns) of `base_factor` should have
         their correlation with `target` computed each day.
 
-    See Also
+    See Also:
     --------
     :func:`scipy.stats.pearsonr`
     :meth:`Factor.pearsonr`
     :class:`zipline.pipeline.factors.RollingPearsonOfReturns`
 
-    Notes
+    Notes:
     -----
     Most users should call Factor.pearsonr rather than directly construct an
     instance of this class.
@@ -115,13 +113,13 @@ class RollingSpearman(_RollingCorrelation):
         A Filter describing which assets (columns) of `base_factor` should have
         their correlation with `target` computed each day.
 
-    See Also
+    See Also:
     --------
     :func:`scipy.stats.spearmanr`
     :meth:`Factor.spearmanr`
     :class:`zipline.pipeline.factors.RollingSpearmanOfReturns`
 
-    Notes
+    Notes:
     -----
     Most users should call Factor.spearmanr rather than directly construct an
     instance of this class.
@@ -160,13 +158,13 @@ class RollingLinearRegression(CustomFactor):
         A Filter describing which assets (columns) of `dependent` should be
         regressed against `independent` each day.
 
-    See Also
+    See Also:
     --------
     :func:`scipy.stats.linregress`
     :meth:`Factor.linear_regression`
     :class:`zipline.pipeline.factors.RollingLinearRegressionOfReturns`
 
-    Notes
+    Notes:
     -----
     Most users should call Factor.linear_regression rather than directly
     construct an instance of this class.
@@ -235,13 +233,13 @@ class RollingPearsonOfReturns(RollingPearson):
         A Filter describing which assets should have their correlation with the
         target asset computed each day.
 
-    Notes
+    Notes:
     -----
     Computing this factor over many assets can be time consuming. It is
     recommended that a mask be used in order to limit the number of assets over
     which correlations are computed.
 
-    Examples
+    Examples:
     --------
     Let the following be example 10-day returns for three different assets::
 
@@ -281,7 +279,7 @@ class RollingPearsonOfReturns(RollingPearson):
     correlation coefficient between SPY's returns looking back from 2017-03-17
     (-.03, -.02, -.01, 0, .01) and MSFT's returns (.03, -.03, .02, -.02, .04).
 
-    See Also
+    See Also:
     --------
     :class:`zipline.pipeline.factors.RollingSpearmanOfReturns`
     :class:`zipline.pipeline.factors.RollingLinearRegressionOfReturns`
@@ -322,13 +320,13 @@ class RollingSpearmanOfReturns(RollingSpearman):
         A Filter describing which assets should have their correlation with the
         target asset computed each day.
 
-    Notes
+    Notes:
     -----
     Computing this factor over many assets can be time consuming. It is
     recommended that a mask be used in order to limit the number of assets over
     which correlations are computed.
 
-    See Also
+    See Also:
     --------
     :class:`zipline.pipeline.factors.RollingPearsonOfReturns`
     :class:`zipline.pipeline.factors.RollingLinearRegressionOfReturns`
@@ -367,7 +365,7 @@ class RollingLinearRegressionOfReturns(RollingLinearRegression):
         A Filter describing which assets should be regressed against the target
         asset each day.
 
-    Notes
+    Notes:
     -----
     Computing this factor over many assets can be time consuming. It is
     recommended that a mask be used in order to limit the number of assets over
@@ -388,7 +386,7 @@ class RollingLinearRegressionOfReturns(RollingLinearRegression):
     For more help on factors with multiple outputs, see
     :class:`zipline.pipeline.CustomFactor`.
 
-    Examples
+    Examples:
     --------
     Let the following be example 10-day returns for three different assets::
 
@@ -441,7 +439,7 @@ class RollingLinearRegressionOfReturns(RollingLinearRegression):
     x = [-.03, -.02, -.01, 0, .01] and y = [.03, -.03, .02, -.02, .04], and it
     produced a slope of .3 and an intercept of .011.
 
-    See Also
+    See Also:
     --------
     :class:`zipline.pipeline.factors.RollingPearsonOfReturns`
     :class:`zipline.pipeline.factors.RollingSpearmanOfReturns`
@@ -510,9 +508,7 @@ class SimpleBeta(CustomFactor, StandardOutputs):
             allowed_missing_count=allowed_missing_count,
         )
 
-    def compute(
-        self, today, assets, out, all_returns, target_returns, allowed_missing_count
-    ):
+    def compute(self, today, assets, out, all_returns, target_returns, allowed_missing_count):
         vectorized_beta(
             dependents=all_returns,
             independent=target_returns,
@@ -560,7 +556,7 @@ def vectorized_beta(dependents, independent, allowed_missing, out=None):
         Output array into which to write results.  If None, a new array is
         created and returned.
 
-    Returns
+    Returns:
     -------
     slopes : np.array[M]
         Linear regression coefficients for each column of ``dependents``.
@@ -587,7 +583,7 @@ def vectorized_beta(dependents, independent, allowed_missing, out=None):
     )
 
     # Calculate beta as Cov(X, Y) / Cov(X, X).
-    # https://en.wikipedia.org/wiki/Simple_linear_regression#Fitting_the_regression_line  # noqa
+    # https://en.wikipedia.org/wiki/Simple_linear_regression#Fitting_the_regression_line
     #
     # NOTE: The usual formula for covariance is::
     #
@@ -658,12 +654,12 @@ def vectorized_pearson_r(dependents, independents, allowed_missing, out=None):
         Output array into which to write results.  If None, a new array is
         created and returned.
 
-    Returns
+    Returns:
     -------
     correlations : np.array[M]
         Pearson correlation coefficients for each column of ``dependents``.
 
-    See Also
+    See Also:
     --------
     :class:`zipline.pipeline.factors.RollingPearson`
     :class:`zipline.pipeline.factors.RollingPearsonOfReturns`

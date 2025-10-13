@@ -6,14 +6,15 @@ from functools import partial
 from itertools import product
 from operator import and_
 
-from toolz import compose
 import numpy as np
-from numpy.random import RandomState
 import pandas as pd
+import pytest
+from numpy.random import RandomState
+from toolz import compose
 
 from rustybt.errors import BadPercentileBounds
 from rustybt.lib.labelarray import labelarray_where
-from rustybt.pipeline import Filter, Factor, Pipeline
+from rustybt.pipeline import Factor, Filter, Pipeline
 from rustybt.pipeline.classifiers import Classifier
 from rustybt.pipeline.domain import US_EQUITIES
 from rustybt.pipeline.factors import CustomFactor
@@ -25,7 +26,7 @@ from rustybt.pipeline.filters import (
     StaticAssets,
     StaticSids,
 )
-from rustybt.testing import parameter_space, permute_rows, ZiplineTestCase
+from rustybt.testing import ZiplineTestCase, parameter_space, permute_rows
 from rustybt.testing.fixtures import WithSeededRandomPipelineEngine
 from rustybt.testing.predicates import assert_equal
 from rustybt.utils.numpy_utils import (
@@ -34,8 +35,8 @@ from rustybt.utils.numpy_utils import (
     int64_dtype,
     object_dtype,
 )
+
 from .base import BaseUSEquityPipelineTestCase
-import pytest
 
 
 def rowwise_rank(array, mask=None):
@@ -177,13 +178,11 @@ class FilterTestCase(BaseUSEquityPipelineTestCase):
         )
 
     def test_percentile_between(self):
-
         quintiles = range(5)
         filter_names = ["pct_" + str(q) for q in quintiles]
-        iter_quintiles = list(zip(filter_names, quintiles))
+        iter_quintiles = list(zip(filter_names, quintiles, strict=False))
         terms = {
-            name: self.f.percentile_between(q * 20.0, (q + 1) * 20.0)
-            for name, q in iter_quintiles
+            name: self.f.percentile_between(q * 20.0, (q + 1) * 20.0) for name, q in iter_quintiles
         }
 
         # Test with 5 columns and no NaNs.
@@ -272,11 +271,11 @@ class FilterTestCase(BaseUSEquityPipelineTestCase):
 
         terms = {
             name: self.f.percentile_between(q * 25.0, (q + 1) * 25.0)
-            for name, q in zip(filter_names, quartiles)
+            for name, q in zip(filter_names, quartiles, strict=False)
         }
 
         expected = {}
-        for name, quartile in zip(filter_names, quartiles):
+        for name, quartile in zip(filter_names, quartiles, strict=False):
             lower = quartile * 25.0
             upper = (quartile + 1) * 25.0
             expected[name] = and_(
@@ -564,7 +563,6 @@ class FilterTestCase(BaseUSEquityPipelineTestCase):
             AllPresent([Mask()], window_length=4)
 
     def test_all(self):
-
         data = np.array(
             [
                 [1, 1, 1, 1, 1, 1],
@@ -623,7 +621,6 @@ class FilterTestCase(BaseUSEquityPipelineTestCase):
         )
 
     def test_any(self):
-
         # FUN FACT: The inputs and outputs here are exactly the negation of
         # the inputs and outputs for test_all above. This isn't a coincidence.
         #
@@ -698,7 +695,6 @@ class FilterTestCase(BaseUSEquityPipelineTestCase):
         )
 
     def test_at_least_N(self):
-
         # With a window_length of K, AtLeastN should return 1
         # if N or more 1's exist in the lookback window
 
@@ -838,9 +834,7 @@ class FilterTestCase(BaseUSEquityPipelineTestCase):
         filter_ = TestFactor() > 3
         assert filter_.window_safe
 
-    @parameter_space(
-        dtype=("float64", "datetime64[ns]"), seed=(1, 2, 3), __fail_fast=True
-    )
+    @parameter_space(dtype=("float64", "datetime64[ns]"), seed=(1, 2, 3), __fail_fast=True)
     def test_top_with_groupby(self, dtype, seed):
         permute = partial(permute_rows, seed)
         permuted_array = compose(permute, partial(np.array, dtype=int64_dtype))
@@ -925,9 +919,7 @@ class FilterTestCase(BaseUSEquityPipelineTestCase):
             mask=self.build_mask(self.ones_mask(shape=shape)),
         )
 
-    @parameter_space(
-        dtype=("float64", "datetime64[ns]"), seed=(1, 2, 3), __fail_fast=True
-    )
+    @parameter_space(dtype=("float64", "datetime64[ns]"), seed=(1, 2, 3), __fail_fast=True)
     def test_top_and_bottom_with_groupby(self, dtype, seed):
         permute = partial(permute_rows, seed)
         permuted_array = compose(permute, partial(np.array, dtype=int64_dtype))
@@ -1237,19 +1229,13 @@ class TestRepr:
         rep = repr(m)
         assert_equal(
             rep,
-            "Maximum({}, groupby={}, mask={})".format(
-                SomeFactor().recursive_repr(),
-                SomeClassifier().recursive_repr(),
-                SomeFilter().recursive_repr(),
-            ),
+            f"Maximum({SomeFactor().recursive_repr()}, groupby={SomeClassifier().recursive_repr()}, mask={SomeFilter().recursive_repr()})",
         )
 
         short_rep = m.graph_repr()
         assert_equal(
             short_rep,
-            "Maximum:\\l  "
-            "groupby: SomeClassifier(...)\\l  "
-            "mask: SomeFilter(...)\\l",
+            "Maximum:\\l  groupby: SomeClassifier(...)\\l  mask: SomeFilter(...)\\l",
         )
 
 

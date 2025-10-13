@@ -6,10 +6,11 @@ metrics (empyrical-reloaded).
 Run with: pytest benchmarks/decimal_metrics_benchmark.py --benchmark-only
 """
 
-import pytest
-import polars as pl
-from decimal import Decimal
 import random
+from decimal import Decimal
+
+import polars as pl
+import pytest
 
 
 class DecimalMetrics:
@@ -48,9 +49,7 @@ class DecimalMetrics:
         return Decimal(str(min_dd)) if min_dd is not None else Decimal("0")
 
     @staticmethod
-    def sortino_ratio(
-        returns: pl.Series, risk_free_rate: Decimal = Decimal("0")
-    ) -> Decimal:
+    def sortino_ratio(returns: pl.Series, risk_free_rate: Decimal = Decimal("0")) -> Decimal:
         """Calculate Sortino ratio (downside deviation only)."""
         if len(returns) < 2:
             return Decimal("0")
@@ -83,7 +82,7 @@ class DecimalMetrics:
         # Manual cumulative product
         cumulative = Decimal("1")
         for ret in returns:
-            cumulative *= (Decimal("1") + ret)
+            cumulative *= Decimal("1") + ret
 
         return cumulative - Decimal("1")
 
@@ -188,6 +187,7 @@ def test_all_metrics_252_returns(benchmark, returns_252):
     Expected: ~2-5 milliseconds for all metrics
     Target (Epic 7): <1 millisecond
     """
+
     def calculate_all_metrics():
         # Generate cumulative returns for drawdown
         price_factors = returns_252.map_elements(

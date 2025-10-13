@@ -9,7 +9,7 @@ import signal
 import sys
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 import structlog
@@ -29,10 +29,8 @@ from rustybt.live.events import (
     SystemErrorEvent,
 )
 from rustybt.live.models import (
-    AlignmentMetrics,
     DiscrepancySeverity,
     OrderSnapshot,
-    PositionSnapshot,
     ReconciliationStrategy,
     StateCheckpoint,
 )
@@ -64,15 +62,15 @@ class LiveTradingEngine:
         strategy: TradingAlgorithm,
         broker_adapter: BrokerAdapter,
         data_portal: Any,
-        portfolio: Optional[Any] = None,
-        account: Optional[Any] = None,
-        scheduler: Optional[Any] = None,
-        state_manager: Optional[StateManager] = None,
+        portfolio: Any | None = None,
+        account: Any | None = None,
+        scheduler: Any | None = None,
+        state_manager: StateManager | None = None,
         checkpoint_interval_seconds: int = 60,
         reconciliation_strategy: ReconciliationStrategy = ReconciliationStrategy.WARN_ONLY,
         reconciliation_interval_seconds: int = 300,
         shadow_mode: bool = False,
-        shadow_config: Optional[ShadowTradingConfig] = None,
+        shadow_config: ShadowTradingConfig | None = None,
     ) -> None:
         """Initialize live trading engine.
 
@@ -131,14 +129,22 @@ class LiveTradingEngine:
 
         # Shadow mode setup
         self._shadow_mode = shadow_mode
-        self._shadow_engine: Optional[ShadowBacktestEngine] = None
+        self._shadow_engine: ShadowBacktestEngine | None = None
         if shadow_mode:
             config = shadow_config or ShadowTradingConfig()
             self._shadow_engine = ShadowBacktestEngine(
                 strategy=strategy,
                 config=config,
-                commission_model=broker_adapter.commission_model if hasattr(broker_adapter, 'commission_model') else None,
-                slippage_model=broker_adapter.slippage_model if hasattr(broker_adapter, 'slippage_model') else None,
+                commission_model=(
+                    broker_adapter.commission_model
+                    if hasattr(broker_adapter, "commission_model")
+                    else None
+                ),
+                slippage_model=(
+                    broker_adapter.slippage_model
+                    if hasattr(broker_adapter, "slippage_model")
+                    else None
+                ),
                 starting_cash=Decimal("100000"),  # TODO: Get from portfolio
             )
 
@@ -163,29 +169,19 @@ class LiveTradingEngine:
     def _register_handlers(self) -> None:
         """Register event handlers with dispatcher."""
         # Market data → strategy
-        self._dispatcher.register_handler(
-            "market_data", self._handle_market_data
-        )
+        self._dispatcher.register_handler("market_data", self._handle_market_data)
 
         # Order fill → portfolio update + strategy notification
-        self._dispatcher.register_handler(
-            "order_fill", self._handle_order_fill
-        )
+        self._dispatcher.register_handler("order_fill", self._handle_order_fill)
 
         # Order reject → strategy notification
-        self._dispatcher.register_handler(
-            "order_reject", self._handle_order_reject
-        )
+        self._dispatcher.register_handler("order_reject", self._handle_order_reject)
 
         # Scheduled trigger → strategy callback
-        self._dispatcher.register_handler(
-            "scheduled_trigger", self._handle_scheduled_trigger
-        )
+        self._dispatcher.register_handler("scheduled_trigger", self._handle_scheduled_trigger)
 
         # System error → error handler
-        self._dispatcher.register_handler(
-            "system_error", self._handle_system_error
-        )
+        self._dispatcher.register_handler("system_error", self._handle_system_error)
 
         logger.debug("event_handlers_registered")
 
@@ -195,12 +191,12 @@ class LiveTradingEngine:
             # Unix-like systems
             loop = asyncio.get_event_loop()
             for sig in (signal.SIGTERM, signal.SIGINT):
-                loop.add_signal_handler(
-                    sig, lambda: asyncio.create_task(self.graceful_shutdown())
-                )
+                loop.add_signal_handler(sig, lambda: asyncio.create_task(self.graceful_shutdown()))
         else:
             # Windows
-            signal.signal(signal.SIGTERM, lambda s, f: asyncio.create_task(self.graceful_shutdown()))
+            signal.signal(
+                signal.SIGTERM, lambda s, f: asyncio.create_task(self.graceful_shutdown())
+            )
             signal.signal(signal.SIGINT, lambda s, f: asyncio.create_task(self.graceful_shutdown()))
 
         logger.debug("signal_handlers_configured")
@@ -301,9 +297,7 @@ class LiveTradingEngine:
         while self._running and not self._shutdown_requested:
             try:
                 # Get next event from queue (blocks until event available)
-                event = await asyncio.wait_for(
-                    self._event_queue.get(), timeout=1.0
-                )
+                event = await asyncio.wait_for(self._event_queue.get(), timeout=1.0)
 
                 logger.debug(
                     "event_dequeued",
@@ -317,7 +311,7 @@ class LiveTradingEngine:
                 # Mark task done
                 self._event_queue.task_done()
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # No events in queue, continue
                 continue
             except Exception as e:
@@ -380,8 +374,7 @@ class LiveTradingEngine:
             try:
                 # Process same market data in shadow backtest
                 await self._shadow_engine.process_market_data(
-                    timestamp=event.timestamp,
-                    market_data=event.data
+                    timestamp=event.timestamp, market_data=event.data
                 )
 
                 # Check alignment and update checkpoint metrics
@@ -540,9 +533,7 @@ class LiveTradingEngine:
                         sid=order.get("sid", 0),
                         amount=str(order.get("amount", Decimal(0))),
                         order_type=order.get("order_type", "market"),
-                        limit_price=str(order["limit_price"])
-                        if order.get("limit_price")
-                        else None,
+                        limit_price=str(order["limit_price"]) if order.get("limit_price") else None,
                         broker_order_id=order.get("broker_order_id"),
                         status=order.get("status", "pending"),
                         created_at=order.get("created_at", datetime.now()),
@@ -627,9 +618,7 @@ class LiveTradingEngine:
                         sid=order.get("sid", 0),
                         amount=str(order.get("amount", Decimal(0))),
                         order_type=order.get("order_type", "market"),
-                        limit_price=str(order["limit_price"])
-                        if order.get("limit_price")
-                        else None,
+                        limit_price=str(order["limit_price"]) if order.get("limit_price") else None,
                         broker_order_id=order.get("broker_order_id"),
                         status=order.get("status", "pending"),
                         created_at=order.get("created_at", datetime.now()),
@@ -706,9 +695,7 @@ class LiveTradingEngine:
             # TODO: Restore cash to portfolio
 
             # Reconcile positions with broker
-            reconciliation_result = await self._reconciler.reconcile_positions(
-                checkpoint.positions
-            )
+            reconciliation_result = await self._reconciler.reconcile_positions(checkpoint.positions)
 
             if reconciliation_result["discrepancies"]:
                 logger.warning(
@@ -765,7 +752,7 @@ class LiveTradingEngine:
         try:
             await asyncio.wait_for(self._event_queue.join(), timeout=10.0)
             logger.info("event_queue_drained")
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("event_queue_drain_timeout")
 
         # Save final checkpoint

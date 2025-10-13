@@ -8,12 +8,12 @@ This module contains deterministic strategies used for benchmarking:
 All strategies are deterministic (same inputs produce same results).
 """
 
-from .simple_sma_crossover import SimpleSMACrossover
 from .momentum_strategy import MomentumStrategy
 from .multi_indicator_strategy import MultiIndicatorStrategy
+from .simple_sma_crossover import SimpleSMACrossover
 
 __all__ = [
-    "SimpleSMACrossover",
     "MomentumStrategy",
     "MultiIndicatorStrategy",
+    "SimpleSMACrossover",
 ]

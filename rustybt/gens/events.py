@@ -19,10 +19,11 @@ Event system with priority handling and custom triggers.
 
 import heapq
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import IntEnum
-from typing import Any, Callable, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -56,7 +57,7 @@ class Event:
     # Non-comparison fields - init fields must come before fields with defaults
     event_type: str = ""
     priority: int = EventPriority.BAR_DATA
-    data: Optional[dict] = None
+    data: dict | None = None
 
     def __post_init__(self):
         """Set negative priority for max-heap behavior with min-heap."""
@@ -128,15 +129,13 @@ class PriceThresholdTrigger(EventTrigger):
             raise ValueError(f"direction must be 'above' or 'below', got '{direction}'")
 
         if field not in ("open", "high", "low", "close"):
-            raise ValueError(
-                f"field must be 'open', 'high', 'low', or 'close', got '{field}'"
-            )
+            raise ValueError(f"field must be 'open', 'high', 'low', or 'close', got '{field}'")
 
         self.asset = asset
         self.threshold = threshold
         self.direction = direction
         self.field = field
-        self.last_price: Optional[Decimal] = None
+        self.last_price: Decimal | None = None
 
     def should_trigger(self, current_time: pd.Timestamp, data: dict) -> bool:
         """
@@ -188,7 +187,7 @@ class TimeIntervalTrigger(EventTrigger):
     Fires callback at specified time intervals during simulation.
     """
 
-    def __init__(self, interval: pd.Timedelta, callback: Optional[Callable] = None):
+    def __init__(self, interval: pd.Timedelta, callback: Callable | None = None):
         """
         Initialize time interval trigger.
 
@@ -204,7 +203,7 @@ class TimeIntervalTrigger(EventTrigger):
 
         self.interval = interval
         self.callback = callback
-        self.last_trigger: Optional[pd.Timestamp] = None
+        self.last_trigger: pd.Timestamp | None = None
 
     def should_trigger(self, current_time: pd.Timestamp, data: dict) -> bool:
         """
@@ -269,7 +268,7 @@ class EventQueue:
         """
         return heapq.heappop(self._heap)
 
-    def peek(self) -> Optional[Event]:
+    def peek(self) -> Event | None:
         """
         View next event without removing it.
 

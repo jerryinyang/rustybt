@@ -19,14 +19,13 @@ from rustybt.optimization.parameter_space import (
 from rustybt.optimization.search.grid_search import GridSearchAlgorithm
 from rustybt.optimization.search.random_search import RandomSearchAlgorithm
 
-
 # Module-level objective functions (required for multiprocessing pickle)
 
 
 def simple_objective(params):
     """Simple quadratic objective."""
     x = params["x"]
-    return Decimal(str(-x**2))
+    return Decimal(str(-(x**2)))
 
 
 def sphere_objective(params):
@@ -39,7 +38,7 @@ def sphere_objective(params):
 def quadratic_objective(params):
     """Quadratic with known maximum at x=5."""
     x = params["x"]
-    return Decimal(str(-(x - 5) ** 2 + 10))
+    return Decimal(str(-((x - 5) ** 2) + 10))
 
 
 def failing_objective(params):
@@ -47,13 +46,13 @@ def failing_objective(params):
     x = params["x"]
     if x == 5:
         raise ValueError("Intentional failure for x=5")
-    return Decimal(str(-x**2))
+    return Decimal(str(-(x**2)))
 
 
 def slow_objective(params):
     """Slow CPU-intensive objective."""
     time.sleep(0.05)
-    return Decimal(str(-params["x"] ** 2))
+    return Decimal(str(-(params["x"] ** 2)))
 
 
 def cpu_intensive_objective(params):
@@ -62,7 +61,7 @@ def cpu_intensive_objective(params):
     for i in range(100000):
         result += Decimal(str(i % 10))
     x = float(params["x"])
-    return Decimal(str(-x**2)) + result * Decimal("0.0000001")
+    return Decimal(str(-(x**2))) + result * Decimal("0.0000001")
 
 
 class TestWorkerStats:
@@ -235,9 +234,7 @@ class TestParallelOptimizer:
             ]
         )
 
-        algorithm = RandomSearchAlgorithm(
-            parameter_space=param_space, n_iter=20, seed=42
-        )
+        algorithm = RandomSearchAlgorithm(parameter_space=param_space, n_iter=20, seed=42)
 
         optimizer = ParallelOptimizer(algorithm, n_jobs=2, verbose=False)
         optimizer.run(sphere_objective)
@@ -276,9 +273,7 @@ class TestParallelOptimizer:
         )
 
         # Serial optimization
-        serial_algorithm = RandomSearchAlgorithm(
-            parameter_space=param_space, n_iter=50, seed=42
-        )
+        serial_algorithm = RandomSearchAlgorithm(parameter_space=param_space, n_iter=50, seed=42)
         while not serial_algorithm.is_complete():
             params = serial_algorithm.suggest()
             score = sphere_objective(params)
@@ -286,9 +281,7 @@ class TestParallelOptimizer:
         serial_best_params, serial_best_score = serial_algorithm.get_best_result()
 
         # Parallel optimization (same seed)
-        parallel_algorithm = RandomSearchAlgorithm(
-            parameter_space=param_space, n_iter=50, seed=42
-        )
+        parallel_algorithm = RandomSearchAlgorithm(parameter_space=param_space, n_iter=50, seed=42)
         parallel_optimizer = ParallelOptimizer(parallel_algorithm, n_jobs=2, verbose=False)
         parallel_optimizer.run(sphere_objective)
         parallel_best_params, parallel_best_score = parallel_optimizer.get_best_result()
@@ -414,9 +407,7 @@ class TestParallelOptimizer:
         )
         algorithm = RandomSearchAlgorithm(parameter_space=param_space, n_iter=10)
 
-        optimizer = ParallelOptimizer(
-            algorithm, n_jobs=2, maxtasksperchild=50, verbose=False
-        )
+        optimizer = ParallelOptimizer(algorithm, n_jobs=2, maxtasksperchild=50, verbose=False)
         assert optimizer.maxtasksperchild == 50
 
 
@@ -431,18 +422,14 @@ class TestParallelPerformance:
 
         # Serial execution (1 worker)
         serial_algorithm = GridSearchAlgorithm(parameter_space=param_space)
-        serial_optimizer = ParallelOptimizer(
-            serial_algorithm, n_jobs=1, verbose=False
-        )
+        serial_optimizer = ParallelOptimizer(serial_algorithm, n_jobs=1, verbose=False)
         start_serial = time.time()
         serial_optimizer.run(slow_objective)
         serial_time = time.time() - start_serial
 
         # Parallel execution (4 workers)
         parallel_algorithm = GridSearchAlgorithm(parameter_space=param_space)
-        parallel_optimizer = ParallelOptimizer(
-            parallel_algorithm, n_jobs=4, verbose=False
-        )
+        parallel_optimizer = ParallelOptimizer(parallel_algorithm, n_jobs=4, verbose=False)
         start_parallel = time.time()
         parallel_optimizer.run(slow_objective)
         parallel_time = time.time() - start_parallel
@@ -453,10 +440,14 @@ class TestParallelPerformance:
         # Should achieve at least some speedup with 4 workers
         # (Python's multiprocessing has significant overhead due to process forking and pickling)
         # Just verify parallel is not slower than serial
-        assert speedup >= 1.0, f"Expected speedup >= 1.0 (parallel faster or equal to serial), got {speedup:.2f}"
+        assert (
+            speedup >= 1.0
+        ), f"Expected speedup >= 1.0 (parallel faster or equal to serial), got {speedup:.2f}"
 
         # Ideally should be faster, but we'll just log it
-        print(f"\nParallel speedup with 4 workers: {speedup:.2f}x (serial={serial_time:.2f}s, parallel={parallel_time:.2f}s)")
+        print(
+            f"\nParallel speedup with 4 workers: {speedup:.2f}x (serial={serial_time:.2f}s, parallel={parallel_time:.2f}s)"
+        )
 
         # Both should find same best result
         serial_best = serial_optimizer.get_best_result()[1]
@@ -471,18 +462,14 @@ class TestParallelPerformance:
 
         # Measure baseline (1 worker)
         baseline_algorithm = GridSearchAlgorithm(parameter_space=param_space)
-        baseline_optimizer = ParallelOptimizer(
-            baseline_algorithm, n_jobs=1, verbose=False
-        )
+        baseline_optimizer = ParallelOptimizer(baseline_algorithm, n_jobs=1, verbose=False)
         start = time.time()
         baseline_optimizer.run(cpu_intensive_objective)
         baseline_time = time.time() - start
 
         # Measure parallel (2 workers)
         parallel_algorithm = GridSearchAlgorithm(parameter_space=param_space)
-        parallel_optimizer = ParallelOptimizer(
-            parallel_algorithm, n_jobs=2, verbose=False
-        )
+        parallel_optimizer = ParallelOptimizer(parallel_algorithm, n_jobs=2, verbose=False)
         start = time.time()
         parallel_optimizer.run(cpu_intensive_objective)
         parallel_time = time.time() - start
@@ -492,7 +479,9 @@ class TestParallelPerformance:
 
         # Just verify parallel doesn't make things significantly worse
         # (Python's multiprocessing has overhead from process forking and pickling)
-        assert speedup >= 0.8, f"Expected parallel not to be significantly slower (speedup >= 0.8), got {speedup:.2f}"
+        assert (
+            speedup >= 0.8
+        ), f"Expected parallel not to be significantly slower (speedup >= 0.8), got {speedup:.2f}"
 
         # Log efficiency for informational purposes
         print(f"\nParallel efficiency with 2 workers: {efficiency:.1%} (speedup={speedup:.2f}x)")
@@ -521,7 +510,7 @@ class TestRayBackend:
             ray.shutdown()
 
         def simple_objective(params):
-            return Decimal(str(-params["x"] ** 2))
+            return Decimal(str(-(params["x"] ** 2)))
 
         param_space = ParameterSpace(
             parameters=[DiscreteParameter(name="x", min_value=0, max_value=10, step=1)]

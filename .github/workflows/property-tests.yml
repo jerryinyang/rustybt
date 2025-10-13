@@ -44,11 +44,12 @@ jobs:
         run: |
           uv run python scripts/property_test_coverage.py --enforce-gates
 
-      - name: Run property tests (CI profile - 500 examples)
+      - name: Run property tests (CI profile - 1000 examples)
         env:
           HYPOTHESIS_PROFILE: ci
         run: |
-          uv run pytest tests/property_tests/ \
+          uv run pytest -m property \
+            --hypothesis-profile=ci \
             --hypothesis-show-statistics \
             -v \
             --tb=short \

@@ -19,7 +19,6 @@ float-based metrics, with precision loss warnings.
 """
 
 from decimal import Decimal
-from typing import Optional
 
 import numpy as np
 import polars as pl
@@ -73,7 +72,10 @@ def from_float_value(float_value: float) -> Decimal:
 
 
 def compare_metrics(
-    decimal_value: Decimal, empyrical_value: float, metric_name: str, tolerance: Decimal = Decimal("1e-10")
+    decimal_value: Decimal,
+    empyrical_value: float,
+    metric_name: str,
+    tolerance: Decimal = Decimal("1e-10"),
 ) -> bool:
     """Compare Decimal metric with empyrical float metric.
 
@@ -138,7 +140,7 @@ def validate_decimal_against_empyrical(
     """
     validation_results = {}
 
-    for metric_name in decimal_metrics.keys():
+    for metric_name in decimal_metrics:
         if metric_name in empyrical_metrics:
             decimal_value = decimal_metrics[metric_name]
             empyrical_value = empyrical_metrics[metric_name]
@@ -198,7 +200,7 @@ class EmpyricalAdapter:
         returns: pl.Series,
         risk_free: float = 0.0,
         period: str = "daily",
-        annualization: Optional[int] = None,
+        annualization: int | None = None,
     ) -> Decimal:
         """Calculate Sharpe ratio using empyrical.
 
@@ -224,7 +226,7 @@ class EmpyricalAdapter:
         returns: pl.Series,
         required_return: float = 0.0,
         period: str = "daily",
-        annualization: Optional[int] = None,
+        annualization: int | None = None,
     ) -> Decimal:
         """Calculate Sortino ratio using empyrical.
 

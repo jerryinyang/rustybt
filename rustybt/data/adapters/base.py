@@ -11,7 +11,7 @@ import time
 from abc import ABC, abstractmethod
 from decimal import getcontext
 from functools import wraps
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 import pandas as pd
 import polars as pl
@@ -78,9 +78,7 @@ class RateLimiter:
         throttle_events: Number of times requests were throttled
     """
 
-    def __init__(
-        self, requests_per_second: int, burst_size: Optional[int] = None
-    ) -> None:
+    def __init__(self, requests_per_second: int, burst_size: int | None = None) -> None:
         """Initialize rate limiter.
 
         Args:
@@ -132,9 +130,7 @@ class RateLimiter:
 # ============================================================================
 
 
-def with_retry(
-    max_retries: int = 3, initial_delay: float = 1.0, backoff_factor: float = 2.0
-):
+def with_retry(max_retries: int = 3, initial_delay: float = 1.0, backoff_factor: float = 2.0):
     """Decorator for retry logic with exponential backoff and jitter.
 
     Retries transient errors (NetworkError, TimeoutError) with exponential
@@ -181,9 +177,7 @@ def with_retry(
 
                         await asyncio.sleep(actual_delay)
                     else:
-                        logger.error(
-                            "retry_exhausted", attempts=max_retries, error=str(e)
-                        )
+                        logger.error("retry_exhausted", attempts=max_retries, error=str(e))
 
             raise last_exception
 
@@ -243,7 +237,7 @@ def validate_ohlcv_relationships(df: pl.DataFrame) -> bool:
     null_counts = df.select([pl.col(c).null_count().alias(c) for c in required_cols])
     total_nulls = sum(null_counts.row(0))
     if total_nulls > 0:
-        null_dict = {k: v for k, v in zip(required_cols, null_counts.row(0)) if v > 0}
+        null_dict = {k: v for k, v in zip(required_cols, null_counts.row(0), strict=False) if v > 0}
         raise ValidationError(f"NULL values found in required columns: {null_dict}")
 
     # Temporal consistency: timestamps must be sorted
@@ -251,9 +245,7 @@ def validate_ohlcv_relationships(df: pl.DataFrame) -> bool:
         raise ValidationError("Timestamps are not sorted")
 
     # Check for duplicate timestamps per symbol
-    duplicates = (
-        df.group_by(["symbol", "timestamp"]).agg(pl.count()).filter(pl.col("count") > 1)
-    )
+    duplicates = df.group_by(["symbol", "timestamp"]).agg(pl.count()).filter(pl.col("count") > 1)
     if len(duplicates) > 0:
         raise ValidationError(
             f"Duplicate timestamps found for {len(duplicates)} symbol-timestamp pairs"
@@ -397,7 +389,7 @@ class BaseDataAdapter(ABC):
     @abstractmethod
     async def fetch(
         self,
-        symbols: List[str],
+        symbols: list[str],
         start_date: pd.Timestamp,
         end_date: pd.Timestamp,
         resolution: str,
@@ -465,7 +457,7 @@ class BaseDataAdapter(ABC):
 
     def _log_fetch_success(
         self,
-        symbols: List[str],
+        symbols: list[str],
         start_date: pd.Timestamp,
         end_date: pd.Timestamp,
         resolution: str,
@@ -501,7 +493,5 @@ class BaseDataAdapter(ABC):
             adapter=self.name,
             error_type=type(error).__name__,
             error_message=str(error),
-            invalid_rows=(
-                len(error.invalid_rows) if error.invalid_rows is not None else 0
-            ),
+            invalid_rows=(len(error.invalid_rows) if error.invalid_rows is not None else 0),
         )

@@ -104,9 +104,7 @@ class TestBayesianOptimizerInitialization:
         with pytest.raises(ValueError, match="n_iter must be positive"):
             BayesianOptimizer(parameter_space=simple_space, n_iter=-5)
 
-    def test_initialization_with_prior_knowledge(
-        self, simple_space: ParameterSpace
-    ) -> None:
+    def test_initialization_with_prior_knowledge(self, simple_space: ParameterSpace) -> None:
         """Test initialization with prior knowledge."""
         initial_points = [{"x": 0.0, "y": 0.0}, {"x": 1.0, "y": 1.0}]
         initial_scores = [Decimal("0.0"), Decimal("-2.0")]
@@ -120,9 +118,7 @@ class TestBayesianOptimizerInitialization:
 
         assert optimizer.iteration == 0  # Prior knowledge doesn't count as iterations
 
-    def test_mismatched_initial_points_and_scores(
-        self, simple_space: ParameterSpace
-    ) -> None:
+    def test_mismatched_initial_points_and_scores(self, simple_space: ParameterSpace) -> None:
         """Test that mismatched initial points and scores raises error."""
         initial_points = [{"x": 0.0, "y": 0.0}]
         initial_scores = [Decimal("0.0"), Decimal("-1.0")]  # Mismatch!
@@ -160,9 +156,7 @@ class TestBayesianOptimizerSuggestUpdate:
         optimizer.suggest()
         assert optimizer.iteration == 1
 
-    def test_suggest_after_complete_raises_error(
-        self, simple_space: ParameterSpace
-    ) -> None:
+    def test_suggest_after_complete_raises_error(self, simple_space: ParameterSpace) -> None:
         """Test that suggest() after completion raises error."""
         optimizer = BayesianOptimizer(parameter_space=simple_space, n_iter=1)
 
@@ -198,18 +192,14 @@ class TestBayesianOptimizerSuggestUpdate:
         assert optimizer.get_best_score() == Decimal("2.0")
         assert optimizer.get_best_params() == params2
 
-    def test_update_without_suggest_raises_error(
-        self, simple_space: ParameterSpace
-    ) -> None:
+    def test_update_without_suggest_raises_error(self, simple_space: ParameterSpace) -> None:
         """Test that update() without suggest() raises error."""
         optimizer = BayesianOptimizer(parameter_space=simple_space, n_iter=5)
 
         with pytest.raises(ValueError, match="No suggestion pending"):
             optimizer.update({"x": 0.0, "y": 0.0}, Decimal("0.0"))
 
-    def test_update_with_wrong_params_raises_error(
-        self, simple_space: ParameterSpace
-    ) -> None:
+    def test_update_with_wrong_params_raises_error(self, simple_space: ParameterSpace) -> None:
         """Test that update() with wrong params raises error."""
         optimizer = BayesianOptimizer(parameter_space=simple_space, n_iter=5)
 
@@ -224,9 +214,7 @@ class TestBayesianOptimizerAcquisitionFunctions:
     """Test different acquisition functions."""
 
     @pytest.mark.parametrize("acq_func", ["EI", "PI", "LCB"])
-    def test_acquisition_function(
-        self, simple_space: ParameterSpace, acq_func: str
-    ) -> None:
+    def test_acquisition_function(self, simple_space: ParameterSpace, acq_func: str) -> None:
         """Test that each acquisition function works."""
         optimizer = BayesianOptimizer(
             parameter_space=simple_space,
@@ -250,9 +238,7 @@ class TestBayesianOptimizerAcquisitionFunctions:
 class TestBayesianOptimizerConvergence:
     """Test convergence detection."""
 
-    def test_convergence_on_max_iterations(
-        self, simple_space: ParameterSpace
-    ) -> None:
+    def test_convergence_on_max_iterations(self, simple_space: ParameterSpace) -> None:
         """Test that optimizer stops after max iterations."""
         optimizer = BayesianOptimizer(parameter_space=simple_space, n_iter=10)
 
@@ -286,9 +272,7 @@ class TestBayesianOptimizerConvergence:
 class TestBayesianOptimizerPriorKnowledge:
     """Test prior knowledge seeding."""
 
-    def test_prior_knowledge_improves_convergence(
-        self, simple_space: ParameterSpace
-    ) -> None:
+    def test_prior_knowledge_improves_convergence(self, simple_space: ParameterSpace) -> None:
         """Test that prior knowledge speeds up optimization."""
         # Without prior knowledge
         optimizer_no_prior = BayesianOptimizer(
@@ -438,9 +422,7 @@ class TestBayesianOptimizerEfficiency:
 class TestBayesianOptimizerVisualization:
     """Test visualization methods."""
 
-    def test_plot_convergence(
-        self, simple_space: ParameterSpace, tmp_path: Path
-    ) -> None:
+    def test_plot_convergence(self, simple_space: ParameterSpace, tmp_path: Path) -> None:
         """Test convergence plotting."""
         pytest.importorskip("matplotlib")
 
@@ -463,9 +445,7 @@ class TestBayesianOptimizerVisualization:
         fig = optimizer.plot_convergence(save_path=save_path)
         assert save_path.exists()
 
-    def test_plot_objective(
-        self, simple_space: ParameterSpace, tmp_path: Path
-    ) -> None:
+    def test_plot_objective(self, simple_space: ParameterSpace, tmp_path: Path) -> None:
         """Test objective function plotting."""
         pytest.importorskip("matplotlib")
 
@@ -484,9 +464,7 @@ class TestBayesianOptimizerVisualization:
         assert fig is not None
         assert save_path.exists()
 
-    def test_plot_evaluations(
-        self, simple_space: ParameterSpace, tmp_path: Path
-    ) -> None:
+    def test_plot_evaluations(self, simple_space: ParameterSpace, tmp_path: Path) -> None:
         """Test evaluations plotting."""
         pytest.importorskip("matplotlib")
 
@@ -544,9 +522,7 @@ class TestBayesianOptimizerPropertyBased:
     def test_best_score_monotonic_increasing(self, n_iter: int) -> None:
         """Best score should never decrease (higher is better)."""
         space = ParameterSpace(
-            parameters=[
-                ContinuousParameter(name="x", min_value=-5.0, max_value=5.0)
-            ]
+            parameters=[ContinuousParameter(name="x", min_value=-5.0, max_value=5.0)]
         )
 
         optimizer = BayesianOptimizer(
@@ -558,7 +534,7 @@ class TestBayesianOptimizerPropertyBased:
         best_scores = []
         for _ in range(min(n_iter, 10)):
             params = optimizer.suggest()
-            score = Decimal(str(-params["x"] ** 2))  # Simple quadratic
+            score = Decimal(str(-(params["x"] ** 2)))  # Simple quadratic
             optimizer.update(params, score)
 
             current_best = optimizer.get_best_score()

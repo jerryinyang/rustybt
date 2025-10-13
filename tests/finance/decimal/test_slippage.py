@@ -1,18 +1,18 @@
 """Unit tests for Decimal slippage models."""
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
 
-from rustybt.finance.decimal import (
-    DecimalOrder,
-    NoSlippage,
-    FixedSlippage,
-    FixedBasisPointsSlippage,
-    VolumeShareSlippage,
-    AsymmetricSlippage,
-)
+import pytest
 
+from rustybt.finance.decimal import (
+    AsymmetricSlippage,
+    DecimalOrder,
+    FixedBasisPointsSlippage,
+    FixedSlippage,
+    NoSlippage,
+    VolumeShareSlippage,
+)
 
 
 @pytest.fixture

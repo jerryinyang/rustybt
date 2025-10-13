@@ -1,25 +1,24 @@
 import errno
+import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from importlib import util as importlib_util
 from pathlib import Path
 
 import click
-import logging
 import pandas as pd
-
 from rich.console import Console
 from rich.table import Table
 
 import rustybt
 from rustybt.data import bundles as bundles_module
 from rustybt.data.bundles.metadata import BundleMetadata
-from rustybt.utils.calendar_utils import get_calendar
-from rustybt.utils.compat import wraps
-from rustybt.utils.cli import Date, Timestamp
-from rustybt.utils.run_algo import _run, BenchmarkSpec, load_extensions
 from rustybt.extensions import create_args
+from rustybt.utils.calendar_utils import get_calendar
+from rustybt.utils.cli import Date, Timestamp
+from rustybt.utils.compat import wraps
 from rustybt.utils.paths import zipline_root
+from rustybt.utils.run_algo import BenchmarkSpec, _run, load_extensions
 
 try:
     __IPYTHON__
@@ -81,7 +80,7 @@ def extract_option_object(option):
     option : decorator
         A click.option decorator.
 
-    Returns
+    Returns:
     -------
     option_object : click.Option
         The option object that this decorator will create.
@@ -102,7 +101,7 @@ def ipython_only(option):
     option : decorator
         A click.option decorator.
 
-    Returns
+    Returns:
     -------
     ipython_only_dec : decorator
         A decorator that correctly applies the argument even when not
@@ -131,7 +130,7 @@ def _format_timestamp(ts: int | None) -> str:
     if ts is None:
         return "—"
     try:
-        return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
+        return datetime.fromtimestamp(ts, tz=UTC).strftime("%Y-%m-%d %H:%M:%S %Z")
     except (OSError, OverflowError, ValueError):
         return str(ts)
 
@@ -140,7 +139,7 @@ def _format_date(ts: int | None) -> str:
     if ts is None:
         return "—"
     try:
-        return datetime.fromtimestamp(ts, tz=timezone.utc).date().isoformat()
+        return datetime.fromtimestamp(ts, tz=UTC).date().isoformat()
     except (OSError, OverflowError, ValueError):
         return str(ts)
 
@@ -165,7 +164,9 @@ def _load_migration_module():
     if _migration_module is not None:
         return _migration_module
 
-    script_path = Path(__file__).resolve().parent.parent / "scripts" / "migrate_catalog_to_unified.py"
+    script_path = (
+        Path(__file__).resolve().parent.parent / "scripts" / "migrate_catalog_to_unified.py"
+    )
     spec = importlib_util.spec_from_file_location("rustybt_cli_migration", script_path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Migration script not found at {script_path}")
@@ -224,7 +225,7 @@ def _load_migration_module():
     type=Timestamp(),
     default=pd.Timestamp.utcnow(),
     show_default=False,
-    help="The date to lookup data on or before.\n" "[default: <current-time>]",
+    help="The date to lookup data on or before.\n[default: <current-time>]",
 )
 @click.option(
     "-bf",
@@ -271,8 +272,7 @@ def _load_migration_module():
     default="-",
     metavar="FILENAME",
     show_default=True,
-    help="The location to write the perf data. If this is '-' the perf will"
-    " be written to stdout.",
+    help="The location to write the perf data. If this is '-' the perf will be written to stdout.",
 )
 @click.option(
     "--trading-calendar",
@@ -289,8 +289,7 @@ def _load_migration_module():
 @click.option(
     "--metrics-set",
     default="default",
-    help="The metrics set to use. New metrics sets may be registered in your"
-    " extension.py.",
+    help="The metrics set to use. New metrics sets may be registered in your extension.py.",
 )
 @click.option(
     "--blotter",
@@ -303,7 +302,7 @@ def _load_migration_module():
         "--local-namespace/--no-local-namespace",
         is_flag=True,
         default=None,
-        help="Should the algorithm methods be " "resolved in the local namespace.",
+        help="Should the algorithm methods be resolved in the local namespace.",
     )
 )
 @click.pass_context
@@ -345,9 +344,7 @@ def run(
 
     if (algotext is not None) == (algofile is not None):
         ctx.fail(
-            "must specify exactly one of '-f' / "
-            "'--algofile' or"
-            " '-t' / '--algotext'",
+            "must specify exactly one of '-f' / '--algofile' or '-t' / '--algotext'",
         )
 
     trading_calendar = get_calendar(trading_calendar)
@@ -423,9 +420,7 @@ def rustybt_magic(line, cell=None):
         # https://github.com/mitsuhiko/click/pull/533
         # even in standalone_mode=False `--help` really wants to kill us ;_;
         if exc.code:
-            raise ValueError(
-                "main returned non-zero status code: %d" % exc.code
-            ) from exc
+            raise ValueError("main returned non-zero status code: %d" % exc.code) from exc
 
 
 @main.command()
@@ -529,8 +524,19 @@ def ingest(bundle, assets_version, show_progress):
     help="Directory containing CSV files (for CSV adapter).",
 )
 def ingest_unified(
-    source, bundle, symbols, start, end, frequency,
-    list_sources, source_info, list_exchanges, exchange, api_key, api_secret, csv_dir
+    source,
+    bundle,
+    symbols,
+    start,
+    end,
+    frequency,
+    list_sources,
+    source_info,
+    list_exchanges,
+    exchange,
+    api_key,
+    api_secret,
+    csv_dir,
 ):
     """Unified data ingestion command using DataSource interface.
 
@@ -558,8 +564,9 @@ def ingest_unified(
             --start 2023-01-01 --end 2023-12-31 --frequency 1d \\
             --csv-dir /path/to/csv
     """
-    from rustybt.data.sources import DataSourceRegistry
     import pandas as pd
+
+    from rustybt.data.sources import DataSourceRegistry
 
     # Handle --list-sources flag
     if list_sources:
@@ -581,20 +588,22 @@ def ingest_unified(
             click.echo(f"  Supports Live: {'Yes' if info['supports_live'] else 'No'}")
             click.echo(f"  Auth Required: {'Yes' if info['auth_required'] else 'No'}")
 
-            if info['rate_limit']:
+            if info["rate_limit"]:
                 click.echo(f"  Rate Limit: {info['rate_limit']} req/min")
 
-            if info['data_delay'] is not None:
-                delay_str = f"{info['data_delay']} minutes" if info['data_delay'] > 0 else "Real-time"
+            if info["data_delay"] is not None:
+                delay_str = (
+                    f"{info['data_delay']} minutes" if info["data_delay"] > 0 else "Real-time"
+                )
                 click.echo(f"  Data Delay: {delay_str}")
 
-            if info['supported_frequencies']:
-                freqs = ', '.join(info['supported_frequencies'])
+            if info["supported_frequencies"]:
+                freqs = ", ".join(info["supported_frequencies"])
                 click.echo(f"  Supported Frequencies: {freqs}")
 
-            metadata = info['metadata']
+            metadata = info["metadata"]
             if metadata.additional_info:
-                click.echo(f"  Additional Info:")
+                click.echo("  Additional Info:")
                 for key, value in metadata.additional_info.items():
                     click.echo(f"    {key}: {value}")
 
@@ -614,7 +623,7 @@ def ingest_unified(
         except Exception:
             click.echo("Error: ccxt is not installed. Install with 'pip install ccxt'", err=True)
             return
-        exchanges = sorted(getattr(ccxt, 'exchanges', []))
+        exchanges = sorted(getattr(ccxt, "exchanges", []))
         if not exchanges:
             click.echo("No exchanges reported by ccxt.")
             return
@@ -626,7 +635,9 @@ def ingest_unified(
 
     # Require source argument if not using info flags
     if not source:
-        click.echo("Error: SOURCE argument is required (or use --list-sources or --source-info)", err=True)
+        click.echo(
+            "Error: SOURCE argument is required (or use --list-sources or --source-info)", err=True
+        )
         click.echo("\nRun 'rustybt ingest-unified --help' for usage information.", err=True)
         return
 
@@ -668,7 +679,9 @@ def ingest_unified(
 
     elif source.lower() in ["polygon", "alpaca", "alphavantage"]:
         if not api_key:
-            click.echo(f"Warning: {source} typically requires --api-key for authentication", err=True)
+            click.echo(
+                f"Warning: {source} typically requires --api-key for authentication", err=True
+            )
         if api_key:
             config["api_key"] = api_key
         if api_secret:
@@ -697,9 +710,7 @@ def ingest_unified(
     # Perform ingestion
     try:
         with click.progressbar(
-            length=len(symbol_list),
-            label="Ingesting data",
-            show_eta=True
+            length=len(symbol_list), label="Ingesting data", show_eta=True
         ) as bar:
             data_source.ingest_to_bundle(
                 bundle_name=bundle,
@@ -716,6 +727,7 @@ def ingest_unified(
     except Exception as e:
         click.echo(f"\n✗ Ingestion failed: {e}", err=True)
         import traceback
+
         traceback.print_exc()
 
 
@@ -732,15 +744,13 @@ def ingest_unified(
     "-e",
     "--before",
     type=Timestamp(),
-    help="Clear all data before TIMESTAMP."
-    " This may not be passed with -k / --keep-last",
+    help="Clear all data before TIMESTAMP. This may not be passed with -k / --keep-last",
 )
 @click.option(
     "-a",
     "--after",
     type=Timestamp(),
-    help="Clear all data after TIMESTAMP"
-    " This may not be passed with -k / --keep-last",
+    help="Clear all data after TIMESTAMP This may not be passed with -k / --keep-last",
 )
 @click.option(
     "-k",
@@ -794,7 +804,6 @@ def bundle():
 @bundle.command(name="list")
 def bundle_list():
     """Display bundles with provenance summary."""
-
     console = Console()
     bundles = BundleMetadata.list_bundles()
     if not bundles:
@@ -826,14 +835,15 @@ def bundle_list():
         )
 
     console.print(table)
-    console.print("\nUse 'rustybt bundle info <name>' for details or 'rustybt bundle validate <name>' to run checks.")
+    console.print(
+        "\nUse 'rustybt bundle info <name>' for details or 'rustybt bundle validate <name>' to run checks."
+    )
 
 
 @bundle.command(name="info")
 @click.argument("bundle_name", type=str)
 def bundle_info(bundle_name: str):
     """Show detailed metadata for a bundle."""
-
     console = Console()
     metadata = BundleMetadata.get(bundle_name)
     if metadata is None:
@@ -883,8 +893,8 @@ def bundle_info(bundle_name: str):
 @click.argument("bundle_name", type=str)
 def bundle_validate(bundle_name: str):
     """Validate bundle quality metrics against stored data."""
-
     import json
+
     import polars as pl
 
     console = Console()
@@ -1003,7 +1013,6 @@ def bundle_validate(bundle_name: str):
 @click.option("--validate", is_flag=True, help="Validate migration integrity")
 def bundle_migrate(dry_run: bool, no_backup: bool, rollback: int | None, validate: bool):
     """Run unified metadata migration commands."""
-
     module = _load_migration_module()
     console = Console()
 
@@ -1093,8 +1102,7 @@ def cache_stats(days):
         latency_ms = f"{stat['avg_fetch_latency_ms']:.1f}"
 
         click.echo(
-            f"{date_str:<12} {hits:<8} {misses:<8} {hit_rate:<12} "
-            f"{size_mb:<12} {latency_ms:<12}"
+            f"{date_str:<12} {hits:<8} {misses:<8} {hit_rate:<12} {size_mb:<12} {latency_ms:<12}"
         )
 
     click.echo("=" * 80)
@@ -1129,8 +1137,9 @@ def cache_clean(max_size, clean_all):
         rustybt cache clean --max-size 1000MB
         rustybt cache clean --all
     """
-    from rustybt.data.catalog import DataCatalog
     from pathlib import Path
+
+    from rustybt.data.catalog import DataCatalog
 
     catalog = DataCatalog()
 
@@ -1235,9 +1244,7 @@ def cache_list():
         cache_key = entry["cache_key"]
         bundle_name = entry["bundle_name"][:24]  # Truncate long names
         size_mb = f"{entry['size_bytes'] / 1024**2:.2f}"
-        last_accessed = pd.Timestamp(entry["last_accessed"], unit="s").strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        last_accessed = pd.Timestamp(entry["last_accessed"], unit="s").strftime("%Y-%m-%d %H:%M:%S")
 
         click.echo(f"{cache_key:<18} {bundle_name:<25} {size_mb:<12} {last_accessed:<20}")
 
@@ -1268,7 +1275,7 @@ def keygen():
     from cryptography.fernet import Fernet
 
     key = Fernet.generate_key()
-    key_str = key.decode('utf-8')
+    key_str = key.decode("utf-8")
 
     click.echo("\n" + "=" * 80)
     click.echo("Generated Encryption Key")
@@ -1286,7 +1293,7 @@ def keygen():
     "--env-file",
     type=click.Path(exists=True),
     default=".env",
-    help="Path to .env file containing credentials"
+    help="Path to .env file containing credentials",
 )
 def encrypt_credentials(env_file):
     """Encrypt broker credentials at rest.
@@ -1298,13 +1305,14 @@ def encrypt_credentials(env_file):
         rustybt encrypt-credentials
         rustybt encrypt-credentials --env-file /path/to/.env
     """
+    import json
     import os
     from pathlib import Path
+
     from cryptography.fernet import Fernet
-    import json
 
     # Check for encryption key
-    encryption_key = os.getenv('RUSTYBT_ENCRYPTION_KEY')
+    encryption_key = os.getenv("RUSTYBT_ENCRYPTION_KEY")
     if not encryption_key:
         click.echo("❌ Error: RUSTYBT_ENCRYPTION_KEY not found in environment", err=True)
         click.echo("   Run 'rustybt keygen' to generate a key first", err=True)
@@ -1313,18 +1321,20 @@ def encrypt_credentials(env_file):
     # Read credentials from .env file
     credentials = {}
     credential_keys = [
-        'BINANCE_API_KEY', 'BINANCE_API_SECRET',
-        'BYBIT_API_KEY', 'BYBIT_API_SECRET',
-        'IB_ACCOUNT',
-        'API_AUTH_TOKEN'
+        "BINANCE_API_KEY",
+        "BINANCE_API_SECRET",
+        "BYBIT_API_KEY",
+        "BYBIT_API_SECRET",
+        "IB_ACCOUNT",
+        "API_AUTH_TOKEN",
     ]
 
     try:
-        with open(env_file, 'r') as f:
+        with open(env_file) as f:
             for line in f:
                 line = line.strip()
-                if '=' in line and not line.startswith('#'):
-                    key, value = line.split('=', 1)
+                if "=" in line and not line.startswith("#"):
+                    key, value = line.split("=", 1)
                     if key in credential_keys:
                         credentials[key] = value
     except FileNotFoundError:
@@ -1341,11 +1351,11 @@ def encrypt_credentials(env_file):
     encrypted_data = cipher.encrypt(json.dumps(credentials).encode())
 
     # Save to encrypted file
-    creds_dir = Path.home() / '.rustybt' / 'config'
+    creds_dir = Path.home() / ".rustybt" / "config"
     creds_dir.mkdir(parents=True, exist_ok=True)
-    creds_file = creds_dir / 'credentials.enc'
+    creds_file = creds_dir / "credentials.enc"
 
-    with open(creds_file, 'wb') as f:
+    with open(creds_file, "wb") as f:
         f.write(encrypted_data)
 
     # Set restrictive permissions
@@ -1353,22 +1363,18 @@ def encrypt_credentials(env_file):
 
     click.echo(f"\n✓ Successfully encrypted {len(credentials)} credentials")
     click.echo(f"  Saved to: {creds_file}")
-    click.echo(f"  Permissions: -rw------- (600)")
+    click.echo("  Permissions: -rw------- (600)")
     click.echo("\n⚠️  You can now remove plaintext credentials from .env file\n")
 
 
 @main.command()
 @click.option(
     "--broker",
-    type=click.Choice(['binance', 'bybit', 'ccxt', 'ib'], case_sensitive=False),
+    type=click.Choice(["binance", "bybit", "ccxt", "ib"], case_sensitive=False),
     required=True,
-    help="Broker to test"
+    help="Broker to test",
 )
-@click.option(
-    "--testnet",
-    is_flag=True,
-    help="Use testnet/paper trading environment"
-)
+@click.option("--testnet", is_flag=True, help="Use testnet/paper trading environment")
 def test_broker(broker, testnet):
     """Test broker connection and authentication.
 
@@ -1381,8 +1387,8 @@ def test_broker(broker, testnet):
         rustybt test-broker --broker binance
         rustybt test-broker --broker binance --testnet
     """
-    import os
     import asyncio
+    import os
 
     click.echo(f"\n{'=' * 80}")
     click.echo(f"Testing {broker.upper()} Connection")
@@ -1392,20 +1398,23 @@ def test_broker(broker, testnet):
 
     async def test_connection():
         try:
-            if broker.lower() == 'binance':
+            if broker.lower() == "binance":
                 import ccxt
-                api_key = os.getenv('BINANCE_API_KEY')
-                api_secret = os.getenv('BINANCE_API_SECRET')
+
+                api_key = os.getenv("BINANCE_API_KEY")
+                api_secret = os.getenv("BINANCE_API_SECRET")
 
                 if not api_key or not api_secret:
                     click.echo("❌ Error: BINANCE_API_KEY or BINANCE_API_SECRET not set", err=True)
                     return False
 
-                exchange = ccxt.binance({
-                    'apiKey': api_key,
-                    'secret': api_secret,
-                    'options': {'defaultType': 'spot'},
-                })
+                exchange = ccxt.binance(
+                    {
+                        "apiKey": api_key,
+                        "secret": api_secret,
+                        "options": {"defaultType": "spot"},
+                    }
+                )
 
                 if testnet:
                     exchange.set_sandbox_mode(True)
@@ -1414,23 +1423,27 @@ def test_broker(broker, testnet):
                 balance = await exchange.fetch_balance()
 
                 click.echo("✓ Connection successful")
-                click.echo(f"✓ Account authenticated")
+                click.echo("✓ Account authenticated")
                 click.echo(f"✓ Total balance: {len(balance.get('total', {}))} assets")
 
                 # Test market data
-                ticker = await exchange.fetch_ticker('BTC/USDT')
+                ticker = await exchange.fetch_ticker("BTC/USDT")
                 click.echo(f"✓ Market data accessible (BTC/USDT: ${ticker['last']:.2f})")
 
                 await exchange.close()
                 return True
 
-            elif broker.lower() == 'ccxt':
-                click.echo("⚠️  CCXT supports 100+ exchanges. Specify exchange with --broker <exchange>")
+            elif broker.lower() == "ccxt":
+                click.echo(
+                    "⚠️  CCXT supports 100+ exchanges. Specify exchange with --broker <exchange>"
+                )
                 return False
 
-            elif broker.lower() == 'ib':
+            elif broker.lower() == "ib":
                 click.echo("⚠️  Interactive Brokers testing requires IB Gateway/TWS running")
-                click.echo("   Please ensure IB Gateway is running on port 7497 (paper) or 7496 (live)")
+                click.echo(
+                    "   Please ensure IB Gateway is running on port 7497 (paper) or 7496 (live)"
+                )
                 return False
 
             else:
@@ -1438,7 +1451,7 @@ def test_broker(broker, testnet):
                 return False
 
         except Exception as e:
-            click.echo(f"\n❌ Connection failed: {str(e)}", err=True)
+            click.echo(f"\n❌ Connection failed: {e!s}", err=True)
             return False
 
     success = asyncio.run(test_connection())
@@ -1456,10 +1469,7 @@ def test_broker(broker, testnet):
 
 @main.command()
 @click.option(
-    "--env-file",
-    type=click.Path(exists=True),
-    default=".env",
-    help="Path to .env file to validate"
+    "--env-file", type=click.Path(exists=True), default=".env", help="Path to .env file to validate"
 )
 def verify_config(env_file):
     """Validate configuration file.
@@ -1473,9 +1483,6 @@ def verify_config(env_file):
         rustybt verify-config
         rustybt verify-config --env-file /path/to/.env
     """
-    import os
-    from pathlib import Path
-
     click.echo(f"\n{'=' * 80}")
     click.echo("Configuration Validation")
     click.echo(f"{'=' * 80}\n")
@@ -1487,11 +1494,11 @@ def verify_config(env_file):
 
     # Read .env file
     try:
-        with open(env_file, 'r') as f:
-            for line_num, line in enumerate(f, 1):
+        with open(env_file) as f:
+            for _line_num, line in enumerate(f, 1):
                 line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
                     config[key.strip()] = value.strip()
     except FileNotFoundError:
         click.echo(f"❌ Error: File not found: {env_file}", err=True)
@@ -1499,9 +1506,9 @@ def verify_config(env_file):
 
     # Check required variables
     required_vars = {
-        'RUSTYBT_ENCRYPTION_KEY': 'Encryption key for credential storage',
-        'LOG_LEVEL': 'Logging level',
-        'LOG_DIR': 'Log directory path',
+        "RUSTYBT_ENCRYPTION_KEY": "Encryption key for credential storage",
+        "LOG_LEVEL": "Logging level",
+        "LOG_DIR": "Log directory path",
     }
 
     for var, description in required_vars.items():
@@ -1511,16 +1518,16 @@ def verify_config(env_file):
             errors.append(f"Empty value for: {var}")
 
     # Validate encryption key
-    if 'RUSTYBT_ENCRYPTION_KEY' in config:
-        key = config['RUSTYBT_ENCRYPTION_KEY']
+    if "RUSTYBT_ENCRYPTION_KEY" in config:
+        key = config["RUSTYBT_ENCRYPTION_KEY"]
         if len(key) < 40:
             errors.append("RUSTYBT_ENCRYPTION_KEY appears too short (should be Fernet key)")
 
     # Validate risk limits
     risk_vars = {
-        'MAX_POSITION_SIZE': (0.0, 1.0),
-        'MAX_DAILY_LOSS': (0.0, 1.0),
-        'MAX_LEVERAGE': (1.0, 10.0),
+        "MAX_POSITION_SIZE": (0.0, 1.0),
+        "MAX_DAILY_LOSS": (0.0, 1.0),
+        "MAX_LEVERAGE": (1.0, 10.0),
     }
 
     for var, (min_val, max_val) in risk_vars.items():
@@ -1528,14 +1535,15 @@ def verify_config(env_file):
             try:
                 value = float(config[var])
                 if not (min_val <= value <= max_val):
-                    warnings.append(f"{var}={value} outside recommended range [{min_val}, {max_val}]")
+                    warnings.append(
+                        f"{var}={value} outside recommended range [{min_val}, {max_val}]"
+                    )
             except ValueError:
                 errors.append(f"Invalid numeric value for {var}: {config[var]}")
 
     # Check for common mistakes
-    if 'BINANCE_API_KEY' in config:
-        if len(config['BINANCE_API_KEY']) < 20:
-            warnings.append("BINANCE_API_KEY seems too short")
+    if "BINANCE_API_KEY" in config and len(config["BINANCE_API_KEY"]) < 20:
+        warnings.append("BINANCE_API_KEY seems too short")
 
     # Display results
     click.echo("Results:")
@@ -1567,27 +1575,19 @@ def verify_config(env_file):
 
 @main.command()
 @click.option(
-    "--strategy",
-    type=click.Path(exists=True),
-    required=True,
-    help="Path to strategy Python file"
+    "--strategy", type=click.Path(exists=True), required=True, help="Path to strategy Python file"
 )
 @click.option(
     "--broker",
-    type=click.Choice(['binance', 'bybit', 'paper'], case_sensitive=False),
-    default='paper',
-    help="Broker to use (default: paper)"
+    type=click.Choice(["binance", "bybit", "paper"], case_sensitive=False),
+    default="paper",
+    help="Broker to use (default: paper)",
 )
-@click.option(
-    "--duration",
-    type=str,
-    default="24h",
-    help="Duration to run (e.g., 24h, 7d, 30d)"
-)
+@click.option("--duration", type=str, default="24h", help="Duration to run (e.g., 24h, 7d, 30d)")
 @click.option(
     "--log-file",
     type=click.Path(),
-    help="Path to log file (default: logs/paper_trade_{timestamp}.log)"
+    help="Path to log file (default: logs/paper_trade_{timestamp}.log)",
 )
 def paper_trade(strategy, broker, duration, log_file):
     """Run paper trading mode.
@@ -1599,11 +1599,10 @@ def paper_trade(strategy, broker, duration, log_file):
         rustybt paper-trade --strategy momentum.py --duration 30d
         rustybt paper-trade --strategy momentum.py --broker binance --duration 7d
     """
-    import sys
     import importlib.util
-    from pathlib import Path
+    import sys
     from datetime import datetime
-    import structlog
+    from pathlib import Path
 
     click.echo(f"\n{'=' * 80}")
     click.echo("Paper Trading Mode")
@@ -1614,9 +1613,9 @@ def paper_trade(strategy, broker, duration, log_file):
     click.echo(f"{'=' * 80}\n")
 
     # Parse duration
-    duration_mapping = {'h': 'hours', 'd': 'days', 'w': 'weeks', 'm': 'months'}
+    duration_mapping = {"h": "hours", "d": "days", "w": "weeks", "m": "months"}
     unit = duration[-1]
-    value = int(duration[:-1])
+    int(duration[:-1])
 
     if unit not in duration_mapping:
         click.echo(f"❌ Invalid duration format: {duration}", err=True)
@@ -1625,10 +1624,10 @@ def paper_trade(strategy, broker, duration, log_file):
 
     # Setup logging
     if not log_file:
-        log_dir = Path('logs')
+        log_dir = Path("logs")
         log_dir.mkdir(exist_ok=True)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        log_file = log_dir / f'paper_trade_{timestamp}.log'
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_file = log_dir / f"paper_trade_{timestamp}.log"
 
     # Load strategy
     try:
@@ -1643,7 +1642,7 @@ def paper_trade(strategy, broker, duration, log_file):
         click.echo(f"❌ Error loading strategy: {e}", err=True)
         raise click.exceptions.Exit(1)
 
-    click.echo(f"✓ Strategy loaded successfully")
+    click.echo("✓ Strategy loaded successfully")
     click.echo(f"✓ Logging to: {log_file}")
     click.echo("\n⚠️  Paper trading will run for {value} {duration_mapping[unit]}")
     click.echo("   Press Ctrl+C to stop\n")
@@ -1655,22 +1654,15 @@ def paper_trade(strategy, broker, duration, log_file):
 
 @main.command()
 @click.option(
-    "--strategy",
-    type=click.Path(exists=True),
-    required=True,
-    help="Path to strategy Python file"
+    "--strategy", type=click.Path(exists=True), required=True, help="Path to strategy Python file"
 )
 @click.option(
     "--broker",
-    type=click.Choice(['binance', 'bybit', 'ib'], case_sensitive=False),
+    type=click.Choice(["binance", "bybit", "ib"], case_sensitive=False),
     required=True,
-    help="Live broker to use"
+    help="Live broker to use",
 )
-@click.option(
-    "--confirm",
-    is_flag=True,
-    help="Confirm live trading with real money"
-)
+@click.option("--confirm", is_flag=True, help="Confirm live trading with real money")
 def live_trade(strategy, broker, confirm):
     """Run live trading mode.
 
@@ -1682,14 +1674,15 @@ def live_trade(strategy, broker, confirm):
     Example:
         rustybt live-trade --strategy momentum.py --broker binance --confirm
     """
-    import sys
     import importlib.util
-    from pathlib import Path
+    import sys
 
     if not confirm:
         click.echo("\n⚠️  LIVE TRADING REQUIRES --confirm FLAG", err=True)
         click.echo("   This will trade with REAL MONEY on a REAL BROKER", err=True)
-        click.echo("\n   Run: rustybt live-trade --strategy <file> --broker <broker> --confirm\n", err=True)
+        click.echo(
+            "\n   Run: rustybt live-trade --strategy <file> --broker <broker> --confirm\n", err=True
+        )
         raise click.exceptions.Exit(1)
 
     click.echo(f"\n{'=' * 80}")
@@ -1715,7 +1708,7 @@ def live_trade(strategy, broker, confirm):
         click.echo(f"❌ Error loading strategy: {e}", err=True)
         raise click.exceptions.Exit(1)
 
-    click.echo(f"✓ Strategy loaded successfully")
+    click.echo("✓ Strategy loaded successfully")
     click.echo("\n⚠️  Live trading engine requires Epic 6 implementation")
     click.echo("   This command validates strategy loading and broker connection")
 
@@ -1726,23 +1719,11 @@ def live_trade(strategy, broker, confirm):
 
 
 @main.command()
+@click.option("--log-file", type=click.Path(exists=True), help="Path to log file to analyze")
 @click.option(
-    "--log-file",
-    type=click.Path(exists=True),
-    help="Path to log file to analyze"
+    "--log-dir", type=click.Path(exists=True), default="logs", help="Directory containing log files"
 )
-@click.option(
-    "--log-dir",
-    type=click.Path(exists=True),
-    default="logs",
-    help="Directory containing log files"
-)
-@click.option(
-    "--days",
-    type=int,
-    default=30,
-    help="Number of days to analyze"
-)
+@click.option("--days", type=int, default=30, help="Number of days to analyze")
 def analyze_uptime(log_file, log_dir, days):
     """Analyze logs for uptime statistics.
 
@@ -1757,9 +1738,9 @@ def analyze_uptime(log_file, log_dir, days):
         rustybt analyze-uptime --log-file logs/paper_trade.log
     """
     import re
-    from pathlib import Path
-    from datetime import datetime, timedelta
     from collections import Counter
+    from datetime import datetime, timedelta
+    from pathlib import Path
 
     click.echo(f"\n{'=' * 80}")
     click.echo("Uptime Analysis")
@@ -1792,27 +1773,27 @@ def analyze_uptime(log_file, log_dir, days):
     error_types = Counter()
 
     for lf in log_files:
-        with open(lf, 'r') as f:
+        with open(lf) as f:
             for line in f:
                 # Count operations
-                if 'order_filled' in line or 'order_submitted' in line:
+                if "order_filled" in line or "order_submitted" in line:
                     total_operations += 1
 
                 # Track errors
-                if 'ERROR' in line:
+                if "ERROR" in line:
                     errors += 1
                     # Extract error type
-                    match = re.search(r'ERROR.*?(\w+Error|\w+Exception)', line)
+                    match = re.search(r"ERROR.*?(\w+Error|\w+Exception)", line)
                     if match:
                         error_types[match.group(1)] += 1
 
-                if 'WARNING' in line:
+                if "WARNING" in line:
                     warnings += 1
 
                 # Track start/stop
-                if 'engine_started' in line or 'strategy_initialized' in line:
+                if "engine_started" in line or "strategy_initialized" in line:
                     start_events.append(line)
-                if 'engine_stopped' in line or 'strategy_halted' in line:
+                if "engine_stopped" in line or "strategy_halted" in line:
                     stop_events.append(line)
 
     # Calculate uptime
@@ -1826,7 +1807,7 @@ def analyze_uptime(log_file, log_dir, days):
     click.echo("Results:")
     click.echo("-" * 80)
     click.echo(f"Total Operations: {total_operations:,}")
-    click.echo(f"Errors: {errors:,} ({(errors/max(total_operations,1)*100):.2f}%)")
+    click.echo(f"Errors: {errors:,} ({(errors / max(total_operations, 1) * 100):.2f}%)")
     click.echo(f"Warnings: {warnings:,}")
     click.echo(f"\nUptime: {uptime_pct:.3f}%")
     click.echo(f"Estimated Downtime: {estimated_downtime_hours:.1f} hours")
@@ -1834,7 +1815,7 @@ def analyze_uptime(log_file, log_dir, days):
 
     # 99.9% uptime target
     target_uptime = 99.9
-    max_downtime = (total_hours * (1 - target_uptime / 100))
+    max_downtime = total_hours * (1 - target_uptime / 100)
     click.echo(f"\nTarget: 99.9% uptime (max {max_downtime:.1f} hours downtime)")
 
     if uptime_pct >= target_uptime:
@@ -1844,7 +1825,7 @@ def analyze_uptime(log_file, log_dir, days):
 
     # Error breakdown
     if error_types:
-        click.echo(f"\nTop Error Types:")
+        click.echo("\nTop Error Types:")
         for error_type, count in error_types.most_common(5):
             click.echo(f"  {error_type}: {count}")
 
@@ -1854,9 +1835,9 @@ def analyze_uptime(log_file, log_dir, days):
 @main.command()
 @click.option(
     "--output",
-    type=click.Choice(['table', 'json'], case_sensitive=False),
-    default='table',
-    help="Output format"
+    type=click.Choice(["table", "json"], case_sensitive=False),
+    default="table",
+    help="Output format",
 )
 def benchmark(output):
     """Run performance benchmarks.
@@ -1871,10 +1852,11 @@ def benchmark(output):
         rustybt benchmark
         rustybt benchmark --output json
     """
-    import time
-    import psutil
     import json as json_module
+    import time
     from decimal import Decimal
+
+    import psutil
 
     click.echo(f"\n{'=' * 80}")
     click.echo("Performance Benchmarks")
@@ -1885,35 +1867,36 @@ def benchmark(output):
     # Benchmark 1: Decimal arithmetic
     click.echo("Running Decimal arithmetic benchmark...")
     start = time.perf_counter()
-    total = Decimal('0')
+    total = Decimal("0")
     for i in range(10000):
-        total += Decimal(str(i)) * Decimal('1.01')
+        total += Decimal(str(i)) * Decimal("1.01")
     decimal_time = (time.perf_counter() - start) * 1000
-    results['decimal_arithmetic_ms'] = round(decimal_time, 2)
+    results["decimal_arithmetic_ms"] = round(decimal_time, 2)
     click.echo(f"  ✓ Completed in {decimal_time:.2f}ms")
 
     # Benchmark 2: Memory usage
     click.echo("Measuring memory usage...")
     process = psutil.Process()
     mem_info = process.memory_info()
-    results['memory_rss_mb'] = round(mem_info.rss / 1024**2, 2)
-    results['memory_vms_mb'] = round(mem_info.vms / 1024**2, 2)
+    results["memory_rss_mb"] = round(mem_info.rss / 1024**2, 2)
+    results["memory_vms_mb"] = round(mem_info.vms / 1024**2, 2)
     click.echo(f"  ✓ RSS: {results['memory_rss_mb']} MB")
 
     # Benchmark 3: File I/O
     click.echo("Testing file I/O...")
     import tempfile
-    with tempfile.NamedTemporaryFile(mode='w', delete=True) as f:
+
+    with tempfile.NamedTemporaryFile(mode="w", delete=True) as f:
         start = time.perf_counter()
         for _ in range(1000):
             f.write("test data line\n")
         f.flush()
         io_time = (time.perf_counter() - start) * 1000
-    results['file_io_1000_lines_ms'] = round(io_time, 2)
+    results["file_io_1000_lines_ms"] = round(io_time, 2)
     click.echo(f"  ✓ 1000 writes in {io_time:.2f}ms")
 
     # Display results
-    if output == 'json':
+    if output == "json":
         click.echo(f"\n{json_module.dumps(results, indent=2)}\n")
     else:
         click.echo(f"\n{'=' * 80}")
@@ -1927,9 +1910,9 @@ def benchmark(output):
 @main.command()
 @click.option(
     "--broker",
-    type=click.Choice(['binance', 'bybit', 'paper'], case_sensitive=False),
+    type=click.Choice(["binance", "bybit", "paper"], case_sensitive=False),
     required=True,
-    help="Broker to query"
+    help="Broker to query",
 )
 def balance(broker):
     """Query account balance from broker.
@@ -1938,30 +1921,33 @@ def balance(broker):
         rustybt balance --broker binance
         rustybt balance --broker paper
     """
-    import os
     import asyncio
+    import os
 
     async def fetch_balance():
         try:
-            if broker == 'binance':
+            if broker == "binance":
                 import ccxt
-                api_key = os.getenv('BINANCE_API_KEY')
-                api_secret = os.getenv('BINANCE_API_SECRET')
+
+                api_key = os.getenv("BINANCE_API_KEY")
+                api_secret = os.getenv("BINANCE_API_SECRET")
 
                 if not api_key or not api_secret:
                     click.echo("❌ BINANCE_API_KEY or BINANCE_API_SECRET not set", err=True)
                     return None
 
-                exchange = ccxt.binance({
-                    'apiKey': api_key,
-                    'secret': api_secret,
-                })
+                exchange = ccxt.binance(
+                    {
+                        "apiKey": api_key,
+                        "secret": api_secret,
+                    }
+                )
 
                 balance = await exchange.fetch_balance()
                 await exchange.close()
                 return balance
 
-            elif broker == 'paper':
+            elif broker == "paper":
                 click.echo("⚠️  Paper broker balance requires running paper trading engine")
                 return None
 
@@ -1981,15 +1967,15 @@ def balance(broker):
 
     if balance_data:
         # Display non-zero balances
-        total_balances = balance_data.get('total', {})
+        total_balances = balance_data.get("total", {})
         non_zero = {k: v for k, v in total_balances.items() if v > 0}
 
         if non_zero:
             click.echo(f"{'Asset':<10} {'Total':<15} {'Free':<15} {'Used':<15}")
             click.echo("-" * 80)
             for asset, total in sorted(non_zero.items(), key=lambda x: x[1], reverse=True):
-                free = balance_data.get('free', {}).get(asset, 0)
-                used = balance_data.get('used', {}).get(asset, 0)
+                free = balance_data.get("free", {}).get(asset, 0)
+                used = balance_data.get("used", {}).get(asset, 0)
                 click.echo(f"{asset:<10} {total:<15.8f} {free:<15.8f} {used:<15.8f}")
         else:
             click.echo("No balances found")
@@ -2011,15 +1997,15 @@ def status():
     Example:
         rustybt status
     """
-    from pathlib import Path
     import json as json_module
+    from pathlib import Path
 
     click.echo(f"\n{'=' * 80}")
     click.echo("Live Trading Engine Status")
     click.echo(f"{'=' * 80}\n")
 
     # Check for state file
-    state_file = Path.home() / '.rustybt' / 'state' / 'engine_state.json'
+    state_file = Path.home() / ".rustybt" / "state" / "engine_state.json"
 
     if not state_file.exists():
         click.echo("Engine Status: NOT RUNNING")
@@ -2029,7 +2015,7 @@ def status():
 
     # Load state
     try:
-        with open(state_file, 'r') as f:
+        with open(state_file) as f:
             state = json_module.load(f)
 
         click.echo(f"Engine Status: {state.get('status', 'UNKNOWN').upper()}")
@@ -2039,13 +2025,13 @@ def status():
         click.echo(f"Uptime: {state.get('uptime_hours', 0):.1f} hours")
 
         # Positions
-        positions = state.get('positions', {})
+        positions = state.get("positions", {})
         click.echo(f"\nOpen Positions: {len(positions)}")
         for asset, pos in positions.items():
             click.echo(f"  {asset}: {pos.get('amount', 0)} @ {pos.get('avg_price', 0)}")
 
         # Recent orders
-        recent_orders = state.get('recent_orders', [])
+        recent_orders = state.get("recent_orders", [])
         click.echo(f"\nRecent Orders: {len(recent_orders)}")
 
     except Exception as e:
@@ -2057,16 +2043,11 @@ def status():
 @main.command()
 @click.option(
     "--source",
-    type=click.Choice(['yfinance', 'ccxt', 'binance'], case_sensitive=False),
+    type=click.Choice(["yfinance", "ccxt", "binance"], case_sensitive=False),
     required=True,
-    help="Data source to test"
+    help="Data source to test",
 )
-@click.option(
-    "--symbol",
-    type=str,
-    default="BTC/USDT",
-    help="Symbol to fetch (default: BTC/USDT)"
-)
+@click.option("--symbol", type=str, default="BTC/USDT", help="Symbol to fetch (default: BTC/USDT)")
 def test_data(source, symbol):
     """Test data source connectivity.
 
@@ -2083,22 +2064,24 @@ def test_data(source, symbol):
 
     async def test_fetch():
         try:
-            if source == 'yfinance':
+            if source == "yfinance":
                 import yfinance as yf
+
                 ticker = yf.Ticker(symbol)
                 hist = ticker.history(period="1d")
                 if not hist.empty:
-                    click.echo(f"✓ Data fetched successfully")
+                    click.echo("✓ Data fetched successfully")
                     click.echo(f"  Latest close: ${hist['Close'].iloc[-1]:.2f}")
                     return True
                 return False
 
-            elif source == 'ccxt':
+            elif source == "ccxt":
                 import ccxt
+
                 exchange = ccxt.binance()
                 ticker = await exchange.fetch_ticker(symbol)
                 await exchange.close()
-                click.echo(f"✓ Data fetched successfully")
+                click.echo("✓ Data fetched successfully")
                 click.echo(f"  Latest price: ${ticker['last']:.2f}")
                 return True
 
@@ -2121,16 +2104,8 @@ def test_data(source, symbol):
 
 
 @main.command()
-@click.option(
-    "--email",
-    type=str,
-    help="Test email alert"
-)
-@click.option(
-    "--slack",
-    type=str,
-    help="Test Slack webhook"
-)
+@click.option("--email", type=str, help="Test email alert")
+@click.option("--slack", type=str, help="Test Slack webhook")
 def test_alerts(email, slack):
     """Test alert configuration.
 
@@ -2138,7 +2113,6 @@ def test_alerts(email, slack):
         rustybt test-alerts --email your@email.com
         rustybt test-alerts --slack https://hooks.slack.com/...
     """
-    import smtplib
     import requests
 
     click.echo(f"\n{'=' * 80}")
@@ -2156,13 +2130,11 @@ def test_alerts(email, slack):
 
     if slack:
         total_tests += 1
-        click.echo(f"Testing Slack webhook...")
+        click.echo("Testing Slack webhook...")
         try:
             # SECURITY FIX (Story 8.10): Already has timeout=10, which is good
             response = requests.post(
-                slack,
-                json={"text": "RustyBT Test Alert: System Operational"},
-                timeout=10
+                slack, json={"text": "RustyBT Test Alert: System Operational"}, timeout=10
             )
             if response.status_code == 200:
                 click.echo("✓ Slack alert sent successfully")
@@ -2182,12 +2154,7 @@ def test_alerts(email, slack):
 
 
 @main.command()
-@click.option(
-    "--expiry",
-    type=int,
-    default=365,
-    help="Token expiry in days (default: 365)"
-)
+@click.option("--expiry", type=int, default=365, help="Token expiry in days (default: 365)")
 def generate_api_token(expiry):
     """Generate API authentication token.
 

@@ -19,8 +19,7 @@ audit-compliant financial calculations. All metrics maintain precision
 throughout the calculation pipeline.
 """
 
-from decimal import Decimal, getcontext
-from typing import Optional
+from decimal import Decimal
 
 import polars as pl
 import structlog
@@ -46,7 +45,7 @@ def calculate_sharpe_ratio(
     returns: pl.Series,
     risk_free_rate: Decimal = Decimal("0"),
     annualization_factor: int = 252,
-    config: Optional[DecimalConfig] = None,
+    config: DecimalConfig | None = None,
 ) -> Decimal:
     """Calculate Sharpe ratio with Decimal precision.
 
@@ -109,7 +108,7 @@ def calculate_sortino_ratio(
     returns: pl.Series,
     risk_free_rate: Decimal = Decimal("0"),
     annualization_factor: int = 252,
-    config: Optional[DecimalConfig] = None,
+    config: DecimalConfig | None = None,
 ) -> Decimal:
     """Calculate Sortino ratio with Decimal precision.
 
@@ -251,7 +250,7 @@ def calculate_max_drawdown(cumulative_returns: pl.Series) -> Decimal:
 def calculate_calmar_ratio(
     cumulative_returns: pl.Series,
     periods_per_year: int = 252,
-    config: Optional[DecimalConfig] = None,
+    config: DecimalConfig | None = None,
 ) -> Decimal:
     """Calculate Calmar ratio (annualized return / abs(max drawdown)).
 
@@ -311,7 +310,7 @@ def calculate_calmar_ratio(
 def calculate_var(
     returns: pl.Series,
     confidence_level: Decimal = Decimal("0.05"),
-    config: Optional[DecimalConfig] = None,
+    config: DecimalConfig | None = None,
 ) -> Decimal:
     """Calculate Value at Risk (VaR) at specified confidence level.
 
@@ -352,7 +351,7 @@ def calculate_var(
 def calculate_cvar(
     returns: pl.Series,
     confidence_level: Decimal = Decimal("0.05"),
-    config: Optional[DecimalConfig] = None,
+    config: DecimalConfig | None = None,
 ) -> Decimal:
     """Calculate Conditional Value at Risk (CVaR / Expected Shortfall).
 
@@ -475,9 +474,7 @@ def calculate_profit_factor(trade_returns: pl.Series) -> Decimal:
     return profit_factor
 
 
-def calculate_excess_return(
-    strategy_returns: pl.Series, benchmark_returns: pl.Series
-) -> pl.Series:
+def calculate_excess_return(strategy_returns: pl.Series, benchmark_returns: pl.Series) -> pl.Series:
     """Calculate excess returns (strategy - benchmark).
 
     Args:

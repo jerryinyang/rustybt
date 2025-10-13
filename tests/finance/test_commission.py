@@ -12,23 +12,21 @@ Tests cover:
 """
 
 from decimal import Decimal
-from typing import Any, Optional
 
 import pandas as pd
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from rustybt.finance.commission import (
     CommissionConfigurationError,
     CommissionResult,
-    DecimalCommissionModel,
     MakerTakerCommission,
     PercentageCommission,
     PerShareCommission,
     TieredCommission,
     VolumeTracker,
 )
-
 
 # ============================================================================
 # Test Fixtures
@@ -51,7 +49,7 @@ class MockOrder:
         asset: MockAsset,
         amount: Decimal,
         order_type: str = "market",
-        immediate_fill: Optional[bool] = None,
+        immediate_fill: bool | None = None,
     ):
         self.id = id
         self.asset = asset
@@ -79,9 +77,7 @@ def current_time():
 
 def test_per_share_commission_calculation(mock_asset, current_time):
     """PerShareCommission calculates fee based on share count."""
-    model = PerShareCommission(
-        cost_per_share=Decimal("0.005"), min_commission=Decimal("1.00")
-    )
+    model = PerShareCommission(cost_per_share=Decimal("0.005"), min_commission=Decimal("1.00"))
 
     order = MockOrder(id="order-1", asset=mock_asset, amount=Decimal("100"))
 
@@ -98,14 +94,15 @@ def test_per_share_commission_calculation(mock_asset, current_time):
 
 def test_per_share_commission_above_minimum(mock_asset, current_time):
     """PerShareCommission above minimum threshold."""
-    model = PerShareCommission(
-        cost_per_share=Decimal("0.005"), min_commission=Decimal("1.00")
-    )
+    model = PerShareCommission(cost_per_share=Decimal("0.005"), min_commission=Decimal("1.00"))
 
     order = MockOrder(id="order-2", asset=mock_asset, amount=Decimal("1000"))
 
     result = model.calculate_commission(
-        order, fill_price=Decimal("150.00"), fill_quantity=Decimal("1000"), current_time=current_time
+        order,
+        fill_price=Decimal("150.00"),
+        fill_quantity=Decimal("1000"),
+        current_time=current_time,
     )
 
     # Commission = 1000 shares × $0.005 = $5.00 (above minimum)
@@ -115,14 +112,15 @@ def test_per_share_commission_above_minimum(mock_asset, current_time):
 
 def test_per_share_commission_handles_negative_quantity(mock_asset, current_time):
     """PerShareCommission handles negative quantities (sell orders)."""
-    model = PerShareCommission(
-        cost_per_share=Decimal("0.005"), min_commission=Decimal("1.00")
-    )
+    model = PerShareCommission(cost_per_share=Decimal("0.005"), min_commission=Decimal("1.00"))
 
     order = MockOrder(id="order-3", asset=mock_asset, amount=Decimal("-500"))
 
     result = model.calculate_commission(
-        order, fill_price=Decimal("150.00"), fill_quantity=Decimal("-500"), current_time=current_time
+        order,
+        fill_price=Decimal("150.00"),
+        fill_quantity=Decimal("-500"),
+        current_time=current_time,
     )
 
     # Commission = 500 shares × $0.005 = $2.50
@@ -294,7 +292,7 @@ def test_tiered_commission_resets_monthly(mock_asset):
             order,
             fill_price=Decimal("10.00"),
             fill_quantity=Decimal("10000"),
-            current_time=pd.Timestamp(f"2023-01-{i+1:02d} 10:00"),
+            current_time=pd.Timestamp(f"2023-01-{i + 1:02d} 10:00"),
         )
 
     # Should be at tier_100000
@@ -342,7 +340,10 @@ def test_maker_taker_commission_maker(mock_asset, current_time):
     )
 
     result = model.calculate_commission(
-        order, fill_price=Decimal("30000.00"), fill_quantity=Decimal("0.1"), current_time=current_time
+        order,
+        fill_price=Decimal("30000.00"),
+        fill_quantity=Decimal("0.1"),
+        current_time=current_time,
     )
 
     # Trade value = 0.1 × $30,000 = $3,000
@@ -359,12 +360,13 @@ def test_maker_taker_commission_taker(mock_asset, current_time):
     )
 
     # Market order (taker)
-    order = MockOrder(
-        id="order-11", asset=mock_asset, amount=Decimal("0.1"), order_type="market"
-    )
+    order = MockOrder(id="order-11", asset=mock_asset, amount=Decimal("0.1"), order_type="market")
 
     result = model.calculate_commission(
-        order, fill_price=Decimal("30000.00"), fill_quantity=Decimal("0.1"), current_time=current_time
+        order,
+        fill_price=Decimal("30000.00"),
+        fill_quantity=Decimal("0.1"),
+        current_time=current_time,
     )
 
     # Trade value = 0.1 × $30,000 = $3,000
@@ -390,7 +392,10 @@ def test_maker_rebate(mock_asset, current_time):
     )
 
     result = model.calculate_commission(
-        order, fill_price=Decimal("30000.00"), fill_quantity=Decimal("1.0"), current_time=current_time
+        order,
+        fill_price=Decimal("30000.00"),
+        fill_quantity=Decimal("1.0"),
+        current_time=current_time,
     )
 
     # Trade value = 1.0 × $30,000 = $30,000
@@ -416,7 +421,10 @@ def test_maker_minimum_not_applied_to_rebate(mock_asset, current_time):
     )
 
     result = model.calculate_commission(
-        order, fill_price=Decimal("30000.00"), fill_quantity=Decimal("1.0"), current_time=current_time
+        order,
+        fill_price=Decimal("30000.00"),
+        fill_quantity=Decimal("1.0"),
+        current_time=current_time,
     )
 
     # Rebate should not be subject to minimum
@@ -447,9 +455,7 @@ def test_commission_never_negative_for_positive_rates(quantity, price, rate):
     asset = MockAsset(symbol="TEST")
     order = MockOrder(id="test", asset=asset, amount=quantity)
 
-    result = model.calculate_commission(
-        order, price, quantity, pd.Timestamp("2023-01-01")
-    )
+    result = model.calculate_commission(order, price, quantity, pd.Timestamp("2023-01-01"))
 
     # Property: Non-negative commission for positive rates
     assert result.commission >= Decimal("0")
@@ -476,9 +482,7 @@ def test_commission_never_exceeds_trade_value(quantity, price, percentage):
     asset = MockAsset(symbol="TEST")
     order = MockOrder(id="test", asset=asset, amount=quantity)
 
-    result = model.calculate_commission(
-        order, price, quantity, pd.Timestamp("2023-01-01")
-    )
+    result = model.calculate_commission(order, price, quantity, pd.Timestamp("2023-01-01"))
 
     trade_value = price * quantity
 
@@ -520,7 +524,7 @@ def test_minimum_commission_always_enforced(cost_per_share, min_commission):
 
 def test_commission_integration_with_execution_engine(mock_asset, current_time):
     """Integration test: Commission applied in execution pipeline."""
-    from rustybt.finance.execution import ExecutionEngine, ExecutionResult
+    from rustybt.finance.execution import ExecutionEngine
 
     # Create execution engine with commission model
     commission_model = PerShareCommission(
@@ -546,15 +550,11 @@ def test_commission_integration_with_execution_engine(mock_asset, current_time):
 def test_real_world_broker_profiles(mock_asset, current_time):
     """Integration test: Real broker commission profiles."""
     # Test Interactive Brokers
-    ib_model = PerShareCommission(
-        cost_per_share=Decimal("0.005"), min_commission=Decimal("1.00")
-    )
+    ib_model = PerShareCommission(cost_per_share=Decimal("0.005"), min_commission=Decimal("1.00"))
 
     # Small IB trade (hits minimum)
     ib_order = MockOrder(id="ib-1", asset=mock_asset, amount=Decimal("50"))
-    ib_result = ib_model.calculate_commission(
-        ib_order, Decimal("100"), Decimal("50"), current_time
-    )
+    ib_result = ib_model.calculate_commission(ib_order, Decimal("100"), Decimal("50"), current_time)
     assert ib_result.commission == Decimal("1.00")
 
     # Large IB trade (above minimum)
@@ -565,9 +565,7 @@ def test_real_world_broker_profiles(mock_asset, current_time):
     assert ib_result_large.commission == Decimal("5.00")  # 1000 × $0.005
 
     # Test Binance
-    binance_model = MakerTakerCommission(
-        maker_rate=Decimal("0.001"), taker_rate=Decimal("0.001")
-    )
+    binance_model = MakerTakerCommission(maker_rate=Decimal("0.001"), taker_rate=Decimal("0.001"))
 
     # Binance crypto trade
     btc_asset = MockAsset(symbol="BTC-USD")

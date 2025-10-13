@@ -97,13 +97,13 @@ pub fn rust_ema(values: Vec<f64>, span: usize) -> PyResult<Vec<f64>> {
 
     let len = values.len();
     let mut result = vec![0.0; len];
-    
+
     // EMA multiplier: 2 / (span + 1)
     let alpha = 2.0 / (span as f64 + 1.0);
-    
+
     // Initialize with first value
     result[0] = values[0];
-    
+
     // Calculate EMA for remaining values
     for i in 1..len {
         result[i] = alpha * values[i] + (1.0 - alpha) * result[i - 1];
@@ -213,7 +213,7 @@ mod tests {
     fn test_sma_basic() {
         let values = vec![1.0, 2.0, 3.0, 4.0, 5.0];
         let result = rust_sma(values, 3).unwrap();
-        
+
         assert!(result[0].is_nan());
         assert!(result[1].is_nan());
         assert!((result[2] - 2.0).abs() < 1e-10);
@@ -247,10 +247,10 @@ mod tests {
     fn test_ema_basic() {
         let values = vec![1.0, 2.0, 3.0, 4.0, 5.0];
         let result = rust_ema(values, 3).unwrap();
-        
+
         // First value should be equal to input
         assert_eq!(result[0], 1.0);
-        
+
         // EMA should be increasing
         for i in 1..result.len() {
             assert!(result[i] > result[i - 1]);
@@ -261,7 +261,7 @@ mod tests {
     fn test_ema_constant_values() {
         let values = vec![5.0; 10];
         let result = rust_ema(values, 3).unwrap();
-        
+
         // EMA of constant values should converge to that constant
         for i in 0..result.len() {
             assert!((result[i] - 5.0).abs() < 1e-10);
@@ -272,7 +272,7 @@ mod tests {
     fn test_sum_legacy() {
         let result = rust_sum(2, 3).unwrap();
         assert_eq!(result, 5);
-        
+
         let result = rust_sum(-10, 5).unwrap();
         assert_eq!(result, -5);
     }
@@ -309,7 +309,7 @@ mod tests {
     fn test_rolling_sum_basic() {
         let values = vec![1.0, 2.0, 3.0, 4.0, 5.0];
         let result = rust_rolling_sum(values, 3).unwrap();
-        
+
         assert!(result[0].is_nan());
         assert!(result[1].is_nan());
         assert_eq!(result[2], 6.0);  // 1+2+3

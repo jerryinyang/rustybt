@@ -12,22 +12,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from collections.abc import Iterable
-from collections import namedtuple
-from copy import copy
-import warnings
-from datetime import tzinfo, time, timezone
 import logging
-import structlog
-import pytz
-import pandas as pd
-import numpy as np
-
+import warnings
+from collections import namedtuple
+from collections.abc import Iterable
+from copy import copy
+from datetime import UTC, time, tzinfo
 from itertools import chain, repeat
 
-from rustybt.utils.calendar_utils import get_calendar, days_at_time
+import numpy as np
+import pandas as pd
+import pytz
+import structlog
 
+import rustybt.pipeline.domain as domain
+import rustybt.protocol
+import rustybt.utils.events
 from rustybt._protocol import handle_non_market_minutes
+from rustybt.assets import Asset, Equity, Future
+from rustybt.data import bundles as bundle_loader
+from rustybt.data.data_portal import DataPortal as LegacyDataPortal
+from rustybt.data.polars.data_portal import PolarsDataPortal
 from rustybt.errors import (
     AttachPipelineAfterInitialize,
     CannotOrderDelistedAsset,
@@ -50,13 +55,20 @@ from rustybt.errors import (
     UnsupportedOrderParameters,
     ZeroCapitalError,
 )
+from rustybt.finance.asset_restrictions import (
+    NoRestrictions,
+    Restrictions,
+    SecurityListRestrictions,
+    StaticRestrictions,
+)
 from rustybt.finance.blotter import SimulationBlotter
+from rustybt.finance.cancel_policy import CancelPolicy, NeverCancel
 from rustybt.finance.controls import (
     LongOnly,
+    MaxLeverage,
     MaxOrderCount,
     MaxOrderSize,
     MaxPositionSize,
-    MaxLeverage,
     MinLeverage,
     RestrictedListOrder,
 )
@@ -66,31 +78,37 @@ from rustybt.finance.execution import (
     StopLimitOrder,
     StopOrder,
 )
-from rustybt.finance.asset_restrictions import Restrictions
-from rustybt.finance.cancel_policy import NeverCancel, CancelPolicy
-from rustybt.finance.asset_restrictions import (
-    NoRestrictions,
-    StaticRestrictions,
-    SecurityListRestrictions,
-)
-from rustybt.assets import Asset, Equity, Future
+from rustybt.finance.metrics import MetricsTracker
+from rustybt.finance.metrics import load as load_metrics_set
+from rustybt.gens.sim_engine import MinuteSimulationClock
 from rustybt.gens.tradesimulation import AlgorithmSimulator
-from rustybt.finance.metrics import MetricsTracker, load as load_metrics_set
 from rustybt.pipeline import Pipeline
-import rustybt.pipeline.domain as domain
 from rustybt.pipeline.engine import (
     ExplodingPipelineEngine,
     SimplePipelineEngine,
 )
+from rustybt.sources.benchmark_source import BenchmarkSource
+from rustybt.sources.requests_csv import PandasRequestsCSV
 from rustybt.utils.api_support import (
+    ZiplineAPI,
     api_method,
+    disallowed_in_before_trading_start,
     require_initialized,
     require_not_initialized,
-    ZiplineAPI,
-    disallowed_in_before_trading_start,
 )
+from rustybt.utils.cache import ExpiringCache
+from rustybt.utils.calendar_utils import days_at_time, get_calendar
 from rustybt.utils.compat import ExitStack
 from rustybt.utils.date_utils import make_utc_aware
+from rustybt.utils.events import (
+    AfterOpen,
+    BeforeClose,
+    EventManager,
+    calendars,
+    date_rules,
+    make_eventrule,
+    time_rules,
+)
 from rustybt.utils.input_validation import (
     coerce_string,
     ensure_upper_case,
@@ -100,35 +118,14 @@ from rustybt.utils.input_validation import (
     optional,
     optionally,
 )
-from rustybt.utils.numpy_utils import int64_dtype
-from rustybt.utils.cache import ExpiringCache
-
-import rustybt.utils.events
-from rustybt.utils.events import (
-    EventManager,
-    make_eventrule,
-    date_rules,
-    time_rules,
-    calendars,
-    AfterOpen,
-    BeforeClose,
-)
 from rustybt.utils.math_utils import (
-    tolerant_equals,
     round_if_near_integer,
+    tolerant_equals,
 )
+from rustybt.utils.numpy_utils import int64_dtype
 from rustybt.utils.preprocess import preprocess
 from rustybt.utils.security_list import SecurityList
-
-import rustybt.protocol
-from rustybt.sources.requests_csv import PandasRequestsCSV
-
-from rustybt.gens.sim_engine import MinuteSimulationClock
-from rustybt.sources.benchmark_source import BenchmarkSource
 from rustybt.zipline_warnings import ZiplineDeprecationWarning
-from rustybt.data.polars.data_portal import PolarsDataPortal
-from rustybt.data.data_portal import DataPortal as LegacyDataPortal
-from rustybt.data import bundles as bundle_loader
 
 log = logging.getLogger("ZiplineLog")
 
@@ -254,9 +251,7 @@ class TradingAlgorithm:
         self.logger = None
 
         if data_portal is not None and (data_source is not None or bundle is not None):
-            raise ValueError(
-                "Cannot supply data_portal together with data_source or bundle"
-            )
+            raise ValueError("Cannot supply data_portal together with data_source or bundle")
 
         self.live_trading = live_trading
         self.data_source = data_source
@@ -271,8 +266,8 @@ class TradingAlgorithm:
 
         if resolved_portal is None:
             if self.data_source is not None:
-                resolved_asset_finder = (
-                    resolved_asset_finder or getattr(self.data_source, "asset_finder", None)
+                resolved_asset_finder = resolved_asset_finder or getattr(
+                    self.data_source, "asset_finder", None
                 )
                 if resolved_asset_finder is None:
                     raise ValueError(
@@ -341,17 +336,12 @@ class TradingAlgorithm:
         # it matches their sim_params. Otherwise, just use what's in their
         # sim_params.
         self.sim_params = sim_params
-        if trading_calendar is None:
-            self.trading_calendar = sim_params.trading_calendar
-        elif trading_calendar.name == sim_params.trading_calendar.name:
+        if trading_calendar is None or trading_calendar.name == sim_params.trading_calendar.name:
             self.trading_calendar = sim_params.trading_calendar
         else:
             raise ValueError(
-                "Conflicting calendars: trading_calendar={}, but "
-                "sim_params.trading_calendar={}".format(
-                    trading_calendar.name,
-                    self.sim_params.trading_calendar.name,
-                )
+                f"Conflicting calendars: trading_calendar={trading_calendar.name}, but "
+                f"sim_params.trading_calendar={self.sim_params.trading_calendar.name}"
             )
 
         self.metrics_tracker = None
@@ -410,15 +400,28 @@ class TradingAlgorithm:
             if unexpected_api_methods:
                 raise ValueError(
                     "TradingAlgorithm received a script and the following API"
-                    " methods as functions:\n{funcs}".format(
-                        funcs=unexpected_api_methods,
-                    )
+                    f" methods as functions:\n{unexpected_api_methods}"
                 )
 
             if algo_filename is None:
                 algo_filename = "<string>"
             code = compile(self.algoscript, algo_filename, "exec")
-            exec(code, self.namespace)
+
+            # SECURITY: exec() used for trusted user-provided algorithm code.
+            # THREAT MODEL:
+            # - Users have full system access in their local environment
+            # - This is NOT a sandboxed multi-tenant environment
+            # - Algorithm code is considered trusted (user's own trading strategies)
+            # GUARDRAILS:
+            # - Code runs with same privileges as the RustyBT process
+            # - No network isolation or filesystem restrictions
+            # - Suitable for: local backtesting, personal live trading
+            # - NOT suitable for: untrusted code, shared hosting environments
+            # MITIGATION for untrusted sources:
+            # - Consider AST validation before exec
+            # - Use separate process with restricted permissions
+            # - Implement resource limits (CPU, memory, time)
+            exec(code, self.namespace)  # nosec B102 - trusted user algorithm code
 
             self._initialize = self.namespace.get("initialize", noop)
             self._handle_data = self.namespace.get("handle_data", noop)
@@ -492,11 +495,7 @@ class TradingAlgorithm:
 
         self._in_before_trading_start = True
 
-        with (
-            handle_non_market_minutes(data)
-            if self.data_frequency == "minute"
-            else ExitStack()
-        ):
+        with handle_non_market_minutes(data) if self.data_frequency == "minute" else ExitStack():
             self._before_trading_start(self, data)
 
         self._in_before_trading_start = False
@@ -541,9 +540,7 @@ class TradingAlgorithm:
 
     def _create_clock(self):
         """If the clock property is not set, then create one based on frequency."""
-        market_closes = self.trading_calendar.schedule.loc[
-            self.sim_params.sessions, "close"
-        ]
+        market_closes = self.trading_calendar.schedule.loc[self.sim_params.sessions, "close"]
         market_opens = self.trading_calendar.first_minutes.loc[self.sim_params.sessions]
         minutely_emission = False
 
@@ -558,12 +555,8 @@ class TradingAlgorithm:
             # dictate a market open time of 6:31am US/Eastern and a close of
             # 5:00pm US/Eastern.
             if self.trading_calendar.name == "us_futures":
-                execution_opens = self.trading_calendar.execution_time_from_open(
-                    market_opens
-                )
-                execution_closes = self.trading_calendar.execution_time_from_close(
-                    market_closes
-                )
+                execution_opens = self.trading_calendar.execution_time_from_open(market_opens)
+                execution_closes = self.trading_calendar.execution_time_from_close(market_closes)
             else:
                 execution_opens = market_opens
                 execution_closes = market_closes
@@ -571,9 +564,7 @@ class TradingAlgorithm:
             # in daily mode, we want to have one bar per session, timestamped
             # as the last minute of the session.
             if self.trading_calendar.name == "us_futures":
-                execution_closes = self.trading_calendar.execution_time_from_close(
-                    market_closes
-                )
+                execution_closes = self.trading_calendar.execution_time_from_close(market_closes)
                 execution_opens = execution_closes
             else:
                 execution_closes = market_closes
@@ -677,9 +668,7 @@ class TradingAlgorithm:
                 "Either pass a DataPortal to TradingAlgorithm() or to run()."
             )
         else:
-            assert (
-                self.asset_finder is not None
-            ), "Have data portal without asset_finder."
+            assert self.asset_finder is not None, "Have data portal without asset_finder."
 
         # Create zipline and loop through simulated_trading.
         # Each iteration returns a perf dictionary
@@ -741,7 +730,7 @@ class TradingAlgorithm:
             >>> positions = algo.get_positions_df()
             >>> print(positions)
         """
-        if not hasattr(self, 'portfolio') or self.portfolio is None:
+        if not hasattr(self, "portfolio") or self.portfolio is None:
             raise ValueError("No portfolio available. Run the algorithm first.")
 
         positions_data = []
@@ -751,21 +740,24 @@ class TradingAlgorithm:
             pnl = market_value - cost
             pnl_pct = (pnl / abs(cost) * 100) if cost != 0 else 0
 
-            positions_data.append({
-                'asset': asset.symbol if hasattr(asset, 'symbol') else str(asset),
-                'amount': float(position.amount),
-                'cost_basis': float(position.cost_basis),
-                'last_sale_price': float(position.last_sale_price),
-                'market_value': float(market_value),
-                'pnl': float(pnl),
-                'pnl_pct': float(pnl_pct),
-            })
+            positions_data.append(
+                {
+                    "asset": asset.symbol if hasattr(asset, "symbol") else str(asset),
+                    "amount": float(position.amount),
+                    "cost_basis": float(position.cost_basis),
+                    "last_sale_price": float(position.last_sale_price),
+                    "market_value": float(market_value),
+                    "pnl": float(pnl),
+                    "pnl_pct": float(pnl_pct),
+                }
+            )
 
         df = pd.DataFrame(positions_data)
 
         if as_polars:
             try:
                 import polars as pl
+
                 return pl.from_pandas(df)
             except ImportError:
                 raise ImportError("Polars required. Install with: pip install polars")
@@ -789,30 +781,37 @@ class TradingAlgorithm:
             This requires the blotter to track transaction history.
             Returns empty DataFrame if no transactions recorded.
         """
-        if not hasattr(self, 'blotter') or self.blotter is None:
+        if not hasattr(self, "blotter") or self.blotter is None:
             return pd.DataFrame()
 
         # Try to access transaction log from blotter
-        if hasattr(self.blotter, 'transactions'):
+        if hasattr(self.blotter, "transactions"):
             transactions_data = []
             for dt, txns in self.blotter.transactions.items():
                 for txn in txns:
-                    transactions_data.append({
-                        'date': dt,
-                        'asset': txn.asset.symbol if hasattr(txn.asset, 'symbol') else str(txn.asset),
-                        'amount': float(txn.amount),
-                        'price': float(txn.price),
-                        'commission': float(txn.commission) if hasattr(txn, 'commission') else 0.0,
-                        'order_id': txn.order_id if hasattr(txn, 'order_id') else None,
-                    })
+                    transactions_data.append(
+                        {
+                            "date": dt,
+                            "asset": (
+                                txn.asset.symbol if hasattr(txn.asset, "symbol") else str(txn.asset)
+                            ),
+                            "amount": float(txn.amount),
+                            "price": float(txn.price),
+                            "commission": (
+                                float(txn.commission) if hasattr(txn, "commission") else 0.0
+                            ),
+                            "order_id": txn.order_id if hasattr(txn, "order_id") else None,
+                        }
+                    )
 
             df = pd.DataFrame(transactions_data)
             if len(df) > 0:
-                df = df.sort_values('date')
+                df = df.sort_values("date")
 
             if as_polars:
                 try:
                     import polars as pl
+
                     return pl.from_pandas(df)
                 except ImportError:
                     raise ImportError("Polars required. Install with: pip install polars")
@@ -852,7 +851,6 @@ class TradingAlgorithm:
         portfolio_value of the cumulative performance when calculating deltas
         from target capital changes.
         """
-
         # CHECK is try/catch faster than search?
 
         try:
@@ -874,10 +872,7 @@ class TradingAlgorithm:
         elif capital_change["type"] == "delta":
             target = None
             capital_change_amount = capital_change["value"]
-            log.info(
-                "Processing capital change of delta %s at %s"
-                % (capital_change_amount, dt)
-            )
+            log.info("Processing capital change of delta %s at %s" % (capital_change_amount, dt))
         else:
             log.error(
                 "Capital change %s does not indicate a valid type "
@@ -928,12 +923,12 @@ class TradingAlgorithm:
         - * : dict[str -> any]
           Returns all the fields in a dictionary.
 
-        Returns
+        Returns:
         -------
         val : any
             The value for the field queried. See above for more information.
 
-        Raises
+        Raises:
         ------
         ValueError
             Raised when ``field`` is not a valid option.
@@ -964,7 +959,7 @@ class TradingAlgorithm:
         post_func=None,
         date_column="date",
         date_format=None,
-        timezone=str(timezone.utc),
+        timezone=str(UTC),
         symbol=None,
         mask=True,
         symbol_column=None,
@@ -1011,7 +1006,7 @@ class TradingAlgorithm:
         **kwargs
             Forwarded to :func:`pandas.read_csv`.
 
-        Returns
+        Returns:
         -------
         csv_data_source : zipline.sources.requests_csv.PandasRequestsCSV
             A requests source that will pull data from the url specified.
@@ -1089,12 +1084,11 @@ class TradingAlgorithm:
         calendar : Sentinel, optional
             Calendar used to compute rules that depend on the trading calendar.
 
-        See Also
+        See Also:
         --------
         :class:`zipline.api.date_rules`
         :class:`zipline.api.time_rules`
         """
-
         # When the user calls schedule_function(func, <time_rule>), assume that
         # the user meant to specify a time rule but no date rule, instead of
         # a date rule and no time rule as the signature suggests
@@ -1111,9 +1105,8 @@ class TradingAlgorithm:
         time_rule = (
             (time_rule or time_rules.every_minute())
             if self.sim_params.data_frequency == "minute"
-            else
             # If we are in daily mode the time_rule is ignored.
-            time_rules.every_minute()
+            else time_rules.every_minute()
         )
 
         # Check the type of the algorithm's schedule before pulling calendar
@@ -1145,7 +1138,7 @@ class TradingAlgorithm:
         **kwargs
             The names and values to record.
 
-        Notes
+        Notes:
         -----
         These values will appear in the performance packets and the performance
         dataframe passed to ``analyze`` and returned from
@@ -1158,7 +1151,7 @@ class TradingAlgorithm:
         # receives.  In this case the two iterators are the same object, so the
         # call to next on args[0] will also advance args[1], resulting in zip
         # returning (a,b) (c,d) (e,f) rather than (a,a) (b,b) (c,c) etc.
-        positionals = zip(*args)
+        positionals = zip(*args, strict=False)
         for name, value in chain(positionals, kwargs.items()):
             self._recorded_vars[name] = value
 
@@ -1171,7 +1164,7 @@ class TradingAlgorithm:
         benchmark : zipline.assets.Asset
             The asset to set as the new benchmark.
 
-        Notes
+        Notes:
         -----
         Any dividends payed out for that new benchmark asset will be
         automatically reinvested.
@@ -1183,9 +1176,7 @@ class TradingAlgorithm:
 
     @api_method
     @preprocess(root_symbol_str=ensure_upper_case)
-    def continuous_future(
-        self, root_symbol_str, offset=0, roll="volume", adjustment="mul"
-    ):
+    def continuous_future(self, root_symbol_str, offset=0, roll="volume", adjustment="mul"):
         """Create a specifier for a continuous contract.
 
         Parameters
@@ -1203,7 +1194,7 @@ class TradingAlgorithm:
             Method for adjusting lookback prices between rolls. Options are
             'mul', 'add', and None. Default is 'mul'.
 
-        Returns
+        Returns:
         -------
         continuous_future : zipline.assets.ContinuousFuture
             The continuous future specifier.
@@ -1230,18 +1221,18 @@ class TradingAlgorithm:
         country_code : str or None, optional
             A country to limit symbol searches to.
 
-        Returns
+        Returns:
         -------
         equity : zipline.assets.Equity
             The equity that held the ticker symbol on the current
             symbol lookup date.
 
-        Raises
+        Raises:
         ------
         SymbolNotFound
             Raised when the symbols was not held on the current lookup date.
 
-        See Also
+        See Also:
         --------
         :func:`zipline.api.set_symbol_lookup_date`
         """
@@ -1270,19 +1261,19 @@ class TradingAlgorithm:
         country_code : str or None, optional
             A country to limit symbol searches to.
 
-        Returns
+        Returns:
         -------
         equities : list[zipline.assets.Equity]
             The equities that held the given ticker symbols on the current
             symbol lookup date.
 
-        Raises
+        Raises:
         ------
         SymbolNotFound
             Raised when one of the symbols was not held on the current
             lookup date.
 
-        See Also
+        See Also:
         --------
         :func:`zipline.api.set_symbol_lookup_date`
         """
@@ -1297,12 +1288,12 @@ class TradingAlgorithm:
         sid : int
             The unique integer that identifies an asset.
 
-        Returns
+        Returns:
         -------
         asset : zipline.assets.Asset
             The asset with the given ``sid``.
 
-        Raises
+        Raises:
         ------
         SidsNotFound
             When a requested ``sid`` does not map to any asset.
@@ -1319,12 +1310,12 @@ class TradingAlgorithm:
         symbol : str
             The symbol of the desired contract.
 
-        Returns
+        Returns:
         -------
         future : zipline.assets.Future
             The future that trades with the name ``symbol``.
 
-        Raises
+        Raises:
         ------
         SymbolNotFound
             Raised when no contract named 'symbol' is found.
@@ -1342,25 +1333,23 @@ class TradingAlgorithm:
 
         if normalized_date < asset.start_date:
             raise CannotOrderDelistedAsset(
-                msg="Cannot order {0}, as it started trading on"
-                " {1}.".format(asset.symbol, asset.start_date)
+                msg=f"Cannot order {asset.symbol}, as it started trading on {asset.start_date}."
             )
         elif normalized_date > asset.end_date:
             raise CannotOrderDelistedAsset(
-                msg="Cannot order {0}, as it stopped trading on"
-                " {1}.".format(asset.symbol, asset.end_date)
+                msg=f"Cannot order {asset.symbol}, as it stopped trading on {asset.end_date}."
             )
         else:
             last_price = self.trading_client.current_data.current(asset, "price")
 
             if np.isnan(last_price):
                 raise CannotOrderDelistedAsset(
-                    msg="Cannot order {0} on {1} as there is no last "
-                    "price for the security.".format(asset.symbol, self.datetime)
+                    msg=f"Cannot order {asset.symbol} on {self.datetime} as there is no last "
+                    "price for the security."
                 )
 
         if tolerant_equals(last_price, 0):
-            zero_message = "Price of 0 for {psid}; can't infer value".format(psid=asset)
+            zero_message = f"Price of 0 for {asset}; can't infer value"
             if self.logger:
                 self.logger.debug(zero_message)
             # Don't place any order
@@ -1386,10 +1375,10 @@ class TradingAlgorithm:
                 # the user that they can't place an order for this asset, and
                 # return None.
                 log.warning(
-                    "Cannot place order for {0}, as it has de-listed. "
+                    f"Cannot place order for {asset.symbol}, as it has de-listed. "
                     "Any existing positions for this asset will be "
                     "liquidated on "
-                    "{1}.".format(asset.symbol, asset.auto_close_date)
+                    f"{asset.auto_close_date}."
                 )
 
                 return False
@@ -1416,13 +1405,13 @@ class TradingAlgorithm:
         style : ExecutionStyle, optional
             The execution style for the order.
 
-        Returns
+        Returns:
         -------
         order_id : str or None
             The unique identifier for this order, or None if no order was
             placed.
 
-        Notes
+        Notes:
         -----
         The ``limit_price`` and ``stop_price`` arguments provide shorthands for
         passing common execution styles. Passing ``limit_price=N`` is
@@ -1432,7 +1421,7 @@ class TradingAlgorithm:
         ``style=StopLimitOrder(N, M)``. It is an error to pass both a ``style``
         and ``limit_price`` or ``stop_price``.
 
-        See Also
+        See Also:
         --------
         :class:`zipline.finance.execution.ExecutionStyle`
         :func:`zipline.api.order_value`
@@ -1441,9 +1430,7 @@ class TradingAlgorithm:
         if not self._can_order_asset(asset):
             return None
 
-        amount, style = self._calculate_order(
-            asset, amount, limit_price, stop_price, style
-        )
+        amount, style = self._calculate_order(asset, amount, limit_price, stop_price, style)
 
         # Strategy decision logging (AC: 3)
         logger = structlog.get_logger()
@@ -1462,9 +1449,7 @@ class TradingAlgorithm:
 
         return self.blotter.order(asset, amount, style)
 
-    def _calculate_order(
-        self, asset, amount, limit_price=None, stop_price=None, style=None
-    ):
+    def _calculate_order(self, asset, amount, limit_price=None, stop_price=None, style=None):
         amount = self.round_order(amount)
 
         # Raises a ZiplineError if invalid parameters are detected.
@@ -1472,9 +1457,7 @@ class TradingAlgorithm:
 
         # Convert deprecated limit_price and stop_price parameters to use
         # ExecutionStyle objects.
-        style = self.__convert_order_params_for_blotter(
-            asset, limit_price, stop_price, style
-        )
+        style = self.__convert_order_params_for_blotter(asset, limit_price, stop_price, style)
         return amount, style
 
     @staticmethod
@@ -1494,11 +1477,8 @@ class TradingAlgorithm:
 
         Raises an UnsupportedOrderParameters if invalid arguments are found.
         """
-
         if not self.initialized:
-            raise OrderDuringInitialize(
-                msg="order() can only be called from within handle_data()"
-            )
+            raise OrderDuringInitialize(msg="order() can only be called from within handle_data()")
 
         if style:
             if limit_price:
@@ -1561,17 +1541,17 @@ class TradingAlgorithm:
         style : ExecutionStyle
             The execution style for the order.
 
-        Returns
+        Returns:
         -------
         order_id : str
             The unique identifier for this order.
 
-        Notes
+        Notes:
         -----
         See :func:`zipline.api.order` for more information about
         ``limit_price``, ``stop_price``, and ``style``
 
-        See Also
+        See Also:
         --------
         :class:`zipline.finance.execution.ExecutionStyle`
         :func:`zipline.api.order`
@@ -1602,7 +1582,7 @@ class TradingAlgorithm:
         dt : datetime
             The time to sync the prices to.
 
-        Notes
+        Notes:
         -----
         This call is cached by the datetime. Repeated calls in the same bar
         are cheap.
@@ -1651,23 +1631,19 @@ class TradingAlgorithm:
         tz : tzinfo or str, optional
             The timezone to return the datetime in. This defaults to utc.
 
-        Returns
+        Returns:
         -------
         dt : datetime
             The current simulation datetime converted to ``tz``.
         """
         dt = self.datetime
-        from packaging.version import Version
         import pytz
+        from packaging.version import Version
 
         if Version(pd.__version__) < Version("2.0.0"):
-            assert (
-                dt.tzinfo == pytz.utc
-            ), f"Algorithm should have a pytc utc datetime, {dt.tzinfo}"
+            assert dt.tzinfo == pytz.utc, f"Algorithm should have a pytc utc datetime, {dt.tzinfo}"
         else:
-            assert (
-                dt.tzinfo == timezone.utc
-            ), f"Algorithm should have a timezone.utc datetime, {dt.tzinfo}"
+            assert dt.tzinfo == UTC, f"Algorithm should have a timezone.utc datetime, {dt.tzinfo}"
 
         # assert dt.tzinfo == timezone.utc, "Algorithm should have a utc datetime"
         if tz is not None:
@@ -1685,12 +1661,12 @@ class TradingAlgorithm:
         us_futures : FutureSlippageModel
             The slippage model to use for trading US futures.
 
-        Notes
+        Notes:
         -----
         This function can only be called during
         :func:`~zipline.api.initialize`.
 
-        See Also
+        See Also:
         --------
         :class:`zipline.finance.slippage.SlippageModel`
         """
@@ -1726,12 +1702,12 @@ class TradingAlgorithm:
         us_futures : FutureCommissionModel
             The commission model to use for trading US futures.
 
-        Notes
+        Notes:
         -----
         This function can only be called during
         :func:`~zipline.api.initialize`.
 
-        See Also
+        See Also:
         --------
         :class:`zipline.finance.commission.PerShare`
         :class:`zipline.finance.commission.PerTrade`
@@ -1767,7 +1743,7 @@ class TradingAlgorithm:
         cancel_policy : CancelPolicy
             The cancellation policy to use.
 
-        See Also
+        See Also:
         --------
         :class:`zipline.api.EODCancel`
         :class:`zipline.api.NeverCancel`
@@ -1796,9 +1772,7 @@ class TradingAlgorithm:
         except TypeError:
             self._symbol_lookup_date = pd.Timestamp(dt).tz_convert("UTC")
         except ValueError as exc:
-            raise UnsupportedDatetimeFormat(
-                input=dt, method="set_symbol_lookup_date"
-            ) from exc
+            raise UnsupportedDatetimeFormat(input=dt, method="set_symbol_lookup_date") from exc
 
     @property
     def data_frequency(self):
@@ -1811,9 +1785,7 @@ class TradingAlgorithm:
 
     @api_method
     @disallowed_in_before_trading_start(OrderInBeforeTradingStart())
-    def order_percent(
-        self, asset, percent, limit_price=None, stop_price=None, style=None
-    ):
+    def order_percent(self, asset, percent, limit_price=None, stop_price=None, style=None):
         """Place an order in the specified asset corresponding to the given
         percent of the current portfolio value.
 
@@ -1831,17 +1803,17 @@ class TradingAlgorithm:
         style : ExecutionStyle
             The execution style for the order.
 
-        Returns
+        Returns:
         -------
         order_id : str
             The unique identifier for this order.
 
-        Notes
+        Notes:
         -----
         See :func:`zipline.api.order` for more information about
         ``limit_price``, ``stop_price``, and ``style``
 
-        See Also
+        See Also:
         --------
         :class:`zipline.finance.execution.ExecutionStyle`
         :func:`zipline.api.order`
@@ -1865,9 +1837,7 @@ class TradingAlgorithm:
 
     @api_method
     @disallowed_in_before_trading_start(OrderInBeforeTradingStart())
-    def order_target(
-        self, asset, target, limit_price=None, stop_price=None, style=None
-    ):
+    def order_target(self, asset, target, limit_price=None, stop_price=None, style=None):
         """Place an order to adjust a position to a target number of shares. If
         the position doesn't already exist, this is equivalent to placing a new
         order. If the position does exist, this is equivalent to placing an
@@ -1887,13 +1857,13 @@ class TradingAlgorithm:
         style : ExecutionStyle
             The execution style for the order.
 
-        Returns
+        Returns:
         -------
         order_id : str
             The unique identifier for this order.
 
 
-        Notes
+        Notes:
         -----
         ``order_target`` does not take into account any open orders. For
         example:
@@ -1910,7 +1880,7 @@ class TradingAlgorithm:
         See :func:`zipline.api.order` for more information about
         ``limit_price``, ``stop_price``, and ``style``
 
-        See Also
+        See Also:
         --------
         :class:`zipline.finance.execution.ExecutionStyle`
         :func:`zipline.api.order`
@@ -1938,9 +1908,7 @@ class TradingAlgorithm:
 
     @api_method
     @disallowed_in_before_trading_start(OrderInBeforeTradingStart())
-    def order_target_value(
-        self, asset, target, limit_price=None, stop_price=None, style=None
-    ):
+    def order_target_value(self, asset, target, limit_price=None, stop_price=None, style=None):
         """Place an order to adjust a position to a target value. If
         the position doesn't already exist, this is equivalent to placing a new
         order. If the position does exist, this is equivalent to placing an
@@ -1962,12 +1930,12 @@ class TradingAlgorithm:
         style : ExecutionStyle
             The execution style for the order.
 
-        Returns
+        Returns:
         -------
         order_id : str
             The unique identifier for this order.
 
-        Notes
+        Notes:
         -----
         ``order_target_value`` does not take into account any open orders. For
         example:
@@ -1984,7 +1952,7 @@ class TradingAlgorithm:
         See :func:`zipline.api.order` for more information about
         ``limit_price``, ``stop_price``, and ``style``
 
-        See Also
+        See Also:
         --------
         :class:`zipline.finance.execution.ExecutionStyle`
         :func:`zipline.api.order`
@@ -2006,9 +1974,7 @@ class TradingAlgorithm:
 
     @api_method
     @disallowed_in_before_trading_start(OrderInBeforeTradingStart())
-    def order_target_percent(
-        self, asset, target, limit_price=None, stop_price=None, style=None
-    ):
+    def order_target_percent(self, asset, target, limit_price=None, stop_price=None, style=None):
         """Place an order to adjust a position to a target percent of the
         current portfolio value. If the position doesn't already exist, this is
         equivalent to placing a new order. If the position does exist, this is
@@ -2030,12 +1996,12 @@ class TradingAlgorithm:
         style : ExecutionStyle
             The execution style for the order.
 
-        Returns
+        Returns:
         -------
         order_id : str
             The unique identifier for this order.
 
-        Notes
+        Notes:
         -----
         ``order_target_value`` does not take into account any open orders. For
         example:
@@ -2052,7 +2018,7 @@ class TradingAlgorithm:
         See :func:`zipline.api.order` for more information about
         ``limit_price``, ``stop_price``, and ``style``
 
-        See Also
+        See Also:
         --------
         :class:`zipline.finance.execution.ExecutionStyle`
         :func:`zipline.api.order`
@@ -2086,15 +2052,13 @@ class TradingAlgorithm:
         share_counts : pd.Series[Asset -> int]
             Map from asset to number of shares to order for that asset.
 
-        Returns
+        Returns:
         -------
         order_ids : pd.Index[str]
             Index of ids for newly-created orders.
         """
         style = MarketOrder()
-        order_args = [
-            (asset, amount, style) for (asset, amount) in share_counts.items() if amount
-        ]
+        order_args = [(asset, amount, style) for (asset, amount) in share_counts.items() if amount]
         return self.blotter.batch_order(order_args)
 
     @error_keywords(
@@ -2111,7 +2075,7 @@ class TradingAlgorithm:
             If passed and not None, return only the open orders for the given
             asset instead of all open orders.
 
-        Returns
+        Returns:
         -------
         open_orders : dict[list[Order]] or list[Order]
             If no asset is passed this will return a dict mapping Assets
@@ -2140,7 +2104,7 @@ class TradingAlgorithm:
         order_id : str
             The unique identifier for the order.
 
-        Returns
+        Returns:
         -------
         order : Order
             The order object.
@@ -2258,9 +2222,7 @@ class TradingAlgorithm:
         self.register_trading_control(control)
 
     @api_method
-    def set_max_order_size(
-        self, asset=None, max_shares=None, max_notional=None, on_error="fail"
-    ):
+    def set_max_order_size(self, asset=None, max_shares=None, max_notional=None, on_error="fail"):
         """Set a limit on the number of shares and/or dollar value of any single
         order placed for sid.  Limits are treated as absolute values and are
         enforced at the time that the algo attempts to place an order for sid.
@@ -2344,7 +2306,7 @@ class TradingAlgorithm:
         restricted_list : Restrictions
             An object providing information about restricted assets.
 
-        See Also
+        See Also:
         --------
         zipline.finance.asset_restrictions.Restrictions
         """
@@ -2388,12 +2350,12 @@ class TradingAlgorithm:
             Whether or not to compute this pipeline prior to
             before_trading_start.
 
-        Returns
+        Returns:
         -------
         pipeline : Pipeline
             Returns the pipeline that was attached unchanged.
 
-        See Also
+        See Also:
         --------
         :func:`zipline.api.pipeline_output`
         """
@@ -2423,18 +2385,18 @@ class TradingAlgorithm:
         name : str
             Name of the pipeline from which to fetch results.
 
-        Returns
+        Returns:
         -------
         results : pd.DataFrame
             DataFrame containing the results of the requested pipeline for
             the current simulation date.
 
-        Raises
+        Raises:
         ------
         NoSuchPipeline
             Raised when no pipeline with the name `name` has been registered.
 
-        See Also
+        See Also:
         --------
         :func:`zipline.api.attach_pipeline`
         :meth:`zipline.pipeline.engine.PipelineEngine.run_pipeline`
@@ -2480,11 +2442,11 @@ class TradingAlgorithm:
             `end_date = min(start_date + chunksize trading days,
                             simulation_end)`
 
-        Returns
+        Returns:
         -------
         (data, valid_until) : tuple (pd.DataFrame, pd.Timestamp)
 
-        See Also
+        See Also:
         --------
         PipelineEngine.run_pipeline
         """

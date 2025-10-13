@@ -21,7 +21,6 @@ from rustybt.optimization.parameter_space import (
 )
 from rustybt.optimization.search import (
     BayesianOptimizer,
-    GridSearchAlgorithm,
     RandomSearchAlgorithm,
 )
 
@@ -90,12 +89,8 @@ def main():
     # Define parameter space
     param_space = ParameterSpace(
         parameters=[
-            ContinuousParameter(
-                name="lookback_short", min_value=10.0, max_value=50.0
-            ),
-            ContinuousParameter(
-                name="lookback_long", min_value=50.0, max_value=200.0
-            ),
+            ContinuousParameter(name="lookback_short", min_value=10.0, max_value=50.0),
+            ContinuousParameter(name="lookback_long", min_value=50.0, max_value=200.0),
             ContinuousParameter(
                 name="threshold",
                 min_value=0.01,
@@ -141,9 +136,9 @@ def main():
     best_params = bayes_optimizer.get_best_params()
     best_score = bayes_optimizer.get_best_score()
 
-    print(f"\nBayesian Optimization Results:")
+    print("\nBayesian Optimization Results:")
     print(f"  Best Sharpe Ratio: {best_score}")
-    print(f"  Best Parameters:")
+    print("  Best Parameters:")
     for key, value in best_params.items():
         print(f"    {key}: {value}")
     print(f"  Total Evaluations: {bayes_optimizer.iteration}")
@@ -174,7 +169,7 @@ def main():
         random_state=42,
     )
 
-    print(f"\nSeeded with prior knowledge:")
+    print("\nSeeded with prior knowledge:")
     print(f"  Initial Sharpe: {initial_scores[0]}")
 
     print("\nRunning 50 iterations...")
@@ -187,7 +182,7 @@ def main():
         bayes_prior_evaluations.append(float(score))
 
     best_prior_score = bayes_prior_optimizer.get_best_score()
-    print(f"\nBayesian with Prior Results:")
+    print("\nBayesian with Prior Results:")
     print(f"  Best Sharpe Ratio: {best_prior_score}")
     print(f"  Total Evaluations: {bayes_prior_optimizer.iteration}")
 
@@ -196,9 +191,7 @@ def main():
     print("3. Random Search (for comparison)")
     print("=" * 80)
 
-    random_optimizer = RandomSearchAlgorithm(
-        parameter_space=param_space, n_iter=50
-    )
+    random_optimizer = RandomSearchAlgorithm(parameter_space=param_space, n_iter=50)
 
     print("\nRunning 50 iterations...")
     random_evaluations = []
@@ -214,7 +207,7 @@ def main():
             print(f"  Iteration {random_optimizer.iteration}: Best Sharpe = {best:.4f}")
 
     random_best_score = Decimal(str(max(random_evaluations)))
-    print(f"\nRandom Search Results:")
+    print("\nRandom Search Results:")
     print(f"  Best Sharpe Ratio: {random_best_score}")
     print(f"  Total Evaluations: {random_optimizer.iteration}")
 
@@ -282,7 +275,7 @@ def main():
     plt.ylabel("Best Sharpe Ratio")
     plt.title("Final Best Scores (50 iterations each)")
     plt.ylim(0, max(scores) * 1.2)
-    for bar, score in zip(bars, scores):
+    for bar, score in zip(bars, scores, strict=False):
         height = bar.get_height()
         plt.text(
             bar.get_x() + bar.get_width() / 2.0,
@@ -324,14 +317,12 @@ def main():
     print("Summary")
     print("=" * 80)
 
-    print(f"\nBest Scores (50 evaluations each):")
+    print("\nBest Scores (50 evaluations each):")
     print(f"  1. Bayesian (EI):     {best_score:.4f}")
     print(f"  2. Bayesian + Prior:  {best_prior_score:.4f}")
     print(f"  3. Random Search:     {random_best_score:.4f}")
 
-    improvement = (
-        (float(best_score) - float(random_best_score)) / float(random_best_score) * 100
-    )
+    improvement = (float(best_score) - float(random_best_score)) / float(random_best_score) * 100
     print(f"\nBayesian improvement over Random: {improvement:+.1f}%")
 
     print("\nKey Takeaways:")

@@ -6,7 +6,6 @@ implementations to calculate overhead percentages and generate reports.
 
 import argparse
 import json
-from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -24,9 +23,7 @@ def load_benchmark_results(filepath: Path) -> dict[str, Any]:
         return json.load(f)
 
 
-def calculate_overhead(
-    float_time: float, decimal_time: float
-) -> tuple[float, str]:
+def calculate_overhead(float_time: float, decimal_time: float) -> tuple[float, str]:
     """Calculate overhead percentage.
 
     Args:
@@ -68,12 +65,8 @@ def generate_comparison_table(
         "|-----------|----------------|------------------|------------|--------|",
     ]
 
-    float_benchmarks = {
-        b["name"]: b["stats"] for b in float_results["benchmarks"]
-    }
-    decimal_benchmarks = {
-        b["name"]: b["stats"] for b in decimal_results["benchmarks"]
-    }
+    float_benchmarks = {b["name"]: b["stats"] for b in float_results["benchmarks"]}
+    decimal_benchmarks = {b["name"]: b["stats"] for b in decimal_results["benchmarks"]}
 
     for name in sorted(float_benchmarks.keys()):
         if name not in decimal_benchmarks:
@@ -125,7 +118,7 @@ def generate_markdown_report(
 ## Executive Summary
 
 - **Overall Overhead:** {overall_overhead:.1f}% slower than float baseline
-- **Number of Benchmarks:** {len(float_results['benchmarks'])}
+- **Number of Benchmarks:** {len(float_results["benchmarks"])}
 - **Epic 7 Target:** Reduce overhead to <30%
 
 ## Overall Performance
@@ -157,8 +150,8 @@ See `docs/performance/benchmarking.md` for detailed methodology.
 ---
 
 *Benchmark data:*
-- *Float baseline: `{float_results.get('commit_info', {}).get('id', 'N/A')}`*
-- *Decimal results: `{decimal_results.get('commit_info', {}).get('id', 'N/A')}`*
+- *Float baseline: `{float_results.get("commit_info", {}).get("id", "N/A")}`*
+- *Decimal results: `{decimal_results.get("commit_info", {}).get("id", "N/A")}`*
 """
 
     with open(output_path, "w") as f:
@@ -218,9 +211,7 @@ after profiling.
 
 def main() -> None:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Calculate Decimal vs float overhead"
-    )
+    parser = argparse.ArgumentParser(description="Calculate Decimal vs float overhead")
     parser.add_argument(
         "float_baseline",
         type=Path,

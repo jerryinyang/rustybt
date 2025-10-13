@@ -1,31 +1,31 @@
-import numpy as np
 import os
-import pandas as pd
-import platform
-import toolz.curried.operator as op
+import sys
 from os.path import (
     dirname,
     join,
     realpath,
 )
 
-from rustybt.utils.calendar_utils import get_calendar
-from rustybt.data.bundles import ingest, load, bundles
+import numpy as np
+import pandas as pd
+import pytest
+import toolz.curried.operator as op
+
+from rustybt.data.bundles import bundles, ingest, load
 from rustybt.data.bundles.quandl import format_metadata_url, load_data_table
 from rustybt.lib.adjustment import Float64Multiply
 from rustybt.testing import (
-    tmp_dir,
     patch_read_csv,
+    tmp_dir,
 )
 from rustybt.testing.fixtures import (
-    ZiplineTestCase,
     WithResponses,
+    ZiplineTestCase,
 )
-from tests.conftest import ON_WINDOWS_CI
-import sys
-from rustybt.utils.functional import apply
 from rustybt.testing.github_actions import skip_on
-import pytest
+from rustybt.utils.calendar_utils import get_calendar
+from rustybt.utils.functional import apply
+from tests.conftest import ON_WINDOWS_CI
 
 TEST_RESOURCE_PATH = join(
     dirname(dirname(dirname(realpath(__file__)))),
@@ -74,9 +74,7 @@ class QuandlBundleTestCase(WithResponses, ZiplineTestCase):
                 yield vs
 
         # the first index our written data will appear in the files on disk
-        start_idx = (
-            self.calendar.sessions.get_indexer([self.start_date], "ffill")[0] + 1
-        )
+        start_idx = self.calendar.sessions.get_indexer([self.start_date], "ffill")[0] + 1
 
         # convert an index into the raw dataframe into an index into the
         # final data
@@ -84,10 +82,7 @@ class QuandlBundleTestCase(WithResponses, ZiplineTestCase):
 
         def expected_dividend_adjustment(idx, symbol):
             sid = sids[symbol]
-            return (
-                1
-                - all_.iloc[idx]["ex_dividend", sid] / all_.iloc[idx - 1]["close", sid]
-            )
+            return 1 - all_.iloc[idx]["ex_dividend", sid] / all_.iloc[idx - 1]["close", sid]
 
         adjustments = [
             {
@@ -248,6 +243,6 @@ class QuandlBundleTestCase(WithResponses, ZiplineTestCase):
         )
 
         for column, adjustments, expected in zip(
-            self.columns, adjs_for_cols, expected_adjustments
+            self.columns, adjs_for_cols, expected_adjustments, strict=False
         ):
             assert adjustments == expected, column

@@ -26,17 +26,13 @@ class OptimizationResult:
 
         # Convert duration to Decimal if needed
         if not isinstance(self.duration_seconds, Decimal):
-            object.__setattr__(
-                self, "duration_seconds", Decimal(str(self.duration_seconds))
-            )
+            object.__setattr__(self, "duration_seconds", Decimal(str(self.duration_seconds)))
 
         # Validate failed trials have -Infinity score
         if self.error is not None:
             expected_score = Decimal("-Infinity")
             if self.score != expected_score:
-                raise ValueError(
-                    f"Failed trials must have score=-Infinity, got {self.score}"
-                )
+                raise ValueError(f"Failed trials must have score=-Infinity, got {self.score}")
 
     @property
     def is_success(self) -> bool:

@@ -1,7 +1,7 @@
 import numpy as np
 
-from rustybt.testing.predicates import assert_equal
 from rustybt.pipeline import Classifier, Factor, Filter
+from rustybt.testing.predicates import assert_equal
 from rustybt.utils.numpy_utils import float64_dtype, int64_dtype
 
 from .base import BaseUSEquityPipelineTestCase

@@ -2,13 +2,13 @@
 classifier.py
 """
 
-from functools import partial
-from numbers import Number
 import operator
 import re
+from functools import partial
+from numbers import Number
 
-from numpy import where, isnan, nan, zeros
 import pandas as pd
+from numpy import isnan, nan, where, zeros
 
 from rustybt.errors import UnsupportedDataType
 from rustybt.lib.labelarray import LabelArray
@@ -22,7 +22,7 @@ from rustybt.pipeline.dtypes import (
 from rustybt.pipeline.sentinels import NotSpecified
 from rustybt.pipeline.term import ComputableTerm
 from rustybt.utils.compat import unicode
-from rustybt.utils.input_validation import expect_types, expect_dtypes
+from rustybt.utils.input_validation import expect_dtypes, expect_types
 from rustybt.utils.numpy_utils import (
     categorical_dtype,
     int64_dtype,
@@ -38,7 +38,6 @@ from ..mixins import (
     SingleInputMixin,
     StandardOutputs,
 )
-
 
 string_classifiers_only = restrict_to_dtype(
     dtype=categorical_dtype,
@@ -77,14 +76,11 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
         # certainly not what the user wants.
         if other == self.missing_value:
             raise ValueError(
-                "Comparison against self.missing_value ({value!r}) in"
-                " {typename}.eq().\n"
+                f"Comparison against self.missing_value ({other!r}) in"
+                f" {type(self).__name__}.eq().\n"
                 "Missing values have NaN semantics, so the "
                 "requested comparison would always produce False.\n"
-                "Use the isnull() method to check for missing values.".format(
-                    value=other,
-                    typename=(type(self).__name__),
-                )
+                "Use the isnull() method to check for missing values."
             )
 
         if isinstance(other, Number) != (self.dtype == int64_dtype):
@@ -92,7 +88,7 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
 
         if isinstance(other, Number):
             return NumExprFilter.create(
-                "x_0 == {other}".format(other=int(other)),
+                f"x_0 == {int(other)}",
                 binds=(self,),
             )
         else:
@@ -112,10 +108,7 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
 
         if isinstance(other, Number):
             return NumExprFilter.create(
-                "((x_0 != {other}) & (x_0 != {missing}))".format(
-                    other=int(other),
-                    missing=self.missing_value,
-                ),
+                f"((x_0 != {int(other)}) & (x_0 != {self.missing_value}))",
                 binds=(self,),
             )
         else:
@@ -143,7 +136,7 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
         prefix : str
             String prefix against which to compare values produced by ``self``.
 
-        Returns
+        Returns:
         -------
         matches : Filter
             Filter returning True for all sid/date pairs for which ``self``
@@ -166,7 +159,7 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
         suffix : str
             String suffix against which to compare values produced by ``self``.
 
-        Returns
+        Returns:
         -------
         matches : Filter
             Filter returning True for all sid/date pairs for which ``self``
@@ -189,7 +182,7 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
         substring : str
             Sub-string against which to compare values produced by ``self``.
 
-        Returns
+        Returns:
         -------
         matches : Filter
             Filter returning True for all sid/date pairs for which ``self``
@@ -212,13 +205,13 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
         pattern : str
             Regex pattern against which to compare values produced by ``self``.
 
-        Returns
+        Returns:
         -------
         matches : Filter
             Filter returning True for all sid/date pairs for which ``self``
             produces a string matched by ``pattern``.
 
-        See Also
+        See Also:
         --------
         :mod:`Python Regular Expressions <re>`
         """
@@ -240,7 +233,7 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
         relabeler : function[str -> str or None]
             A function to apply to each unique value produced by ``self``.
 
-        Returns
+        Returns:
         -------
         relabeled : Classifier
             A classifier produced by applying ``relabeler`` to each unique
@@ -257,7 +250,7 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
         choices : iterable[str or int]
             An iterable of choices.
 
-        Returns
+        Returns:
         -------
         matches : Filter
             Filter returning True for all sid/date pairs for which ``self``
@@ -268,23 +261,18 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
         except Exception as exc:
             raise TypeError(
                 "Expected `choices` to be an iterable of hashable values,"
-                " but got {} instead.\n"
-                "This caused the following error: {!r}.".format(choices, exc)
+                f" but got {choices} instead.\n"
+                f"This caused the following error: {exc!r}."
             ) from exc
 
         if self.missing_value in choices:
             raise ValueError(
-                "Found self.missing_value ({mv!r}) in choices supplied to"
-                " {typename}.{meth_name}().\n"
+                f"Found self.missing_value ({self.missing_value!r}) in choices supplied to"
+                f" {type(self).__name__}.{self.element_of.__name__}().\n"
                 "Missing values have NaN semantics, so the"
                 " requested comparison would always produce False.\n"
                 "Use the isnull() method to check for missing values.\n"
-                "Received choices were {choices}.".format(
-                    mv=self.missing_value,
-                    typename=(type(self).__name__),
-                    choices=sorted(choices),
-                    meth_name=self.element_of.__name__,
-                )
+                f"Received choices were {sorted(choices)}."
             )
 
         def only_contains(type_, values):
@@ -299,11 +287,8 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
                 )
             else:
                 raise TypeError(
-                    "Found non-int in choices for {typename}.element_of.\n"
-                    "Supplied choices were {choices}.".format(
-                        typename=type(self).__name__,
-                        choices=choices,
-                    )
+                    f"Found non-int in choices for {type(self).__name__}.element_of.\n"
+                    f"Supplied choices were {choices}."
                 )
         elif self.dtype == categorical_dtype:
             if only_contains((bytes, unicode), choices):
@@ -314,11 +299,8 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
                 )
             else:
                 raise TypeError(
-                    "Found non-string in choices for {typename}.element_of.\n"
-                    "Supplied choices were {choices}.".format(
-                        typename=type(self).__name__,
-                        choices=choices,
-                    )
+                    f"Found non-string in choices for {type(self).__name__}.element_of.\n"
+                    f"Supplied choices were {choices}."
                 )
         raise AssertionError(f"Unknown dtype in Classifier.element_of {self.dtype}.")
 
@@ -339,9 +321,9 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
         if self.dtype == int64_dtype:
             return super(Classifier, self).to_workspace_value(result, assets)
 
-        assert isinstance(
-            result.values, pd.Categorical
-        ), "Expected a Categorical, got %r." % type(result.values)
+        assert isinstance(result.values, pd.Categorical), "Expected a Categorical, got %r." % type(
+            result.values
+        )
         with_missing = pd.Series(
             data=pd.Categorical(
                 result.values,
@@ -390,7 +372,7 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
             If passed, only count assets passing the filter.  Default behavior
             is to count all assets.
 
-        Examples
+        Examples:
         --------
         Let ``c`` be a Classifier which would produce the following output::
 
@@ -412,7 +394,7 @@ class Classifier(RestrictedDTypeMixin, ComputableTerm):
             2015-05-07    NaN    1.0    3.0    3.0    3.0    NaN
             2015-05-08    6.0    6.0    6.0    6.0    6.0    6.0
 
-        Returns
+        Returns:
         -------
         factor : CustomFactor
             A CustomFactor that counts, for each asset, the total number
@@ -504,20 +486,18 @@ class Relabel(SingleInputMixin, Classifier):
             result[~mask] = data.missing_value
         else:
             raise NotImplementedError(
-                "Relabeling is not currently supported for " "int-dtype classifiers."
+                "Relabeling is not currently supported for int-dtype classifiers."
             )
         return result
 
 
-class CustomClassifier(
-    PositiveWindowLengthMixin, StandardOutputs, CustomTermMixin, Classifier
-):
+class CustomClassifier(PositiveWindowLengthMixin, StandardOutputs, CustomTermMixin, Classifier):
     """
     Base class for user-defined Classifiers.
 
     Does not suppport multiple outputs.
 
-    See Also
+    See Also:
     --------
     zipline.pipeline.CustomFactor
     zipline.pipeline.CustomFilter
@@ -562,7 +542,7 @@ class Latest(LatestMixin, CustomClassifier):
     """
     A classifier producing the latest value of an input.
 
-    See Also
+    See Also:
     --------
     zipline.pipeline.data.dataset.BoundColumn.latest
     """
@@ -574,9 +554,5 @@ class InvalidClassifierComparison(TypeError):
     def __init__(self, classifier, compval):
         super(InvalidClassifierComparison, self).__init__(
             "Can't compare classifier of dtype"
-            " {dtype} to value {value} of type {type}.".format(
-                dtype=classifier.dtype,
-                value=compval,
-                type=type(compval).__name__,
-            )
+            f" {classifier.dtype} to value {compval} of type {type(compval).__name__}."
         )

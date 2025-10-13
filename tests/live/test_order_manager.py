@@ -2,14 +2,13 @@
 
 import asyncio
 from decimal import Decimal
-from unittest.mock import Mock
 
 import pandas as pd
 import pytest
 
 from rustybt.assets import Equity
 from rustybt.assets.exchange_info import ExchangeInfo
-from rustybt.live.order_manager import Order, OrderManager, OrderStatus
+from rustybt.live.order_manager import OrderManager, OrderStatus
 
 
 @pytest.fixture
@@ -184,12 +183,8 @@ class TestOrderManager:
         """Test retrieving all orders."""
         manager = OrderManager()
 
-        await manager.create_order(
-            asset=sample_asset, amount=Decimal("100"), order_type="market"
-        )
-        await manager.create_order(
-            asset=sample_asset, amount=Decimal("200"), order_type="market"
-        )
+        await manager.create_order(asset=sample_asset, amount=Decimal("100"), order_type="market")
+        await manager.create_order(asset=sample_asset, amount=Decimal("200"), order_type="market")
 
         all_orders = await manager.get_all_orders()
         assert len(all_orders) == 2
@@ -212,15 +207,9 @@ class TestOrderManager:
             auto_close_date=pd.Timestamp("2030-01-01"),
         )
 
-        await manager.create_order(
-            asset=sample_asset, amount=Decimal("100"), order_type="market"
-        )
-        await manager.create_order(
-            asset=asset2, amount=Decimal("200"), order_type="market"
-        )
-        await manager.create_order(
-            asset=sample_asset, amount=Decimal("300"), order_type="market"
-        )
+        await manager.create_order(asset=sample_asset, amount=Decimal("100"), order_type="market")
+        await manager.create_order(asset=asset2, amount=Decimal("200"), order_type="market")
+        await manager.create_order(asset=sample_asset, amount=Decimal("300"), order_type="market")
 
         aapl_orders = await manager.get_orders_by_asset(sample_asset)
         assert len(aapl_orders) == 2
@@ -296,6 +285,7 @@ class TestOrderManagerLogging:
     async def test_order_submitted_logging(self, sample_asset, tmp_path, caplog):
         """Test that order submission generates audit logs."""
         import json
+
         from rustybt.utils.logging import configure_logging
 
         # Configure logging to temp directory
@@ -333,6 +323,7 @@ class TestOrderManagerLogging:
     async def test_order_filled_logging(self, sample_asset, tmp_path):
         """Test that order fill generates audit logs without hardcoded slippage."""
         import json
+
         from rustybt.utils.logging import configure_logging
 
         # Configure logging to temp directory
@@ -372,13 +363,16 @@ class TestOrderManagerLogging:
         assert log_entry["filled_amount"] == "100"
         assert log_entry["commission"] == "1.00"
         # Verify slippage is NOT in logs (was hardcoded before fix)
-        assert "slippage" not in log_entry, "Slippage should be omitted until calculation implemented"
+        assert (
+            "slippage" not in log_entry
+        ), "Slippage should be omitted until calculation implemented"
         assert "timestamp" in log_entry
 
     @pytest.mark.asyncio
     async def test_order_rejected_logging(self, sample_asset, tmp_path):
         """Test that order rejection generates audit logs."""
         import json
+
         from rustybt.utils.logging import configure_logging
 
         # Configure logging to temp directory
@@ -420,6 +414,7 @@ class TestOrderManagerLogging:
     async def test_order_canceled_logging(self, sample_asset, tmp_path):
         """Test that order cancellation generates audit logs."""
         import json
+
         from rustybt.utils.logging import configure_logging
 
         # Configure logging to temp directory

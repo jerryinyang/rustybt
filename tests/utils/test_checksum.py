@@ -39,9 +39,7 @@ class TestChecksumCalculation:
             checksum = calculate_checksum(filepath)
             assert len(checksum) == 64
             # Empty file has known SHA256 hash
-            assert (
-                checksum == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-            )
+            assert checksum == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         finally:
             Path(filepath).unlink()
 

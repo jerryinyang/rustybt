@@ -5,7 +5,7 @@ Includes unit tests with mocked responses.
 """
 
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pandas as pd
 import polars as pl
@@ -14,10 +14,8 @@ import pytest
 from rustybt.data.adapters.api_provider_base import (
     AuthenticationError,
     DataParsingError,
-    SymbolNotFoundError,
 )
 from rustybt.data.adapters.polygon_adapter import PolygonAdapter
-
 
 # ============================================================================
 # Unit Tests

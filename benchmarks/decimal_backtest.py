@@ -6,21 +6,23 @@ overhead compared to float baseline.
 Run with: pytest benchmarks/decimal_backtest.py --benchmark-only
 """
 
-import pytest
-import polars as pl
-from decimal import Decimal
-from typing import Sequence
-
-from rustybt.finance.decimal.ledger import DecimalLedger
-from rustybt.finance.decimal.position import DecimalPosition
-from rustybt.finance.decimal.order import DecimalOrder
-from rustybt.finance.decimal.commission import PerShareCommission
-from rustybt.assets import Equity
 from collections import namedtuple
+from decimal import Decimal
+
+import polars as pl
+import pytest
+
+from rustybt.assets import Equity
+from rustybt.finance.decimal.commission import PerShareCommission
+from rustybt.finance.decimal.ledger import DecimalLedger
+from rustybt.finance.decimal.order import DecimalOrder
+from rustybt.finance.decimal.position import DecimalPosition
 
 # Test fixture for exchange info (acceptable for test/benchmark fixtures)
-ExchangeInfo = namedtuple('ExchangeInfo', ['canonical_name', 'name', 'country_code'])
-TEST_EXCHANGE = ExchangeInfo(canonical_name='NYSE', name='New York Stock Exchange', country_code='US')
+ExchangeInfo = namedtuple("ExchangeInfo", ["canonical_name", "name", "country_code"])
+TEST_EXCHANGE = ExchangeInfo(
+    canonical_name="NYSE", name="New York Stock Exchange", country_code="US"
+)
 
 
 class DecimalMetrics:
@@ -118,9 +120,7 @@ def decimal_returns_series() -> pl.Series:
 
     random.seed(42)
     # Generate realistic returns: mean 0.05%, std 1.5%
-    returns = [
-        Decimal(str(random.gauss(0.0005, 0.015))) for _ in range(252)
-    ]
+    returns = [Decimal(str(random.gauss(0.0005, 0.015))) for _ in range(252)]
     return pl.Series("returns", returns, dtype=pl.Decimal(scale=8))
 
 
@@ -338,7 +338,7 @@ def test_decimal_simplified_backtest(benchmark):
         for day in range(252):
             # Process 10 orders per day
             for i in range(10):
-                asset = Equity(sid=i + 1, exchange_info=TEST_EXCHANGE, symbol=f"TEST{i+1}")
+                asset = Equity(sid=i + 1, exchange_info=TEST_EXCHANGE, symbol=f"TEST{i + 1}")
                 price = Decimal(str(50.0 + random.random()))
 
                 order = DecimalOrder(

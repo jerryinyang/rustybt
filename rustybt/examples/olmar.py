@@ -1,6 +1,3 @@
-import logging
-import sys
-
 import numpy as np
 
 from rustybt.finance import commission, slippage
@@ -71,10 +68,7 @@ def handle_data(algo, data):
     variability = (np.linalg.norm(mark_rel_dev)) ** 2
 
     # test for divide-by-zero case
-    if variability == 0.0:
-        step_size = 0
-    else:
-        step_size = max(0, weight / variability)
+    step_size = 0 if variability == 0.0 else max(0, weight / variability)
 
     b = algo.b_t + step_size * mark_rel_dev
     b_norm = simplex_projection(b)
@@ -132,7 +126,6 @@ def simplex_projection(v, b=1):
     Original matlab implementation: John Duchi (jduchi@cs.berkeley.edu)
     Python-port: Copyright 2013 by Thomas Wiecki (thomas.wiecki@gmail.com).
     """
-
     v = np.asarray(v)
     p = len(v)
 

@@ -589,7 +589,7 @@ def test_order_tracker_timeout(mock_asset, mock_data_portal):
     # Process 6 bars (exceeds timeout) - need to process AFTER the initial bar
     for i in range(1, 7):  # Start from bar 1 to simulate time passing
         current_time = pd.Timestamp(f"2023-01-01 10:{i:02d}")
-        filled_orders = tracker.process_bar(current_time, mock_data_portal)
+        tracker.process_bar(current_time, mock_data_portal)
 
     # Order should be canceled and removed
     assert len(tracker.get_open_orders()) == 0
@@ -787,11 +787,11 @@ def test_integration_multi_bar_fill_realistic_scenario(mock_asset):
 
     # Define realistic volume and price sequences
     volume_sequence = [
-        Decimal("5000"),   # Low volume bar
+        Decimal("5000"),  # Low volume bar
         Decimal("15000"),  # Normal volume
         Decimal("20000"),  # High volume
         Decimal("10000"),  # Normal volume
-        Decimal("8000"),   # Lower volume
+        Decimal("8000"),  # Lower volume
         Decimal("12000"),  # Normal volume
     ]
 
@@ -807,8 +807,6 @@ def test_integration_multi_bar_fill_realistic_scenario(mock_asset):
     current_time = pd.Timestamp("2023-01-01 10:00")
     tracker.add_order(order, current_time)
 
-    filled_completely = False
-
     for i, (volume, price) in enumerate(zip(volume_sequence, price_sequence, strict=False)):
         data_portal.get_volume.return_value = volume
         data_portal.get_price.return_value = price
@@ -817,7 +815,6 @@ def test_integration_multi_bar_fill_realistic_scenario(mock_asset):
         filled_orders = tracker.process_bar(bar_time, data_portal)
 
         if filled_orders:
-            filled_completely = True
             break
 
     # With balanced model (10% fill ratio):

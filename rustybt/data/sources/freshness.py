@@ -6,7 +6,7 @@ and adapter type to avoid serving stale data while maximizing cache hit rates.
 
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 from exchange_calendars import ExchangeCalendar
@@ -31,7 +31,7 @@ class CacheFreshnessPolicy(ABC):
         self,
         bundle_metadata: dict[str, Any],
         frequency: str,
-        calendar: Optional[ExchangeCalendar] = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> bool:
         """Check if cached data is still fresh.
 
@@ -50,7 +50,7 @@ class CacheFreshnessPolicy(ABC):
         self,
         bundle_metadata: dict[str, Any],
         frequency: str,
-        calendar: Optional[ExchangeCalendar] = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> pd.Timestamp:
         """Get timestamp when cache entry should be invalidated.
 
@@ -84,7 +84,7 @@ class MarketCloseFreshnessPolicy(CacheFreshnessPolicy):
         self,
         bundle_metadata: dict[str, Any],
         frequency: str,
-        calendar: Optional[ExchangeCalendar] = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> bool:
         """Cache is fresh if fetched after last market close.
 
@@ -118,7 +118,7 @@ class MarketCloseFreshnessPolicy(CacheFreshnessPolicy):
         self,
         bundle_metadata: dict[str, Any],
         frequency: str,
-        calendar: Optional[ExchangeCalendar] = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> pd.Timestamp:
         """Next refresh is at next market close.
 
@@ -168,7 +168,7 @@ class TTLFreshnessPolicy(CacheFreshnessPolicy):
         >>> # Returns False (stale)
     """
 
-    def __init__(self, ttl_seconds: Optional[int] = None):
+    def __init__(self, ttl_seconds: int | None = None):
         """Initialize TTL policy.
 
         Args:
@@ -180,7 +180,7 @@ class TTLFreshnessPolicy(CacheFreshnessPolicy):
         self,
         bundle_metadata: dict[str, Any],
         frequency: str,
-        calendar: Optional[ExchangeCalendar] = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> bool:
         """Cache is fresh if age < TTL.
 
@@ -192,7 +192,11 @@ class TTLFreshnessPolicy(CacheFreshnessPolicy):
         Returns:
             True if age < TTL, False otherwise
         """
-        ttl = self.ttl_seconds if self.ttl_seconds is not None else self._get_ttl_for_frequency(frequency)
+        ttl = (
+            self.ttl_seconds
+            if self.ttl_seconds is not None
+            else self._get_ttl_for_frequency(frequency)
+        )
 
         fetch_timestamp = bundle_metadata.get("fetch_timestamp", 0)
         current_time = time.time()
@@ -204,7 +208,7 @@ class TTLFreshnessPolicy(CacheFreshnessPolicy):
         self,
         bundle_metadata: dict[str, Any],
         frequency: str,
-        calendar: Optional[ExchangeCalendar] = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> pd.Timestamp:
         """Next refresh is fetch_time + TTL.
 
@@ -216,7 +220,11 @@ class TTLFreshnessPolicy(CacheFreshnessPolicy):
         Returns:
             Timestamp when TTL expires
         """
-        ttl = self.ttl_seconds if self.ttl_seconds is not None else self._get_ttl_for_frequency(frequency)
+        ttl = (
+            self.ttl_seconds
+            if self.ttl_seconds is not None
+            else self._get_ttl_for_frequency(frequency)
+        )
 
         fetch_timestamp = bundle_metadata.get("fetch_timestamp", 0)
         refresh_time = fetch_timestamp + ttl
@@ -271,7 +279,7 @@ class HybridFreshnessPolicy(CacheFreshnessPolicy):
         self,
         bundle_metadata: dict[str, Any],
         frequency: str,
-        calendar: Optional[ExchangeCalendar] = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> bool:
         """Cache is fresh if market closed OR (market open AND age < TTL).
 
@@ -285,7 +293,9 @@ class HybridFreshnessPolicy(CacheFreshnessPolicy):
         """
         if calendar is None:
             # Fallback to simple TTL
-            return TTLFreshnessPolicy(self.ttl_seconds).is_fresh(bundle_metadata, frequency, calendar)
+            return TTLFreshnessPolicy(self.ttl_seconds).is_fresh(
+                bundle_metadata, frequency, calendar
+            )
 
         current_time = pd.Timestamp.now(tz="UTC")
 
@@ -294,7 +304,9 @@ class HybridFreshnessPolicy(CacheFreshnessPolicy):
             is_open = calendar.is_open_on_minute(current_time)
         except Exception:
             # Fallback to TTL if calendar check fails
-            return TTLFreshnessPolicy(self.ttl_seconds).is_fresh(bundle_metadata, frequency, calendar)
+            return TTLFreshnessPolicy(self.ttl_seconds).is_fresh(
+                bundle_metadata, frequency, calendar
+            )
 
         # If market closed, cache is always fresh
         if not is_open:
@@ -311,7 +323,7 @@ class HybridFreshnessPolicy(CacheFreshnessPolicy):
         self,
         bundle_metadata: dict[str, Any],
         frequency: str,
-        calendar: Optional[ExchangeCalendar] = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> pd.Timestamp:
         """Next refresh is next market open + TTL.
 
@@ -362,7 +374,7 @@ class NeverStaleFreshnessPolicy(CacheFreshnessPolicy):
         self,
         bundle_metadata: dict[str, Any],
         frequency: str,
-        calendar: Optional[ExchangeCalendar] = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> bool:
         """Always returns True (never stale).
 
@@ -380,7 +392,7 @@ class NeverStaleFreshnessPolicy(CacheFreshnessPolicy):
         self,
         bundle_metadata: dict[str, Any],
         frequency: str,
-        calendar: Optional[ExchangeCalendar] = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> pd.Timestamp:
         """Returns far future timestamp (never refresh).
 
@@ -412,7 +424,7 @@ class AlwaysStaleFreshnessPolicy(CacheFreshnessPolicy):
         self,
         bundle_metadata: dict[str, Any],
         frequency: str,
-        calendar: Optional[ExchangeCalendar] = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> bool:
         """Always returns False (always stale).
 
@@ -430,7 +442,7 @@ class AlwaysStaleFreshnessPolicy(CacheFreshnessPolicy):
         self,
         bundle_metadata: dict[str, Any],
         frequency: str,
-        calendar: Optional[ExchangeCalendar] = None,
+        calendar: ExchangeCalendar | None = None,
     ) -> pd.Timestamp:
         """Returns current time (immediate refresh).
 

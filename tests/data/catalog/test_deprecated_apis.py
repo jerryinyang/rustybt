@@ -10,7 +10,6 @@ Story: 8.4 (Unified Metadata Management)
 Phase: 4 (Deprecation Wrappers)
 """
 
-import json
 import tempfile
 import time
 from pathlib import Path

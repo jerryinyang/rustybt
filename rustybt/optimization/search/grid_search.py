@@ -134,17 +134,13 @@ class GridSearchAlgorithm(SearchAlgorithm):
 
             if isinstance(param, DiscreteParameter):
                 # Generate discrete values: [min, min+step, min+2*step, ..., max]
-                values = list(
-                    range(param.min_value, param.max_value + 1, param.step)
-                )
+                values = list(range(param.min_value, param.max_value + 1, param.step))
             elif isinstance(param, CategoricalParameter):
                 # Use choices directly
                 values = param.choices
             else:
                 # Should be caught by _validate_parameter_space, but defensive check
-                raise ValueError(
-                    f"Unsupported parameter type: {type(param).__name__}"
-                )
+                raise ValueError(f"Unsupported parameter type: {type(param).__name__}")
 
             param_values.append(values)
 
@@ -290,9 +286,7 @@ class GridSearchAlgorithm(SearchAlgorithm):
             "completed_count": self._completed_count,
             "best_score": str(self._best_score) if self._best_score is not None else None,
             "rounds_without_improvement": self._rounds_without_improvement,
-            "results": [
-                (params, str(score)) for params, score in self._results
-            ],
+            "results": [(params, str(score)) for params, score in self._results],
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
@@ -304,10 +298,6 @@ class GridSearchAlgorithm(SearchAlgorithm):
         self._iteration = state["iteration"]
         self._current_index = state["current_index"]
         self._completed_count = state["completed_count"]
-        self._best_score = (
-            Decimal(state["best_score"]) if state["best_score"] is not None else None
-        )
+        self._best_score = Decimal(state["best_score"]) if state["best_score"] is not None else None
         self._rounds_without_improvement = state["rounds_without_improvement"]
-        self._results = [
-            (params, Decimal(score)) for params, score in state["results"]
-        ]
+        self._results = [(params, Decimal(score)) for params, score in state["results"]]

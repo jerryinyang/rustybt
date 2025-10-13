@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import ABC, abstractmethod
+
 from rustybt.extensions import extensible
 from rustybt.finance.cancel_policy import NeverCancel
 
@@ -43,13 +44,13 @@ class Blotter(ABC):
         order_id : str, optional
             The unique identifier for this order.
 
-        Returns
+        Returns:
         -------
         order_id : str or None
             The unique identifier for this order, or None if no order was
             placed.
 
-        Notes
+        Notes:
         -----
         amount > 0 : Buy/Cover
         amount < 0 : Sell/Short
@@ -59,7 +60,6 @@ class Blotter(ABC):
         StopLimit order : order(asset, amount,
         style=StopLimitOrder(limit_price, stop_price))
         """
-
         raise NotImplementedError("order")
 
     def batch_order(self, order_arg_lists):
@@ -70,18 +70,17 @@ class Blotter(ABC):
         order_arg_lists : iterable[tuple]
             Tuples of args that `order` expects.
 
-        Returns
+        Returns:
         -------
         order_ids : list[str or None]
             The unique identifier (or None) for each of the orders placed
             (or not placed).
 
-        Notes
+        Notes:
         -----
         This is required for `Blotter` subclasses to be able to place a batch
         of orders, instead of being passed the order requests one at a time.
         """
-
         return [self.order(*order_args) for order_args in order_arg_lists]
 
     @abstractmethod
@@ -103,7 +102,6 @@ class Blotter(ABC):
         """
         Cancel all open orders for a given asset.
         """
-
         raise NotImplementedError("cancel_all_orders_for_asset")
 
     @abstractmethod
@@ -118,7 +116,6 @@ class Blotter(ABC):
         usually include a message from a broker indicating why the order was
         rejected) while cancels are typically user-driven.
         """
-
         raise NotImplementedError("reject")
 
     @abstractmethod
@@ -128,7 +125,6 @@ class Blotter(ABC):
         to 'open'. When a fill (full or partial) arrives, the status
         will automatically change back to open/filled as necessary.
         """
-
         raise NotImplementedError("hold")
 
     @abstractmethod
@@ -141,11 +137,10 @@ class Blotter(ABC):
         splits: list
             A list of splits.  Each split is a tuple of (asset, ratio).
 
-        Returns
+        Returns:
         -------
         None
         """
-
         raise NotImplementedError("process_splits")
 
     @abstractmethod
@@ -158,12 +153,12 @@ class Blotter(ABC):
         ----------
         bar_data: zipline._protocol.BarData
 
-        Notes
+        Notes:
         -----
         This method book-keeps the blotter's open_orders dictionary, so that
          it is accurate by the time we're done processing open orders.
 
-        Returns
+        Returns:
         -------
         transactions_list: List
             transactions_list: list of transactions resulting from the current
@@ -178,7 +173,6 @@ class Blotter(ABC):
         closed_orders: List
             closed_orders: list of all the orders that have filled.
         """
-
         raise NotImplementedError("get_transactions")
 
     @abstractmethod
@@ -190,9 +184,8 @@ class Blotter(ABC):
         ----------
         closed_orders: iterable of orders that are closed.
 
-        Returns
+        Returns:
         -------
         None
         """
-
         raise NotImplementedError("prune_orders")

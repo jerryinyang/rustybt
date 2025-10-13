@@ -111,9 +111,7 @@ class AllocationAlgorithm(ABC):
         if total == Decimal("0"):
             # Equal allocation fallback
             n = len(allocations)
-            return {
-                strategy_id: Decimal("1") / Decimal(str(n)) for strategy_id in allocations
-            }
+            return {strategy_id: Decimal("1") / Decimal(str(n)) for strategy_id in allocations}
 
         # Normalize to sum to 1.0
         normalized = {
@@ -734,14 +732,12 @@ class AllocationRebalancer:
             and current_allocations is not None
             and target_allocations is not None
         ):
-
             # Calculate maximum drift
             max_drift = self._calculate_max_drift(current_allocations, target_allocations)
 
             if max_drift > self.drift_threshold:
                 drift_msg = (
-                    f"Allocation drift ({float(max_drift):.1%} > "
-                    f"{float(self.drift_threshold):.1%})"
+                    f"Allocation drift ({float(max_drift):.1%} > {float(self.drift_threshold):.1%})"
                 )
                 return True, drift_msg
 

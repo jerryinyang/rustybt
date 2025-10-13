@@ -7,7 +7,6 @@ with Decimal precision for all monetary values.
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 
 import structlog
 
@@ -46,7 +45,7 @@ class DecimalTransaction:
     price: Decimal  # Execution price
     commission: Decimal  # Commission cost (always positive)
     slippage: Decimal = Decimal("0")  # Slippage cost (always positive)
-    broker_order_id: Optional[str] = None
+    broker_order_id: str | None = None
 
     def __post_init__(self) -> None:
         """Validate transaction fields.
@@ -165,7 +164,7 @@ def create_decimal_transaction(
     amount: Decimal,
     commission: Decimal = Decimal("0"),
     slippage: Decimal = Decimal("0"),
-    broker_order_id: Optional[str] = None,
+    broker_order_id: str | None = None,
 ) -> DecimalTransaction:
     """Create a DecimalTransaction with validation.
 

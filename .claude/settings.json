@@ -6,8 +6,8 @@
   "permissions": {
     "allow": [
       "Bash",
-      "Edit", 
-      "Search", 
+      "Edit",
+      "Search",
       "WebSearch",
       "WebFetch",
       "Update",

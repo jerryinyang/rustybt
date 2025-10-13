@@ -598,22 +598,22 @@ class MyStrategy(TradingAlgorithm):
         self.set_commission(
             PerShare(cost=0.005, min_trade_cost=1.0)
         )
-        
+
         # Set slippage model
         self.set_slippage(
             VolumeShareSlippage(volume_limit=0.025, price_impact=0.1)
         )
-        
+
         # Add borrow costs for shorts
         self.set_borrow_cost(
             BorrowCost(annual_rate=0.02)
         )
-        
+
         # Add overnight financing
         self.set_overnight_financing(
             OvernightFinancing(annual_rate=0.05)
         )
-        
+
     def handle_data(self, context, data):
         # Place orders - commission and slippage applied automatically
         self.order(self.symbol('AAPL'), 100)

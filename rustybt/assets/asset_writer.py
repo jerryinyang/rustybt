@@ -24,15 +24,17 @@ from rustybt.assets.asset_db_schema import (
     ASSET_DB_VERSION,
     asset_db_table_names,
     asset_router,
+    equity_symbol_mappings,
+    futures_root_symbols,
+    metadata,
+    version_info,
 )
 from rustybt.assets.asset_db_schema import equities as equities_table
 from rustybt.assets.asset_db_schema import (
     equity_supplementary_mappings as equity_supplementary_mappings_table,
 )
-from rustybt.assets.asset_db_schema import equity_symbol_mappings
 from rustybt.assets.asset_db_schema import exchanges as exchanges_table
 from rustybt.assets.asset_db_schema import futures_contracts as futures_contracts_table
-from rustybt.assets.asset_db_schema import futures_root_symbols, metadata, version_info
 from rustybt.errors import AssetDBVersionError
 from rustybt.utils.compat import ExitStack
 from rustybt.utils.preprocess import preprocess
@@ -184,7 +186,7 @@ def split_delimited_symbol(symbol):
     symbol : str
         The possibly-delimited symbol to be split
 
-    Returns
+    Returns:
     -------
     company_symbol : str
         The company part of the symbol.
@@ -231,7 +233,7 @@ def _generate_output_dataframe(data_subset, defaults):
         column name to the default values to insert in the DataFrame if no user
         data is provided
 
-    Returns
+    Returns:
     -------
     DataFrame
         A DataFrame containing all user-provided metadata, and default values
@@ -284,16 +286,14 @@ def _check_symbol_mappings(df, exchanges, asset_exchange):
     asset_exchange : pd.Series
         A series that maps sids to the exchange the asset is in.
 
-    Raises
+    Raises:
     ------
     ValueError
         Raised when there are ambiguous symbol mappings.
     """
     mappings = df.set_index("sid")[list(mapping_columns)].copy()
     try:
-        mappings["country_code"] = exchanges["country_code"][
-            asset_exchange.loc[df["sid"]]
-        ].values
+        mappings["country_code"] = exchanges["country_code"][asset_exchange.loc[df["sid"]]].values
     except KeyError:
         mappings["country_code"] = exchanges.set_index("exchange")["country_code"].loc[
             asset_exchange.loc[df["sid"]].values
@@ -306,7 +306,7 @@ def _check_symbol_mappings(df, exchanges, asset_exchange):
             intersecting_ranges(
                 map(
                     from_tuple,
-                    zip(persymbol.start_date, persymbol.end_date),
+                    zip(persymbol.start_date, persymbol.end_date, strict=False),
                 )
             )
         )
@@ -318,9 +318,7 @@ def _check_symbol_mappings(df, exchanges, asset_exchange):
             msg_component = "\n  ".join(str(data).splitlines())
             ambiguous[persymbol.name] = intersections, msg_component
 
-    mappings.groupby(["symbol", "country_code"], group_keys=False).apply(
-        check_intersections
-    )
+    mappings.groupby(["symbol", "country_code"], group_keys=False).apply(check_intersections)
 
     if ambiguous:
         raise ValueError(
@@ -356,7 +354,7 @@ def _split_symbol_mappings(df, exchanges):
     exchanges : pd.DataFrame
         The exchanges table.
 
-    Returns
+    Returns:
     -------
     asset_info : pd.DataFrame
         The asset info with one row per asset.
@@ -372,10 +370,7 @@ def _split_symbol_mappings(df, exchanges):
 
     # take the most recent sid->exchange mapping based on end date
     asset_exchange = (
-        df[["exchange", "end_date"]]
-        .sort_values("end_date")
-        .groupby(level=0)["exchange"]
-        .nth(-1)
+        df[["exchange", "end_date"]].sort_values("end_date").groupby(level=0)["exchange"].nth(-1)
     )
 
     _check_symbol_mappings(mappings, exchanges, asset_exchange)
@@ -393,7 +388,7 @@ def _dt_to_epoch_ns(dt_series: pd.Series) -> pd.Index:
     dt_series : pd.Series
         The timeseries to convert.
 
-    Returns
+    Returns:
     -------
     idx : pd.Index
         The index converted to nanoseconds since the epoch.
@@ -419,7 +414,7 @@ def check_version_info(conn, version_table, expected_version: int):
     expected_version : int
         The expected version of the asset database
 
-    Raises
+    Raises:
     ------
     AssetDBVersionError
         If the version is in the table and not equal to ASSET_DB_VERSION.
@@ -433,9 +428,7 @@ def check_version_info(conn, version_table, expected_version: int):
 
     # Raise an error if the versions do not match
     if version_from_table != expected_version:
-        raise AssetDBVersionError(
-            db_version=version_from_table, expected_version=expected_version
-        )
+        raise AssetDBVersionError(db_version=version_from_table, expected_version=expected_version)
 
 
 def write_version_info(conn, version_table, version_value):
@@ -780,15 +773,13 @@ class AssetDBWriter:
             If you have compiled sqlite3 with more bind or less params you may
             want to pass that value here.
 
-        See Also
+        See Also:
         --------
         zipline.assets.asset_finder
         """
         if exchanges is None:
             exchange_names = [
-                df["exchange"]
-                for df in (equities, futures, root_symbols)
-                if df is not None
+                df["exchange"] for df in (equities, futures, root_symbols) if df is not None
             ]
             if exchange_names:
                 exchanges = pd.DataFrame(
@@ -883,7 +874,7 @@ class AssetDBWriter:
         txn : Transaction
             The open transaction to check in.
 
-        Returns
+        Returns:
         -------
         has_tables : bool
             True if any tables are present, otherwise False.
@@ -904,7 +895,7 @@ class AssetDBWriter:
             The transaction block to execute in. If this is not provided, a new
             transaction will be started with the engine provided.
 
-        Returns
+        Returns:
         -------
         metadata : sa.MetaData
             The metadata that describes the new assets db.
@@ -987,9 +978,7 @@ class AssetDBWriter:
 
         return mappings_output
 
-    def _load_data(
-        self, equities, futures, exchanges, root_symbols, equity_supplementary_mappings
-    ):
+    def _load_data(self, equities, futures, exchanges, root_symbols, equity_supplementary_mappings):
         """
         Returns a standard set of pandas.DataFrames:
         equities, futures, exchanges, root_symbols
@@ -1005,10 +994,8 @@ class AssetDBWriter:
 
         futures_output = self._normalize_futures(futures)
 
-        equity_supplementary_mappings_output = (
-            self._normalize_equity_supplementary_mappings(
-                equity_supplementary_mappings,
-            )
+        equity_supplementary_mappings_output = self._normalize_equity_supplementary_mappings(
+            equity_supplementary_mappings,
         )
 
         exchanges_output = _generate_output_dataframe(

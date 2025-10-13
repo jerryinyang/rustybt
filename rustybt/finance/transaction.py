@@ -33,7 +33,7 @@ class Transaction:
         return self.__dict__[name]
 
     def __repr__(self):
-        template = "{cls}(asset={asset}, dt={dt}," " amount={amount}, price={price})"
+        template = "{cls}(asset={asset}, dt={dt}, amount={amount}, price={price})"
 
         return template.format(
             cls=type(self).__name__,
@@ -60,7 +60,6 @@ class Transaction:
 
 
 def create_transaction(order, dt, price, amount):
-
     # floor the amount to protect against non-whole number orders
     # TODO: Investigate whether we can add a robust check in blotter
     # and/or tradesimulation, as well.

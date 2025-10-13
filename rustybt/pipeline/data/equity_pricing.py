@@ -2,7 +2,7 @@
 Dataset representing OHLCV data.
 """
 
-from rustybt.utils.numpy_utils import float64_dtype, categorical_dtype
+from rustybt.utils.numpy_utils import categorical_dtype, float64_dtype
 
 from ..domain import US_EQUITIES
 from .dataset import Column, DataSet

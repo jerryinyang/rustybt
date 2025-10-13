@@ -1,9 +1,9 @@
 from .classifier import (
     Classifier,
     CustomClassifier,
-    Quantiles,
     Everything,
     Latest,
+    Quantiles,
 )
 
 __all__ = [

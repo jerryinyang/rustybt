@@ -14,12 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy
 from pathlib import Path
-from Cython.Build import cythonize
-from setuptools import Extension, setup  # noqa: E402
-from setuptools_rust import Binding, RustExtension
 
+import numpy
+from Cython.Build import cythonize
+from setuptools import Extension, setup
+from setuptools_rust import Binding, RustExtension
 
 ROOT_DIR = Path(__file__).parent.resolve()
 
@@ -34,10 +34,10 @@ def window_specialization(typename):
     )
 
 
-ext_options = dict(
-    compiler_directives=dict(profile=True, language_level="3"),
-    annotate=True,
-)
+ext_options = {
+    "compiler_directives": {"profile": True, "language_level": "3"},
+    "annotate": True,
+}
 ext_modules = [
     Extension(
         name="rustybt.assets._assets",

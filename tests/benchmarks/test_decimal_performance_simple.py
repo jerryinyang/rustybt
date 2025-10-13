@@ -4,30 +4,32 @@ These tests verify that operations complete within reasonable time limits
 and provide basic performance metrics without requiring pytest-benchmark.
 """
 
-import pytest
-import polars as pl
 import tempfile
 import time
-from pathlib import Path
-from decimal import Decimal
 from datetime import date, timedelta
+from decimal import Decimal
+from pathlib import Path
+
 import pandas as pd
+import polars as pl
+import pytest
 
 from rustybt.data.bundles.csvdir import convert_csv_to_decimal_parquet
-from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader
-from rustybt.data.polars.data_portal import PolarsDataPortal
 from rustybt.data.decimal_adjustments import (
-    apply_split_adjustment,
     apply_dividend_adjustment,
+    apply_split_adjustment,
 )
+from rustybt.data.polars.data_portal import PolarsDataPortal
+from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader
 from rustybt.pipeline.factors.decimal_factors import (
-    DecimalSimpleMovingAverage,
     DecimalReturns,
+    DecimalSimpleMovingAverage,
 )
 
 
 class MockAsset:
     """Mock Asset for performance testing."""
+
     def __init__(self, sid, symbol="TEST"):
         self.sid = sid
         self.symbol = symbol
@@ -75,11 +77,7 @@ def small_bundle():
         daily_bars_path.mkdir()
 
         parquet_path = daily_bars_path / "data.parquet"
-        convert_csv_to_decimal_parquet(
-            str(csv_path),
-            str(parquet_path),
-            "crypto"
-        )
+        convert_csv_to_decimal_parquet(str(csv_path), str(parquet_path), "crypto")
 
         yield bundle_path
 
@@ -98,11 +96,7 @@ def large_bundle():
         daily_bars_path.mkdir()
 
         parquet_path = daily_bars_path / "data.parquet"
-        convert_csv_to_decimal_parquet(
-            str(csv_path),
-            str(parquet_path),
-            "crypto"
-        )
+        convert_csv_to_decimal_parquet(str(csv_path), str(parquet_path), "crypto")
 
         yield bundle_path
 
@@ -120,11 +114,7 @@ class TestDataLoadingPerformance:
             parquet_path = Path(tmpdir) / "test.parquet"
 
             start = time.time()
-            result = convert_csv_to_decimal_parquet(
-                str(csv_path),
-                str(parquet_path),
-                "crypto"
-            )
+            result = convert_csv_to_decimal_parquet(str(csv_path), str(parquet_path), "crypto")
             elapsed = time.time() - start
 
             print(f"\nCSV Ingestion (5K rows): {elapsed:.3f}s")
@@ -137,9 +127,7 @@ class TestDataLoadingPerformance:
 
         start = time.time()
         df = reader.load_daily_bars(
-            sids=list(range(1, 101)),
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=list(range(1, 101)), start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
         elapsed = time.time() - start
 
@@ -156,10 +144,7 @@ class TestDataLoadingPerformance:
 
         start = time.time()
         prices = portal.get_spot_value(
-            assets=assets,
-            field="close",
-            dt=pd.Timestamp("2023-02-15"),
-            data_frequency="daily"
+            assets=assets, field="close", dt=pd.Timestamp("2023-02-15"), data_frequency="daily"
         )
         elapsed = time.time() - start
 
@@ -181,7 +166,7 @@ class TestDataLoadingPerformance:
             bar_count=20,
             frequency="1d",
             field="close",
-            data_frequency="daily"
+            data_frequency="daily",
         )
         elapsed = time.time() - start
 
@@ -197,9 +182,7 @@ class TestAdjustmentPerformance:
         """Test split adjustment performance on large dataset."""
         reader = PolarsParquetDailyReader(str(large_bundle))
         df = reader.load_daily_bars(
-            sids=[1],
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=[1], start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         prices = df["close"]
@@ -217,9 +200,7 @@ class TestAdjustmentPerformance:
         """Test dividend adjustment performance on large dataset."""
         reader = PolarsParquetDailyReader(str(large_bundle))
         df = reader.load_daily_bars(
-            sids=[1],
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=[1], start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         prices = df["close"]
@@ -237,9 +218,7 @@ class TestAdjustmentPerformance:
         """Test chained adjustments performance."""
         reader = PolarsParquetDailyReader(str(large_bundle))
         df = reader.load_daily_bars(
-            sids=[1],
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=[1], start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         prices = df["close"]
@@ -263,9 +242,7 @@ class TestPipelineFactorPerformance:
         """Test SMA calculation performance."""
         reader = PolarsParquetDailyReader(str(large_bundle))
         df = reader.load_daily_bars(
-            sids=[1],
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=[1], start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         factor = DecimalSimpleMovingAverage(window_length=20)
@@ -282,9 +259,7 @@ class TestPipelineFactorPerformance:
         """Test returns calculation performance."""
         reader = PolarsParquetDailyReader(str(large_bundle))
         df = reader.load_daily_bars(
-            sids=[1],
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=[1], start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         factor = DecimalReturns(window_length=1)
@@ -301,17 +276,15 @@ class TestPipelineFactorPerformance:
         """Test multiple factor calculations performance."""
         reader = PolarsParquetDailyReader(str(large_bundle))
         df = reader.load_daily_bars(
-            sids=[1],
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=[1], start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         start = time.time()
         # Calculate multiple factors
         sma_20 = DecimalSimpleMovingAverage(window_length=20).compute(df)
-        sma_50 = DecimalSimpleMovingAverage(window_length=50).compute(df)
-        returns_1d = DecimalReturns(window_length=1).compute(df)
-        returns_5d = DecimalReturns(window_length=5).compute(df)
+        DecimalSimpleMovingAverage(window_length=50).compute(df)
+        DecimalReturns(window_length=1).compute(df)
+        DecimalReturns(window_length=5).compute(df)
         elapsed = time.time() - start
 
         print(f"\nMulti-Factor Calculation (4 factors, 252 rows): {elapsed:.4f}s")
@@ -339,11 +312,7 @@ class TestEndToEndPerformance:
             start = time.time()
 
             # 1. Ingest
-            convert_csv_to_decimal_parquet(
-                str(csv_path),
-                str(parquet_path),
-                "crypto"
-            )
+            convert_csv_to_decimal_parquet(str(csv_path), str(parquet_path), "crypto")
 
             # 2. Create reader and portal
             reader = PolarsParquetDailyReader(str(bundle_path))
@@ -357,14 +326,11 @@ class TestEndToEndPerformance:
                 bar_count=20,
                 frequency="1d",
                 field="close",
-                data_frequency="daily"
+                data_frequency="daily",
             )
 
             # 4. Apply adjustment
-            adjusted = apply_split_adjustment(
-                history["close"],
-                Decimal("2.0")
-            )
+            adjusted = apply_split_adjustment(history["close"], Decimal("2.0"))
 
             # 5. Calculate factor
             factor_df = history.with_columns(close=adjusted)
@@ -386,25 +352,25 @@ class TestMemoryUsage:
 
         # Load as Decimal
         df_decimal = reader.load_daily_bars(
-            sids=list(range(1, 101)),
-            start_date=date(2023, 1, 1),
-            end_date=date(2023, 12, 31)
+            sids=list(range(1, 101)), start_date=date(2023, 1, 1), end_date=date(2023, 12, 31)
         )
 
         # Convert to float64
-        df_float = df_decimal.with_columns([
-            pl.col("open").cast(pl.Float64),
-            pl.col("high").cast(pl.Float64),
-            pl.col("low").cast(pl.Float64),
-            pl.col("close").cast(pl.Float64),
-            pl.col("volume").cast(pl.Float64),
-        ])
+        df_float = df_decimal.with_columns(
+            [
+                pl.col("open").cast(pl.Float64),
+                pl.col("high").cast(pl.Float64),
+                pl.col("low").cast(pl.Float64),
+                pl.col("close").cast(pl.Float64),
+                pl.col("volume").cast(pl.Float64),
+            ]
+        )
 
         decimal_size = df_decimal.estimated_size()
         float_size = df_float.estimated_size()
         overhead_pct = ((decimal_size - float_size) / float_size) * 100
 
-        print(f"\nMemory Usage:")
+        print("\nMemory Usage:")
         print(f"  Decimal: {decimal_size / 1024 / 1024:.2f} MB")
         print(f"  Float64: {float_size / 1024 / 1024:.2f} MB")
         print(f"  Overhead: {overhead_pct:.1f}%")

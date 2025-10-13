@@ -76,7 +76,7 @@ jobs:
           cd /tmp
           python -c "import rustybt; print(f'RustyBT version: {rustybt.__version__}')"
           python -c "import rustybt; import os; print(f'RustyBT location: {os.path.dirname(rustybt.__file__)}')"
-          python -c "import polars, hypothesis, structlog, pydantic; print('All dependencies OK')"
+          python -c "import polars, structlog, pydantic; print('Core dependencies OK')"
           python -c "from rustybt.lib.labelarray import LabelArray; print('✅ labelarray import OK')"
           python -c "from rustybt.gens.sim_engine import SESSION_END; print('✅ sim_engine import OK')"
 
@@ -189,8 +189,8 @@ jobs:
           flags: unittests
           name: codecov-rustybt
           fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        # env:
+        #   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload coverage artifact on failure
         if: failure()

@@ -1,24 +1,21 @@
 #!/usr/bin/env python
-#
-# Copyright 2014 Quantopian, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+"""
+Minimal setup.py for building Cython and Rust extensions.
+
+This file is kept separate from package metadata (now in pyproject.toml) to handle
+extension building which is not yet fully supported in pure pyproject.toml.
+
+Architecture:
+- Package metadata, dependencies, scripts: pyproject.toml
+- Extension building (Cython, Rust): This file
+- Package discovery: Explicit configuration in pyproject.toml
+"""
 
 from pathlib import Path
 
 import numpy
 from Cython.Build import cythonize
-from setuptools import Extension, find_packages, setup
+from setuptools import Extension
 from setuptools_rust import Binding, RustExtension
 
 ROOT_DIR = Path(__file__).parent.resolve()
@@ -34,11 +31,19 @@ def window_specialization(typename):
     )
 
 
+# Cython compiler options
 ext_options = {
-    "compiler_directives": {"profile": True, "language_level": "3"},
+    "compiler_directives": {
+        "profile": True,
+        "language_level": "3",
+        "embedsignature": True,
+    },
     "annotate": True,
 }
+
+# Define all Cython extensions
 ext_modules = [
+    # Assets
     Extension(
         name="rustybt.assets._assets",
         sources=["rustybt/assets/_assets.pyx"],
@@ -49,6 +54,7 @@ ext_modules = [
         sources=["rustybt/assets/continuous_futures.pyx"],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
     ),
+    # Lib
     Extension(
         name="rustybt.lib.adjustment",
         sources=["rustybt/lib/adjustment.pyx"],
@@ -61,7 +67,6 @@ ext_modules = [
     ),
     window_specialization("float64"),
     window_specialization("int64"),
-    window_specialization("int64"),
     window_specialization("uint8"),
     window_specialization("label"),
     Extension(
@@ -69,6 +74,7 @@ ext_modules = [
         sources=["rustybt/lib/rank.pyx"],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
     ),
+    # Data
     Extension(
         name="rustybt.data._equities",
         sources=["rustybt/data/_equities.pyx"],
@@ -77,21 +83,6 @@ ext_modules = [
     Extension(
         name="rustybt.data._adjustments",
         sources=["rustybt/data/_adjustments.pyx"],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
-    ),
-    Extension(
-        name="rustybt._protocol",
-        sources=["rustybt/_protocol.pyx"],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
-    ),
-    Extension(
-        name="rustybt.finance._finance_ext",
-        sources=["rustybt/finance/_finance_ext.pyx"],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
-    ),
-    Extension(
-        name="rustybt.gens.sim_engine",
-        sources=["rustybt/gens/sim_engine.pyx"],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
     ),
     Extension(
@@ -104,22 +95,66 @@ ext_modules = [
         sources=["rustybt/data/_resample.pyx"],
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
     ),
+    # Protocol
+    Extension(
+        name="rustybt._protocol",
+        sources=["rustybt/_protocol.pyx"],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+    ),
+    # Finance
+    Extension(
+        name="rustybt.finance._finance_ext",
+        sources=["rustybt/finance/_finance_ext.pyx"],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+    ),
+    # Gens (simulation engine)
+    Extension(
+        name="rustybt.gens.sim_engine",
+        sources=["rustybt/gens/sim_engine.pyx"],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+    ),
 ]
-# for ext_module in ext_modules:
-#     ext_module.cython_directives = dict(language_level="3")
 
-setup(
-    packages=find_packages(exclude=["tests*", "deps*", "docs*", ".bmad-core*"]),
-    use_scm_version=True,
-    ext_modules=cythonize(ext_modules, **ext_options),
-    rust_extensions=[
-        RustExtension(
-            "rustybt._rustybt",
-            path=str(ROOT_DIR / "rust" / "crates" / "rustybt" / "Cargo.toml"),
-            binding=Binding.PyO3,
-            debug=False,
-        )
-    ],
-    include_dirs=[numpy.get_include()],
-    zip_safe=False,
-)
+
+def build(setup_kwargs):
+    """
+    This function is called by the build backend.
+    It adds extension modules to the build configuration.
+    """
+    setup_kwargs.update(
+        {
+            "ext_modules": cythonize(ext_modules, **ext_options),
+            "rust_extensions": [
+                RustExtension(
+                    "rustybt._rustybt",
+                    path=str(ROOT_DIR / "rust" / "crates" / "rustybt" / "Cargo.toml"),
+                    binding=Binding.PyO3,
+                    debug=False,
+                )
+            ],
+            "include_dirs": [numpy.get_include()],
+            "zip_safe": False,
+        }
+    )
+
+
+# For compatibility with older build systems that might still call setup.py directly
+if __name__ == "__main__":
+    from setuptools import find_packages, setup
+
+    setup(
+        packages=find_packages(
+            where=".", include=["rustybt*"], exclude=["tests*", "deps*", "docs*", ".bmad-core*"]
+        ),
+        ext_modules=cythonize(ext_modules, **ext_options),
+        rust_extensions=[
+            RustExtension(
+                "rustybt._rustybt",
+                path=str(ROOT_DIR / "rust" / "crates" / "rustybt" / "Cargo.toml"),
+                binding=Binding.PyO3,
+                debug=False,
+            )
+        ],
+        include_dirs=[numpy.get_include()],
+        zip_safe=False,
+    )

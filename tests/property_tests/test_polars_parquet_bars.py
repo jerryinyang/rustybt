@@ -16,7 +16,8 @@ from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 # Import the modules we're testing so the coverage script can detect them
-from rustybt.data.polars import parquet_daily_bars, parquet_minute_bars
+import rustybt.data.polars.parquet_daily_bars
+import rustybt.data.polars.parquet_minute_bars
 
 
 class TestParquetMinuteBarsProperties:

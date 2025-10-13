@@ -2,6 +2,30 @@
 
 ## [Unreleased]
 
+### Fixed - CI/CD Build System and Package Discovery (2025-10-13)
+- **Critical Fix**: Resolved CI smoke test failures where Cython extensions failed to import after installation
+  - Root cause: Package discovery not explicitly including all `rustybt*` subpackages
+  - Added explicit `include=['rustybt*']` in both `pyproject.toml` and `setup.py`
+  - Enhanced `MANIFEST.in` to include all Cython source files (`.pyx`, `.pxd`, `.pxi`)
+  - Added compiled extension inclusion (`*.so`, `*.pyd`) in package data
+- **Build System Modernization**:
+  - Upgraded to `setuptools>=64.0.0` for better PEP 517/660 support
+  - Upgraded to `setuptools_scm>=8.0` for improved pyproject.toml integration
+  - Cleaned up build-system requirements, removed unused commented lines
+  - Preserved backwards compatibility with existing build process
+- **CI Improvements**:
+  - Added comprehensive package verification step in smoke test workflow
+  - Verification checks installed package structure, compiled extensions, and critical imports
+  - Improved diagnostic output for debugging installation issues
+- **Documentation**:
+  - Created comprehensive CI/CD blocking issues analysis (`docs/pr/2025-10-13-CI-BLOCKING-dependency-issues.md`)
+  - Created solutions proposal document (`docs/pr/2025-10-13-CI-BLOCKING-solutions-proposal.md`)
+  - Documented all attempted solutions and implementation decisions
+- **Dependency Management**: Earlier fixes (already applied)
+  - Fixed numpy/numexpr version conflicts for Python 3.12/3.13
+  - Corrected Python version classifiers to match `requires-python='>=3.12'`
+  - Version-specific numexpr constraints aligned with numpy versions
+
 ### Fixed - Missing Cython Source Files and Test Coverage
 - **Critical Fix**: Added 9 missing Cython source files in `rustybt/lib/` that were previously untracked
   - `adjustment.pyx`, `adjustment.pxd` (1,054 lines) - Corporate action adjustments

@@ -951,10 +951,11 @@ python -m rustybt test-broker --broker binance --testnet
 ### Step 6: Test Data Ingestion
 
 ```bash
-# Test data fetch from yfinance
-python -m rustybt fetch-data --source yfinance --symbols AAPL,MSFT --start 2024-01-01
+# Test data connectivity with yfinance
+python -m rustybt test-data --source yfinance --symbol AAPL
+python -m rustybt test-data --source yfinance --symbol MSFT
 
-# Verify data downloaded successfully
+# Verify data source is accessible
 ```
 
 ### Step 7: Run Paper Trading Validation

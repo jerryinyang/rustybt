@@ -9,7 +9,6 @@ edit_uri: edit/main/docs/
 
 # Exclude files not meant for the documentation site
 not_in_nav: |
-  INDEX.md
   architecture.md
   prd.md
   experiments.md

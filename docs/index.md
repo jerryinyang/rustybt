@@ -23,7 +23,7 @@ Start here if you're new to RustyBT:
 - 📚 [User Guides](#user-guides)
 - 💡 [Examples](#examples)
 - 🏗️ [Architecture](#architecture-documentation)
-- 📋 [Stories & PRD](#stories--prd)
+- 📋 [Stories & PRD](#-stories-prd)
 
 ---
 

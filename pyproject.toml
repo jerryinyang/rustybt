@@ -93,9 +93,9 @@ dependencies = [
 ]
 
 [project.urls]
-homepage = 'https://ml4trading.io'
-repository = 'https://github.com/stefan-jansen/zipline-reloaded'
-documentation = 'https://zipline.ml4trading.io'
+homepage = 'https://github.com/jerryinyang/rustybt'
+repository = 'https://github.com/jerryinyang/rustybt'
+documentation = 'https://jerryinyang.github.io/rustybt/'
 
 [build-system]
 requires = [

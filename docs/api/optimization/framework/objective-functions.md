@@ -35,51 +35,6 @@ def objective_function(params):
 
 ### Complete Example
 
-```python
-from decimal import Decimal
-from rustybt import run_algorithm
-from rustybt.finance import PerformanceAnalyzer
-import structlog
-
-logger = structlog.get_logger()
-
-def robust_objective_function(params):
-    """
-    Robust objective function with error handling.
-    """
-    try:
-        # Run backtest
-        result = run_algorithm(
-            algorithm_class=MyStrategy,
-            algorithm_params=params,
-            start=pd.Timestamp('2020-01-01'),
-            end=pd.Timestamp('2023-12-31'),
-            capital_base=100000
-        )
-
-        # Validate result
-        if result is None or len(result) == 0:
-            logger.warning("empty_result", params=params)
-            return Decimal('-Infinity')
-
-        # Calculate metrics
-        analyzer = PerformanceAnalyzer(result)
-        metrics = analyzer.calculate_metrics()
-
-        # Validate metrics
-        if metrics['num_trades'] < 30:
-            logger.warning("insufficient_trades", count=metrics['num_trades'])
-            return Decimal('-Infinity')
-
-        # Return score
-        sharpe = metrics['sharpe_ratio']
-        return Decimal(str(sharpe))
-
-    except Exception as e:
-        logger.error("backtest_failed", params=params, error=str(e))
-        return Decimal('-Infinity')
-```
-
 ## Metric Selection
 
 ### Common Metrics
@@ -390,25 +345,6 @@ def robust_objective(params):
 ### Multi-Objective Optimization
 
 Optimize multiple objectives simultaneously:
-
-```python
-from rustybt.optimization import MultiObjectiveOptimizer
-
-def multi_objective_function(params):
-    result = run_backtest(params)
-
-    return {
-        'sharpe': calculate_sharpe(result),
-        'sortino': calculate_sortino(result),
-        'max_drawdown': -abs(calculate_max_drawdown(result))  # Negative = minimize
-    }
-
-# Pareto frontier optimization
-optimizer = MultiObjectiveOptimizer(
-    objective_function=multi_objective_function,
-    parameter_space=param_space
-)
-```
 
 ### Time-Weighted Objectives
 

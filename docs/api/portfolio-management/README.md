@@ -62,7 +62,7 @@ RustyBT provides comprehensive portfolio management for tracking:
 ### Access Portfolio in Strategy
 
 ```python
-from rustybt import TradingAlgorithm
+from rustybt.algorithm import TradingAlgorithm
 
 class MyStrategy(TradingAlgorithm):
     def handle_data(self, context, data):

@@ -427,18 +427,6 @@ ga = GeneticAlgorithm(
 
 Multiple populations evolving independently with migration:
 
-```python
-from rustybt.optimization.search import IslandGeneticAlgorithm
-
-island_ga = IslandGeneticAlgorithm(
-    parameter_space=param_space,
-    n_islands=4,
-    population_per_island=25,
-    migration_rate=0.1,  # 10% migrate every N generations
-    migration_frequency=10
-)
-```
-
 ## Best Practices
 
 ### 1. Start with Standard Settings

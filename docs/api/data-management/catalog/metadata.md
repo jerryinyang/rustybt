@@ -19,26 +19,13 @@ Bundle metadata tracks data quality, lineage, and versioning information.
 ## Querying Metadata
 
 ```python
-from rustybt.data.bundles.metadata import BundleMetadata
-
-# Get metadata
-metadata = BundleMetadata.get('my_bundle')
-
-# Check quality
-if metadata['validation_passed']:
-    print("Data quality OK")
-else:
-    print(f"Issues: {metadata['ohlcv_violations']} violations")
+# Code example removed - API does not exist
 ```
 
 ## Updating Metadata
 
 ```python
-BundleMetadata.update(
-    'my_bundle',
-    data_version='2.0',
-    custom_field='custom_value'
-)
+# Code example removed - API does not exist
 ```
 
 ## See [Catalog Overview](overview.md) for complete guide.

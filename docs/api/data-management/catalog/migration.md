@@ -63,15 +63,4 @@ clean('my_bundle', keep_last=0)  # Remove all
 
 ## Automated Migration
 
-```python
-from rustybt.data.bundles.migration import migrate_to_parquet
-
-# Migrate existing bundle
-migrate_to_parquet(
-    source_bundle='my_old_bundle',
-    target_bundle='my_new_bundle',
-    remove_source=False  # Keep source for safety
-)
-```
-
 ## See [Catalog Overview](overview.md) for more details.

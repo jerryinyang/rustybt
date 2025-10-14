@@ -55,12 +55,12 @@ RustyBT provides a sophisticated order management system for backtesting and liv
 ### Basic Market Order
 
 ```python
-from rustybt import TradingAlgorithm
+from rustybt.algorithm import TradingAlgorithm
 from rustybt.api import order, symbol
 
 class SimpleStrategy(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('AAPL')
+        context.asset = self.symbol('AAPL')
 
     def handle_data(self, context, data):
         # Place market order for 100 shares

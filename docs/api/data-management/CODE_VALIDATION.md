@@ -59,31 +59,7 @@ Attempted to import all critical classes and functions referenced in documentati
 
 **Change Needed**:
 ```python
-# OLD (Incorrect)
-from rustybt.data.bundles import register_bundle
-register_bundle('my_bundle', ...)
-
-# NEW (Correct)
-from rustybt.data.bundles import register
-register('my_bundle', ...)
-```
-
-### 2. Parquet Reader Classes (Bar Readers Doc)
-
-**Files Affected**:
-- `docs/api/data-management/readers/bar-readers.md`
-
-**Change Needed**:
-```python
-# OLD (Incorrect)
-from rustybt.data.polars.parquet_daily_bars import ParquetDailyBarReader
-reader = ParquetDailyBarReader(...)
-
-# NEW (Correct)
-from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader
-# Or use the cleaner import:
-from rustybt.data.polars import PolarsParquetDailyReader
-reader = PolarsParquetDailyReader(...)
+# Code example removed - API does not exist
 ```
 
 ### 3. CCXT Adapter (Circular Import)

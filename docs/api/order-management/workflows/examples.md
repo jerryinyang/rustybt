@@ -17,12 +17,12 @@ This guide demonstrates real-world order management patterns including:
 ### Simple Buy and Hold
 
 ```python
-from rustybt import TradingAlgorithm
+from rustybt.algorithm import TradingAlgorithm
 from rustybt.api import order, symbol
 
 class BuyAndHold(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('SPY')
+        context.asset = self.symbol('SPY')
         context.ordered = False
 
     def handle_data(self, context, data):
@@ -40,7 +40,7 @@ from rustybt.finance.execution import LimitOrder
 
 class MeanReversion(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('AAPL')
+        context.asset = self.symbol('AAPL')
         context.lookback = 20
 
     def handle_data(self, context, data):
@@ -76,7 +76,7 @@ from rustybt.finance.execution import MarketOrder, StopOrder
 
 class StopLossStrategy(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('AAPL')
+        context.asset = self.symbol('AAPL')
         context.entry_price = None
         context.stop_loss_pct = 0.05  # 5% stop
 
@@ -107,7 +107,7 @@ from rustybt.finance.execution import BracketOrder, MarketOrder
 
 class BracketStrategy(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('TSLA')
+        context.asset = self.symbol('TSLA')
         context.risk_reward_ratio = 2.0  # 2:1 reward:risk
 
     def handle_data(self, context, data):
@@ -150,7 +150,7 @@ from rustybt.api import get_open_orders, cancel_order
 
 class TrailingStopStrategy(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('AAPL')
+        context.asset = self.symbol('AAPL')
         context.entry_price = None
         context.profit_threshold = 0.05  # 5% profit to activate trailing
         context.trail_percent = 0.03     # 3% trail
@@ -193,7 +193,7 @@ class TrailingStopStrategy(TradingAlgorithm):
 ```python
 class FixedDollarPosition(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('SPY')
+        context.asset = self.symbol('SPY')
         context.target_position_value = 10000  # $10,000 per position
 
     def handle_data(self, context, data):
@@ -215,7 +215,7 @@ class FixedDollarPosition(TradingAlgorithm):
 ```python
 class PercentagePosition(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('QQQ')
+        context.asset = self.symbol('QQQ')
         context.target_pct = 0.10  # 10% of portfolio
 
     def handle_data(self, context, data):
@@ -240,7 +240,7 @@ import numpy as np
 
 class KellyPosition(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('AAPL')
+        context.asset = self.symbol('AAPL')
         context.win_rate = 0.55      # 55% win rate
         context.avg_win = 0.10       # 10% average win
         context.avg_loss = 0.05      # 5% average loss
@@ -283,7 +283,7 @@ from rustybt.finance.execution import LimitOrder
 
 class MonitoringStrategy(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('AAPL')
+        context.asset = self.symbol('AAPL')
         context.order_timeout_bars = 5
         context.order_timestamps = {}
 
@@ -315,7 +315,7 @@ from rustybt.finance.order import ORDER_STATUS
 
 class PartialFillHandler(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('AAPL')
+        context.asset = self.symbol('AAPL')
         context.min_fill_pct = 0.75  # Require 75% fill
 
     def handle_data(self, context, data):
@@ -347,8 +347,8 @@ class PartialFillHandler(TradingAlgorithm):
 ```python
 class PairsTrading(TradingAlgorithm):
     def initialize(self, context):
-        context.asset1 = symbol('PEP')
-        context.asset2 = symbol('KO')
+        context.asset1 = self.symbol('PEP')
+        context.asset2 = self.symbol('KO')
         context.lookback = 30
         context.entry_zscore = 2.0
         context.exit_zscore = 0.5
@@ -394,10 +394,10 @@ class Rebalancing(TradingAlgorithm):
     def initialize(self, context):
         # Define target portfolio weights
         context.target_weights = {
-            symbol('SPY'): 0.40,   # 40% S&P 500
-            symbol('QQQ'): 0.30,   # 30% Nasdaq
-            symbol('IWM'): 0.20,   # 20% Small cap
-            symbol('TLT'): 0.10,   # 10% Bonds
+            self.symbol('SPY'): 0.40,   # 40% S&P 500
+            self.symbol('QQQ'): 0.30,   # 30% Nasdaq
+            self.symbol('IWM'): 0.20,   # 20% Small cap
+            self.symbol('TLT'): 0.10,   # 10% Bonds
         }
         context.rebalance_frequency = 21  # Monthly (trading days)
         context.days_since_rebalance = 0
@@ -440,7 +440,7 @@ class Rebalancing(TradingAlgorithm):
 ```python
 class ScaleIn(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('AAPL')
+        context.asset = self.symbol('AAPL')
         context.total_target = 300      # Total position target
         context.scale_increments = 3    # Number of entries
         context.scale_interval = 5      # Days between entries
@@ -475,7 +475,7 @@ class ScaleIn(TradingAlgorithm):
 ```python
 class ScaleOut(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('AAPL')
+        context.asset = self.symbol('AAPL')
         context.profit_levels = [0.05, 0.10, 0.15]  # 5%, 10%, 15% profit
         context.scale_percentages = [0.33, 0.33, 0.34]  # Scale out portions
         context.entry_price = None
@@ -523,7 +523,7 @@ from rustybt.finance.order import ORDER_STATUS
 
 class RobustOrdering(TradingAlgorithm):
     def initialize(self, context):
-        context.asset = symbol('AAPL')
+        context.asset = self.symbol('AAPL')
         context.max_retries = 3
         context.retry_count = {}
 

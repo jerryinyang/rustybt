@@ -9,7 +9,6 @@ RustyBT supports a comprehensive range of order types for both simple and sophis
 - **Basic Orders**: Market, Limit, Stop, Stop-Limit
 - **Advanced Orders**: Trailing Stop, OCO (One-Cancels-Other), Bracket
 - **Time-in-Force**: GTC, GTD, IOC, FOK
-- **Algorithmic Orders**: TWAP, VWAP, Iceberg (broker-dependent)
 
 ## Order Anatomy
 
@@ -327,91 +326,6 @@ bracket_style = BracketOrder(
 # Example: (108 - 98) / (98 - 93) = 10 / 5 = 2:1 ratio
 ```
 
-## Algorithmic Order Types
-
-### TWAP (Time-Weighted Average Price)
-
-Execute order evenly over specified time period.
-
-**Use Case**: Large orders in liquid markets to minimize market impact.
-
-**Example**:
-```python
-from rustybt.finance.execution import TWAPOrder
-import pandas as pd
-
-# Execute 1000 shares over 30 minutes
-twap_style = TWAPOrder(
-    end_dt=pd.Timestamp.now() + pd.Timedelta(minutes=30),
-    participation_rate=0.10  # 10% of volume
-)
-
-order(asset, 1000, style=twap_style)
-```
-
-**Behavior**:
-- ⏱️ Breaks order into time-based slices
-- 📊 Executes evenly regardless of volume
-- ✅ Predictable execution
-- ❌ May not complete if insufficient liquidity
-
-**Note**: TWAP execution requires broker support in live trading.
-
-### VWAP (Volume-Weighted Average Price)
-
-Execute order proportional to market volume.
-
-**Use Case**: Large orders following market volume profile.
-
-**Example**:
-```python
-from rustybt.finance.execution import VWAPOrder
-
-# Execute proportional to volume over next 4 hours
-vwap_style = VWAPOrder(
-    end_dt=pd.Timestamp.now() + pd.Timedelta(hours=4),
-    max_volume_participation=0.10  # Max 10% per bar
-)
-
-order(asset, 5000, style=vwap_style)
-```
-
-**Behavior**:
-- 📊 Follows volume profile
-- ✅ Minimizes market impact
-- ⚡ More aggressive in high-volume periods
-- ⏱️ Slower in low-volume periods
-
-**Note**: VWAP execution requires broker support and volume data.
-
-### Iceberg Order
-
-Display only portion of total order size to market.
-
-**Use Case**: Hide large order intent from market participants.
-
-**Example**:
-```python
-from rustybt.finance.execution import IcebergOrder
-
-# Buy 1000 shares, showing only 100 at a time
-iceberg_style = IcebergOrder(
-    total_quantity=1000,
-    display_quantity=100,
-    limit_price=100.0
-)
-
-order(asset, 1000, style=iceberg_style)
-```
-
-**Behavior**:
-- 👁️ Only display_quantity visible to market
-- 🔄 Automatically replenishes as fills occur
-- ✅ Reduces market impact
-- 🔒 Hides trading intent
-
-**Note**: Iceberg orders require broker support and may not be available on all exchanges.
-
 ## Time-in-Force Instructions
 
 Control how long order remains active.
@@ -510,7 +424,7 @@ def handle_data(self, context, data):
 ## Complete Strategy Example
 
 ```python
-from rustybt import TradingAlgorithm
+from rustybt.algorithm import TradingAlgorithm
 from rustybt.api import order, symbol, get_open_orders, cancel_order
 from rustybt.finance.execution import (
     MarketOrder, LimitOrder, StopOrder, BracketOrder, TrailingStopOrder
@@ -518,7 +432,7 @@ from rustybt.finance.execution import (
 
 class AdvancedOrderStrategy(TradingAlgorithm):
     def initialize(self, context):
-        self.asset = symbol('AAPL')
+        self.asset = self.symbol('AAPL')
         self.entry_price = None
         self.position_entered = False
 

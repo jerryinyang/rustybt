@@ -96,7 +96,7 @@ print(f"CVaR (95%): {cvar_95:.2%}")
 
 ```python
 from rustybt.analytics import RiskAnalytics
-from rustybt import run_algorithm
+from rustybt.utils.run_algo import run_algorithm
 import pandas as pd
 
 # Run backtest

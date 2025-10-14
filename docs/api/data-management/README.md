@@ -128,12 +128,11 @@ register(
 ### Workflow 2: Loading Data in Strategy
 
 ```python
-from rustybt import TradingAlgorithm
-from rustybt.api import symbol, get_datetime
+from rustybt.algorithm import TradingAlgorithm
 
 class MyStrategy(TradingAlgorithm):
     def initialize(self, context):
-        self.btc = symbol('BTC/USDT')
+        self.btc = self.symbol('BTC/USDT')
 
     def handle_data(self, context, data):
         # Access current bar

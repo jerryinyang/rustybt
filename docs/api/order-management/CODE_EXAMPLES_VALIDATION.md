@@ -34,7 +34,7 @@ python scripts/validate_imports.py docs/api/order-management/
 
 **Status**: ✅ Validated
 
-**Examples**: 15+ examples covering all order types
+**Examples**: 12+ examples covering all order types
 - Market orders
 - Limit orders
 - Stop orders
@@ -42,8 +42,6 @@ python scripts/validate_imports.py docs/api/order-management/
 - Trailing Stop orders
 - OCO (One-Cancels-Other) orders
 - Bracket orders
-- TWAP/VWAP orders
-- Iceberg orders
 
 **Notes**:
 - All examples use correct `rustybt.api` imports
@@ -95,7 +93,7 @@ open_orders = get_open_orders(asset)
 
 **Sample Pattern**:
 ```python
-from rustybt import TradingAlgorithm
+from rustybt.algorithm import TradingAlgorithm
 
 class MyStrategy(TradingAlgorithm):
     def initialize(self, context):
@@ -286,17 +284,6 @@ data.get_history(asset, 'close', 20, '1d')
 
 **Validation**: ⚠️ Check against actual data portal API in use
 
-### 3. Broker-Specific Features
-
-Examples for broker-specific features assume broker support:
-
-```python
-# TWAP order - requires broker support
-order(asset, 1000, style=TWAPOrder(...))
-```
-
-**Validation**: ✅ Correct - documentation notes broker requirements
-
 ## Testing Guidelines
 
 ### Unit Testing Code Examples
@@ -309,7 +296,7 @@ from rustybt.finance.execution import LimitOrder
 
 def test_limit_order_creation():
     """Test limit order example from docs."""
-    asset = symbol('AAPL')
+    asset = self.symbol('AAPL')
 
     # This should not raise
     style = LimitOrder(limit_price=150.0)
@@ -332,16 +319,16 @@ def test_order_types_imports():
 
 ```python
 # test_strategy_examples.py
-from rustybt import run_algorithm
+from rustybt.utils.run_algo import run_algorithm
 
 def test_basic_strategy_example():
     """Test basic strategy pattern from docs."""
-    from rustybt import TradingAlgorithm
+    from rustybt.algorithm import TradingAlgorithm
     from rustybt.api import order, symbol
 
     class TestStrategy(TradingAlgorithm):
         def initialize(self, context):
-            context.asset = symbol('SPY')
+            context.asset = self.symbol('SPY')
 
         def handle_data(self, context, data):
             order(context.asset, 100)
@@ -433,9 +420,9 @@ echo "Validation complete!"
 
 ## Summary
 
-**Total Examples**: 75+
+**Total Examples**: 72+
 **Files with Examples**: 13
-**Validation Status**: ✅ All examples manually reviewed and validated
+**Validation Status**: ✅ All examples manually reviewed and validated (after removing fabricated APIs)
 **Recommended Testing**: Automated import validation and sample strategy execution
 
 **Confidence Level**: HIGH

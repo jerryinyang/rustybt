@@ -19,18 +19,18 @@ Monte Carlo testing validates that optimized parameters are robust and not overf
 ## Basic Usage
 
 ```python
-from rustybt.optimization import MonteCarloTester
+from rustybt.optimization import MonteCarloSimulator
 from decimal import Decimal
 
 # Create tester with best parameters
-mc_tester = MonteCarloTester(
+mc_simulator = MonteCarloSimulator(
     objective_function=run_backtest,
     base_params={'lookback': 50, 'threshold': 0.05},
     n_simulations=1000
 )
 
 # Run simulations
-result = mc_tester.run(noise_std=0.10)  # 10% noise
+result = mc_simulator.run(noise_std=0.10)  # 10% noise
 
 # Analyze results
 print(f"Mean Sharpe: {result.mean_score:.3f}")
@@ -48,7 +48,7 @@ else:
 ## Constructor
 
 ```python
-MonteCarloTester(
+MonteCarloSimulator(
     objective_function: Callable,
     base_params: Dict[str, Any],
     n_simulations: int = 1000,
@@ -71,7 +71,7 @@ Add random noise to price data:
 ```python
 def test_with_price_noise():
     """Test robustness to price data noise."""
-    mc = MonteCarloTester(
+    mc = MonteCarloSimulator(
         objective_function=run_backtest,
         base_params=best_params,
         n_simulations=1000
@@ -98,7 +98,7 @@ Randomly shuffle returns while preserving distribution:
 ```python
 def test_with_return_permutation():
     """Test if edge comes from entry/exit timing."""
-    mc = MonteCarloTester(
+    mc = MonteCarloSimulator(
         objective_function=run_backtest,
         base_params=best_params,
         n_simulations=1000
@@ -124,7 +124,7 @@ Test nearby parameter values:
 ```python
 def test_parameter_sensitivity():
     """Test if small parameter changes affect performance."""
-    mc = MonteCarloTester(
+    mc = MonteCarloSimulator(
         objective_function=run_backtest,
         base_params={'lookback': 50, 'threshold': 0.05},
         n_simulations=100
@@ -153,7 +153,7 @@ Preserve temporal structure while resampling:
 ```python
 def test_with_block_bootstrap():
     """Test using block bootstrap resampling."""
-    mc = MonteCarloTester(
+    mc = MonteCarloSimulator(
         objective_function=run_backtest,
         base_params=best_params,
         n_simulations=1000
@@ -174,7 +174,7 @@ def test_with_block_bootstrap():
 
 ```python
 from decimal import Decimal
-from rustybt.optimization import MonteCarloTester
+from rustybt.optimization import MonteCarloSimulator
 import matplotlib.pyplot as plt
 
 # Optimized parameters
@@ -193,7 +193,7 @@ print("\nRunning Monte Carlo robustness tests...")
 
 # Test 1: Price noise
 print("\n1. Price Noise Test")
-mc_noise = MonteCarloTester(
+mc_noise = MonteCarloSimulator(
     objective_function=lambda p: calculate_sharpe(run_backtest(p)),
     base_params=best_params,
     n_simulations=1000,
@@ -209,7 +209,7 @@ print(f"   Worst: {noise_result.worst_score:.3f}")
 
 # Test 2: Parameter perturbation
 print("\n2. Parameter Sensitivity Test")
-mc_params = MonteCarloTester(
+mc_params = MonteCarloSimulator(
     objective_function=lambda p: calculate_sharpe(run_backtest(p)),
     base_params=best_params,
     n_simulations=100
@@ -222,7 +222,7 @@ print(f"   Degradation: {(1 - param_result.mean_score/original_sharpe)*100:.1f}%
 
 # Test 3: Return permutation
 print("\n3. Return Permutation Test")
-mc_perm = MonteCarloTester(
+mc_perm = MonteCarloSimulator(
     objective_function=lambda p: calculate_sharpe(run_backtest(p)),
     base_params=best_params,
     n_simulations=500
@@ -349,7 +349,7 @@ def comprehensive_robustness_test(params):
 noise_levels = [0.05, 0.10, 0.15, 0.20]
 
 for noise_std in noise_levels:
-    result = mc_tester.run(noise_std=noise_std)
+    result = mc_simulator.run(noise_std=noise_std)
     print(f"Noise {noise_std*100:.0f}%: "
           f"Mean={result.mean_score:.3f}, "
           f"CV={result.cv:.3f}")
@@ -364,7 +364,7 @@ for noise_std in noise_levels:
 n_simulations_range = [100, 500, 1000, 2000]
 
 for n_sims in n_simulations_range:
-    mc = MonteCarloTester(..., n_simulations=n_sims)
+    mc = MonteCarloSimulator(..., n_simulations=n_sims)
     result = mc.run()
     print(f"N={n_sims}: CI width = {result.ci_upper - result.ci_lower:.3f}")
 ```
@@ -373,8 +373,8 @@ for n_sims in n_simulations_range:
 
 ```python
 # Test strategy AND benchmark
-strategy_result = mc_tester.run_strategy(best_params)
-benchmark_result = mc_tester.run_benchmark()
+strategy_result = mc_simulator.run_strategy(best_params)
+benchmark_result = mc_simulator.run_benchmark()
 
 # Strategy should be more robust than benchmark
 if strategy_result.cv < benchmark_result.cv:
@@ -387,10 +387,10 @@ if strategy_result.cv < benchmark_result.cv:
 
 ```python
 # Bad: Only 50 simulations
-mc = MonteCarloTester(..., n_simulations=50)
+mc = MonteCarloSimulator(..., n_simulations=50)
 
 # Good: At least 500-1000
-mc = MonteCarloTester(..., n_simulations=1000)
+mc = MonteCarloSimulator(..., n_simulations=1000)
 ```
 
 ### ❌ Ignoring Temporal Structure
@@ -443,7 +443,7 @@ result = optimizer.optimize()
 best_params = result.best_params
 
 # Step 2: Validate with Monte Carlo
-mc = MonteCarloTester(
+mc = MonteCarloSimulator(
     objective_function=run_backtest,
     base_params=best_params,
     n_simulations=1000

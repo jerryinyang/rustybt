@@ -175,9 +175,9 @@ def objective_with_min_trades(params):
 Test parameter stability with noise:
 
 ```python
-from rustybt.optimization import MonteCarloTester
+from rustybt.optimization import MonteCarloSimulator
 
-mc = MonteCarloTester(
+mc = MonteCarloSimulator(
     objective_function=run_backtest,
     base_params=best_params,
     n_simulations=1000
@@ -242,7 +242,8 @@ if strategy_b['sharpe'] - strategy_a['sharpe'] < 0.3:
 Always use realistic costs:
 
 ```python
-from rustybt.finance import PerShareCommission, FixedSlippage
+from rustybt.finance.commission import PerShareCommission
+from rustybt.finance.slippage import FixedSlippage
 
 # WRONG: No costs
 result = run_backtest(params)  # Overly optimistic

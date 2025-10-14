@@ -375,7 +375,7 @@ register(
 )
 
 # Use in backtest
-from rustybt import run_algorithm
+from rustybt.utils.run_algo import run_algorithm
 
 run_algorithm(
     start=pd.Timestamp('2024-01-01'),

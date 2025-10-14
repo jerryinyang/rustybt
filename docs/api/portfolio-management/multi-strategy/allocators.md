@@ -34,7 +34,7 @@ Multi-strategy portfolios run several strategies simultaneously with coordinated
 Allocate fixed percentage to each strategy.
 
 ```python
-from rustybt import TradingAlgorithm
+from rustybt.algorithm import TradingAlgorithm
 
 class FixedAllocation(TradingAlgorithm):
     """Run multiple strategies with fixed allocation."""

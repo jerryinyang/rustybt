@@ -731,20 +731,20 @@ for param, results in all_sensitivity.items():
 
 ---
 
-### MonteCarloTester
+### MonteCarloSimulator
 
 Monte Carlo noise infusion for robustness testing.
 
 ```python
-from rustybt.optimization import MonteCarloTester
+from rustybt.optimization import MonteCarloSimulator
 
-mc_tester = MonteCarloTester(
+mc_simulator = MonteCarloSimulator(
     objective_function=run_backtest,
     base_params={'lookback': 50},
     n_simulations=1000
 )
 
-results = mc_tester.run(noise_std=0.1)
+results = mc_simulator.run(noise_std=0.1)
 ```
 
 #### Methods
@@ -754,7 +754,7 @@ results = mc_tester.run(noise_std=0.1)
 Run Monte Carlo simulations.
 
 ```python
-result = mc_tester.run(noise_std=0.1)
+result = mc_simulator.run(noise_std=0.1)
 print(f"Mean score: {result.mean_score}")
 print(f"Std score: {result.std_score}")
 print(f"95% CI: [{result.ci_lower}, {result.ci_upper}]")

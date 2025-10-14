@@ -64,15 +64,6 @@ reader = BcolzDailyBarReader('/path/to/daily_equities.bcolz')
 
 The dispatch reader automatically selects the appropriate format:
 
-```python
-from rustybt.data.dispatch_bar_reader import DispatchBarReader
-
-reader = DispatchBarReader(
-    daily_bar_path='/path/to/data',
-    # Automatically detects: .parquet, .h5, or .bcolz
-)
-```
-
 ## Data Quality
 
 All readers validate:

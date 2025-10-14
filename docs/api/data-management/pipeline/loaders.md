@@ -23,7 +23,7 @@ Specialized for US equities with adjustments.
 ## Custom Loaders
 
 ```python
-from rustybt.pipeline.loaders import PipelineLoader
+from rustybt.pipeline.loaders import USEquityPricingLoader
 
 class FundamentalsLoader(PipelineLoader):
     """Load fundamental data."""
@@ -46,7 +46,7 @@ pipe.add_loader(FundamentalsLoader())
 ## Data Sources
 
 ```python
-from rustybt.pipeline import DataSet, Column
+from rustybt.pipeline.data import DataSet, Column
 
 class Fundamentals(DataSet):
     """Fundamental data columns."""

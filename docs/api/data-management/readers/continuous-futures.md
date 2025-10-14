@@ -12,20 +12,6 @@ Futures contracts expire, requiring "rolling" to the next contract. Continuous f
 
 Always use the nearest-to-expiry contract:
 
-```python
-from rustybt.data.continuous_future_reader import ContinuousFutureReader
-
-reader = ContinuousFutureReader(futures_reader)
-
-# Get continuous contract
-continuous_data = reader.get_history(
-    root_symbol='CL',  # Crude oil
-    end_dt=pd.Timestamp('2023-12-31'),
-    bar_count=252,
-    roll_style='volume'  # Roll based on volume
-)
-```
-
 ### Volume-Based Roll
 
 Roll when next contract has higher volume:

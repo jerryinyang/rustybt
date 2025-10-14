@@ -54,7 +54,7 @@ pipe.set_screen(rsi < 30)  # Oversold stocks
 ## Using in Strategy
 
 ```python
-from rustybt import TradingAlgorithm
+from rustybt.algorithm import TradingAlgorithm
 
 class PipelineStrategy(TradingAlgorithm):
     def initialize(self, context):

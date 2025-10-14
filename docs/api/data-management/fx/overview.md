@@ -242,16 +242,15 @@ reader = ExplodingFXRateReader()
 ### Multi-Currency Portfolio
 
 ```python
-from rustybt import TradingAlgorithm
-from rustybt.api import symbol, order_target_percent
+from rustybt.algorithm import TradingAlgorithm
 from rustybt.data.fx import HDF5FXRateReader
 
 class GlobalEquityStrategy(TradingAlgorithm):
     def initialize(self, context):
         # Assets in different currencies
-        context.us_stock = symbol('AAPL')    # USD
-        context.uk_stock = symbol('VOD.L')   # GBP
-        context.jp_stock = symbol('7203.T')  # JPY
+        context.us_stock = self.symbol('AAPL')    # USD
+        context.uk_stock = self.symbol('VOD.L')   # GBP
+        context.jp_stock = self.symbol('7203.T')  # JPY
 
         # Load FX rates
         context.fx_reader = HDF5FXRateReader('fx_rates.h5')
@@ -263,7 +262,7 @@ class GlobalEquityStrategy(TradingAlgorithm):
         toyota_price_jpy = data.current(context.jp_stock, 'close')
 
         # Convert to USD for comparison
-        dt = context.get_datetime()
+        dt = context.self.get_datetime()
 
         gbp_usd_rate = context.fx_reader.get_rate_scalar(
             rate='mid',

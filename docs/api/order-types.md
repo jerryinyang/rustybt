@@ -108,13 +108,13 @@ Advanced orders support the following states:
 Here's a complete strategy using advanced orders for risk management:
 
 ```python
-from rustybt import TradingAlgorithm
+from rustybt.algorithm import TradingAlgorithm
 from rustybt.api import order, symbol
 from rustybt.finance.execution import BracketOrder, MarketOrder, TrailingStopOrder
 
 class AdvancedOrderStrategy(TradingAlgorithm):
     def initialize(self, context):
-        self.stock = symbol('AAPL')
+        self.stock = self.symbol('AAPL')
         self.entry_price = None
         self.in_position = False
 

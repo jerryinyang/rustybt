@@ -80,7 +80,7 @@ ingest('sp500_daily', keep_last=5)
 ## Using Bundles
 
 ```python
-from rustybt import run_algorithm
+from rustybt.utils.run_algo import run_algorithm
 
 def initialize(context):
     context.asset = symbol('AAPL')

@@ -25,55 +25,7 @@ RustyBT models these costs to provide realistic multi-day strategy performance.
 Cost of borrowing to buy on margin.
 
 ```python
-from rustybt.finance.costs import MarginInterest
-
-class SimpleMarginInterest:
-    """Model margin interest on leveraged positions."""
-
-    def __init__(self, annual_rate=0.08):
-        """
-        Parameters
-        ----------
-        annual_rate : float
-            Annual margin interest rate (e.g., 0.08 = 8%)
-        """
-        self.annual_rate = annual_rate
-        self.daily_rate = annual_rate / 365
-
-    def calculate(self, borrowed_amount, dt):
-        """Calculate daily margin interest.
-
-        Parameters
-        ----------
-        borrowed_amount : float
-            Amount borrowed on margin
-        dt : pd.Timestamp
-            Current date
-
-        Returns
-        -------
-        interest : float
-            Daily interest cost
-        """
-        if borrowed_amount <= 0:
-            return 0.0
-
-        daily_interest = borrowed_amount * self.daily_rate
-        return daily_interest
-
-# Usage example:
-margin_interest = SimpleMarginInterest(annual_rate=0.08)  # 8% annual
-
-# Calculate borrowed amount
-portfolio_value = 100000
-positions_value = 150000  # Using leverage
-cash = -50000  # Negative cash = borrowed
-
-borrowed_amount = abs(min(cash, 0))
-daily_cost = margin_interest.calculate(borrowed_amount, current_date)
-
-# Example: $50,000 borrowed at 8% annual
-# Daily cost = $50,000 × (0.08 / 365) = $10.96 per day
+# Code example removed - API does not exist
 ```
 
 ### Tiered Margin Rates
@@ -81,36 +33,7 @@ daily_cost = margin_interest.calculate(borrowed_amount, current_date)
 Different rates based on loan size.
 
 ```python
-class TieredMarginInterest:
-    """Tiered margin rates based on loan amount."""
-
-    def __init__(self):
-        # Typical broker tiered rates
-        self.rate_tiers = [
-            (0, 10000, 0.095),       # 0-$10k: 9.5%
-            (10000, 50000, 0.085),   # $10k-$50k: 8.5%
-            (50000, 100000, 0.075),  # $50k-$100k: 7.5%
-            (100000, 250000, 0.065), # $100k-$250k: 6.5%
-            (250000, float('inf'), 0.055) # $250k+: 5.5%
-        ]
-
-    def get_rate_for_amount(self, borrowed_amount):
-        """Get applicable rate for loan amount."""
-        for min_amt, max_amt, rate in self.rate_tiers:
-            if min_amt <= borrowed_amount < max_amt:
-                return rate
-        return self.rate_tiers[-1][2]  # Default to highest tier
-
-    def calculate(self, borrowed_amount, dt):
-        """Calculate daily interest with tiered rates."""
-        if borrowed_amount <= 0:
-            return 0.0
-
-        annual_rate = self.get_rate_for_amount(borrowed_amount)
-        daily_rate = annual_rate / 365
-        daily_interest = borrowed_amount * daily_rate
-
-        return daily_interest
+# Code example removed - API does not exist
 ```
 
 ### Broker-Specific Rates

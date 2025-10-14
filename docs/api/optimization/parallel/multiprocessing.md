@@ -263,25 +263,6 @@ parallel = ParallelOptimizer(
 
 For multi-machine parallelization:
 
-```python
-from rustybt.optimization import DistributedOptimizer
-import ray
-
-# Initialize Ray cluster
-ray.init(address='auto')  # Connect to Ray cluster
-
-# Create distributed optimizer
-distributed = DistributedOptimizer(
-    objective_function=run_backtest,
-    parameter_space=param_space,
-    algorithm='grid',
-    backend='ray',
-    resources_per_task={'cpu': 1, 'memory': 2*1024**3}  # 2GB per task
-)
-
-result = distributed.optimize()
-```
-
 **Advantages**:
 - Scales beyond single machine
 - Fault tolerance
@@ -296,25 +277,6 @@ ray start --head  # Start Ray cluster
 ### Dask Backend
 
 Alternative distributed backend:
-
-```python
-from rustybt.optimization import DistributedOptimizer
-from dask.distributed import Client
-
-# Connect to Dask cluster
-client = Client('scheduler-address:8786')
-
-distributed = DistributedOptimizer(
-    objective_function=run_backtest,
-    parameter_space=param_space,
-    algorithm='random',
-    n_iterations=10000,
-    backend='dask',
-    client=client
-)
-
-result = distributed.optimize()
-```
 
 ## Progress Monitoring
 
@@ -333,21 +295,6 @@ parallel = ParallelOptimizer(
 ```
 
 ### Real-Time Dashboard
-
-```python
-from rustybt.optimization import OptimizationDashboard
-
-# Start dashboard
-dashboard = OptimizationDashboard(port=8050)
-
-parallel = ParallelOptimizer(
-    ...,
-    dashboard=dashboard
-)
-
-# Access at http://localhost:8050
-result = parallel.optimize()
-```
 
 ## Best Practices
 

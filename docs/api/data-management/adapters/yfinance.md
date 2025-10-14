@@ -514,13 +514,12 @@ df_intraday = await adapter.fetch(
 
 ```python
 # For real-time data, use a professional data provider
-from rustybt.data.adapters import PolygonAdapter  # Real-time capable
+from rustybt.data.adapters import PolygonAdapter
 
 # For extensive intraday history, use alternative sources
-from rustybt.data.adapters import AlpacaAdapter  # More intraday history
 
 # For reliable international data
-from rustybt.data.adapters import AlphaVantageAdapter  # Better international coverage
+
 ```
 
 ## API Reference

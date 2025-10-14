@@ -273,7 +273,7 @@ def multi_metric_objective(params):
 Extend base `Parameter` class:
 
 ```python
-from rustybt.optimization.parameter_space import Parameter
+from rustybt.optimization.parameter_space import ContinuousParameter
 
 class LogScaleParameter(Parameter):
     """Parameter sampled on log scale."""

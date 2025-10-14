@@ -6,7 +6,7 @@
 3. [Configuration](#3-configuration)
 4. [Security Hardening](#4-security-hardening)
 5. [Monitoring Setup](#5-monitoring-setup)
-6. [Backup & Disaster Recovery](#6-backup--disaster-recovery)
+6. [Backup & Disaster Recovery](#6-backup-disaster-recovery)
 7. [Deployment Verification](#7-deployment-verification)
 8. [Going Live](#8-going-live)
 

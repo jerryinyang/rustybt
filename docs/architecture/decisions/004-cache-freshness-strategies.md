@@ -24,7 +24,7 @@ The `CachedDataSource` must determine **when cached data is stale** and needs re
 - Static data (CSV files never stale)
 
 ### Current Complexity
-The [cached_source.py:462-479](../epic-X1-unified-data-architecture.md#L462-479) implementation mixes:
+The Smart Caching Layer implementation (see [Story X1.3](../../prd/epic-X1-unified-data-architecture.md#story-x13-smart-caching-layer)) addresses:
 - Frequency-based rules (daily/hourly/minute)
 - Market calendar awareness (market close detection)
 - Timezone handling (ET for US markets)

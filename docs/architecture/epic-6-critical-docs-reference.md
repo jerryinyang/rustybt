@@ -70,7 +70,7 @@ This document serves as a **central reference** for all critical architecture do
 
 ### 3. Enhancement Scope - API Integration ⭐️ **IMPORTANT**
 
-**Document:** [enhancement-scope-and-integration-strategy.md (Lines 56-113)](enhancement-scope-and-integration-strategy.md#L56-L113)
+**Document:** [enhancement-scope-and-integration-strategy.md (API Integration section)](enhancement-scope-and-integration-strategy.md#api-integration)
 
 **What it defines:**
 - **Preserve:** Backtest API methods (`initialize`, `handle_data`, `before_trading_start`)
@@ -88,9 +88,7 @@ This document serves as a **central reference** for all critical architecture do
 - **Story 6.2**: StrategyExecutor must support preserved API
 
 **Key sections:**
-- [CRITICAL REQUIREMENT: Strategy Reusability](enhancement-scope-and-integration-strategy.md#L56-L99) - Code example
-- [Preserve (Backtest API)](enhancement-scope-and-integration-strategy.md#L101-L105) - What must stay
-- [Extend (Live Trading Hooks)](enhancement-scope-and-integration-strategy.md#L107-L113) - Optional additions
+- [API Integration](enhancement-scope-and-integration-strategy.md#api-integration) - Complete API strategy including code example, preserved methods, and optional extensions
 
 ---
 
@@ -196,7 +194,7 @@ Before starting any Epic 6 implementation:
 
 - [ ] Read [strategy-reusability-guarantee.md](strategy-reusability-guarantee.md) in full
 - [ ] Read [shadow-trading-summary.md](shadow-trading-summary.md) in full
-- [ ] Read [enhancement-scope-and-integration-strategy.md (API section)](enhancement-scope-and-integration-strategy.md#L56-L113)
+- [ ] Read [enhancement-scope-and-integration-strategy.md (API section)](enhancement-scope-and-integration-strategy.md#api-integration)
 - [ ] Understand which TradingAlgorithm methods are required vs. optional
 - [ ] Understand the 4-phase production deployment workflow (backtest → paper → live)
 - [ ] Understand alignment metrics and circuit breaker thresholds
@@ -209,20 +207,20 @@ Before starting any Epic 6 implementation:
 |----------|--------|---------------|------------------|--------------|
 | [strategy-reusability-guarantee.md](strategy-reusability-guarantee.md) | ⭐️ MANDATORY | ~400 | All Epic 6 developers | Before Story 6.1 |
 | [shadow-trading-summary.md](shadow-trading-summary.md) | ⭐️ CRITICAL | ~250 | Story 6.1, 6.12 developers | Before Story 6.1 |
-| [enhancement-scope API section](enhancement-scope-and-integration-strategy.md#L56-L113) | ⭐️ IMPORTANT | ~60 | Story 6.1, 6.2 developers | Before Story 6.1 |
+| [enhancement-scope API section](enhancement-scope-and-integration-strategy.md#api-integration) | ⭐️ IMPORTANT | ~60 | Story 6.1, 6.2 developers | Before Story 6.1 |
 
 ---
 
 ## Files Updated to Reference These Documents
 
 **Story Files:**
-1. [6.1.design-live-trading-architecture.story.md](../stories/6.1.design-live-trading-architecture.story.md#L127-L144)
-2. [6.2.async-trading-engine-core.story.md](../stories/6.2.async-trading-engine-core.story.md#L106-L117)
-3. [6.7.paper-trading-mode.story.md](../stories/6.7.paper-trading-mode.story.md#L113-L124)
-4. [6.12.implement-shadow-trading-validation.story.md](../stories/6.12.implement-shadow-trading-validation.story.md#L122-L139)
+1. [6.1.design-live-trading-architecture.story.md](../stories/completed/6.1.design-live-trading-architecture.story.md)
+2. [6.2.async-trading-engine-core.story.md](../stories/completed/6.2.async-trading-engine-core.story.md)
+3. [6.7.paper-trading-mode.story.md](../stories/completed/6.7.paper-trading-mode.story.md)
+4. [6.12.implement-shadow-trading-validation.story.md](../stories/completed/6.12.implement-shadow-trading-validation.story.md)
 
 **Architecture Index:**
-5. [index.md](index.md#L3-L24) - Added "Critical Architecture Documents" section at top
+5. [index.md](index.md) - Added "Critical Architecture Documents" section at top
 
 ---
 

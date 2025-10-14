@@ -176,6 +176,12 @@ optimization = [
 
 docs = [
     'Cython',
+    # MkDocs for modern documentation
+    'mkdocs>=1.5.0',
+    'mkdocs-material>=9.5.0',
+    'mkdocstrings[python]>=0.24.0',
+    'mkdocs-autorefs>=0.5.0',
+    # Sphinx (legacy, kept for backward compatibility)
     'Sphinx >=1.3.2',
     'numpydoc >=0.5.0',
     'sphinx-autobuild >=0.6.0',

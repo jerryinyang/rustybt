@@ -350,11 +350,11 @@ LiveTradingEngine(strategy=AdvancedStrategy(), ...)
 ## Documentation References
 
 **Source Files:**
-- [enhancement-scope-and-integration-strategy.md](enhancement-scope-and-integration-strategy.md#L56-L113) - API Integration section
-- [component-architecture.md](component-architecture.md#L178-L218) - LiveTradingEngine definition
-- [6.1.design-live-trading-architecture.story.md](../stories/6.1.design-live-trading-architecture.story.md#L10-L23) - AC10
-- [6.2.async-trading-engine-core.story.md](../stories/6.2.async-trading-engine-core.story.md#L11-L22) - AC8
-- [6.7.paper-trading-mode.story.md](../stories/6.7.paper-trading-mode.story.md#L72-L85) - Validation tests
+- [enhancement-scope-and-integration-strategy.md](enhancement-scope-and-integration-strategy.md#api-integration) - API Integration section
+- [component-architecture.md](component-architecture.md#livetradingengine) - LiveTradingEngine definition
+- [6.1.design-live-trading-architecture.story.md](../stories/completed/6.1.design-live-trading-architecture.story.md) - AC10
+- [6.2.async-trading-engine-core.story.md](../stories/completed/6.2.async-trading-engine-core.story.md) - AC8
+- [6.7.paper-trading-mode.story.md](../stories/completed/6.7.paper-trading-mode.story.md) - Validation tests
 
 ---
 

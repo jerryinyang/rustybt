@@ -16,7 +16,7 @@
    - Documents production deployment workflow and alignment metrics
    - **Referenced in:** Story 6.1 (AC9), Story 6.12 (primary reference)
 
-3. **[Enhancement Scope - API Integration](./enhancement-scope-and-integration-strategy.md#L56-L113)** ⭐️ **IMPORTANT**
+3. **[Enhancement Scope - API Integration](./enhancement-scope-and-integration-strategy.md#api-integration)** ⭐️ **IMPORTANT**
    - Documents which APIs are preserved vs. extended for live trading
    - Shows concrete code example of strategy reusability
    - Explains optional live hooks vs. required backtest methods
@@ -57,10 +57,10 @@
     - [Removed Technologies (Deprecated from Zipline)](./tech-stack.md#removed-technologies-deprecated-from-zipline)
   - [Data Models and Schema Changes](./data-models-and-schema-changes.md)
     - [New Database Tables (Extend Zipline Asset DB)](./data-models-and-schema-changes.md#new-database-tables-extend-zipline-asset-db)
-      - [broker_connections](./data-models-and-schema-changes.md#brokerconnections)
-      - [live_positions](./data-models-and-schema-changes.md#livepositions)
-      - [order_audit_log](./data-models-and-schema-changes.md#orderauditlog)
-      - [strategy_state](./data-models-and-schema-changes.md#strategystate)
+      - [broker_connections](./data-models-and-schema-changes.md#broker_connections)
+      - [live_positions](./data-models-and-schema-changes.md#live_positions)
+      - [order_audit_log](./data-models-and-schema-changes.md#order_audit_log)
+      - [strategy_state](./data-models-and-schema-changes.md#strategy_state)
     - [Decimal Finance Models (Replaces float64)](./data-models-and-schema-changes.md#decimal-finance-models-replaces-float64)
       - [DecimalLedger](./data-models-and-schema-changes.md#decimalledger)
       - [DecimalPosition](./data-models-and-schema-changes.md#decimalposition)
@@ -91,7 +91,7 @@
       - [CSVAdapter](./component-architecture.md#csvadapter)
   - [External API Integration](./external-api-integration.md)
     - [Broker API Integration](./external-api-integration.md#broker-api-integration)
-      - [Interactive Brokers (ib_async)](./external-api-integration.md#interactive-brokers-ibasync)
+      - [Interactive Brokers (ib_async)](./external-api-integration.md#interactive-brokers-ib_async)
       - [Binance (binance-connector)](./external-api-integration.md#binance-binance-connector)
       - [Bybit (pybit)](./external-api-integration.md#bybit-pybit)
       - [Hyperliquid (hyperliquid-python-sdk)](./external-api-integration.md#hyperliquid-hyperliquid-python-sdk)

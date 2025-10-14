@@ -34,7 +34,7 @@
 3. [Story X2.6 Remediation (HIGH)](#story-x26-remediation-high)
 4. [Story X2.1 Remediation (MINOR)](#story-x21-remediation-minor)
 5. [Story X2.3 Remediation (MINOR)](#story-x23-remediation-minor)
-6. [Implementation Checklist](#implementation-checklist)
+6. [Implementation Checklist](#pre-implementation-setup)
 
 ---
 

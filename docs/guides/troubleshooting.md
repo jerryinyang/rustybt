@@ -11,14 +11,14 @@ This guide provides solutions to common issues encountered when deploying and op
 
 ## Table of Contents
 
-1. [Installation & Setup Issues](#1-installation--setup-issues)
+1. [Installation & Setup Issues](#1-installation-setup-issues)
 2. [Broker Connection Issues](#2-broker-connection-issues)
 3. [Data Source Issues](#3-data-source-issues)
 4. [Order Execution Issues](#4-order-execution-issues)
 5. [Performance Issues](#5-performance-issues)
-6. [Security & Authentication Issues](#6-security--authentication-issues)
-7. [Logging & Monitoring Issues](#7-logging--monitoring-issues)
-8. [State Persistence & Recovery Issues](#8-state-persistence--recovery-issues)
+6. [Security & Authentication Issues](#6-security-authentication-issues)
+7. [Logging & Monitoring Issues](#7-logging-monitoring-issues)
+8. [State Persistence & Recovery Issues](#8-state-persistence-recovery-issues)
 9. [Common Error Messages](#9-common-error-messages)
 10. [Log Interpretation Guide](#10-log-interpretation-guide)
 

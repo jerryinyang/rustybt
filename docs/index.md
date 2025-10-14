@@ -1,393 +1,245 @@
-# RustyBT Documentation Index
+# Welcome to RustyBT
 
-**Complete documentation index for RustyBT framework**
+**Modern Python backtesting engine built on Zipline-Reloaded, enhanced with Decimal precision, Polars data engine, and live trading capabilities**
 
-Last Updated: 2025-10-13
+[![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![CI](https://github.com/jerryinyang/rustybt/workflows/CI/badge.svg)](https://github.com/jerryinyang/rustybt/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/jerryinyang/rustybt/branch/main/graph/badge.svg)](https://codecov.io/gh/jerryinyang/rustybt)
 
----
+## What is RustyBT?
 
-## 🚀 Getting Started
+RustyBT is a next-generation algorithmic trading framework that extends [Zipline-Reloaded](https://github.com/stefan-jansen/zipline-reloaded) with modern enhancements for professional traders and quantitative researchers.
 
-### New Users
+### Key Features
 
-Start here if you're new to RustyBT:
+✨ **Decimal Precision** - Financial-grade arithmetic using Python's `Decimal` type for audit-compliant calculations
 
-1. **[README.md](../README.md)** - Project overview and quick start
-2. **[Installation Guide](guides/installation-guide.md)** - Setup instructions
-3. **[Your First Backtest](tutorials/first-backtest.md)** - Tutorial
-4. **[Example Gallery](../examples/README.md)** - Working examples
+⚡ **Polars Data Engine** - 5-10x faster data processing with lazy evaluation and efficient memory usage
 
-### Quick Links
+💾 **Parquet Storage** - Industry-standard columnar format (50-80% smaller than HDF5)
 
-- 📖 [API References](#api-references)
-- 📚 [User Guides](#user-guides)
-- 💡 [Examples](#examples)
-- 🏗️ [Architecture](#architecture-documentation)
-- 📋 [Stories & PRD](#-stories-prd)
+📊 **Multi-Strategy Portfolio** - Advanced capital allocation and risk management across multiple strategies
 
----
+🔧 **Strategy Optimization** - Grid search, Bayesian optimization, genetic algorithms, and walk-forward analysis
 
-## 📖 API References
+🔴 **Live Trading** - Production-ready engine for executing strategies in real-time markets (CCXT, Interactive Brokers, Binance, Bybit, Hyperliquid)
 
-Complete API documentation for all modules:
+🐍 **Modern Python** - Requires Python 3.12+ for structural pattern matching and enhanced type hints
 
-### Core APIs
+## Quick Start
 
-- **[Live Trading API](api/live-trading-api.md)** ⭐ NEW
-  - LiveTradingEngine
-  - Broker adapters (Binance, Bybit, IB, etc.)
-  - Position reconciliation
-  - Shadow trading
-  - Circuit breakers
+### Installation
 
-- **[Optimization API](api/optimization-api.md)** ⭐ NEW
-  - Grid/Random/Bayesian/Genetic algorithms
-  - Walk-forward optimization
-  - Parallel optimization
-  - Sensitivity analysis
+```bash
+# Using uv (recommended)
+uv sync
 
-- **[Analytics API](api/analytics-api.md)** ⭐ NEW
-  - Report generation (PDF/HTML)
-  - Performance attribution
-  - Risk analytics
-  - Trade analysis
+# Or using pip
+pip install -e .
+```
 
-- **[DataSource API](api/datasource-api.md)**
-  - Data adapter interface
-  - Built-in adapters (YFinance, CCXT, Polygon, etc.)
-  - Custom adapter development
+[Full installation instructions →](getting-started/installation.md)
 
-### Supporting APIs
+### Your First Backtest
 
-- **[Caching API](api/caching-api.md)**
-  - Cache management
-  - Freshness strategies
-  - Performance optimization
+```python
+from rustybt.api import order_target, record, symbol
 
-- **[Bundle Metadata API](api/bundle-metadata-api.md)**
-  - Bundle management
-  - Quality metrics
-  - Validation
+def initialize(context):
+    context.asset = symbol('AAPL')
 
-- **[Order Types API](api/order-types.md)**
-  - Market/Limit/Stop orders
-  - Advanced order types
-  - Order execution
+def handle_data(context, data):
+    # Simple moving average crossover
+    short_mavg = data.history(context.asset, 'price',
+                              bar_count=100, frequency="1d").mean()
+    long_mavg = data.history(context.asset, 'price',
+                             bar_count=300, frequency="1d").mean()
 
-### Coming Soon
+    if short_mavg > long_mavg:
+        order_target(context.asset, 100)
+    elif short_mavg < long_mavg:
+        order_target(context.asset, 0)
+```
 
-- **[Finance API](api/finance-api.md)** - Decimal ledger, commission, slippage (coming soon)
-- **[Algorithm API](api/algorithm-api.md)** - TradingAlgorithm class reference (coming soon)
-- **[Pipeline API](api/pipeline-api.md)** - Pipeline framework (coming soon)
+Run the backtest:
 
----
+```bash
+rustybt run -f strategy.py --start 2020-01-01 --end 2023-12-31
+```
 
-## 📚 User Guides
+[Complete quick start guide →](getting-started/quickstart.md)
 
-Step-by-step guides for common tasks:
+## Documentation Navigation
 
-### Data Management
+### 🚀 [Getting Started](getting-started/installation.md)
+New to RustyBT? Start here!
 
-- **[Data Ingestion Guide](guides/data-ingestion.md)** - Complete guide to ingesting data
-- **[Caching Guide](guides/caching-guide.md)** - Optimize performance with caching
-- **[CSV Data Import](guides/csv-data-import.md)** - Import custom CSV data
-- **[Creating Data Adapters](guides/creating-data-adapters.md)** - Build custom adapters
-- **[Migrating to Unified Data](guides/migrating-to-unified-data.md)** - Migration guide
-- **[Data Validation Guide](guides/data-validation.md)** - Validate data quality
+- [Installation](getting-started/installation.md) - Set up RustyBT on your system
+- [Quick Start](getting-started/quickstart.md) - Write your first trading strategy
+- [Configuration](getting-started/configuration.md) - Configure RustyBT for your needs
+
+### 📚 [User Guides](guides/decimal-precision-configuration.md)
+In-depth guides for specific features:
+
+- [Decimal Precision](guides/decimal-precision-configuration.md) - Financial-grade calculations
+- [Caching System](guides/caching-system.md) - Optimize performance with intelligent caching
+- [Creating Data Adapters](guides/creating-data-adapters.md) - Build custom data sources
+- [CSV Data Import](guides/csv-data-import.md) - Import your own data
+- [Testnet Setup](guides/testnet-setup-guide.md) - Test live trading safely
+
+### 💡 [Examples & Tutorials](examples/README.md)
+Learn by example with 13 Jupyter notebooks and 20+ Python examples:
+
+**Interactive Tutorials:**
+- Getting Started, Data Ingestion, Strategy Development
+- Performance Analysis, Optimization, Walk-Forward Analysis
+- Risk Analytics, Portfolio Construction, Paper Trading
+- Full Workflow, Advanced Topics, Crypto & Equity Backtests
+
+**Python Examples:**
+- Data ingestion (Yahoo Finance, CCXT, CSV)
+- Live trading & paper trading
+- Portfolio allocation & transaction costs
+- Strategy optimization (Grid, Bayesian, Genetic, Walk-Forward)
+- Report generation & attribution analysis
+
+[Browse all examples →](examples/README.md)
+
+### 📖 [API Reference](api/order-types.md)
+Complete API documentation:
+
+- [Order Types](api/order-types.md) - Market, Limit, Stop orders and advanced types
+- [Caching API](api/caching-api.md) - Cache management and freshness strategies
+- [Bundle Metadata API](api/bundle-metadata-api.md) - Data bundle management
+
+### ℹ️ [About](about/license.md)
+Project information:
+
+- [License](about/license.md) - Apache 2.0 license information
+- [Contributing](about/contributing.md) - How to contribute to RustyBT
+- [Changelog](about/changelog.md) - Release history and changes
+
+## Key Differences from Zipline-Reloaded
+
+| Feature | Zipline-Reloaded | RustyBT |
+|---------|------------------|---------|
+| Numeric Type | `float64` | `Decimal` (configurable precision) |
+| Data Engine | `pandas` | `polars` (pandas compatible) |
+| Storage Format | bcolz/HDF5 | Parquet (Arrow-based) |
+| Python Version | 3.10+ | 3.12+ |
+| Live Trading | No | Yes (multiple brokers) |
+| Multi-Strategy | Limited | Advanced portfolio management |
+| Optimization | Basic | Grid, Bayesian, Genetic, Walk-Forward |
+
+## Feature Highlights
+
+### Decimal Precision
+
+```python
+from decimal import Decimal
+from rustybt.finance.decimal import DecimalLedger
+
+# Financial calculations with audit-compliant precision
+ledger = DecimalLedger(starting_cash=Decimal("100000.00"))
+```
+
+### Modern Data Architecture
+
+```python
+import polars as pl
+from rustybt.data.adapters import YFinanceAdapter, CCXTAdapter
+
+# Multiple data sources with intelligent caching
+yf_adapter = YFinanceAdapter()
+crypto_adapter = CCXTAdapter(exchange_id='binance')
+```
+
+### Multi-Strategy Portfolio Management
+
+```python
+from rustybt.portfolio import PortfolioAllocator
+from rustybt.portfolio.allocation import RiskParityAllocator
+
+# Manage multiple strategies with intelligent allocation
+allocator = PortfolioAllocator(
+    strategies=[strategy1, strategy2, strategy3],
+    allocation_algorithm=RiskParityAllocator()
+)
+```
+
+### Strategy Optimization
+
+```python
+from rustybt.optimization import BayesianOptimizer
+
+# Optimize strategy parameters
+optimizer = BayesianOptimizer(
+    param_space={'fast_ma': (10, 50), 'slow_ma': (50, 200)},
+    n_iterations=100
+)
+results = optimizer.optimize(strategy)
+```
 
 ### Live Trading
 
-- **[Broker Setup Guide](guides/broker-setup-guide.md)** ⭐ NEW - Complete broker setup
-- **[Live vs Backtest Data](guides/live-vs-backtest-data.md)** - Understand the differences
-- **[Testnet Setup Guide](guides/testnet-setup-guide.md)** - Test before live trading
-- **[WebSocket Streaming Guide](guides/websocket-streaming-guide.md)** - Real-time data (coming soon)
+```python
+from rustybt.live import LiveTradingEngine
+from rustybt.live.brokers import CCXTBrokerAdapter
 
-### Production Readiness
+# Connect to exchange for live trading
+broker = CCXTBrokerAdapter(
+    exchange_id='binance',
+    api_key='YOUR_API_KEY',
+    api_secret='YOUR_API_SECRET',
+    testnet=True,
+)
+engine = LiveTradingEngine(strategy=my_strategy, broker_adapter=broker)
+engine.run()
+```
 
-- **[Exception Handling Guide](guides/exception-handling.md)** - Robust error handling
-- **[Audit Logging Guide](guides/audit-logging.md)** - Structured logging
-- **[Type Hinting Guide](guides/type-hinting.md)** - Type safety with mypy
-- **[Decimal Precision Configuration](guides/decimal-precision-configuration.md)** - Financial accuracy
+## Community & Support
 
-### Advanced Topics
+- 📖 **Documentation**: You're reading it!
+- 🐛 **Issues**: [GitHub Issues](https://github.com/jerryinyang/rustybt/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/jerryinyang/rustybt/discussions)
+- 📦 **Source Code**: [GitHub Repository](https://github.com/jerryinyang/rustybt)
 
-- **[Pipeline API Guide](guides/pipeline-api-guide.md)** - Factor analysis (coming soon)
-- **[Optimization Guide](guides/optimization-guide.md)** - Parameter tuning (coming soon)
+## Project Status
 
----
+### Completed ✅
 
-## 💡 Examples
+- Epic 1: Project setup and architecture foundations
+- Epic 2: Decimal precision financial calculations
+- Epic 3: Modern data architecture (Polars/Parquet)
+- Epic 4: Enhanced transaction costs and multi-strategy
+- Epic 5: Strategy optimization framework
+- Epic 6: Live trading engine with broker integrations
+- Epic 8: Analytics and production readiness
 
-Runnable code examples for learning:
+### In Progress 🚧
 
-### Data Ingestion
+- Epic 7: Rust performance optimizations
+- Epic X2: Production readiness validation
 
-- [ingest_yfinance.py](../examples/ingest_yfinance.py) - Yahoo Finance data
-- [ingest_ccxt.py](../examples/ingest_ccxt.py) - Crypto data via CCXT
-- [backtest_with_cache.py](../examples/backtest_with_cache.py) - Caching demo
-- [cache_warming.py](../examples/cache_warming.py) - Cache optimization
-- [custom_data_adapter.py](../examples/custom_data_adapter.py) ⭐ NEW - Custom adapter
+### Planned 📋
 
-### Live Trading
+- Epic 9: REST API and WebSocket interface
+- v1.0.0: Production-ready stable release
 
-- [live_trading.py](../examples/live_trading.py) - Full live trading
-- [live_trading_simple.py](../examples/live_trading_simple.py) - Simple version
-- [paper_trading_simple.py](../examples/paper_trading_simple.py) - Paper trading
-- [shadow_trading_simple.py](../examples/shadow_trading_simple.py) - Shadow mode
-- [custom_broker_adapter.py](../examples/custom_broker_adapter.py) - Custom broker (coming soon)
-- [websocket_streaming.py](../examples/websocket_streaming.py) - WebSocket streaming (coming soon)
+## Acknowledgments
 
-### Analytics
+RustyBT is built on the shoulders of giants:
 
-- [generate_backtest_report.py](../examples/generate_backtest_report.py) - Report generation
-- [attribution_analysis_example.py](../examples/attribution_analysis_example.py) - Attribution analysis
+- **[Zipline](https://github.com/quantopian/zipline)** - Original backtesting library by Quantopian
+- **[Zipline-Reloaded](https://github.com/stefan-jansen/zipline-reloaded)** - Maintained fork by Stefan Jansen
+- **[Machine Learning for Algorithmic Trading](https://ml4trading.io)** - Comprehensive guide by Stefan Jansen
 
-### Optimization
-
-- [grid_search_ma_crossover.py](../examples/optimization/grid_search_ma_crossover.py) - Grid search
-- [random_search_vs_grid.py](../examples/optimization/random_search_vs_grid.py) - Random search
-- [bayesian_optimization_5param.py](../examples/optimization/bayesian_optimization_5param.py) - Bayesian opt
-- [genetic_algorithm_nonsmooth.ipynb](../examples/optimization/genetic_algorithm_nonsmooth.ipynb) - Genetic algo
-- [parallel_optimization_example.py](../examples/optimization/parallel_optimization_example.py) - Parallel opt
-- [walk_forward_analysis.py](../examples/optimization/walk_forward_analysis.py) - Walk-forward
-- [sensitivity_analysis.ipynb](../examples/optimization/sensitivity_analysis.ipynb) - Sensitivity
-- [noise_infusion_robustness.ipynb](../examples/optimization/noise_infusion_robustness.ipynb) - Robustness
-
-### Advanced Features
-
-- [allocation_algorithms_tutorial.py](../examples/allocation_algorithms_tutorial.py) - Portfolio allocation
-- [slippage_models_tutorial.py](../examples/slippage_models_tutorial.py) - Slippage modeling
-- [latency_simulation_tutorial.py](../examples/latency_simulation_tutorial.py) - Latency
-- [borrow_cost_tutorial.py](../examples/borrow_cost_tutorial.py) - Short selling costs
-- [overnight_financing_tutorial.py](../examples/overnight_financing_tutorial.py) - Financing costs
-- [pipeline_tutorial.py](../examples/pipeline_tutorial.py) - Pipeline API (coming soon)
-
-### Jupyter Notebooks
-
-See [examples/notebooks/](../examples/notebooks/) for interactive tutorials.
+We are grateful to the Quantopian team, Stefan Jansen, and the entire open-source algorithmic trading community.
 
 ---
 
-## 🏗️ Architecture Documentation
+!!! note "Development Status"
+    RustyBT is under active development. APIs may change until version 1.0.0.
 
-Technical architecture and design decisions:
-
-### Overview
-
-- **[Architecture Overview](architecture/index.md)** - System architecture
-- **[Component Architecture](architecture/component-architecture.md)** - Component design
-- **[Source Tree](architecture/source-tree.md)** - Directory structure
-- **[Tech Stack](architecture/tech-stack.md)** - Technologies used
-
-### Design Decisions
-
-- **[ADR 001: Unified Data Source Abstraction](architecture/decisions/001-unified-data-source-abstraction.md)**
-- **[ADR 002: Unified Metadata Schema](architecture/decisions/002-unified-metadata-schema.md)**
-- **[ADR 003: Smart Caching Layer](architecture/decisions/003-smart-caching-layer.md)**
-- **[ADR 004: Cache Freshness Strategies](architecture/decisions/004-cache-freshness-strategies.md)**
-- **[ADR 005: Migration Rollback Safety](architecture/decisions/005-migration-rollback-safety.md)**
-
-### Specific Topics
-
-- **[Live Trading Architecture](architecture/live-trading.md)** - Live engine design
-- **[Shadow Trading](architecture/shadow-trading-summary.md)** - Validation system
-- **[Data Catalog](architecture/data-catalog.md)** - Data organization
-- **[Optimization](architecture/optimization.md)** - Optimization framework
-- **[Testing Strategy](architecture/testing-strategy.md)** - Testing approach
-- **[Coding Standards](architecture/coding-standards.md)** - Code conventions
-- **[Zero Mock Enforcement](architecture/zero-mock-enforcement.md)** - Testing philosophy
-
----
-
-## 📋 Stories & PRD
-
-Product requirements and implementation stories:
-
-### Product Requirements (PRD)
-
-- **[PRD Index](prd/index.md)** - Overview
-- **[Epic List](prd/epic-list.md)** - All epics
-- **[Epic 1: Foundation](prd/epic-1-foundation-core-infrastructure.md)** ✅ Complete
-- **[Epic 2: Decimal Precision](prd/epic-2-financial-integrity-decimal-arithmetic.md)** ✅ Complete
-- **[Epic 3: Modern Data Architecture](prd/epic-3-modern-data-architecture-mvp-data-sources.md)** ✅ Complete
-- **[Epic 4: Transaction Costs](prd/epic-4-enhanced-transaction-costs-multi-strategy-portfolio.md)** ✅ Complete
-- **[Epic 5: Optimization](prd/epic-5-strategy-optimization-robustness-testing.md)** ✅ Complete
-- **[Epic 6: Live Trading](prd/epic-6-live-trading-engine-broker-integrations.md)** ✅ Complete
-- **[Epic 7: Performance](prd/epic-7-performance-optimization-rust-integration.md)** ✅ Complete
-- **[Epic 8: Analytics](prd/epic-8-analytics-production-readiness.md)** ✅ Complete
-- **[Epic X1: Unified Data](prd/epic-X1-unified-data-architecture.md)** ✅ Complete
-- **[Epic X2: Production Readiness](prd/epic-X2-production-readiness-remediation.story.md)** 🚧 In Progress
-
-### Implementation Stories
-
-Browse by epic:
-
-- **[Epic 1 Stories](stories/completed/)** - Foundation stories (completed)
-- **[Epic 6 Stories](stories/)** - Live trading stories (6.1-6.13)
-- **[Epic 7 Stories](stories/)** - Performance stories (7.1-7.5)
-- **[Epic 8 Stories](stories/)** - Analytics stories (8.1-8.10)
-- **[Epic X1 Stories](stories/)** - Unified data stories (X1.1-X1.5)
-- **[Epic X2 Stories](stories/)** - Production readiness stories (X2.1-X2.3)
-
----
-
-## 🔍 Performance & Benchmarking
-
-Performance analysis and optimization:
-
-- **[Benchmarking Suite](performance/benchmarking-suite.md)** - Comprehensive benchmarks
-- **[Benchmark Guide](performance/benchmark-guide.md)** - How to run benchmarks
-- **[Profiling Setup](performance/profiling-setup.md)** - Profiling tools
-- **[Profiling Results](performance/profiling-results.md)** - Performance analysis
-- **[Rust Optimizations](performance/rust-optimizations.md)** - Rust integration
-- **[Rust Benchmarks](performance/rust-benchmarks.md)** - Rust performance results
-- **[Hotspots Analysis](performance/hotspots.md)** - Performance bottlenecks
-- **[Decimal Baseline](performance/decimal-baseline.md)** - Decimal performance
-- **[Story 7.4 Summary](performance/STORY-7.4-SUMMARY.md)** - Validation results
-
----
-
-## 🧪 Testing & QA
-
-Quality assurance and testing:
-
-### Testing Docs
-
-- **[Testing Strategy](architecture/testing-strategy.md)** - Overall strategy
-- **[Property-Based Testing](testing/property-based-testing.md)** - Hypothesis testing
-- **[Zero Mock Enforcement](architecture/zero-mock-enforcement.md)** - No mocks policy
-
-### QA Reports
-
-- **[QA Improvements Summary](qa/QA-IMPROVEMENTS-SUMMARY.md)** - QA enhancements
-- **[Test Execution Results](qa/TEST-EXECUTION-RESULTS.md)** - Test results
-- **[Enhancements Summary](qa/ENHANCEMENTS-SUMMARY.md)** - Improvements made
-
-### QA Gates
-
-Quality gates for each story (see [qa/gates/](qa/gates/)):
-- Story 6.1-6.13 QA gates
-- Story 7.1-7.5 QA gates
-- Story 8.1-8.10 QA gates
-- Story X1.1-X1.5 QA gates
-- Story X2.1-X2.3 QA gates
-
----
-
-## 📄 Pull Request Documentation
-
-Detailed documentation for significant pull requests:
-
-- **[PR Documentation Index](pr/README.md)** - Overview and naming conventions
-
-### 🚨 Critical Issues
-
-- **[2025-10-13: CI/CD Blocking Issues](pr/2025-10-13-CI-BLOCKING-dependency-issues.md)** 🟡 **IN PROGRESS**
-  - All CI/CD workflows failing due to dependency/build issues
-  - ✅ RESOLVED: Numpy/numexpr version conflicts (Python 3.12/3.13)
-  - ✅ RESOLVED: Python version classifiers mismatch
-  - ❌ BLOCKING: Editable install module import failures
-  - Comprehensive analysis with attempted solutions and recommendations
-
-### Recent Implementations
-
-- **[2025-10-13-PR1: Test Suite Implementation](pr/2025-10-13-PR1-335f312-test-suite-implementation.md)** ⭐ NEW
-  - Comprehensive test suite for rustybt.lib Cython modules
-  - 112 tests covering 2,028 lines of code
-  - Issues identified and fixes implemented
-
----
-
-## 📊 Production Deployment
-
-Production readiness documentation:
-
-- **[Production Checklist](guides/production-checklist.md)** - Pre-launch checklist
-- **[Production Readiness Gap Analysis](reviews/production-readiness-gap-analysis.md)** - Gap analysis
-- **[Deployment Guide](guides/deployment-guide.md)** - Deployment instructions
-- **[Security Audit](reviews/security-audit.md)** - Security review
-- **[Troubleshooting Guide](guides/troubleshooting.md)** - Common issues
-
----
-
-## 📝 Additional Resources
-
-### Documentation Reviews
-
-- **[Comprehensive Documentation Review](reviews/COMPREHENSIVE-DOCUMENTATION-REVIEW-REPORT.md)** ⭐ NEW - Full review
-- **[Documentation Examples Review](reviews/documentation-examples-review.md)** - Examples review
-- **[Documentation Fixes Summary](reviews/documentation-fixes-summary.md)** - Recent fixes
-
-### Other
-
-- **[Deprecation Timeline](prd/deprecation-timeline.md)** - Deprecated features
-- **[Caching System](guides/caching-system.md)** - Cache architecture
-- **[Epic 3 Implementation Sequence](prd/epic-3-implementation-sequence.md)** - Implementation plan
-- **[Architecture (Full)](architecture.md)** - Complete architecture doc
-- **[PRD (Full)](prd.md)** - Complete PRD document
-
----
-
-## 🗺️ Learning Paths
-
-### Path 1: Backtesting (Beginner)
-
-1. Read [README.md](../README.md)
-2. Follow [Data Ingestion Guide](guides/data-ingestion.md)
-3. Try [ingest_yfinance.py](../examples/ingest_yfinance.py)
-4. Try [backtest_with_cache.py](../examples/backtest_with_cache.py)
-5. Generate report with [generate_backtest_report.py](../examples/generate_backtest_report.py)
-
-### Path 2: Optimization (Intermediate)
-
-1. Complete Path 1 (Backtesting)
-2. Read [Optimization API](api/optimization-api.md)
-3. Try [grid_search_ma_crossover.py](../examples/optimization/grid_search_ma_crossover.py)
-4. Try [bayesian_optimization_5param.py](../examples/optimization/bayesian_optimization_5param.py)
-5. Learn [walk_forward_analysis.py](../examples/optimization/walk_forward_analysis.py)
-
-### Path 3: Live Trading (Advanced)
-
-1. Complete Path 1 & 2
-2. Read [Live Trading API](api/live-trading-api.md)
-3. Read [Broker Setup Guide](guides/broker-setup-guide.md)
-4. Setup testnet account
-5. Try [paper_trading_simple.py](../examples/paper_trading_simple.py)
-6. Try [shadow_trading_simple.py](../examples/shadow_trading_simple.py)
-7. Monitor, validate, then go live
-
-### Path 4: Custom Development (Expert)
-
-1. Complete Path 1-3
-2. Read [Architecture Overview](architecture/index.md)
-3. Try [custom_data_adapter.py](../examples/custom_data_adapter.py)
-4. Read [Creating Data Adapters](guides/creating-data-adapters.md)
-5. Implement custom broker adapter
-6. Contribute back to RustyBT!
-
----
-
-## 🔗 External Links
-
-- **GitHub Repository**: [github.com/your-org/rustybt](https://github.com/your-org/rustybt)
-- **PyPI Package**: [pypi.org/project/rustybt](https://pypi.org/project/rustybt)
-- **Documentation Site**: [docs.rustybt.io](https://docs.rustybt.io) (coming soon)
-- **Community Discord**: [discord.gg/rustybt](https://discord.gg/rustybt) (coming soon)
-
----
-
-## 📧 Getting Help
-
-- **Issues**: [GitHub Issues](https://github.com/your-org/rustybt/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/rustybt/discussions)
-- **Email**: support@rustybt.io
-
----
-
-**Last Updated**: 2025-10-13
-**Documentation Version**: 0.1.0
-**Framework Version**: 0.1.0-dev
-
----
-
-*This documentation is continuously updated. If you find any issues or have suggestions, please open an issue on GitHub.*
+**Ready to get started?** Head to the [Installation Guide](getting-started/installation.md) →

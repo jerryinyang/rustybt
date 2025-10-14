@@ -38,17 +38,22 @@ RustyBT is a next-generation Python-based algorithmic trading framework that ext
 ### Using uv (Recommended)
 
 ```bash
-# Create virtual environment
-uv venv --python 3.12
+# Production installation (minimal dependencies)
+uv sync
 
-# Activate virtual environment
-source .venv/bin/activate  # On Unix/macOS
-# or
-.venv\Scripts\activate  # On Windows
+# Development installation (includes dev tools, notebooks, and tests)
+uv sync --extra dev --extra test
 
-# Install RustyBT
-uv pip install -e ".[dev,test]"
+# Or install all optional extras
+uv sync --all-extras
 ```
+
+**Available extras:**
+- `dev` - Development tools (jupyter, jupyterlab, ruff, mypy, black, type stubs)
+- `test` - Testing tools (pytest, hypothesis, coverage)
+- `benchmarks` - Performance profiling tools
+- `optimization` - Strategy optimization (scikit-learn, genetic algorithms)
+- `docs` - Documentation generation (Sphinx, mkdocs)
 
 ### Using pip
 
@@ -58,9 +63,13 @@ python3.12 -m venv .venv
 
 # Activate virtual environment
 source .venv/bin/activate  # On Unix/macOS
+# or
+.venv\Scripts\activate  # On Windows
 
 # Install RustyBT
-pip install -e ".[dev,test]"
+pip install -e ".[dev,test]"  # Development installation
+# or
+pip install -e .  # Production installation
 ```
 
 ## Quick Start
@@ -205,6 +214,23 @@ We are grateful to the Quantopian team, Stefan Jansen, and the entire open-sourc
 RustyBT is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
 
 This project incorporates code from Zipline and Zipline-Reloaded, both licensed under Apache 2.0.
+
+### Known License Limitations
+
+While RustyBT follows an **Apache 2.0/MIT-only dependency policy**, the following LGPL dependencies currently exist as transitive dependencies:
+
+| Package | License | Type | Source | Status |
+|---------|---------|------|--------|--------|
+| `frozendict` | LGPL v3 | Production | Via `yfinance` (Yahoo Finance data) | Tracked for replacement |
+| `chardet` | LGPL | Development | Via `tox` (testing tool) | Tracked for replacement |
+
+**Legal Status**: LGPL allows use as a dynamically-linked library without GPL license contamination. RustyBT's Apache 2.0 license remains unaffected.
+
+**Mitigation Plans**:
+- **frozendict**: Evaluating alternative data providers or forking `yfinance` with MIT-licensed replacement
+- **chardet**: Considering migration from `tox` to modern alternatives (`nox`, `hatch`)
+
+For details on dependency security and license compliance, see [docs/security-audit.md](docs/security-audit.md).
 
 ## Community
 

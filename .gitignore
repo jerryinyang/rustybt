@@ -159,3 +159,14 @@ api_keys.ini
 **/api_keys.ini
 credentials.json
 secrets.json
+
+# Experiments (outputs and data)
+experiments/**/output/
+experiments/**/data/
+experiments/**/*.csv
+experiments/**/*.json
+experiments/**/*.pkl
+experiments/**/*.png
+experiments/**/*.pdf
+!experiments/**/README.md
+!experiments/**/*.py

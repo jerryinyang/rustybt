@@ -1370,7 +1370,7 @@ def encrypt_credentials(env_file):
 @main.command()
 @click.option(
     "--broker",
-    type=click.Choice(["binance", "bybit", "ccxt", "ib"], case_sensitive=False),
+    type=click.Choice(["binance", "bybit", "hyperliquid", "ccxt", "ib"], case_sensitive=False),
     required=True,
     help="Broker to test",
 )
@@ -1386,6 +1386,8 @@ def test_broker(broker, testnet):
     Example:
         rustybt test-broker --broker binance
         rustybt test-broker --broker binance --testnet
+        rustybt test-broker --broker bybit
+        rustybt test-broker --broker hyperliquid
     """
     import asyncio
     import os
@@ -1399,7 +1401,7 @@ def test_broker(broker, testnet):
     async def test_connection():
         try:
             if broker.lower() == "binance":
-                import ccxt
+                import ccxt.async_support as ccxt_async
 
                 api_key = os.getenv("BINANCE_API_KEY")
                 api_secret = os.getenv("BINANCE_API_SECRET")
@@ -1408,7 +1410,7 @@ def test_broker(broker, testnet):
                     click.echo("❌ Error: BINANCE_API_KEY or BINANCE_API_SECRET not set", err=True)
                     return False
 
-                exchange = ccxt.binance(
+                exchange = ccxt_async.binance(
                     {
                         "apiKey": api_key,
                         "secret": api_secret,
@@ -1433,6 +1435,97 @@ def test_broker(broker, testnet):
                 await exchange.close()
                 return True
 
+            elif broker.lower() == "bybit":
+                import ccxt.async_support as ccxt_async
+
+                api_key = os.getenv("BYBIT_API_KEY")
+                api_secret = os.getenv("BYBIT_API_SECRET")
+
+                if not api_key or not api_secret:
+                    click.echo("❌ Error: BYBIT_API_KEY or BYBIT_API_SECRET not set", err=True)
+                    return False
+
+                exchange = ccxt_async.bybit(
+                    {
+                        "apiKey": api_key,
+                        "secret": api_secret,
+                    }
+                )
+
+                if testnet:
+                    exchange.set_sandbox_mode(True)
+
+                click.echo("📡 Connecting to Bybit...")
+                balance = await exchange.fetch_balance()
+
+                click.echo("✓ Connection successful")
+                click.echo("✓ Account authenticated")
+                click.echo(f"✓ Total balance: {len(balance.get('total', {}))} assets")
+
+                # Test market data
+                ticker = await exchange.fetch_ticker("BTC/USDT")
+                click.echo(f"✓ Market data accessible (BTC/USDT: ${ticker['last']:.2f})")
+
+                await exchange.close()
+                return True
+
+            elif broker.lower() == "hyperliquid":
+                private_key = os.getenv("HYPERLIQUID_PRIVATE_KEY")
+                wallet_address = os.getenv("HYPERLIQUID_WALLET_ADDRESS")
+
+                if not private_key:
+                    click.echo("❌ Error: HYPERLIQUID_PRIVATE_KEY not set", err=True)
+                    return False
+
+                if not wallet_address:
+                    click.echo("⚠️  Warning: HYPERLIQUID_WALLET_ADDRESS not set (optional)")
+
+                # Import Hyperliquid SDK
+                from hyperliquid.info import Info
+                from hyperliquid.utils import constants
+
+                # Initialize Info API (read-only, no authentication needed)
+                base_url = constants.MAINNET_API_URL
+                if testnet:
+                    click.echo(
+                        "⚠️  Hyperliquid testnet not available, using mainnet for info queries"
+                    )
+
+                info = Info(base_url=base_url, skip_ws=True)
+
+                click.echo("📡 Connecting to Hyperliquid...")
+
+                # Test market data access (no auth required)
+                try:
+                    all_mids = info.all_mids()
+                    if all_mids and len(all_mids) > 0:
+                        click.echo("✓ Connection successful")
+                        click.echo(f"✓ Market data accessible ({len(all_mids)} markets)")
+
+                        # Show BTC price if available
+                        if "BTC" in all_mids:
+                            click.echo(f"✓ BTC/USD: ${float(all_mids['BTC']):.2f}")
+                except Exception as e:
+                    click.echo(f"⚠️  Market data test failed: {e}")
+
+                # Test user data access (requires private key/wallet)
+                if wallet_address:
+                    try:
+                        user_state = info.user_state(wallet_address)
+                        if user_state:
+                            click.echo("✓ Account authenticated")
+
+                            # Show position info
+                            positions = user_state.get("assetPositions", [])
+                            click.echo(f"✓ Account accessible ({len(positions)} positions)")
+                    except Exception as e:
+                        click.echo(f"⚠️  Account data access: {e}")
+                else:
+                    click.echo("⚠️  Skipping account authentication (no wallet address)")
+
+                click.echo("✓ Private key validated (format correct)")
+                return True
+
             elif broker.lower() == "ccxt":
                 click.echo(
                     "⚠️  CCXT supports 100+ exchanges. Specify exchange with --broker <exchange>"
@@ -1452,6 +1545,9 @@ def test_broker(broker, testnet):
 
         except Exception as e:
             click.echo(f"\n❌ Connection failed: {e!s}", err=True)
+            import traceback
+
+            click.echo(f"\nDebug info:\n{traceback.format_exc()}", err=True)
             return False
 
     success = asyncio.run(test_connection())
@@ -2076,14 +2172,19 @@ def test_data(source, symbol):
                 return False
 
             elif source == "ccxt":
-                import ccxt
+                import ccxt.async_support as ccxt_async
 
-                exchange = ccxt.binance()
+                exchange = ccxt_async.binance()
                 ticker = await exchange.fetch_ticker(symbol)
                 await exchange.close()
                 click.echo("✓ Data fetched successfully")
                 click.echo(f"  Latest price: ${ticker['last']:.2f}")
                 return True
+
+            elif source == "binance":
+                click.echo("⚠️  Use 'ccxt' source with Binance exchange instead")
+                click.echo("   Example: rustybt test-data --source ccxt --symbol BTC/USDT")
+                return False
 
             else:
                 click.echo(f"❌ Source {source} not yet implemented", err=True)

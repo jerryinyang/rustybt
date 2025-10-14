@@ -4,8 +4,8 @@
 
 This document summarizes security vulnerabilities identified in RustyBT and their remediation status.
 
-Last Updated: 2025-10-12
-Story: X2.1 - P0 Security & Test Infrastructure
+Last Updated: 2025-10-13
+Story: X2.1 - P0 Security & Test Infrastructure, X2.6 - P1 Dependency Hygiene
 
 ---
 
@@ -128,6 +128,75 @@ response = requests.get(url)
 # After (protected with timeout)
 response = requests.get(url, timeout=30)  # SECURITY FIX (Story X2.1)
 ```
+
+---
+
+## Dependency Security
+
+**Last Scanned:** 2025-10-13
+**Tool:** pip-audit 2.9.0
+**Story:** X2.6 - P1 Dependency Hygiene
+
+### Vulnerability Tracking
+
+| Package | Version | Vulnerability | Severity | Status | Mitigation |
+|---------|---------|---------------|----------|--------|------------|
+| pip | 25.2 | CVE-2025-8869 / GHSA-4xh5-x5gv-qwph | High | Accepted (awaiting fix) | Dev-time risk only; install from trusted sources only |
+
+**Production Dependencies:** ✅ **0 vulnerabilities**
+**Dev Dependencies:** ⚠️ **1 accepted risk** (pip tarfile extraction)
+
+### Accepted Risks
+
+| Package | Vulnerability | Severity | Justification | Review Date |
+|---------|---------------|----------|---------------|-------------|
+| pip | CVE-2025-8869 (tarfile extraction path traversal) | High | Dev tooling only, not runtime dependency. Fix planned for pip 25.3. Mitigation: Only install packages from trusted sources (PyPI). | 2025-Q1 |
+
+### Weekly Scan Results
+
+Automated security scans run every Monday at 2 AM UTC via GitHub Actions workflow:
+`.github/workflows/dependency-security.yml`
+
+**Scan Tools:**
+- `pip-audit` - Python dependency vulnerability scanner
+- `safety` - Safety DB vulnerability scanner
+- `scripts/check_licenses.py` - License compliance checker (Story X2.6)
+
+Reports uploaded as artifacts to workflow runs.
+
+### Dependency Upgrade Policy
+
+**Immediate Upgrade (within 24 hours):**
+- Critical vulnerabilities in production dependencies
+- High vulnerabilities in production dependencies with active exploits
+
+**Planned Upgrade (within 1 week):**
+- High vulnerabilities in production dependencies
+- Critical vulnerabilities in dev dependencies
+
+**Scheduled Upgrade (next sprint):**
+- Medium vulnerabilities in production dependencies
+- High vulnerabilities in dev dependencies
+
+**Monitored:**
+- Low vulnerabilities (upgrade during regular dependency updates)
+- Dev tooling vulnerabilities with no production impact
+
+### License Compliance
+
+**Policy:** Apache 2.0 / MIT / BSD / ISC licenses only
+**Forbidden:** GPL, AGPL, LGPL, SSPL
+**Enforcement:** `scripts/check_licenses.py` runs in CI/CD
+**Status:** ⚠️ 2 LGPL exceptions documented below
+
+**Known LGPL Dependencies (Accepted Risks):**
+
+| Package | License | Used By | Type | Justification | Review Date |
+|---------|---------|---------|------|---------------|-------------|
+| chardet | LGPL | tox | Dev-only | Transitive dependency of tox (test tool). No production impact. Consider replacing tox or using charset-normalizer alternative. | 2025-Q2 |
+| frozendict | LGPL v3 | yfinance | Production | Transitive dependency of yfinance (Yahoo Finance data). LGPL allows dynamic linking without GPL contamination. Consider forking yfinance with MIT alternative or finding different data provider. | 2025-Q1 |
+
+**Note:** LGPL allows use as a library without contaminating our Apache 2.0 license, but we aim to replace these in future releases.
 
 ---
 

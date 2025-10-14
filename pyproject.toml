@@ -88,8 +88,6 @@ dependencies = [
     # Report generation (Story 8.2)
     'seaborn >=0.13.0',
     'jinja2 >=3.0.0',
-    # Machine learning dependency for optimization
-    'scikit-learn >=1.3.0',
     # IB dependency
     'eventkit',
 ]
@@ -142,6 +140,10 @@ dev = [
     'mypy>=1.10.0',
     'black>=24.1',
     'hypothesis>=6.0',
+    # Jupyter notebook tools for development and strategy exploration
+    'jupyter>=1.0.0',
+    'jupyterlab>=4.0.0',
+    'ipython>=8.0.0',
     # Type stubs for external libraries (Story 8.9)
     'types-requests>=2.31.0',
     'types-pytz>=2024.1.0',
@@ -163,6 +165,7 @@ benchmarks = [
 ]
 
 optimization = [
+    'scikit-learn>=1.3.0',  # Required for sensitivity analysis (bootstrap resampling)
     'scikit-optimize>=0.9.0',
     'deap>=1.4.0',
     'matplotlib>=3.5.0',

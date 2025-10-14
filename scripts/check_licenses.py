@@ -27,23 +27,30 @@ ACCEPTABLE_LICENSES = {
     "apache software license",
     "mit",
     "mit license",
+    "expat",  # Expat is MIT
     "bsd",
     "bsd license",
     "bsd-3-clause",
     "bsd-2-clause",
+    "bsd 3-clause",
     "isc",
     "isc license",
     "python software foundation",
     "psf",
     "mpl",
     "mozilla public license",
-    "lgpl",  # LGPL is acceptable (not GPL)
+    "unlicense",  # Public domain equivalent
+    "public domain",
+    "dual license",  # Usually Apache/BSD + proprietary (verify manually)
 }
 
 # Forbidden licenses (contains these strings)
+# Story X2.6: GPL, AGPL, LGPL, SSPL are forbidden per coding standards
 FORBIDDEN_LICENSES = {
-    "gpl",  # Matches GPL, GPLv2, GPLv3, but NOT LGPL
+    "gpl",  # Matches GPL, GPLv2, GPLv3 (including LGPL)
     "agpl",
+    "lgpl",
+    "sspl",
     "commercial",
 }
 
@@ -59,6 +66,13 @@ def get_package_license(package_name: str) -> str:
     """
     try:
         dist = metadata.distribution(package_name)
+
+        # Try License-Expression field first (PEP 639)
+        license_str = dist.metadata.get("License-Expression", "")
+        if license_str and license_str != "Unknown":
+            return license_str
+
+        # Try License field
         license_str = dist.metadata.get("License", "Unknown")
 
         # Try classifiers if license field is empty
@@ -86,13 +100,10 @@ def check_license(license_str: str) -> tuple[bool, str]:
     """
     license_lower = license_str.lower()
 
-    # Check for forbidden licenses (but exclude LGPL from GPL check)
+    # Check for forbidden licenses
+    # Story X2.6: LGPL is now forbidden per coding standards
     for forbidden in FORBIDDEN_LICENSES:
-        if forbidden in license_lower and forbidden == "gpl":
-            # Special case: Allow LGPL but not GPL
-            if "lgpl" not in license_lower:
-                return False, f"Forbidden license: {license_str}"
-        elif forbidden in license_lower:
+        if forbidden in license_lower:
             return False, f"Forbidden license: {license_str}"
 
     # Check for acceptable licenses
@@ -155,8 +166,8 @@ def main():
             print()
 
         print("Action required:")
-        print("1. Remove packages with forbidden licenses (GPL, AGPL)")
-        print("2. Find alternatives with Apache 2.0 or MIT licenses")
+        print("1. Remove packages with forbidden licenses (GPL, AGPL, LGPL, SSPL)")
+        print("2. Find alternatives with Apache 2.0, MIT, BSD, or ISC licenses")
         print("3. For unknown licenses, manually verify and update ACCEPTABLE_LICENSES if needed")
         sys.exit(1)
     else:

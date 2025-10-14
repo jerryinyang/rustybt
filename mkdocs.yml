@@ -107,15 +107,6 @@ nav:
   - Examples & Tutorials:
       - Overview: examples/README.md
   - API Reference:
-      - Overview APIs:
-          - Order Types: api/order-types.md
-          - Caching API: api/caching-api.md
-          - Bundle Metadata API: api/bundle-metadata-api.md
-          - Datasource API: api/datasource-api.md
-          - Finance API: api/finance-api.md
-          - Optimization API: api/optimization-api.md
-          - Live Trading API: api/live-trading-api.md
-          - Analytics API: api/analytics-api.md
       - Data Management:
           - Overview: api/data-management/README.md
           - Adapters:
@@ -205,6 +196,12 @@ nav:
               - Circuit Breakers: api/live-trading/safety/circuit-breakers.md
       - Testing:
           - Overview: api/testing/README.md
+      - API Overview Guides:
+          - Datasource API: api/datasource-api.md
+          - Finance API: api/finance-api.md
+          - Optimization API: api/optimization-api.md
+          - Live Trading API: api/live-trading-api.md
+          - Analytics API: api/analytics-api.md
   - About:
       - License: about/license.md
       - Contributing: about/contributing.md

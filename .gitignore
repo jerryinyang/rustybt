@@ -15,6 +15,13 @@ eggs/
 # Exception: rustybt/lib contains Cython source files
 !rustybt/lib/
 !rustybt/lib/**
+# But exclude build artifacts in rustybt/lib/
+rustybt/lib/__pycache__/
+rustybt/lib/**/__pycache__/
+rustybt/lib/*.so
+rustybt/lib/**/*.so
+rustybt/lib/*.pyc
+rustybt/lib/**/*.pyc
 parts/
 sdist/
 var/
@@ -160,13 +167,5 @@ api_keys.ini
 credentials.json
 secrets.json
 
-# Experiments (outputs and data)
-experiments/**/output/
-experiments/**/data/
-experiments/**/*.csv
-experiments/**/*.json
-experiments/**/*.pkl
-experiments/**/*.png
-experiments/**/*.pdf
-!experiments/**/README.md
-!experiments/**/*.py
+# Experiments (exclude entire directory - experimental/research code)
+experiments/

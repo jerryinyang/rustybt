@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-10-09T18:20:40.739717",
+  "target_overhead_percent": 30.0,
+  "scenarios": [
+    {
+      "scenario": "daily",
+      "float_mean": 1.1473001946675747,
+      "float_std": 0.19793112461820164,
+      "decimal_rust_mean": 1.1204455696667235,
+      "decimal_rust_std": 0.08017361946920118,
+      "overhead_percent": -2.340679895781961,
+      "target_met": true,
+      "runs": 3
+    },
+    {
+      "scenario": "hourly",
+      "float_mean": 17.026045930334174,
+      "float_std": 0.30181673279751203,
+      "decimal_rust_mean": 17.720604541665427,
+      "decimal_rust_std": 0.02447149169643719,
+      "overhead_percent": 4.079388803326345,
+      "target_met": true,
+      "runs": 3
+    },
+    {
+      "scenario": "minute",
+      "float_mean": 3.7888295556646576,
+      "float_std": 0.011924280594898433,
+      "decimal_rust_mean": 3.853192124666142,
+      "decimal_rust_std": 0.09444541707240249,
+      "overhead_percent": 1.6987454319568496,
+      "target_met": true,
+      "runs": 3
+    }
+  ]
+}

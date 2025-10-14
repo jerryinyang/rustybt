@@ -1,0 +1,457 @@
+docs/CI_CD_FIX_PLAN.md:24:recursive-include rustybt *.py
+docs/CI_CD_FIX_PLAN.md:25:recursive-include rustybt *.pyx
+docs/CI_CD_FIX_PLAN.md:26:recursive-include rustybt *.pxd
+docs/CI_CD_FIX_PLAN.md:27:recursive-include rustybt *.pxi
+docs/CI_CD_FIX_PLAN.md:131:4. Run `uv run bandit -r rustybt -ll -i` to verify security fixes
+docs/prd.md:152:- Python package (rustybt core)
+docs/architecture.md:142:- Provide `rustybt bundle migrate <bundle_name>` CLI command
+docs/architecture.md:2537:          pytest -v --cov=rustybt --cov-report=xml --cov-report=term
+docs/architecture.md:2621:- Key generation: `python -m rustybt keygen`
+docs/architecture.md:2862:- **Mitigation:** `rustybt bundle migrate` CLI tool with dual-format read support during transition
+docs/data-provider-validation-report.md:23:python3 -m rustybt test-data --source yfinance --symbol SPY
+docs/data-provider-validation-report.md:75:python3 -m rustybt test-data --source ccxt --symbol BTC/USDT
+docs/data-provider-validation-report.md:115:python3 -m rustybt test-data --source binance --symbol BTC/USDT
+docs/data-provider-validation-report.md:209:- Re-run: `python3 -m rustybt test-data --source ccxt --symbol BTC/USDT`
+docs/data-provider-validation-report.md:223:- **CLI Command:** `python3 -m rustybt test-data`
+docs/development/ci-cd-pipeline.md:310:bandit -r rustybt -ll
+docs/development/ci-cd-pipeline.md:337:pytest --cov=rustybt --cov-report=html
+docs/development/rust-setup.md:55:python -c "from rustybt import rust_sum; print(rust_sum(2, 3))"
+docs/development/rust-setup.md:232:    from rustybt._rustybt import rust_sum, multiply
+docs/cli-commands-inventory.md:31:python3 -m rustybt test-broker [OPTIONS]
+docs/cli-commands-inventory.md:41:python3 -m rustybt test-broker --broker binance
+docs/cli-commands-inventory.md:42:python3 -m rustybt test-broker --broker binance --testnet
+docs/cli-commands-inventory.md:58:python3 -m rustybt test-data [OPTIONS]
+docs/cli-commands-inventory.md:68:python3 -m rustybt test-data --source yfinance --symbol AAPL
+docs/cli-commands-inventory.md:69:python3 -m rustybt test-data --source ccxt --symbol BTC/USDT
+docs/cli-commands-inventory.md:80:python3 -m rustybt benchmark [OPTIONS]
+docs/cli-commands-inventory.md:89:python3 -m rustybt benchmark
+docs/cli-commands-inventory.md:90:python3 -m rustybt benchmark --output json
+docs/cli-commands-inventory.md:107:python3 -m rustybt paper-trade [OPTIONS]
+docs/cli-commands-inventory.md:119:python3 -m rustybt paper-trade --strategy momentum.py --duration 30d
+docs/cli-commands-inventory.md:120:python3 -m rustybt paper-trade --strategy momentum.py --broker binance --duration 7d
+docs/cli-commands-inventory.md:135:python3 -m rustybt analyze-uptime [OPTIONS]
+docs/cli-commands-inventory.md:146:python3 -m rustybt analyze-uptime --days 30
+docs/cli-commands-inventory.md:147:python3 -m rustybt analyze-uptime --log-file logs/paper_trade.log
+docs/cli-commands-inventory.md:164:python3 -m rustybt verify-config [OPTIONS]
+docs/cli-commands-inventory.md:173:python3 -m rustybt verify-config
+docs/cli-commands-inventory.md:174:python3 -m rustybt verify-config --env-file /path/to/.env
+docs/cli-commands-inventory.md:190:python3 -m rustybt test-alerts [OPTIONS]
+docs/cli-commands-inventory.md:200:python3 -m rustybt test-alerts --email your@email.com
+docs/cli-commands-inventory.md:201:python3 -m rustybt test-alerts --slack https://hooks.slack.com/...
+docs/qa/gates/8.10-production-deployment-guide.yml:28:    finding: "Documentation references 'rustybt fetch-data' but actual command is 'rustybt test-data' (4 occurrences)"
+docs/qa/gates/8.10-production-deployment-guide.yml:92:    - action: "Update documentation: replace 'rustybt fetch-data' with 'rustybt test-data'"
+docs/qa/gates/X1.2-unified-datasource-abstraction.yml:128:    - command: "rustybt ingest-unified --list-sources"
+docs/qa/gates/X1.2-unified-datasource-abstraction.yml:131:    - command: "rustybt ingest-unified --source-info yfinance"
+docs/qa/gates/X1.2-unified-datasource-abstraction.yml:134:    - command: "rustybt ingest-unified --source-info ccxt"
+docs/qa/gates/1.1-fork-repository-and-establish-development-environment.yml:76:      details: "Simple test verifying rustybt imports correctly for fast CI feedback"
+docs/qa/gates/X2.4-p1-zero-mock-enforcement.yml:117:      - "import rustybt successful"
+docs/qa/gates/7.2-setup-rust-integration-pyo3.yml:91:      ✓ Verified: python -m build produces wheel with _rustybt extension
+docs/qa/gates/7.2-setup-rust-integration-pyo3.yml:100:      ✓ Registered in _rustybt PyModule (line 34)
+docs/qa/assessments/epic-X1-cross-story-review.md:251:# User: rustybt ingest yfinance --symbols AAPL,MSFT --bundle my-stocks
+docs/qa/assessments/epic-X1-cross-story-review.md:283:# User: rustybt bundle migrate --backup
+docs/security-audit.md:219:  --cov=rustybt --cov-report=term --cov-report=html
+docs/pr/2025-10-13-CI-BLOCKING-dependency-issues.md:149:Building editable for rustybt (pyproject.toml): started
+docs/pr/2025-10-13-CI-BLOCKING-dependency-issues.md:150:Building editable for rustybt (pyproject.toml): still running...
+docs/pr/2025-10-13-CI-BLOCKING-dependency-issues.md:151:Building editable for rustybt (pyproject.toml): finished with status 'done'
+docs/pr/2025-10-13-CI-BLOCKING-solutions-proposal.md:125:include = ['rustybt*']  # Explicitly include all rustybt subpackages
+docs/pr/2025-10-13-CI-BLOCKING-solutions-proposal.md:182:recursive-include rustybt *.pyx
+docs/pr/2025-10-13-CI-BLOCKING-solutions-proposal.md:183:recursive-include rustybt *.pxd
+docs/pr/2025-10-13-CI-BLOCKING-solutions-proposal.md:184:recursive-include rustybt *.pxi
+docs/pr/2025-10-13-CI-BLOCKING-solutions-proposal.md:381:pip uninstall rustybt -y
+docs/testing/property-based-testing.md:83:pytest -m property --cov=rustybt --cov-report=term
+docs/broker-validation-findings.md:14:   - Story AC specifies: `python -m rustybt test-broker --broker paper`
+docs/broker-validation-findings.md:33:$ python3 -m rustybt test-broker --broker paper
+docs/broker-validation-findings.md:43:$ python3 -m rustybt test-broker --broker ccxt
+docs/broker-validation-findings.md:89:python3 -m rustybt test-broker --broker binance --testnet
+docs/broker-validation-findings.md:95:python3 -m rustybt paper-trade --strategy <file.py> --broker paper --duration 1h
+docs/broker-validation-findings.md:107:   - Story says: `python -m rustybt test-broker --broker paper`
+docs/broker-validation-findings.md:112:   - Story says: `python -m rustybt test-broker --broker <ccxt-exchange>`
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:33:4. Simplifies CLI to one command: `rustybt ingest <source> --bundle <name>`
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:121:    rustybt ingest <source> --bundle <name> [options]
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:127:22. **AC4.6**: Deprecate old commands (`rustybt ingest csvdir`, etc.) with warnings
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:136:    rustybt ingest yfinance --symbols AAPL,MSFT --bundle my-stocks
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:137:    rustybt ingest ccxt --exchange binance --symbols BTC/USDT --bundle crypto
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:138:    rustybt ingest csv --csv-dir /path/to/csv --bundle csv-data
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:304:| `rustybt ingest csvdir --csvdir /path` | `rustybt ingest csv --csv-dir /path --bundle my-csv` |
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:305:| `rustybt ingest quandl --symbol AAPL` | `rustybt ingest yfinance --symbols AAPL --bundle quandl-data` |
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:306:| (manual script) | `rustybt ingest yfinance --symbols AAPL --bundle my-stocks` |
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:307:| (manual script) | `rustybt ingest ccxt --exchange binance --symbols BTC/USDT --bundle crypto` |
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:481:5. Added unified CLI command `rustybt ingest-unified` with --list-sources and --source-info flags
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:852:1. **List Sources**: `rustybt ingest-unified --list-sources`
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:856:2. **YFinance Info**: `rustybt ingest-unified --source-info yfinance`
+docs/stories/completed/X1.2.unified-datasource-abstraction.story.md:860:3. **CCXT Info**: `rustybt ingest-unified --source-info ccxt`
+docs/stories/completed/1.2.configure-cicd-pipeline.md:31:  - [x] Add pytest execution step with coverage: `pytest -v --cov=rustybt --cov-report=xml --cov-report=term`
+docs/stories/completed/1.2.configure-cicd-pipeline.md:47:  - [x] Configure mypy to check all Python files in rustybt package
+docs/stories/completed/1.2.configure-cicd-pipeline.md:111:          pytest -v --cov=rustybt --cov-report=xml --cov-report=term
+docs/stories/completed/1.2.configure-cicd-pipeline.md:138:- Run tests with pytest: `pytest -v --cov=rustybt --cov-report=xml --cov-report=term`
+docs/stories/completed/1.2.configure-cicd-pipeline.md:208:addopts = "-v --strict-markers --cov=rustybt --cov-report=term-missing"
+docs/stories/completed/X1.5.integration-documentation.story.md:212:    - Quick start: `rustybt ingest yfinance --symbols AAPL --bundle my-data`
+docs/stories/completed/X1.5.integration-documentation.story.md:214:    - CLI reference: `rustybt ingest <source> [options]`
+docs/stories/completed/X1.5.integration-documentation.story.md:228:    - Monitoring cache stats: `rustybt cache stats`
+docs/stories/completed/X1.5.integration-documentation.story.md:254:    - CLI commands: `rustybt bundle list/info/validate`
+docs/stories/completed/X1.5.integration-documentation.story.md:292:    from rustybt import TradingAlgorithm
+docs/stories/completed/4.6.implement-overnight-financing-for-leveraged-positions.md:1706:- **Project Structure**: ✅ PASS (follows rustybt conventions)
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:66:8. **AC1.8**: CLI command `rustybt ingest yfinance-profiling` creates bundle
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:94:19. **AC2.9**: Unified CLI: `rustybt ingest <source> --bundle <name> [options]`
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:122:34. **AC4.4**: CLI command `rustybt catalog list` shows all ingested bundles
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:123:35. **AC4.5**: CLI command `rustybt catalog info <bundle>` shows detailed metadata
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:124:36. **AC4.6**: CLI command `rustybt catalog validate <bundle>` runs quality checks
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:170:  - [x] Verify `rustybt ingest yfinance-profiling` command works
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:173:  - [x] Test CLI with `rustybt ingest ccxt-hourly-profiling`
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:219:  - [ ] Command: `rustybt ingest <source> --bundle <name> [options]`
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:223:  - [ ] Deprecate old `rustybt ingest csvdir`, `rustybt ingest quandl`
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:247:  - [ ] Add CLI command `rustybt cache clean --max-size 5GB`
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:257:  - [ ] CLI command `rustybt cache stats` shows hit rate, avg latency
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:322:  - [ ] Show CLI usage: `rustybt ingest yfinance --symbols AAPL,MSFT`
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:595:- **CLI Verification**: All bundles registered and accessible via `rustybt ingest -b <bundle-name>`
+docs/stories/completed/X1.1.adapter-bundle-bridge.story.md:719:  4. Bundle accessible via CLI `rustybt ingest <bundle-name>` ✅ Verified
+docs/stories/completed/X1.3.smart-caching-layer.story.md:210:22. **AC3.6**: CLI command `rustybt cache clean --max-size 5GB` for manual eviction
+docs/stories/completed/X1.3.smart-caching-layer.story.md:226:25. **AC4.3**: CLI command `rustybt cache stats` shows:
+docs/stories/completed/X1.3.smart-caching-layer.story.md:320:  - [x] Implement CLI `rustybt cache clean --max-size` command
+docs/stories/completed/X1.3.smart-caching-layer.story.md:330:  - [x] Implement CLI `rustybt cache stats` command
+docs/stories/completed/X1.3.smart-caching-layer.story.md:609:- ✅ Added CLI commands: rustybt cache stats, rustybt cache clean, rustybt cache list
+docs/stories/completed/X1.3.smart-caching-layer.story.md:693:- ✅ AC3.6: CLI command `rustybt cache clean` implemented (__main__.py:786)
+docs/stories/completed/X1.3.smart-caching-layer.story.md:699:- ✅ AC4.3: CLI `rustybt cache stats` command (__main__.py:723)
+docs/stories/completed/X1.3.smart-caching-layer.story.md:933:   - **Actionable Guidance**: Suggests `rustybt cache clean` or increasing `cache.max_size_bytes`
+docs/stories/completed/7.3.implement-rust-optimized-modules.story.md:409:    from rustybt._rustybt import rust_decimal_sum
+docs/stories/completed/6.11.circuit-breakers-monitoring.story.md:57:  - [x] Provide CLI command for emergency stop: rustybt live stop --strategy <name>
+docs/stories/completed/1.1.fork-repository-and-establish-development-environment.md:25:  - [x] Clone rustybt repository locally
+docs/stories/completed/1.1.fork-repository-and-establish-development-environment.md:26:  - [x] Verify remote URL points to new rustybt repository
+docs/stories/completed/1.1.fork-repository-and-establish-development-environment.md:47:  - [x] Generate coverage report: `pytest tests/ --cov=rustybt --cov-report=term --cov-report=xml`
+docs/stories/completed/1.1.fork-repository-and-establish-development-environment.md:81:- Run tests with: `pytest tests/ -v --cov=rustybt --cov-report=xml --cov-report=term`
+docs/stories/completed/1.1.fork-repository-and-establish-development-environment.md:289:- Updated setup.py to reference rustybt paths instead of src/zipline paths
+docs/stories/completed/1.1.fork-repository-and-establish-development-environment.md:372:   - **How**: Updated to call rustybt API which is already imported
+docs/stories/completed/3.6.implement-yfinance-data-adapter.md:44:  - [x] Add resolution mapping (rustybt → yfinance: "1d" → "1d", "1h" → "1h", "1m" → "1m")
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:41:  - [x] Set module name: rustybt._rustybt (private module, exposed via __init__.py)
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:55:  - [x] Re-export rust_sum at package level: `from rustybt._rustybt import rust_sum`
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:57:  - [x] Test import: `python -c "from rustybt import rust_sum; print(rust_sum(2, 3))"`
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:133:- Module naming: rustybt._rustybt (private), exposed via rustybt/__init__.py
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:197:- Python imports from rustybt._rustybt (private module built by maturin)
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:235:from rustybt import rust_sum, divide
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:272:- Import rust_sum from rustybt package successfully
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:308:    from rustybt import rust_sum
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:312:    from rustybt import rust_sum
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:316:    from rustybt import rust_sum
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:349:- `.venv/bin/python -c "from rustybt import rust_sum; print(rust_sum(2, 3))"`: Returns 5 (Rust extension working)
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:368:  - Converted to proper Cargo workspace structure with crates/rustybt subdirectory (AC #1)
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:377:  - Verified Rust extension import: `from rustybt import rust_sum` works correctly
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:610:- ✅ Verified: `python -c "from rustybt import rust_sum; print(rust_sum(2, 3))"` → Returns 5
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:660:| 1 | Rust workspace at rust/ | ✓ PASS | rust/Cargo.toml workspace with crates/rustybt member |
+docs/stories/completed/7.2.setup-rust-integration-pyo3.story.md:715:python -c "from rustybt import rust_sum; print(f'rust_sum(2, 3) = {rust_sum(2, 3)}')"
+docs/stories/completed/X1.4.unified-metadata-management.story.md:323:17. **AC5.1**: Implement `rustybt bundle list` command:
+docs/stories/completed/X1.4.unified-metadata-management.story.md:325:    rustybt bundle list
+docs/stories/completed/X1.4.unified-metadata-management.story.md:336:18. **AC5.2**: Implement `rustybt bundle info <name>` command:
+docs/stories/completed/X1.4.unified-metadata-management.story.md:338:    rustybt bundle info yfinance-daily
+docs/stories/completed/X1.4.unified-metadata-management.story.md:360:19. **AC5.3**: Implement `rustybt bundle validate <name>` command:
+docs/stories/completed/X1.4.unified-metadata-management.story.md:362:    rustybt bundle validate yfinance-daily
+docs/stories/completed/X1.4.unified-metadata-management.story.md:374:20. **AC5.4**: Implement `rustybt bundle migrate` command:
+docs/stories/completed/X1.4.unified-metadata-management.story.md:376:    rustybt bundle migrate --dry-run     # Preview
+docs/stories/completed/X1.4.unified-metadata-management.story.md:377:    rustybt bundle migrate --backup      # Execute with backup
+docs/stories/completed/X1.4.unified-metadata-management.story.md:378:    rustybt bundle migrate --rollback <timestamp>
+docs/stories/completed/X1.4.unified-metadata-management.story.md:444:  - [x] Implemented `rustybt bundle list` with Rich table formatting over BundleMetadata
+docs/stories/completed/X1.4.unified-metadata-management.story.md:445:  - [x] Implemented `rustybt bundle info <name>` with provenance, quality, and file sections
+docs/stories/completed/X1.4.unified-metadata-management.story.md:446:  - [x] Implemented `rustybt bundle validate <name>` with OHLCV, duplicates, and missing day checks
+docs/stories/completed/X1.4.unified-metadata-management.story.md:447:  - [x] Implemented `rustybt bundle migrate` wrapper around migration script utilities
+docs/stories/completed/X1.4.unified-metadata-management.story.md:731:- Added `rustybt bundle` group with list, info, validate, and migrate commands wired to BundleMetadata
+docs/stories/completed/X1.4.unified-metadata-management.story.md:821:- [ ] Implement `rustybt bundle list` with Rich table formatting
+docs/stories/completed/X1.4.unified-metadata-management.story.md:822:- [ ] Implement `rustybt bundle info <name>` with detailed metadata
+docs/stories/completed/X1.4.unified-metadata-management.story.md:823:- [ ] Implement `rustybt bundle validate <name>` with quality checks
+docs/stories/completed/X1.4.unified-metadata-management.story.md:824:- [ ] Implement `rustybt bundle migrate` wrapper around migration script
+docs/stories/completed/X1.4.unified-metadata-management.story.md:928:- No `rustybt bundle` subcommands exist
+docs/stories/completed/X1.4.unified-metadata-management.story.md:979:4. **Phase 5**: Implement CLI commands (rustybt bundle list/info/validate/migrate)
+docs/stories/completed/X1.4.unified-metadata-management.story.md:997:- Every adapter `ingest_to_bundle` entry point (for example `rustybt/data/adapters/yfinance_adapter.py` and `csv_adapter.py`) returns after fetching data; no Parquet writing or metadata persistence occurs. As a result, the new `rustybt ingest-unified` command and any adapter-driven ingestion produce no bundle files and never exercise the unified metadata path (AC 3.2 is unmet).
+docs/stories/completed/X1.4.unified-metadata-management.story.md:998:- Phase 5 CLI work is still absent (`rustybt/__main__.py` exposes `ingest-unified` but there is no `rustybt bundle [list|info|validate|migrate]` command group). Users cannot inspect or validate unified metadata from the CLI (AC 5.1–5.4 remain unimplemented).
+docs/stories/completed/X1.4.unified-metadata-management.story.md:1018:- [ ] Implement `rustybt bundle list/info/validate/migrate` commands with Rich output and automated tests to satisfy AC 5.1–5.4.
+docs/stories/completed/X1.4.unified-metadata-management.story.md:1067:- [ ] Implement `rustybt bundle` CLI command group (`list`, `info`, `validate`, `migrate`) with Rich output and regression tests (AC 5.1–5.4).
+docs/stories/completed/X1.4.unified-metadata-management.story.md:1102:- Deprecation wrappers forward all operations to `BundleMetadata` with warnings and regression tests (AC 4.1–4.2), and the new `rustybt bundle` CLI group delivers list/info/validate/migrate flows with Rich formatting and coverage (AC 5.1–5.4).
+docs/stories/completed/X1.4.unified-metadata-management.story.md:1167:- **Phase 5 (CLI)**: Full `rustybt bundle` command group operational with `list`, `info`, `validate`, and `migrate` subcommands. Rich table formatting for bundle displays. All 6 CLI tests pass in 0.22s.
+docs/stories/completed/8.10.production-deployment-guide.story.md:252:# Encryption key (generate with: python -m rustybt keygen)
+docs/stories/completed/8.10.production-deployment-guide.story.md:259:python -m rustybt encrypt-credentials
+docs/stories/completed/8.10.production-deployment-guide.story.md:271:rustybt paper-trade --duration 30d --strategy momentum.py
+docs/stories/completed/8.10.production-deployment-guide.story.md:276:rustybt live-trade --strategy momentum.py --broker binance
+docs/stories/completed/8.10.production-deployment-guide.story.md:407:- `rustybt keygen` (referenced in deployment-guide.md:365, security-audit.md:79)
+docs/stories/completed/8.10.production-deployment-guide.story.md:408:- `rustybt encrypt-credentials` (deployment-guide.md:375)
+docs/stories/completed/8.10.production-deployment-guide.story.md:409:- `rustybt test-broker` (deployment-guide.md:348, production-checklist.md:126)
+docs/stories/completed/8.10.production-deployment-guide.story.md:410:- `rustybt verify-config` (deployment-guide.md:354, production-checklist.md:153)
+docs/stories/completed/8.10.production-deployment-guide.story.md:411:- `rustybt analyze-uptime` (deployment-guide.md:976, troubleshooting.md:901)
+docs/stories/completed/8.10.production-deployment-guide.story.md:412:- `rustybt benchmark` (deployment-guide.md:988, production-checklist.md:183)
+docs/stories/completed/8.10.production-deployment-guide.story.md:413:- `rustybt paper-trade` (deployment-guide.md:964)
+docs/stories/completed/8.10.production-deployment-guide.story.md:414:- `rustybt live-trade` (deployment-guide.md:1045)
+docs/stories/completed/8.10.production-deployment-guide.story.md:415:- `rustybt balance` (troubleshooting.md:357)
+docs/stories/completed/8.10.production-deployment-guide.story.md:416:- `rustybt status` (deployment-guide.md:1061)
+docs/stories/completed/8.10.production-deployment-guide.story.md:417:- `rustybt test-data` (production-checklist.md:139)
+docs/stories/completed/8.10.production-deployment-guide.story.md:418:- `rustybt fetch-data` (troubleshooting.md:335, production-checklist.md:140)
+docs/stories/completed/8.10.production-deployment-guide.story.md:419:- `rustybt test-alerts` (production-checklist.md:235)
+docs/stories/completed/8.10.production-deployment-guide.story.md:420:- `rustybt generate-api-token` (deployment-guide.md:457)
+docs/stories/completed/8.10.production-deployment-guide.story.md:423:- `rustybt run` - Run backtest
+docs/stories/completed/8.10.production-deployment-guide.story.md:424:- `rustybt ingest` - Ingest data bundles
+docs/stories/completed/8.10.production-deployment-guide.story.md:425:- `rustybt ingest-unified` - Unified data ingestion
+docs/stories/completed/8.10.production-deployment-guide.story.md:426:- `rustybt clean` - Clean bundles
+docs/stories/completed/8.10.production-deployment-guide.story.md:427:- `rustybt bundles` - List bundles
+docs/stories/completed/8.10.production-deployment-guide.story.md:428:- `rustybt bundle [list|info|validate|migrate]` - Bundle management
+docs/stories/completed/8.10.production-deployment-guide.story.md:429:- `rustybt cache [stats|clean|list]` - Cache management
+docs/stories/completed/8.10.production-deployment-guide.story.md:442:   These represent planned functionality. Use `rustybt --help` to see available commands.
+docs/stories/completed/8.10.production-deployment-guide.story.md:545:However, the `rustybt benchmark` command does not exist. Users cannot execute performance validation as documented.
+docs/stories/completed/8.10.production-deployment-guide.story.md:604:- ✅ `rustybt keygen` - Generate Fernet encryption keys (lines 1228-1254)
+docs/stories/completed/8.10.production-deployment-guide.story.md:605:- ✅ `rustybt encrypt-credentials` - Encrypt broker API credentials (lines 1256-1330)
+docs/stories/completed/8.10.production-deployment-guide.story.md:606:- ✅ `rustybt test-broker` - Test broker connectivity & auth (lines 1332-1427)
+docs/stories/completed/8.10.production-deployment-guide.story.md:607:- ✅ `rustybt verify-config` - Validate configuration files (lines 1429-1533)
+docs/stories/completed/8.10.production-deployment-guide.story.md:610:- ✅ `rustybt paper-trade` - Paper trading mode with uptime tracking (lines 1540-1627)
+docs/stories/completed/8.10.production-deployment-guide.story.md:611:- ✅ `rustybt live-trade` - Live trading mode with safety confirmations (lines 1628-1693)
+docs/stories/completed/8.10.production-deployment-guide.story.md:614:- ✅ `rustybt analyze-uptime` - Parse logs for 99.9% uptime validation (lines 1700-1824)
+docs/stories/completed/8.10.production-deployment-guide.story.md:615:- ✅ `rustybt benchmark` - Performance benchmarking suite (lines 1826-1897)
+docs/stories/completed/8.10.production-deployment-guide.story.md:616:- ✅ `rustybt balance` - Query broker account balances (lines 1899-1970)
+docs/stories/completed/8.10.production-deployment-guide.story.md:617:- ✅ `rustybt status` - Live engine status monitoring (lines 1972-2027)
+docs/stories/completed/8.10.production-deployment-guide.story.md:620:- ✅ `rustybt test-data` - Test data source connectivity (lines 2029-2093)
+docs/stories/completed/8.10.production-deployment-guide.story.md:621:- ✅ `rustybt test-alerts` - Test alert configuration (lines 2095-2154)
+docs/stories/completed/8.10.production-deployment-guide.story.md:622:- ✅ `rustybt generate-api-token` - Generate JWT tokens (lines 2156-2189)
+docs/stories/completed/8.10.production-deployment-guide.story.md:694:**Issue**: Documentation references `rustybt fetch-data` but actual command is `rustybt test-data`
+docs/stories/completed/8.10.production-deployment-guide.story.md:704:**Recommendation**: Update documentation to use `rustybt test-data` for consistency
+docs/stories/completed/8.10.production-deployment-guide.story.md:808:- ✅ `rustybt benchmark` command implemented for performance testing
+docs/stories/completed/8.10.production-deployment-guide.story.md:896:  python -m rustybt test-broker --broker <name> [--testnet]
+docs/stories/completed/8.10.production-deployment-guide.story.md:897:  python -m rustybt test-data --source <provider>
+docs/stories/completed/8.10.production-deployment-guide.story.md:898:  python -m rustybt benchmark --suite backtest
+docs/stories/completed/8.10.production-deployment-guide.story.md:899:  python -m rustybt paper-trade --strategy <file.py> --broker <name> --duration 30d
+docs/stories/completed/8.10.production-deployment-guide.story.md:900:  python -m rustybt analyze-uptime --log-dir <dir> --start-date ... --end-date ...
+docs/stories/completed/8.10.production-deployment-guide.story.md:910:  - Validate `python -m rustybt keygen` works
+docs/stories/completed/8.10.production-deployment-guide.story.md:911:  - Validate `python -m rustybt encrypt-credentials` works
+docs/stories/completed/3.5.implement-ccxt-data-adapter.md:44:  - [x] Add resolution mapping (rustybt format → CCXT timeframe: "1d" → "1d", "1h" → "1h")
+docs/stories/completed/7.1.profile-python-implementation.story.md:310:    - This is a rustybt framework bug, not a profiling infrastructure issue
+docs/stories/completed/7.1.profile-python-implementation.story.md:312:    - Requires fix in core rustybt codebase before profiling can complete
+docs/stories/completed/7.1.profile-python-implementation.story.md:342:  - Requires core rustybt codebase fix before profiling execution can complete
+docs/stories/completed/7.1.profile-python-implementation.story.md:641:- Profiling scenarios now use actual rustybt algorithms with realistic strategies
+docs/stories/completed/7.1.profile-python-implementation.story.md:680:  - Or manually: `rustybt ingest profiling-daily`
+docs/stories/completed/7.1.profile-python-implementation.story.md:795:   - Proper integration with rustybt algorithm API
+docs/stories/X2.7.p2-production-validation-docs.story.md:18:  - [ ] Run: `python -m rustybt --help` - verify all commands listed
+docs/stories/X2.7.p2-production-validation-docs.story.md:21:  - [ ] `python -m rustybt test-broker --help` - document available options
+docs/stories/X2.7.p2-production-validation-docs.story.md:22:  - [ ] `python -m rustybt test-data --help` - document available options
+docs/stories/X2.7.p2-production-validation-docs.story.md:23:  - [ ] `python -m rustybt benchmark --help` - document available options
+docs/stories/X2.7.p2-production-validation-docs.story.md:24:  - [ ] `python -m rustybt paper-trade --help` - document available options
+docs/stories/X2.7.p2-production-validation-docs.story.md:25:  - [ ] `python -m rustybt analyze-uptime --help` - document available options
+docs/stories/X2.7.p2-production-validation-docs.story.md:37:- [ ] Run `python -m rustybt test-broker --broker <ccxt-exchange>` successfully
+docs/stories/X2.7.p2-production-validation-docs.story.md:42:- [ ] Run `python -m rustybt test-broker --broker paper` successfully
+docs/stories/X2.7.p2-production-validation-docs.story.md:50:- [ ] Run `python -m rustybt test-data --source yfinance` successfully
+docs/stories/X2.7.p2-production-validation-docs.story.md:54:- [ ] Run `python -m rustybt test-data --source <alternative>` successfully (if applicable)
+docs/stories/X2.7.p2-production-validation-docs.story.md:60:- [ ] Run `python -m rustybt benchmark --suite backtest` successfully
+docs/stories/X2.7.p2-production-validation-docs.story.md:81:- [ ] Run `python -m rustybt paper-trade --strategy <file.py> --broker paper --duration 30d`
+docs/stories/X2.7.p2-production-validation-docs.story.md:91:  - [ ] Run `python -m rustybt analyze-uptime --log-dir ~/.rustybt/logs --start-date <start> --end-date <end>`
+docs/stories/X2.7.p2-production-validation-docs.story.md:114:  grep -rn "python -m rustybt\|rustybt " docs/ README.md \
+docs/stories/X2.7.p2-production-validation-docs.story.md:175:- [ ] Command help text is accurate: `python -m rustybt <command> --help`
+docs/stories/X2.7.p2-production-validation-docs.story.md:218:  - [x] Verify all CLI commands exist using `python -m rustybt --help`
+docs/stories/X2.7.p2-production-validation-docs.story.md:224:  - [ ] Test paper broker: `python -m rustybt test-broker --broker paper`
+docs/stories/X2.7.p2-production-validation-docs.story.md:227:  - [ ] Test CCXT broker: `python -m rustybt test-broker --broker <exchange> --testnet`
+docs/stories/X2.7.p2-production-validation-docs.story.md:233:  - [x] Test yfinance: `python -m rustybt test-data --source yfinance --symbol SPY`
+docs/stories/X2.7.p2-production-validation-docs.story.md:242:  - [x] Run backtest benchmark: `python -m rustybt benchmark --suite backtest --output benchmark-results.json`
+docs/stories/X2.7.p2-production-validation-docs.story.md:260:  - [ ] Start paper trading: `python -m rustybt paper-trade --strategy <file.py> --broker paper --duration 30d`
+docs/stories/X2.7.p2-production-validation-docs.story.md:268:  - [ ] Run uptime analysis: `python -m rustybt analyze-uptime --log-dir ~/.rustybt/logs --start-date <start> --end-date <end>`
+docs/stories/X2.7.p2-production-validation-docs.story.md:352:- **CLI command pattern:** `python -m rustybt <command> [options]` (see rustybt/__main__.py)
+docs/stories/X2.7.p2-production-validation-docs.story.md:396:   python -m rustybt test-broker --broker paper
+docs/stories/X2.7.p2-production-validation-docs.story.md:403:   python -m rustybt test-broker --broker $CCXT_EXCHANGE --testnet
+docs/stories/X2.7.p2-production-validation-docs.story.md:408:   python -m rustybt test-broker --broker paper >> validation-report.md 2>&1
+docs/stories/X2.7.p2-production-validation-docs.story.md:414:   python -m rustybt test-data --source yfinance --symbol SPY --start 2024-01-01 --end 2024-12-31
+docs/stories/X2.7.p2-production-validation-docs.story.md:418:   python -m rustybt test-data --source quandl
+docs/stories/X2.7.p2-production-validation-docs.story.md:423:   python -m rustybt test-data --source yfinance --symbol SPY >> validation-report.md 2>&1
+docs/stories/X2.7.p2-production-validation-docs.story.md:429:   python -m rustybt benchmark --suite backtest --output benchmark-results.json
+docs/stories/X2.7.p2-production-validation-docs.story.md:445:   from rustybt import Algorithm
+docs/stories/X2.7.p2-production-validation-docs.story.md:458:   python -m rustybt paper-trade \
+docs/stories/X2.7.p2-production-validation-docs.story.md:469:   python -m rustybt analyze-uptime \
+docs/stories/X2.7.p2-production-validation-docs.story.md:483:   grep -rn "python -m rustybt" docs/ > command-references.txt
+docs/stories/X2.7.p2-production-validation-docs.story.md:486:   # - Verify command name exists: python -m rustybt --help
+docs/stories/X2.7.p2-production-validation-docs.story.md:487:   # - Verify options/flags: python -m rustybt <command> --help
+docs/stories/X2.7.p2-production-validation-docs.story.md:749:   - Verify command exists: `python -m rustybt <command> --help`
+docs/stories/X2.7.p2-production-validation-docs.story.md:765:python -m rustybt --help
+docs/stories/X2.7.p2-production-validation-docs.story.md:766:python -m rustybt test-broker --help
+docs/stories/X2.7.p2-production-validation-docs.story.md:767:python -m rustybt test-data --help
+docs/stories/X2.7.p2-production-validation-docs.story.md:768:python -m rustybt benchmark --help
+docs/stories/X2.7.p2-production-validation-docs.story.md:769:python -m rustybt paper-trade --help
+docs/stories/X2.7.p2-production-validation-docs.story.md:770:python -m rustybt analyze-uptime --help
+docs/stories/X2.4.p1-zero-mock-enforcement.story.md:350:    """Find all validation functions in rustybt package."""
+docs/stories/X2.4.p1-zero-mock-enforcement.story.md:353:    # Import rustybt package
+docs/stories/X2.1.p0-security-test-infrastructure.story.md:58:   - Coverage report generated: `--cov=rustybt --cov-report=term`
+docs/stories/X2.1.p0-security-test-infrastructure.story.md:66:   - `python -m rustybt ingest -b quandl` completes successfully
+docs/stories/X2.1.p0-security-test-infrastructure.story.md:151:  - [x] Run: `pytest -m "not memory and not api_integration and not live and not ib_integration" --cov=rustybt --cov-report=term`
+docs/stories/X2.1.p0-security-test-infrastructure.story.md:277:  --cov=rustybt --cov-report=term --cov-report=html
+docs/stories/X2.1.p0-security-test-infrastructure.story.md:362:pytest tests/data/bundles/ tests/analytics/ --cov=rustybt --cov-report=term-missing
+docs/stories/X2.5.p1-cicd-pipeline.story.md:34:   - BLOCKING: `bandit -r rustybt -ll -i` (0 High severity issues)
+docs/stories/X2.5.p1-cicd-pipeline.story.md:41:   - Run unit tests: `pytest -m "not memory and not api_integration and not live and not ib_integration" --cov=rustybt --cov-report=term --cov-report=html`
+docs/stories/X2.5.p1-cicd-pipeline.story.md:57:   - `python -m rustybt benchmark --suite backtest --output benchmark-results.json`
+docs/stories/X2.5.p1-cicd-pipeline.story.md:395:          uv run bandit -r rustybt -ll -i
+docs/stories/X2.5.p1-cicd-pipeline.story.md:450:            --cov=rustybt \
+docs/stories/X2.5.p1-cicd-pipeline.story.md:574:          uv run python -m rustybt benchmark --suite backtest --output benchmark-results.json
+docs/stories/X2.3.p1-code-quality-baseline.story.md:314:  --cov=rustybt --cov-report=term --cov-report=html
+docs/stories/X2.3.p1-code-quality-baseline.story.md:317:pytest --cov=rustybt --cov-report=term | grep "TOTAL"
+docs/stories/X2.3.p1-code-quality-baseline.story.md:345:python -m rustybt ingest -b quandl  # Bundle ingestion
+docs/stories/X2.3.p1-code-quality-baseline.story.md:346:python -m rustybt run-algorithm --start 2023-01-01 --end 2023-12-31  # Backtest
+docs/stories/X2.3.p1-code-quality-baseline.story.md:347:python -m rustybt paper-trade --duration 1h  # Paper trading start
+docs/stories/X2.6.p1-dependency-hygiene.story.md:551:uv run pytest --cov=rustybt --cov-report=term
+docs/architecture/build-system.md:40:├── RustExtension - rustybt._rustybt (PyO3 binding)
+docs/architecture/build-system.md:45:├── recursive-include rustybt *.pyx - Cython implementation files
+docs/architecture/build-system.md:46:├── recursive-include rustybt *.pxd - Cython declaration files
+docs/architecture/build-system.md:47:└── recursive-include rustybt *.pxi - Cython include files
+docs/architecture/unified-data-management.md:442:1. User runs: rustybt ingest yfinance --symbols AAPL --bundle my-data
+docs/architecture/adapter-bundle-bridge.md:163:rustybt ingest yfinance-profiling
+docs/architecture/adapter-bundle-bridge.md:176:YFINANCE_SYMBOLS="AAPL,MSFT,TSLA" rustybt ingest yfinance-profiling
+docs/architecture/adapter-bundle-bridge.md:179:YFINANCE_START="2020-01-01" YFINANCE_END="2023-12-31" rustybt ingest yfinance-profiling
+docs/architecture/adapter-bundle-bridge.md:187:rustybt ingest ccxt-hourly-profiling
+docs/architecture/adapter-bundle-bridge.md:202:rustybt ingest ccxt-minute-profiling
+docs/architecture/adapter-bundle-bridge.md:217:CSVDIR=/path/to/csv rustybt ingest csv-profiling
+docs/architecture/adapter-bundle-bridge.md:235:rustybt ingest yfinance-profiling
+docs/architecture/adapter-bundle-bridge.md:238:rustybt ingest ccxt-hourly-profiling
+docs/architecture/adapter-bundle-bridge.md:241:rustybt ingest ccxt-minute-profiling
+docs/architecture/adapter-bundle-bridge.md:244:CSVDIR=/path/to/csv rustybt ingest csv-profiling
+docs/architecture/adapter-bundle-bridge.md:362:    rustybt ingest yfinance-profiling
+docs/architecture/adapter-bundle-bridge.md:381:4. Enable debug logging: `RUSTYBT_LOG_LEVEL=DEBUG rustybt ingest ...`
+docs/architecture/epic-X1-unified-data-architecture.md:626:rustybt ingest csvdir --csvdir /path/to/csv
+docs/architecture/epic-X1-unified-data-architecture.md:638:rustybt ingest yfinance --symbols AAPL,MSFT --bundle my-data
+docs/architecture/epic-X1-unified-data-architecture.md:639:rustybt ingest ccxt --exchange binance --symbols BTC/USDT --bundle crypto
+docs/architecture/enhancement-scope-and-integration-strategy.md:51:- Provide `rustybt bundle migrate <bundle_name>` CLI command
+docs/architecture/decisions/003-smart-caching-layer.md:231:- CLI command `rustybt cache clean --max-size 5GB`
+docs/architecture/data-catalog.md:1132:rustybt ingest migrate-hdf5-to-parquet \
+docs/architecture/data-catalog.md:1139:rustybt ingest migrate-hdf5-to-parquet \
+docs/architecture/data-catalog.md:1237:rustybt run my_strategy.py --bundle quandl
+docs/architecture/data-catalog.md:1388:│     rustybt ingest --source ccxt:binance --symbols BTC/USDT ... │
+docs/architecture/strategy-reusability-guarantee.md:49:from rustybt import run_algorithm
+docs/architecture/live-trading.md:2556:python -m rustybt run backtest \
+docs/architecture/live-trading.md:2563:python -m rustybt live run \
+docs/architecture/live-trading.md:2572:python -m rustybt live run \
+docs/architecture/live-trading.md:2579:python -m rustybt live metrics \
+docs/architecture/live-trading.md:2586:python -m rustybt live run \
+docs/architecture/security-integration.md:8:- Key generation: `python -m rustybt keygen`
+docs/architecture/epic-X2-architectural-compliance-review.md:186:    - bandit -r rustybt -ll -i
+docs/architecture/epic-X2-architectural-compliance-review.md:195:    - python -m rustybt benchmark --suite backtest
+docs/architecture/epic-X2-architectural-compliance-review.md:474:  - [ ] `bandit -r rustybt -ll -i` (must pass: 0 High)
+docs/architecture/epic-X2-architectural-compliance-review.md:486:  - [ ] `python -m rustybt benchmark --suite backtest`
+docs/architecture/optimization.md:858:from rustybt import TradingAlgorithm, run_algorithm
+docs/architecture/epic-X2-remediation-required.md:148:  - [ ] `bandit -r rustybt -ll -i` (BLOCKING: 0 High severity issues)
+docs/architecture/epic-X2-remediation-required.md:153:  - [ ] Run unit tests: `pytest -m "not memory and not api_integration and not live and not ib_integration" --cov=rustybt --cov-report=term --cov-report=html`
+docs/architecture/epic-X2-remediation-required.md:165:  - [ ] `python -m rustybt benchmark --suite backtest --output benchmark-results.json`
+docs/architecture/testing-strategy.md:276:          pytest -v --cov=rustybt --cov-report=xml --cov-report=term
+docs/architecture/checklist-results-report.md:47:- **Mitigation:** `rustybt bundle migrate` CLI tool with dual-format read support during transition
+docs/guides/deployment-guide.md:199:# Encryption Key (generate with: python -m rustybt keygen)
+docs/guides/deployment-guide.md:348:python -m rustybt test-broker --broker binance
+docs/guides/deployment-guide.md:351:python -m rustybt test-data --source yfinance
+docs/guides/deployment-guide.md:354:python -m rustybt verify-config
+docs/guides/deployment-guide.md:365:python -m rustybt keygen
+docs/guides/deployment-guide.md:375:python -m rustybt encrypt-credentials
+docs/guides/deployment-guide.md:457:python -m rustybt generate-api-token
+docs/guides/deployment-guide.md:536:        systemctl reload rustybt || true
+docs/guides/deployment-guide.md:824:aws s3 sync /backup/rustybt s3://your-backup-bucket/rustybt/
+docs/guides/deployment-guide.md:839:gsutil -m rsync -r /backup/rustybt gs://your-backup-bucket/rustybt/
+docs/guides/deployment-guide.md:898:pytest tests/ -v --cov=rustybt --cov-report=html
+docs/guides/deployment-guide.md:943:python -m rustybt test-broker --broker binance --testnet
+docs/guides/deployment-guide.md:955:python -m rustybt fetch-data --source yfinance --symbols AAPL,MSFT --start 2024-01-01
+docs/guides/deployment-guide.md:964:python -m rustybt paper-trade \
+docs/guides/deployment-guide.md:974:python -m rustybt analyze-uptime \
+docs/guides/deployment-guide.md:986:python -m rustybt benchmark \
+docs/guides/deployment-guide.md:1045:python -m rustybt live-trade \
+docs/guides/deployment-guide.md:1061:python -m rustybt status
+docs/guides/troubleshooting.md:156:BINANCE_TESTNET=true python -m rustybt test-broker --broker binance
+docs/guides/troubleshooting.md:335:python -m rustybt fetch-data --source yfinance --symbols AAPL --start 2023-01-01
+docs/guides/troubleshooting.md:357:python -m rustybt balance --broker binance
+docs/guides/troubleshooting.md:575:python -m rustybt keygen
+docs/guides/troubleshooting.md:613:python -m rustybt generate-api-token
+docs/guides/troubleshooting.md:688:python -m rustybt test-alerts
+docs/guides/troubleshooting.md:808:python -m rustybt analyze-trades
+docs/guides/troubleshooting.md:829:python -m rustybt live-trade --strategy momentum.py
+docs/guides/troubleshooting.md:901:python -m rustybt analyze-uptime --log-dir ~/.rustybt/logs --start-date 2025-01-01
+docs/guides/data-ingestion.md:10:rustybt ingest-unified yfinance --symbols AAPL,MSFT,GOOGL --bundle my-stocks \
+docs/guides/data-ingestion.md:79:rustybt ingest-unified yfinance \
+docs/guides/data-ingestion.md:113:rustybt ingest-unified ccxt \
+docs/guides/data-ingestion.md:122:**Supported exchanges**: Run `rustybt ingest-unified ccxt --list-exchanges`
+docs/guides/data-ingestion.md:254:rustybt ingest-unified <source> [options]
+docs/guides/live-vs-backtest-data.md:87:from rustybt import TradingAlgorithm
+docs/guides/live-vs-backtest-data.md:120:from rustybt import TradingAlgorithm
+docs/guides/pipeline-api-guide.md:393:from rustybt import TradingAlgorithm
+docs/guides/production-checklist.md:25:pytest tests/ -v --cov=rustybt --cov-report=html --cov-report=term
+docs/guides/production-checklist.md:78:- [ ] Encryption key generated: `python -m rustybt keygen`
+docs/guides/production-checklist.md:126:python -m rustybt test-broker --broker binance --testnet
+docs/guides/production-checklist.md:139:python -m rustybt test-data --source yfinance
+docs/guides/production-checklist.md:140:python -m rustybt fetch-data --source yfinance --symbols AAPL,MSFT --start 2024-01-01
+docs/guides/production-checklist.md:153:python -m rustybt verify-config
+docs/guides/production-checklist.md:183:python -m rustybt benchmark --suite backtest --iterations 10
+docs/guides/production-checklist.md:184:python -m rustybt benchmark --suite order-execution --iterations 100
+docs/guides/production-checklist.md:235:python -m rustybt test-alerts
+docs/guides/production-checklist.md:293:python -m rustybt verify-restore
+docs/guides/production-checklist.md:323:python -m rustybt paper-trade --strategy momentum.py --broker binance --duration 30d
+docs/guides/production-checklist.md:326:python -m rustybt analyze-uptime --log-dir ~/.rustybt/logs --start-date 2025-01-01 --end-date 2025-01-30
+docs/guides/caching-guide.md:224:rustybt cache stats
+docs/guides/caching-guide.md:241:rustybt cache list
+docs/guides/caching-guide.md:248:rustybt cache clear
+docs/guides/caching-guide.md:251:rustybt cache clear --symbols AAPL MSFT
+docs/guides/caching-guide.md:254:rustybt cache clear --older-than 30d
+docs/guides/caching-guide.md:331:   rustybt cache cleanup --max-size 5GB --min-age 30d
+docs/guides/caching-guide.md:336:   rustybt cache clear --older-than 90d
+docs/prd/epic-7-performance-optimization-rust-integration.md:63:6. CLI command `rustybt ingest yfinance-profiling` creates profiling bundle
+docs/prd/epic-7-performance-optimization-rust-integration.md:71:12. Unified CLI: `rustybt ingest <source> --bundle <name> [options]`
+docs/prd/epic-7-performance-optimization-rust-integration.md:87:24. CLI commands: `rustybt catalog list|info|validate`
+docs/prd/epic-X1-unified-data-architecture.md:95:- **Better DX**: `rustybt ingest yfinance --symbols AAPL` just works
+docs/prd/epic-X1-unified-data-architecture.md:220:- ✅ CLI: `rustybt ingest yfinance-profiling`
+docs/prd/epic-X1-unified-data-architecture.md:260:- Unified CLI: `rustybt ingest <source> --bundle <name>`
+docs/prd/epic-X1-unified-data-architecture.md:266:- `rustybt ingest yfinance --symbols AAPL,MSFT --bundle my-data` works
+docs/prd/epic-X1-unified-data-architecture.md:367:  - CLI: `rustybt cache stats` shows metrics
+docs/prd/epic-X1-unified-data-architecture.md:500:  - `rustybt bundle list` → all bundles with metadata
+docs/prd/epic-X1-unified-data-architecture.md:501:  - `rustybt bundle info <name>` → detailed provenance + quality
+docs/prd/epic-X1-unified-data-architecture.md:502:  - `rustybt bundle validate <name>` → quality check
+docs/prd/epic-X1-unified-data-architecture.md:611:- ✅ CLI simplification: `rustybt ingest <source>` for all sources
+docs/prd/epic-X1-unified-data-architecture.md:628:- ✅ Developer experience: 1-line data ingestion (`rustybt ingest yfinance`)
+docs/prd/epic-X1-unified-data-architecture.md:651:   - **Decision**: 10GB default, configurable via `rustybt config set cache.max_size 20GB`
+docs/prd/technical-assumptions.md:6:- Python package (rustybt core)
+docs/prd/EPIC-X2-STORY-UPDATES-SUMMARY.md:199:   - Verify all commands exist: `python -m rustybt --help`
+docs/api/live-trading-api.md:20:from rustybt import TradingAlgorithm
+docs/api/live-trading-api.md:768:from rustybt import TradingAlgorithm
+docs/api/bundle-metadata-api.md:34:rustybt bundle list
+docs/api/bundle-metadata-api.md:37:rustybt bundle info my-bundle
+docs/api/bundle-metadata-api.md:40:rustybt bundle validate my-bundle
+docs/api/order-types.md:111:from rustybt import TradingAlgorithm
+docs/api/finance-api.md:589:from rustybt import TradingAlgorithm
+docs/benchmark-validation-report.md:22:python3 -m rustybt benchmark --output json
+docs/benchmark-validation-report.md:185:| Run benchmark suite successfully | ✅ Pass | `python3 -m rustybt benchmark` executed successfully |
+docs/benchmark-validation-report.md:261:- **CLI Command:** `python3 -m rustybt benchmark`
+docs/performance/rust-optimizations.md:137:from rustybt import rust_optimizations
+docs/performance/rust-optimizations.md:195:from rustybt import TradingAlgorithm
+docs/performance/rust-optimizations.md:301:pip install rustybt  # Includes Rust extensions
+docs/performance/rust-optimizations.md:313:from rustybt import rust_optimizations
+docs/performance/rust-optimizations.md:327:2. Rebuild extensions: `cd rust/crates/rustybt && maturin develop --release`
+docs/reviews/production-readiness-gap-analysis.md:111:- Use `python -m rustybt keygen` and `python -m rustybt encrypt-credentials` to manage credential encryption.
+docs/reviews/production-readiness-gap-analysis.md:124:  - `python -m rustybt test-broker --broker <name> [--testnet]`
+docs/reviews/production-readiness-gap-analysis.md:125:  - `python -m rustybt test-data --source <provider>`
+docs/reviews/production-readiness-gap-analysis.md:126:  - `python -m rustybt benchmark --suite backtest`
+docs/reviews/production-readiness-gap-analysis.md:127:  - `python -m rustybt paper-trade --strategy <file.py> --broker <name> --duration 30d`
+docs/reviews/production-readiness-gap-analysis.md:128:  - `python -m rustybt analyze-uptime --log-dir <dir> --start-date ... --end-date ...`
+docs/reviews/production-readiness-gap-analysis.md:187:  --cov=rustybt --cov-report=term
+docs/reviews/production-readiness-gap-analysis.md:197:bandit -r rustybt -ll -i
+docs/reviews/production-readiness-gap-analysis.md:201:python -m rustybt test-broker --broker <name>
+docs/reviews/production-readiness-gap-analysis.md:202:python -m rustybt test-data --source <provider>
+docs/reviews/production-readiness-gap-analysis.md:203:python -m rustybt benchmark --suite backtest
+docs/reviews/production-readiness-gap-analysis.md:204:python -m rustybt paper-trade --strategy <file.py> --broker <name> --duration 30d
+docs/reviews/production-readiness-gap-analysis.md:205:python -m rustybt analyze-uptime --log-dir ~/.rustybt/logs --start-date <date> --end-date <date>
+docs/reviews/EPIC-X2-STORY-REMEDIATION-PLAN.md:307:          uv run bandit -r rustybt -ll -i
+docs/reviews/EPIC-X2-STORY-REMEDIATION-PLAN.md:362:            --cov=rustybt \
+docs/reviews/EPIC-X2-STORY-REMEDIATION-PLAN.md:486:          uv run python -m rustybt benchmark --suite backtest --output benchmark-results.json
+docs/reviews/EPIC-X2-STORY-REMEDIATION-PLAN.md:1090:    """Find all validation functions in rustybt package."""
+docs/reviews/EPIC-X2-STORY-REMEDIATION-PLAN.md:1093:    # Import rustybt package
+docs/reviews/EPIC-X2-STORY-REMEDIATION-PLAN.md:1849:uv run pytest --cov=rustybt --cov-report=term
+docs/reviews/EPIC-X2-STORY-REMEDIATION-PLAN.md:2005:  --cov=rustybt --cov-report=term --cov-report=html
+docs/reviews/EPIC-X2-STORY-REMEDIATION-PLAN.md:2101:  --cov=rustybt --cov-report=term --cov-report=html
+docs/reviews/EPIC-X2-STORY-REMEDIATION-PLAN.md:2104:pytest --cov=rustybt --cov-report=term | grep "TOTAL"
+docs/reviews/EPIC-X2-STORY-REMEDIATION-PLAN.md:2132:python -m rustybt ingest -b quandl  # Bundle ingestion
+docs/reviews/EPIC-X2-STORY-REMEDIATION-PLAN.md:2133:python -m rustybt run-algorithm --start 2023-01-01 --end 2023-12-31  # Backtest
+docs/reviews/EPIC-X2-STORY-REMEDIATION-PLAN.md:2134:python -m rustybt paper-trade --duration 1h  # Paper trading start
+docs/reviews/documentation-fixes-summary.md:192:- All guides consistently use `rustybt ingest-unified` ✅
+docs/reviews/comprehensive-documentation-review.md:98:   - Some examples use `rustybt ingest yfinance` (legacy command)
+docs/reviews/comprehensive-documentation-review.md:99:   - Should consistently use `rustybt ingest-unified yfinance`
+docs/reviews/comprehensive-documentation-review.md:103:   - Doc suggests: `rustybt ingest-unified ccxt --list-exchanges`
+docs/reviews/comprehensive-documentation-review.md:217:   - ✅ Imports: `from rustybt import TradingAlgorithm` (verified)
+docs/reviews/comprehensive-documentation-review.md:466:   rustybt --help | grep "ingest-unified"
+docs/reviews/comprehensive-documentation-review.md:467:   rustybt ingest-unified --help
+docs/reviews/documentation-examples-review.md:20:  - Docs use `rustybt ingest yfinance ...` for unified ingestion; the implemented unified command is `rustybt ingest-unified ...`. Legacy `ingest` is for bundle registry ingestion.
+docs/reviews/documentation-examples-review.md:33:  - Docs suggest `rustybt ingest ccxt --list-exchanges`; CLI implements `ingest-unified --list-sources` and `--source-info`. No `--list-exchanges` handler exists.
+docs/reviews/documentation-examples-review.md:55:  - Replace legacy `rustybt ingest yfinance ...`
+docs/reviews/documentation-examples-review.md:56:  - With: `rustybt ingest-unified yfinance --bundle my-stocks --symbols AAPL,MSFT,GOOGL --start 2023-01-01 --end 2023-12-31 --frequency 1d`
+docs/reviews/documentation-examples-review.md:75:- Remove or revise “Supported exchanges: Run `rustybt ingest ccxt --list-exchanges`”:
+docs/reviews/documentation-examples-review.md:77:  - Option 2: Replace with: `rustybt ingest-unified --source-info ccxt`.
+docs/reviews/documentation-examples-review.md:79:  - Code blocks run as-is; CLI commands validated against `rustybt __main__.py`.
+docs/reviews/documentation-examples-review.md:106:  - `rustybt ingest-unified ccxt --list-exchanges` prints exchanges; or docs no longer mention this flag.
+docs/reviews/documentation-examples-review.md:149:  rustybt ingest-unified yfinance \
+README.md:111:rustybt run -f strategy.py --start 2020-01-01 --end 2023-12-31
+README.md:164:pytest tests/ --cov=rustybt --cov-report=html

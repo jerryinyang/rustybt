@@ -1,0 +1,14 @@
+# Documentation dependencies for ReadTheDocs
+# This file avoids building the full rustybt package with Cython/Rust extensions
+
+# MkDocs and theme
+mkdocs>=1.5.0
+mkdocs-material>=9.5.0
+mkdocstrings[python]>=0.24.0
+mkdocs-autorefs>=0.5.0
+
+# For rendering Jupyter notebooks (optional)
+# mkdocs-jupyter>=0.24.0
+
+# Minimal dependencies for documentation generation
+# (ReadTheDocs doesn't need to import rustybt code)

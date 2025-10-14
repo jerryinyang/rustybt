@@ -1,0 +1,5758 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Modern Python backtesting engine built on Zipline-Reloaded">
+      
+      
+        <meta name="author" content="RustyBT Development Team">
+      
+      
+        <link rel="canonical" href="https://jerryinyang.github.io/rustybt/stories/completed/6.6.websocket-data-adapter-foundation.story/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../assets/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.21">
+    
+    
+      
+        <title>Story 6.6: Implement WebSocket Data Adapter Foundation (Moved from Epic 3) - RustyBT Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.2a3383ac.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#story-66-implement-websocket-data-adapter-foundation-moved-from-epic-3" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="RustyBT Documentation" class="md-header__button md-logo" aria-label="RustyBT Documentation" data-md-component="logo">
+      
+  <img src="../../../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RustyBT Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Story 6.6: Implement WebSocket Data Adapter Foundation (Moved from Epic 3)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jerryinyang/rustybt" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jerryinyang/rustybt
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../guides/decimal-precision-configuration/" class="md-tabs__link">
+          
+  
+  
+  User Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../examples/" class="md-tabs__link">
+          
+  
+  
+  Examples & Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../api/order-types/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../about/license/" class="md-tabs__link">
+          
+  
+  
+  About
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="RustyBT Documentation" class="md-nav__button md-logo" aria-label="RustyBT Documentation" data-md-component="logo">
+      
+  <img src="../../../assets/logo.png" alt="logo">
+
+    </a>
+    RustyBT Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jerryinyang/rustybt" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jerryinyang/rustybt
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/decimal-precision-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Decimal Precision
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/caching-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Caching System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/creating-data-adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Creating Data Adapters
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/csv-data-import/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CSV Data Import
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/testnet-setup-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testnet Setup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Examples & Tutorials
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Examples & Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_1" id="__nav_5_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Overview APIs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1">
+            <span class="md-nav__icon md-icon"></span>
+            Overview APIs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/order-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Order Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/caching-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Caching API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/bundle-metadata-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Bundle Metadata API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/datasource-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Datasource API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/finance-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Finance API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Optimization API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/live-trading-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Live Trading API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/analytics-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Analytics API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            Data Management
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_2" id="__nav_5_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Adapters
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Adapters
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/adapters/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/adapters/ccxt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CCXT
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/adapters/yfinance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    YFinance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/adapters/csv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CSV
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/adapters/polygon/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Polygon
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/adapters/alpaca/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Alpaca
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/adapters/alphavantage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AlphaVantage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_3" id="__nav_5_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Catalog
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Catalog
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/catalog/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/catalog/bundles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Bundles
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/catalog/metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metadata
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/catalog/migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_4" id="__nav_5_2_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Readers
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Readers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/readers/data-portal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Portal
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/readers/bar-readers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Bar Readers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/readers/history-loader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    History Loader
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/readers/continuous-futures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Continuous Futures
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_5" id="__nav_5_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    FX System
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            FX System
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/fx/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/fx/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Providers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/fx/storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Storage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/fx/converters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Converters
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_6" id="__nav_5_2_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Pipeline
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Pipeline
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/pipeline/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/pipeline/factors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Factors
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/pipeline/filters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Filters
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/pipeline/loaders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Loaders
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/pipeline/expressions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expressions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_7" id="__nav_5_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Performance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Performance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/performance/caching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Caching
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/performance/optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Optimization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/data-management/performance/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Order Management
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            Order Management
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/order-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/order-management/order-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Order Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3_3" id="__nav_5_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Execution
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Execution
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/order-management/execution/blotter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Blotter
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3_4" id="__nav_5_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Transaction Costs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Transaction Costs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/order-management/transaction-costs/slippage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Slippage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/order-management/transaction-costs/commissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Commissions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/order-management/transaction-costs/borrow-costs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Borrow Costs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/order-management/transaction-costs/financing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Financing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3_5" id="__nav_5_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/order-management/workflows/order-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Order Lifecycle
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/order-management/workflows/examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Portfolio Management
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            Portfolio Management
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/portfolio-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4_2" id="__nav_5_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Multi-Strategy
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Multi-Strategy
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/portfolio-management/multi-strategy/allocators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Allocators
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4_3" id="__nav_5_4_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Risk
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            Risk
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/portfolio-management/risk/position-limits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Position Limits
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4_4" id="__nav_5_4_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Performance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            Performance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/portfolio-management/performance/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Optimization
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Optimization
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_2" id="__nav_5_5_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Framework
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            Framework
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/framework/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/framework/parameter-spaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Parameter Spaces
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/framework/objective-functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Objective Functions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_3" id="__nav_5_5_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Algorithms
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            Algorithms
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/algorithms/grid-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Grid Search
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/algorithms/random-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Random Search
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/algorithms/bayesian/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Bayesian
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/algorithms/genetic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Genetic
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_4" id="__nav_5_5_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Walk-Forward
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            Walk-Forward
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/walk-forward/framework/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Framework
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/walk-forward/windows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Windows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/walk-forward/validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Monte Carlo
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Monte Carlo
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/monte-carlo/stability-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Stability Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_6" id="__nav_5_5_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Parallel
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_6">
+            <span class="md-nav__icon md-icon"></span>
+            Parallel
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/parallel/multiprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Multiprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_7" id="__nav_5_5_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_7">
+            <span class="md-nav__icon md-icon"></span>
+            Best Practices
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/optimization/best-practices/overfitting-prevention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overfitting Prevention
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Analytics
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_6">
+            <span class="md-nav__icon md-icon"></span>
+            Analytics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_6_2" id="__nav_5_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Risk
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Risk
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/analytics/risk/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/analytics/risk/var-cvar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    VaR & CVaR
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/analytics/risk/drawdown/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Drawdown
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_7" id="__nav_5_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Live Trading
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_7">
+            <span class="md-nav__icon md-icon"></span>
+            Live Trading
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/live-trading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_7_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_7_2" id="__nav_5_7_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Safety
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            Safety
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/live-trading/safety/circuit-breakers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Circuit Breakers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_8" id="__nav_5_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    About
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            About
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/license/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    License
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Changelog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Status
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#story" class="md-nav__link">
+    <span class="md-ellipsis">
+      Story
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      Acceptance Criteria
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tasks-subtasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tasks / Subtasks
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dev-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dev Notes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dev Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#previous-story-insights" class="md-nav__link">
+    <span class="md-ellipsis">
+      Previous Story Insights
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architecture-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture Context
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-locations" class="md-nav__link">
+    <span class="md-ellipsis">
+      File Locations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Points
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binance-websocket-message-format-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Binance WebSocket Message Format Examples
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bar-buffering-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bar Buffering Logic
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reconnection-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reconnection Strategy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#change-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      Change Log
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dev-agent-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dev Agent Record
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dev Agent Record">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agent-model-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      Agent Model Used
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-log-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debug Log References
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#completion-notes-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      Completion Notes List
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      File List
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#qa-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      QA Results
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="QA Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#review-date-2025-10-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      Review Date: 2025-10-03
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reviewed-by-quinn-test-architect" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reviewed By: Quinn (Test Architect)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-quality-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Quality Assessment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compliance-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compliance Check
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requirements-traceability-ac-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Requirements Traceability (AC Coverage)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-architecture-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Architecture Assessment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linting-issues-11-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      Linting Issues (11 Total)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Considerations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-functional-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Non-Functional Requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#technical-debt-identified" class="md-nav__link">
+    <span class="md-ellipsis">
+      Technical Debt Identified
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improvements-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Improvements Checklist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gate-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Gate Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommended Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#review-date-2025-10-03-re-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Review Date: 2025-10-03 (Re-Review)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reviewed-by-quinn-test-architect_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reviewed By: Quinn (Test Architect)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-quality-assessment_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Quality Assessment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#refactoring-performed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Refactoring Performed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compliance-check_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compliance Check
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requirements-traceability-ac-coverage_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Requirements Traceability (AC Coverage)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-architecture-assessment_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Architecture Assessment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-review_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-considerations_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Considerations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-functional-requirements_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Non-Functional Requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#technical-debt-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Technical Debt Summary
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improvements-checklist_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Improvements Checklist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-modified-during-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files Modified During Review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gate-status_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Gate Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-status_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommended Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#review-date-2025-10-03-final-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Review Date: 2025-10-03 (Final Review)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reviewed-by-quinn-test-architect_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reviewed By: Quinn (Test Architect)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-quality-assessment_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Quality Assessment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#refactoring-performed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Refactoring Performed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compliance-check_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compliance Check
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-architecture-assessment_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Architecture Assessment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requirements-traceability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Requirements Traceability
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-review_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-considerations_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Considerations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-functional-requirements_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Non-Functional Requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#technical-debt-summary_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Technical Debt Summary
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#improvements-checklist_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Improvements Checklist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-modified-during-review_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files Modified During Review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gate-status_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Gate Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-status_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommended Status
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="story-66-implement-websocket-data-adapter-foundation-moved-from-epic-3">Story 6.6: Implement WebSocket Data Adapter Foundation (Moved from Epic 3)<a class="headerlink" href="#story-66-implement-websocket-data-adapter-foundation-moved-from-epic-3" title="Permanent link">&para;</a></h1>
+<h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
+<p>Completed</p>
+<h2 id="story">Story<a class="headerlink" href="#story" title="Permanent link">&para;</a></h2>
+<p><strong>As a</strong> developer,
+<strong>I want</strong> WebSocket adapter base class for real-time streaming data,
+<strong>so that</strong> live trading can integrate real-time market data feeds.</p>
+<h2 id="acceptance-criteria">Acceptance Criteria<a class="headerlink" href="#acceptance-criteria" title="Permanent link">&para;</a></h2>
+<ol>
+<li>BaseWebSocketAdapter created for real-time data streaming</li>
+<li>Connection management implemented (connect, disconnect, reconnect on failure)</li>
+<li>Subscription management (subscribe to symbols/channels, unsubscribe)</li>
+<li>Message parsing framework (standardize exchange-specific WebSocket messages to OHLCV)</li>
+<li>Buffering system implemented (accumulate ticks into OHLCV bars for configured resolution)</li>
+<li>Heartbeat/keepalive handling (maintain connection, detect stale connections)</li>
+<li>Error handling covers disconnections, invalid messages, rate limits</li>
+<li>Example WebSocket adapter implemented for one exchange (e.g., Binance WebSocket)</li>
+<li>Tests validate connection lifecycle and message parsing (using mock WebSocket server)</li>
+<li>Documentation explains WebSocket adapter architecture for extension</li>
+</ol>
+<h2 id="tasks-subtasks">Tasks / Subtasks<a class="headerlink" href="#tasks-subtasks" title="Permanent link">&para;</a></h2>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement BaseWebSocketAdapter core (AC: 1, 2)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Create BaseWebSocketAdapter abstract class in rustybt/live/streaming/base.py</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement async connect(url, **kwargs) method using websockets library</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement async disconnect() method with cleanup</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement auto-reconnect on disconnect with exponential backoff (1s, 2s, 4s, 8s, 16s max)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Track connection state (DISCONNECTED, CONNECTING, CONNECTED, RECONNECTING)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement connection health monitoring (last_message_time tracking)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Add configurable reconnect_attempts parameter (default: infinite)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement subscription management (AC: 3)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement abstract subscribe(symbols: List[str], channels: List[str]) method</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement abstract unsubscribe(symbols: List[str], channels: List[str]) method</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Track active subscriptions (symbol → channels mapping)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Handle subscription confirmation from exchange</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Re-subscribe after reconnection</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Support dynamic subscription changes (add/remove symbols while connected)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement message parsing framework (AC: 4)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Create TickData dataclass (symbol, timestamp, price, volume, side)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement abstract parse_message(raw_message: dict) → TickData method</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Standardize tick data format across exchanges</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Handle exchange-specific message formats (override in subclasses)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Validate parsed data (required fields, data types)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Handle parsing errors gracefully (log and skip invalid messages)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement tick-to-bar buffering system (AC: 5)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Create BarBuffer class to accumulate ticks into OHLCV bars</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Support configurable bar resolution (1m, 5m, 15m, 1h, etc.)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement bar aggregation logic (first tick → open, last tick → close, max price → high, min price → low, sum volume)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Emit completed bars as MarketDataEvent</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Handle bar boundaries correctly (align to minute/hour boundaries)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Support multiple symbols with separate buffers</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement heartbeat and keepalive handling (AC: 6)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement ping/pong mechanism (send ping, expect pong response)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Detect stale connections (no message received in N seconds, configurable)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Trigger reconnection on stale connection detected</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Handle exchange-specific heartbeat formats (some exchanges send heartbeat messages)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Log heartbeat activity at DEBUG level</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement error handling and rate limiting (AC: 7)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Handle WebSocket disconnections (ConnectionClosed, ConnectionError)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Handle invalid JSON messages (log and skip)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Handle rate limit errors from exchange (backoff and retry)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Handle subscription errors (symbol not found, invalid channel)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement circuit breaker for repeated errors (trip after N consecutive errors)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Log all errors with context (symbol, channel, error_message)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement Binance WebSocket adapter example (AC: 8)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Create BinanceWebSocketAdapter in rustybt/live/streaming/binance_stream.py</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement connect() to wss://stream.binance.com:9443/ws</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement subscribe() with Binance subscription format (kline, trade, ticker)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement parse_message() for Binance kline messages</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Convert Binance kline to TickData format</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Support both spot and futures streams</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Handle Binance-specific error codes</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Implement unit and integration tests (AC: 9)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Test connection lifecycle (connect → disconnect)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Test auto-reconnect on disconnect</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Test subscription management (subscribe → receive messages → unsubscribe)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Test message parsing with sample Binance messages</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Test tick-to-bar buffering (accumulate ticks, emit completed bars)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Test heartbeat handling (send ping, receive pong)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Test error handling for various failure scenarios</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Use pytest-asyncio with mock WebSocket server (websockets library provides test utilities, or use pytest-aiohttp for WebSocket mocking)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Create WebSocket adapter documentation (AC: 10)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Document BaseWebSocketAdapter architecture in docs/architecture/live-trading.md</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Explain connection lifecycle and auto-reconnect strategy</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Document subscription management and re-subscription on reconnect</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Explain message parsing framework and standardization</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Document tick-to-bar buffering system</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Provide guide for implementing new exchange adapters</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Add example for Binance WebSocket usage</li>
+</ul>
+<h2 id="dev-notes">Dev Notes<a class="headerlink" href="#dev-notes" title="Permanent link">&para;</a></h2>
+<h3 id="previous-story-insights">Previous Story Insights<a class="headerlink" href="#previous-story-insights" title="Permanent link">&para;</a></h3>
+<p>[From Story 6.1: Design Live Trading Engine Architecture]
+- WebSocket streaming foundation for real-time data (deferred from Epic 3)
+- BaseStreamAdapter for standardizing exchange WebSocket messages
+- Buffering system to accumulate ticks into OHLCV bars</p>
+<p>[From Story 6.5: Scheduled Calculations]
+- Event system already in place for scheduled triggers
+- Integration point for real-time data event triggering</p>
+<p><strong>Note:</strong> This story is now Story 6.6, positioned before Paper Trading (6.7) to provide WebSocket foundation for real-time data.</p>
+<h3 id="architecture-context">Architecture Context<a class="headerlink" href="#architecture-context" title="Permanent link">&para;</a></h3>
+<p><strong>WebSocket Streaming Design:</strong>
+[Source: architecture/external-api-integration.md#websocket-streaming-epic-6]
+- Supported brokers: Binance (wss://stream.binance.com:9443), Bybit, Hyperliquid, IB
+- Features: orderbook updates, trade stream, kline/candlestick stream, account updates
+- Connection management: auto-reconnect, heartbeat, subscription management</p>
+<p><strong>Data Adapter Pattern:</strong>
+[Source: architecture/component-architecture.md#data-adapter-components]
+- BaseDataAdapter: Extensible framework for data sources
+- Standard schema: timestamp, symbol, open, high, low, close, volume (Decimal columns)
+- Validation: OHLCV relationships, outlier detection, temporal consistency</p>
+<p><strong>Tech Stack:</strong>
+[Source: architecture/tech-stack.md#new-technology-additions]
+- websockets 14.x+ for WebSocket streaming
+- asyncio for async connection management
+- Python Decimal for price and volume data
+- Pydantic for message validation</p>
+<p><strong>Coding Standards:</strong>
+[Source: architecture/coding-standards.md]
+- Type hints: mypy --strict compliance
+- Async/await for all WebSocket operations
+- Structured logging for connection events and errors
+- Error handling: WebSocketError, ConnectionError, ParseError</p>
+<h3 id="file-locations">File Locations<a class="headerlink" href="#file-locations" title="Permanent link">&para;</a></h3>
+<p>[Source: architecture/source-tree.md#rustybt-directory-structure]
+- Base adapter: <code>rustybt/live/streaming/base.py</code> (BaseWebSocketAdapter)
+- Binance adapter: <code>rustybt/live/streaming/binance_stream.py</code> (BinanceWebSocketAdapter)
+- Tick buffer: <code>rustybt/live/streaming/bar_buffer.py</code> (BarBuffer)
+- Models: <code>rustybt/live/streaming/models.py</code> (TickData, StreamConfig)
+- Tests: <code>tests/live/streaming/test_base_adapter.py</code>, <code>tests/live/streaming/test_binance_stream.py</code>
+- Documentation: <code>docs/architecture/live-trading.md</code> (add WebSocket streaming section)</p>
+<h3 id="integration-points">Integration Points<a class="headerlink" href="#integration-points" title="Permanent link">&para;</a></h3>
+<ul>
+<li>LiveTradingEngine: Uses WebSocket adapters for real-time market data</li>
+<li>DataFeed: Dispatches TickData as MarketDataEvent</li>
+<li>BarBuffer: Converts ticks to OHLCV bars</li>
+<li>BrokerAdapter: May provide WebSocket data (e.g., IB streaming)</li>
+</ul>
+<h3 id="binance-websocket-message-format-examples">Binance WebSocket Message Format Examples<a class="headerlink" href="#binance-websocket-message-format-examples" title="Permanent link">&para;</a></h3>
+<p><strong>Binance Message Format Note:</strong> Examples shown are for spot market. Futures format may differ slightly (additional fields like markPrice, fundingRate). Adapter should handle both.</p>
+<p><strong>Kline (Candlestick):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">&quot;e&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;kline&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">&quot;E&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1638747420000</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">&quot;s&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BTCUSDT&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">&quot;k&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nt">&quot;t&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1638747360000</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="nt">&quot;T&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1638747419999</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="nt">&quot;s&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BTCUSDT&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="nt">&quot;i&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1m&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="nt">&quot;o&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;49500.00&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="nt">&quot;c&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;49550.00&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="nt">&quot;h&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;49600.00&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">    </span><span class="nt">&quot;l&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;49480.00&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="nt">&quot;v&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;123.456&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">    </span><span class="nt">&quot;x&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Trade:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;e&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;trade&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">&quot;E&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1638747420000</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">&quot;s&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BTCUSDT&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nt">&quot;t&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">123456</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="nt">&quot;p&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;49500.00&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="nt">&quot;q&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.5&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="nt">&quot;T&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1638747420000</span><span class="p">,</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="nt">&quot;m&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="p">}</span>
+</code></pre></div></p>
+<h3 id="bar-buffering-logic">Bar Buffering Logic<a class="headerlink" href="#bar-buffering-logic" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Receive tick with timestamp, price, volume</li>
+<li>Determine bar interval (e.g., 1 minute → round down to minute boundary)</li>
+<li>Add tick to current bar buffer:</li>
+<li>If first tick in bar: open = price</li>
+<li>Update: high = max(high, price), low = min(low, price)</li>
+<li>If last tick (bar complete): close = price</li>
+<li>Aggregate: volume += tick_volume</li>
+<li>On bar boundary: Emit completed bar, start new bar</li>
+</ol>
+<h3 id="reconnection-strategy">Reconnection Strategy<a class="headerlink" href="#reconnection-strategy" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Initial connect: immediate</li>
+<li>Reconnect on disconnect: exponential backoff (1s, 2s, 4s, 8s, 16s max)</li>
+<li>Re-subscribe to all active subscriptions after reconnect</li>
+<li>Log reconnection attempts and successes</li>
+</ul>
+<h3 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h3>
+<p>[Source: architecture/testing-strategy.md]</p>
+<p><strong>Test Location:</strong>
+- Unit tests: <code>tests/live/streaming/test_base_adapter.py</code>, <code>tests/live/streaming/test_binance_stream.py</code>
+- Integration tests: <code>tests/integration/live/test_websocket_streaming.py</code></p>
+<p><strong>Testing Standards:</strong>
+- Unit tests: ≥90% coverage (mock WebSocket server)
+- Integration tests: Use real WebSocket connections (mark with @pytest.mark.websocket_integration)
+- Test connection lifecycle, message parsing, buffering, error handling</p>
+<p><strong>Key Test Scenarios:</strong>
+- Connection succeeds and receives messages
+- Auto-reconnect on disconnect
+- Subscription management (subscribe → messages → unsubscribe)
+- Message parsing with various formats
+- Tick-to-bar buffering produces correct OHLCV bars
+- Heartbeat maintains connection
+- Error handling for disconnect, parse errors, rate limits
+- Re-subscription after reconnect</p>
+<p><strong>Test Fixtures:</strong>
+- Mock WebSocket server returning sample messages
+- Sample Binance kline and trade messages
+- Sample tick data for buffering tests
+- WebSocket test client</p>
+<h2 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Description</th>
+<th>Author</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-10-02</td>
+<td>1.0</td>
+<td>Initial story creation (moved from Epic 3)</td>
+<td>Bob (Scrum Master)</td>
+</tr>
+<tr>
+<td>2025-10-03</td>
+<td>1.1</td>
+<td>Applied QA fixes: resolved 11 linting issues, updated documentation</td>
+<td>James (Dev)</td>
+</tr>
+<tr>
+<td>2025-10-03</td>
+<td>1.2</td>
+<td>QA coverage improvements: added 20 tests, achieved 94% coverage (90% target exceeded)</td>
+<td>James (Dev)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="dev-agent-record">Dev Agent Record<a class="headerlink" href="#dev-agent-record" title="Permanent link">&para;</a></h2>
+<h3 id="agent-model-used">Agent Model Used<a class="headerlink" href="#agent-model-used" title="Permanent link">&para;</a></h3>
+<p>claude-sonnet-4-5-20250929</p>
+<h3 id="debug-log-references">Debug Log References<a class="headerlink" href="#debug-log-references" title="Permanent link">&para;</a></h3>
+<p><strong>QA Fix Session (2025-10-03):</strong>
+- Linting check: <code>uv run ruff check rustybt/live/streaming/</code> - 11 issues found
+- Fixed shadowing builtin (A001): Renamed <code>ConnectionError</code> → <code>WSConnectionError</code>
+- Fixed broad exception handling (BLE001): Specified exception types <code>(WebSocketException, OSError)</code>, <code>(ValueError, KeyError, TypeError)</code>
+- Fixed SIM105: Used <code>contextlib.suppress(asyncio.CancelledError)</code> for task cancellation
+- Fixed RUF006: Stored task reference <code>self._reconnect_task = asyncio.create_task(self.reconnect())</code>
+- Fixed ANN401: Changed type hints from <code>Any</code> to <code>Callable[[TickData], None]</code> for on_tick, removed **kwargs
+- Final linting: <code>uv run ruff check rustybt/live/streaming/</code> - All checks passed
+- Tests: <code>uv run pytest tests/live/streaming/ -v</code> - 61 passed</p>
+<p><strong>QA Coverage Improvement Session (2025-10-03):</strong>
+- Initial coverage: 83% (7 points below 90% target)
+- Gap analysis: BaseWebSocketAdapter async lifecycle methods (_listen, _heartbeat_monitor, reconnect edge cases) had test gaps
+- Added 20 new tests for edge cases and async methods:
+  - Edge case tests: Already connected/disconnected/reconnecting states (4 tests)
+  - Reconnect tests: Re-subscription, failure handling (2 tests)
+  - _listen() tests: Message processing, error handling, reconnect triggers (6 tests)
+  - _heartbeat_monitor() tests: Stale connection detection, ping/pong, timeout handling (5 tests)
+  - _send_message() tests: Not connected, send failure (2 tests)
+  - Circuit breaker test (1 test)
+- Final coverage: 94.06% (exceeds 90% target by 4 points)
+- All tests passing: 81 tests (15 bar buffer, 35 base adapter, 17 Binance adapter, 14 models)
+- Linting: <code>uv run ruff check</code> - All checks passed</p>
+<h3 id="completion-notes-list">Completion Notes List<a class="headerlink" href="#completion-notes-list" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Core Implementation:</strong> Implemented <code>BaseWebSocketAdapter</code> with full connection lifecycle management, including exponential backoff reconnection (1s → 16s max)</li>
+<li><strong>Subscription System:</strong> Implemented subscription tracking with automatic re-subscription after reconnect, supporting dynamic add/remove of symbols</li>
+<li><strong>Data Standardization:</strong> Created <code>TickData</code> model for exchange-agnostic tick representation and <code>BarBuffer</code> for tick-to-OHLCV aggregation</li>
+<li><strong>Error Resilience:</strong> Implemented circuit breaker pattern (trips after 10 consecutive errors), heartbeat monitoring (30s interval, 60s timeout), and comprehensive error handling</li>
+<li><strong>Binance Integration:</strong> Implemented <code>BinanceWebSocketAdapter</code> supporting both spot and futures markets, with kline and trade message parsing</li>
+<li><strong>Test Coverage:</strong> 61 tests passing (14 models, 15 bar buffer, 15 base adapter, 17 Binance adapter) - 100% pass rate</li>
+<li><strong>Documentation:</strong> Added comprehensive WebSocket section to live-trading.md (300+ lines) with architecture diagrams, code examples, and implementation guide</li>
+<li><strong>QA Fixes Applied (2025-10-03):</strong> Resolved all 11 linting issues (LINT-001), updated documentation to remove non-existent test references (DOCS-001). All tests passing, code now meets production quality standards for maintainability NFR.</li>
+<li><strong>QA Coverage Improvements (2025-10-03):</strong> Added 20 comprehensive tests targeting async lifecycle methods and edge cases. Achieved 94% coverage (exceeds 90% target). All 81 tests passing with zero linting violations.</li>
+</ol>
+<h3 id="file-list">File List<a class="headerlink" href="#file-list" title="Permanent link">&para;</a></h3>
+<p><strong>Source Files:</strong>
+- rustybt/live/streaming/<strong>init</strong>.py
+- rustybt/live/streaming/models.py
+- rustybt/live/streaming/base.py (modified: QA fixes)
+- rustybt/live/streaming/bar_buffer.py
+- rustybt/live/streaming/binance_stream.py (modified: QA fixes)</p>
+<p><strong>Test Files:</strong>
+- tests/live/streaming/<strong>init</strong>.py
+- tests/live/streaming/test_models.py
+- tests/live/streaming/test_bar_buffer.py
+- tests/live/streaming/test_base_adapter.py (modified: QA fixes, added 20 tests for coverage)
+- tests/live/streaming/test_binance_stream.py</p>
+<p><strong>Documentation Files:</strong>
+- docs/architecture/live-trading.md (modified: QA fixes)</p>
+<h2 id="qa-results">QA Results<a class="headerlink" href="#qa-results" title="Permanent link">&para;</a></h2>
+<h3 id="review-date-2025-10-03">Review Date: 2025-10-03<a class="headerlink" href="#review-date-2025-10-03" title="Permanent link">&para;</a></h3>
+<h3 id="reviewed-by-quinn-test-architect">Reviewed By: Quinn (Test Architect)<a class="headerlink" href="#reviewed-by-quinn-test-architect" title="Permanent link">&para;</a></h3>
+<h3 id="code-quality-assessment">Code Quality Assessment<a class="headerlink" href="#code-quality-assessment" title="Permanent link">&para;</a></h3>
+<p><strong>Overall Score: 80/100 (Good Implementation with Technical Debt)</strong></p>
+<p>This story delivers a solid WebSocket streaming foundation with excellent architecture and comprehensive functionality. The implementation correctly uses async/await patterns, Decimal precision for financial data, immutable dataclasses, and robust error handling with circuit breaker pattern. The developer completed all 10 acceptance criteria with 61 passing tests.</p>
+<p><strong>Strengths:</strong>
+- <strong>Architecture Excellence:</strong> Clean abstraction with BaseWebSocketAdapter providing extensible framework
+- <strong>Financial Precision:</strong> Proper use of Decimal throughout for price/volume data (no float precision issues)
+- <strong>Resilience Design:</strong> Exponential backoff reconnection (1s→16s), circuit breaker (10 error threshold), heartbeat monitoring (60s timeout)
+- <strong>Data Integrity:</strong> OHLCVBar validation ensures OHLCV relationships (high ≥ low, etc.) at construction time
+- <strong>Production Ready:</strong> Structured logging (structlog), proper error hierarchies, configurable parameters
+- <strong>Documentation:</strong> Excellent 350-line WebSocket section in live-trading.md with architecture diagrams, usage examples, and implementation guide</p>
+<p><strong>Weaknesses:</strong>
+- <strong>Test Coverage Gap:</strong> 82% coverage is below 90% target. BaseWebSocketAdapter async lifecycle methods (_listen, _heartbeat_monitor, reconnect) have test gaps (67% on base.py)
+- <strong>Linting Technical Debt:</strong> 11 issues requiring cleanup before production (shadowing builtins, broad exception handling, contextlib.suppress opportunities)
+- <strong>Integration Test Gap:</strong> Documentation references non-existent integration tests (tests/integration/live/test_websocket_streaming.py)</p>
+<h3 id="compliance-check">Compliance Check<a class="headerlink" href="#compliance-check" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Coding Standards: ⚠️ <strong>CONCERNS</strong> - 11 linting violations (see details below)</li>
+<li>Project Structure: ✓ <strong>PASS</strong> - Correct locations per source-tree.md (rustybt/live/streaming/)</li>
+<li>Testing Strategy: ⚠️ <strong>CONCERNS</strong> - 82% coverage below 90% target, missing integration tests</li>
+<li>All ACs Met: ✓ <strong>PASS</strong> - All 10 acceptance criteria implemented and tested</li>
+</ul>
+<h3 id="requirements-traceability-ac-coverage">Requirements Traceability (AC Coverage)<a class="headerlink" href="#requirements-traceability-ac-coverage" title="Permanent link">&para;</a></h3>
+<p><strong>All 10 Acceptance Criteria Fully Implemented:</strong></p>
+<ol>
+<li>✓ <strong>BaseWebSocketAdapter created</strong> (<a href="rustybt/live/streaming/base.py">rustybt/live/streaming/base.py:46-399</a>)</li>
+<li>
+<p>Tests: test_adapter_initialization, test_adapter_with_custom_config</p>
+</li>
+<li>
+<p>✓ <strong>Connection management</strong> (<a href="rustybt/live/streaming/base.py">rustybt/live/streaming/base.py:101-222</a>)</p>
+</li>
+<li>connect(), disconnect(), reconnect() with exponential backoff</li>
+<li>
+<p>Tests: test_connect_success, test_connect_failure, test_disconnect, test_reconnect_exponential_backoff, test_reconnect_max_attempts</p>
+</li>
+<li>
+<p>✓ <strong>Subscription management</strong> (<a href="rustybt/live/streaming/base.py">rustybt/live/streaming/base.py:224-246</a>)</p>
+</li>
+<li>subscribe(), unsubscribe() abstract methods, subscription tracking, re-subscription after reconnect</li>
+<li>
+<p>Tests: test_subscribe, test_subscribe_not_connected, test_unsubscribe, test_active_subscriptions_immutable</p>
+</li>
+<li>
+<p>✓ <strong>Message parsing framework</strong> (<a href="rustybt/live/streaming/base.py">rustybt/live/streaming/base.py:248-260</a>)</p>
+</li>
+<li>parse_message() abstract method, TickData standardization</li>
+<li>
+<p>Tests: test_parse_message_tick, test_parse_message_error, test_parse_message_unknown_type (Binance: 7 parsing tests)</p>
+</li>
+<li>
+<p>✓ <strong>Buffering system</strong> (<a href="rustybt/live/streaming/bar_buffer.py">rustybt/live/streaming/bar_buffer.py:54-259</a>)</p>
+</li>
+<li>BarBuffer accumulates ticks → OHLCV bars, configurable resolution, bar boundary alignment</li>
+<li>
+<p>Tests: 15 bar buffer tests covering creation, aggregation, multiple symbols, flush, alignment</p>
+</li>
+<li>
+<p>✓ <strong>Heartbeat/keepalive</strong> (<a href="rustybt/live/streaming/base.py">rustybt/live/streaming/base.py:338-368</a>)</p>
+</li>
+<li>_heartbeat_monitor() with ping/pong, stale connection detection (60s timeout)</li>
+<li>
+<p>Tests: Covered in base adapter tests (heartbeat logic tested via mock)</p>
+</li>
+<li>
+<p>✓ <strong>Error handling</strong> (<a href="rustybt/live/streaming/base.py">rustybt/live/streaming/base.py:289-336</a>)</p>
+</li>
+<li>Handles ConnectionClosed, WebSocketException, ParseError, JSONDecodeError, rate limits</li>
+<li>Circuit breaker pattern trips after 10 consecutive errors</li>
+<li>
+<p>Tests: test_circuit_breaker, error handling in parse tests</p>
+</li>
+<li>
+<p>✓ <strong>Binance adapter example</strong> (<a href="rustybt/live/streaming/binance_stream.py">rustybt/live/streaming/binance_stream.py:19-306</a>)</p>
+</li>
+<li>BinanceWebSocketAdapter for spot/futures, kline &amp; trade parsing</li>
+<li>
+<p>Tests: 17 Binance adapter tests (initialization, subscribe/unsubscribe, parse kline/trade, error handling)</p>
+</li>
+<li>
+<p>✓ <strong>Tests validate lifecycle and parsing</strong> (<a href="tests/live/streaming/">tests/live/streaming/</a>)</p>
+</li>
+<li>61 tests passing (14 models, 15 bar buffer, 15 base adapter, 17 Binance adapter)</li>
+<li>
+<p>Mock WebSocket server via pytest fixtures</p>
+</li>
+<li>
+<p>✓ <strong>Documentation</strong> (<a href="docs/architecture/live-trading.md">docs/architecture/live-trading.md:645-987</a>)</p>
+<ul>
+<li>350+ lines covering architecture, usage examples, implementation guide, testing</li>
+</ul>
+</li>
+</ol>
+<h3 id="test-architecture-assessment">Test Architecture Assessment<a class="headerlink" href="#test-architecture-assessment" title="Permanent link">&para;</a></h3>
+<p><strong>Test Coverage: 82% (Below Target)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Coverage</th>
+<th>Missing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>models.py</td>
+<td>100%</td>
+<td>-</td>
+</tr>
+<tr>
+<td>bar_buffer.py</td>
+<td>92%</td>
+<td>Lines 45, 49, 150, 230, 256-258 (edge case handling)</td>
+</tr>
+<tr>
+<td><strong>base.py</strong></td>
+<td><strong>67%</strong></td>
+<td><strong>Lines 111-112, 138-139, 170-171, 212-216, 292-336, 343-368, 391, 396-398 (async methods)</strong></td>
+</tr>
+<tr>
+<td>binance_stream.py</td>
+<td>93%</td>
+<td>Lines 87-89, 102, 125-127 (exception paths)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Gap Analysis:</strong>
+- <strong>Primary Gap:</strong> BaseWebSocketAdapter async lifecycle methods (_listen, _heartbeat_monitor, reconnect) have test coverage gaps
+- <strong>Root Cause:</strong> Unit tests use mocks but don't exercise full async state machine edge cases
+- <strong>Impact:</strong> Medium risk - untested code paths in connection management could fail in production edge cases (network flakiness, race conditions)
+- <strong>Recommendation:</strong> Add integration tests with real WebSocket mock server to achieve 90%+ coverage</p>
+<p><strong>Test Quality: Excellent</strong>
+- Proper use of pytest-asyncio for async tests
+- Comprehensive edge case coverage (invalid data, error scenarios, boundary conditions)
+- Good test organization (TestOHLCVBar, TestBarBuffer, TestBaseWebSocketAdapter, TestBinanceWebSocketAdapter)
+- Tests validate OHLCV invariants (high ≥ low, etc.)</p>
+<h3 id="linting-issues-11-total">Linting Issues (11 Total)<a class="headerlink" href="#linting-issues-11-total" title="Permanent link">&para;</a></h3>
+<p><strong>Must Fix for Production:</strong></p>
+<ol>
+<li><strong>A001</strong> - Shadowing builtin <code>ConnectionError</code> (<a href="rustybt/live/streaming/base.py#L34">base.py:34</a>)</li>
+<li>
+<p>Fix: Rename to <code>WSConnectionError</code> or <code>WebSocketConnectionError</code></p>
+</li>
+<li>
+<p><strong>BLE001</strong> - Broad exception catching (4 instances: <a href="rustybt/live/streaming/base.py#L218">base.py:218</a>, <a href="rustybt/live/streaming/base.py#L321">321</a>, <a href="rustybt/live/streaming/base.py#L334">334</a>, <a href="rustybt/live/streaming/base.py#L367">367</a>)</p>
+</li>
+<li>
+<p>Fix: Specify exception types or use Union[WebSocketException, ConnectionClosed] for WebSocket errors</p>
+</li>
+<li>
+<p><strong>SIM105</strong> - Use contextlib.suppress (2 instances: <a href="rustybt/live/streaming/base.py#L146">base.py:146-149</a>, <a href="rustybt/live/streaming/base.py#L153">153-156</a>)</p>
+</li>
+<li>
+<p>Fix: Replace <code>try-except-pass</code> with <code>contextlib.suppress(asyncio.CancelledError)</code></p>
+</li>
+<li>
+<p><strong>RUF006</strong> - Uncaptured task reference (<a href="rustybt/live/streaming/base.py#L379">base.py:379</a>)</p>
+</li>
+<li>Fix: Store reference: <code>self._reconnect_task = asyncio.create_task(self.reconnect())</code></li>
+</ol>
+<p><strong>Low Priority:</strong></p>
+<ol>
+<li><strong>ANN401</strong> - Any type hints (2 instances: <a href="rustybt/live/streaming/base.py#L101">base.py:101</a>, <a href="rustybt/live/streaming/binance_stream.py#L34">binance_stream.py:34</a>)</li>
+<li>
+<p>Fix: Use <code>Callable[[TickData], None]</code> instead of <code>Any</code> for on_tick</p>
+</li>
+<li>
+<p><strong>E501</strong> - Line too long (<a href="rustybt/live/streaming/base.py#L219">base.py:219</a>, 103 &gt; 100)</p>
+</li>
+<li>Fix: Break line</li>
+</ol>
+<h3 id="security-review">Security Review<a class="headerlink" href="#security-review" title="Permanent link">&para;</a></h3>
+<p>✓ <strong>PASS</strong> - No security concerns identified</p>
+<ul>
+<li>No hardcoded credentials or secrets</li>
+<li>WebSocket URLs configurable (not hardcoded)</li>
+<li>Proper validation in TickData and OHLCVBar constructors prevents invalid data injection</li>
+<li>Structured logging uses str() for user-controlled data (prevents log injection)</li>
+<li>Credential management deferred to broker integration (correct separation of concerns)</li>
+</ul>
+<h3 id="performance-considerations">Performance Considerations<a class="headerlink" href="#performance-considerations" title="Permanent link">&para;</a></h3>
+<p>✓ <strong>PASS</strong> - Performance design is sound</p>
+<p><strong>Strengths:</strong>
+- Async/await eliminates blocking I/O
+- Circuit breaker prevents resource exhaustion during error storms
+- Exponential backoff prevents thundering herd on reconnect
+- Decimal operations used correctly (no unnecessary conversions)
+- BarBuffer uses defaultdict for O(1) symbol lookup</p>
+<p><strong>Minor Optimization Opportunities:</strong>
+- Consider connection pooling for multiple symbol streams (future enhancement)
+- Bar buffer flush operations could batch callbacks (low priority)</p>
+<h3 id="non-functional-requirements">Non-Functional Requirements<a class="headerlink" href="#non-functional-requirements" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>NFR</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Reliability</strong></td>
+<td>✓ PASS</td>
+<td>Exponential backoff, circuit breaker, heartbeat monitoring, auto re-subscribe</td>
+</tr>
+<tr>
+<td><strong>Maintainability</strong></td>
+<td>⚠️ CONCERNS</td>
+<td>Linting issues reduce code quality. Well-structured but needs cleanup</td>
+</tr>
+<tr>
+<td><strong>Performance</strong></td>
+<td>✓ PASS</td>
+<td>Async design, efficient data structures, circuit breaker protection</td>
+</tr>
+<tr>
+<td><strong>Security</strong></td>
+<td>✓ PASS</td>
+<td>No hardcoded secrets, proper validation, log injection prevention</td>
+</tr>
+<tr>
+<td><strong>Testability</strong></td>
+<td>⚠️ CONCERNS</td>
+<td>82% coverage below 90% target. Good test design but coverage gaps</td>
+</tr>
+<tr>
+<td><strong>Extensibility</strong></td>
+<td>✓ PASS</td>
+<td>BaseWebSocketAdapter provides clean extension point for new exchanges</td>
+</tr>
+</tbody>
+</table>
+<h3 id="technical-debt-identified">Technical Debt Identified<a class="headerlink" href="#technical-debt-identified" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Test Coverage Debt (Medium Priority):</strong></li>
+<li>8% coverage gap to reach 90% target</li>
+<li>Integration tests referenced in docs but not implemented</li>
+<li>
+<p>Estimated effort: 4-6 hours to add integration tests</p>
+</li>
+<li>
+<p><strong>Linting Debt (Low Priority):</strong></p>
+</li>
+<li>11 linting violations</li>
+<li>
+<p>Estimated effort: 1-2 hours to fix</p>
+</li>
+<li>
+<p><strong>Documentation Debt (Low Priority):</strong></p>
+</li>
+<li>Integration test references need update or implementation</li>
+<li>Estimated effort: 30 minutes</li>
+</ol>
+<p><strong>Total Estimated Debt: 6-9 hours</strong></p>
+<h3 id="improvements-checklist">Improvements Checklist<a class="headerlink" href="#improvements-checklist" title="Permanent link">&para;</a></h3>
+<p><strong>Automated Fixes Available:</strong>
+- [ ] Fix SIM105 violations with <code>contextlib.suppress</code> (2 instances)
+- [ ] Fix E501 line length violation (1 instance)
+- [ ] Rename <code>ConnectionError</code> to <code>WSConnectionError</code> (1 instance)
+- [ ] Store task reference in <code>_check_circuit_breaker</code> (1 instance)</p>
+<p><strong>Manual Improvements Required:</strong>
+- [ ] Specify exception types instead of broad <code>except Exception</code> (4 instances)
+- [ ] Fix <code>Any</code> type hints for <code>on_tick</code> callback (2 instances)
+- [ ] Add integration tests to reach 90% coverage target
+- [ ] Create tests/integration/live/test_websocket_streaming.py or update docs
+- [ ] Consider property-based tests for bar aggregation invariants</p>
+<p><strong>Future Enhancements (Not Blocking):</strong>
+- [ ] Add connection pooling for multiple symbol streams
+- [ ] Implement batched bar callbacks for performance
+- [ ] Add metrics/observability hooks (connection uptime, message rate, etc.)</p>
+<h3 id="gate-status">Gate Status<a class="headerlink" href="#gate-status" title="Permanent link">&para;</a></h3>
+<p>Gate: <strong>CONCERNS</strong> → <a href="../qa/gates/6.6-websocket-data-adapter-foundation.yml">docs/qa/gates/6.6-websocket-data-adapter-foundation.yml</a></p>
+<p><strong>Quality Score: 80/100</strong>
+- -10 points: Test coverage 8% below target (82% vs 90%)
+- -10 points: 11 linting issues requiring cleanup</p>
+<p><strong>Status Reason:</strong> Excellent implementation with solid architecture and comprehensive functionality. Test coverage gap (82% vs 90% target) and linting technical debt prevent PASS gate. Recommend addressing test coverage and linting issues before marking Done, though story delivers all functional requirements.</p>
+<h3 id="recommended-status">Recommended Status<a class="headerlink" href="#recommended-status" title="Permanent link">&para;</a></h3>
+<p>⚠️ <strong>Changes Recommended</strong> - Address before marking Done:</p>
+<p><strong>Must Fix:</strong>
+1. Improve test coverage to 90%+ (add integration tests for async lifecycle methods)
+2. Fix linting issues (rename ConnectionError, specify exception types, use contextlib.suppress)
+3. Update documentation or create integration tests (resolve docs/code mismatch)</p>
+<p><strong>Story owner decides final status</strong> - All functional requirements met, but quality standards need attention.</p>
+<hr />
+<p><strong>Review Methodology:</strong> Comprehensive analysis including requirements traceability (10/10 ACs mapped), code architecture review, test coverage analysis (pytest-cov), linting validation (ruff), NFR assessment (security, performance, reliability, maintainability), and technical debt quantification.</p>
+<hr />
+<h3 id="review-date-2025-10-03-re-review">Review Date: 2025-10-03 (Re-Review)<a class="headerlink" href="#review-date-2025-10-03-re-review" title="Permanent link">&para;</a></h3>
+<h3 id="reviewed-by-quinn-test-architect_1">Reviewed By: Quinn (Test Architect)<a class="headerlink" href="#reviewed-by-quinn-test-architect_1" title="Permanent link">&para;</a></h3>
+<h3 id="code-quality-assessment_1">Code Quality Assessment<a class="headerlink" href="#code-quality-assessment_1" title="Permanent link">&para;</a></h3>
+<p><strong>Overall Score: 90/100 (Excellent Implementation - Production Ready with Minor Coverage Gap)</strong></p>
+<p>This re-review confirms significant quality improvements from the previous review. The developer successfully addressed all 11 linting issues identified in the initial review (LINT-001 ✅ RESOLVED), resulting in clean, production-ready code that passes all linting checks. The implementation maintains excellent architecture, comprehensive functionality, and robust error handling.</p>
+<p><strong>Improvements Since Last Review:</strong>
+- ✅ <strong>All Linting Issues Fixed:</strong> Renamed <code>ConnectionError</code> → <code>WSConnectionError</code>, specified exception types, used <code>contextlib.suppress</code>, proper type hints
+- ✅ <strong>Documentation Updated:</strong> Removed references to non-existent integration tests
+- ✅ <strong>Code Quality:</strong> Now passes <code>ruff check</code> with zero violations
+- ⚠️ <strong>Test Coverage:</strong> Remains at 83% (below 90% target, 7% improvement needed)</p>
+<p><strong>Strengths (Unchanged):</strong>
+- <strong>Architecture Excellence:</strong> Clean abstraction with BaseWebSocketAdapter providing extensible framework
+- <strong>Financial Precision:</strong> Proper use of Decimal throughout for price/volume data
+- <strong>Resilience Design:</strong> Exponential backoff reconnection, circuit breaker, heartbeat monitoring
+- <strong>Production Quality:</strong> Structured logging, proper error hierarchies, configurable parameters
+- <strong>Documentation:</strong> Comprehensive 350-line WebSocket section with architecture diagrams</p>
+<p><strong>Remaining Gap:</strong>
+- <strong>Test Coverage:</strong> 83% coverage (7 percentage points below 90% target)
+  - BaseWebSocketAdapter async lifecycle methods still have test gaps
+  - Missing coverage in <code>_listen()</code>, <code>_heartbeat_monitor()</code>, edge cases in <code>reconnect()</code>
+  - Impact: Low-Medium risk - untested async state machine paths could fail in production edge cases</p>
+<h3 id="refactoring-performed">Refactoring Performed<a class="headerlink" href="#refactoring-performed" title="Permanent link">&para;</a></h3>
+<p><strong>This Re-Review Session:</strong>
+No refactoring performed - developer successfully completed all required fixes independently.</p>
+<p><strong>Previous QA Fix Session (Applied by Dev):</strong>
+- <strong>File</strong>: <a href="rustybt/live/streaming/base.py">rustybt/live/streaming/base.py</a>
+  - <strong>Change</strong>: Renamed <code>ConnectionError</code> → <code>WSConnectionError</code> (line 35)
+  - <strong>Why</strong>: Shadowing builtin <code>ConnectionError</code> reduces code clarity
+  - <strong>How</strong>: Import-safe rename preserves functionality while avoiding builtin shadowing</p>
+<ul>
+<li><strong>File</strong>: <a href="rustybt/live/streaming/base.py">rustybt/live/streaming/base.py</a></li>
+<li><strong>Change</strong>: Used <code>contextlib.suppress()</code> for task cancellation (lines 145-151)</li>
+<li><strong>Why</strong>: Pythonic pattern for expected exceptions, cleaner than try-except-pass</li>
+<li>
+<p><strong>How</strong>: <code>with suppress(asyncio.CancelledError): await task</code> replaces bare except</p>
+</li>
+<li>
+<p><strong>File</strong>: <a href="rustybt/live/streaming/base.py">rustybt/live/streaming/base.py</a></p>
+</li>
+<li><strong>Change</strong>: Specified exception types (lines 213, 318, 327, 360)</li>
+<li><strong>Why</strong>: Broad <code>except Exception</code> can mask unexpected errors</li>
+<li>
+<p><strong>How</strong>: Changed to <code>(WebSocketException, OSError)</code> and <code>(ValueError, KeyError, TypeError)</code> for precise handling</p>
+</li>
+<li>
+<p><strong>File</strong>: <a href="rustybt/live/streaming/base.py">rustybt/live/streaming/base.py</a></p>
+</li>
+<li><strong>Change</strong>: Stored reconnect task reference (line 372)</li>
+<li><strong>Why</strong>: Prevents task garbage collection before completion</li>
+<li>
+<p><strong>How</strong>: <code>self._reconnect_task = asyncio.create_task(self.reconnect())</code></p>
+</li>
+<li>
+<p><strong>File</strong>: <a href="rustybt/live/streaming/binance_stream.py">rustybt/live/streaming/binance_stream.py</a></p>
+</li>
+<li><strong>Change</strong>: Fixed type hints <code>Any</code> → <code>Callable[[TickData], None]</code> (line 35)</li>
+<li><strong>Why</strong>: Precise type hints enable better static analysis and IDE support</li>
+<li>
+<p><strong>How</strong>: Imported <code>Callable</code> from <code>collections.abc</code>, specified callback signature</p>
+</li>
+<li>
+<p><strong>File</strong>: <a href="docs/architecture/live-trading.md">docs/architecture/live-trading.md</a></p>
+</li>
+<li><strong>Change</strong>: Removed references to non-existent <code>tests/integration/live/test_websocket_streaming.py</code></li>
+<li><strong>Why</strong>: Documentation-code mismatch confuses developers</li>
+<li><strong>How</strong>: Updated test section to reflect actual test structure in <code>tests/live/streaming/</code></li>
+</ul>
+<h3 id="compliance-check_1">Compliance Check<a class="headerlink" href="#compliance-check_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Coding Standards: ✅ <strong>PASS</strong> - All linting violations resolved, passes ruff check</li>
+<li>Project Structure: ✅ <strong>PASS</strong> - Correct locations per source-tree.md</li>
+<li>Testing Strategy: ⚠️ <strong>CONCERNS</strong> - 83% coverage (7 points below 90% target)</li>
+<li>All ACs Met: ✅ <strong>PASS</strong> - All 10 acceptance criteria fully implemented</li>
+</ul>
+<h3 id="requirements-traceability-ac-coverage_1">Requirements Traceability (AC Coverage)<a class="headerlink" href="#requirements-traceability-ac-coverage_1" title="Permanent link">&para;</a></h3>
+<p><strong>All 10 Acceptance Criteria Remain Fully Implemented</strong> (no changes from previous review):</p>
+<ol>
+<li>✅ BaseWebSocketAdapter created → <a href="rustybt/live/streaming/base.py#L47">rustybt/live/streaming/base.py:47-392</a></li>
+<li>✅ Connection management → <a href="rustybt/live/streaming/base.py#L103">rustybt/live/streaming/base.py:103-219</a></li>
+<li>✅ Subscription management → <a href="rustybt/live/streaming/base.py#L220">rustybt/live/streaming/base.py:220-242</a></li>
+<li>✅ Message parsing framework → <a href="rustybt/live/streaming/base.py#L244">rustybt/live/streaming/base.py:244-256</a></li>
+<li>✅ Buffering system → <a href="rustybt/live/streaming/bar_buffer.py#L54">rustybt/live/streaming/bar_buffer.py:54-259</a></li>
+<li>✅ Heartbeat/keepalive → <a href="rustybt/live/streaming/base.py#L331">rustybt/live/streaming/base.py:331-362</a></li>
+<li>✅ Error handling → <a href="rustybt/live/streaming/base.py#L286">rustybt/live/streaming/base.py:286-330</a></li>
+<li>✅ Binance adapter → <a href="rustybt/live/streaming/binance_stream.py#L20">rustybt/live/streaming/binance_stream.py:20-306</a></li>
+<li>✅ Tests validate lifecycle → <a href="tests/live/streaming/">tests/live/streaming/</a> - 61 tests passing</li>
+<li>✅ Documentation → <a href="docs/architecture/live-trading.md#L645">docs/architecture/live-trading.md:645-987</a></li>
+</ol>
+<h3 id="test-architecture-assessment_1">Test Architecture Assessment<a class="headerlink" href="#test-architecture-assessment_1" title="Permanent link">&para;</a></h3>
+<p><strong>Test Coverage: 83% (Below Target by 7 points)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Coverage</th>
+<th>Change</th>
+<th>Missing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>models.py</td>
+<td>100%</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>bar_buffer.py</td>
+<td>92%</td>
+<td>-</td>
+<td>Lines 45, 49, 150, 230, 256-258 (edge cases)</td>
+</tr>
+<tr>
+<td><strong>base.py</strong></td>
+<td><strong>68%</strong></td>
+<td><strong>+1%</strong></td>
+<td><strong>Lines 110-111, 137-138, 165-166, 208, 214-218, 289-290, 294-329, 336-361, 384, 389-391</strong></td>
+</tr>
+<tr>
+<td>binance_stream.py</td>
+<td>93%</td>
+<td>-</td>
+<td>Lines 88-90, 103, 126-128 (exception paths)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Gap Analysis:</strong>
+- <strong>Primary Gap:</strong> BaseWebSocketAdapter async methods (_listen, _heartbeat_monitor, reconnect edge cases)
+- <strong>Root Cause:</strong> Unit tests with mocks don't exercise full async state machine including race conditions
+- <strong>Risk Assessment:</strong> <strong>Medium</strong> - untested async paths could fail with network flakiness, connection race conditions
+- <strong>Effort to Fix:</strong> ~4-6 hours to add comprehensive async integration tests</p>
+<p><strong>Test Quality: Excellent</strong> (unchanged)
+- 61 tests all passing with proper async testing using pytest-asyncio
+- Comprehensive edge case coverage (invalid data, errors, boundary conditions)
+- Good test organization with clear test class structure</p>
+<h3 id="security-review_1">Security Review<a class="headerlink" href="#security-review_1" title="Permanent link">&para;</a></h3>
+<p>✅ <strong>PASS</strong> - No security concerns (unchanged from previous review)</p>
+<ul>
+<li>No hardcoded credentials or secrets</li>
+<li>WebSocket URLs configurable</li>
+<li>Proper validation in constructors prevents invalid data</li>
+<li>Structured logging prevents log injection</li>
+<li>Credential management properly deferred to broker integration</li>
+</ul>
+<h3 id="performance-considerations_1">Performance Considerations<a class="headerlink" href="#performance-considerations_1" title="Permanent link">&para;</a></h3>
+<p>✅ <strong>PASS</strong> - Performance design remains sound (unchanged)</p>
+<p><strong>Strengths:</strong>
+- Async/await eliminates blocking I/O
+- Circuit breaker prevents resource exhaustion
+- Exponential backoff prevents thundering herd
+- Efficient data structures (defaultdict for O(1) symbol lookup)</p>
+<h3 id="non-functional-requirements_1">Non-Functional Requirements<a class="headerlink" href="#non-functional-requirements_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>NFR</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Reliability</strong></td>
+<td>✅ PASS</td>
+<td>Exponential backoff, circuit breaker, heartbeat monitoring, auto re-subscribe</td>
+</tr>
+<tr>
+<td><strong>Maintainability</strong></td>
+<td>✅ PASS</td>
+<td><strong>IMPROVED</strong> - All linting issues resolved, production-ready code quality</td>
+</tr>
+<tr>
+<td><strong>Performance</strong></td>
+<td>✅ PASS</td>
+<td>Async design, efficient data structures, circuit breaker protection</td>
+</tr>
+<tr>
+<td><strong>Security</strong></td>
+<td>✅ PASS</td>
+<td>No hardcoded secrets, proper validation, log injection prevention</td>
+</tr>
+<tr>
+<td><strong>Testability</strong></td>
+<td>⚠️ CONCERNS</td>
+<td>83% coverage (7 points below 90% target, but test design is sound)</td>
+</tr>
+<tr>
+<td><strong>Extensibility</strong></td>
+<td>✅ PASS</td>
+<td>BaseWebSocketAdapter provides clean extension point</td>
+</tr>
+</tbody>
+</table>
+<h3 id="technical-debt-summary">Technical Debt Summary<a class="headerlink" href="#technical-debt-summary" title="Permanent link">&para;</a></h3>
+<p><strong>Resolved Since Last Review:</strong>
+- ✅ <strong>Linting Debt</strong> - All 11 violations fixed (estimated 2 hours, completed)
+- ✅ <strong>Documentation Debt</strong> - Integration test references corrected (estimated 30 min, completed)</p>
+<p><strong>Remaining Debt:</strong></p>
+<ol>
+<li><strong>Test Coverage Debt (Medium Priority):</strong></li>
+<li>7 percentage points below 90% target (83% current)</li>
+<li>Async lifecycle methods need integration test coverage</li>
+<li><strong>Estimated effort:</strong> 4-6 hours to add comprehensive async tests</li>
+<li><strong>Risk:</strong> Medium - could miss edge cases in production (network failures, race conditions)</li>
+</ol>
+<p><strong>Total Outstanding Debt: 4-6 hours</strong> (reduced from 6-9 hours)</p>
+<h3 id="improvements-checklist_1">Improvements Checklist<a class="headerlink" href="#improvements-checklist_1" title="Permanent link">&para;</a></h3>
+<p><strong>Completed Since Last Review:</strong>
+- [x] ✅ Fixed SIM105 violations with <code>contextlib.suppress</code> (2 instances)
+- [x] ✅ Fixed E501 line length violation (1 instance)
+- [x] ✅ Renamed <code>ConnectionError</code> to <code>WSConnectionError</code> (1 instance)
+- [x] ✅ Stored task reference in <code>_check_circuit_breaker</code> (1 instance)
+- [x] ✅ Specified exception types instead of broad <code>except Exception</code> (4 instances)
+- [x] ✅ Fixed <code>Any</code> type hints for <code>on_tick</code> callback (2 instances)
+- [x] ✅ Updated docs to remove non-existent integration test references</p>
+<p><strong>Remaining Improvements:</strong>
+- [ ] Add integration tests to reach 90% coverage target (async lifecycle edge cases)
+- [ ] Consider property-based tests for bar aggregation invariants (nice-to-have)</p>
+<p><strong>Future Enhancements (Not Blocking):</strong>
+- [ ] Add connection pooling for multiple symbol streams
+- [ ] Implement batched bar callbacks for performance
+- [ ] Add metrics/observability hooks (connection uptime, message rate)</p>
+<h3 id="files-modified-during-review">Files Modified During Review<a class="headerlink" href="#files-modified-during-review" title="Permanent link">&para;</a></h3>
+<p><strong>This Re-Review:</strong> No files modified (verification only)</p>
+<p><strong>Previous QA Fix Session (by Dev):</strong>
+- rustybt/live/streaming/base.py
+- rustybt/live/streaming/binance_stream.py
+- docs/architecture/live-trading.md</p>
+<h3 id="gate-status_1">Gate Status<a class="headerlink" href="#gate-status_1" title="Permanent link">&para;</a></h3>
+<p>Gate: <strong>CONCERNS</strong> → <a href="../qa/gates/6.6-websocket-data-adapter-foundation.yml">docs/qa/gates/6.6-websocket-data-adapter-foundation.yml</a></p>
+<p><strong>Quality Score: 90/100</strong> (+10 from previous review)
+- Previous: 80/100 (linting -10, coverage -10)
+- Current: 90/100 (linting ✅ resolved, coverage -10)</p>
+<p><strong>Status Reason:</strong> Excellent production-ready implementation with all linting issues resolved. Test coverage at 83% is 7 points below 90% target, primarily in BaseWebSocketAdapter async lifecycle methods. All 10 ACs fully implemented with 61 passing tests. Recommend addressing test coverage gap, though story delivers all functional requirements and code quality is production-ready.</p>
+<h3 id="recommended-status_1">Recommended Status<a class="headerlink" href="#recommended-status_1" title="Permanent link">&para;</a></h3>
+<p>⚠️ <strong>CONCERNS - Optional Coverage Improvement</strong></p>
+<p><strong>Assessment:</strong>
+- ✅ All functional requirements delivered (10/10 ACs)
+- ✅ Production code quality achieved (zero linting issues)
+- ✅ 61 tests passing with excellent coverage on critical paths
+- ⚠️ Test coverage 7 points below target (83% vs 90%)</p>
+<p><strong>Options for Story Owner:</strong></p>
+<ol>
+<li><strong>Accept as Done</strong> - Code is production-ready, coverage gap is in async edge cases (medium risk)</li>
+<li><strong>Add Coverage First</strong> - Invest 4-6 hours for async integration tests to reach 90%+</li>
+</ol>
+<p><strong>Story owner decides final status</strong> - Technical delivery is complete and high quality.</p>
+<hr />
+<p><strong>Re-Review Methodology:</strong> Verification of previous QA fixes, linting validation (ruff check), test coverage analysis (pytest-cov), code inspection of fix quality, NFR re-assessment, technical debt update.</p>
+<hr />
+<h3 id="review-date-2025-10-03-final-review">Review Date: 2025-10-03 (Final Review)<a class="headerlink" href="#review-date-2025-10-03-final-review" title="Permanent link">&para;</a></h3>
+<h3 id="reviewed-by-quinn-test-architect_2">Reviewed By: Quinn (Test Architect)<a class="headerlink" href="#reviewed-by-quinn-test-architect_2" title="Permanent link">&para;</a></h3>
+<h3 id="code-quality-assessment_2">Code Quality Assessment<a class="headerlink" href="#code-quality-assessment_2" title="Permanent link">&para;</a></h3>
+<p><strong>Overall Score: 100/100 (Excellent - Production Ready)</strong></p>
+<p>This final review confirms the developer has successfully achieved all quality targets. Test coverage now stands at <strong>94.06%</strong>, exceeding the 90% target by 4 percentage points. All linting issues remain resolved (zero violations). The implementation delivers all 10 acceptance criteria with 81 comprehensive tests, excellent architecture, and production-ready code quality.</p>
+<p><strong>Key Achievements Since Last Review:</strong>
+- ✅ <strong>Test Coverage Target Exceeded:</strong> 94.06% (was 83%, needed 90%)
+- ✅ <strong>20 New Tests Added:</strong> Comprehensive async lifecycle testing
+- ✅ <strong>Zero Linting Issues:</strong> Maintained clean code quality
+- ✅ <strong>All Quality Gates Passed:</strong> Security, Performance, Reliability, Maintainability, Testability</p>
+<p><strong>Coverage Breakdown:</strong>
+| Module | Coverage | Status |
+|--------|----------|--------|
+| models.py | 100% | ✅ |
+| bar_buffer.py | 92% | ✅ |
+| <strong>base.py</strong> | <strong>94%</strong> | ✅ <strong>(+26% from initial review)</strong> |
+| binance_stream.py | 93% | ✅ |
+| <strong>TOTAL</strong> | <strong>94.06%</strong> | ✅ <strong>EXCEEDS TARGET</strong> |</p>
+<p><strong>Test Suite:</strong>
+- 81 tests passing (100% pass rate)
+- 14 models tests
+- 15 bar buffer tests
+- 35 base adapter tests (+20 since last review)
+- 17 Binance adapter tests</p>
+<h3 id="refactoring-performed_1">Refactoring Performed<a class="headerlink" href="#refactoring-performed_1" title="Permanent link">&para;</a></h3>
+<p><strong>This Final Review Session:</strong>
+No refactoring required - developer completed all improvements independently.</p>
+<h3 id="compliance-check_2">Compliance Check<a class="headerlink" href="#compliance-check_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Coding Standards: ✅ <strong>PASS</strong> - Zero ruff violations maintained</li>
+<li>Project Structure: ✅ <strong>PASS</strong> - Correct locations per source-tree.md</li>
+<li>Testing Strategy: ✅ <strong>PASS</strong> - 94.06% coverage exceeds 90% target</li>
+<li>All ACs Met: ✅ <strong>PASS</strong> - All 10 acceptance criteria fully implemented</li>
+</ul>
+<h3 id="test-architecture-assessment_2">Test Architecture Assessment<a class="headerlink" href="#test-architecture-assessment_2" title="Permanent link">&para;</a></h3>
+<p><strong>Test Coverage: 94.06% (EXCEEDS TARGET by 4 points) ✅</strong></p>
+<p><strong>Coverage Improvements:</strong>
+- BaseWebSocketAdapter: 68% → <strong>94%</strong> (+26 percentage points)
+- Added comprehensive async lifecycle testing:
+  - Edge case tests for connection states (4 tests)
+  - Reconnect with re-subscription (2 tests)
+  - <code>_listen()</code> method coverage (6 tests)
+  - <code>_heartbeat_monitor()</code> coverage (5 tests)
+  - <code>_send_message()</code> error paths (2 tests)
+  - Circuit breaker validation (1 test)</p>
+<p><strong>Test Quality: Excellent</strong>
+- Proper async testing with pytest-asyncio
+- Comprehensive edge case coverage (connection race conditions, network failures)
+- Tests validate OHLCV invariants and data integrity
+- Mock WebSocket server properly simulates production scenarios</p>
+<h3 id="requirements-traceability">Requirements Traceability<a class="headerlink" href="#requirements-traceability" title="Permanent link">&para;</a></h3>
+<p><strong>All 10 Acceptance Criteria Fully Tested:</strong></p>
+<ol>
+<li>✅ BaseWebSocketAdapter → 35 tests covering initialization, lifecycle, state management</li>
+<li>✅ Connection management → Tests for connect, disconnect, reconnect with exponential backoff</li>
+<li>✅ Subscription management → Tests for subscribe, unsubscribe, re-subscription after reconnect</li>
+<li>✅ Message parsing → 7 parsing tests (tick, error, unknown type, invalid formats)</li>
+<li>✅ Buffering system → 15 bar buffer tests (aggregation, boundaries, multiple symbols)</li>
+<li>✅ Heartbeat/keepalive → 5 heartbeat monitor tests (ping, pong, stale detection, timeout)</li>
+<li>✅ Error handling → Tests for circuit breaker, connection errors, parse errors</li>
+<li>✅ Binance adapter → 17 tests (spot/futures, kline/trade parsing, error handling)</li>
+<li>✅ Tests validate lifecycle → 81 passing tests with mock WebSocket server</li>
+<li>✅ Documentation → Comprehensive 350-line section in live-trading.md</li>
+</ol>
+<h3 id="security-review_2">Security Review<a class="headerlink" href="#security-review_2" title="Permanent link">&para;</a></h3>
+<p>✅ <strong>PASS</strong> - No security concerns (maintained from previous reviews)</p>
+<h3 id="performance-considerations_2">Performance Considerations<a class="headerlink" href="#performance-considerations_2" title="Permanent link">&para;</a></h3>
+<p>✅ <strong>PASS</strong> - Performance design remains excellent</p>
+<h3 id="non-functional-requirements_2">Non-Functional Requirements<a class="headerlink" href="#non-functional-requirements_2" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>NFR</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Reliability</strong></td>
+<td>✅ PASS</td>
+<td>Exponential backoff, circuit breaker, heartbeat monitoring, auto re-subscribe</td>
+</tr>
+<tr>
+<td><strong>Maintainability</strong></td>
+<td>✅ PASS</td>
+<td>Zero linting violations, production-ready code quality</td>
+</tr>
+<tr>
+<td><strong>Performance</strong></td>
+<td>✅ PASS</td>
+<td>Async design, efficient data structures, circuit breaker protection</td>
+</tr>
+<tr>
+<td><strong>Security</strong></td>
+<td>✅ PASS</td>
+<td>No hardcoded secrets, proper validation, log injection prevention</td>
+</tr>
+<tr>
+<td><strong>Testability</strong></td>
+<td>✅ PASS</td>
+<td><strong>94.06% coverage exceeds 90% target. Comprehensive async testing.</strong></td>
+</tr>
+<tr>
+<td><strong>Extensibility</strong></td>
+<td>✅ PASS</td>
+<td>BaseWebSocketAdapter provides clean extension point</td>
+</tr>
+</tbody>
+</table>
+<h3 id="technical-debt-summary_1">Technical Debt Summary<a class="headerlink" href="#technical-debt-summary_1" title="Permanent link">&para;</a></h3>
+<p><strong>All Debt Resolved:</strong>
+- ✅ Linting issues (11 violations) - RESOLVED
+- ✅ Documentation gaps - RESOLVED
+- ✅ Test coverage gap (12 percentage points) - RESOLVED</p>
+<p><strong>Remaining Debt: NONE</strong> ✅</p>
+<h3 id="improvements-checklist_2">Improvements Checklist<a class="headerlink" href="#improvements-checklist_2" title="Permanent link">&para;</a></h3>
+<p><strong>All Required Improvements Completed:</strong>
+- [x] ✅ Fixed all 11 linting violations
+- [x] ✅ Achieved 94.06% test coverage (exceeds 90% target)
+- [x] ✅ Added 20 comprehensive async lifecycle tests
+- [x] ✅ Updated documentation to match code</p>
+<p><strong>Optional Future Enhancements (Not Blocking):</strong>
+- [ ] Consider property-based tests for bar aggregation invariants
+- [ ] Add observability metrics (connection uptime, message rate, error rate)
+- [ ] Add connection pooling for multiple symbol streams</p>
+<h3 id="files-modified-during-review_1">Files Modified During Review<a class="headerlink" href="#files-modified-during-review_1" title="Permanent link">&para;</a></h3>
+<p><strong>This Final Review:</strong> No files modified (verification only)</p>
+<h3 id="gate-status_2">Gate Status<a class="headerlink" href="#gate-status_2" title="Permanent link">&para;</a></h3>
+<p>Gate: ✅ <strong>PASS</strong> → <a href="../qa/gates/6.6-websocket-data-adapter-foundation.yml">docs/qa/gates/6.6-websocket-data-adapter-foundation.yml</a></p>
+<p><strong>Quality Score: 100/100</strong></p>
+<p><strong>Status Reason:</strong> Excellent production-ready implementation. Test coverage achieved 94.06% (exceeds 90% target by 4 points). All linting issues resolved. All 10 ACs fully implemented with 81 passing tests. Code quality, architecture, and comprehensive testing meet all production standards.</p>
+<h3 id="recommended-status_2">Recommended Status<a class="headerlink" href="#recommended-status_2" title="Permanent link">&para;</a></h3>
+<p>✅ <strong>Ready for Done</strong></p>
+<p><strong>Assessment:</strong>
+- ✅ All functional requirements delivered (10/10 ACs)
+- ✅ Production code quality achieved (zero linting issues)
+- ✅ Test coverage exceeds target (94.06% vs 90% target)
+- ✅ 81 tests passing with comprehensive async lifecycle coverage
+- ✅ All NFRs validated (Security, Performance, Reliability, Maintainability, Testability)
+- ✅ Zero technical debt remaining</p>
+<p><strong>Story is complete and ready for Done status.</strong> 🎉</p>
+<hr />
+<p><strong>Final Review Methodology:</strong> Test execution and coverage validation (pytest with pytest-cov), linting verification (ruff check), code quality inspection, NFR validation, requirements traceability verification (10/10 ACs), technical debt assessment.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/jerryinyang/rustybt" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/project/rustybt/" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 444.7a20.4 20.4 0 1 1 0-40.7 20.4 20.4 0 1 1 0 40.7M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.6-183.4a20.4 20.4 0 1 1 0 40.8 20.4 20.4 0 1 1 0-40.8"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

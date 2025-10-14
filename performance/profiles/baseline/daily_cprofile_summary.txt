@@ -1,0 +1,34 @@
+cProfile Summary: daily
+Timestamp: 2025-10-08T14:21:55.196808
+================================================================================
+
+Top 20 functions by cumulative time:
+================================================================================
+Wed Oct  8 14:21:55 2025    docs/performance/profiles/baseline/daily_cprofile.pstats
+
+         4994902 function calls (4922462 primitive calls) in 2.805 seconds
+
+   Ordered by: cumulative time
+   List reduced from 2619 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    2.805    2.805 /Users/jerryinyang/Code/bmad-dev/rustybt/scripts/profiling/run_profiler.py:142(run_daily_scenario)
+        1    0.000    0.000    2.805    2.805 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/utils/run_algo.py:304(run_algorithm)
+        1    0.001    0.001    2.804    2.804 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/utils/run_algo.py:64(_run)
+        1    0.000    0.000    2.459    2.459 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/algorithm.py:665(run)
+      253    0.002    0.000    2.334    0.009 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/gens/tradesimulation.py:99(transform)
+      251    0.001    0.000    2.084    0.008 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/gens/tradesimulation.py:107(every_bar)
+      251    0.001    0.000    2.011    0.008 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/utils/events.py:198(handle_data)
+      251    0.000    0.000    2.010    0.008 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/utils/events.py:219(handle_data)
+      251    0.001    0.000    2.010    0.008 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/algorithm.py:503(handle_data)
+      251    0.016    0.000    2.009    0.008 /Users/jerryinyang/Code/bmad-dev/rustybt/scripts/profiling/run_profiler.py:158(handle_data)
+     7066    0.011    0.000    1.810    0.000 rustybt/_protocol.pyx:55(assert_keywords_and_call)
+     5020    0.009    0.000    1.725    0.000 rustybt/_protocol.pyx:532(history)
+     5020    0.007    0.000    1.152    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/data_portal.py:853(get_history_window)
+     5020    0.014    0.000    1.139    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/data_portal.py:757(_get_history_daily_window)
+5023/5022    0.015    0.000    0.444    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexing.py:1177(__getitem__)
+     5022    0.024    0.000    0.410    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/frame.py:698(__init__)
+     5021    0.010    0.000    0.385    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexing.py:1366(_getitem_tuple)
+     5020    0.003    0.000    0.367    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/data_portal.py:774(_get_history_daily_window_data)
+     5021    0.020    0.000    0.365    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexing.py:1033(_getitem_lowerdim)
+     5020    0.016    0.000    0.364    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/data_portal.py:994(_get_daily_window_data)

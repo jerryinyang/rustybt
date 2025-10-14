@@ -170,3 +170,4 @@ secrets.json
 
 # Experiments (exclude entire directory - experimental/research code)
 experiments/
+rustybt/_version.py

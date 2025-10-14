@@ -14,9 +14,11 @@
       "Read",
       "Task",
       "Write",
-      "SlashCommand"
+      "SlashCommand",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "includeCoAuthoredBy": false
 }

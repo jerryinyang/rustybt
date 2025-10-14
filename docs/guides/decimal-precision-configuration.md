@@ -427,5 +427,5 @@ print(f"Crypto rounding mode: {mode}")
 - Validation ensures precision (0-18) and rounding modes are valid
 
 For more information, see:
-- [Coding Standards](../architecture/coding-standards.md)
 - [Python Decimal Module Documentation](https://docs.python.org/3/library/decimal.html)
+- [Examples & Tutorials](../examples/README.md)

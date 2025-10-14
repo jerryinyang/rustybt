@@ -389,7 +389,7 @@ print(f"✓ Cache working (first: {first_fetch:.2f}s, second: {second_fetch:.2f}
 
 ## Migration Checklist
 
-- [ ] Read this guide and [architecture docs](../architecture/unified-data-management.md)
+- [ ] Read this guide thoroughly
 - [ ] Run migration script in `--validate` mode
 - [ ] Backup existing data
 - [ ] Apply migration with `--apply`

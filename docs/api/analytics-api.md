@@ -661,6 +661,4 @@ plot_drawdown(backtest_result, highlight_top_n=5)
 
 - [Report Generation Example](../../examples/generate_backtest_report.py)
 - [Attribution Analysis Example](../../examples/attribution_analysis_example.py)
-- [Story 8.2: Programmatic Report Generation](../stories/8.2.programmatic-report-generation.story.md)
-- [Story 8.3: Advanced Performance Attribution](../stories/8.3.advanced-performance-attribution.story.md)
-- [Story 8.4: Risk Analytics](../stories/8.4.risk-analytics.story.md)
+- [Examples & Tutorials](../examples/README.md)

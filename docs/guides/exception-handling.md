@@ -583,7 +583,5 @@ raise InvalidOrderError(
 
 ## See Also
 
-- [Coding Standards - Python Error Handling](../architecture/coding-standards.md#python-coding-standards)
-- [Zero-Mock Enforcement](../architecture/zero-mock-enforcement.md)
-- [API Reference: rustybt.exceptions](../api/exceptions.md)
-- [API Reference: rustybt.utils.error_handling](../api/utils/error_handling.md)
+- [User Guides](decimal-precision-configuration.md)
+- [Examples & Tutorials](../examples/README.md)

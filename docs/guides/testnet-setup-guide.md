@@ -16,14 +16,14 @@ This guide provides step-by-step instructions for setting up testnet and demo ac
 
 Epic 6 requires access to multiple broker testnet accounts and data API provider keys for comprehensive integration testing. This guide covers setup for:
 
-**Brokers (Stories 6.7, 6.8, 6.10):**
+**Brokers:**
 - Interactive Brokers (IB) Paper Trading
 - Binance Testnet
 - Bybit Testnet
 - Hyperliquid (Mainnet/Testnet)
 - CCXT-supported exchanges
 
-**Data Providers (Story 6.9):**
+**Data Providers:**
 - Polygon.io
 - Alpaca
 - Alpha Vantage
@@ -32,7 +32,7 @@ Epic 6 requires access to multiple broker testnet accounts and data API provider
 
 ## Broker Integrations
 
-### Interactive Brokers (Story 6.8)
+### Interactive Brokers
 
 **Setup Steps:**
 
@@ -89,7 +89,7 @@ IB_CLIENT_ID=1
 
 ---
 
-### Binance Testnet (Story 6.10)
+### Binance Testnet
 
 **Setup Steps:**
 
@@ -121,7 +121,7 @@ BINANCE_TESTNET_URL=https://testnet.binance.vision
 
 ---
 
-### Bybit Testnet (Story 6.10)
+### Bybit Testnet
 
 **Setup Steps:**
 
@@ -151,7 +151,7 @@ BYBIT_TESTNET_URL=https://api-testnet.bybit.com
 
 ---
 
-### Hyperliquid (Story 6.10)
+### Hyperliquid
 
 **Setup Steps:**
 
@@ -182,7 +182,7 @@ HYPERLIQUID_NETWORK=mainnet  # or testnet if available
 
 ---
 
-### CCXT Exchanges (Story 6.10)
+### CCXT Exchanges
 
 For CCXT-supported exchanges, register for testnet/demo accounts:
 
@@ -204,7 +204,7 @@ CCXT_TESTNET=true
 
 ## Data API Providers
 
-### Polygon.io (Story 6.9)
+### Polygon.io
 
 **Setup Steps:**
 
@@ -231,7 +231,7 @@ POLYGON_API_KEY=your_polygon_api_key
 
 ---
 
-### Alpaca (Story 6.9)
+### Alpaca
 
 **Setup Steps:**
 
@@ -260,7 +260,7 @@ ALPACA_BASE_URL=https://paper-api.alpaca.markets  # Paper trading
 
 ---
 
-### Alpha Vantage (Story 6.9)
+### Alpha Vantage
 
 **Setup Steps:**
 
@@ -458,5 +458,3 @@ pytest tests/  # Integration tests skipped without flags
 ---
 
 **Last Updated:** 2025-10-02
-**Epic:** 6 - Live Trading Engine & Broker Integrations
-**Stories:** 6.7 (Paper Trading), 6.8 (IB), 6.9 (Data Providers), 6.10 (Crypto Exchanges)

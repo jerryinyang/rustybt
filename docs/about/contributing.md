@@ -57,7 +57,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
    ```
 
 2. **Make Changes**
-   - Follow [Coding Standards](../architecture/coding-standards.md)
+   - Follow PEP 8 and project conventions
    - Write tests for new functionality
    - Update documentation as needed
 
@@ -113,7 +113,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 ### Testing Standards
 
-- **Zero-Mock Policy**: We prefer integration tests over mocks. See [Testing Strategy](../architecture/testing-strategy.md)
+- **Zero-Mock Policy**: We prefer integration tests over mocks whenever possible
 - **Property-Based Testing**: Use Hypothesis for financial calculations
 - **Coverage Target**: Aim for 90%+ test coverage
 
@@ -174,7 +174,7 @@ rustybt/
 
 - **GitHub Discussions**: For general questions and ideas
 - **GitHub Issues**: For bugs and feature requests
-- **Documentation**: Check the [Architecture](../architecture/index.md) docs
+- **Documentation**: Check the [User Guides](../guides/decimal-precision-configuration.md) and [Examples](../examples/README.md)
 
 ## License
 

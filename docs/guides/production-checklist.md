@@ -357,11 +357,10 @@ uptime_pct = ((total_hours - downtime_hours) / total_hours) * 100
 ## 8. Documentation
 
 ### 8.1 Deployment Documentation
-- [ ] Deployment guide complete: `docs/deployment-guide.md`
-- [ ] Troubleshooting guide complete: `docs/troubleshooting.md`
-- [ ] Security audit report complete: `docs/security-audit.md`
-- [ ] API documentation complete (if Epic 9)
-- [ ] Architecture documentation up to date
+- [ ] Deployment guide complete: See [Deployment Guide](deployment-guide.md)
+- [ ] User guides up to date: See [User Guides](../guides/decimal-precision-configuration.md)
+- [ ] API documentation complete: See [API Reference](../api/order-types.md)
+- [ ] Examples documentation up to date: See [Examples](../examples/README.md)
 
 ### 8.2 Operational Documentation
 - [ ] Runbook created for common operations:

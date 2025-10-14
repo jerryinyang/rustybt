@@ -1098,21 +1098,18 @@ After successful initial period (1-2 weeks):
 
 ## Additional Resources
 
-- **Troubleshooting Guide**: See `docs/troubleshooting.md`
-- **Production Checklist**: See `docs/production-checklist.md`
-- **Security Audit Report**: See `docs/security-audit.md`
-- **API Documentation**: See `docs/api/`
-- **Architecture Documentation**: See `docs/architecture/`
+- **Production Checklist**: See [Production Checklist](production-checklist.md)
+- **User Guides**: See [User Guides](../guides/decimal-precision-configuration.md)
+- **Examples**: See [Examples & Tutorials](../examples/README.md)
 
 ---
 
 ## Support
 
 For issues or questions:
-1. Check troubleshooting guide: `docs/troubleshooting.md`
-2. Review logs: `~/.rustybt/logs/rustybt.log`
-3. Open GitHub issue: https://github.com/yourusername/rustybt/issues
-4. Community support: [Discord/Slack link]
+1. Review logs: `~/.rustybt/logs/rustybt.log`
+2. Open GitHub issue: https://github.com/jerryinyang/rustybt/issues
+3. Check documentation: https://jerryinyang.github.io/rustybt
 
 ---
 

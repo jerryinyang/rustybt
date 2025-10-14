@@ -225,7 +225,7 @@ Legacy Zipline modules have relaxed type checking (temporarily):
 - `rustybt.finance.*` - Finance calculations
 - `rustybt.pipeline.*` - Pipeline framework
 
-**Migration plan**: These modules will be migrated to strict typing incrementally in future stories (tracked in backlog).
+**Migration plan**: These modules will be migrated to strict typing incrementally in future releases.
 
 ### Configuration
 

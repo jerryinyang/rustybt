@@ -503,6 +503,5 @@ df = await catalog.get_data(
 
 ## See Also
 
-- [Data Catalog Architecture](../architecture/data-catalog.md)
 - [Creating Data Adapters](creating-data-adapters.md)
-- [Caching System](../caching-system.md)
+- [Caching System](caching-system.md)

@@ -79,6 +79,6 @@ RustyBT will display:
 
 ### Explore the API
 
-- [Architecture Overview](../architecture/index.md)
-- [Component Architecture](../architecture/component-architecture.md)
-- [API Documentation](../api/order-types.md)
+- [Examples & Tutorials](../examples/README.md) - Learn by example
+- [API Documentation](../api/order-types.md) - Complete API reference
+- [User Guides](../guides/decimal-precision-configuration.md) - Feature guides

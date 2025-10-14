@@ -478,6 +478,5 @@ print(f"Cold Cache Hits: {stats['session_stats']['cold_hits']}")
 
 ## See Also
 
-- [Parquet Storage Layer](./architecture/data-catalog.md)
-- [Data Adapters](./data-adapters.md)
-- [Performance Optimization](./performance.md)
+- [Creating Data Adapters](creating-data-adapters.md)
+- [CSV Data Import](csv-data-import.md)

@@ -32,7 +32,6 @@ build:
 # Python environment
 python:
   install:
-    - method: pip
-      path: .
-      extra_requirements:
-        - docs
+    # Install only documentation dependencies, not the package itself
+    # This avoids Cython/Rust compilation issues on ReadTheDocs
+    - requirements: docs/requirements.txt

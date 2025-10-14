@@ -1,0 +1,5207 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Modern Python backtesting engine built on Zipline-Reloaded">
+      
+      
+        <meta name="author" content="RustyBT Development Team">
+      
+      
+        <link rel="canonical" href="https://jerryinyang.github.io/rustybt/qa/SPRINT_CHANGE_PROPOSAL_EPIC10_DOCUMENTATION_INTEGRITY/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.21">
+    
+    
+      
+        <title>Sprint Change Proposal: Epic 10 Documentation Integrity Remediation - RustyBT Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.2a3383ac.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#sprint-change-proposal-epic-10-documentation-integrity-remediation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="RustyBT Documentation" class="md-header__button md-logo" aria-label="RustyBT Documentation" data-md-component="logo">
+      
+  <img src="../../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RustyBT Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Sprint Change Proposal: Epic 10 Documentation Integrity Remediation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jerryinyang/rustybt" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jerryinyang/rustybt
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guides/decimal-precision-configuration/" class="md-tabs__link">
+          
+  
+  
+  User Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../examples/" class="md-tabs__link">
+          
+  
+  
+  Examples & Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/data-management/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../about/license/" class="md-tabs__link">
+          
+  
+  
+  About
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="RustyBT Documentation" class="md-nav__button md-logo" aria-label="RustyBT Documentation" data-md-component="logo">
+      
+  <img src="../../assets/logo.png" alt="logo">
+
+    </a>
+    RustyBT Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jerryinyang/rustybt" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jerryinyang/rustybt
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/decimal-precision-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Decimal Precision
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/caching-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Caching System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/creating-data-adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Creating Data Adapters
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/csv-data-import/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CSV Data Import
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/testnet-setup-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testnet Setup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Examples & Tutorials
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Examples & Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_1" id="__nav_5_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Data Management
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1">
+            <span class="md-nav__icon md-icon"></span>
+            Data Management
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_1_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_1_2" id="__nav_5_1_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Adapters
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_1_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_2">
+            <span class="md-nav__icon md-icon"></span>
+            Adapters
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/adapters/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/adapters/ccxt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CCXT
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/adapters/yfinance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    YFinance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/adapters/csv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CSV
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/adapters/polygon/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Polygon
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/adapters/alpaca/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Alpaca
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/adapters/alphavantage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AlphaVantage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_1_3" id="__nav_5_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Catalog
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            Catalog
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/catalog/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/catalog/bundles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Bundles
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/catalog/metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metadata
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/catalog/migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_1_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_1_4" id="__nav_5_1_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Readers
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_4">
+            <span class="md-nav__icon md-icon"></span>
+            Readers
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/readers/data-portal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Portal
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/readers/bar-readers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Bar Readers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/readers/history-loader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    History Loader
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/readers/continuous-futures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Continuous Futures
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_1_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_1_5" id="__nav_5_1_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    FX System
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_1_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_5">
+            <span class="md-nav__icon md-icon"></span>
+            FX System
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/fx/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/fx/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Providers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/fx/storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Storage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/fx/converters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Converters
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_1_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_1_6" id="__nav_5_1_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Pipeline
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_1_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_6">
+            <span class="md-nav__icon md-icon"></span>
+            Pipeline
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/pipeline/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/pipeline/factors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Factors
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/pipeline/filters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Filters
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/pipeline/loaders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Loaders
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/pipeline/expressions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expressions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_1_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_1_7" id="__nav_5_1_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Performance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            Performance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/performance/caching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Caching
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/performance/optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Optimization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/data-management/performance/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Order Management
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            Order Management
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/order-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/order-management/order-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Order Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_3" id="__nav_5_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Execution
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Execution
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/order-management/execution/blotter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Blotter
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_4" id="__nav_5_2_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Transaction Costs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Transaction Costs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/order-management/transaction-costs/slippage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Slippage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/order-management/transaction-costs/commissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Commissions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/order-management/transaction-costs/borrow-costs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Borrow Costs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/order-management/transaction-costs/financing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Financing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_5" id="__nav_5_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/order-management/workflows/order-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Order Lifecycle
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/order-management/workflows/examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Portfolio Management
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            Portfolio Management
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/portfolio-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3_2" id="__nav_5_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Multi-Strategy
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Multi-Strategy
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/portfolio-management/multi-strategy/allocators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Allocators
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3_3" id="__nav_5_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Risk
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Risk
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/portfolio-management/risk/position-limits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Position Limits
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3_4" id="__nav_5_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Performance
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Performance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/portfolio-management/performance/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Optimization
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            Optimization
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4_2" id="__nav_5_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Framework
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Framework
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/framework/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/framework/parameter-spaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Parameter Spaces
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/framework/objective-functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Objective Functions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4_3" id="__nav_5_4_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Algorithms
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            Algorithms
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/algorithms/grid-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Grid Search
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/algorithms/random-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Random Search
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/algorithms/bayesian/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Bayesian
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/algorithms/genetic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Genetic
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4_4" id="__nav_5_4_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Walk-Forward
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            Walk-Forward
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/walk-forward/framework/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Framework
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/walk-forward/windows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Windows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/walk-forward/validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4_5" id="__nav_5_4_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Monte Carlo
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            Monte Carlo
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/monte-carlo/stability-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Stability Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4_6" id="__nav_5_4_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Parallel
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            Parallel
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/parallel/multiprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Multiprocessing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4_7" id="__nav_5_4_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            Best Practices
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization/best-practices/overfitting-prevention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overfitting Prevention
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Analytics
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Analytics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_2" id="__nav_5_5_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Risk
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            Risk
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/analytics/risk/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/analytics/risk/var-cvar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    VaR & CVaR
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/analytics/risk/drawdown/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Drawdown
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Live Trading
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_6">
+            <span class="md-nav__icon md-icon"></span>
+            Live Trading
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/live-trading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_6_2" id="__nav_5_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Safety
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Safety
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/live-trading/safety/circuit-breakers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Circuit Breakers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_7" id="__nav_5_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_7">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_8" id="__nav_5_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Overview Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            API Overview Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/datasource-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Datasource API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/finance-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Finance API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/optimization-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Optimization API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/live-trading-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Live Trading API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/analytics-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Analytics API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    About
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            About
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/license/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    License
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Changelog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Executive Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-1-change-context-trigger" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 1: Change Context &amp; Trigger
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 1: Change Context &amp; Trigger">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#triggering-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      Triggering Event
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-definition" class="md-nav__link">
+    <span class="md-ellipsis">
+      Issue Definition
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#initial-impact-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Initial Impact Assessment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evidence-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Evidence Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-2-epic-impact-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 2: Epic Impact Assessment
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 2: Epic Impact Assessment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-epic-epic-10-comprehensive-framework-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current Epic: Epic 10 (Comprehensive Framework Documentation)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#future-epics-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Future Epics Analysis
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-3-artifact-conflict-impact-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 3: Artifact Conflict &amp; Impact Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 3: Artifact Conflict &amp; Impact Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prd-conflicts" class="md-nav__link">
+    <span class="md-ellipsis">
+      PRD Conflicts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architecture-document-conflicts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture Document Conflicts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-artifact-impacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Other Artifact Impacts
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-4-path-forward-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 4: Path Forward Evaluation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 4: Path Forward Evaluation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-direct-correction-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option 1: Direct Correction (RECOMMENDED)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-rollback-story-102" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option 2: Rollback Story 10.2
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-mvp-re-scoping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option 3: MVP Re-scoping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selected-recommended-path-option-1-direct-correction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Selected Recommended Path: Option 1 (Direct Correction)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-5-sprint-change-proposal-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 5: Sprint Change Proposal Components
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 5: Sprint Change Proposal Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#identified-issue-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Identified Issue Summary
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#epic-impact-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Epic Impact Summary
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifact-adjustment-needs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Artifact Adjustment Needs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-path-forward" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommended Path Forward
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prd-mvp-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      PRD MVP Impact
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#high-level-action-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      High-Level Action Plan
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#agent-handoff-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Agent Handoff Plan
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-6-detailed-proposed-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 6: Detailed Proposed Changes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 6: Detailed Proposed Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#change-1-remove-fabricated-order-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Change 1: Remove Fabricated Order Types
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#change-2-update-validation-document" class="md-nav__link">
+    <span class="md-ellipsis">
+      Change 2: Update Validation Document
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#change-3-update-story-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Change 3: Update Story Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#change-4-invalidate-qa-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Change 4: Invalidate QA Gate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#change-5-create-corrections-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Change 5: Create Corrections Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verification
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#source-code-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Source Code Verification
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prd-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      PRD Verification
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      Impact
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Impact">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#before-corrections" class="md-nav__link">
+    <span class="md-ellipsis">
+      Before Corrections
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-corrections" class="md-nav__link">
+    <span class="md-ellipsis">
+      After Corrections
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#process-improvements-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      Process Improvements Implemented
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sign-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sign-Off
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-7-final-review-user-approval" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section 7: Final Review &amp; User Approval
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 7: Final Review &amp; User Approval">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checklist-completion-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checklist Completion Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sprint-change-proposal-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sprint Change Proposal Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-approval-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      User Approval Request
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="sprint-change-proposal-epic-10-documentation-integrity-remediation">Sprint Change Proposal: Epic 10 Documentation Integrity Remediation<a class="headerlink" href="#sprint-change-proposal-epic-10-documentation-integrity-remediation" title="Permanent link">&para;</a></h1>
+<p><strong>Date</strong>: 2025-10-14
+<strong>Trigger</strong>: Story 10.2 contains fabricated API documentation violating zero-mock enforcement
+<strong>Reporter</strong>: User (Project Owner)
+<strong>Analyzer</strong>: John (Product Manager Agent)
+<strong>Status</strong>: DRAFT - Awaiting User Approval</p>
+<hr />
+<h2 id="executive-summary">Executive Summary<a class="headerlink" href="#executive-summary" title="Permanent link">&para;</a></h2>
+<p><strong>Critical Issue Identified</strong>: Story 10.2 (Document Order, Portfolio &amp; Execution Systems) contains documentation for <strong>3 non-existent order types</strong> (TWAP, VWAP, Iceberg) that are:
+1. <strong>Not implemented</strong> in the framework (verified in <code>rustybt/finance/execution.py</code>)
+2. <strong>Explicitly OUT OF SCOPE</strong> per PRD (docs/prd.md:74)
+3. <strong>Documented as complete</strong> with supposedly working code examples
+4. <strong>Passed QA review</strong> despite violating zero-mock enforcement</p>
+<p><strong>Violation Severity</strong>: CRITICAL - Violates Zero-Mock Enforcement Commandment #5:</p>
+<blockquote>
+<p>"NEVER claim completion for incomplete work"</p>
+</blockquote>
+<p><strong>Impact</strong>: Documentation cannot be trusted. Users will attempt to use non-existent APIs leading to immediate import errors.</p>
+<hr />
+<h2 id="section-1-change-context-trigger">Section 1: Change Context &amp; Trigger<a class="headerlink" href="#section-1-change-context-trigger" title="Permanent link">&para;</a></h2>
+<h3 id="triggering-event">Triggering Event<a class="headerlink" href="#triggering-event" title="Permanent link">&para;</a></h3>
+<p>User reported: <em>"There are references to VWAP and TWAP order types, with supposedly correct code implementation on how to use those from the framework; these do not exist anywhere in the framework and have been made up."</em></p>
+<h3 id="issue-definition">Issue Definition<a class="headerlink" href="#issue-definition" title="Permanent link">&para;</a></h3>
+<p><strong>Core Problem</strong>: Documentation fabricates API implementations that do not exist.</p>
+<p><strong>Issue Category</strong>:
+- ✅ Fundamental misunderstanding of existing implementation
+- ✅ Necessary correction based on new information (zero-mock enforcement violation)</p>
+<h3 id="initial-impact-assessment">Initial Impact Assessment<a class="headerlink" href="#initial-impact-assessment" title="Permanent link">&para;</a></h3>
+<p><strong>Immediate Consequences</strong>:
+- Documentation integrity compromised across Epic 10
+- Story 10.2 falsely marked "Complete"
+- QA gate approval (docs/qa/gates/10.2-document-order-portfolio-execution-systems.yml) is invalid
+- Unknown number of users may have attempted to use fabricated APIs</p>
+<h3 id="evidence-summary">Evidence Summary<a class="headerlink" href="#evidence-summary" title="Permanent link">&para;</a></h3>
+<p><strong>Fabricated APIs Confirmed</strong>:</p>
+<ol>
+<li><strong>TWAPOrder</strong></li>
+<li>Documented: <code>docs/api/order-management/order-types.md:332-358</code></li>
+<li>Source code: NOT FOUND (verified in <code>rustybt/finance/execution.py</code>)</li>
+<li>
+<p>PRD Status: OUT OF SCOPE (docs/prd.md:74)</p>
+</li>
+<li>
+<p><strong>VWAPOrder</strong></p>
+</li>
+<li>Documented: <code>docs/api/order-management/order-types.md:360-386</code></li>
+<li>Source code: NOT FOUND (verified in <code>rustybt/finance/execution.py</code>)</li>
+<li>
+<p>PRD Status: OUT OF SCOPE (docs/prd.md:74)</p>
+</li>
+<li>
+<p><strong>IcebergOrder</strong></p>
+</li>
+<li>Documented: <code>docs/api/order-management/order-types.md:388-414</code></li>
+<li>Source code: NOT FOUND (verified in <code>rustybt/finance/execution.py</code>)</li>
+<li>PRD Status: OUT OF SCOPE (docs/prd.md:74)</li>
+</ol>
+<p><strong>Actual Order Types Implemented</strong> (per <code>rustybt/finance/execution.py</code>):
+- ✅ MarketOrder (line 64)
+- ✅ LimitOrder (line 81)
+- ✅ StopOrder (line 111)
+- ✅ StopLimitOrder (line 142)
+- ✅ TrailingStopOrder (line 219)
+- ✅ OCOOrder (line 318)
+- ✅ BracketOrder (line 359)</p>
+<p><strong>Files Containing Fabricated References</strong>:
+1. <code>docs/api/order-management/order-types.md</code> - Lines 340, 368, 395 (import statements)
+2. <code>docs/api/order-management/CODE_EXAMPLES_VALIDATION.md</code> - Claims examples validated (FALSE)</p>
+<hr />
+<h2 id="section-2-epic-impact-assessment">Section 2: Epic Impact Assessment<a class="headerlink" href="#section-2-epic-impact-assessment" title="Permanent link">&para;</a></h2>
+<h3 id="current-epic-epic-10-comprehensive-framework-documentation">Current Epic: Epic 10 (Comprehensive Framework Documentation)<a class="headerlink" href="#current-epic-epic-10-comprehensive-framework-documentation" title="Permanent link">&para;</a></h3>
+<p><strong>Epic Status</strong>: PARTIALLY COMPLETE (Stories 10.1, 10.2 marked complete; 10.3 in progress)</p>
+<p><strong>Impact on Current Epic</strong>:
+- <strong>Story 10.1</strong> (Data Management): Previously had similar issues (corrected per CORRECTIONS_SUMMARY.md)
+- <strong>Story 10.2</strong> (Order Management): CRITICAL - Contains fabricated APIs, cannot be marked complete
+- <strong>Story 10.3</strong> (Optimization/Analytics): UNKNOWN - requires verification audit</p>
+<p><strong>Can Epic 10 be completed?</strong>: YES, with modifications
+- Remove fabricated order type documentation
+- Add prominent "Not Yet Implemented" sections for out-of-scope features
+- Re-run QA validation with actual code verification</p>
+<h3 id="future-epics-analysis">Future Epics Analysis<a class="headerlink" href="#future-epics-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Epic Impact</strong>: None directly (Epic 10 is documentation only)</p>
+<p><strong>Dependencies</strong>:
+- If Epic 6 (Live Trading) were to implement algorithmic order types, documentation could be added then
+- Current fabrication creates false expectation that these features exist</p>
+<p><strong>Order/Priority Changes</strong>: None required</p>
+<hr />
+<h2 id="section-3-artifact-conflict-impact-analysis">Section 3: Artifact Conflict &amp; Impact Analysis<a class="headerlink" href="#section-3-artifact-conflict-impact-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="prd-conflicts">PRD Conflicts<a class="headerlink" href="#prd-conflicts" title="Permanent link">&para;</a></h3>
+<p><strong>Conflict Identified</strong>: YES - CRITICAL</p>
+<p><strong>PRD Section</strong>: Out of Scope (docs/prd.md:74)</p>
+<p><strong>Explicit Statement</strong>:</p>
+<blockquote>
+<p>"Algorithmic execution optimization (smart order routing, TWAP/VWAP, etc.)" - OUT OF SCOPE</p>
+</blockquote>
+<p><strong>Analysis</strong>: Documentation directly contradicts PRD by documenting out-of-scope features as implemented and complete.</p>
+<p><strong>PRD Updates Needed</strong>: None - PRD is correct, documentation is wrong.</p>
+<h3 id="architecture-document-conflicts">Architecture Document Conflicts<a class="headerlink" href="#architecture-document-conflicts" title="Permanent link">&para;</a></h3>
+<p><strong>Architecture Review</strong>: Not applicable (documentation-only epic)</p>
+<h3 id="other-artifact-impacts">Other Artifact Impacts<a class="headerlink" href="#other-artifact-impacts" title="Permanent link">&para;</a></h3>
+<p><strong>Affected Artifacts</strong>:</p>
+<ol>
+<li><strong>Story 10.2</strong> (docs/stories/10.2.document-order-portfolio-execution-systems.md)</li>
+<li>Status: Marked "Complete" ❌ INVALID</li>
+<li>AC 1: "Complete order types documentation" - FAILED (documents non-existent types)</li>
+<li>
+<p>AC 14: "Each component includes... usage examples" - FAILED (examples can't work)</p>
+</li>
+<li>
+<p><strong>QA Gate</strong> (docs/qa/gates/10.2-document-order-portfolio-execution-systems.yml)</p>
+</li>
+<li>Gate: PASS ❌ INVALID</li>
+<li>Finding: "All code examples tested and working" - FALSE</li>
+<li>
+<p>Quality Score: 100/100 ❌ SHOULD BE FAIL</p>
+</li>
+<li>
+<p><strong>CODE_EXAMPLES_VALIDATION.md</strong></p>
+</li>
+<li>Claims: "All imports verified against source code" - FALSE</li>
+<li>Claims: "Validation Status: ✅ All examples manually reviewed" - FALSE</li>
+</ol>
+<hr />
+<h2 id="section-4-path-forward-evaluation">Section 4: Path Forward Evaluation<a class="headerlink" href="#section-4-path-forward-evaluation" title="Permanent link">&para;</a></h2>
+<h3 id="option-1-direct-correction-recommended">Option 1: Direct Correction (RECOMMENDED)<a class="headerlink" href="#option-1-direct-correction-recommended" title="Permanent link">&para;</a></h3>
+<p><strong>Description</strong>: Remove fabricated documentation, correct examples, re-validate</p>
+<p><strong>Scope</strong>:
+1. Remove TWAP, VWAP, Iceberg order documentation sections (lines 330-414 in order-types.md)
+2. Add "Algorithmic Orders (Not Yet Implemented)" section referencing PRD out-of-scope
+3. Remove fabricated order references from CODE_EXAMPLES_VALIDATION.md
+4. Update story 10.2 status to "In Progress - Corrections Required"
+5. Invalidate QA gate, re-run with actual code verification
+6. Create verification audit task for Stories 10.1 and 10.3</p>
+<p><strong>Effort</strong>: 2-4 hours
+- 1 hour: Remove fabricated sections
+- 1 hour: Update validation documents
+- 1-2 hours: Audit remaining Epic 10 documentation for similar issues</p>
+<p><strong>Risks</strong>: Low
+- Documentation changes only, no code impact
+- Clear path to correction</p>
+<p><strong>Benefits</strong>:
+- ✅ Immediate integrity restoration
+- ✅ Prevents user confusion
+- ✅ Establishes documentation verification process
+- ✅ Can be completed quickly</p>
+<p><strong>Feasibility</strong>: HIGH</p>
+<hr />
+<h3 id="option-2-rollback-story-102">Option 2: Rollback Story 10.2<a class="headerlink" href="#option-2-rollback-story-102" title="Permanent link">&para;</a></h3>
+<p><strong>Description</strong>: Revert Story 10.2 to initial state, restart with strict verification</p>
+<p><strong>Impact</strong>:
+- Loses all Story 10.2 work (14 documentation files, ~9,000 lines)
+- Most documentation IS accurate (only 3 order types are fabricated)
+- Wasteful to discard 95% accurate work</p>
+<p><strong>Effort</strong>: 8-16 hours to recreate</p>
+<p><strong>Assessment</strong>: NOT RECOMMENDED - Option 1 is more efficient</p>
+<hr />
+<h3 id="option-3-mvp-re-scoping">Option 3: MVP Re-scoping<a class="headerlink" href="#option-3-mvp-re-scoping" title="Permanent link">&para;</a></h3>
+<p><strong>Description</strong>: Accept fabricated documentation as "aspirational" and defer correction</p>
+<p><strong>Assessment</strong>: ABSOLUTELY NOT RECOMMENDED
+- Violates zero-mock enforcement principles
+- Damages documentation credibility
+- Creates user trust issues
+- Unacceptable per project values</p>
+<hr />
+<h3 id="selected-recommended-path-option-1-direct-correction">Selected Recommended Path: Option 1 (Direct Correction)<a class="headerlink" href="#selected-recommended-path-option-1-direct-correction" title="Permanent link">&para;</a></h3>
+<p><strong>Rationale</strong>:
+- Most efficient (2-4 hours vs 8-16 hours)
+- Preserves accurate documentation
+- Establishes verification process for future work
+- Aligns with zero-mock enforcement
+- Minimal disruption</p>
+<hr />
+<h2 id="section-5-sprint-change-proposal-components">Section 5: Sprint Change Proposal Components<a class="headerlink" href="#section-5-sprint-change-proposal-components" title="Permanent link">&para;</a></h2>
+<h3 id="identified-issue-summary">Identified Issue Summary<a class="headerlink" href="#identified-issue-summary" title="Permanent link">&para;</a></h3>
+<p>Epic 10 Story 10.2 documentation contains fabricated API references for THREE order types (TWAPOrder, VWAPOrder, IcebergOrder) that:
+- Do not exist in source code
+- Are explicitly out of scope per PRD
+- Were incorrectly marked as complete with validated examples
+- Passed QA review despite being fabricated</p>
+<p>This violates Zero-Mock Enforcement Commandment #5: "NEVER claim completion for incomplete work"</p>
+<h3 id="epic-impact-summary">Epic Impact Summary<a class="headerlink" href="#epic-impact-summary" title="Permanent link">&para;</a></h3>
+<p><strong>Epic 10</strong>: Story 10.2 cannot be considered complete. Requires correction and re-validation.</p>
+<p><strong>Other Epics</strong>: No impact (documentation only)</p>
+<h3 id="artifact-adjustment-needs">Artifact Adjustment Needs<a class="headerlink" href="#artifact-adjustment-needs" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>docs/api/order-management/order-types.md</strong></li>
+<li>Remove lines 330-414 (TWAP, VWAP, Iceberg sections)</li>
+<li>
+<p>Add "Algorithmic Orders (Not Yet Implemented)" section</p>
+</li>
+<li>
+<p><strong>docs/api/order-management/CODE_EXAMPLES_VALIDATION.md</strong></p>
+</li>
+<li>Update to reflect removal of fabricated examples</li>
+<li>
+<p>Add validation process improvements</p>
+</li>
+<li>
+<p><strong>docs/stories/10.2.document-order-portfolio-execution-systems.md</strong></p>
+</li>
+<li>Update status: "Complete" → "In Progress - Corrections Required"</li>
+<li>
+<p>Add "Corrections Applied" section</p>
+</li>
+<li>
+<p><strong>docs/qa/gates/10.2-document-order-portfolio-execution-systems.yml</strong></p>
+</li>
+<li>Update gate status: "PASS" → "FAIL - Corrections Required"</li>
+<li>Update quality score: 100 → PENDING</li>
+</ol>
+<h3 id="recommended-path-forward">Recommended Path Forward<a class="headerlink" href="#recommended-path-forward" title="Permanent link">&para;</a></h3>
+<p><strong>Direct Correction</strong> (Option 1) with the following steps:</p>
+<p><strong>Phase 1: Immediate Corrections</strong> (1-2 hours)
+1. Remove fabricated order type sections from order-types.md
+2. Add disclaimer section for out-of-scope algorithmic orders
+3. Update CODE_EXAMPLES_VALIDATION.md to remove false claims</p>
+<p><strong>Phase 2: Status Updates</strong> (30 minutes)
+4. Update Story 10.2 status and add corrections summary
+5. Invalidate QA gate and update with corrected status</p>
+<p><strong>Phase 3: Verification Audit</strong> (1-2 hours)
+6. Audit Story 10.1 documentation for similar fabrications
+7. Audit Story 10.3 documentation (if completed)
+8. Create comprehensive verification checklist</p>
+<p><strong>Phase 4: Process Improvement</strong> (30 minutes)
+9. Add automated import validation to documentation CI/CD
+10. Create "Documentation Verification Story Template" for future use</p>
+<h3 id="prd-mvp-impact">PRD MVP Impact<a class="headerlink" href="#prd-mvp-impact" title="Permanent link">&para;</a></h3>
+<p><strong>MVP Scope Change</strong>: None required</p>
+<p><strong>Analysis</strong>: Epic 10 is not part of MVP (Epics 1-5 only). This correction ensures MVP documentation quality when Epic 10 is referenced.</p>
+<h3 id="high-level-action-plan">High-Level Action Plan<a class="headerlink" href="#high-level-action-plan" title="Permanent link">&para;</a></h3>
+<p><strong>Immediate Actions</strong> (Next 24 hours):
+1. ✅ Create Sprint Change Proposal (THIS DOCUMENT)
+2. ⏳ Obtain user approval for correction path
+3. ⏳ Execute Phase 1: Remove fabricated documentation
+4. ⏳ Execute Phase 2: Update story and QA gate status</p>
+<p><strong>Short-Term Actions</strong> (Next 1-2 days):
+5. ⏳ Execute Phase 3: Audit all Epic 10 documentation
+6. ⏳ Execute Phase 4: Implement verification improvements
+7. ⏳ Re-run QA validation with corrected documentation</p>
+<p><strong>Documentation</strong>:
+8. ⏳ Create "docs/api/order-management/CORRECTIONS_SUMMARY.md" (similar to Story 10.1)
+9. ⏳ Update Epic 10 README with verification process</p>
+<h3 id="agent-handoff-plan">Agent Handoff Plan<a class="headerlink" href="#agent-handoff-plan" title="Permanent link">&para;</a></h3>
+<p><strong>Primary Agent</strong>: Dev Agent
+- Responsible for: Executing documentation corrections (Phases 1-2)
+- Deliverable: Corrected documentation files, updated story status</p>
+<p><strong>Secondary Agent</strong>: QA Agent
+- Responsible for: Re-validation after corrections (Phase 3)
+- Deliverable: New QA gate decision with actual verification</p>
+<p><strong>PM Agent (Current)</strong>:
+- Responsible for: Oversight, user communication, process improvement (Phase 4)
+- Deliverable: Verification checklist, updated documentation standards</p>
+<hr />
+<h2 id="section-6-detailed-proposed-changes">Section 6: Detailed Proposed Changes<a class="headerlink" href="#section-6-detailed-proposed-changes" title="Permanent link">&para;</a></h2>
+<h3 id="change-1-remove-fabricated-order-types">Change 1: Remove Fabricated Order Types<a class="headerlink" href="#change-1-remove-fabricated-order-types" title="Permanent link">&para;</a></h3>
+<p><strong>File</strong>: <code>docs/api/order-management/order-types.md</code></p>
+<p><strong>Location</strong>: Lines 330-414</p>
+<p><strong>Current Content</strong> (TO BE REMOVED):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gu">## Algorithmic Order Types</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gu">### TWAP (Time-Weighted Average Price)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>[Full section with examples - 28 lines]
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gu">### VWAP (Volume-Weighted Average Price)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>[Full section with examples - 26 lines]
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="gu">### Iceberg Order</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>[Full section with examples - 20 lines]
+</code></pre></div></p>
+<p><strong>Replacement Content</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gu">## Algorithmic Order Types (Not Yet Implemented)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>RustyBT currently supports the core order types documented above. Advanced algorithmic order types including TWAP (Time-Weighted Average Price), VWAP (Volume-Weighted Average Price), and Iceberg orders are <span class="gs">**out of scope**</span> for the current release per the project PRD.
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="gu">### Why These Are Not Implemented</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Algorithmic execution optimization (smart order routing, TWAP/VWAP, iceberg orders) requires:
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="k">-</span><span class="w"> </span>Integration with live broker execution systems
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="k">-</span><span class="w"> </span>Real-time market microstructure modeling
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="k">-</span><span class="w"> </span>Advanced partial fill algorithms beyond current scope
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>These features may be considered for future releases if there is user demand and after core live trading capabilities (Epic 6) are completed.
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="gu">### Workarounds</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>For users requiring similar functionality:
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="k">-</span><span class="w"> </span><span class="gs">**TWAP-like execution**</span>: Use custom strategy logic to split orders across time
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="k">-</span><span class="w"> </span><span class="gs">**VWAP-like execution**</span>: Monitor volume and adjust order sizes dynamically
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="k">-</span><span class="w"> </span><span class="gs">**Iceberg functionality**</span>: Place multiple smaller limit orders sequentially
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="gu">### Request These Features</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>If you need algorithmic order types, please open a GitHub issue describing your use case.
+</code></pre></div></p>
+<p><strong>Rationale</strong>:
+- Honest about current capabilities
+- Explains why features aren't implemented
+- Provides user workarounds
+- Invites feedback for future planning</p>
+<hr />
+<h3 id="change-2-update-validation-document">Change 2: Update Validation Document<a class="headerlink" href="#change-2-update-validation-document" title="Permanent link">&para;</a></h3>
+<p><strong>File</strong>: <code>docs/api/order-management/CODE_EXAMPLES_VALIDATION.md</code></p>
+<p><strong>Section</strong>: Line 45-61 (Order Types validation)</p>
+<p><strong>Current Content</strong> (INCORRECT):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gu">### 1. Order Types (order-types.md)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="gs">**Status**</span>: ✅ Validated
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="gs">**Examples**</span>: 15+ examples covering all order types
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="k">-</span><span class="w"> </span>Market orders
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="k">-</span><span class="w"> </span>Limit orders
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">-</span><span class="w"> </span>Stop orders
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="k">-</span><span class="w"> </span>Stop-Limit orders
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="k">-</span><span class="w"> </span>Trailing Stop orders
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="k">-</span><span class="w"> </span>OCO (One-Cancels-Other) orders
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="k">-</span><span class="w"> </span>Bracket orders
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="k">-</span><span class="w"> </span>TWAP/VWAP orders  ❌ FABRICATED
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="k">-</span><span class="w"> </span>Iceberg orders    ❌ FABRICATED
+</code></pre></div></p>
+<p><strong>Updated Content</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gu">### 1. Order Types (order-types.md)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="gs">**Status**</span>: ✅ Validated (Corrected 2025-10-14)
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="gs">**Examples**</span>: 12+ examples covering all implemented order types
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">-</span><span class="w"> </span>Market orders ✅
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="k">-</span><span class="w"> </span>Limit orders ✅
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="k">-</span><span class="w"> </span>Stop orders ✅
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="k">-</span><span class="w"> </span>Stop-Limit orders ✅
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="k">-</span><span class="w"> </span>Trailing Stop orders ✅
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="k">-</span><span class="w"> </span>OCO (One-Cancels-Other) orders ✅
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="k">-</span><span class="w"> </span>Bracket orders ✅
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="gs">**Removed**</span> (2025-10-14 Correction):
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="k">-</span><span class="w"> </span>❌ TWAP/VWAP orders - NOT IMPLEMENTED (out of scope per PRD)
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="k">-</span><span class="w"> </span>❌ Iceberg orders - NOT IMPLEMENTED (out of scope per PRD)
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="gs">**Notes**</span>:
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="k">-</span><span class="w"> </span>All examples use correct <span class="sb">`rustybt.api`</span> imports
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="k">-</span><span class="w"> </span>Order style classes verified against <span class="sb">`rustybt.finance.execution`</span> module
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="k">-</span><span class="w"> </span>Examples demonstrate realistic parameters for implemented order types only
+</code></pre></div></p>
+<hr />
+<h3 id="change-3-update-story-status">Change 3: Update Story Status<a class="headerlink" href="#change-3-update-story-status" title="Permanent link">&para;</a></h3>
+<p><strong>File</strong>: <code>docs/stories/10.2.document-order-portfolio-execution-systems.md</code></p>
+<p><strong>Section</strong>: Status (line 4)</p>
+<p><strong>Change</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gu">## Status</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="gd">~~Complete~~</span> → <span class="gs">**In Progress - Corrections Required**</span>
+</code></pre></div></p>
+<p><strong>Add New Section</strong> (after line 257, before "Technical Notes"):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gu">## Corrections Applied</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="gu">### 2025-10-14: Removal of Fabricated Order Types</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="gs">**Issue**</span>: Story was marked complete with documentation for three non-existent order types:
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="k">-</span><span class="w"> </span>TWAPOrder (Time-Weighted Average Price)
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">-</span><span class="w"> </span>VWAPOrder (Volume-Weighted Average Price)
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="k">-</span><span class="w"> </span>IcebergOrder (Hidden liquidity orders)
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="gs">**Root Cause**</span>: Documentation was created without verifying implementation existence in source code (<span class="sb">`rustybt/finance/execution.py`</span>). These features are explicitly OUT OF SCOPE per PRD (docs/prd.md:74).
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="gs">**Violation**</span>: Zero-Mock Enforcement Commandment <span class="ni">#5:</span> &quot;NEVER claim completion for incomplete work&quot;
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="gs">**Correction Actions**</span>:
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="k">1.</span> ✅ Removed fabricated order type sections from docs/api/order-management/order-types.md (lines 330-414)
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="k">2.</span> ✅ Added &quot;Algorithmic Orders (Not Yet Implemented)&quot; disclaimer section
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="k">3.</span> ✅ Updated CODE_EXAMPLES_VALIDATION.md to remove false validation claims
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="k">4.</span> ✅ Invalidated QA gate approval (re-validation required)
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="k">5.</span> ✅ Updated story status to reflect incomplete/corrections-in-progress state
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="gs">**Impact**</span>:
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="k">-</span><span class="w"> </span>Documentation now accurately reflects framework capabilities
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="k">-</span><span class="w"> </span>Users will not attempt to import non-existent classes
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="k">-</span><span class="w"> </span>Zero-mock enforcement integrity restored
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="gs">**Re-Completion Criteria**</span>:
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="k">-</span><span class="w"> </span>All corrections applied and reviewed
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="k">-</span><span class="w"> </span>QA re-validation with actual source code verification
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="k">-</span><span class="w"> </span>No fabricated APIs remain in Epic 10 documentation
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="gs">**Lessons Learned**</span>:
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="k">-</span><span class="w"> </span>ALL code examples MUST be verified against actual source code
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="k">-</span><span class="w"> </span>&quot;Manual review&quot; is insufficient - automated import validation required
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a><span class="k">-</span><span class="w"> </span>QA gates must include automated API existence verification
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a><span class="k">-</span><span class="w"> </span>Future documentation must follow strict verification protocol
+</code></pre></div></p>
+<hr />
+<h3 id="change-4-invalidate-qa-gate">Change 4: Invalidate QA Gate<a class="headerlink" href="#change-4-invalidate-qa-gate" title="Permanent link">&para;</a></h3>
+<p><strong>File</strong>: <code>docs/qa/gates/10.2-document-order-portfolio-execution-systems.yml</code></p>
+<p><strong>Changes</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Line 8: Update gate status</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nt">gate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PASS → FAIL - Corrections Required</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Line 9: Update status reason</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nt">status_reason</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;~~Comprehensive</span><span class="nv"> </span><span class="s">documentation</span><span class="nv"> </span><span class="s">delivered...~~&quot;</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nt">status_reason</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;INVALIDATED</span><span class="nv"> </span><span class="s">2025-10-14:</span><span class="nv"> </span><span class="s">Documentation</span><span class="nv"> </span><span class="s">contained</span><span class="nv"> </span><span class="s">fabricated</span><span class="nv"> </span><span class="s">API</span><span class="nv"> </span><span class="s">references</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">THREE</span><span class="nv"> </span><span class="s">order</span><span class="nv"> </span><span class="s">types</span><span class="nv"> </span><span class="s">(TWAPOrder,</span><span class="nv"> </span><span class="s">VWAPOrder,</span><span class="nv"> </span><span class="s">IcebergOrder)</span><span class="nv"> </span><span class="s">that</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">not</span><span class="nv"> </span><span class="s">exist</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">source</span><span class="nv"> </span><span class="s">code</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">are</span><span class="nv"> </span><span class="s">out</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">scope</span><span class="nv"> </span><span class="s">per</span><span class="nv"> </span><span class="s">PRD.</span><span class="nv"> </span><span class="s">Violates</span><span class="nv"> </span><span class="s">zero-mock</span><span class="nv"> </span><span class="s">enforcement.</span><span class="nv"> </span><span class="s">Corrections</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">progress.&quot;</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1"># Line 17-24: Add critical issues</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="nt">top_issues</span><span class="p">:</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">critical</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">    </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fabricated_api</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TWAPOrder,</span><span class="nv"> </span><span class="s">VWAPOrder,</span><span class="nv"> </span><span class="s">IcebergOrder</span><span class="nv"> </span><span class="s">documented</span><span class="nv"> </span><span class="s">as</span><span class="nv"> </span><span class="s">implemented</span><span class="nv"> </span><span class="s">but</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">not</span><span class="nv"> </span><span class="s">exist</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">rustybt.finance.execution&quot;</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;docs/api/order-management/order-types.md:330-414&quot;</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">    </span><span class="nt">impact</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Users</span><span class="nv"> </span><span class="s">will</span><span class="nv"> </span><span class="s">encounter</span><span class="nv"> </span><span class="s">ImportError</span><span class="nv"> </span><span class="s">when</span><span class="nv"> </span><span class="s">attempting</span><span class="nv"> </span><span class="s">examples&quot;</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">critical</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">    </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">qa_process_failure</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;QA</span><span class="nv"> </span><span class="s">validation</span><span class="nv"> </span><span class="s">claimed</span><span class="nv"> </span><span class="s">&#39;All</span><span class="nv"> </span><span class="s">code</span><span class="nv"> </span><span class="s">examples</span><span class="nv"> </span><span class="s">tested</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">working&#39;</span><span class="nv"> </span><span class="s">without</span><span class="nv"> </span><span class="s">actual</span><span class="nv"> </span><span class="s">verification&quot;</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">    </span><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;docs/api/order-management/CODE_EXAMPLES_VALIDATION.md&quot;</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">    </span><span class="nt">impact</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;QA</span><span class="nv"> </span><span class="s">process</span><span class="nv"> </span><span class="s">failed</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">detect</span><span class="nv"> </span><span class="s">fabricated</span><span class="nv"> </span><span class="s">APIs&quot;</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">high</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="w">    </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prd_violation</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Documented</span><span class="nv"> </span><span class="s">out-of-scope</span><span class="nv"> </span><span class="s">features</span><span class="nv"> </span><span class="s">(PRD</span><span class="nv"> </span><span class="s">line</span><span class="nv"> </span><span class="s">74:</span><span class="nv"> </span><span class="s">Algorithmic</span><span class="nv"> </span><span class="s">execution</span><span class="nv"> </span><span class="s">OUT</span><span class="nv"> </span><span class="s">OF</span><span class="nv"> </span><span class="s">SCOPE)&quot;</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="w">    </span><span class="nt">impact</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Documentation</span><span class="nv"> </span><span class="s">contradicts</span><span class="nv"> </span><span class="s">PRD,</span><span class="nv"> </span><span class="s">creates</span><span class="nv"> </span><span class="s">false</span><span class="nv"> </span><span class="s">user</span><span class="nv"> </span><span class="s">expectations&quot;</span>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="c1"># Line 21: Update quality score</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="nt">quality_score</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100 → 40</span>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="c1"># Line 55-66: Update findings</span>
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a><span class="nt">findings</span><span class="p">:</span>
+<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="w">  </span><span class="nt">strengths</span><span class="p">:</span>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;Documentation</span><span class="nv"> </span><span class="s">structure</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">format</span><span class="nv"> </span><span class="s">remain</span><span class="nv"> </span><span class="s">high</span><span class="nv"> </span><span class="s">quality&quot;</span>
+<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;Order</span><span class="nv"> </span><span class="s">types</span><span class="nv"> </span><span class="s">that</span><span class="nv"> </span><span class="s">DO</span><span class="nv"> </span><span class="s">exist</span><span class="nv"> </span><span class="s">(Market,</span><span class="nv"> </span><span class="s">Limit,</span><span class="nv"> </span><span class="s">Stop,</span><span class="nv"> </span><span class="s">StopLimit,</span><span class="nv"> </span><span class="s">TrailingStop,</span><span class="nv"> </span><span class="s">OCO,</span><span class="nv"> </span><span class="s">Bracket)</span><span class="nv"> </span><span class="s">are</span><span class="nv"> </span><span class="s">well</span><span class="nv"> </span><span class="s">documented&quot;</span>
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;Most</span><span class="nv"> </span><span class="s">examples</span><span class="nv"> </span><span class="s">(&gt;90%)</span><span class="nv"> </span><span class="s">are</span><span class="nv"> </span><span class="s">accurate</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">usable&quot;</span>
+<a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a>
+<a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="w">  </span><span class="nt">critical_issues</span><span class="p">:</span>
+<a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;THREE</span><span class="nv"> </span><span class="s">fabricated</span><span class="nv"> </span><span class="s">order</span><span class="nv"> </span><span class="s">types</span><span class="nv"> </span><span class="s">(TWAP,</span><span class="nv"> </span><span class="s">VWAP,</span><span class="nv"> </span><span class="s">Iceberg)</span><span class="nv"> </span><span class="s">documented</span><span class="nv"> </span><span class="s">with</span><span class="nv"> </span><span class="s">working</span><span class="nv"> </span><span class="s">examples</span><span class="nv"> </span><span class="s">despite</span><span class="nv"> </span><span class="s">not</span><span class="nv"> </span><span class="s">existing&quot;</span>
+<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;Violates</span><span class="nv"> </span><span class="s">Zero-Mock</span><span class="nv"> </span><span class="s">Enforcement</span><span class="nv"> </span><span class="s">Commandment</span><span class="nv"> </span><span class="s">#5:</span><span class="nv"> </span><span class="s">NEVER</span><span class="nv"> </span><span class="s">claim</span><span class="nv"> </span><span class="s">completion</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">incomplete</span><span class="nv"> </span><span class="s">work&quot;</span>
+<a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;CODE_EXAMPLES_VALIDATION</span><span class="nv"> </span><span class="s">claims</span><span class="nv"> </span><span class="s">false</span><span class="nv"> </span><span class="s">verification&quot;</span>
+<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;Documents</span><span class="nv"> </span><span class="s">out-of-scope</span><span class="nv"> </span><span class="s">features</span><span class="nv"> </span><span class="s">as</span><span class="nv"> </span><span class="s">implemented&quot;</span>
+<a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a>
+<a id="__codelineno-6-41" name="__codelineno-6-41" href="#__codelineno-6-41"></a><span class="c1"># Line 76-83: Update recommendations</span>
+<a id="__codelineno-6-42" name="__codelineno-6-42" href="#__codelineno-6-42"></a><span class="nt">recommendations</span><span class="p">:</span>
+<a id="__codelineno-6-43" name="__codelineno-6-43" href="#__codelineno-6-43"></a><span class="w">  </span><span class="nt">immediate</span><span class="p">:</span>
+<a id="__codelineno-6-44" name="__codelineno-6-44" href="#__codelineno-6-44"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Remove</span><span class="nv"> </span><span class="s">fabricated</span><span class="nv"> </span><span class="s">order</span><span class="nv"> </span><span class="s">type</span><span class="nv"> </span><span class="s">documentation</span><span class="nv"> </span><span class="s">(TWAPOrder,</span><span class="nv"> </span><span class="s">VWAPOrder,</span><span class="nv"> </span><span class="s">IcebergOrder)&quot;</span>
+<a id="__codelineno-6-45" name="__codelineno-6-45" href="#__codelineno-6-45"></a><span class="w">      </span><span class="nt">refs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;docs/api/order-management/order-types.md:330-414&quot;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-6-46" name="__codelineno-6-46" href="#__codelineno-6-46"></a><span class="w">      </span><span class="nt">rationale</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;CRITICAL</span><span class="nv"> </span><span class="s">-</span><span class="nv"> </span><span class="s">Prevents</span><span class="nv"> </span><span class="s">user</span><span class="nv"> </span><span class="s">errors</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">attempting</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">use</span><span class="nv"> </span><span class="s">non-existent</span><span class="nv"> </span><span class="s">APIs&quot;</span>
+<a id="__codelineno-6-47" name="__codelineno-6-47" href="#__codelineno-6-47"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Add</span><span class="nv"> </span><span class="s">disclaimer</span><span class="nv"> </span><span class="s">section</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">out-of-scope</span><span class="nv"> </span><span class="s">algorithmic</span><span class="nv"> </span><span class="s">orders&quot;</span>
+<a id="__codelineno-6-48" name="__codelineno-6-48" href="#__codelineno-6-48"></a><span class="w">      </span><span class="nt">rationale</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Honest</span><span class="nv"> </span><span class="s">communication</span><span class="nv"> </span><span class="s">about</span><span class="nv"> </span><span class="s">current</span><span class="nv"> </span><span class="s">limitations&quot;</span>
+<a id="__codelineno-6-49" name="__codelineno-6-49" href="#__codelineno-6-49"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Implement</span><span class="nv"> </span><span class="s">automated</span><span class="nv"> </span><span class="s">import</span><span class="nv"> </span><span class="s">validation</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">CI/CD&quot;</span>
+<a id="__codelineno-6-50" name="__codelineno-6-50" href="#__codelineno-6-50"></a><span class="w">      </span><span class="nt">rationale</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Prevent</span><span class="nv"> </span><span class="s">future</span><span class="nv"> </span><span class="s">fabricated</span><span class="nv"> </span><span class="s">API</span><span class="nv"> </span><span class="s">documentation&quot;</span>
+</code></pre></div>
+<hr />
+<h3 id="change-5-create-corrections-summary">Change 5: Create Corrections Summary<a class="headerlink" href="#change-5-create-corrections-summary" title="Permanent link">&para;</a></h3>
+<p><strong>New File</strong>: <code>docs/api/order-management/CORRECTIONS_SUMMARY.md</code></p>
+<p><strong>Content</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gh"># Order Management Documentation Corrections Summary</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="gs">**Date**</span>: 2025-10-14
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="gs">**Story**</span>: 10.2 - Document Order, Portfolio &amp; Execution Systems
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="gs">**Author**</span>: John (PM Agent)
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="gu">## Overview</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>Critical corrections applied to remove fabricated API documentation that violated zero-mock enforcement principles.
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="gu">## Corrections Applied</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="gu">### 1. Removed Fabricated Order Types</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="gs">**Issue**</span>: THREE order types documented as implemented despite not existing in source code
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="gs">**Fabricated APIs Removed**</span>:
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="k">1.</span> <span class="gs">**TWAPOrder**</span> (Time-Weighted Average Price)
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="w">   </span><span class="k">-</span><span class="w"> </span>Location: docs/api/order-management/order-types.md:332-358 (27 lines)
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">   </span><span class="k">-</span><span class="w"> </span>Reason: Does not exist in rustybt.finance.execution
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">   </span><span class="k">-</span><span class="w"> </span>PRD Status: OUT OF SCOPE (docs/prd.md:74)
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a>
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="k">2.</span> <span class="gs">**VWAPOrder**</span> (Volume-Weighted Average Price)
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="w">   </span><span class="k">-</span><span class="w"> </span>Location: docs/api/order-management/order-types.md:360-386 (27 lines)
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="w">   </span><span class="k">-</span><span class="w"> </span>Reason: Does not exist in rustybt.finance.execution
+<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="w">   </span><span class="k">-</span><span class="w"> </span>PRD Status: OUT OF SCOPE (docs/prd.md:74)
+<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a>
+<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="k">3.</span> <span class="gs">**IcebergOrder**</span> (Hidden Liquidity)
+<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="w">   </span><span class="k">-</span><span class="w"> </span>Location: docs/api/order-management/order-types.md:388-414 (27 lines)
+<a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="w">   </span><span class="k">-</span><span class="w"> </span>Reason: Does not exist in rustybt.finance.execution
+<a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a><span class="w">   </span><span class="k">-</span><span class="w"> </span>PRD Status: OUT OF SCOPE (docs/prd.md:74)
+<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a>
+<a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a><span class="gs">**Total Lines Removed**</span>: 81 lines of fabricated documentation
+<a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a>
+<a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a><span class="gs">**Replacement**</span>: Added &quot;Algorithmic Orders (Not Yet Implemented)&quot; section explaining why these features are out of scope and providing workarounds.
+<a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a>
+<a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a>---
+<a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a>
+<a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a><span class="gu">### 2. Updated Validation Documentation</span>
+<a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a>
+<a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a><span class="gs">**File**</span>: docs/api/order-management/CODE_EXAMPLES_VALIDATION.md
+<a id="__codelineno-7-43" name="__codelineno-7-43" href="#__codelineno-7-43"></a>
+<a id="__codelineno-7-44" name="__codelineno-7-44" href="#__codelineno-7-44"></a><span class="gs">**Changes**</span>:
+<a id="__codelineno-7-45" name="__codelineno-7-45" href="#__codelineno-7-45"></a><span class="k">-</span><span class="w"> </span>Removed false claims about TWAP/VWAP/Iceberg validation
+<a id="__codelineno-7-46" name="__codelineno-7-46" href="#__codelineno-7-46"></a><span class="k">-</span><span class="w"> </span>Added correction notes documenting removed fabricated examples
+<a id="__codelineno-7-47" name="__codelineno-7-47" href="#__codelineno-7-47"></a><span class="k">-</span><span class="w"> </span>Updated example count: 15+ → 12+ (reflecting actual implemented order types)
+<a id="__codelineno-7-48" name="__codelineno-7-48" href="#__codelineno-7-48"></a>
+<a id="__codelineno-7-49" name="__codelineno-7-49" href="#__codelineno-7-49"></a>---
+<a id="__codelineno-7-50" name="__codelineno-7-50" href="#__codelineno-7-50"></a>
+<a id="__codelineno-7-51" name="__codelineno-7-51" href="#__codelineno-7-51"></a><span class="gu">### 3. Corrected Import Statements</span>
+<a id="__codelineno-7-52" name="__codelineno-7-52" href="#__codelineno-7-52"></a>
+<a id="__codelineno-7-53" name="__codelineno-7-53" href="#__codelineno-7-53"></a><span class="gs">**Files Affected**</span>:
+<a id="__codelineno-7-54" name="__codelineno-7-54" href="#__codelineno-7-54"></a><span class="k">-</span><span class="w"> </span>docs/api/order-management/order-types.md (3 import statement removals)
+<a id="__codelineno-7-55" name="__codelineno-7-55" href="#__codelineno-7-55"></a>
+<a id="__codelineno-7-56" name="__codelineno-7-56" href="#__codelineno-7-56"></a><span class="gs">**Removed Imports**</span>:
+<a id="__codelineno-7-57" name="__codelineno-7-57" href="#__codelineno-7-57"></a>```python
+<a id="__codelineno-7-58" name="__codelineno-7-58" href="#__codelineno-7-58"></a>from rustybt.finance.execution import TWAPOrder      # ❌ Does not exist
+<a id="__codelineno-7-59" name="__codelineno-7-59" href="#__codelineno-7-59"></a>from rustybt.finance.execution import VWAPOrder      # ❌ Does not exist
+<a id="__codelineno-7-60" name="__codelineno-7-60" href="#__codelineno-7-60"></a>from rustybt.finance.execution import IcebergOrder   # ❌ Does not exist
+</code></pre></div></p>
+<hr />
+<h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
+<h3 id="source-code-verification">Source Code Verification<a class="headerlink" href="#source-code-verification" title="Permanent link">&para;</a></h3>
+<p><strong>Verified Implemented Order Types</strong> (rustybt/finance/execution.py):
+- ✅ MarketOrder (line 64)
+- ✅ LimitOrder (line 81)
+- ✅ StopOrder (line 111)
+- ✅ StopLimitOrder (line 142)
+- ✅ TrailingStopOrder (line 219)
+- ✅ OCOOrder (line 318)
+- ✅ BracketOrder (line 359)</p>
+<p><strong>Verified NON-Existent</strong> (searched entire rustybt codebase):
+- ❌ TWAPOrder - NOT FOUND
+- ❌ VWAPOrder - NOT FOUND
+- ❌ IcebergOrder - NOT FOUND</p>
+<h3 id="prd-verification">PRD Verification<a class="headerlink" href="#prd-verification" title="Permanent link">&para;</a></h3>
+<p><strong>PRD Out-of-Scope Section</strong> (docs/prd.md:74):</p>
+<blockquote>
+<p>"Algorithmic execution optimization (smart order routing, TWAP/VWAP, etc.)"</p>
+</blockquote>
+<p><strong>Conclusion</strong>: Documentation correctly aligned with PRD after corrections.</p>
+<hr />
+<h2 id="impact">Impact<a class="headerlink" href="#impact" title="Permanent link">&para;</a></h2>
+<h3 id="before-corrections">Before Corrections<a class="headerlink" href="#before-corrections" title="Permanent link">&para;</a></h3>
+<ul>
+<li>❌ Documentation contained 81 lines of fabricated API references</li>
+<li>❌ Users would encounter ImportError attempting documented examples</li>
+<li>❌ Violated zero-mock enforcement principles</li>
+<li>❌ Story falsely marked "Complete"</li>
+<li>❌ QA gate falsely marked "PASS"</li>
+</ul>
+<h3 id="after-corrections">After Corrections<a class="headerlink" href="#after-corrections" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✅ Documentation 100% aligned with actual implementation</li>
+<li>✅ All documented APIs verified to exist in source code</li>
+<li>✅ Zero-mock enforcement integrity restored</li>
+<li>✅ Honest communication about out-of-scope features</li>
+<li>✅ User workarounds provided for missing functionality</li>
+</ul>
+<hr />
+<h2 id="process-improvements-implemented">Process Improvements Implemented<a class="headerlink" href="#process-improvements-implemented" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Automated Verification Required</strong>:</li>
+<li>All future API documentation must pass automated import validation</li>
+<li>
+<p>CI/CD pipeline should verify all documented imports exist</p>
+</li>
+<li>
+<p><strong>QA Gate Enhancement</strong>:</p>
+</li>
+<li>QA reviews must include source code verification</li>
+<li>
+<p>"Manual review" is insufficient for API documentation</p>
+</li>
+<li>
+<p><strong>Documentation Template Updates</strong>:</p>
+</li>
+<li>Added verification checklist to story templates</li>
+<li>
+<p>Require explicit source code line references for all documented APIs</p>
+</li>
+<li>
+<p><strong>Lessons Learned</strong>:</p>
+</li>
+<li>Never document APIs without verifying source code</li>
+<li>"It should exist" ≠ "It does exist"</li>
+<li>Zero-mock principles apply to documentation just as strictly as code</li>
+</ol>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ol>
+<li>✅ Corrections applied to order-types.md</li>
+<li>✅ Validation documentation updated</li>
+<li>✅ Story status corrected</li>
+<li>⏳ QA re-validation required</li>
+<li>⏳ Audit Stories 10.1 and 10.3 for similar issues</li>
+<li>⏳ Implement automated import validation in CI/CD</li>
+</ol>
+<hr />
+<h2 id="sign-off">Sign-Off<a class="headerlink" href="#sign-off" title="Permanent link">&para;</a></h2>
+<p><strong>Corrections Completed By</strong>: John (PM Agent)
+<strong>Date</strong>: 2025-10-14
+<strong>Verification Method</strong>: Manual source code audit + grep verification
+<strong>Re-Validation Required</strong>: YES - QA Agent must re-approve after corrections
+```</p>
+<hr />
+<h2 id="section-7-final-review-user-approval">Section 7: Final Review &amp; User Approval<a class="headerlink" href="#section-7-final-review-user-approval" title="Permanent link">&para;</a></h2>
+<h3 id="checklist-completion-status">Checklist Completion Status<a class="headerlink" href="#checklist-completion-status" title="Permanent link">&para;</a></h3>
+<p><strong>Change Navigation Checklist</strong>:
+- [x] Section 1: Understand the Trigger &amp; Context - COMPLETE
+- [x] Section 2: Epic Impact Assessment - COMPLETE
+- [x] Section 3: Artifact Conflict &amp; Impact Analysis - COMPLETE
+- [x] Section 4: Path Forward Evaluation - COMPLETE
+- [x] Section 5: Sprint Change Proposal Components - COMPLETE
+- [x] Section 6: Detailed Proposed Changes - COMPLETE</p>
+<h3 id="sprint-change-proposal-summary">Sprint Change Proposal Summary<a class="headerlink" href="#sprint-change-proposal-summary" title="Permanent link">&para;</a></h3>
+<p><strong>Issue</strong>: Epic 10 Story 10.2 contains fabricated documentation for 3 non-existent order types violating zero-mock enforcement</p>
+<p><strong>Epics Affected</strong>: Epic 10 (Story 10.2 status correction required)</p>
+<p><strong>Artifacts Requiring Updates</strong>:
+1. docs/api/order-management/order-types.md - Remove fabricated sections
+2. docs/api/order-management/CODE_EXAMPLES_VALIDATION.md - Correct validation claims
+3. docs/stories/10.2.document-order-portfolio-execution-systems.md - Update status
+4. docs/qa/gates/10.2-document-order-portfolio-execution-systems.yml - Invalidate gate
+5. docs/api/order-management/CORRECTIONS_SUMMARY.md - NEW, document corrections</p>
+<p><strong>Recommended Path</strong>: Direct Correction (Option 1) - 2-4 hours effort</p>
+<p><strong>MVP Impact</strong>: None (Epic 10 not in MVP scope)</p>
+<p><strong>Next Actions</strong>:
+1. Obtain user approval for correction path
+2. Execute corrections (Phases 1-2)
+3. Audit remaining Epic 10 docs (Phase 3)
+4. Implement verification improvements (Phase 4)</p>
+<hr />
+<h2 id="user-approval-request">User Approval Request<a class="headerlink" href="#user-approval-request" title="Permanent link">&para;</a></h2>
+<p><strong>Decision Required</strong>: Approve recommended correction path (Option 1)?</p>
+<p><strong>Options</strong>:
+1. <strong>APPROVE</strong> - Proceed with Direct Correction (recommended, 2-4 hours)
+2. <strong>MODIFY</strong> - Request changes to correction approach
+3. <strong>DEFER</strong> - Postpone corrections (NOT RECOMMENDED - violates zero-mock)
+4. <strong>DISCUSS</strong> - Request additional analysis or clarification</p>
+<p><strong>Question for User</strong>: Do you approve proceeding with the Direct Correction path as outlined above?</p>
+<hr />
+<p><strong>Prepared By</strong>: John (Product Manager Agent)
+<strong>Date</strong>: 2025-10-14
+<strong>Mode</strong>: YOLO (Batch Analysis)
+<strong>Status</strong>: DRAFT - Awaiting User Approval</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/jerryinyang/rustybt" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/project/rustybt/" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 444.7a20.4 20.4 0 1 1 0-40.7 20.4 20.4 0 1 1 0 40.7M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.6-183.4a20.4 20.4 0 1 1 0 40.8 20.4 20.4 0 1 1 0-40.8"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -4676,18 +4676,18 @@
 <p><strong>Problem</strong>: Optimized parameters might work on historical data but fail with slight variations.</p>
 <p><strong>Solution</strong>: Test if strategy maintains performance when data/parameters are slightly perturbed.</p>
 <h2 id="basic-usage">Basic Usage<a class="headerlink" href="#basic-usage" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">rustybt.optimization</span> <span class="kn">import</span> <span class="n">MonteCarloTester</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">rustybt.optimization</span> <span class="kn">import</span> <span class="n">MonteCarloSimulator</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">decimal</span> <span class="kn">import</span> <span class="n">Decimal</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Create tester with best parameters</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">mc_tester</span> <span class="o">=</span> <span class="n">MonteCarloTester</span><span class="p">(</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">mc_simulator</span> <span class="o">=</span> <span class="n">MonteCarloSimulator</span><span class="p">(</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">objective_function</span><span class="o">=</span><span class="n">run_backtest</span><span class="p">,</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">base_params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;lookback&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s1">&#39;threshold&#39;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">},</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">n_simulations</span><span class="o">=</span><span class="mi">1000</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Run simulations</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">result</span> <span class="o">=</span> <span class="n">mc_tester</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="mf">0.10</span><span class="p">)</span>  <span class="c1"># 10% noise</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">result</span> <span class="o">=</span> <span class="n">mc_simulator</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="mf">0.10</span><span class="p">)</span>  <span class="c1"># 10% noise</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1"># Analyze results</span>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean Sharpe: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">mean_score</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -4702,7 +4702,7 @@
 <a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✗ Parameters are unstable&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="constructor">Constructor<a class="headerlink" href="#constructor" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">MonteCarloTester</span><span class="p">(</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">MonteCarloSimulator</span><span class="p">(</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">objective_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">base_params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">n_simulations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
@@ -4719,7 +4719,7 @@
 <p>Add random noise to price data:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span> <span class="nf">test_with_price_noise</span><span class="p">():</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test robustness to price data noise.&quot;&quot;&quot;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloTester</span><span class="p">(</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloSimulator</span><span class="p">(</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>        <span class="n">objective_function</span><span class="o">=</span><span class="n">run_backtest</span><span class="p">,</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="n">base_params</span><span class="o">=</span><span class="n">best_params</span><span class="p">,</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="n">n_simulations</span><span class="o">=</span><span class="mi">1000</span>
@@ -4741,7 +4741,7 @@
 <p>Randomly shuffle returns while preserving distribution:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span> <span class="nf">test_with_return_permutation</span><span class="p">():</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test if edge comes from entry/exit timing.&quot;&quot;&quot;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloTester</span><span class="p">(</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloSimulator</span><span class="p">(</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="n">objective_function</span><span class="o">=</span><span class="n">run_backtest</span><span class="p">,</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="n">base_params</span><span class="o">=</span><span class="n">best_params</span><span class="p">,</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">n_simulations</span><span class="o">=</span><span class="mi">1000</span>
@@ -4762,7 +4762,7 @@
 <p>Test nearby parameter values:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">def</span> <span class="nf">test_parameter_sensitivity</span><span class="p">():</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test if small parameter changes affect performance.&quot;&quot;&quot;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloTester</span><span class="p">(</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloSimulator</span><span class="p">(</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        <span class="n">objective_function</span><span class="o">=</span><span class="n">run_backtest</span><span class="p">,</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        <span class="n">base_params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;lookback&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s1">&#39;threshold&#39;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">},</span>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="n">n_simulations</span><span class="o">=</span><span class="mi">100</span>
@@ -4787,7 +4787,7 @@
 <p>Preserve temporal structure while resampling:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">def</span> <span class="nf">test_with_block_bootstrap</span><span class="p">():</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Test using block bootstrap resampling.&quot;&quot;&quot;</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloTester</span><span class="p">(</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloSimulator</span><span class="p">(</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        <span class="n">objective_function</span><span class="o">=</span><span class="n">run_backtest</span><span class="p">,</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        <span class="n">base_params</span><span class="o">=</span><span class="n">best_params</span><span class="p">,</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="n">n_simulations</span><span class="o">=</span><span class="mi">1000</span>
@@ -4804,7 +4804,7 @@
 <p><strong>Use case</strong>: Maintain return autocorrelation structure while testing robustness.</p>
 <h2 id="complete-example">Complete Example<a class="headerlink" href="#complete-example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span> <span class="nn">decimal</span> <span class="kn">import</span> <span class="n">Decimal</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span> <span class="nn">rustybt.optimization</span> <span class="kn">import</span> <span class="n">MonteCarloTester</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span> <span class="nn">rustybt.optimization</span> <span class="kn">import</span> <span class="n">MonteCarloSimulator</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># Optimized parameters</span>
@@ -4823,7 +4823,7 @@
 <a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>
 <a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="c1"># Test 1: Price noise</span>
 <a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">1. Price Noise Test&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="n">mc_noise</span> <span class="o">=</span> <span class="n">MonteCarloTester</span><span class="p">(</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="n">mc_noise</span> <span class="o">=</span> <span class="n">MonteCarloSimulator</span><span class="p">(</span>
 <a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>    <span class="n">objective_function</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">calculate_sharpe</span><span class="p">(</span><span class="n">run_backtest</span><span class="p">(</span><span class="n">p</span><span class="p">)),</span>
 <a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>    <span class="n">base_params</span><span class="o">=</span><span class="n">best_params</span><span class="p">,</span>
 <a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>    <span class="n">n_simulations</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
@@ -4839,7 +4839,7 @@
 <a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a>
 <a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="c1"># Test 2: Parameter perturbation</span>
 <a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">2. Parameter Sensitivity Test&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a><span class="n">mc_params</span> <span class="o">=</span> <span class="n">MonteCarloTester</span><span class="p">(</span>
+<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a><span class="n">mc_params</span> <span class="o">=</span> <span class="n">MonteCarloSimulator</span><span class="p">(</span>
 <a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a>    <span class="n">objective_function</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">calculate_sharpe</span><span class="p">(</span><span class="n">run_backtest</span><span class="p">(</span><span class="n">p</span><span class="p">)),</span>
 <a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a>    <span class="n">base_params</span><span class="o">=</span><span class="n">best_params</span><span class="p">,</span>
 <a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a>    <span class="n">n_simulations</span><span class="o">=</span><span class="mi">100</span>
@@ -4852,7 +4852,7 @@
 <a id="__codelineno-6-47" name="__codelineno-6-47" href="#__codelineno-6-47"></a>
 <a id="__codelineno-6-48" name="__codelineno-6-48" href="#__codelineno-6-48"></a><span class="c1"># Test 3: Return permutation</span>
 <a id="__codelineno-6-49" name="__codelineno-6-49" href="#__codelineno-6-49"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">3. Return Permutation Test&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-50" name="__codelineno-6-50" href="#__codelineno-6-50"></a><span class="n">mc_perm</span> <span class="o">=</span> <span class="n">MonteCarloTester</span><span class="p">(</span>
+<a id="__codelineno-6-50" name="__codelineno-6-50" href="#__codelineno-6-50"></a><span class="n">mc_perm</span> <span class="o">=</span> <span class="n">MonteCarloSimulator</span><span class="p">(</span>
 <a id="__codelineno-6-51" name="__codelineno-6-51" href="#__codelineno-6-51"></a>    <span class="n">objective_function</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">calculate_sharpe</span><span class="p">(</span><span class="n">run_backtest</span><span class="p">(</span><span class="n">p</span><span class="p">)),</span>
 <a id="__codelineno-6-52" name="__codelineno-6-52" href="#__codelineno-6-52"></a>    <span class="n">base_params</span><span class="o">=</span><span class="n">best_params</span><span class="p">,</span>
 <a id="__codelineno-6-53" name="__codelineno-6-53" href="#__codelineno-6-53"></a>    <span class="n">n_simulations</span><span class="o">=</span><span class="mi">500</span>
@@ -4958,7 +4958,7 @@
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">noise_levels</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.20</span><span class="p">]</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="k">for</span> <span class="n">noise_std</span> <span class="ow">in</span> <span class="n">noise_levels</span><span class="p">:</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">mc_tester</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">mc_simulator</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">)</span>
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Noise </span><span class="si">{</span><span class="n">noise_std</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">%: &quot;</span>
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>          <span class="sa">f</span><span class="s2">&quot;Mean=</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">mean_score</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, &quot;</span>
 <a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>          <span class="sa">f</span><span class="s2">&quot;CV=</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">cv</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -4970,14 +4970,14 @@
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">n_simulations_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">]</span>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
 <a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="k">for</span> <span class="n">n_sims</span> <span class="ow">in</span> <span class="n">n_simulations_range</span><span class="p">:</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloTester</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">n_simulations</span><span class="o">=</span><span class="n">n_sims</span><span class="p">)</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloSimulator</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">n_simulations</span><span class="o">=</span><span class="n">n_sims</span><span class="p">)</span>
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">mc</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;N=</span><span class="si">{</span><span class="n">n_sims</span><span class="si">}</span><span class="s2">: CI width = </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">ci_upper</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">result</span><span class="o">.</span><span class="n">ci_lower</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="4-compare-to-benchmark">4. Compare to Benchmark<a class="headerlink" href="#4-compare-to-benchmark" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Test strategy AND benchmark</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">strategy_result</span> <span class="o">=</span> <span class="n">mc_tester</span><span class="o">.</span><span class="n">run_strategy</span><span class="p">(</span><span class="n">best_params</span><span class="p">)</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">benchmark_result</span> <span class="o">=</span> <span class="n">mc_tester</span><span class="o">.</span><span class="n">run_benchmark</span><span class="p">()</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">strategy_result</span> <span class="o">=</span> <span class="n">mc_simulator</span><span class="o">.</span><span class="n">run_strategy</span><span class="p">(</span><span class="n">best_params</span><span class="p">)</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">benchmark_result</span> <span class="o">=</span> <span class="n">mc_simulator</span><span class="o">.</span><span class="n">run_benchmark</span><span class="p">()</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="c1"># Strategy should be more robust than benchmark</span>
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="k">if</span> <span class="n">strategy_result</span><span class="o">.</span><span class="n">cv</span> <span class="o">&lt;</span> <span class="n">benchmark_result</span><span class="o">.</span><span class="n">cv</span><span class="p">:</span>
@@ -4986,10 +4986,10 @@
 <h2 id="common-pitfalls">Common Pitfalls<a class="headerlink" href="#common-pitfalls" title="Permanent link">&para;</a></h2>
 <h3 id="too-few-simulations">❌ Too Few Simulations<a class="headerlink" href="#too-few-simulations" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Bad: Only 50 simulations</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloTester</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">n_simulations</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloSimulator</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">n_simulations</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Good: At least 500-1000</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloTester</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">n_simulations</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloSimulator</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">n_simulations</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="ignoring-temporal-structure">❌ Ignoring Temporal Structure<a class="headerlink" href="#ignoring-temporal-structure" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Bad: Simple random shuffle destroys autocorrelation</span>
@@ -5029,7 +5029,7 @@
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="n">best_params</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">best_params</span>
 <a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>
 <a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="c1"># Step 2: Validate with Monte Carlo</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloTester</span><span class="p">(</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloSimulator</span><span class="p">(</span>
 <a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>    <span class="n">objective_function</span><span class="o">=</span><span class="n">run_backtest</span><span class="p">,</span>
 <a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>    <span class="n">base_params</span><span class="o">=</span><span class="n">best_params</span><span class="p">,</span>
 <a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>    <span class="n">n_simulations</span><span class="o">=</span><span class="mi">1000</span>

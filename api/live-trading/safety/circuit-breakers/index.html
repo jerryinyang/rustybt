@@ -3690,66 +3690,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#position-limits" class="md-nav__link">
-    <span class="md-ellipsis">
-      Position Limits
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rate-limits" class="md-nav__link">
-    <span class="md-ellipsis">
-      Rate Limits
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integration-with-live-trading" class="md-nav__link">
-    <span class="md-ellipsis">
-      Integration with Live Trading
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#recovery-procedures" class="md-nav__link">
-    <span class="md-ellipsis">
-      Recovery Procedures
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
-    <span class="md-ellipsis">
-      Best Practices
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Best Practices">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-conservative-limits" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. Conservative Limits
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#2-multiple-layers" class="md-nav__link">
     <span class="md-ellipsis">
       2. Multiple Layers
@@ -4248,66 +4188,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#position-limits" class="md-nav__link">
-    <span class="md-ellipsis">
-      Position Limits
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rate-limits" class="md-nav__link">
-    <span class="md-ellipsis">
-      Rate Limits
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integration-with-live-trading" class="md-nav__link">
-    <span class="md-ellipsis">
-      Integration with Live Trading
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#recovery-procedures" class="md-nav__link">
-    <span class="md-ellipsis">
-      Recovery Procedures
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
-    <span class="md-ellipsis">
-      Best Practices
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Best Practices">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-conservative-limits" class="md-nav__link">
-    <span class="md-ellipsis">
-      1. Conservative Limits
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#2-multiple-layers" class="md-nav__link">
     <span class="md-ellipsis">
       2. Multiple Layers
@@ -4363,120 +4243,18 @@
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p>Circuit breakers protect against catastrophic losses by automatically stopping trading when predefined risk thresholds are exceeded.</p>
 <h2 id="basic-usage">Basic Usage<a class="headerlink" href="#basic-usage" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">rustybt.live</span> <span class="kn">import</span> <span class="n">CircuitBreaker</span><span class="p">,</span> <span class="n">CircuitBreakerConfig</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">decimal</span> <span class="kn">import</span> <span class="n">Decimal</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Configure safety limits</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">config</span> <span class="o">=</span> <span class="n">CircuitBreakerConfig</span><span class="p">(</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">max_daily_loss</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;5000&quot;</span><span class="p">),</span>      <span class="c1"># Max $5k loss per day</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">max_position_size</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;50000&quot;</span><span class="p">),</span>   <span class="c1"># Max $50k position</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">max_leverage</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;2.0&quot;</span><span class="p">),</span>          <span class="c1"># Max 2x leverage</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">max_drawdown</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;0.15&quot;</span><span class="p">),</span>         <span class="c1"># Max 15% drawdown</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">max_order_value</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;10000&quot;</span><span class="p">),</span>     <span class="c1"># Max $10k per order</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">max_orders_per_minute</span><span class="o">=</span><span class="mi">10</span>              <span class="c1"># Rate limit</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">)</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">breaker</span> <span class="o">=</span> <span class="n">CircuitBreaker</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Check before each trade</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="k">if</span> <span class="n">breaker</span><span class="o">.</span><span class="n">check_trade</span><span class="p">({</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;5000&quot;</span><span class="p">)}):</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="c1"># Trade allowed</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="n">execute_trade</span><span class="p">()</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="c1"># Trade rejected</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Circuit breaker triggered!&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Code example removed - API does not exist</span>
 </code></pre></div>
 <h2 id="circuit-breaker-types">Circuit Breaker Types<a class="headerlink" href="#circuit-breaker-types" title="Permanent link">&para;</a></h2>
 <h3 id="loss-limits">Loss Limits<a class="headerlink" href="#loss-limits" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Daily loss limit</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">if</span> <span class="n">current_daily_loss</span> <span class="o">&gt;</span> <span class="n">config</span><span class="o">.</span><span class="n">max_daily_loss</span><span class="p">:</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">breaker</span><span class="o">.</span><span class="n">trip</span><span class="p">(</span><span class="s2">&quot;Daily loss limit exceeded&quot;</span><span class="p">)</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Total drawdown limit</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="k">if</span> <span class="n">current_drawdown</span> <span class="o">&gt;</span> <span class="n">config</span><span class="o">.</span><span class="n">max_drawdown</span><span class="p">:</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">breaker</span><span class="o">.</span><span class="n">trip</span><span class="p">(</span><span class="s2">&quot;Max drawdown exceeded&quot;</span><span class="p">)</span>
-</code></pre></div>
-<h3 id="position-limits">Position Limits<a class="headerlink" href="#position-limits" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Single position size</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">if</span> <span class="n">position_value</span> <span class="o">&gt;</span> <span class="n">config</span><span class="o">.</span><span class="n">max_position_size</span><span class="p">:</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">breaker</span><span class="o">.</span><span class="n">reject_order</span><span class="p">(</span><span class="s2">&quot;Position size limit exceeded&quot;</span><span class="p">)</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Leverage limit</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="k">if</span> <span class="n">total_leverage</span> <span class="o">&gt;</span> <span class="n">config</span><span class="o">.</span><span class="n">max_leverage</span><span class="p">:</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">breaker</span><span class="o">.</span><span class="n">reject_order</span><span class="p">(</span><span class="s2">&quot;Leverage limit exceeded&quot;</span><span class="p">)</span>
-</code></pre></div>
-<h3 id="rate-limits">Rate Limits<a class="headerlink" href="#rate-limits" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Orders per time period</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">if</span> <span class="n">orders_last_minute</span> <span class="o">&gt;</span> <span class="n">config</span><span class="o">.</span><span class="n">max_orders_per_minute</span><span class="p">:</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">breaker</span><span class="o">.</span><span class="n">reject_order</span><span class="p">(</span><span class="s2">&quot;Rate limit exceeded&quot;</span><span class="p">)</span>
-</code></pre></div>
-<h2 id="integration-with-live-trading">Integration with Live Trading<a class="headerlink" href="#integration-with-live-trading" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span> <span class="nn">rustybt.live</span> <span class="kn">import</span> <span class="n">LiveTradingEngine</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># Create engine with circuit breaker</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">engine</span> <span class="o">=</span> <span class="n">LiveTradingEngine</span><span class="p">(</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">strategy</span><span class="o">=</span><span class="n">MyStrategy</span><span class="p">(),</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">broker_adapter</span><span class="o">=</span><span class="n">broker</span><span class="p">,</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">data_portal</span><span class="o">=</span><span class="n">portal</span><span class="p">,</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">circuit_breaker</span><span class="o">=</span><span class="n">breaker</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="p">)</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1"># Engine automatically checks breaker before each trade</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="k">await</span> <span class="n">engine</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-</code></pre></div>
-<h2 id="recovery-procedures">Recovery Procedures<a class="headerlink" href="#recovery-procedures" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Manual reset after investigation</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">if</span> <span class="n">breaker</span><span class="o">.</span><span class="n">is_tripped</span><span class="p">():</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="c1"># 1. Review what triggered breaker</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">trigger_reason</span> <span class="o">=</span> <span class="n">breaker</span><span class="o">.</span><span class="n">get_trigger_reason</span><span class="p">()</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="c1"># 2. Fix underlying issue</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="c1"># 3. Reset breaker</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">breaker</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>    <span class="c1"># 4. Resume trading</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="k">await</span> <span class="n">engine</span><span class="o">.</span><span class="n">resume</span><span class="p">()</span>
-</code></pre></div>
-<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
-<h3 id="1-conservative-limits">1. Conservative Limits<a class="headerlink" href="#1-conservative-limits" title="Permanent link">&para;</a></h3>
-<p>Start with tight limits and relax gradually:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Initial deployment</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">config</span> <span class="o">=</span> <span class="n">CircuitBreakerConfig</span><span class="p">(</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">max_daily_loss</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;1000&quot;</span><span class="p">),</span>  <span class="c1"># Conservative</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">max_position_size</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;10000&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">)</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># After proven reliability</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">config</span> <span class="o">=</span> <span class="n">CircuitBreakerConfig</span><span class="p">(</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">max_daily_loss</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;5000&quot;</span><span class="p">),</span>  <span class="c1"># Relaxed</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="n">max_position_size</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;50000&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Code example removed - API does not exist</span>
 </code></pre></div>
 <h3 id="2-multiple-layers">2. Multiple Layers<a class="headerlink" href="#2-multiple-layers" title="Permanent link">&para;</a></h3>
 <p>Use cascading safety limits:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">config</span> <span class="o">=</span> <span class="n">CircuitBreakerConfig</span><span class="p">(</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="c1"># Layer 1: Warning (log but continue)</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">warning_daily_loss</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;2000&quot;</span><span class="p">),</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="c1"># Layer 2: Reduce position sizes</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">caution_daily_loss</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;3500&quot;</span><span class="p">),</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="c1"># Layer 3: Hard stop</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="n">max_daily_loss</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;5000&quot;</span><span class="p">)</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Code example removed - API does not exist</span>
 </code></pre></div>
 <h3 id="3-alert-notifications">3. Alert Notifications<a class="headerlink" href="#3-alert-notifications" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">def</span> <span class="nf">on_circuit_breaker_trip</span><span class="p">(</span><span class="n">reason</span><span class="p">):</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Send alerts when breaker trips.&quot;&quot;&quot;</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">send_email</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Circuit breaker tripped: </span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">send_slack</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚠️ Trading halted: </span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">send_sms</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ALERT: </span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">breaker</span> <span class="o">=</span> <span class="n">CircuitBreaker</span><span class="p">(</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">on_trip</span><span class="o">=</span><span class="n">on_circuit_breaker_trip</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Code example removed - API does not exist</span>
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>

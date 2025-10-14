@@ -4322,13 +4322,6 @@
 </code></pre></div>
 <h2 id="reader-selection">Reader Selection<a class="headerlink" href="#reader-selection" title="Permanent link">&para;</a></h2>
 <p>The dispatch reader automatically selects the appropriate format:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span> <span class="nn">rustybt.data.dispatch_bar_reader</span> <span class="kn">import</span> <span class="n">DispatchBarReader</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">reader</span> <span class="o">=</span> <span class="n">DispatchBarReader</span><span class="p">(</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">daily_bar_path</span><span class="o">=</span><span class="s1">&#39;/path/to/data&#39;</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="c1"># Automatically detects: .parquet, .h5, or .bcolz</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="p">)</span>
-</code></pre></div>
 <h2 id="data-quality">Data Quality<a class="headerlink" href="#data-quality" title="Permanent link">&para;</a></h2>
 <p>All readers validate:
 - OHLCV relationships (high ≥ open, close, low)

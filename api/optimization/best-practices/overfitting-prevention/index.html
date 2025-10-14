@@ -4826,9 +4826,9 @@
 - &gt;100 trades: Good</p>
 <h3 id="5-monte-carlo-robustness-testing">5. Monte Carlo Robustness Testing<a class="headerlink" href="#5-monte-carlo-robustness-testing" title="Permanent link">&para;</a></h3>
 <p>Test parameter stability with noise:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span> <span class="nn">rustybt.optimization</span> <span class="kn">import</span> <span class="n">MonteCarloTester</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span> <span class="nn">rustybt.optimization</span> <span class="kn">import</span> <span class="n">MonteCarloSimulator</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloTester</span><span class="p">(</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">mc</span> <span class="o">=</span> <span class="n">MonteCarloSimulator</span><span class="p">(</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">objective_function</span><span class="o">=</span><span class="n">run_backtest</span><span class="p">,</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">base_params</span><span class="o">=</span><span class="n">best_params</span><span class="p">,</span>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    <span class="n">n_simulations</span><span class="o">=</span><span class="mi">1000</span>
@@ -4880,17 +4880,18 @@
 <p><strong>Occam's Razor</strong>: Simpler explanations are more likely correct.</p>
 <h3 id="8-include-transaction-costs">8. Include Transaction Costs<a class="headerlink" href="#8-include-transaction-costs" title="Permanent link">&para;</a></h3>
 <p>Always use realistic costs:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span> <span class="nn">rustybt.finance</span> <span class="kn">import</span> <span class="n">PerShareCommission</span><span class="p">,</span> <span class="n">FixedSlippage</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># WRONG: No costs</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">run_backtest</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>  <span class="c1"># Overly optimistic</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="c1"># RIGHT: Realistic costs</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="n">result</span> <span class="o">=</span> <span class="n">run_backtest</span><span class="p">(</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    <span class="n">params</span><span class="p">,</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    <span class="n">commission</span><span class="o">=</span><span class="n">PerShareCommission</span><span class="p">(</span><span class="n">cost</span><span class="o">=</span><span class="mf">0.01</span><span class="p">),</span>  <span class="c1"># $0.01/share</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>    <span class="n">slippage</span><span class="o">=</span><span class="n">FixedSlippage</span><span class="p">(</span><span class="n">spread</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>  <span class="c1"># 10 bps</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span> <span class="nn">rustybt.finance.commission</span> <span class="kn">import</span> <span class="n">PerShareCommission</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kn">from</span> <span class="nn">rustybt.finance.slippage</span> <span class="kn">import</span> <span class="n">FixedSlippage</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># WRONG: No costs</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="n">result</span> <span class="o">=</span> <span class="n">run_backtest</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>  <span class="c1"># Overly optimistic</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="c1"># RIGHT: Realistic costs</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="n">result</span> <span class="o">=</span> <span class="n">run_backtest</span><span class="p">(</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    <span class="n">params</span><span class="p">,</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>    <span class="n">commission</span><span class="o">=</span><span class="n">PerShareCommission</span><span class="p">(</span><span class="n">cost</span><span class="o">=</span><span class="mf">0.01</span><span class="p">),</span>  <span class="c1"># $0.01/share</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>    <span class="n">slippage</span><span class="o">=</span><span class="n">FixedSlippage</span><span class="p">(</span><span class="n">spread</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>  <span class="c1"># 10 bps</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="p">)</span>
 </code></pre></div>
 <h3 id="9-out-of-sample-reserve">9. Out-of-Sample Reserve<a class="headerlink" href="#9-out-of-sample-reserve" title="Permanent link">&para;</a></h3>
 <p>Hold out recent data for final validation:</p>

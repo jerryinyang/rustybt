@@ -4234,7 +4234,7 @@
 <h3 id="usequitypricingloader">USEquityPricingLoader<a class="headerlink" href="#usequitypricingloader" title="Permanent link">&para;</a></h3>
 <p>Specialized for US equities with adjustments.</p>
 <h2 id="custom-loaders">Custom Loaders<a class="headerlink" href="#custom-loaders" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">rustybt.pipeline.loaders</span> <span class="kn">import</span> <span class="n">PipelineLoader</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">rustybt.pipeline.loaders</span> <span class="kn">import</span> <span class="n">USEquityPricingLoader</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">class</span> <span class="nc">FundamentalsLoader</span><span class="p">(</span><span class="n">PipelineLoader</span><span class="p">):</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load fundamental data.&quot;&quot;&quot;</span>
@@ -4254,7 +4254,7 @@
 <a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="n">pipe</span><span class="o">.</span><span class="n">add_loader</span><span class="p">(</span><span class="n">FundamentalsLoader</span><span class="p">())</span>
 </code></pre></div>
 <h2 id="data-sources">Data Sources<a class="headerlink" href="#data-sources" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">rustybt.pipeline</span> <span class="kn">import</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">Column</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">rustybt.pipeline.data</span> <span class="kn">import</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">Column</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">class</span> <span class="nc">Fundamentals</span><span class="p">(</span><span class="n">DataSet</span><span class="p">):</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Fundamental data columns.&quot;&quot;&quot;</span>

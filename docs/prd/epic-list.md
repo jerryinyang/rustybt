@@ -34,3 +34,10 @@ Implement Jupyter notebook integration, programmatic reporting, advanced analyti
 Build FastAPI REST API and WebSocket interface for remote strategy execution and real-time monitoring. Optional - evaluate necessity after Epic 6 live trading validates scheduled/triggered operations sufficiency. Testing and documentation integrated throughout.
 
 ---
+
+## Documentation & Knowledge Management
+
+**Epic 10: Comprehensive Framework Documentation**
+Create exhaustive documentation covering 90%+ of the framework's functionality, organized by major subsystems matching the code structure, including all classes, methods, functions, workflows, and usage examples. Addresses current sparse API documentation that only covers Advanced Order Types, Caching API, and Bundle Metadata API.
+
+---

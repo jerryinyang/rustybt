@@ -72,6 +72,7 @@ docs/_build/
 docs/.build/
 .sphinx/
 site/  # MkDocs build output
+site/*
 
 # Project specific
 tmp/

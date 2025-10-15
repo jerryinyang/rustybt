@@ -32,6 +32,9 @@ exclude_docs: |
   EPIC_10_*.md
   DOCUMENTATION-SETUP.md
   security-audit.md
+  **/architecture.md
+  **/prd.md
+
 
 theme:
   name: material

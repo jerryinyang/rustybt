@@ -2,6 +2,16 @@
 
 This guide will help you write and run your first trading strategy with RustyBT.
 
+## Installation
+
+If you haven't installed RustyBT yet:
+
+```bash
+pip install rustybt
+```
+
+For more installation options, see the [Installation Guide](installation.md).
+
 ## Your First Strategy
 
 Create a file called `my_strategy.py`:

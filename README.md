@@ -2,6 +2,7 @@
 
 **Modern Python backtesting engine built on Zipline-Reloaded, enhanced with Decimal precision, Polars data engine, and live trading capabilities**
 
+[![PyPI version](https://img.shields.io/pypi/v/rustybt.svg)](https://pypi.org/project/rustybt/)
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![CI](https://github.com/jerryinyang/rustybt/workflows/CI/badge.svg)](https://github.com/jerryinyang/rustybt/actions/workflows/ci.yml)
@@ -33,43 +34,46 @@ RustyBT is a next-generation Python-based algorithmic trading framework that ext
 ### Prerequisites
 
 - Python 3.12 or higher
-- [uv](https://github.com/astral-sh/uv) (recommended) or pip
+- pip (included with Python)
 
-### Using uv (Recommended)
+### From PyPI (Recommended)
+
+Install the latest stable release from PyPI:
 
 ```bash
-# Production installation (minimal dependencies)
-uv sync
+# Install RustyBT
+pip install rustybt
 
-# Development installation (includes dev tools, notebooks, and tests)
-uv sync --extra dev --extra test
-
-# Or install all optional extras
-uv sync --all-extras
+# Or install with optional features
+pip install rustybt[optimization]  # Strategy optimization tools
+pip install rustybt[dev]           # Development tools
+pip install rustybt[test]          # Testing tools
 ```
 
 **Available extras:**
+- `optimization` - Strategy optimization (scikit-learn, genetic algorithms)
 - `dev` - Development tools (jupyter, jupyterlab, ruff, mypy, black, type stubs)
 - `test` - Testing tools (pytest, hypothesis, coverage)
 - `benchmarks` - Performance profiling tools
-- `optimization` - Strategy optimization (scikit-learn, genetic algorithms)
 - `docs` - Documentation generation (MkDocs with Material theme)
 
-### Using pip
+### From Source (Development)
+
+For contributors or those who want the latest development version:
 
 ```bash
-# Create virtual environment
+# Clone the repository
+git clone https://github.com/jerryinyang/rustybt.git
+cd rustybt
+
+# Using uv (recommended for development)
+uv sync --extra dev --extra test
+
+# Or using pip
 python3.12 -m venv .venv
-
-# Activate virtual environment
 source .venv/bin/activate  # On Unix/macOS
-# or
-.venv\Scripts\activate  # On Windows
-
-# Install RustyBT
-pip install -e ".[dev,test]"  # Development installation
-# or
-pip install -e .  # Production installation
+# or .venv\Scripts\activate on Windows
+pip install -e ".[dev,test]"
 ```
 
 ## Quick Start

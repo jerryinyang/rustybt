@@ -3,24 +3,83 @@
 ## Prerequisites
 
 - Python 3.12 or higher
-- [uv](https://github.com/astral-sh/uv) (recommended) or pip
-- Git (for development installation)
+- pip (included with Python)
+- Git (only for development installation from source)
 
-## Using uv (Recommended)
+## From PyPI (Recommended)
 
-### Production Installation
+The easiest way to install RustyBT is from PyPI:
 
-For minimal dependencies suitable for production use:
+### Basic Installation
 
 ```bash
-uv sync
+pip install rustybt
 ```
 
-### Development Installation
+This installs the core package with minimal dependencies suitable for production use.
 
-For development with dev tools, notebooks, and tests:
+### Installation with Optional Features
 
 ```bash
+# Strategy optimization tools (scikit-learn, genetic algorithms)
+pip install rustybt[optimization]
+
+# Development tools (jupyter, jupyterlab, ruff, mypy, black)
+pip install rustybt[dev]
+
+# Testing tools (pytest, hypothesis, coverage)
+pip install rustybt[test]
+
+# Multiple extras
+pip install rustybt[optimization,dev,test]
+```
+
+### Available Extras
+
+- `optimization` - Strategy optimization (scikit-learn, genetic algorithms, walk-forward)
+- `dev` - Development tools (jupyter, jupyterlab, ruff, mypy, black, type stubs)
+- `test` - Testing tools (pytest, hypothesis, coverage)
+- `benchmarks` - Performance profiling tools (cProfile, memory-profiler)
+- `docs` - Documentation generation (MkDocs with Material theme)
+
+### Using a Virtual Environment (Recommended)
+
+It's recommended to install RustyBT in a virtual environment:
+
+```bash
+# Create virtual environment
+python3.12 -m venv rustybt-env
+
+# Activate virtual environment
+# On Unix/macOS:
+source rustybt-env/bin/activate
+
+# On Windows:
+rustybt-env\Scripts\activate
+
+# Install RustyBT
+pip install rustybt[optimization]
+```
+
+## From Source (Development)
+
+For contributors or those who want the latest development version:
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/jerryinyang/rustybt.git
+cd rustybt
+```
+
+### Using uv (Recommended for Development)
+
+[uv](https://github.com/astral-sh/uv) is a fast Python package installer:
+
+```bash
+# Install uv if you don't have it
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
 # Install with specific extras
 uv sync --extra dev --extra test
 
@@ -28,38 +87,18 @@ uv sync --extra dev --extra test
 uv sync --all-extras
 ```
 
-### Available Extras
-
-- `dev` - Development tools (jupyter, jupyterlab, ruff, mypy, black, type stubs)
-- `test` - Testing tools (pytest, hypothesis, coverage)
-- `benchmarks` - Performance profiling tools
-- `optimization` - Strategy optimization (scikit-learn, genetic algorithms)
-- `docs` - Documentation generation (MkDocs, Material theme)
-
-## Using pip
-
-### Create Virtual Environment
+### Using pip
 
 ```bash
 # Create virtual environment
 python3.12 -m venv .venv
 
 # Activate virtual environment
-# On Unix/macOS:
-source .venv/bin/activate
+source .venv/bin/activate  # On Unix/macOS
+# or .venv\Scripts\activate on Windows
 
-# On Windows:
-.venv\Scripts\activate
-```
-
-### Install RustyBT
-
-```bash
-# Development installation
+# Install in editable mode with dev tools
 pip install -e ".[dev,test]"
-
-# Or production installation (minimal dependencies)
-pip install -e .
 ```
 
 ## Verification

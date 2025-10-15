@@ -2,6 +2,7 @@
 
 **Modern Python backtesting engine built on Zipline-Reloaded, enhanced with Decimal precision, Polars data engine, and live trading capabilities**
 
+[![PyPI version](https://img.shields.io/pypi/v/rustybt.svg)](https://pypi.org/project/rustybt/)
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![CI](https://github.com/jerryinyang/rustybt/workflows/CI/badge.svg)](https://github.com/jerryinyang/rustybt/actions/workflows/ci.yml)
@@ -32,11 +33,11 @@ RustyBT is a next-generation algorithmic trading framework that extends [Zipline
 ### Installation
 
 ```bash
-# Using uv (recommended)
-uv sync
+# Install from PyPI (recommended)
+pip install rustybt
 
-# Or using pip
-pip install -e .
+# Or with optional features
+pip install rustybt[optimization]
 ```
 
 [Full installation instructions →](getting-started/installation.md)

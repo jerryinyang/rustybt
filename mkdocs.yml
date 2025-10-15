@@ -9,31 +9,36 @@ edit_uri: edit/main/docs/
 
 # Exclude files and directories not meant for the documentation site
 not_in_nav: |
-  architecture.md
-  prd.md
-  experiments.md
+  - architecture.md
+  - prd.md
+  - experiments.md
 
 # Exclude internal documentation directories from search and build
-exclude: |
-  architecture/
-  stories/
-  qa/
-  reviews/
-  development/
-  validation/
-  pr/
-  prd/
-  performance/
-  testing/
-  **/AUDIT_REPORT*.md
-  **/CORRECTIONS_SUMMARY.md
-  **/CODE_VALIDATION.md
-  **/CODE_EXAMPLES_VALIDATION.md
-  EPIC_10_*.md
-  DOCUMENTATION-SETUP.md
-  security-audit.md
-  **/architecture.md
-  **/prd.md
+exclude:
+  - architecture.md
+  - prd.md
+  - experiments.md
+  - architecture/
+  - stories/
+  - qa/
+  - reviews/
+  - development/
+  - validation/
+  - pr/
+  - prd/
+  - performance/
+  - testing/
+  - '**/AUDIT_REPORT*.md'
+  - '**/CORRECTIONS_SUMMARY.md'
+  - '**/CODE_VALIDATION.md'
+  - '**/CODE_EXAMPLES_VALIDATION.md'
+  - 'EPIC_10_*.md'
+  - 'DOCUMENTATION-SETUP.md'
+  - 'security-audit.md'
+  - '**/architecture.md'
+  - '**/prd.md'
+  - '**/experiments.md'
+
 
 
 theme:

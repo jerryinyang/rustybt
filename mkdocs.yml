@@ -14,7 +14,7 @@ not_in_nav: |
   experiments.md
 
 # Exclude internal documentation directories from search and build
-exclude_docs: |
+exclude: |
   architecture/
   stories/
   qa/

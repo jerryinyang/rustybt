@@ -98,5 +98,3 @@ result = run_algorithm(
     capital_base=100000
 )
 ```
-
-## See [Catalog Overview](overview.md) for more details.

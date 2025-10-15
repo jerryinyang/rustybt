@@ -24,11 +24,6 @@ Slippage represents the difference between expected and actual execution prices.
 - ✓ Liquidity constraints
 - ✓ Partial fills in illiquid markets
 
-**Impact Example**:
-```python
-# Code example removed - API does not exist
-```
-
 ## Custom Slippage Models
 
 Build custom slippage model for specific needs.

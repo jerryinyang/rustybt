@@ -96,8 +96,9 @@ class StopLossStrategy(TradingAlgorithm):
                 order(context.asset, -100, style=StopOrder(stop_price))
 
     def should_enter(self, context, data):
-        # Your entry signal logic here
-        return True  # Placeholder
+        # Example: Simple price momentum signal
+        prices = data.history(context.asset, 'close', 20, '1d')
+        return prices[-1] > prices.mean()  # Price above 20-day MA
 ```
 
 ### Bracket Order (Complete Risk Management)
@@ -138,8 +139,10 @@ class BracketStrategy(TradingAlgorithm):
                 )
 
     def entry_signal(self, context, data):
-        # Your signal logic
-        return True  # Placeholder
+        # Example: RSI oversold signal
+        prices = data.history(context.asset, 'close', 14, '1d')
+        rsi = compute_rsi(prices, window=14)  # Your RSI calculation
+        return rsi < 30  # Oversold condition
 ```
 
 ### Trailing Stop for Profit Protection

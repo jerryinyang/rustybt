@@ -28,20 +28,6 @@ Position limits and risk controls prevent excessive risk-taking and ensure strat
 
 ## Position Size Limits
 
-### Maximum Shares Per Asset
-
-Limit absolute number of shares held.
-
-```python
-# Code example removed - API does not exist
-```
-
-### Example: Volatility-Based Position Sizing
-
-```python
-# Code example removed - API does not exist
-```
-
 ## Risk Control Best Practices
 
 ### Multiple Layers of Protection

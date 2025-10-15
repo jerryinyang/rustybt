@@ -14,18 +14,6 @@ RustyBT provides comprehensive performance metrics for evaluating trading strate
 
 ## Quick Start
 
-### Access Performance Metrics
-
-```python
-# Code example removed - API does not exist
-```
-
-### Example: Omega Ratio
-
-```python
-# Code example removed - API does not exist
-```
-
 ## Performance Analysis Example
 
 ```python

@@ -13,12 +13,6 @@ RustyBT provides multi-level caching:
 
 ## Memory Caching
 
-### CacheManager
-
-```python
-# Code example removed - API does not exist
-```
-
 ## Monitoring Performance
 
 ### Timing Operations
@@ -71,4 +65,4 @@ print(f"Cache size: {stats['size_mb']:.2f} MB")
 
 - [Optimization Guide](optimization.md) - Advanced optimization techniques
 - [Troubleshooting](troubleshooting.md) - Performance debugging
-- [Data Catalog](../catalog/overview.md) - Bundle caching
+- [Data Catalog](../catalog/bundles.md) - Bundle caching

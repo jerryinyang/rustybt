@@ -75,6 +75,7 @@ site/  # MkDocs build output
 
 # Project specific
 tmp/
+temp/
 .cache/
 *.log
 *.db

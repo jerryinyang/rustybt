@@ -7,11 +7,31 @@ repo_name: jerryinyang/rustybt
 repo_url: https://github.com/jerryinyang/rustybt
 edit_uri: edit/main/docs/
 
-# Exclude files not meant for the documentation site
+# Exclude files and directories not meant for the documentation site
 not_in_nav: |
   architecture.md
   prd.md
   experiments.md
+
+# Exclude internal documentation directories from search and build
+exclude_docs: |
+  architecture/
+  stories/
+  qa/
+  reviews/
+  development/
+  validation/
+  pr/
+  prd/
+  performance/
+  testing/
+  **/AUDIT_REPORT*.md
+  **/CORRECTIONS_SUMMARY.md
+  **/CODE_VALIDATION.md
+  **/CODE_EXAMPLES_VALIDATION.md
+  EPIC_10_*.md
+  DOCUMENTATION-SETUP.md
+  security-audit.md
 
 theme:
   name: material
@@ -118,9 +138,7 @@ nav:
               - Alpaca: api/data-management/adapters/alpaca.md
               - AlphaVantage: api/data-management/adapters/alphavantage.md
           - Catalog:
-              - Overview: api/data-management/catalog/overview.md
               - Bundles: api/data-management/catalog/bundles.md
-              - Metadata: api/data-management/catalog/metadata.md
               - Migration: api/data-management/catalog/migration.md
           - Readers:
               - Data Portal: api/data-management/readers/data-portal.md
@@ -150,8 +168,6 @@ nav:
           - Transaction Costs:
               - Slippage: api/order-management/transaction-costs/slippage.md
               - Commissions: api/order-management/transaction-costs/commissions.md
-              - Borrow Costs: api/order-management/transaction-costs/borrow-costs.md
-              - Financing: api/order-management/transaction-costs/financing.md
           - Workflows:
               - Order Lifecycle: api/order-management/workflows/order-lifecycle.md
               - Examples: api/order-management/workflows/examples.md
@@ -192,15 +208,11 @@ nav:
               - Drawdown: api/analytics/risk/drawdown.md
       - Live Trading:
           - Overview: api/live-trading/README.md
-          - Safety:
-              - Circuit Breakers: api/live-trading/safety/circuit-breakers.md
       - Testing:
           - Overview: api/testing/README.md
       - API Overview Guides:
           - Datasource API: api/datasource-api.md
-          - Finance API: api/finance-api.md
           - Optimization API: api/optimization-api.md
-          - Live Trading API: api/live-trading-api.md
           - Analytics API: api/analytics-api.md
   - About:
       - License: about/license.md

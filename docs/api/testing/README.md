@@ -31,11 +31,7 @@ RustyBT provides a robust testing framework including unit testing utilities, pr
 
 Property-based testing with Hypothesis generates thousands of test cases automatically, finding edge cases that manual testing misses.
 
-### Basic Example
-
-```python
-# Code example removed - API does not exist
-```
+See the [Hypothesis documentation](https://hypothesis.readthedocs.io/) for comprehensive examples and usage patterns.
 
 ## Best Practices
 

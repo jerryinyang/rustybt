@@ -8,19 +8,6 @@ A parameter space defines the domain of possible parameter values for optimizati
 
 ## Parameter Types
 
-### Continuous Parameters
-
-Float or Decimal parameters with continuous range.
-
-```python
-# Code example removed - API does not exist
-```
-
-**Benefits**:
-- Even better space coverage than Latin hypercube
-- Deterministic (reproducible)
-- Ideal for sensitivity analysis
-
 ## Design Guidelines
 
 ### Parameter Count

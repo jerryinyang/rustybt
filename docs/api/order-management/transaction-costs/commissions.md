@@ -15,10 +15,7 @@ Commission models calculate the cost of executing trades. RustyBT supports multi
 
 ## Why Model Commissions?
 
-**Impact on Returns**:
-```python
-# Code example removed - API does not exist
-```
+Commissions directly impact strategy profitability, especially for high-frequency strategies. Accurately modeling commission costs in backtesting ensures realistic performance expectations.
 
 ## Custom Commission Models
 

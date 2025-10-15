@@ -21,12 +21,6 @@ Random search randomly samples parameter combinations from the search space. Des
 - Sample efficiency critical - use Bayesian optimization
 - Budget allows sophisticated methods
 
-## Basic Usage
-
-```python
-# Code example removed - API does not exist
-```
-
 ## See Also
 
 - [Grid Search](grid-search.md)

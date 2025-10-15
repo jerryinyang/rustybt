@@ -38,9 +38,8 @@ RustyBT's data management system provides a flexible, high-performance framework
   - [AlphaVantage Adapter](adapters/alphavantage.md) - Global market data and fundamentals
 
 ### Data Storage & Management
-- **[Data Catalog](catalog/overview.md)** - Central registry for data bundles and metadata
+- **[Data Catalog](catalog/bundles.md)** - Central registry for data bundles and metadata
   - [Bundles](catalog/bundles.md) - Creating and managing data bundles
-  - [Metadata](catalog/metadata.md) - Asset metadata and tracking systems
   - [Migration](catalog/migration.md) - Migrating from HDF5/bcolz to Parquet
 
 ### Data Access

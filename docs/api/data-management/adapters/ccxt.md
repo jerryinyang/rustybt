@@ -550,6 +550,6 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
 ## See Also
 
 - [Adapter Overview](overview.md) - Common adapter functionality
-- [Data Catalog](../catalog/overview.md) - Storing fetched data
+- [Data Catalog](../catalog/bundles.md) - Storing fetched data
 - [Binance Documentation](https://binance-docs.github.io/apidocs/) - Binance API reference
 - [CCXT Documentation](https://docs.ccxt.com/) - CCXT library documentation

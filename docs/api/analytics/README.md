@@ -57,12 +57,6 @@ The analytics suite provides professional-grade analysis tools for understanding
 
 ## Quick Start
 
-### Basic Risk Analysis
-
-```python
-# Code example removed - API does not exist
-```
-
 ## Visualization Examples
 
 ### Equity Curve with Drawdown

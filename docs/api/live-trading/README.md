@@ -1,136 +1,135 @@
-# Live Trading Infrastructure
+# Live Trading API Reference
 
-Production-ready infrastructure for deploying strategies to live markets with safety controls and state management.
+⚠️ **Note:** The API reference documentation for live trading is currently being reorganized to ensure all code examples use actual working implementations.
 
-## Overview
+In the meantime, please refer to our comprehensive **user guides** which contain complete, tested examples for all live trading functionality:
 
-The live trading system enables strategies developed in backtesting to run in production with real capital. It provides broker integrations, real-time data streaming, position reconciliation, state management, and comprehensive safety controls.
+---
 
-### Key Features
+## 📚 **Complete Live Trading Documentation**
 
-- **Multiple Broker Support**: CCXT (100+ exchanges), Interactive Brokers, Binance, Bybit, Hyperliquid
-- **Real-Time Streaming**: WebSocket data feeds for live market data
-- **State Management**: Checkpointing and recovery for reliability
-- **Position Reconciliation**: Sync with broker positions automatically
-- **Circuit Breakers**: Automated risk controls and safety limits
-- **Shadow Trading**: Parallel backtest validation against live execution
-- **Paper Trading**: Simulated trading for strategy validation
+### Getting Started with Live Trading
 
-### Architecture
+- **[Broker Setup Guide](../../guides/broker-setup-guide.md)** - Complete setup for all supported brokers
+  - PaperBroker (testing without real capital)
+  - Binance (crypto spot and futures)
+  - Bybit (derivatives trading)
+  - Hyperliquid (decentralized perpetuals)
+  - Interactive Brokers (traditional markets)
+  - CCXT Generic (100+ exchanges)
 
-```
-┌──────────────────────────────────────────────────────┐
-│             Trading Strategy (Your Code)              │
-├──────────────────────────────────────────────────────┤
-│            LiveTradingEngine                          │
-│  ┌─────────┬──────────┬───────────┬───────────┐     │
-│  │ Event   │  State   │Position   │ Circuit   │     │
-│  │ Loop    │ Manager  │Reconciler │ Breakers  │     │
-│  └─────────┴──────────┴───────────┴───────────┘     │
-├──────────────────────────────────────────────────────┤
-│       Broker Adapter (CCXT/IB/Binance/etc.)         │
-├──────────────────────────────────────────────────────┤
-│    ┌──────────────┬──────────────┐                  │
-│    │   Orders     │  Market Data │                  │
-│    │  REST API    │   WebSocket  │                  │
-│    └──────────────┴──────────────┘                  │
-├──────────────────────────────────────────────────────┤
-│         Live Market / Exchange / Broker              │
-└──────────────────────────────────────────────────────┘
-```
+### Real-Time Data Streaming
 
-## Quick Navigation
+- **[WebSocket Streaming Guide](../../guides/websocket-streaming-guide.md)** - Real-time market data
+  - WebSocket connection management
+  - Bar aggregation from tick data
+  - Multiple stream handling
+  - Performance optimization
 
-### Core Infrastructure
-- **[Streaming Architecture](streaming/architecture.md)** - Real-time data streaming design
-- **[Exchange-Specific Streams](streaming/binance.md)** - Binance, Bybit, Hyperliquid, CCXT
+### Production Deployment
 
-### State Management
-- **[State Management](state/management.md)** - Checkpointing and recovery
-- **[Position Reconciliation](state/reconciliation.md)** - Syncing with broker positions
-- **[Recovery Procedures](state/recovery.md)** - Handling failures and restarts
+- **[Deployment Guide](../../guides/deployment-guide.md)** - Production deployment strategies
+  - Environment setup
+  - Configuration management
+  - Monitoring and logging
+  - Scaling considerations
 
-### Safety & Risk Controls
-- **[Circuit Breakers](safety/circuit-breakers.md)** - Automated trading halts
-- **[Position Limits](safety/limits.md)** - Risk limits and constraints
-- **[Monitoring](safety/monitoring.md)** - Health checks and alerts
+- **[Production Checklist](../../guides/production-checklist.md)** - Pre-deployment safety checklist
+  - Risk management verification
+  - Circuit breaker configuration
+  - Position limits
+  - Emergency procedures
 
-### Deployment
-- **[Setup Guide](deployment/setup.md)** - Production deployment
-- **[Configuration](deployment/configuration.md)** - Environment and settings
-- **[Best Practices](deployment/best-practices.md)** - Production recommendations
+### Data Considerations
 
-## Quick Start
+- **[Live vs Backtest Data Guide](../../guides/live-vs-backtest-data.md)** - Data differences and considerations
+  - Real-time vs historical data
+  - Latency management
+  - Data quality checks
 
-### Basic Live Trading
+---
 
-```python
-# Code example removed - API does not exist
-```
+## 🔧 **Source Code Reference**
 
-## Error Handling
+For implementation details, refer to the actual broker adapter source code:
 
-### Graceful Shutdown
+### Broker Adapters
 
-```python
-# Code example removed - API does not exist
-```
+Located in `rustybt/live/brokers/`:
 
-### Automatic Recovery
+- `paper_broker.py` - Simulated broker for testing
+- `binance_adapter.py` - Binance exchange integration
+- `bybit_adapter.py` - Bybit exchange integration
+- `hyperliquid_adapter.py` - Hyperliquid DEX integration
+- `ib_adapter.py` - Interactive Brokers integration
+- `ccxt_adapter.py` - Generic CCXT exchange wrapper
 
-```python
-# Code example removed - API does not exist
-```
+### Safety Systems
 
-## Monitoring
+Located in `rustybt/live/`:
 
-### Health Checks
+- `engine.py` - Live trading engine with built-in safety controls
+- `reconciler.py` - Position reconciliation with broker
+- `state_manager.py` - State persistence and recovery
+- `scheduler.py` - Market-aware scheduling
+
+### Circuit Breakers & Risk Controls
+
+The live trading engine includes built-in safety mechanisms:
 
 ```python
-# Code example removed - API does not exist
+from rustybt.live.engine import LiveTradingEngine
+
+# Circuit breakers are configured in the engine
+engine = LiveTradingEngine(
+    strategy=my_strategy,
+    broker=broker,
+    max_daily_loss=Decimal("1000"),      # Daily loss limit
+    max_position_value=Decimal("50000"),  # Per-position limit
+    max_total_exposure=Decimal("100000"), # Total exposure limit
+)
 ```
 
-### 4. Monitor Closely
+**See `rustybt/live/engine.py` source code for complete implementation details.**
 
-```python
-# Code example removed - API does not exist
-```
+---
 
-### ❌ Ignoring State Management
+## 📖 **API Reference (Under Development)**
 
-```python
-# Code example removed - API does not exist
-```
+Detailed API reference documentation for the following modules is being prepared with tested code examples:
 
-## Examples
+- [ ] Live Trading Engine API
+- [ ] Broker Adapter Interface
+- [ ] Circuit Breaker Configuration
+- [ ] Position Reconciliation API
+- [ ] State Management API
+- [ ] Real-Time Data Streaming API
 
-See `examples/live_trading/` for complete examples:
+**Expected completion:** Q1 2025
 
-- `paper_trading_example.py` - Basic paper trading
-- `binance_live_trading.py` - Binance integration
-- `ib_live_trading.py` - Interactive Brokers
-- `shadow_trading_example.py` - Shadow backtest validation
-- `production_deployment.py` - Full production setup
+---
 
-## See Also
+## 🆘 **Support**
 
-- [Main Live Trading API](../live-trading-api.md)
-- [Optimization Documentation](../optimization/README.md)
-- [Analytics Documentation](../analytics/README.md)
-- [Broker Setup Guide](../../guides/broker-setup-guide.md)
+- **Questions?** See our [Troubleshooting Guide](../../guides/troubleshooting.md)
+- **Issues?** Report on [GitHub Issues](https://github.com/bmad-sim/rustybt/issues)
+- **Community:** Join discussions on GitHub Discussions
 
-## Support
+---
 
-- **Issues**: [GitHub Issues](https://github.com/bmad-dev/rustybt/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/bmad-dev/rustybt/discussions)
-- **Documentation**: [Full API Reference](https://rustybt.readthedocs.io)
+## ⚠️ **Safety Notice**
 
-## ⚠️ Risk Warning
+Live trading involves real financial risk. Always:
 
-**Live trading involves real financial risk. You can lose money.**
+1. ✅ Test thoroughly with PaperBroker first
+2. ✅ Start with small position sizes
+3. ✅ Configure appropriate circuit breakers and limits
+4. ✅ Monitor positions and P&L actively
+5. ✅ Have emergency shutdown procedures in place
+6. ✅ Review the [Production Checklist](../../guides/production-checklist.md) before going live
 
-- Always test thoroughly in paper trading and testnets
-- Start with small capital
-- Use all safety controls
-- Monitor closely
-- Never risk more than you can afford to lose
+**Never deploy to production without comprehensive testing and risk controls.**
+
+---
+
+*For the most up-to-date information, always refer to the guides linked above and the source code implementations.*

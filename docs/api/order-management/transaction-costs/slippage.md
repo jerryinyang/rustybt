@@ -255,12 +255,12 @@ if avg_slippage.mean() > 0.002:  # More than 20 bps
 ## Related Documentation
 
 - [Commission Models](commissions.md) - Transaction fee modeling
-- [Volume Share Slippage](../execution/fills.md) - Detailed fill processing
+- Volume Share Slippage (Coming soon) - Detailed fill processing
 - [Order Types](../order-types.md) - How order types affect slippage
-- [Transaction Costs Overview](README.md) - Complete cost modeling guide
+- Transaction Costs - Complete cost modeling guide
 
 ## Next Steps
 
 1. Study [Commission Models](commissions.md) for complete cost modeling
-2. Review [Fill Processing](../execution/fills.md) for execution details
+2. Review Fill Processing (Coming soon) for execution details
 3. Test [Sensitivity Analysis](../workflows/examples.md) with varying slippage assumptions

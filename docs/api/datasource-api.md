@@ -286,6 +286,6 @@ print(sources)  # ["alpaca", "alphavantage", "ccxt", "csv", "polygon", "yfinance
 ---
 
 **See Also**:
-- [Caching API Reference](caching-api.md)
+- [Data Management Performance](data-management/README.md)
 - [Data Ingestion Guide](../guides/data-ingestion.md)
 - [Live vs Backtest Data](../guides/live-vs-backtest-data.md)

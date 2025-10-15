@@ -465,4 +465,4 @@ Note: Redis-backed distributed caching is not available yet. For now, share Parq
 **See Also**:
 - [Data Ingestion Guide](data-ingestion.md)
 - [Live vs Backtest Data](live-vs-backtest-data.md)
-- [Caching API Reference](../api/caching-api.md)
+- [Data Management Performance](../api/data-management/README.md)

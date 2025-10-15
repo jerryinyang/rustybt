@@ -51,8 +51,6 @@ While RustyBT follows an **Apache 2.0/MIT-only dependency policy**, the followin
 - **frozendict**: Evaluating alternative data providers or forking `yfinance` with MIT-licensed replacement
 - **chardet**: Considering migration from `tox` to modern alternatives (`nox`, `hatch`)
 
-For details on dependency security and license compliance, see the [Security Audit](../security-audit.md).
-
 ## Contributing
 
 By contributing to RustyBT, you agree that your contributions will be licensed under the Apache License 2.0. See [Contributing Guide](contributing.md) for more information.

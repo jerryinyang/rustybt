@@ -581,10 +581,10 @@ logger.debug("WebSocket message received", data=bar)
 
 ## Next Steps
 
-- **Example**: [websocket_streaming.py](../../examples/websocket_streaming.py)
+- **Example**: <!-- WebSocket Example (Coming soon) -->
 - **Live Trading Guide**: [Live vs Backtest Data](live-vs-backtest-data.md)
 - **Broker Setup**: [Broker Setup Guide](broker-setup-guide.md)
-- **API Reference**: [Live Trading API](../api/live-trading-api.md)
+- **API Reference**: Live Trading API (Coming soon)
 
 ---
 

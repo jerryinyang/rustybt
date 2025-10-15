@@ -445,6 +445,6 @@ def test_objective_stability():
 ## See Also
 
 - [Parameter Spaces](parameter-spaces.md)
-- [Architecture](architecture.md)
+- Architecture
 - [Overfitting Prevention](../best-practices/overfitting-prevention.md)
 - [Walk-Forward Validation](../walk-forward/framework.md)

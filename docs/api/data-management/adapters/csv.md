@@ -562,4 +562,4 @@ class CSVAdapter(BaseDataAdapter):
 
 - [Adapter Overview](overview.md) - Common adapter features
 - [Data Catalog](../catalog/bundles.md) - Creating bundles from CSV
-- [Schema Validation](../readers/bar-readers.md#validation) - Data quality checks
+- [Schema Validation](../readers/bar-readers.md) - Data quality checks

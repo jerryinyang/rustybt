@@ -40,7 +40,7 @@ The optimization framework provides tools for finding optimal strategy parameter
 ## Quick Navigation
 
 ### Core Framework
-- **[Architecture](framework/architecture.md)** - Optimization system architecture and design patterns
+- **Architecture** - Optimization system architecture and design patterns
 - **[Parameter Spaces](framework/parameter-spaces.md)** - Defining search spaces for optimization
 - **[Objective Functions](framework/objective-functions.md)** - Designing objective functions and metrics
 
@@ -56,17 +56,17 @@ The optimization framework provides tools for finding optimal strategy parameter
 - **[Out-of-Sample Validation](walk-forward/validation.md)** - Validation methodologies
 
 ### Robustness Testing
-- **[Monte Carlo Framework](monte-carlo/permutation.md)** - Data permutation techniques
-- **[Noise Infusion](monte-carlo/noise-infusion.md)** - Adding noise for robustness
+- **Monte Carlo Framework (Coming soon)** - Data permutation techniques
+- **Noise Infusion (Coming soon)** - Adding noise for robustness
 - **[Stability Testing](monte-carlo/stability-testing.md)** - Parameter stability analysis
 
 ### Performance & Scaling
 - **[Multiprocessing](parallel/multiprocessing.md)** - Parallel optimization with multiprocessing
-- **[Distributed Computing](parallel/distributed.md)** - Scaling to clusters
+- **Distributed Computing (Coming soon)** - Scaling to clusters
 
 ### Best Practices
 - **[Overfitting Prevention](best-practices/overfitting-prevention.md)** - Avoiding overfitting pitfalls
-- **[Validation Techniques](best-practices/validation-techniques.md)** - Comprehensive validation strategies
+- **Validation Techniques (Coming soon)** - Comprehensive validation strategies
 
 ## Quick Start
 

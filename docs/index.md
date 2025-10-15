@@ -107,12 +107,12 @@ Learn by example with 13 Jupyter notebooks and 20+ Python examples:
 
 [Browse all examples →](examples/README.md)
 
-### 📖 [API Reference](api/order-types.md)
+### 📖 [API Reference](api/datasource-api.md)
 Complete API documentation:
 
-- [Order Types](api/order-types.md) - Market, Limit, Stop orders and advanced types
-- [Caching API](api/caching-api.md) - Cache management and freshness strategies
-- [Bundle Metadata API](api/bundle-metadata-api.md) - Data bundle management
+- [Datasource API](api/datasource-api.md) - Data ingestion and management
+- [Optimization API](api/optimization-api.md) - Strategy optimization tools
+- [Analytics API](api/analytics-api.md) - Performance analysis and reporting
 
 ### ℹ️ [About](about/license.md)
 Project information:

@@ -57,10 +57,10 @@ RustyBT's data management system provides a flexible, high-performance framework
   - [Expressions](pipeline/expressions.md) - Combining and transforming pipeline terms
 
 ### Performance Optimization
-- **[Performance](performance/caching.md)** - Optimization strategies
-  - [Caching](performance/caching.md) - Data and computation caching
-  - [Optimization](performance/optimization.md) - Performance tuning techniques
-  - [Troubleshooting](performance/troubleshooting.md) - Common issues and solutions
+- **Performance (Coming soon)** - Optimization strategies
+  - Caching (Coming soon) - Data and computation caching
+  - Optimization (Coming soon) - Performance tuning techniques
+  - Troubleshooting (Coming soon) - Common issues and solutions
 
 ## Key Concepts
 
@@ -266,7 +266,7 @@ adapters:
 1. **New to RustyBT?** Start with [Data Adapters](adapters/overview.md)
 2. **Migrating from Zipline?** See [Migration Guide](catalog/migration.md)
 3. **Building Features?** Check out [Pipeline System](pipeline/overview.md)
-4. **Performance Issues?** Read [Optimization Guide](performance/optimization.md)
+4. **Performance Issues?** Read Optimization Guide (Coming soon)
 
 ## Support & Resources
 

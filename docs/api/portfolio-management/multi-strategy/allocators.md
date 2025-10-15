@@ -612,13 +612,13 @@ class ProductionMultiStrategy(TradingAlgorithm):
 
 ## Related Documentation
 
-- [Performance Attribution](attribution.md) - Detailed attribution methods
-- [Order Aggregation](order-aggregation.md) - Order combination strategies
-- [Risk Management](../risk/README.md) - Portfolio-level risk controls
+- Performance Attribution (Coming soon) - Detailed attribution methods
+- Order Aggregation (Coming soon) - Order combination strategies
+- Risk Management - Portfolio-level risk controls
 - [Portfolio Management](../README.md) - Portfolio tracking
 
 ## Next Steps
 
-1. Study [Performance Attribution](attribution.md) for detailed tracking
-2. Review [Order Aggregation](order-aggregation.md) for optimization
+1. Study Performance Attribution (Coming soon) for detailed tracking
+2. Review Order Aggregation (Coming soon) for optimization
 3. Implement multi-strategy system in your framework

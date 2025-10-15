@@ -63,4 +63,4 @@ clean('my_bundle', keep_last=0)  # Remove all
 
 ## Automated Migration
 
-## See [Catalog Overview](overview.md) for more details.
+## See Catalog Overview (Coming soon) for more details.

@@ -512,5 +512,5 @@ See detailed guides:
 ## See Also
 
 - [Data Portal](../readers/data-portal.md) - Data access integration
-- [Multi-Asset Strategies](../../guides/multi-asset.md) - Multi-currency examples
-- [Performance](../performance/optimization.md) - FX lookup optimization
+- Multi-Asset Strategies (Coming soon) - Multi-currency examples
+- Performance (Coming soon) - FX lookup optimization

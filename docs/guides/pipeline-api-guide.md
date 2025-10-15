@@ -665,7 +665,7 @@ def make_pipeline():
 
 ## Next Steps
 
-- **Example**: [pipeline_tutorial.py](../../examples/pipeline_tutorial.py)
+- **Example**: <!-- Pipeline Tutorial (Coming soon) -->
 - **API Reference**: Coming soon
 - **Factor Library**: Explore built-in factors in `rustybt.pipeline.factors`
 - **Research**: Use Pipeline for factor research and backtesting

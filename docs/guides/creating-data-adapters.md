@@ -614,8 +614,8 @@ AdapterRegistry.register(MyDataAdapter)
 
 ## Resources
 
-- **BaseDataAdapter Source:** [rustybt/data/adapters/base.py](../../rustybt/data/adapters/base.py)
-- **Adapter Registry:** [rustybt/data/adapters/registry.py](../../rustybt/data/adapters/registry.py)
+- **BaseDataAdapter Source:** `BaseDataAdapter` class
+- **Adapter Registry:** adapter registry
 - **Example Adapters:** See the [Examples section](../examples/README.md) for CCXT, YFinance, and CSV adapter examples
 
 ---

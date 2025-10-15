@@ -700,7 +700,7 @@ After setting up your broker:
 
 ## See Also
 
-- [Live Trading API Reference](../api/live-trading-api.md)
-- [Live Trading Examples](../../examples/live_trading.py)
+- Live Trading API Reference (Coming soon)
+- <!-- Live Trading Example (Coming soon) -->
 - [Exception Handling Guide](exception-handling.md)
 - [Testnet Setup Guide](testnet-setup-guide.md)

@@ -95,15 +95,15 @@ order(asset, -100, style=StopOrder(stop_price=95.0))
 
 ### Execution System
 - **[Blotter Architecture](execution/blotter.md)** - Order management and routing
-- **[Simulation Blotter](execution/simulation.md)** - Backtesting execution
-- **[Fill Processing](execution/fills.md)** - Order matching and partial fills
-- **[Execution Events](execution/events.md)** - Event-driven execution flow
+- **Simulation Blotter (Coming soon)** - Backtesting execution
+- **Fill Processing (Coming soon)** - Order matching and partial fills
+- **Execution Events (Coming soon)** - Event-driven execution flow
 
 ### Transaction Costs
 - **[Slippage Models](transaction-costs/slippage.md)** - Market impact and slippage
 - **[Commission Models](transaction-costs/commissions.md)** - Broker fees and commissions
-- **[Borrow Costs](transaction-costs/borrow-costs.md)** - Short selling costs
-- **[Financing Costs](transaction-costs/financing.md)** - Overnight and leverage fees
+- **Borrow Costs (Coming soon)** - Short selling costs
+- **Financing Costs (Coming soon)** - Overnight and leverage fees
 
 ## Key Concepts
 
@@ -204,20 +204,20 @@ Even small per-share commissions compound:
 # = $0.001 × 100 × 1000 = $100 in commissions
 ```
 
-See [Performance Optimization](../portfolio-management/performance/README.md) for strategies.
+See Performance Optimization for strategies.
 
 ## Related Documentation
 
 - [Portfolio Management](../portfolio-management/README.md) - Position tracking and P&L
 - [Data Management](../data-management/README.md) - Market data for order execution
-- [Live Trading API](../live-trading-api.md) - Live order execution with brokers
-- [Finance API](../finance-api.md) - Core finance module reference
+- Live Trading API - Live order execution with brokers
+- Finance API - Core finance module reference
 
 ## Next Steps
 
 1. **Understand Order Types**: Start with [Order Types](order-types.md)
 2. **Learn Execution Flow**: Read [Blotter Architecture](execution/blotter.md)
-3. **Model Costs Realistically**: Study [Transaction Costs](transaction-costs/README.md)
+3. **Model Costs Realistically**: Study Transaction Costs
 4. **Build Strategies**: Review [Order Examples](workflows/examples.md)
 
 ## Support
@@ -225,4 +225,4 @@ See [Performance Optimization](../portfolio-management/performance/README.md) fo
 For questions about order management:
 - Check [Order Lifecycle](workflows/order-lifecycle.md) for state transitions
 - See [Troubleshooting](transaction-costs/slippage.md#troubleshooting) for common issues
-- Review [Finance API Reference](../finance-api.md) for complete API documentation
+- Review Finance API Reference for complete API documentation

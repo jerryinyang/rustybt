@@ -633,13 +633,13 @@ elif "INVALID_PRICE" in order.reason:
 
 ## Related Documentation
 
-- [Simulation Blotter](simulation.md) - Backtesting execution details
-- [Fill Processing](fills.md) - Fill calculation and transaction creation
+- Simulation Blotter (Coming soon) - Backtesting execution details
+- Fill Processing (Coming soon) - Fill calculation and transaction creation
 - [Order Lifecycle](../workflows/order-lifecycle.md) - Order state transitions
 - [Transaction Costs](../transaction-costs/slippage.md) - Cost modeling
 
 ## Next Steps
 
-1. Study [Simulation Blotter](simulation.md) for backtesting specifics
-2. Review [Fill Processing](fills.md) for execution details
+1. Study Simulation Blotter (Coming soon) for backtesting specifics
+2. Review Fill Processing (Coming soon) for execution details
 3. Explore [Transaction Costs](../transaction-costs/slippage.md) for realistic modeling

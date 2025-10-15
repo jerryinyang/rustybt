@@ -137,13 +137,13 @@ def test_drawdown_halt():
 
 ## Related Documentation
 
-- [Exposure Tracking](exposure-tracking.md) - Monitor portfolio exposure
-- [Risk Metrics](risk-metrics.md) - Calculate risk measures
-- [Best Practices](best-practices.md) - Risk management guidelines
+- Exposure Tracking (Coming soon) - Monitor portfolio exposure
+- Risk Metrics (Coming soon) - Calculate risk measures
+- Best Practices (Coming soon) - Risk management guidelines
 - [Portfolio Management](../README.md) - Portfolio tracking
 
 ## Next Steps
 
-1. Study [Exposure Tracking](exposure-tracking.md) for monitoring exposure
-2. Review [Risk Metrics](risk-metrics.md) for risk measurement
-3. Read [Best Practices](best-practices.md) for comprehensive risk management
+1. Study Exposure Tracking (Coming soon) for monitoring exposure
+2. Review Risk Metrics (Coming soon) for risk measurement
+3. Read Best Practices (Coming soon) for comprehensive risk management

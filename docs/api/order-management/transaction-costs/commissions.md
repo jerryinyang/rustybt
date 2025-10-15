@@ -193,12 +193,12 @@ for name, metrics in results.items():
 ## Related Documentation
 
 - [Slippage Models](slippage.md) - Price impact and execution costs
-- [Borrow Costs](borrow-costs.md) - Short selling costs
-- [Financing Costs](financing.md) - Overnight and leverage fees
-- [Transaction Cost Overview](README.md) - Complete cost modeling
+- Borrow Costs (Coming soon) - Short selling costs
+- Financing Costs (Coming soon) - Overnight and leverage fees
+- Transaction Costs - Complete cost modeling
 
 ## Next Steps
 
 1. Review [Slippage Models](slippage.md) for complete cost picture
-2. Study [Borrow Costs](borrow-costs.md) for short selling
+2. Study Borrow Costs (Coming soon) for short selling
 3. Analyze [Commission Impact](../workflows/examples.md) on your strategies

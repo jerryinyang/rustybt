@@ -207,7 +207,7 @@ def validate_param_space(space):
 
 ## See Also
 
-- [Architecture](architecture.md)
+- Architecture
 - [Objective Functions](objective-functions.md)
 - [Grid Search](../algorithms/grid-search.md)
 - [Overfitting Prevention](../best-practices/overfitting-prevention.md)

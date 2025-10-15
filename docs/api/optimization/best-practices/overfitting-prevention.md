@@ -416,5 +416,5 @@ Much better! More likely to work in live trading.
 
 - [Walk-Forward Framework](../walk-forward/framework.md)
 - [Monte Carlo Testing](../monte-carlo/stability-testing.md)
-- [Validation Techniques](validation-techniques.md)
+- Validation Techniques (Coming soon)
 - [Parameter Spaces](../framework/parameter-spaces.md)

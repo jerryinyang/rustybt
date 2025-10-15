@@ -41,19 +41,19 @@ The analytics suite provides professional-grade analysis tools for understanding
 - **[Drawdown Analysis](risk/drawdown.md)** - Maximum drawdown and underwater periods
 
 ### Performance Attribution
-- **[Performance Attribution](attribution/performance.md)** - Alpha/beta decomposition
-- **[Factor Attribution](attribution/factor.md)** - Factor exposure analysis
-- **[Multi-Strategy Attribution](attribution/multi-strategy.md)** - Portfolio-level attribution
+- **Performance Attribution (Coming soon)** - Alpha/beta decomposition
+- **Factor Attribution (Coming soon)** - Factor exposure analysis
+- **Multi-Strategy Attribution (Coming soon)** - Portfolio-level attribution
 
 ### Trade Analysis
-- **[Trade Statistics](trade-analysis/statistics.md)** - Win rates, profit factors, expectancy
-- **[Trade Patterns](trade-analysis/patterns.md)** - Entry/exit timing analysis
-- **[Trade Timing](trade-analysis/timing.md)** - Holding period analysis
+- **Trade Statistics (Coming soon)** - Win rates, profit factors, expectancy
+- **Trade Patterns (Coming soon)** - Entry/exit timing analysis
+- **Trade Timing (Coming soon)** - Holding period analysis
 
 ### Visualization
-- **[Charts](visualization/charts.md)** - Equity curves, returns distributions
-- **[Dashboards](visualization/dashboards.md)** - Interactive dashboards
-- **[Notebooks](visualization/notebooks.md)** - Jupyter integration
+- **Charts (Coming soon)** - Equity curves, returns distributions
+- **Dashboards (Coming soon)** - Interactive dashboards
+- **Notebooks (Coming soon)** - Jupyter integration
 
 ## Quick Start
 

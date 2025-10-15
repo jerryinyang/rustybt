@@ -495,7 +495,7 @@ class AdvancedOrderStrategy(TradingAlgorithm):
 
 - [Order Lifecycle](workflows/order-lifecycle.md) - Order state transitions
 - [Blotter Architecture](execution/blotter.md) - Order routing and management
-- [Transaction Costs](transaction-costs/README.md) - Slippage and commission modeling
+- Transaction Costs - Slippage and commission modeling
 - [Order Examples](workflows/examples.md) - Real-world trading scenarios
 
 ## Next Steps

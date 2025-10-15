@@ -205,7 +205,7 @@ Weighted average of all purchases.
 # Remaining: 50 @ $52.50 cost basis
 ```
 
-**Note**: RustyBT currently uses FIFO by default. See [Accounting Methods](portfolio/accounting.md) for details.
+**Note**: RustyBT currently uses FIFO by default. See Accounting Methods (Coming soon) for details.
 
 ## Cash Management
 
@@ -373,26 +373,26 @@ def calculate_position_size(self, context, data, asset):
 ## Documentation Structure
 
 ### Position Management
-- **[Positions](portfolio/positions.md)** - Position tracking and updates
-- **[Accounting Methods](portfolio/accounting.md)** - FIFO, LIFO, average cost
-- **[Cash Management](portfolio/cash-management.md)** - Cash flow and buying power
-- **[Corporate Actions](portfolio/corporate-actions.md)** - Splits, dividends
+- **Positions (Coming soon)** - Position tracking and updates
+- **Accounting Methods (Coming soon)** - FIFO, LIFO, average cost
+- **Cash Management (Coming soon)** - Cash flow and buying power
+- **Corporate Actions (Coming soon)** - Splits, dividends
 
 ### Multi-Strategy
 - **[Portfolio Allocators](multi-strategy/allocators.md)** - Capital allocation
-- **[Order Aggregation](multi-strategy/order-aggregation.md)** - Cross-strategy netting
-- **[Performance Attribution](multi-strategy/attribution.md)** - Strategy-level P&L
+- **Order Aggregation (Coming soon)** - Cross-strategy netting
+- **Performance Attribution (Coming soon)** - Strategy-level P&L
 
 ### Risk Management
 - **[Position Limits](risk/position-limits.md)** - Maximum position constraints
-- **[Exposure Tracking](risk/exposure-tracking.md)** - Gross/net exposure
-- **[Risk Metrics](risk/risk-metrics.md)** - VaR, correlation, stress tests
-- **[Best Practices](risk/best-practices.md)** - Risk management guidelines
+- **Exposure Tracking (Coming soon)** - Gross/net exposure
+- **Risk Metrics (Coming soon)** - VaR, correlation, stress tests
+- **Best Practices (Coming soon)** - Risk management guidelines
 
 ### Performance
-- **[Metrics](performance/metrics.md)** - Returns, Sharpe, alpha/beta
-- **[Calculations](performance/calculations.md)** - Performance calculations
-- **[Interpretation](performance/interpretation.md)** - Understanding metrics
+- **Metrics (Coming soon)** - Returns, Sharpe, alpha/beta
+- **Calculations (Coming soon)** - Performance calculations
+- **Interpretation (Coming soon)** - Understanding metrics
 
 ## Best Practices
 
@@ -415,13 +415,13 @@ def calculate_position_size(self, context, data, asset):
 ## Related Documentation
 
 - [Order Management](../order-management/README.md) - Order placement and execution
-- [Transaction Costs](../order-management/transaction-costs/README.md) - Commissions and slippage
-- [Live Trading](../live-trading-api.md) - Live portfolio reconciliation
+- Transaction Costs - Commissions and slippage
+- Live Trading - Live portfolio reconciliation
 - [Analytics API](../analytics-api.md) - Advanced performance analysis
 
 ## Next Steps
 
-1. Study [Positions](portfolio/positions.md) for position tracking details
-2. Review [Accounting Methods](portfolio/accounting.md) for cost basis calculations
-3. Explore [Risk Management](risk/README.md) for portfolio protection
-4. Learn [Performance Metrics](performance/metrics.md) for strategy evaluation
+1. Study Positions (Coming soon) for position tracking details
+2. Review Accounting Methods (Coming soon) for cost basis calculations
+3. Explore Risk Management for portfolio protection
+4. Learn Performance Metrics (Coming soon) for strategy evaluation

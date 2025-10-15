@@ -74,6 +74,8 @@ docs/.build/
 site/  # MkDocs build output
 site/*
 
+_.*
+
 # Project specific
 tmp/
 temp/

@@ -1,20 +1,16 @@
+# yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
+
 site_name: RustyBT Documentation
 site_description: Modern Python backtesting engine built on Zipline-Reloaded
 site_author: RustyBT Development Team
 site_url: https://jerryinyang.github.io/rustybt
 
-repo_name: jerryinyang/rustybt
 repo_url: https://github.com/jerryinyang/rustybt
+repo_name: jerryinyang/rustybt
 edit_uri: edit/main/docs/
 
-# Exclude files and directories not meant for the documentation site
-not_in_nav: |
-  - architecture.md
-  - prd.md
-  - experiments.md
-
-# Exclude internal documentation directories from search and build
-exclude:
+# Exclude internal documentation from build and search
+exclude_docs:
   - architecture.md
   - prd.md
   - experiments.md
@@ -39,12 +35,9 @@ exclude:
   - '**/prd.md'
   - '**/experiments.md'
 
-
-
 theme:
   name: material
   palette:
-    # Light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: indigo
@@ -52,7 +45,6 @@ theme:
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-    # Dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: indigo

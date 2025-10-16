@@ -7,11 +7,11 @@ Interactive charting and visualization tools for backtest analysis using Plotly.
 **Purpose**: Create professional, interactive charts for backtest analysis, strategy comparison, and investor reporting.
 
 **Key Features**:
-- =Ê **Interactive Charts**: Plotly-based with zoom, pan, hover tooltips
-- <¨ **Theme Support**: Light and dark themes for presentations
-- =È **Common Visualizations**: Equity curve, drawdown, returns distribution, rolling metrics
+- = **Interactive Charts**: Plotly-based with zoom, pan, hover tooltips
+- < **Theme Support**: Light and dark themes for presentations
+- = **Common Visualizations**: Equity curve, drawdown, returns distribution, rolling metrics
 - = **Flexible Input**: Supports both pandas and Polars DataFrames
-- =ñ **Export**: Save to HTML, PNG, or embed in Jupyter notebooks
+- = **Export**: Save to HTML, PNG, or embed in Jupyter notebooks
 
 **When to Use**:
 -  For backtest visualization and diagnostics
@@ -557,9 +557,9 @@ fig.show()
 -  Good for risk-averse investors
 
 **Steep Upward with Pullbacks**:
--   High returns but also high volatility
--   Expect periodic drawdowns
--   Requires strong risk tolerance
+-  High returns but also high volatility
+-  Expect periodic drawdowns
+-  Requires strong risk tolerance
 
 **Flat or Choppy**:
 - L Strategy not generating alpha
@@ -578,12 +578,12 @@ fig.show()
 -  Suitable for conservative portfolios
 
 **Max Drawdown 10-20%**:
--   Moderate risk
--   Acceptable for balanced portfolios
+-  Moderate risk
+-  Acceptable for balanced portfolios
 
 **Max Drawdown 20-30%**:
--   High risk
--   Only for aggressive investors
+-  High risk
+-  Only for aggressive investors
 
 **Max Drawdown > 30%**:
 - L Very high risk
@@ -603,9 +603,9 @@ fig.show()
 -  Easy to risk manage
 
 **Negative Skew (left tail)**:
--   More frequent large losses
--   Use CVaR instead of VaR
--   Implement tail risk hedges
+-  More frequent large losses
+-  Use CVaR instead of VaR
+-  Implement tail risk hedges
 
 **Positive Skew (right tail)**:
 -  More frequent large gains
@@ -613,9 +613,9 @@ fig.show()
 -  Trend-following characteristics
 
 **High Kurtosis (fat tails)**:
--   More extreme events than expected
--   Black swan risk
--   Increase position size limits
+-  More extreme events than expected
+-  Black swan risk
+-  Increase position size limits
 
 **Low Kurtosis (thin tails)**:
 -  Fewer extreme events
@@ -629,19 +629,19 @@ fig.show()
 -  Strategy works in multiple regimes
 
 **Declining Sharpe Ratio**:
--   Strategy degrading over time
--   May be experiencing regime change
--   Consider parameter re-optimization
+-  Strategy degrading over time
+-  May be experiencing regime change
+-  Consider parameter re-optimization
 
 **Increasing Volatility**:
--   Rising market risk
--   May need to reduce position sizes
--   Consider volatility-targeting
+-  Rising market risk
+-  May need to reduce position sizes
+-  Consider volatility-targeting
 
 **Volatile Sharpe Ratio**:
--   Regime-dependent strategy
--   May need regime filters
--   Consider reducing exposure in low-Sharpe periods
+-  Regime-dependent strategy
+-  May need regime filters
+-  Consider reducing exposure in low-Sharpe periods
 
 ---
 
@@ -959,7 +959,7 @@ plot_rolling_metrics(backtest_df).show()
 | `plot_equity_curve()` | O(n) | < 100ms for 10K points |
 | `plot_drawdown()` | O(n) | < 100ms for 10K points |
 | `plot_returns_distribution()` | O(n) | < 50ms for 10K points |
-| `plot_rolling_metrics()` | O(n × w) | 200ms for 10K points, w=60 |
+| `plot_rolling_metrics()` | O(n  w) | 200ms for 10K points, w=60 |
 
 where:
 - n = number of data points

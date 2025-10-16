@@ -622,4 +622,4 @@ ls -l docs/internal/story-artifacts/11.2-test-results/
 
 **Questions?** Review the framework documents or contact PM Agent (John).
 
-**Good luck with your documentation work!** =€
+**Good luck with your documentation work!** =

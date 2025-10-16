@@ -39,10 +39,10 @@ Expert review applies to:
 -  Documentation that affects backward compatibility
 
 ### Not Required For
-- ˜ Minor typo fixes or formatting changes
-- ˜ Internal documentation (architecture, PRDs, stories)
-- ˜ README updates that don't affect API usage
-- ˜ Example code improvements that don't change behavior
+-  Minor typo fixes or formatting changes
+-  Internal documentation (architecture, PRDs, stories)
+-  README updates that don't affect API usage
+-  Example code improvements that don't change behavior
 
 When in doubt, err on the side of requiring expert review.
 

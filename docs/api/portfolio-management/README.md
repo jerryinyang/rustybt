@@ -57,6 +57,18 @@ RustyBT provides comprehensive portfolio management for tracking:
 └─────────────────────────────────────────────────────────┘
 ```
 
+## Example Types in This Documentation
+
+This documentation includes two types of code examples:
+
+**📋 Usage Pattern Snippets**: Brief code snippets showing API usage within a trading strategy context. These assume you're working within a `TradingAlgorithm` subclass.
+
+**🚀 Complete Examples**: Full runnable examples with all imports and setup included.
+
+Look for section headers like "Complete Examples" for full code, and inline examples for usage patterns.
+
+---
+
 ## Quick Start
 
 ### Access Portfolio in Strategy

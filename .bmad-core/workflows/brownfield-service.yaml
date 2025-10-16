@@ -24,13 +24,13 @@ workflow:
       creates: prd.md
       uses: brownfield-prd-tmpl
       requires: existing_service_analysis
-      notes: "Creates comprehensive PRD focused on service enhancement with existing system analysis. SAVE OUTPUT: Copy final prd.md to your project's docs/ folder."
+      notes: "Creates comprehensive PRD focused on service enhancement with existing system analysis. SAVE OUTPUT: Copy final prd.md to your project's docs/internal/ folder."
 
     - agent: architect
       creates: architecture.md
       uses: brownfield-architecture-tmpl
       requires: prd.md
-      notes: "Creates architecture with service integration strategy and API evolution planning. SAVE OUTPUT: Copy final architecture.md to your project's docs/ folder."
+      notes: "Creates architecture with service integration strategy and API evolution planning. SAVE OUTPUT: Copy final architecture.md to your project's docs/internal/ folder."
 
     - agent: po
       validates: all_artifacts
@@ -40,7 +40,7 @@ workflow:
     - agent: various
       updates: any_flagged_documents
       condition: po_checklist_issues
-      notes: "If PO finds issues, return to relevant agent to fix and re-export updated documents to docs/ folder."
+      notes: "If PO finds issues, return to relevant agent to fix and re-export updated documents to docs/internal/ folder."
 
     - agent: po
       action: shard_documents
@@ -48,9 +48,9 @@ workflow:
       requires: all_artifacts_in_project
       notes: |
         Shard documents for IDE development:
-        - Option A: Use PO agent to shard: @po then ask to shard docs/prd.md
-        - Option B: Manual: Drag shard-doc task + docs/prd.md into chat
-        - Creates docs/prd/ and docs/architecture/ folders with sharded content
+        - Option A: Use PO agent to shard: @po then ask to shard docs/internal/prd.md
+        - Option B: Manual: Drag shard-doc task + docs/internal/prd.md into chat
+        - Creates docs/internal/prd/ and docs/internal/architecture/ folders with sharded content
 
     - agent: sm
       action: create_story
@@ -182,7 +182,7 @@ workflow:
 
   handoff_prompts:
     analyst_to_pm: "Service analysis complete. Create comprehensive PRD with service integration strategy."
-    pm_to_architect: "PRD ready. Save it as docs/prd.md, then create the service architecture."
-    architect_to_po: "Architecture complete. Save it as docs/architecture.md. Please validate all artifacts for service integration safety."
+    pm_to_architect: "PRD ready. Save it as docs/internal/prd.md, then create the service architecture."
+    architect_to_po: "Architecture complete. Save it as docs/internal/architecture.md. Please validate all artifacts for service integration safety."
     po_issues: "PO found issues with [document]. Please return to [agent] to fix and re-save the updated document."
-    complete: "All planning artifacts validated and saved in docs/ folder. Move to IDE environment to begin development."
+    complete: "All planning artifacts validated and saved in docs/internal/ folder. Move to IDE environment to begin development."

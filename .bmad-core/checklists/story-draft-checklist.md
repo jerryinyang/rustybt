@@ -8,7 +8,7 @@ The Scrum Master should use this checklist to validate that each story contains 
 
 Before proceeding with this checklist, ensure you have access to:
 
-1. The story document being validated (usually in docs/stories/ or provided directly)
+1. The story document being validated (usually in docs/internal/stories/ or provided directly)
 2. The parent epic context
 3. Any referenced architecture or design documents
 4. Previous related stories if this builds on prior work
@@ -80,7 +80,7 @@ Note: We don't need every file listed - just the important ones.]]
 - [ ] References to external documents point to specific relevant sections
 - [ ] Critical information from previous stories is summarized (not just referenced)
 - [ ] Context is provided for why references are relevant
-- [ ] References use consistent format (e.g., `docs/filename.md#section`)
+- [ ] References use consistent format (e.g., `docs/internal/filename.md#section`)
 
 ## 4. SELF-CONTAINMENT ASSESSMENT
 

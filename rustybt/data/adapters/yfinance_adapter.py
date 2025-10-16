@@ -422,6 +422,10 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
             [pl.col("timestamp").cast(pl.Datetime("us")).alias("timestamp")]
         )
 
+        # Sort by timestamp and symbol to ensure proper ordering
+        # (important for multi-symbol fetches)
+        df_polars = df_polars.sort(["timestamp", "symbol"])
+
         return df_polars
 
     def _log_fetch_success(

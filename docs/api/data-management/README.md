@@ -29,32 +29,30 @@ RustyBT's data management system provides a flexible, high-performance framework
 ## Quick Navigation
 
 ### Data Acquisition
-- **[Data Adapters](adapters/overview.md)** - Fetch data from external sources (crypto exchanges, stock APIs, CSV files)
-  - [CCXT Adapter](adapters/ccxt.md) - 100+ cryptocurrency exchanges
-  - [YFinance Adapter](adapters/yfinance.md) - Stocks, ETFs, indices via Yahoo Finance
-  - [CSV Adapter](adapters/csv.md) - Custom CSV data with flexible schemas
-  - [Polygon Adapter](adapters/polygon.md) - Real-time and historical market data
-  - [Alpaca Adapter](adapters/alpaca.md) - Commission-free trading data
-  - [AlphaVantage Adapter](adapters/alphavantage.md) - Global market data and fundamentals
+- **[Data Adapters](adapters/README.md)** - Fetch data from external sources (crypto exchanges, stock APIs, CSV files)
+  - [CCXT Adapter](adapters/ccxt-adapter.md) - 100+ cryptocurrency exchanges
+  - [YFinance Adapter](adapters/yfinance-adapter.md) - Stocks, ETFs, indices via Yahoo Finance
+  - [CSV Adapter](adapters/csv-adapter.md) - Custom CSV data with flexible schemas
+  - [Polygon Adapter](adapters/polygon-adapter.md) - Real-time and historical market data
+  - [Alpaca Adapter](adapters/alpaca-adapter.md) - Commission-free trading data
+  - [AlphaVantage Adapter](adapters/alphavantage-adapter.md) - Global market data and fundamentals
 
 ### Data Storage & Management
-- **[Data Catalog](catalog/bundles.md)** - Central registry for data bundles and metadata
-  - [Bundles](catalog/bundles.md) - Creating and managing data bundles
-  - [Migration](catalog/migration.md) - Migrating from HDF5/bcolz to Parquet
+- **[Data Catalog](catalog/README.md)** - Central registry for data bundles and metadata
+  - [Bundles](catalog/bundle-system.md) - Creating and managing data bundles
+  - [Migration](catalog/migration-guide.md) - Migrating from HDF5/bcolz to Parquet
 
 ### Data Access
-- **[Data Readers](readers/data-portal.md)** - Reading and accessing stored data
+- **[Data Readers](readers/README.md)** - Reading and accessing stored data
   - [Data Portal](readers/data-portal.md) - Unified data access interface
-  - [Bar Readers](readers/bar-readers.md) - Daily, minute, and tick data readers
-  - [History Loader](readers/history-loader.md) - Efficient historical data loading
-  - [Continuous Futures](readers/continuous-futures.md) - Continuous contract construction
+  - [Polars Data Portal](readers/polars-data-portal.md) - Modern Decimal-precision portal
+  - [Bar Readers](readers/bar-reader.md) - Daily, minute, and tick data readers
+  - [Daily Bar Readers](readers/daily-bars.md) - Daily frequency data readers
 
 ### Feature Engineering
-- **[Pipeline System](pipeline/overview.md)** - Building computational graphs for features
-  - [Factors](pipeline/factors.md) - Numerical computations and indicators
-  - [Filters](pipeline/filters.md) - Boolean selection and screening
-  - [Loaders](pipeline/loaders.md) - Custom data loading for pipeline
-  - [Expressions](pipeline/expressions.md) - Combining and transforming pipeline terms
+- **[Pipeline System](pipeline/README.md)** - Building computational graphs for features
+  - [Data Ingestion Pipeline](pipeline/README.md) - Data fetching and validation pipeline
+  - [Computation Pipeline](../computation/pipeline-api.md) - Factors, filters, loaders, and expressions
 
 ### Performance Optimization
 - **Performance (Coming soon)** - Optimization strategies
@@ -74,7 +72,7 @@ RustyBT supports multiple data storage formats:
 | **HDF5** | ⚡⚡ Medium | ⚡ Slow | ⚡⚡ Good | ⚡ Limited | Supported |
 | **bcolz** | ⚡⚡ Medium | ⚡⚡ Medium | ⚡⚡ Good | ❌ None | Legacy |
 
-**Recommendation**: Use Parquet for new projects. See [Migration Guide](catalog/migration.md) for converting existing data.
+**Recommendation**: Use Parquet for new projects. See [Migration Guide](catalog/migration-guide.md) for converting existing data.
 
 ### Data Resolution
 
@@ -263,9 +261,9 @@ adapters:
 
 ## Next Steps
 
-1. **New to RustyBT?** Start with [Data Adapters](adapters/overview.md)
-2. **Migrating from Zipline?** See [Migration Guide](catalog/migration.md)
-3. **Building Features?** Check out [Pipeline System](pipeline/overview.md)
+1. **New to RustyBT?** Start with [Data Adapters](adapters/README.md)
+2. **Migrating from Zipline?** See [Migration Guide](catalog/migration-guide.md)
+3. **Building Features?** Check out [Data Ingestion Pipeline](pipeline/README.md) or [Computation Pipeline](../computation/pipeline-api.md)
 4. **Performance Issues?** Read Optimization Guide (Coming soon)
 
 ## Support & Resources

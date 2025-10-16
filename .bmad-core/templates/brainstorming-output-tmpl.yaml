@@ -4,7 +4,7 @@ template:
   version: 2.0
   output:
     format: markdown
-    filename: docs/brainstorming-session-results.md
+    filename: docs/internal/brainstorming-session-results.md
     title: "Brainstorming Session Results"
 
 workflow:

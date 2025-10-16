@@ -89,9 +89,9 @@ required:
 
 ### 4. Standards Compliance Check
 
-- Verify adherence to `docs/coding-standards.md`
-- Check compliance with `docs/unified-project-structure.md`
-- Validate testing approach against `docs/testing-strategy.md`
+- Verify adherence to `docs/internal/coding-standards.md`
+- Check compliance with `docs/internal/unified-project-structure.md`
+- Validate testing approach against `docs/internal/testing-strategy.md`
 - Ensure all guidelines mentioned in the story are followed
 
 ### 5. Acceptance Criteria Validation

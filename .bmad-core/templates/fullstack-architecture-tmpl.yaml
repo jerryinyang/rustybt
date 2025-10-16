@@ -5,7 +5,7 @@ template:
   version: 2.0
   output:
     format: markdown
-    filename: docs/architecture.md
+    filename: docs/internal/architecture.md
     title: "{{project_name}} Fullstack Architecture Document"
 
 workflow:
@@ -16,7 +16,7 @@ sections:
   - id: introduction
     title: Introduction
     instruction: |
-      If available, review any provided relevant documents to gather all relevant context before beginning. At minimum, you should have access to docs/prd.md and docs/front-end-spec.md. Ask the user for any documents you need but cannot locate. This template creates a unified architecture that covers both backend and frontend concerns to guide AI-driven fullstack development.
+      If available, review any provided relevant documents to gather all relevant context before beginning. At minimum, you should have access to docs/internal/prd.md and docs/internal/front-end-spec.md. Ask the user for any documents you need but cannot locate. This template creates a unified architecture that covers both backend and frontend concerns to guide AI-driven fullstack development.
     elicit: true
     content: |
       This document outlines the complete fullstack architecture for {{project_name}}, including backend systems, frontend implementation, and their integration. It serves as the single source of truth for AI-driven development, ensuring consistency across the entire technology stack.
@@ -553,7 +553,7 @@ sections:
         ├── infrastructure/             # IaC definitions
         │   └── {{iac_structure}}
         ├── scripts/                    # Build/deploy scripts
-        ├── docs/                       # Documentation
+        ├── docs/internal/                       # Documentation
         │   ├── prd.md
         │   ├── front-end-spec.md
         │   └── fullstack-architecture.md

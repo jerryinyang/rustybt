@@ -13,7 +13,7 @@ Generate a comprehensive risk assessment matrix for a story implementation using
 ```yaml
 required:
   - story_id: '{epic}.{story}' # e.g., "1.3"
-  - story_path: 'docs/stories/{epic}.{story}.*.md'
+  - story_path: 'docs/internal/stories/{epic}.{story}.*.md'
   - story_title: '{title}' # If missing, derive from story file H1
   - story_slug: '{slug}' # If missing, derive from title (lowercase, hyphenated)
 ```

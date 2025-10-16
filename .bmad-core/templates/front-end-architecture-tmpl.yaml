@@ -5,7 +5,7 @@ template:
   version: 2.0
   output:
     format: markdown
-    filename: docs/ui-architecture.md
+    filename: docs/internal/ui-architecture.md
     title: "{{project_name}} Frontend Architecture Document"
 
 workflow:

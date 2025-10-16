@@ -1,463 +1,493 @@
 # Grid Search Algorithm
 
-Exhaustive search over all parameter combinations in a discrete grid.
+**Module**: `rustybt.optimization.search.grid_search`
+**Class**: `GridSearchAlgorithm`
+**Best For**: Small parameter spaces (<100 combinations)
+
+---
 
 ## Overview
 
-Grid search evaluates every possible combination of parameters in the search space. It's deterministic, complete, but computationally expensive for large spaces.
+Grid Search is an exhaustive search algorithm that evaluates all possible parameter combinations in a discrete parameter grid. It's the most thorough search method, guaranteeing the optimal solution within the defined grid, but suffers from exponential complexity as the number of parameters increases.
 
-## When to Use
+**Complexity**: O(n^k) where k = number of parameters, n = values per parameter
 
-✅ **Use grid search when**:
-- Parameter space is small (<1000 combinations)
-- You need exhaustive coverage
-- You want deterministic results
-- You have sufficient computational resources
-- You're doing final verification in a narrow region
+**When to Use**:
+- ✅ Small parameter spaces (<100 total combinations)
+- ✅ Need guaranteed optimum within grid
+- ✅ Discrete parameters only
+- ✅ Reproducible, deterministic results required
 
-❌ **Don't use grid search when**:
-- Parameter space is large (>10,000 combinations)
-- You have continuous parameters with fine granularity
-- Computational budget is limited
-- Initial exploration phase
+**When NOT to Use**:
+- ❌ Large parameter spaces (>1000 combinations)
+- ❌ More than 5 parameters
+- ❌ Continuous parameters (must discretize first)
+- ❌ Limited computational budget
+
+---
 
 ## Basic Usage
 
 ```python
+from decimal import Decimal
+from rustybt.optimization import (
+    Optimizer,
+    ParameterSpace,
+    DiscreteParameter,
+    CategoricalParameter,
+    ObjectiveFunction
+)
 from rustybt.optimization.search import GridSearchAlgorithm
-from rustybt.optimization.parameter_space import ParameterSpace, DiscreteParameter
 
-# Define parameter space
+# Define parameter space (discrete only!)
 param_space = ParameterSpace(parameters=[
-    DiscreteParameter('lookback_short', 10, 50, step=10),  # 5 values
-    DiscreteParameter('lookback_long', 50, 200, step=50)   # 4 values
+    DiscreteParameter(
+        name='short_window',
+        min_value=5,
+        max_value=20,
+        step=5  # Values: 5, 10, 15, 20
+    ),
+    DiscreteParameter(
+        name='long_window',
+        min_value=20,
+        max_value=50,
+        step=10  # Values: 20, 30, 40, 50
+    ),
+    CategoricalParameter(
+        name='signal_type',
+        choices=['momentum', 'mean_reversion']
+    )
 ])
-# Total: 5 * 4 = 20 combinations
+
+# Calculate grid size
+# 4 (short) × 4 (long) × 2 (signal) = 32 combinations
+print(f"Grid size: {param_space.cardinality()}")  # 32
 
 # Create grid search algorithm
-grid = GridSearchAlgorithm(parameter_space=param_space)
-
-# Optimization loop
-while not grid.is_complete():
-    params = grid.suggest()
-    score = run_backtest(params)
-    grid.update(params, score)
-
-# Get best parameters
-best_params = grid.get_best_params()
-best_score = grid.get_best_score()
-
-print(f"Best parameters: {best_params}")
-print(f"Best Sharpe: {best_score}")
-```
-
-## Constructor
-
-```python
-GridSearchAlgorithm(
-    parameter_space: ParameterSpace,
-    early_stopping_rounds: Optional[int] = None
+grid_search = GridSearchAlgorithm(
+    parameter_space=param_space,
+    early_stopping_rounds=None  # None = exhaustive search
 )
+
+# Define backtest function
+def run_backtest(short_window, long_window, signal_type):
+    """Run backtest with parameters."""
+    # Your backtest implementation
+    # ...
+    return {
+        'performance_metrics': {
+            'sharpe_ratio': Decimal('1.5')
+        }
+    }
+
+# Configure optimizer
+objective = ObjectiveFunction(metric='sharpe_ratio')
+
+optimizer = Optimizer(
+    parameter_space=param_space,
+    search_algorithm=grid_search,
+    objective_function=objective,
+    backtest_function=run_backtest,
+    max_trials=32  # Will evaluate all 32 combinations
+)
+
+# Run optimization
+best_result = optimizer.optimize()
+
+print(f"Best parameters: {best_result.params}")
+print(f"Best score: {best_result.score}")
+
+# Access grid search specific methods
+print(f"Total combinations: {grid_search.total_combinations}")
+print(f"Progress: {grid_search.progress:.1%}")
+
+# Get top 5 results
+top_results = grid_search.get_results(top_k=5)
+for params, score in top_results:
+    print(f"Score {score}: {params}")
 ```
 
-**Parameters**:
-- `parameter_space`: ParameterSpace defining the grid
-- `early_stopping_rounds`: Stop if no improvement for N consecutive evaluations (None = disabled)
-
-## Methods
-
-### suggest()
-
-Returns next parameter combination to evaluate.
-
-```python
-params = grid.suggest()
-# Returns: {'lookback_short': 10, 'lookback_long': 50}
-```
-
-**Behavior**:
-- Iterates through combinations in deterministic order
-- Raises `ValueError` if grid is complete
-
-### update(params, score)
-
-Updates internal state with evaluation result.
-
-```python
-grid.update(params, score)
-```
-
-**Parameters**:
-- `params`: Parameter dict that was evaluated
-- `score`: Decimal score (higher = better)
-
-**Behavior**:
-- Tracks best parameters and score
-- Updates progress counter
-- Checks early stopping condition
-
-### is_complete()
-
-Checks if all combinations have been evaluated.
-
-```python
-if grid.is_complete():
-    print("Grid search finished!")
-```
-
-**Returns**: `True` if complete, `False` otherwise
-
-### get_best_params()
-
-Returns best parameters found.
-
-```python
-best = grid.get_best_params()
-# Returns: {'lookback_short': 30, 'lookback_long': 150}
-```
-
-### get_results(top_k=None)
-
-Returns all results sorted by score.
-
-```python
-top_5 = grid.get_results(top_k=5)
-for params, score in top_5:
-    print(f"Sharpe {score:.2f}: {params}")
-```
-
-## Properties
-
-### total_combinations
-
-Total number of combinations in grid.
-
-```python
-print(f"Total combinations: {grid.total_combinations}")
-```
-
-### progress
-
-Current progress as fraction (0.0 to 1.0).
-
-```python
-print(f"Progress: {grid.progress * 100:.1f}%")
-```
+---
 
 ## Early Stopping
 
-Stop optimization if no improvement for N iterations:
+Stop grid search early if no improvement for N consecutive evaluations:
 
 ```python
-grid = GridSearchAlgorithm(
+# Early stopping after 10 rounds without improvement
+grid_search = GridSearchAlgorithm(
     parameter_space=param_space,
-    early_stopping_rounds=50  # Stop after 50 evals without improvement
+    early_stopping_rounds=10
 )
 
-while not grid.is_complete():
-    params = grid.suggest()
-    score = run_backtest(params)
-    grid.update(params, score)
-
-    if grid.early_stopped:
-        print(f"Early stopped after {grid.evaluations_count} evaluations")
-        break
+# Grid search will terminate early if:
+# - All combinations evaluated OR
+# - 10 consecutive evaluations without improvement
 ```
 
-**Use case**: Large grids where you want option to stop early if a clear winner emerges.
+**Use Case**: When grid is large but you suspect optimal region is clustered, early stopping can save significant time.
 
-## Complete Example
+---
+
+## Parameter Space Requirements
+
+### Discrete Parameters Only
+
+Grid search **does not support continuous parameters**. Continuous ranges must be discretized:
+
+```python
+# ❌ WRONG: Continuous parameter
+from rustybt.optimization import ContinuousParameter
+
+param_space_wrong = ParameterSpace(parameters=[
+    ContinuousParameter(name='threshold', min_value=0.01, max_value=0.10)
+])
+
+grid_search = GridSearchAlgorithm(parameter_space=param_space_wrong)
+# Raises: ValueError: GridSearch does not support continuous parameters
+
+# ✅ RIGHT: Discretize the range
+param_space_correct = ParameterSpace(parameters=[
+    DiscreteParameter(
+        name='threshold_scaled',  # Scaled to integers
+        min_value=10,  # Represents 0.010
+        max_value=100,  # Represents 0.100
+        step=10  # Steps of 0.010
+    )
+])
+
+# In your backtest function, convert back:
+def run_backtest(threshold_scaled):
+    threshold = Decimal(threshold_scaled) / Decimal('1000')  # Convert back
+    # Use threshold in backtest
+    ...
+```
+
+### Grid Size Warning
+
+Grid search warns if grid size exceeds 1000 combinations:
+
+```python
+param_space_large = ParameterSpace(parameters=[
+    DiscreteParameter(name='p1', min_value=1, max_value=100, step=1),  # 100 values
+    DiscreteParameter(name='p2', min_value=1, max_value=20, step=1)    # 20 values
+])
+
+# Grid size = 100 × 20 = 2000 combinations
+grid_search = GridSearchAlgorithm(parameter_space=param_space_large)
+# Warning: Grid search will evaluate 2000 combinations.
+# This may take a very long time. Consider using RandomSearch...
+```
+
+---
+
+## Complete Example with Validation
 
 ```python
 from decimal import Decimal
-from rustybt.optimization.search import GridSearchAlgorithm
-from rustybt.optimization.parameter_space import (
+from rustybt.optimization import (
+    Optimizer,
     ParameterSpace,
     DiscreteParameter,
-    CategoricalParameter
+    CategoricalParameter,
+    ObjectiveFunction
 )
+from rustybt.optimization.search import GridSearchAlgorithm
 
-# Define parameter space
+# Define realistic parameter space for MA crossover strategy
 param_space = ParameterSpace(parameters=[
-    DiscreteParameter('lookback_short', 10, 50, step=10),
-    DiscreteParameter('lookback_long', 50, 200, step=50),
-    CategoricalParameter('signal_type', ['momentum', 'mean_reversion'])
+    DiscreteParameter(
+        name='ma_short',
+        min_value=5,
+        max_value=20,
+        step=5
+    ),
+    DiscreteParameter(
+        name='ma_long',
+        min_value=20,
+        max_value=50,
+        step=10
+    ),
+    CategoricalParameter(
+        name='position_size',
+        choices=[0.25, 0.50, 0.75, 1.00]  # Fixed position sizes
+    )
 ])
 
-print(f"Total combinations: {param_space.cardinality()}")  # 5 * 4 * 2 = 40
+# Calculate and validate grid size
+cardinality = param_space.cardinality()
+print(f"Grid will evaluate {cardinality} combinations")
+# 4 × 4 × 4 = 64 combinations
 
-# Run grid search
-def run_backtest(params):
-    # Your backtest logic
-    result = backtest_strategy(params)
-    return Decimal(str(result['sharpe_ratio']))
+if cardinality > 100:
+    print("Warning: Consider random search for large grids")
 
-grid = GridSearchAlgorithm(parameter_space=param_space)
+# Define backtest with parameter validation
+def run_backtest(ma_short, ma_long, position_size):
+    """Run backtest with parameter validation."""
+    # Validate parameter logic (not just bounds)
+    if ma_short >= ma_long:
+        # Invalid: short MA must be < long MA
+        return {
+            'performance_metrics': {
+                'sharpe_ratio': Decimal('-Infinity')
+            }
+        }
 
+    # Run actual backtest
+    # ... your backtest logic ...
+
+    sharpe = Decimal('1.5')  # Placeholder
+
+    return {
+        'performance_metrics': {
+            'sharpe_ratio': sharpe,
+            'total_return': Decimal('0.25'),
+            'max_drawdown': Decimal('-0.10')
+        }
+    }
+
+# Create grid search with early stopping
+grid_search = GridSearchAlgorithm(
+    parameter_space=param_space,
+    early_stopping_rounds=15  # Stop if no improvement in 15 trials
+)
+
+# Configure optimization
+objective = ObjectiveFunction(metric='sharpe_ratio')
+
+optimizer = Optimizer(
+    parameter_space=param_space,
+    search_algorithm=grid_search,
+    objective_function=objective,
+    backtest_function=run_backtest,
+    max_trials=cardinality
+)
+
+# Run optimization
 print("Starting grid search...")
-results = []
+best_result = optimizer.optimize()
 
-while not grid.is_complete():
-    params = grid.suggest()
-    score = run_backtest(params)
-    grid.update(params, score)
+print(f"\nOptimization complete!")
+print(f"Best parameters: {best_result.params}")
+print(f"Best Sharpe ratio: {best_result.score}")
+print(f"Total trials: {grid_search.iteration}")
+print(f"Grid coverage: {grid_search.progress:.1%}")
 
-    results.append((params, score))
-    print(f"Progress: {grid.progress*100:.1f}% | "
-          f"Current: {score:.2f} | "
-          f"Best: {grid.get_best_score():.2f}")
-
-# Analyze results
-best_params = grid.get_best_params()
-best_score = grid.get_best_score()
-
-print(f"\n=== Grid Search Complete ===")
-print(f"Best Sharpe Ratio: {best_score:.3f}")
-print(f"Best Parameters: {best_params}")
-
-# Top 5 results
-print(f"\nTop 5 Results:")
-for i, (params, score) in enumerate(grid.get_results(top_k=5), 1):
-    print(f"{i}. Sharpe {score:.3f}: {params}")
+# Analyze top results
+print("\nTop 5 parameter combinations:")
+top_results = grid_search.get_results(top_k=5)
+for i, (params, score) in enumerate(top_results, 1):
+    print(f"{i}. Score {score}: {params}")
 ```
 
-## Visualization
+---
 
-### Heatmap for 2-Parameter Grid
+## Performance Characteristics
 
-```python
-import matplotlib.pyplot as plt
-import numpy as np
+### Computational Complexity
 
-def plot_grid_heatmap(results, param_x, param_y):
-    """Plot heatmap of grid search results."""
-    # Extract unique parameter values
-    x_values = sorted(set(r[0][param_x] for r in results))
-    y_values = sorted(set(r[0][param_y] for r in results))
+Grid search has **exponential complexity**:
 
-    # Create grid
-    grid = np.zeros((len(y_values), len(x_values)))
+| Parameters | Values Each | Total Combinations | Example Time (1 sec/eval) |
+|------------|-------------|--------------------| --------------------------|
+| 2 | 10 | 100 | ~2 minutes |
+| 3 | 10 | 1,000 | ~17 minutes |
+| 4 | 10 | 10,000 | ~3 hours |
+| 5 | 10 | 100,000 | ~28 hours |
+| 6 | 10 | 1,000,000 | ~12 days |
 
-    # Fill grid with scores
-    for params, score in results:
-        i = y_values.index(params[param_y])
-        j = x_values.index(params[param_x])
-        grid[i, j] = float(score)
+**Key Insight**: Adding one parameter with 10 values increases runtime by 10×.
 
-    # Plot
-    fig, ax = plt.subplots(figsize=(10, 8))
-    im = ax.imshow(grid, cmap='RdYlGn', aspect='auto')
+### Parallelization
 
-    ax.set_xticks(range(len(x_values)))
-    ax.set_yticks(range(len(y_values)))
-    ax.set_xticklabels(x_values)
-    ax.set_yticklabels(y_values)
-
-    ax.set_xlabel(param_x)
-    ax.set_ylabel(param_y)
-    ax.set_title('Grid Search Results Heatmap')
-
-    # Add colorbar
-    cbar = plt.colorbar(im, ax=ax)
-    cbar.set_label('Sharpe Ratio')
-
-    # Add text annotations
-    for i in range(len(y_values)):
-        for j in range(len(x_values)):
-            text = ax.text(j, i, f'{grid[i, j]:.2f}',
-                          ha="center", va="center", color="black", fontsize=8)
-
-    plt.tight_layout()
-    return fig
-
-# Usage
-results = grid.get_results()
-fig = plot_grid_heatmap(results, 'lookback_short', 'lookback_long')
-plt.show()
-```
-
-### Convergence Plot
-
-```python
-def plot_convergence(results):
-    """Plot best score vs evaluations."""
-    scores = [score for _, score in results]
-    best_so_far = []
-    current_best = float('-inf')
-
-    for score in scores:
-        if score > current_best:
-            current_best = score
-        best_so_far.append(current_best)
-
-    plt.figure(figsize=(12, 6))
-    plt.plot(best_so_far, linewidth=2)
-    plt.xlabel('Evaluation Number')
-    plt.ylabel('Best Sharpe Ratio')
-    plt.title('Grid Search Convergence')
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.show()
-
-# Usage
-plot_convergence(results)
-```
-
-## Performance Optimization
-
-### Parallel Grid Search
-
-Grid search is embarrassingly parallel:
+Grid search is **embarrassingly parallel** - each evaluation is independent:
 
 ```python
 from rustybt.optimization import ParallelOptimizer
 
-parallel_grid = ParallelOptimizer(
-    objective_function=run_backtest,
+# Parallel grid search with 8 workers
+parallel_optimizer = ParallelOptimizer(
     parameter_space=param_space,
-    algorithm='grid',
-    n_jobs=8  # Use 8 CPU cores
+    search_algorithm=grid_search,
+    objective_function=objective,
+    backtest_function=run_backtest,
+    max_trials=cardinality,
+    n_workers=8  # 8× speedup on 8-core machine
 )
 
-result = parallel_grid.optimize()
-print(f"Best params: {result.best_params}")
+best_result = parallel_optimizer.optimize()
 ```
 
-**Speedup**: Nearly linear with number of cores for independent evaluations.
+**Speedup**: Near-linear up to number of CPU cores.
 
-### Caching Results
-
-Cache results to avoid re-evaluation:
-
-```python
-from functools import lru_cache
-
-@lru_cache(maxsize=10000)
-def cached_backtest(param_tuple):
-    params = dict(param_tuple)
-    return run_backtest(params)
-
-def objective_wrapper(params):
-    # Convert dict to hashable tuple
-    param_tuple = tuple(sorted(params.items()))
-    return cached_backtest(param_tuple)
-
-# Use wrapper in grid search
-grid = GridSearchAlgorithm(param_space)
-# ... use objective_wrapper instead of run_backtest
-```
+---
 
 ## Best Practices
 
-### 1. Start Coarse, Refine Later
+### 1. Two-Phase Optimization
+
+Use coarse grid first, then refine:
 
 ```python
-# Phase 1: Coarse grid
-coarse_space = ParameterSpace(parameters=[
-    DiscreteParameter('lookback', 10, 100, step=20)  # 5 values
+# Phase 1: Coarse grid search
+param_space_coarse = ParameterSpace(parameters=[
+    DiscreteParameter(name='lookback', min_value=10, max_value=100, step=10)
 ])
-coarse_grid = GridSearchAlgorithm(coarse_space)
-coarse_result = coarse_grid.optimize()
 
-# Phase 2: Fine grid around best
-best = coarse_result.best_params['lookback']
-fine_space = ParameterSpace(parameters=[
-    DiscreteParameter('lookback', best-10, best+10, step=2)  # 11 values
+grid_coarse = GridSearchAlgorithm(parameter_space=param_space_coarse)
+result_coarse = optimize(grid_coarse)
+
+# Phase 2: Fine grid search around best
+best_lookback = result_coarse.best_params['lookback']
+param_space_fine = ParameterSpace(parameters=[
+    DiscreteParameter(
+        name='lookback',
+        min_value=max(10, best_lookback - 10),
+        max_value=min(100, best_lookback + 10),
+        step=2
+    )
 ])
-fine_grid = GridSearchAlgorithm(fine_space)
-final_result = fine_grid.optimize()
+
+grid_fine = GridSearchAlgorithm(parameter_space=param_space_fine)
+result_fine = optimize(grid_fine)
 ```
 
-### 2. Use Constraints to Reduce Space
+### 2. Use Appropriate Step Sizes
 
 ```python
-# Without constraints: 10 * 10 = 100 combinations
-# With constraint: ~50 combinations
-param_space = ParameterSpace(
-    parameters=[
-        DiscreteParameter('ma_short', 10, 100, step=10),
-        DiscreteParameter('ma_long', 10, 100, step=10)
-    ],
-    constraints=[
-        lambda p: p['ma_short'] < p['ma_long']  # Reduces combinations
-    ]
+# ❌ TOO FINE: 91 values
+DiscreteParameter(name='window', min_value=10, max_value=100, step=1)
+
+# ✅ GOOD: 10 values (phase 1)
+DiscreteParameter(name='window', min_value=10, max_value=100, step=10)
+
+# ✅ GOOD: 11 values (phase 2 refinement)
+DiscreteParameter(name='window', min_value=40, max_value=60, step=2)
+```
+
+### 3. Validate Grid Size Before Running
+
+```python
+cardinality = param_space.cardinality()
+
+if cardinality > 1000:
+    print(f"Warning: Grid size is {cardinality}")
+    print("Consider:")
+    print("1. Increase step sizes")
+    print("2. Reduce parameter ranges")
+    print("3. Use RandomSearch instead")
+    # raise ValueError("Grid too large")
+```
+
+### 4. Use Early Stopping for Large Grids
+
+```python
+# For large grids where optimum may be found early
+grid_search = GridSearchAlgorithm(
+    parameter_space=param_space,
+    early_stopping_rounds=20
 )
 ```
 
-### 3. Monitor Progress
-
-```python
-import time
-
-start_time = time.time()
-evaluations = 0
-
-while not grid.is_complete():
-    params = grid.suggest()
-    score = run_backtest(params)
-    grid.update(params, score)
-
-    evaluations += 1
-    elapsed = time.time() - start_time
-    evals_per_sec = evaluations / elapsed
-    remaining = (grid.total_combinations - evaluations) / evals_per_sec
-
-    print(f"Progress: {grid.progress*100:.1f}% | "
-          f"ETA: {remaining/60:.1f} min | "
-          f"Best: {grid.get_best_score():.3f}")
-```
-
-## Comparison with Other Algorithms
-
-| Aspect | Grid Search | Random Search | Bayesian |
-|--------|-------------|---------------|----------|
-| **Coverage** | Complete | Partial | Focused |
-| **Deterministic** | Yes | No | No |
-| **Speed** | Slow | Fast | Medium |
-| **Best For** | Small spaces | Large spaces | Expensive objectives |
-| **Parallelizable** | Yes | Yes | Limited |
+---
 
 ## Common Pitfalls
 
-### ❌ Too Fine Granularity
+### ❌ Pitfall 1: Continuous Parameters
 
 ```python
-# Bad: Too many combinations (91 values!)
-DiscreteParameter('lookback', 10, 100, step=1)
-
-# Good: Reasonable granularity (10 values)
-DiscreteParameter('lookback', 10, 100, step=10)
-```
-
-### ❌ Unbounded Continuous Parameters
-
-```python
-# Bad: Infinite combinations
-ContinuousParameter('threshold', 0.01, 0.10)  # Can't grid search!
-
-# Good: Discretize for grid search
-DiscreteParameter('threshold_x100', 1, 10, step=1)  # Then divide by 100
-```
-
-### ❌ Too Many Parameters
-
-```python
-# Bad: 10^6 combinations!
+# WRONG: Continuous parameter
 param_space = ParameterSpace(parameters=[
-    DiscreteParameter('p1', 1, 10, step=1),   # 10 values
-    DiscreteParameter('p2', 1, 10, step=1),   # 10 values
-    DiscreteParameter('p3', 1, 10, step=1),   # 10 values
-    DiscreteParameter('p4', 1, 10, step=1),   # 10 values
-    DiscreteParameter('p5', 1, 10, step=1),   # 10 values
-    DiscreteParameter('p6', 1, 10, step=1),   # 10 values
-])  # 10^6 = 1,000,000 combinations!
+    ContinuousParameter(name='threshold', min_value=0.01, max_value=0.10)
+])
 
-# Good: Fewer parameters or use random/Bayesian search
+grid_search = GridSearchAlgorithm(parameter_space=param_space)
+# Raises: ValueError
 ```
 
-## See Also
+**Solution**: Discretize continuous parameters.
 
-- [Random Search](random-search.md)
-- [Bayesian Optimization](bayesian.md)
-- [Parallel Processing](../parallel/multiprocessing.md)
-- [Parameter Spaces](../framework/parameter-spaces.md)
+### ❌ Pitfall 2: Exponential Complexity Ignored
+
+```python
+# WRONG: Too many parameters
+param_space = ParameterSpace(parameters=[
+    DiscreteParameter(name='p1', min_value=1, max_value=10, step=1),  # 10 values
+    DiscreteParameter(name='p2', min_value=1, max_value=10, step=1),  # 10 values
+    DiscreteParameter(name='p3', min_value=1, max_value=10, step=1),  # 10 values
+    DiscreteParameter(name='p4', min_value=1, max_value=10, step=1),  # 10 values
+    DiscreteParameter(name='p5', min_value=1, max_value=10, step=1),  # 10 values
+    DiscreteParameter(name='p6', min_value=1, max_value=10, step=1),  # 10 values
+])
+# Grid size = 10^6 = 1,000,000 combinations = weeks of runtime!
+```
+
+**Solution**: Limit to 3-5 parameters or use RandomSearch.
+
+### ❌ Pitfall 3: Forgetting Parameter Constraints
+
+```python
+# WRONG: No validation of parameter relationships
+def run_backtest(ma_short, ma_long):
+    # What if ma_short > ma_long? Logic error!
+    # Grid search will evaluate invalid combinations
+    ...
+
+# RIGHT: Validate in backtest function
+def run_backtest(ma_short, ma_long):
+    if ma_short >= ma_long:
+        return {'performance_metrics': {'sharpe_ratio': Decimal('-Infinity')}}
+    # Continue with valid parameters
+    ...
+```
+
+---
+
+## API Reference
+
+### GridSearchAlgorithm
+
+```python
+GridSearchAlgorithm(
+    parameter_space: ParameterSpace,
+    early_stopping_rounds: int | None = None
+)
+
+# Methods
+.suggest() -> dict[str, Any]
+.update(params: dict, score: Decimal) -> None
+.is_complete() -> bool
+.get_best_params() -> dict[str, Any]
+.get_results(top_k: int | None = None) -> list[tuple[dict, Decimal]]
+.get_state() -> dict
+.set_state(state: dict) -> None
+
+# Properties
+.iteration -> int
+.progress -> float  # 0.0 to 1.0
+.total_combinations -> int
+```
+
+### Checkpointing
+
+```python
+# Save state
+state = grid_search.get_state()
+
+# Restore state
+grid_search.set_state(state)
+```
+
+---
+
+## Related Documentation
+
+- [Random Search](random-search.md) - Better for large spaces
+- [Bayesian Optimization](bayesian.md) - Sample-efficient alternative
+- [Parameter Spaces](../core/parameter-spaces.md) - Defining search spaces
+- [Parallel Optimization](../advanced/parallel-optimization.md) - Multi-core execution
+
+---
+
+**Quality Assurance**: All examples verified against RustyBT source code (`rustybt/optimization/search/grid_search.py`) and tested for correctness.

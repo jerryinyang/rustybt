@@ -1,23 +1,23 @@
 markdownExploder: true
 qa:
-  qaLocation: docs/qa
+  qaLocation: docs/internal/qa
 prd:
-  prdFile: docs/prd.md
+  prdFile: docs/internal/prd.md
   prdVersion: v4
   prdSharded: true
-  prdShardedLocation: docs/prd
+  prdShardedLocation: docs/internal/prd
   epicFilePattern: epic-{n}*.md
 architecture:
-  architectureFile: docs/architecture.md
+  architectureFile: docs/internal/architecture.md
   architectureVersion: v4
   architectureSharded: true
-  architectureShardedLocation: docs/architecture
+  architectureShardedLocation: docs/internal/architecture
 customTechnicalDocuments: null
 devLoadAlwaysFiles:
-  - docs/architecture/coding-standards.md
-  - docs/architecture/tech-stack.md
-  - docs/architecture/source-tree.md
-  - docs/architecture/zero-mock-enforcement.md
+  - docs/internal/architecture/coding-standards.md
+  - docs/internal/architecture/tech-stack.md
+  - docs/internal/architecture/source-tree.md
+  - docs/internal/architecture/zero-mock-enforcement.md
 devDebugLog: .ai/debug-log.md
-devStoryLocation: docs/stories
+devStoryLocation: docs/internal/stories
 slashPrefix: BMad

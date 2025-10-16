@@ -11,7 +11,7 @@ This is a simple step-by-step guide to help you efficiently manage your developm
 1. **Start new chat/conversation**
 2. **Load SM agent**
 3. **Execute**: `*draft` (runs create-next-story task)
-4. **Review generated story** in `docs/stories/`
+4. **Review generated story** in `docs/internal/stories/`
 5. **Update status**: Change from "Draft" to "Approved"
 
 ## Story Implementation (Developer)
@@ -31,12 +31,12 @@ The Test Architect (Quinn) provides comprehensive quality assurance throughout t
 
 | **Stage**                | **Command** | **Purpose**                             | **Output**                                                      | **Priority**                |
 | ------------------------ | ----------- | --------------------------------------- | --------------------------------------------------------------- | --------------------------- |
-| **After Story Approval** | `*risk`     | Identify integration & regression risks | `docs/qa/assessments/{epic}.{story}-risk-{YYYYMMDD}.md`         | High for complex/brownfield |
-|                          | `*design`   | Create test strategy for dev            | `docs/qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md`  | High for new features       |
-| **During Development**   | `*trace`    | Verify test coverage                    | `docs/qa/assessments/{epic}.{story}-trace-{YYYYMMDD}.md`        | Medium                      |
-|                          | `*nfr`      | Validate quality attributes             | `docs/qa/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md`          | High for critical features  |
-| **After Development**    | `*review`   | Comprehensive assessment                | QA Results in story + `docs/qa/gates/{epic}.{story}-{slug}.yml` | **Required**                |
-| **Post-Review**          | `*gate`     | Update quality decision                 | Updated `docs/qa/gates/{epic}.{story}-{slug}.yml`               | As needed                   |
+| **After Story Approval** | `*risk`     | Identify integration & regression risks | `docs/internal/qa/assessments/{epic}.{story}-risk-{YYYYMMDD}.md`         | High for complex/brownfield |
+|                          | `*design`   | Create test strategy for dev            | `docs/internal/qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md`  | High for new features       |
+| **During Development**   | `*trace`    | Verify test coverage                    | `docs/internal/qa/assessments/{epic}.{story}-trace-{YYYYMMDD}.md`        | Medium                      |
+|                          | `*nfr`      | Validate quality attributes             | `docs/internal/qa/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md`          | High for critical features  |
+| **After Development**    | `*review`   | Comprehensive assessment                | QA Results in story + `docs/internal/qa/gates/{epic}.{story}-{slug}.yml` | **Required**                |
+| **Post-Review**          | `*gate`     | Update quality decision                 | Updated `docs/internal/qa/gates/{epic}.{story}-{slug}.yml`               | As needed                   |
 
 ### Stage 1: After Story Creation (Before Dev Starts)
 
@@ -116,7 +116,7 @@ The Test Architect (Quinn) provides comprehensive quality assurance throughout t
    - Regression test adequacy
 
 4. **Gate Decision**
-   - Creates: `docs/qa/gates/{epic}.{story}-{slug}.yml`
+   - Creates: `docs/internal/qa/gates/{epic}.{story}-{slug}.yml`
    - Adds: QA Results section to story file
    - Status: PASS/CONCERNS/FAIL/WAIVED
 
@@ -197,8 +197,8 @@ Quinn ensures all tests meet these standards:
 
 All Test Architect activities create permanent records:
 
-- **Assessment Reports**: Timestamped analysis in `docs/qa/assessments/`
-- **Gate Files**: Decision records in `docs/qa/gates/`
+- **Assessment Reports**: Timestamped analysis in `docs/internal/qa/assessments/`
+- **Gate Files**: Decision records in `docs/internal/qa/gates/`
 - **Story Updates**: QA Results sections in story files
 - **Traceability**: Requirements to test mapping maintained
 

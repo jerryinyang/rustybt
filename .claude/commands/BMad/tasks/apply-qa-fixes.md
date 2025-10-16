@@ -20,8 +20,8 @@ Implement fixes based on QA results (gate and assessments) for a specific story.
 ```yaml
 required:
   - story_id: '{epic}.{story}' # e.g., "2.2"
-  - qa_root: from `.bmad-core/core-config.yaml` key `qa.qaLocation` (e.g., `docs/project/qa`)
-  - story_root: from `.bmad-core/core-config.yaml` key `devStoryLocation` (e.g., `docs/project/stories`)
+  - qa_root: from `.bmad-core/core-config.yaml` key `qa.qaLocation` (e.g., `docs/internal/project/qa`)
+  - story_root: from `.bmad-core/core-config.yaml` key `devStoryLocation` (e.g., `docs/internal/project/stories`)
 
 optional:
   - story_title: '{title}' # derive from story H1 if missing
@@ -84,7 +84,7 @@ Guidance:
 
 - Implement code fixes per plan
 - Add missing tests to close coverage gaps (unit first; integration where required by AC)
-- Keep imports centralized via `deps.ts` (see `docs/project/typescript-rules.md`)
+- Keep imports centralized via `deps.ts` (see `docs/internal/project/typescript-rules.md`)
 - Follow DI boundaries in `src/core/di.ts` and existing patterns
 
 ### 4) Validate
@@ -134,7 +134,7 @@ Status Rule:
 
 ## Example: Story 2.2
 
-Given gate `docs/project/qa/gates/2.2-*.yml` shows
+Given gate `docs/internal/project/qa/gates/2.2-*.yml` shows
 
 - `coverage_gaps`: Back action behavior untested (AC2)
 - `coverage_gaps`: Centralized dependencies enforcement untested (AC4)

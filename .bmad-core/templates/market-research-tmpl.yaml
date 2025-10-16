@@ -5,7 +5,7 @@ template:
   version: 2.0
   output:
     format: markdown
-    filename: docs/market-research.md
+    filename: docs/internal/market-research.md
     title: "Market Research Report: {{project_product_name}}"
 
 workflow:

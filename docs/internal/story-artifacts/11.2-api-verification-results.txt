@@ -1,0 +1,148 @@
+================================================================================
+RustyBT API Documentation Verification Script
+================================================================================
+
+Example execution: Disabled
+
+Found 74 documentation files to analyze
+
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/AUDIT_REPORT_10.3_2025-10-15.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/CODE_VALIDATION.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/analytics/README.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/analytics/risk/drawdown.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/analytics/risk/metrics.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/analytics/risk/var-cvar.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/analytics-api.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/computation/pipeline-api.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/AUDIT_REPORT_2025-10-15.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/CODE_VALIDATION.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/CORRECTIONS_SUMMARY.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/README.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/README.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/adapter-selection-guide.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/alpaca-adapter.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/alphavantage-adapter.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/base-adapter.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/ccxt-adapter.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/csv-adapter.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/polygon-adapter.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/yfinance-adapter.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/catalog/README.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/catalog/architecture.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/catalog/bundle-system.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/catalog/catalog-api.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/catalog/metadata-tracking.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/catalog/migration-guide.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/fx/converters.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/fx/overview.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/fx/providers.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/fx/storage.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/fx-and-caching.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/performance/caching.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/performance/optimization.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/performance/troubleshooting.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/pipeline/README.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/readers/README.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/readers/bar-reader.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/readers/daily-bars.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/readers/data-portal.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/readers/polars-data-portal.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/datasource-api.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/live-trading/README.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/README.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/bayesian.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/genetic.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/grid-search.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/random-search.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/best-practices/overfitting-prevention.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/framework/architecture.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/framework/objective-functions.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/framework/parameter-spaces.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/monte-carlo/stability-testing.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/parallel/multiprocessing.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/walk-forward/framework.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/walk-forward/validation.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/walk-forward/windows.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization-api.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/AUDIT_REPORT_2025-10-15.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/CODE_EXAMPLES_VALIDATION.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/CORRECTIONS_SUMMARY.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/README.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/execution/blotter.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/order-types.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/transaction-costs/commissions.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/transaction-costs/slippage.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/workflows/examples.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/workflows/order-lifecycle.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-types.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/portfolio-management/README.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/portfolio-management/multi-strategy/allocators.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/portfolio-management/performance/metrics.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/portfolio-management/risk/position-limits.md
+Analyzing: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/testing/README.md
+
+================================================================================
+VERIFICATION SUMMARY
+================================================================================
+
+Total files analyzed: 74
+
+API Import Verification:
+  Total API references: 283
+  ✅ Verified APIs: 259
+  ❌ Fabricated APIs: 24
+  ⚠️ Errors: 0
+
+API Verification Rate: 91.5%
+✅ Good: Most APIs are verified, but some issues remain
+
+================================================================================
+FABRICATED APIS FOUND
+================================================================================
+
+File: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/README.md
+  Import: rustybt.optimization.Optimizer
+  Status: ❌ Module not found: rustybt.optimization
+
+File: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/README.md
+  Import: rustybt.optimization.WalkForwardOptimizer
+  Status: ❌ Module not found: rustybt.optimization
+
+File: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/bayesian.md
+  Import: rustybt.optimization.search.BayesianOptimizer
+  Status: ❌ Module not found: rustybt.optimization.search
+
+File: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/genetic.md
+  Import: rustybt.optimization.search.GeneticAlgorithm
+  Status: ❌ Module not found: rustybt.optimization.search
+
+File: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/grid-search.md
+  Import: rustybt.optimization.ParallelOptimizer
+  Status: ❌ Module not found: rustybt.optimization
+
+File: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/grid-search.md
+  Import: rustybt.optimization.search.GridSearchAlgorithm
+  Status: ❌ Module not found: rustybt.optimization.search
+
+File: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/best-practices/overfitting-prevention.md
+  Import: rustybt.optimization.MonteCarloSimulator
+  Status: ❌ Module not found: rustybt.optimization
+
+File: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/best-practices/overfitting-prevention.md
+  Import: rustybt.optimization.WalkForwardOptimizer
+  Status: ❌ Module not found: rustybt.optimization
+
+File: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/framework/architecture.md
+  Import: rustybt.optimization.ParallelOptimizer
+  Status: ❌ Module not found: rustybt.optimization
+
+File: /Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/framework/architecture.md
+  Import: rustybt.optimization.search.BayesianOptimizer
+  Status: ❌ Module not found: rustybt.optimization.search
+
+... and 14 more (see JSON report)
+
+Detailed report written to: /Users/jerryinyang/Code/bmad-dev/rustybt/scripts/api_verification_report.json
+
+❌ FAILURE: Issues found in documentation!
+  - Fabricated or problematic APIs detected

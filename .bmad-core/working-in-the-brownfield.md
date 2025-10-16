@@ -98,7 +98,7 @@ The architect creates:
 
 - **One comprehensive architecture document** following fullstack-architecture template
 - **Covers all system aspects** in a single file
-- **Easy to copy and save** as `docs/architecture.md`
+- **Easy to copy and save** as `docs/internal/architecture.md`
 - **Can be sharded later** in IDE if desired
 
 For example, if you say "Add payment processing to user service":
@@ -215,20 +215,20 @@ The PO ensures:
 ### Phase 4: Save and Shard Documents
 
 1. Save your PRD and Architecture as:
-   docs/prd.md
-   docs/architecture.md
+   docs/internal/prd.md
+   docs/internal/architecture.md
    (Note: You can optionally prefix with 'brownfield-' if managing multiple versions)
 2. Shard your docs:
    In your IDE
 
    ```bash
    @po
-   shard docs/prd.md
+   shard docs/internal/prd.md
    ```
 
    ```bash
    @po
-   shard docs/architecture.md
+   shard docs/internal/architecture.md
    ```
 
 ### Phase 5: Transition to Development
@@ -292,7 +292,7 @@ The Test Architect addresses unique brownfield complexities:
 # 1. RISK ASSESSMENT (Run IMMEDIATELY after story creation)
 @qa *risk {brownfield-story}
 # Identifies: Legacy dependencies, breaking changes, integration points
-# Output: docs/qa/assessments/{epic}.{story}-risk-{YYYYMMDD}.md
+# Output: docs/internal/qa/assessments/{epic}.{story}-risk-{YYYYMMDD}.md
 # Brownfield Focus:
 #   - Regression probability scoring
 #   - Affected downstream systems
@@ -302,7 +302,7 @@ The Test Architect addresses unique brownfield complexities:
 # 2. TEST DESIGN (After risk assessment)
 @qa *design {brownfield-story}
 # Creates: Regression test strategy + new feature tests
-# Output: docs/qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
+# Output: docs/internal/qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
 # Brownfield Focus:
 #   - Existing functionality that needs regression tests
 #   - Integration test requirements
@@ -318,7 +318,7 @@ The Test Architect addresses unique brownfield complexities:
 # 3. REQUIREMENTS TRACING (Mid-development checkpoint)
 @qa *trace {brownfield-story}
 # Maps: New requirements + existing functionality preservation
-# Output: docs/qa/assessments/{epic}.{story}-trace-{YYYYMMDD}.md
+# Output: docs/internal/qa/assessments/{epic}.{story}-trace-{YYYYMMDD}.md
 # Brownfield Focus:
 #   - Existing features that must still work
 #   - New/old feature interactions
@@ -328,7 +328,7 @@ The Test Architect addresses unique brownfield complexities:
 # 4. NFR VALIDATION (Before considering "done")
 @qa *nfr {brownfield-story}
 # Validates: Performance, security, reliability unchanged
-# Output: docs/qa/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md
+# Output: docs/internal/qa/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md
 # Brownfield Focus:
 #   - Performance regression detection
 #   - Security implications of integrations
@@ -346,7 +346,7 @@ The Test Architect addresses unique brownfield complexities:
 # Performs: Deep analysis + active refactoring
 # Outputs:
 #   - QA Results in story file
-#   - Gate file: docs/qa/gates/{epic}.{story}-{slug}.yml
+#   - Gate file: docs/internal/qa/gates/{epic}.{story}-{slug}.yml
 ```
 
 The review specifically analyzes:
@@ -364,7 +364,7 @@ The review specifically analyzes:
 # 6. GATE STATUS UPDATE (After addressing issues)
 @qa *gate {brownfield-story}
 # Updates: Quality gate decision after fixes
-# Output: docs/qa/gates/{epic}.{story}-{slug}.yml
+# Output: docs/internal/qa/gates/{epic}.{story}-{slug}.yml
 # Brownfield Considerations:
 #   - May WAIVE certain legacy code issues
 #   - Documents technical debt acceptance

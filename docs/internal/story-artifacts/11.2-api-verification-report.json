@@ -1,0 +1,2874 @@
+{
+  "summary": {
+    "total_files": 74,
+    "total_imports": 283,
+    "verified": 259,
+    "fabricated": 24,
+    "errors": 0,
+    "verification_rate": 91.51943462897526,
+    "total_examples": 1075,
+    "examples_executed": 0,
+    "examples_passed": 0,
+    "examples_failed": 0,
+    "examples_skipped": 0,
+    "execution_rate": 0,
+    "usage_patterns_valid": 0,
+    "usage_patterns_issues": 0
+  },
+  "fabricated_apis": [
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/README.md",
+      "import": "rustybt.optimization.Optimizer",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/README.md",
+      "import": "rustybt.optimization.WalkForwardOptimizer",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/bayesian.md",
+      "import": "rustybt.optimization.search.BayesianOptimizer",
+      "details": "\u274c Module not found: rustybt.optimization.search"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/genetic.md",
+      "import": "rustybt.optimization.search.GeneticAlgorithm",
+      "details": "\u274c Module not found: rustybt.optimization.search"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/grid-search.md",
+      "import": "rustybt.optimization.ParallelOptimizer",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/grid-search.md",
+      "import": "rustybt.optimization.search.GridSearchAlgorithm",
+      "details": "\u274c Module not found: rustybt.optimization.search"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/best-practices/overfitting-prevention.md",
+      "import": "rustybt.optimization.MonteCarloSimulator",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/best-practices/overfitting-prevention.md",
+      "import": "rustybt.optimization.WalkForwardOptimizer",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/framework/architecture.md",
+      "import": "rustybt.optimization.ParallelOptimizer",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/framework/architecture.md",
+      "import": "rustybt.optimization.search.BayesianOptimizer",
+      "details": "\u274c Module not found: rustybt.optimization.search"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/monte-carlo/stability-testing.md",
+      "import": "rustybt.optimization.MonteCarloSimulator",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/parallel/multiprocessing.md",
+      "import": "rustybt.optimization.ParallelOptimizer",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/walk-forward/framework.md",
+      "import": "rustybt.optimization.WalkForwardOptimizer",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/walk-forward/validation.md",
+      "import": "rustybt.optimization.WalkForwardOptimizer",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/walk-forward/windows.md",
+      "import": "rustybt.optimization.WalkForwardOptimizer",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization-api.md",
+      "import": "rustybt.optimization.MonteCarloSimulator",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization-api.md",
+      "import": "rustybt.optimization.Optimizer",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization-api.md",
+      "import": "rustybt.optimization.ParallelOptimizer",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization-api.md",
+      "import": "rustybt.optimization.SensitivityAnalyzer",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization-api.md",
+      "import": "rustybt.optimization.WalkForwardOptimizer",
+      "details": "\u274c Module not found: rustybt.optimization"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization-api.md",
+      "import": "rustybt.optimization.search.BayesianOptimizer",
+      "details": "\u274c Module not found: rustybt.optimization.search"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization-api.md",
+      "import": "rustybt.optimization.search.GeneticAlgorithm",
+      "details": "\u274c Module not found: rustybt.optimization.search"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization-api.md",
+      "import": "rustybt.optimization.search.GridSearchAlgorithm",
+      "details": "\u274c Module not found: rustybt.optimization.search"
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization-api.md",
+      "import": "rustybt.optimization.search.RandomSearchAlgorithm",
+      "details": "\u274c Module not found: rustybt.optimization.search"
+    }
+  ],
+  "failed_examples": [],
+  "usage_issues": [],
+  "file_results": [
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/AUDIT_REPORT_10.3_2025-10-15.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 0,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/CODE_VALIDATION.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 1,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/analytics/README.md",
+      "total_imports": 6,
+      "verified": 6,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 10,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.analytics.TradeAnalyzer",
+          "verified": true,
+          "details": "\u2705 Found: TradeAnalyzer in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.analytics.plot_drawdown",
+          "verified": true,
+          "details": "\u2705 Found: plot_drawdown in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.analytics.plot_equity_curve",
+          "verified": true,
+          "details": "\u2705 Found: plot_equity_curve in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.analytics.plot_returns_distribution",
+          "verified": true,
+          "details": "\u2705 Found: plot_returns_distribution in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.finance.commission.PerShareCommission",
+          "verified": true,
+          "details": "\u2705 Found: PerShareCommission in rustybt.finance.commission"
+        },
+        {
+          "import": "rustybt.finance.slippage.FixedSlippage",
+          "verified": true,
+          "details": "\u2705 Found: FixedSlippage in rustybt.finance.slippage"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/analytics/risk/drawdown.md",
+      "total_imports": 1,
+      "verified": 1,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 17,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.analytics.RiskAnalytics",
+          "verified": true,
+          "details": "\u2705 Found: RiskAnalytics in rustybt.analytics"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/analytics/risk/metrics.md",
+      "total_imports": 2,
+      "verified": 2,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 7,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.analytics.RiskAnalytics",
+          "verified": true,
+          "details": "\u2705 Found: RiskAnalytics in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.utils.run_algo.run_algorithm",
+          "verified": true,
+          "details": "\u2705 Found: run_algorithm in rustybt.utils.run_algo"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/analytics/risk/var-cvar.md",
+      "total_imports": 1,
+      "verified": 1,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 15,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.analytics.RiskAnalytics",
+          "verified": true,
+          "details": "\u2705 Found: RiskAnalytics in rustybt.analytics"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/analytics-api.md",
+      "total_imports": 11,
+      "verified": 11,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 35,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.analytics.PerformanceAttribution",
+          "verified": true,
+          "details": "\u2705 Found: PerformanceAttribution in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.analytics.ReportConfig",
+          "verified": true,
+          "details": "\u2705 Found: ReportConfig in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.analytics.ReportGenerator",
+          "verified": true,
+          "details": "\u2705 Found: ReportGenerator in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.analytics.RiskAnalytics",
+          "verified": true,
+          "details": "\u2705 Found: RiskAnalytics in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.analytics.TradeAnalyzer",
+          "verified": true,
+          "details": "\u2705 Found: TradeAnalyzer in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.analytics.async_backtest",
+          "verified": true,
+          "details": "\u2705 Found: async_backtest in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.analytics.plot_drawdown",
+          "verified": true,
+          "details": "\u2705 Found: plot_drawdown in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.analytics.plot_equity_curve",
+          "verified": true,
+          "details": "\u2705 Found: plot_equity_curve in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.analytics.plot_returns_distribution",
+          "verified": true,
+          "details": "\u2705 Found: plot_returns_distribution in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.analytics.plot_rolling_metrics",
+          "verified": true,
+          "details": "\u2705 Found: plot_rolling_metrics in rustybt.analytics"
+        },
+        {
+          "import": "rustybt.analytics.setup_notebook",
+          "verified": true,
+          "details": "\u2705 Found: setup_notebook in rustybt.analytics"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/computation/pipeline-api.md",
+      "total_imports": 16,
+      "verified": 16,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 38,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.algorithm.TradingAlgorithm",
+          "verified": true,
+          "details": "\u2705 Found: TradingAlgorithm in rustybt.algorithm"
+        },
+        {
+          "import": "rustybt.lib.adjusted_array.AdjustedArray",
+          "verified": true,
+          "details": "\u2705 Found: AdjustedArray in rustybt.lib.adjusted_array"
+        },
+        {
+          "import": "rustybt.pipeline.CustomFactor",
+          "verified": true,
+          "details": "\u2705 Found: CustomFactor in rustybt.pipeline"
+        },
+        {
+          "import": "rustybt.pipeline.CustomFilter",
+          "verified": true,
+          "details": "\u2705 Found: CustomFilter in rustybt.pipeline"
+        },
+        {
+          "import": "rustybt.pipeline.Pipeline",
+          "verified": true,
+          "details": "\u2705 Found: Pipeline in rustybt.pipeline"
+        },
+        {
+          "import": "rustybt.pipeline.data.USEquityPricing",
+          "verified": true,
+          "details": "\u2705 Found: USEquityPricing in rustybt.pipeline.data"
+        },
+        {
+          "import": "rustybt.pipeline.engine.SimplePipelineEngine",
+          "verified": true,
+          "details": "\u2705 Found: SimplePipelineEngine in rustybt.pipeline.engine"
+        },
+        {
+          "import": "rustybt.pipeline.factors.BollingerBands",
+          "verified": true,
+          "details": "\u2705 Found: BollingerBands in rustybt.pipeline.factors"
+        },
+        {
+          "import": "rustybt.pipeline.factors.Latest",
+          "verified": true,
+          "details": "\u2705 Found: Latest in rustybt.pipeline.factors"
+        },
+        {
+          "import": "rustybt.pipeline.factors.RSI",
+          "verified": true,
+          "details": "\u2705 Found: RSI in rustybt.pipeline.factors"
+        },
+        {
+          "import": "rustybt.pipeline.factors.Returns",
+          "verified": true,
+          "details": "\u2705 Found: Returns in rustybt.pipeline.factors"
+        },
+        {
+          "import": "rustybt.pipeline.factors.SimpleMovingAverage",
+          "verified": true,
+          "details": "\u2705 Found: SimpleMovingAverage in rustybt.pipeline.factors"
+        },
+        {
+          "import": "rustybt.pipeline.factors.VWAP",
+          "verified": true,
+          "details": "\u2705 Found: VWAP in rustybt.pipeline.factors"
+        },
+        {
+          "import": "rustybt.pipeline.loaders.EquityPricingLoader",
+          "verified": true,
+          "details": "\u2705 Found: EquityPricingLoader in rustybt.pipeline.loaders"
+        },
+        {
+          "import": "rustybt.pipeline.loaders.base.PipelineLoader",
+          "verified": true,
+          "details": "\u2705 Found: PipelineLoader in rustybt.pipeline.loaders.base"
+        },
+        {
+          "import": "rustybt.utils.run_algo.run_algorithm",
+          "verified": true,
+          "details": "\u2705 Found: run_algorithm in rustybt.utils.run_algo"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/AUDIT_REPORT_2025-10-15.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 0,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/CODE_VALIDATION.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 1,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/CORRECTIONS_SUMMARY.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 0,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/README.md",
+      "total_imports": 8,
+      "verified": 8,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 5,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.algorithm.TradingAlgorithm",
+          "verified": true,
+          "details": "\u2705 Found: TradingAlgorithm in rustybt.algorithm"
+        },
+        {
+          "import": "rustybt.data.adapters.CCXTAdapter",
+          "verified": true,
+          "details": "\u2705 Found: CCXTAdapter in rustybt.data.adapters"
+        },
+        {
+          "import": "rustybt.data.bundles.register",
+          "verified": true,
+          "details": "\u2705 Found: register in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.polars.cache_manager.CacheManager",
+          "verified": true,
+          "details": "\u2705 Found: CacheManager in rustybt.data.polars.cache_manager"
+        },
+        {
+          "import": "rustybt.pipeline.Pipeline",
+          "verified": true,
+          "details": "\u2705 Found: Pipeline in rustybt.pipeline"
+        },
+        {
+          "import": "rustybt.pipeline.data.EquityPricing",
+          "verified": true,
+          "details": "\u2705 Found: EquityPricing in rustybt.pipeline.data"
+        },
+        {
+          "import": "rustybt.pipeline.factors.RSI",
+          "verified": true,
+          "details": "\u2705 Found: RSI in rustybt.pipeline.factors"
+        },
+        {
+          "import": "rustybt.pipeline.factors.SimpleMovingAverage",
+          "verified": true,
+          "details": "\u2705 Found: SimpleMovingAverage in rustybt.pipeline.factors"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/README.md",
+      "total_imports": 2,
+      "verified": 2,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 3,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.adapters.base.detect_outliers",
+          "verified": true,
+          "details": "\u2705 Found: detect_outliers in rustybt.data.adapters.base"
+        },
+        {
+          "import": "rustybt.data.adapters.yfinance_adapter.YFinanceAdapter",
+          "verified": true,
+          "details": "\u2705 Found: YFinanceAdapter in rustybt.data.adapters.yfinance_adapter"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/adapter-selection-guide.md",
+      "total_imports": 8,
+      "verified": 8,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 12,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.adapters.alpaca_adapter.AlpacaAdapter",
+          "verified": true,
+          "details": "\u2705 Found: AlpacaAdapter in rustybt.data.adapters.alpaca_adapter"
+        },
+        {
+          "import": "rustybt.data.adapters.alphavantage_adapter.AlphaVantageAdapter",
+          "verified": true,
+          "details": "\u2705 Found: AlphaVantageAdapter in rustybt.data.adapters.alphavantage_adapter"
+        },
+        {
+          "import": "rustybt.data.adapters.ccxt_adapter.CCXTAdapter",
+          "verified": true,
+          "details": "\u2705 Found: CCXTAdapter in rustybt.data.adapters.ccxt_adapter"
+        },
+        {
+          "import": "rustybt.data.adapters.csv_adapter.CSVAdapter",
+          "verified": true,
+          "details": "\u2705 Found: CSVAdapter in rustybt.data.adapters.csv_adapter"
+        },
+        {
+          "import": "rustybt.data.adapters.csv_adapter.CSVConfig",
+          "verified": true,
+          "details": "\u2705 Found: CSVConfig in rustybt.data.adapters.csv_adapter"
+        },
+        {
+          "import": "rustybt.data.adapters.csv_adapter.SchemaMapping",
+          "verified": true,
+          "details": "\u2705 Found: SchemaMapping in rustybt.data.adapters.csv_adapter"
+        },
+        {
+          "import": "rustybt.data.adapters.polygon_adapter.PolygonAdapter",
+          "verified": true,
+          "details": "\u2705 Found: PolygonAdapter in rustybt.data.adapters.polygon_adapter"
+        },
+        {
+          "import": "rustybt.data.adapters.yfinance_adapter.YFinanceAdapter",
+          "verified": true,
+          "details": "\u2705 Found: YFinanceAdapter in rustybt.data.adapters.yfinance_adapter"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/alpaca-adapter.md",
+      "total_imports": 1,
+      "verified": 1,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 18,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.adapters.alpaca_adapter.AlpacaAdapter",
+          "verified": true,
+          "details": "\u2705 Found: AlpacaAdapter in rustybt.data.adapters.alpaca_adapter"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/alphavantage-adapter.md",
+      "total_imports": 1,
+      "verified": 1,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 15,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.adapters.alphavantage_adapter.AlphaVantageAdapter",
+          "verified": true,
+          "details": "\u2705 Found: AlphaVantageAdapter in rustybt.data.adapters.alphavantage_adapter"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/base-adapter.md",
+      "total_imports": 5,
+      "verified": 5,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 19,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.adapters.base.BaseDataAdapter",
+          "verified": true,
+          "details": "\u2705 Found: BaseDataAdapter in rustybt.data.adapters.base"
+        },
+        {
+          "import": "rustybt.data.adapters.base.detect_outliers",
+          "verified": true,
+          "details": "\u2705 Found: detect_outliers in rustybt.data.adapters.base"
+        },
+        {
+          "import": "rustybt.data.adapters.base.validate_ohlcv_relationships",
+          "verified": true,
+          "details": "\u2705 Found: validate_ohlcv_relationships in rustybt.data.adapters.base"
+        },
+        {
+          "import": "rustybt.data.adapters.yfinance_adapter.YFinanceAdapter",
+          "verified": true,
+          "details": "\u2705 Found: YFinanceAdapter in rustybt.data.adapters.yfinance_adapter"
+        },
+        {
+          "import": "rustybt.exceptions.DataAdapterError",
+          "verified": true,
+          "details": "\u2705 Found: DataAdapterError in rustybt.exceptions"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/ccxt-adapter.md",
+      "total_imports": 3,
+      "verified": 3,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 21,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.adapters.base.InvalidDataError",
+          "verified": true,
+          "details": "\u2705 Found: InvalidDataError in rustybt.data.adapters.base"
+        },
+        {
+          "import": "rustybt.data.adapters.base.NetworkError",
+          "verified": true,
+          "details": "\u2705 Found: NetworkError in rustybt.data.adapters.base"
+        },
+        {
+          "import": "rustybt.data.adapters.ccxt_adapter.CCXTAdapter",
+          "verified": true,
+          "details": "\u2705 Found: CCXTAdapter in rustybt.data.adapters.ccxt_adapter"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/csv-adapter.md",
+      "total_imports": 4,
+      "verified": 4,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 33,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.adapters.base.InvalidDataError",
+          "verified": true,
+          "details": "\u2705 Found: InvalidDataError in rustybt.data.adapters.base"
+        },
+        {
+          "import": "rustybt.data.adapters.csv_adapter.CSVAdapter",
+          "verified": true,
+          "details": "\u2705 Found: CSVAdapter in rustybt.data.adapters.csv_adapter"
+        },
+        {
+          "import": "rustybt.data.adapters.csv_adapter.CSVConfig",
+          "verified": true,
+          "details": "\u2705 Found: CSVConfig in rustybt.data.adapters.csv_adapter"
+        },
+        {
+          "import": "rustybt.data.adapters.csv_adapter.SchemaMapping",
+          "verified": true,
+          "details": "\u2705 Found: SchemaMapping in rustybt.data.adapters.csv_adapter"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/polygon-adapter.md",
+      "total_imports": 1,
+      "verified": 1,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 21,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.adapters.polygon_adapter.PolygonAdapter",
+          "verified": true,
+          "details": "\u2705 Found: PolygonAdapter in rustybt.data.adapters.polygon_adapter"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/adapters/yfinance-adapter.md",
+      "total_imports": 4,
+      "verified": 4,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 32,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.adapters.base.InvalidDataError",
+          "verified": true,
+          "details": "\u2705 Found: InvalidDataError in rustybt.data.adapters.base"
+        },
+        {
+          "import": "rustybt.data.adapters.base.NetworkError",
+          "verified": true,
+          "details": "\u2705 Found: NetworkError in rustybt.data.adapters.base"
+        },
+        {
+          "import": "rustybt.data.adapters.base.detect_outliers",
+          "verified": true,
+          "details": "\u2705 Found: detect_outliers in rustybt.data.adapters.base"
+        },
+        {
+          "import": "rustybt.data.adapters.yfinance_adapter.YFinanceAdapter",
+          "verified": true,
+          "details": "\u2705 Found: YFinanceAdapter in rustybt.data.adapters.yfinance_adapter"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/catalog/README.md",
+      "total_imports": 4,
+      "verified": 4,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 6,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.bundles.metadata.BundleMetadata",
+          "verified": true,
+          "details": "\u2705 Found: BundleMetadata in rustybt.data.bundles.metadata"
+        },
+        {
+          "import": "rustybt.data.catalog.DataCatalog",
+          "verified": true,
+          "details": "\u2705 Found: DataCatalog in rustybt.data.catalog"
+        },
+        {
+          "import": "rustybt.data.metadata_tracker.BundleMetadataTracker",
+          "verified": true,
+          "details": "\u2705 Found: BundleMetadataTracker in rustybt.data.metadata_tracker"
+        },
+        {
+          "import": "rustybt.data.polars.metadata_catalog.ParquetMetadataCatalog",
+          "verified": true,
+          "details": "\u2705 Found: ParquetMetadataCatalog in rustybt.data.polars.metadata_catalog"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/catalog/architecture.md",
+      "total_imports": 1,
+      "verified": 1,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 6,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.catalog.DataCatalog",
+          "verified": true,
+          "details": "\u2705 Found: DataCatalog in rustybt.data.catalog"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/catalog/bundle-system.md",
+      "total_imports": 14,
+      "verified": 14,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 38,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.adapters.CCXTAdapter",
+          "verified": true,
+          "details": "\u2705 Found: CCXTAdapter in rustybt.data.adapters"
+        },
+        {
+          "import": "rustybt.data.adapters.YFinanceAdapter",
+          "verified": true,
+          "details": "\u2705 Found: YFinanceAdapter in rustybt.data.adapters"
+        },
+        {
+          "import": "rustybt.data.bundles.UnknownBundle",
+          "verified": true,
+          "details": "\u2705 Found: UnknownBundle in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.bundles.bundles",
+          "verified": true,
+          "details": "\u2705 Found: bundles in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.bundles.clean",
+          "verified": true,
+          "details": "\u2705 Found: clean in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.bundles.core.BadClean",
+          "verified": true,
+          "details": "\u2705 Found: BadClean in rustybt.data.bundles.core"
+        },
+        {
+          "import": "rustybt.data.bundles.from_bundle_ingest_dirname",
+          "verified": true,
+          "details": "\u2705 Found: from_bundle_ingest_dirname in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.bundles.ingest",
+          "verified": true,
+          "details": "\u2705 Found: ingest in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.bundles.ingestions_for_bundle",
+          "verified": true,
+          "details": "\u2705 Found: ingestions_for_bundle in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.bundles.load",
+          "verified": true,
+          "details": "\u2705 Found: load in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.bundles.register",
+          "verified": true,
+          "details": "\u2705 Found: register in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.bundles.to_bundle_ingest_dirname",
+          "verified": true,
+          "details": "\u2705 Found: to_bundle_ingest_dirname in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.bundles.unregister",
+          "verified": true,
+          "details": "\u2705 Found: unregister in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.utils.run_algo.run_algorithm",
+          "verified": true,
+          "details": "\u2705 Found: run_algorithm in rustybt.utils.run_algo"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/catalog/catalog-api.md",
+      "total_imports": 3,
+      "verified": 3,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 42,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.bundles.metadata.BundleMetadata",
+          "verified": true,
+          "details": "\u2705 Found: BundleMetadata in rustybt.data.bundles.metadata"
+        },
+        {
+          "import": "rustybt.data.catalog.DataCatalog",
+          "verified": true,
+          "details": "\u2705 Found: DataCatalog in rustybt.data.catalog"
+        },
+        {
+          "import": "rustybt.data.metadata_tracker.BundleMetadataTracker",
+          "verified": true,
+          "details": "\u2705 Found: BundleMetadataTracker in rustybt.data.metadata_tracker"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/catalog/metadata-tracking.md",
+      "total_imports": 12,
+      "verified": 12,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 33,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.adapters.YFinanceAdapter",
+          "verified": true,
+          "details": "\u2705 Found: YFinanceAdapter in rustybt.data.adapters"
+        },
+        {
+          "import": "rustybt.data.bundles.metadata.BundleMetadata",
+          "verified": true,
+          "details": "\u2705 Found: BundleMetadata in rustybt.data.bundles.metadata"
+        },
+        {
+          "import": "rustybt.data.metadata_tracker.BundleMetadataTracker",
+          "verified": true,
+          "details": "\u2705 Found: BundleMetadataTracker in rustybt.data.metadata_tracker"
+        },
+        {
+          "import": "rustybt.data.metadata_tracker.track_csv_bundle_metadata",
+          "verified": true,
+          "details": "\u2705 Found: track_csv_bundle_metadata in rustybt.data.metadata_tracker"
+        },
+        {
+          "import": "rustybt.data.quality.calculate_quality_metrics",
+          "verified": true,
+          "details": "\u2705 Found: calculate_quality_metrics in rustybt.data.quality"
+        },
+        {
+          "import": "rustybt.data.quality.generate_quality_report",
+          "verified": true,
+          "details": "\u2705 Found: generate_quality_report in rustybt.data.quality"
+        },
+        {
+          "import": "rustybt.utils.checksum.calculate_checksum",
+          "verified": true,
+          "details": "\u2705 Found: calculate_checksum in rustybt.utils.checksum"
+        },
+        {
+          "import": "rustybt.utils.checksum.calculate_checksum_multiple",
+          "verified": true,
+          "details": "\u2705 Found: calculate_checksum_multiple in rustybt.utils.checksum"
+        },
+        {
+          "import": "rustybt.utils.gap_detection.detect_missing_days",
+          "verified": true,
+          "details": "\u2705 Found: detect_missing_days in rustybt.utils.gap_detection"
+        },
+        {
+          "import": "rustybt.utils.gap_detection.format_missing_days_list",
+          "verified": true,
+          "details": "\u2705 Found: format_missing_days_list in rustybt.utils.gap_detection"
+        },
+        {
+          "import": "rustybt.utils.gap_detection.generate_gap_report",
+          "verified": true,
+          "details": "\u2705 Found: generate_gap_report in rustybt.utils.gap_detection"
+        },
+        {
+          "import": "rustybt.utils.gap_detection.parse_missing_days_list",
+          "verified": true,
+          "details": "\u2705 Found: parse_missing_days_list in rustybt.utils.gap_detection"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/catalog/migration-guide.md",
+      "total_imports": 10,
+      "verified": 10,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 26,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt",
+          "verified": true,
+          "details": "\u2705 Module exists: rustybt"
+        },
+        {
+          "import": "rustybt.data.adapters.csv_adapter.CSVAdapter",
+          "verified": true,
+          "details": "\u2705 Found: CSVAdapter in rustybt.data.adapters.csv_adapter"
+        },
+        {
+          "import": "rustybt.data.bundles.csvdir.csvdir_equities",
+          "verified": true,
+          "details": "\u2705 Found: csvdir_equities in rustybt.data.bundles.csvdir"
+        },
+        {
+          "import": "rustybt.data.bundles.metadata.BundleMetadata",
+          "verified": true,
+          "details": "\u2705 Found: BundleMetadata in rustybt.data.bundles.metadata"
+        },
+        {
+          "import": "rustybt.data.bundles.migration.BundleMigrator",
+          "verified": true,
+          "details": "\u2705 Found: BundleMigrator in rustybt.data.bundles.migration"
+        },
+        {
+          "import": "rustybt.data.bundles.migration.MigrationError",
+          "verified": true,
+          "details": "\u2705 Found: MigrationError in rustybt.data.bundles.migration"
+        },
+        {
+          "import": "rustybt.data.bundles.migration.migrate_bundle",
+          "verified": true,
+          "details": "\u2705 Found: migrate_bundle in rustybt.data.bundles.migration"
+        },
+        {
+          "import": "rustybt.data.bundles.register",
+          "verified": true,
+          "details": "\u2705 Found: register in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.bundles.unregister",
+          "verified": true,
+          "details": "\u2705 Found: unregister in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.polars.parquet_schema.DAILY_BARS_SCHEMA",
+          "verified": true,
+          "details": "\u2705 Found: DAILY_BARS_SCHEMA in rustybt.data.polars.parquet_schema"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/fx/converters.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 3,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/fx/overview.md",
+      "total_imports": 6,
+      "verified": 6,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 19,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.algorithm.TradingAlgorithm",
+          "verified": true,
+          "details": "\u2705 Found: TradingAlgorithm in rustybt.algorithm"
+        },
+        {
+          "import": "rustybt.data.fx.ExplodingFXRateReader",
+          "verified": true,
+          "details": "\u2705 Found: ExplodingFXRateReader in rustybt.data.fx"
+        },
+        {
+          "import": "rustybt.data.fx.FXRateReader",
+          "verified": true,
+          "details": "\u2705 Found: FXRateReader in rustybt.data.fx"
+        },
+        {
+          "import": "rustybt.data.fx.HDF5FXRateReader",
+          "verified": true,
+          "details": "\u2705 Found: HDF5FXRateReader in rustybt.data.fx"
+        },
+        {
+          "import": "rustybt.data.fx.HDF5FXRateWriter",
+          "verified": true,
+          "details": "\u2705 Found: HDF5FXRateWriter in rustybt.data.fx"
+        },
+        {
+          "import": "rustybt.data.fx.InMemoryFXRateReader",
+          "verified": true,
+          "details": "\u2705 Found: InMemoryFXRateReader in rustybt.data.fx"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/fx/providers.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 2,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/fx/storage.md",
+      "total_imports": 3,
+      "verified": 3,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 2,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.fx.HDF5FXRateReader",
+          "verified": true,
+          "details": "\u2705 Found: HDF5FXRateReader in rustybt.data.fx"
+        },
+        {
+          "import": "rustybt.data.fx.HDF5FXRateWriter",
+          "verified": true,
+          "details": "\u2705 Found: HDF5FXRateWriter in rustybt.data.fx"
+        },
+        {
+          "import": "rustybt.data.fx.InMemoryFXRateReader",
+          "verified": true,
+          "details": "\u2705 Found: InMemoryFXRateReader in rustybt.data.fx"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/fx-and-caching.md",
+      "total_imports": 11,
+      "verified": 11,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 37,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.currency.Currency",
+          "verified": true,
+          "details": "\u2705 Found: Currency in rustybt.currency"
+        },
+        {
+          "import": "rustybt.data.adapters.yfinance_adapter.YFinanceAdapter",
+          "verified": true,
+          "details": "\u2705 Found: YFinanceAdapter in rustybt.data.adapters.yfinance_adapter"
+        },
+        {
+          "import": "rustybt.data.fx.ExplodingFXRateReader",
+          "verified": true,
+          "details": "\u2705 Found: ExplodingFXRateReader in rustybt.data.fx"
+        },
+        {
+          "import": "rustybt.data.fx.HDF5FXRateReader",
+          "verified": true,
+          "details": "\u2705 Found: HDF5FXRateReader in rustybt.data.fx"
+        },
+        {
+          "import": "rustybt.data.fx.HDF5FXRateWriter",
+          "verified": true,
+          "details": "\u2705 Found: HDF5FXRateWriter in rustybt.data.fx"
+        },
+        {
+          "import": "rustybt.data.fx.InMemoryFXRateReader",
+          "verified": true,
+          "details": "\u2705 Found: InMemoryFXRateReader in rustybt.data.fx"
+        },
+        {
+          "import": "rustybt.data.polars.cache_manager.CacheManager",
+          "verified": true,
+          "details": "\u2705 Found: CacheManager in rustybt.data.polars.cache_manager"
+        },
+        {
+          "import": "rustybt.data.sources.cached_source.CachedDataSource",
+          "verified": true,
+          "details": "\u2705 Found: CachedDataSource in rustybt.data.sources.cached_source"
+        },
+        {
+          "import": "rustybt.pipeline.Pipeline",
+          "verified": true,
+          "details": "\u2705 Found: Pipeline in rustybt.pipeline"
+        },
+        {
+          "import": "rustybt.pipeline.data.EquityPricing",
+          "verified": true,
+          "details": "\u2705 Found: EquityPricing in rustybt.pipeline.data"
+        },
+        {
+          "import": "rustybt.pipeline.loaders.EquityPricingLoader",
+          "verified": true,
+          "details": "\u2705 Found: EquityPricingLoader in rustybt.pipeline.loaders"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/performance/caching.md",
+      "total_imports": 1,
+      "verified": 1,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 2,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.polars.cache_manager.CacheManager",
+          "verified": true,
+          "details": "\u2705 Found: CacheManager in rustybt.data.polars.cache_manager"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/performance/optimization.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 8,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/performance/troubleshooting.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 0,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/pipeline/README.md",
+      "total_imports": 6,
+      "verified": 6,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 19,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.adapters.yfinance_adapter.YFinanceAdapter",
+          "verified": true,
+          "details": "\u2705 Found: YFinanceAdapter in rustybt.data.adapters.yfinance_adapter"
+        },
+        {
+          "import": "rustybt.data.bundles.metadata.BundleMetadata",
+          "verified": true,
+          "details": "\u2705 Found: BundleMetadata in rustybt.data.bundles.metadata"
+        },
+        {
+          "import": "rustybt.data.polars.parquet_writer.ParquetWriter",
+          "verified": true,
+          "details": "\u2705 Found: ParquetWriter in rustybt.data.polars.parquet_writer"
+        },
+        {
+          "import": "rustybt.data.polars.validation.DataError",
+          "verified": true,
+          "details": "\u2705 Found: DataError in rustybt.data.polars.validation"
+        },
+        {
+          "import": "rustybt.data.polars.validation.validate_ohlcv_relationships",
+          "verified": true,
+          "details": "\u2705 Found: validate_ohlcv_relationships in rustybt.data.polars.validation"
+        },
+        {
+          "import": "rustybt.data.sources.DataSourceRegistry",
+          "verified": true,
+          "details": "\u2705 Found: DataSourceRegistry in rustybt.data.sources"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/readers/README.md",
+      "total_imports": 8,
+      "verified": 8,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 11,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.algorithm.TradingAlgorithm",
+          "verified": true,
+          "details": "\u2705 Found: TradingAlgorithm in rustybt.algorithm"
+        },
+        {
+          "import": "rustybt.assets.Asset",
+          "verified": true,
+          "details": "\u2705 Found: Asset in rustybt.assets"
+        },
+        {
+          "import": "rustybt.assets.AssetFinder",
+          "verified": true,
+          "details": "\u2705 Found: AssetFinder in rustybt.assets"
+        },
+        {
+          "import": "rustybt.data.adapters.yfinance_adapter.YFinanceAdapter",
+          "verified": true,
+          "details": "\u2705 Found: YFinanceAdapter in rustybt.data.adapters.yfinance_adapter"
+        },
+        {
+          "import": "rustybt.data.bundles.load",
+          "verified": true,
+          "details": "\u2705 Found: load in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.data_portal.DataPortal",
+          "verified": true,
+          "details": "\u2705 Found: DataPortal in rustybt.data.data_portal"
+        },
+        {
+          "import": "rustybt.data.polars.data_portal.PolarsDataPortal",
+          "verified": true,
+          "details": "\u2705 Found: PolarsDataPortal in rustybt.data.polars.data_portal"
+        },
+        {
+          "import": "rustybt.live.LiveTradingEngine",
+          "verified": true,
+          "details": "\u2705 Found: LiveTradingEngine in rustybt.live"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/readers/bar-reader.md",
+      "total_imports": 7,
+      "verified": 7,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 28,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.assets.Equity",
+          "verified": true,
+          "details": "\u2705 Found: Equity in rustybt.assets"
+        },
+        {
+          "import": "rustybt.assets.Future",
+          "verified": true,
+          "details": "\u2705 Found: Future in rustybt.assets"
+        },
+        {
+          "import": "rustybt.data.bar_reader.BarReader",
+          "verified": true,
+          "details": "\u2705 Found: BarReader in rustybt.data.bar_reader"
+        },
+        {
+          "import": "rustybt.data.bar_reader.NoDataOnDate",
+          "verified": true,
+          "details": "\u2705 Found: NoDataOnDate in rustybt.data.bar_reader"
+        },
+        {
+          "import": "rustybt.data.dispatch_bar_reader.AssetDispatchMinuteBarReader",
+          "verified": true,
+          "details": "\u2705 Found: AssetDispatchMinuteBarReader in rustybt.data.dispatch_bar_reader"
+        },
+        {
+          "import": "rustybt.data.dispatch_bar_reader.AssetDispatchSessionBarReader",
+          "verified": true,
+          "details": "\u2705 Found: AssetDispatchSessionBarReader in rustybt.data.dispatch_bar_reader"
+        },
+        {
+          "import": "rustybt.data.polars.PolarsParquetDailyReader",
+          "verified": true,
+          "details": "\u2705 Found: PolarsParquetDailyReader in rustybt.data.polars"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/readers/daily-bars.md",
+      "total_imports": 5,
+      "verified": 5,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 27,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.bcolz_daily_bars.BcolzDailyBarReader",
+          "verified": true,
+          "details": "\u2705 Found: BcolzDailyBarReader in rustybt.data.bcolz_daily_bars"
+        },
+        {
+          "import": "rustybt.data.polars.PolarsParquetDailyReader",
+          "verified": true,
+          "details": "\u2705 Found: PolarsParquetDailyReader in rustybt.data.polars"
+        },
+        {
+          "import": "rustybt.data.polars.data_portal.PolarsDataPortal",
+          "verified": true,
+          "details": "\u2705 Found: PolarsDataPortal in rustybt.data.polars.data_portal"
+        },
+        {
+          "import": "rustybt.data.polars.validation.DataError",
+          "verified": true,
+          "details": "\u2705 Found: DataError in rustybt.data.polars.validation"
+        },
+        {
+          "import": "rustybt.data.polars.validation.validate_ohlcv_relationships",
+          "verified": true,
+          "details": "\u2705 Found: validate_ohlcv_relationships in rustybt.data.polars.validation"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/readers/data-portal.md",
+      "total_imports": 5,
+      "verified": 5,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 28,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.assets.continuous_futures.ContinuousFuture",
+          "verified": true,
+          "details": "\u2705 Found: ContinuousFuture in rustybt.assets.continuous_futures"
+        },
+        {
+          "import": "rustybt.data.adapters.yfinance_adapter.YFinanceAdapter",
+          "verified": true,
+          "details": "\u2705 Found: YFinanceAdapter in rustybt.data.adapters.yfinance_adapter"
+        },
+        {
+          "import": "rustybt.data.bundles.load",
+          "verified": true,
+          "details": "\u2705 Found: load in rustybt.data.bundles"
+        },
+        {
+          "import": "rustybt.data.data_portal.DataPortal",
+          "verified": true,
+          "details": "\u2705 Found: DataPortal in rustybt.data.data_portal"
+        },
+        {
+          "import": "rustybt.data.polars.data_portal.PolarsDataPortal",
+          "verified": true,
+          "details": "\u2705 Found: PolarsDataPortal in rustybt.data.polars.data_portal"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/data-management/readers/polars-data-portal.md",
+      "total_imports": 7,
+      "verified": 7,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 29,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.assets.Asset",
+          "verified": true,
+          "details": "\u2705 Found: Asset in rustybt.assets"
+        },
+        {
+          "import": "rustybt.data.adapters.yfinance_adapter.YFinanceAdapter",
+          "verified": true,
+          "details": "\u2705 Found: YFinanceAdapter in rustybt.data.adapters.yfinance_adapter"
+        },
+        {
+          "import": "rustybt.data.data_portal.DataPortal",
+          "verified": true,
+          "details": "\u2705 Found: DataPortal in rustybt.data.data_portal"
+        },
+        {
+          "import": "rustybt.data.polars.PolarsParquetDailyReader",
+          "verified": true,
+          "details": "\u2705 Found: PolarsParquetDailyReader in rustybt.data.polars"
+        },
+        {
+          "import": "rustybt.data.polars.data_portal.LookaheadError",
+          "verified": true,
+          "details": "\u2705 Found: LookaheadError in rustybt.data.polars.data_portal"
+        },
+        {
+          "import": "rustybt.data.polars.data_portal.NoDataAvailableError",
+          "verified": true,
+          "details": "\u2705 Found: NoDataAvailableError in rustybt.data.polars.data_portal"
+        },
+        {
+          "import": "rustybt.data.polars.data_portal.PolarsDataPortal",
+          "verified": true,
+          "details": "\u2705 Found: PolarsDataPortal in rustybt.data.polars.data_portal"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/datasource-api.md",
+      "total_imports": 3,
+      "verified": 3,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 8,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.data.sources.DataSourceRegistry",
+          "verified": true,
+          "details": "\u2705 Found: DataSourceRegistry in rustybt.data.sources"
+        },
+        {
+          "import": "rustybt.data.sources.base.DataSource",
+          "verified": true,
+          "details": "\u2705 Found: DataSource in rustybt.data.sources.base"
+        },
+        {
+          "import": "rustybt.data.sources.base.DataSourceMetadata",
+          "verified": true,
+          "details": "\u2705 Found: DataSourceMetadata in rustybt.data.sources.base"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/live-trading/README.md",
+      "total_imports": 1,
+      "verified": 1,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 1,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.live.engine.LiveTradingEngine",
+          "verified": true,
+          "details": "\u2705 Found: LiveTradingEngine in rustybt.live.engine"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/README.md",
+      "total_imports": 4,
+      "verified": 2,
+      "fabricated": 2,
+      "errors": 0,
+      "total_examples": 2,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.optimization.Optimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        },
+        {
+          "import": "rustybt.optimization.WalkForwardOptimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        },
+        {
+          "import": "rustybt.optimization.parameter_space.DiscreteParameter",
+          "verified": true,
+          "details": "\u2705 Found: DiscreteParameter in rustybt.optimization.parameter_space"
+        },
+        {
+          "import": "rustybt.optimization.parameter_space.ParameterSpace",
+          "verified": true,
+          "details": "\u2705 Found: ParameterSpace in rustybt.optimization.parameter_space"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/bayesian.md",
+      "total_imports": 3,
+      "verified": 2,
+      "fabricated": 1,
+      "errors": 0,
+      "total_examples": 13,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.optimization.parameter_space.ContinuousParameter",
+          "verified": true,
+          "details": "\u2705 Found: ContinuousParameter in rustybt.optimization.parameter_space"
+        },
+        {
+          "import": "rustybt.optimization.parameter_space.ParameterSpace",
+          "verified": true,
+          "details": "\u2705 Found: ParameterSpace in rustybt.optimization.parameter_space"
+        },
+        {
+          "import": "rustybt.optimization.search.BayesianOptimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization.search"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/genetic.md",
+      "total_imports": 3,
+      "verified": 2,
+      "fabricated": 1,
+      "errors": 0,
+      "total_examples": 27,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.optimization.parameter_space.DiscreteParameter",
+          "verified": true,
+          "details": "\u2705 Found: DiscreteParameter in rustybt.optimization.parameter_space"
+        },
+        {
+          "import": "rustybt.optimization.parameter_space.ParameterSpace",
+          "verified": true,
+          "details": "\u2705 Found: ParameterSpace in rustybt.optimization.parameter_space"
+        },
+        {
+          "import": "rustybt.optimization.search.GeneticAlgorithm",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization.search"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/grid-search.md",
+      "total_imports": 4,
+      "verified": 2,
+      "fabricated": 2,
+      "errors": 0,
+      "total_examples": 21,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.optimization.ParallelOptimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        },
+        {
+          "import": "rustybt.optimization.parameter_space.DiscreteParameter",
+          "verified": true,
+          "details": "\u2705 Found: DiscreteParameter in rustybt.optimization.parameter_space"
+        },
+        {
+          "import": "rustybt.optimization.parameter_space.ParameterSpace",
+          "verified": true,
+          "details": "\u2705 Found: ParameterSpace in rustybt.optimization.parameter_space"
+        },
+        {
+          "import": "rustybt.optimization.search.GridSearchAlgorithm",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization.search"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/algorithms/random-search.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 0,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/best-practices/overfitting-prevention.md",
+      "total_imports": 4,
+      "verified": 2,
+      "fabricated": 2,
+      "errors": 0,
+      "total_examples": 19,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.finance.commission.PerShareCommission",
+          "verified": true,
+          "details": "\u2705 Found: PerShareCommission in rustybt.finance.commission"
+        },
+        {
+          "import": "rustybt.finance.slippage.FixedSlippage",
+          "verified": true,
+          "details": "\u2705 Found: FixedSlippage in rustybt.finance.slippage"
+        },
+        {
+          "import": "rustybt.optimization.MonteCarloSimulator",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        },
+        {
+          "import": "rustybt.optimization.WalkForwardOptimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/framework/architecture.md",
+      "total_imports": 4,
+      "verified": 2,
+      "fabricated": 2,
+      "errors": 0,
+      "total_examples": 18,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.optimization.ParallelOptimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        },
+        {
+          "import": "rustybt.optimization.base.SearchAlgorithm",
+          "verified": true,
+          "details": "\u2705 Found: SearchAlgorithm in rustybt.optimization.base"
+        },
+        {
+          "import": "rustybt.optimization.parameter_space.ContinuousParameter",
+          "verified": true,
+          "details": "\u2705 Found: ContinuousParameter in rustybt.optimization.parameter_space"
+        },
+        {
+          "import": "rustybt.optimization.search.BayesianOptimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization.search"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/framework/objective-functions.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 18,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/framework/parameter-spaces.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 12,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/monte-carlo/stability-testing.md",
+      "total_imports": 1,
+      "verified": 0,
+      "fabricated": 1,
+      "errors": 0,
+      "total_examples": 20,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.optimization.MonteCarloSimulator",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/parallel/multiprocessing.md",
+      "total_imports": 3,
+      "verified": 2,
+      "fabricated": 1,
+      "errors": 0,
+      "total_examples": 20,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.optimization.ParallelOptimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        },
+        {
+          "import": "rustybt.optimization.parameter_space.DiscreteParameter",
+          "verified": true,
+          "details": "\u2705 Found: DiscreteParameter in rustybt.optimization.parameter_space"
+        },
+        {
+          "import": "rustybt.optimization.parameter_space.ParameterSpace",
+          "verified": true,
+          "details": "\u2705 Found: ParameterSpace in rustybt.optimization.parameter_space"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/walk-forward/framework.md",
+      "total_imports": 3,
+      "verified": 2,
+      "fabricated": 1,
+      "errors": 0,
+      "total_examples": 14,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.optimization.WalkForwardOptimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        },
+        {
+          "import": "rustybt.optimization.parameter_space.DiscreteParameter",
+          "verified": true,
+          "details": "\u2705 Found: DiscreteParameter in rustybt.optimization.parameter_space"
+        },
+        {
+          "import": "rustybt.optimization.parameter_space.ParameterSpace",
+          "verified": true,
+          "details": "\u2705 Found: ParameterSpace in rustybt.optimization.parameter_space"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/walk-forward/validation.md",
+      "total_imports": 1,
+      "verified": 0,
+      "fabricated": 1,
+      "errors": 0,
+      "total_examples": 12,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.optimization.WalkForwardOptimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization/walk-forward/windows.md",
+      "total_imports": 1,
+      "verified": 0,
+      "fabricated": 1,
+      "errors": 0,
+      "total_examples": 6,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.optimization.WalkForwardOptimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/optimization-api.md",
+      "total_imports": 12,
+      "verified": 3,
+      "fabricated": 9,
+      "errors": 0,
+      "total_examples": 47,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.optimization.MonteCarloSimulator",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        },
+        {
+          "import": "rustybt.optimization.Optimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        },
+        {
+          "import": "rustybt.optimization.ParallelOptimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        },
+        {
+          "import": "rustybt.optimization.SensitivityAnalyzer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        },
+        {
+          "import": "rustybt.optimization.WalkForwardOptimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization"
+        },
+        {
+          "import": "rustybt.optimization.base.SearchAlgorithm",
+          "verified": true,
+          "details": "\u2705 Found: SearchAlgorithm in rustybt.optimization.base"
+        },
+        {
+          "import": "rustybt.optimization.parameter_space.DiscreteParameter",
+          "verified": true,
+          "details": "\u2705 Found: DiscreteParameter in rustybt.optimization.parameter_space"
+        },
+        {
+          "import": "rustybt.optimization.parameter_space.ParameterSpace",
+          "verified": true,
+          "details": "\u2705 Found: ParameterSpace in rustybt.optimization.parameter_space"
+        },
+        {
+          "import": "rustybt.optimization.search.BayesianOptimizer",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization.search"
+        },
+        {
+          "import": "rustybt.optimization.search.GeneticAlgorithm",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization.search"
+        },
+        {
+          "import": "rustybt.optimization.search.GridSearchAlgorithm",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization.search"
+        },
+        {
+          "import": "rustybt.optimization.search.RandomSearchAlgorithm",
+          "verified": false,
+          "details": "\u274c Module not found: rustybt.optimization.search"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/AUDIT_REPORT_2025-10-15.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 0,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/CODE_EXAMPLES_VALIDATION.md",
+      "total_imports": 6,
+      "verified": 6,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 12,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.algorithm.TradingAlgorithm",
+          "verified": true,
+          "details": "\u2705 Found: TradingAlgorithm in rustybt.algorithm"
+        },
+        {
+          "import": "rustybt.api.order",
+          "verified": true,
+          "details": "\u2705 Found: order in rustybt.api"
+        },
+        {
+          "import": "rustybt.api.symbol",
+          "verified": true,
+          "details": "\u2705 Found: symbol in rustybt.api"
+        },
+        {
+          "import": "rustybt.finance.execution.LimitOrder",
+          "verified": true,
+          "details": "\u2705 Found: LimitOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.order.ORDER_STATUS",
+          "verified": true,
+          "details": "\u2705 Found: ORDER_STATUS in rustybt.finance.order"
+        },
+        {
+          "import": "rustybt.utils.run_algo.run_algorithm",
+          "verified": true,
+          "details": "\u2705 Found: run_algorithm in rustybt.utils.run_algo"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/CORRECTIONS_SUMMARY.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 0,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/README.md",
+      "total_imports": 6,
+      "verified": 6,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 7,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.algorithm.TradingAlgorithm",
+          "verified": true,
+          "details": "\u2705 Found: TradingAlgorithm in rustybt.algorithm"
+        },
+        {
+          "import": "rustybt.api.order",
+          "verified": true,
+          "details": "\u2705 Found: order in rustybt.api"
+        },
+        {
+          "import": "rustybt.api.symbol",
+          "verified": true,
+          "details": "\u2705 Found: symbol in rustybt.api"
+        },
+        {
+          "import": "rustybt.finance.execution.LimitOrder",
+          "verified": true,
+          "details": "\u2705 Found: LimitOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.StopOrder",
+          "verified": true,
+          "details": "\u2705 Found: StopOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.slippage.VolumeShareSlippage",
+          "verified": true,
+          "details": "\u2705 Found: VolumeShareSlippage in rustybt.finance.slippage"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/execution/blotter.md",
+      "total_imports": 7,
+      "verified": 7,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 18,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.finance.blotter.Blotter",
+          "verified": true,
+          "details": "\u2705 Found: Blotter in rustybt.finance.blotter"
+        },
+        {
+          "import": "rustybt.finance.blotter.SimulationBlotter",
+          "verified": true,
+          "details": "\u2705 Found: SimulationBlotter in rustybt.finance.blotter"
+        },
+        {
+          "import": "rustybt.finance.cancel_policy.CancelPolicy",
+          "verified": true,
+          "details": "\u2705 Found: CancelPolicy in rustybt.finance.cancel_policy"
+        },
+        {
+          "import": "rustybt.finance.cancel_policy.EODCancel",
+          "verified": true,
+          "details": "\u2705 Found: EODCancel in rustybt.finance.cancel_policy"
+        },
+        {
+          "import": "rustybt.finance.cancel_policy.NeverCancel",
+          "verified": true,
+          "details": "\u2705 Found: NeverCancel in rustybt.finance.cancel_policy"
+        },
+        {
+          "import": "rustybt.finance.commission.PerShare",
+          "verified": true,
+          "details": "\u2705 Found: PerShare in rustybt.finance.commission"
+        },
+        {
+          "import": "rustybt.finance.slippage.VolumeShareSlippage",
+          "verified": true,
+          "details": "\u2705 Found: VolumeShareSlippage in rustybt.finance.slippage"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/order-types.md",
+      "total_imports": 12,
+      "verified": 12,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 20,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.algorithm.TradingAlgorithm",
+          "verified": true,
+          "details": "\u2705 Found: TradingAlgorithm in rustybt.algorithm"
+        },
+        {
+          "import": "rustybt.api.cancel_order",
+          "verified": true,
+          "details": "\u2705 Found: cancel_order in rustybt.api"
+        },
+        {
+          "import": "rustybt.api.get_open_orders",
+          "verified": true,
+          "details": "\u2705 Found: get_open_orders in rustybt.api"
+        },
+        {
+          "import": "rustybt.api.order",
+          "verified": true,
+          "details": "\u2705 Found: order in rustybt.api"
+        },
+        {
+          "import": "rustybt.api.symbol",
+          "verified": true,
+          "details": "\u2705 Found: symbol in rustybt.api"
+        },
+        {
+          "import": "rustybt.finance.execution.LimitOrder",
+          "verified": true,
+          "details": "\u2705 Found: LimitOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.MarketOrder",
+          "verified": true,
+          "details": "\u2705 Found: MarketOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.OCOOrder",
+          "verified": true,
+          "details": "\u2705 Found: OCOOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.StopLimitOrder",
+          "verified": true,
+          "details": "\u2705 Found: StopLimitOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.StopOrder",
+          "verified": true,
+          "details": "\u2705 Found: StopOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.TrailingStopOrder",
+          "verified": true,
+          "details": "\u2705 Found: TrailingStopOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.order.Order",
+          "verified": true,
+          "details": "\u2705 Found: Order in rustybt.finance.order"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/transaction-costs/commissions.md",
+      "total_imports": 1,
+      "verified": 1,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 5,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.finance.commission.CommissionModel",
+          "verified": true,
+          "details": "\u2705 Found: CommissionModel in rustybt.finance.commission"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/transaction-costs/slippage.md",
+      "total_imports": 2,
+      "verified": 2,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 7,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.finance.slippage.SlippageModel",
+          "verified": true,
+          "details": "\u2705 Found: SlippageModel in rustybt.finance.slippage"
+        },
+        {
+          "import": "rustybt.finance.transaction.create_transaction",
+          "verified": true,
+          "details": "\u2705 Found: create_transaction in rustybt.finance.transaction"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/workflows/examples.md",
+      "total_imports": 11,
+      "verified": 11,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 15,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.algorithm.TradingAlgorithm",
+          "verified": true,
+          "details": "\u2705 Found: TradingAlgorithm in rustybt.algorithm"
+        },
+        {
+          "import": "rustybt.api.cancel_order",
+          "verified": true,
+          "details": "\u2705 Found: cancel_order in rustybt.api"
+        },
+        {
+          "import": "rustybt.api.get_open_orders",
+          "verified": true,
+          "details": "\u2705 Found: get_open_orders in rustybt.api"
+        },
+        {
+          "import": "rustybt.api.order",
+          "verified": true,
+          "details": "\u2705 Found: order in rustybt.api"
+        },
+        {
+          "import": "rustybt.api.symbol",
+          "verified": true,
+          "details": "\u2705 Found: symbol in rustybt.api"
+        },
+        {
+          "import": "rustybt.finance.execution.BracketOrder",
+          "verified": true,
+          "details": "\u2705 Found: BracketOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.LimitOrder",
+          "verified": true,
+          "details": "\u2705 Found: LimitOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.MarketOrder",
+          "verified": true,
+          "details": "\u2705 Found: MarketOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.StopOrder",
+          "verified": true,
+          "details": "\u2705 Found: StopOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.TrailingStopOrder",
+          "verified": true,
+          "details": "\u2705 Found: TrailingStopOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.order.ORDER_STATUS",
+          "verified": true,
+          "details": "\u2705 Found: ORDER_STATUS in rustybt.finance.order"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-management/workflows/order-lifecycle.md",
+      "total_imports": 3,
+      "verified": 3,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 26,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.api.cancel_order",
+          "verified": true,
+          "details": "\u2705 Found: cancel_order in rustybt.api"
+        },
+        {
+          "import": "rustybt.api.get_open_orders",
+          "verified": true,
+          "details": "\u2705 Found: get_open_orders in rustybt.api"
+        },
+        {
+          "import": "rustybt.finance.order.ORDER_STATUS",
+          "verified": true,
+          "details": "\u2705 Found: ORDER_STATUS in rustybt.finance.order"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/order-types.md",
+      "total_imports": 9,
+      "verified": 9,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 4,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.algorithm.TradingAlgorithm",
+          "verified": true,
+          "details": "\u2705 Found: TradingAlgorithm in rustybt.algorithm"
+        },
+        {
+          "import": "rustybt.api.order",
+          "verified": true,
+          "details": "\u2705 Found: order in rustybt.api"
+        },
+        {
+          "import": "rustybt.api.symbol",
+          "verified": true,
+          "details": "\u2705 Found: symbol in rustybt.api"
+        },
+        {
+          "import": "rustybt.finance.execution.BracketOrder",
+          "verified": true,
+          "details": "\u2705 Found: BracketOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.LimitOrder",
+          "verified": true,
+          "details": "\u2705 Found: LimitOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.MarketOrder",
+          "verified": true,
+          "details": "\u2705 Found: MarketOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.OCOOrder",
+          "verified": true,
+          "details": "\u2705 Found: OCOOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.StopOrder",
+          "verified": true,
+          "details": "\u2705 Found: StopOrder in rustybt.finance.execution"
+        },
+        {
+          "import": "rustybt.finance.execution.TrailingStopOrder",
+          "verified": true,
+          "details": "\u2705 Found: TrailingStopOrder in rustybt.finance.execution"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/portfolio-management/README.md",
+      "total_imports": 1,
+      "verified": 1,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 19,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.algorithm.TradingAlgorithm",
+          "verified": true,
+          "details": "\u2705 Found: TradingAlgorithm in rustybt.algorithm"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/portfolio-management/multi-strategy/allocators.md",
+      "total_imports": 1,
+      "verified": 1,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 8,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [
+        {
+          "import": "rustybt.algorithm.TradingAlgorithm",
+          "verified": true,
+          "details": "\u2705 Found: TradingAlgorithm in rustybt.algorithm"
+        }
+      ],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/portfolio-management/performance/metrics.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 1,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/portfolio-management/risk/position-limits.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 2,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    },
+    {
+      "file": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/api/testing/README.md",
+      "total_imports": 0,
+      "verified": 0,
+      "fabricated": 0,
+      "errors": 0,
+      "total_examples": 4,
+      "examples_executed": 0,
+      "examples_passed": 0,
+      "examples_failed": 0,
+      "examples_skipped": 0,
+      "usage_patterns_valid": 0,
+      "usage_patterns_issues": 0,
+      "details": [],
+      "example_results": [],
+      "usage_validation_results": []
+    }
+  ]
+}

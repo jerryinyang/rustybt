@@ -1,0 +1,155 @@
+================================================================================
+RustyBT API Documentation Verification Script
+================================================================================
+
+Example execution: Enabled
+
+Found 22 documentation files to analyze
+
+Analyzing: docs/api/order-management/AUDIT_REPORT_2025-10-15.md
+Analyzing: docs/api/order-management/CODE_EXAMPLES_VALIDATION.md
+Analyzing: docs/api/order-management/CORRECTIONS_SUMMARY.md
+Analyzing: docs/api/order-management/README.md
+Analyzing: docs/api/order-management/execution/blotter-system.md
+Analyzing: docs/api/order-management/execution/blotter.md
+Analyzing: docs/api/order-management/execution/decimal-blotter.md
+Analyzing: docs/api/order-management/execution/execution-pipeline.md
+Analyzing: docs/api/order-management/execution/latency-models.md
+Analyzing: docs/api/order-management/execution/order-status-tracking.md
+Analyzing: docs/api/order-management/execution/partial-fills.md
+Analyzing: docs/api/order-management/order-types-verified.md
+Analyzing: docs/api/order-management/order-types.md
+Analyzing: docs/api/order-management/transaction-costs/borrow-costs-financing.md
+Analyzing: docs/api/order-management/transaction-costs/commission-models-verified.md
+Analyzing: docs/api/order-management/transaction-costs/commission-models.md
+Analyzing: docs/api/order-management/transaction-costs/commissions.md
+Analyzing: docs/api/order-management/transaction-costs/slippage-models-verified.md
+Analyzing: docs/api/order-management/transaction-costs/slippage-models.md
+Analyzing: docs/api/order-management/transaction-costs/slippage.md
+Analyzing: docs/api/order-management/workflows/examples.md
+Analyzing: docs/api/order-management/workflows/order-lifecycle.md
+
+================================================================================
+VERIFICATION SUMMARY
+================================================================================
+
+Total files analyzed: 22
+
+API Import Verification:
+  Total API references: 151
+  ✅ Verified APIs: 151
+  ❌ Fabricated APIs: 0
+  ⚠️ Errors: 0
+
+Example Execution:
+  Total examples: 405
+  ✅ Passed: 120
+  ❌ Failed: 267
+  ⊘ Skipped: 18
+
+Usage Pattern Validation:
+  ✅ Valid patterns: 269
+  ⚠️ Issues found: 136
+
+API Verification Rate: 100.0%
+🎉 PERFECT! All documented APIs are verified!
+Example Execution Rate: 31.0%
+❌ Issues found: Multiple examples fail to execute
+
+================================================================================
+FAILED EXAMPLES
+================================================================================
+
+File: docs/api/order-management/CODE_EXAMPLES_VALIDATION.md
+  Example #1
+  Error: ❌ Execution failed: name 'asset' is not defined
+
+File: docs/api/order-management/CODE_EXAMPLES_VALIDATION.md
+  Example #2
+  Error: ❌ Execution failed: name 'order' is not defined
+
+File: docs/api/order-management/CODE_EXAMPLES_VALIDATION.md
+  Example #6
+  Error: ❌ Execution failed: name 'context' is not defined
+
+File: docs/api/order-management/CODE_EXAMPLES_VALIDATION.md
+  Example #7
+  Error: ❌ Execution failed: name 'returns' is not defined
+
+File: docs/api/order-management/CODE_EXAMPLES_VALIDATION.md
+  Example #8
+  Error: ❌ Execution failed: name 'SlippageModel' is not defined
+
+File: docs/api/order-management/CODE_EXAMPLES_VALIDATION.md
+  Example #9
+  Error: ❌ Execution failed: name 'data' is not defined
+
+File: docs/api/order-management/README.md
+  Example #2
+  Error: ❌ Execution failed: name 'asset' is not defined
+
+File: docs/api/order-management/README.md
+  Example #3
+  Error: ❌ Execution failed: name 'order' is not defined
+
+File: docs/api/order-management/README.md
+  Example #4
+  Error: ❌ Execution failed: name 'order' is not defined
+
+File: docs/api/order-management/README.md
+  Example #6
+  Error: ❌ Execution failed: name 'set_slippage' is not defined
+
+... and 257 more (see JSON report)
+
+
+================================================================================
+USAGE PATTERN ISSUES
+================================================================================
+
+File: docs/api/order-management/CODE_EXAMPLES_VALIDATION.md
+  Example #6
+    ⚠️ Example uses APIs but has no imports (may be incomplete snippet)
+
+File: docs/api/order-management/README.md
+  Example #5
+    ⚠️ Example uses APIs but has no imports (may be incomplete snippet)
+
+File: docs/api/order-management/execution/blotter.md
+  Example #3
+    ⚠️ Example uses APIs but has no imports (may be incomplete snippet)
+
+File: docs/api/order-management/execution/blotter.md
+  Example #4
+    ⚠️ Example uses APIs but has no imports (may be incomplete snippet)
+
+File: docs/api/order-management/execution/blotter.md
+  Example #5
+    ⚠️ Example uses APIs but has no imports (may be incomplete snippet)
+
+File: docs/api/order-management/execution/blotter.md
+  Example #6
+    ⚠️ Example uses APIs but has no imports (may be incomplete snippet)
+
+File: docs/api/order-management/execution/blotter.md
+  Example #7
+    ⚠️ Example uses APIs but has no imports (may be incomplete snippet)
+
+File: docs/api/order-management/execution/blotter.md
+  Example #8
+    ⚠️ Example uses APIs but has no imports (may be incomplete snippet)
+
+File: docs/api/order-management/execution/blotter.md
+  Example #12
+    ⚠️ Example uses APIs but has no imports (may be incomplete snippet)
+
+File: docs/api/order-management/execution/blotter.md
+  Example #13
+    ⚠️ Example uses APIs but has no imports (may be incomplete snippet)
+
+... and 126 more (see JSON report)
+
+Detailed report written to: /Users/jerryinyang/Code/bmad-dev/rustybt/scripts/api_verification_report.json
+
+❌ FAILURE: Issues found in documentation!
+  - Examples failed to execute

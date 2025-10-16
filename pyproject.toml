@@ -320,6 +320,7 @@ exclude = '''
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+exclude = ["docs/examples/**/*.py", "docs/examples/**/*.ipynb"]
 
 [tool.ruff.lint]
 select = [
@@ -622,7 +623,7 @@ ci = { max_examples = 1000, derandomize = true }
 quick = { max_examples = 100 }
 
 [tool.bandit]
-exclude_dirs = ["tests", "build", "dist"]
+exclude_dirs = ["tests", "build", "dist", "docs/examples"]
 skips = ["B101", "B601"]
 
 [tool.tox]

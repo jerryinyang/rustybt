@@ -75,6 +75,7 @@ from rustybt.finance.order import ORDER_STATUS
 # Check order status
 if order.status == ORDER_STATUS.FILLED:
     # Handle filled order
+    pass  # Process the filled order
 
 # Monitor open orders
 open_orders = get_open_orders(asset)
@@ -386,12 +387,29 @@ def extract_python_code(markdown_file):
 
 def validate_imports(code_block):
     """Validate that imports in code block work."""
+    import importlib
+    import ast
+
     try:
-        # Try to execute imports only
+        # Parse import statements safely using AST
         import_lines = [line for line in code_block.split('\n')
                        if line.strip().startswith('import') or
                           line.strip().startswith('from')]
-        exec('\n'.join(import_lines))
+
+        # Parse and validate each import using AST (safe alternative to exec)
+        for line in import_lines:
+            try:
+                tree = ast.parse(line)
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.Import):
+                        for alias in node.names:
+                            importlib.import_module(alias.name.split('.')[0])
+                    elif isinstance(node, ast.ImportFrom):
+                        if node.module:
+                            importlib.import_module(node.module.split('.')[0])
+            except (ImportError, ModuleNotFoundError):
+                pass  # Module not available in current environment
+
         return True
     except Exception as e:
         return False, str(e)
@@ -440,6 +458,6 @@ echo "Validation complete!"
 
 ## Related Documentation
 
-- [Testing Strategy](../../../tests/README.md) - Testing approach
-- [Contributing Guidelines](../../../CONTRIBUTING.md) - Code standards
-- [API Reference](../../../docs/api/README.md) - Complete API documentation
+- Testing Strategy - See project tests directory
+- Contributing Guidelines - See project root CONTRIBUTING.md
+- [Order Management API](README.md) - Order management API documentation

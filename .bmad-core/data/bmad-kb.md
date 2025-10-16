@@ -130,7 +130,7 @@ npx bmad-method install
 - Document sharding and story management
 - Implementation workflow (SM/Dev cycles)
 
-**Cost-Saving Tip**: Create large documents (PRDs, architecture) in web UI, then copy to `docs/prd.md` and `docs/architecture.md` in your project before switching to IDE for development.
+**Cost-Saving Tip**: Create large documents (PRDs, architecture) in web UI, then copy to `docs/internal/prd.md` and `docs/internal/architecture.md` in your project before switching to IDE for development.
 
 ### IDE-Only Workflow Considerations
 
@@ -236,10 +236,10 @@ architectureSharded: false
 ```yaml
 prdVersion: v4
 prdSharded: true
-prdShardedLocation: docs/prd
+prdShardedLocation: docs/internal/prd
 architectureVersion: v4
 architectureSharded: true
-architectureShardedLocation: docs/architecture
+architectureShardedLocation: docs/internal/architecture
 ```
 
 ## Core Philosophy
@@ -316,8 +316,8 @@ You are the "Vibe CEO" - thinking like a CEO with unlimited resources and a sing
 - `*help` - Show available commands
 - `*status` - Show current context/progress
 - `*exit` - Exit the agent mode
-- `*shard-doc docs/prd.md prd` - Shard PRD into manageable pieces
-- `*shard-doc docs/architecture.md architecture` - Shard architecture document
+- `*shard-doc docs/internal/prd.md prd` - Shard PRD into manageable pieces
+- `*shard-doc docs/internal/architecture.md architecture` - Shard architecture document
 - `*create` - Run create-next-story task (SM agent)
 
 **In Web UI**:
@@ -449,7 +449,7 @@ This architecture enables seamless operation across environments while maintaini
 3. **PRD Creation**: `/pm create-doc prd` - Comprehensive product requirements
 4. **Architecture Design**: `/architect create-doc architecture` - Technical foundation
 5. **Validation & Alignment**: `/po` run master checklist to ensure document consistency
-6. **Document Preparation**: Copy final documents to project as `docs/prd.md` and `docs/architecture.md`
+6. **Document Preparation**: Copy final documents to project as `docs/internal/prd.md` and `docs/internal/architecture.md`
 
 #### Example Planning Prompts
 
@@ -473,31 +473,31 @@ that can handle [specific requirements]."
 
 - **Why**: Development workflow requires file operations, real-time project integration, and document sharding
 - **Cost Benefit**: Web UI is more cost-effective for large document creation; IDE is optimized for development tasks
-- **Required Files**: Ensure `docs/prd.md` and `docs/architecture.md` exist in your project
+- **Required Files**: Ensure `docs/internal/prd.md` and `docs/internal/architecture.md` exist in your project
 
 ### IDE Development Workflow
 
-**Prerequisites**: Planning documents must exist in `docs/` folder
+**Prerequisites**: Planning documents must exist in `docs/internal/` folder
 
 1. **Document Sharding** (CRITICAL STEP):
    - Documents created by PM/Architect (in Web or IDE) MUST be sharded for development
    - Two methods to shard:
      a) **Manual**: Drag `shard-doc` task + document file into chat
      b) **Agent**: Ask `@bmad-master` or `@po` to shard documents
-   - Shards `docs/prd.md` → `docs/prd/` folder
-   - Shards `docs/architecture.md` → `docs/architecture/` folder
+   - Shards `docs/internal/prd.md` → `docs/internal/prd/` folder
+   - Shards `docs/internal/architecture.md` → `docs/internal/architecture/` folder
    - **WARNING**: Do NOT shard in Web UI - copying many small files is painful!
 
 2. **Verify Sharded Content**:
-   - At least one `epic-n.md` file in `docs/prd/` with stories in development order
+   - At least one `epic-n.md` file in `docs/internal/prd/` with stories in development order
    - Source tree document and coding standards for dev agent reference
    - Sharded docs for SM agent story creation
 
 Resulting Folder Structure:
 
-- `docs/prd/` - Broken down PRD sections
-- `docs/architecture/` - Broken down architecture sections
-- `docs/stories/` - Generated user stories
+- `docs/internal/prd/` - Broken down PRD sections
+- `docs/internal/architecture/` - Broken down architecture sections
+- `docs/internal/stories/` - Generated user stories
 
 1. **Development Cycle** (Sequential, one story at a time):
 
@@ -509,7 +509,7 @@ Resulting Folder Structure:
    **Step 1 - Story Creation**:
    - **NEW CLEAN CHAT** → Select powerful model → `@sm` → `*create`
    - SM executes create-next-story task
-   - Review generated story in `docs/stories/`
+   - Review generated story in `docs/internal/stories/`
    - Update status from "Draft" to "Approved"
 
    **Step 2 - Story Implementation**:
@@ -622,14 +622,14 @@ Each status change requires user verification and approval before proceeding.
 3. **Integration Focus**: Emphasize compatibility and non-breaking changes
 4. **Incremental Approach**: Plan for gradual rollout and testing
 
-**For detailed guide**: See `docs/working-in-the-brownfield.md`
+**For detailed guide**: See `docs/internal/working-in-the-brownfield.md`
 
 ## Document Creation Best Practices
 
 ### Required File Naming for Framework Integration
 
-- `docs/prd.md` - Product Requirements Document
-- `docs/architecture.md` - System Architecture Document
+- `docs/internal/prd.md` - Product Requirements Document
+- `docs/internal/architecture.md` - System Architecture Document
 
 **Why These Names Matter**:
 
@@ -643,7 +643,7 @@ Each status change requires user verification and approval before proceeding.
 
 1. **Use Web UI**: Create documents in web interface for cost efficiency
 2. **Copy Final Output**: Save complete markdown to your project
-3. **Standard Names**: Save as `docs/prd.md` and `docs/architecture.md`
+3. **Standard Names**: Save as `docs/internal/prd.md` and `docs/internal/architecture.md`
 4. **Switch to IDE**: Use IDE agents for development and smaller documents
 
 ### Document Sharding
@@ -664,10 +664,10 @@ Templates with Level 2 headings (`##`) can be automatically sharded:
 
 **After Sharding**:
 
-- `docs/prd/goals-and-background-context.md`
-- `docs/prd/requirements.md`
-- `docs/prd/user-interface-design-goals.md`
-- `docs/prd/success-metrics.md`
+- `docs/internal/prd/goals-and-background-context.md`
+- `docs/internal/prd/requirements.md`
+- `docs/internal/prd/user-interface-design-goals.md`
+- `docs/internal/prd/success-metrics.md`
 
 Use the `shard-doc` task or `@kayvan/markdown-tree-parser` tool for automatic sharding.
 
@@ -732,7 +732,7 @@ For full details, see `CONTRIBUTING.md`. Key points:
 - Atomic commits - one logical change per commit
 - Must align with guiding principles
 
-**Core Principles** (from docs/GUIDING-PRINCIPLES.md):
+**Core Principles** (from docs/internal/GUIDING-PRINCIPLES.md):
 
 - **Dev Agents Must Be Lean**: Minimize dependencies, save context for code
 - **Natural Language First**: Everything in markdown, no code in core
@@ -779,7 +779,7 @@ Expansion packs extend BMAD-METHOD™ beyond traditional software development in
 ### Using Expansion Packs
 
 1. **Browse Available Packs**: Check `expansion-packs/` directory
-2. **Get Inspiration**: See `docs/expansion-packs.md` for detailed examples and ideas
+2. **Get Inspiration**: See `docs/internal/expansion-packs.md` for detailed examples and ideas
 3. **Install via CLI**:
 
    ```bash
@@ -804,6 +804,6 @@ Use the **expansion-creator** pack to build your own:
 
 - **Commands**: Use `*/*help` in any environment to see available commands
 - **Agent Switching**: Use `*/*switch agent-name` with orchestrator for role changes
-- **Documentation**: Check `docs/` folder for project-specific context
+- **Documentation**: Check `docs/internal/` folder for project-specific context
 - **Community**: Discord and GitHub resources available for support
 - **Contributing**: See `CONTRIBUTING.md` for full guidelines

@@ -19,19 +19,19 @@ workflow:
       optional_steps:
         - brainstorming_session
         - market_research_prompt
-      notes: "Can do brainstorming first, then optional deep research before creating project brief. SAVE OUTPUT: Copy final project-brief.md to your project's docs/ folder."
+      notes: "Can do brainstorming first, then optional deep research before creating project brief. SAVE OUTPUT: Copy final project-brief.md to your project's docs/internal/ folder."
 
     - agent: pm
       creates: prd.md
       requires: project-brief.md
-      notes: "Creates PRD from project brief using prd-tmpl. SAVE OUTPUT: Copy final prd.md to your project's docs/ folder."
+      notes: "Creates PRD from project brief using prd-tmpl. SAVE OUTPUT: Copy final prd.md to your project's docs/internal/ folder."
 
     - agent: ux-expert
       creates: front-end-spec.md
       requires: prd.md
       optional_steps:
         - user_research_prompt
-      notes: "Creates UI/UX specification using front-end-spec-tmpl. SAVE OUTPUT: Copy final front-end-spec.md to your project's docs/ folder."
+      notes: "Creates UI/UX specification using front-end-spec-tmpl. SAVE OUTPUT: Copy final front-end-spec.md to your project's docs/internal/ folder."
 
     - agent: ux-expert
       creates: v0_prompt (optional)
@@ -47,13 +47,13 @@ workflow:
       optional_steps:
         - technical_research_prompt
         - review_generated_ui_structure
-      notes: "Creates comprehensive architecture using fullstack-architecture-tmpl. If user generated UI with v0/Lovable, can incorporate the project structure into architecture. May suggest changes to PRD stories or new stories. SAVE OUTPUT: Copy final fullstack-architecture.md to your project's docs/ folder."
+      notes: "Creates comprehensive architecture using fullstack-architecture-tmpl. If user generated UI with v0/Lovable, can incorporate the project structure into architecture. May suggest changes to PRD stories or new stories. SAVE OUTPUT: Copy final fullstack-architecture.md to your project's docs/internal/ folder."
 
     - agent: pm
       updates: prd.md (if needed)
       requires: fullstack-architecture.md
       condition: architecture_suggests_prd_changes
-      notes: "If architect suggests story changes, update PRD and re-export the complete unredacted prd.md to docs/ folder."
+      notes: "If architect suggests story changes, update PRD and re-export the complete unredacted prd.md to docs/internal/ folder."
 
     - agent: po
       validates: all_artifacts
@@ -63,7 +63,7 @@ workflow:
     - agent: various
       updates: any_flagged_documents
       condition: po_checklist_issues
-      notes: "If PO finds issues, return to relevant agent to fix and re-export updated documents to docs/ folder."
+      notes: "If PO finds issues, return to relevant agent to fix and re-export updated documents to docs/internal/ folder."
 
     - step: project_setup_guidance
       action: guide_project_structure
@@ -80,9 +80,9 @@ workflow:
       requires: all_artifacts_in_project
       notes: |
         Shard documents for IDE development:
-        - Option A: Use PO agent to shard: @po then ask to shard docs/prd.md
-        - Option B: Manual: Drag shard-doc task + docs/prd.md into chat
-        - Creates docs/prd/ and docs/architecture/ folders with sharded content
+        - Option A: Use PO agent to shard: @po then ask to shard docs/internal/prd.md
+        - Option B: Manual: Drag shard-doc task + docs/internal/prd.md into chat
+        - Creates docs/internal/prd/ and docs/internal/architecture/ folders with sharded content
 
     - agent: sm
       action: create_story
@@ -231,11 +231,11 @@ workflow:
       - Enterprise or customer-facing applications
 
   handoff_prompts:
-    analyst_to_pm: "Project brief is complete. Save it as docs/project-brief.md in your project, then create the PRD."
-    pm_to_ux: "PRD is ready. Save it as docs/prd.md in your project, then create the UI/UX specification."
-    ux_to_architect: "UI/UX spec complete. Save it as docs/front-end-spec.md in your project, then create the fullstack architecture."
-    architect_review: "Architecture complete. Save it as docs/fullstack-architecture.md. Do you suggest any changes to the PRD stories or need new stories added?"
-    architect_to_pm: "Please update the PRD with the suggested story changes, then re-export the complete prd.md to docs/."
-    updated_to_po: "All documents ready in docs/ folder. Please validate all artifacts for consistency."
+    analyst_to_pm: "Project brief is complete. Save it as docs/internal/project-brief.md in your project, then create the PRD."
+    pm_to_ux: "PRD is ready. Save it as docs/internal/prd.md in your project, then create the UI/UX specification."
+    ux_to_architect: "UI/UX spec complete. Save it as docs/internal/front-end-spec.md in your project, then create the fullstack architecture."
+    architect_review: "Architecture complete. Save it as docs/internal/fullstack-architecture.md. Do you suggest any changes to the PRD stories or need new stories added?"
+    architect_to_pm: "Please update the PRD with the suggested story changes, then re-export the complete prd.md to docs/internal/."
+    updated_to_po: "All documents ready in docs/internal/ folder. Please validate all artifacts for consistency."
     po_issues: "PO found issues with [document]. Please return to [agent] to fix and re-save the updated document."
-    complete: "All planning artifacts validated and saved in docs/ folder. Move to IDE environment to begin development."
+    complete: "All planning artifacts validated and saved in docs/internal/ folder. Move to IDE environment to begin development."

@@ -77,7 +77,7 @@ graph TD
 
 **Critical Transition Point**: Once the PO confirms document alignment, you must switch from web UI to IDE to begin the development workflow:
 
-1. **Copy Documents to Project**: Ensure `docs/prd.md` and `docs/architecture.md` are in your project's docs folder (or a custom location you can specify during installation)
+1. **Copy Documents to Project**: Ensure `docs/internal/prd.md` and `docs/internal/architecture.md` are in your project's docs folder (or a custom location you can specify during installation)
 2. **Switch to IDE**: Open your project in your preferred Agentic IDE
 3. **Document Sharding**: Use the PO agent to shard the PRD and then the Architecture
 4. **Begin Development**: Start the Core Development Cycle that follows
@@ -85,12 +85,12 @@ graph TD
 #### Planning Artifacts (Standard Paths)
 
 ```text
-PRD              → docs/prd.md
-Architecture     → docs/architecture.md
-Sharded Epics    → docs/epics/
-Sharded Stories  → docs/stories/
-QA Assessments   → docs/qa/assessments/
-QA Gates         → docs/qa/gates/
+PRD              → docs/internal/prd.md
+Architecture     → docs/internal/architecture.md
+Sharded Epics    → docs/internal/epics/
+Sharded Stories  → docs/internal/stories/
+QA Assessments   → docs/internal/qa/assessments/
+QA Gates         → docs/internal/qa/gates/
 ```
 
 ### The Core Development Cycle (IDE)
@@ -437,7 +437,7 @@ When you run `@qa *review {story}`, Quinn performs:
 Manages quality gate decisions:
 
 - **Deterministic Rules**: Clear criteria for PASS/CONCERNS/FAIL
-- **Parallel Authority**: QA owns gate files in `docs/qa/gates/`
+- **Parallel Authority**: QA owns gate files in `docs/internal/qa/gates/`
 - **Advisory Nature**: Provides recommendations, not blocks
 - **Waiver Support**: Documents accepted risks when needed
 
@@ -451,12 +451,12 @@ The Test Architect provides value throughout the entire development lifecycle. H
 
 | **Stage**          | **Command** | **When to Use**         | **Value**                  | **Output**                                                     |
 | ------------------ | ----------- | ----------------------- | -------------------------- | -------------------------------------------------------------- |
-| **Story Drafting** | `*risk`     | After SM drafts story   | Identify pitfalls early    | `docs/qa/assessments/{epic}.{story}-risk-{YYYYMMDD}.md`        |
-|                    | `*design`   | After risk assessment   | Guide dev on test strategy | `docs/qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md` |
-| **Development**    | `*trace`    | Mid-implementation      | Verify test coverage       | `docs/qa/assessments/{epic}.{story}-trace-{YYYYMMDD}.md`       |
-|                    | `*nfr`      | While building features | Catch quality issues early | `docs/qa/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md`         |
+| **Story Drafting** | `*risk`     | After SM drafts story   | Identify pitfalls early    | `docs/internal/qa/assessments/{epic}.{story}-risk-{YYYYMMDD}.md`        |
+|                    | `*design`   | After risk assessment   | Guide dev on test strategy | `docs/internal/qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md` |
+| **Development**    | `*trace`    | Mid-implementation      | Verify test coverage       | `docs/internal/qa/assessments/{epic}.{story}-trace-{YYYYMMDD}.md`       |
+|                    | `*nfr`      | While building features | Catch quality issues early | `docs/internal/qa/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md`         |
 | **Review**         | `*review`   | Story marked complete   | Full quality assessment    | QA Results in story + gate file                                |
-| **Post-Review**    | `*gate`     | After fixing issues     | Update quality decision    | Updated `docs/qa/gates/{epic}.{story}-{slug}.yml`              |
+| **Post-Review**    | `*gate`     | After fixing issues     | Update quality decision    | Updated `docs/internal/qa/gates/{epic}.{story}-{slug}.yml`              |
 
 #### Example Commands
 
@@ -530,12 +530,12 @@ Quinn enforces these test quality principles:
 Quick reference for where Test Architect outputs are stored:
 
 ```text
-*risk-profile  → docs/qa/assessments/{epic}.{story}-risk-{YYYYMMDD}.md
-*test-design   → docs/qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
-*trace         → docs/qa/assessments/{epic}.{story}-trace-{YYYYMMDD}.md
-*nfr-assess    → docs/qa/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md
+*risk-profile  → docs/internal/qa/assessments/{epic}.{story}-risk-{YYYYMMDD}.md
+*test-design   → docs/internal/qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
+*trace         → docs/internal/qa/assessments/{epic}.{story}-trace-{YYYYMMDD}.md
+*nfr-assess    → docs/internal/qa/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md
 *review        → QA Results section in story + gate file reference
-*gate          → docs/qa/gates/{epic}.{story}-{slug}.yml
+*gate          → docs/internal/qa/gates/{epic}.{story}-{slug}.yml
 ```
 
 ## Technical Preferences System
@@ -556,9 +556,9 @@ Define which files the dev agent should always load:
 
 ```yaml
 devLoadAlwaysFiles:
-  - docs/architecture/coding-standards.md
-  - docs/architecture/tech-stack.md
-  - docs/architecture/project-structure.md
+  - docs/internal/architecture/coding-standards.md
+  - docs/internal/architecture/tech-stack.md
+  - docs/internal/architecture/project-structure.md
 ```
 
 You will want to verify from sharding your architecture that these documents exist, that they are as lean as possible, and contain exactly the information you want your dev agent to ALWAYS load into its context. These are the rules the agent will follow.

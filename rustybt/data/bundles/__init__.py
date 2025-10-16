@@ -1,7 +1,19 @@
 # These imports are necessary to force module-scope register calls to happen.
 from . import quandl  # noqa
 from . import csvdir  # noqa
-from . import adapter_bundles  # noqa
+
+
+# Deferred import of adapter_bundles to avoid circular import
+# (adapter_bundles imports from adapters, which imports from bundles)
+# This is safe because adapter_bundles is deprecated and only registers
+# profiling bundles used in performance tests.
+def _register_adapter_bundles():
+    """Lazy registration of deprecated adapter bundles."""
+    try:
+        from . import adapter_bundles  # noqa: F401
+    except ImportError:
+        pass
+
 
 # Attempt to register profiling bundles if available (used by performance tests)
 try:  # pragma: no cover - optional dependency for profiling scenarios

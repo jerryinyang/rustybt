@@ -8,7 +8,7 @@ This checklist serves as a comprehensive framework to ensure the Product Require
 
 Before proceeding with this checklist, ensure you have access to:
 
-1. prd.md - The Product Requirements Document (check docs/prd.md)
+1. prd.md - The Product Requirements Document (check docs/internal/prd.md)
 2. Any user research, market analysis, or competitive analysis documents
 3. Business goals and strategy documents
 4. Any existing epic definitions or user stories

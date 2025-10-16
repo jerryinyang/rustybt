@@ -4,7 +4,7 @@ When this command is used, execute the following task:
 
 ## <!-- Powered by BMAD™ Core -->
 
-docOutputLocation: docs/brainstorming-session-results.md
+docOutputLocation: docs/internal/brainstorming-session-results.md
 template: '.bmad-core/templates/brainstorming-output-tmpl.yaml'
 
 ---

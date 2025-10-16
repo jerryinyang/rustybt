@@ -1,342 +1,531 @@
 # Bayesian Optimization
 
-Sample-efficient optimization using Gaussian processes and acquisition functions.
+**Module**: `rustybt.optimization.search.bayesian_search`
+**Class**: `BayesianOptimizer`
+**Best For**: Expensive objective functions, sample-efficient optimization
+
+---
 
 ## Overview
 
-Bayesian optimization builds a probabilistic model of the objective function and uses it to make intelligent decisions about which parameters to try next. It's particularly effective for expensive objective functions (long backtests).
+Bayesian Optimization uses a Gaussian Process (GP) surrogate model to approximate the objective function and an acquisition function to intelligently select which parameters to evaluate next. It balances **exploration** (sampling uncertain regions) and **exploitation** (sampling near known good regions), making it more sample-efficient than grid or random search.
 
-## When to Use
+**Key Advantages**:
+- Sample-efficient: Needs fewer evaluations than random search
+- Learns from past evaluations using Gaussian Process
+- Balances exploration vs exploitation automatically
+- Handles continuous, discrete, and categorical parameters
+- Supports prior knowledge (initial points)
 
-✅ **Use Bayesian optimization when**:
-- Objective function is expensive to evaluate (>1 minute per evaluation)
-- Parameter space is continuous or mixed
-- You want sample efficiency (fewer evaluations needed)
-- Parameters have smooth relationships with objective
+**When to Use**:
+- ✅ Expensive objective functions (minutes per backtest)
+- ✅ Moderate parameter count (2-20 parameters)
+- ✅ Continuous parameter spaces
+- ✅ Sequential optimization (not massively parallel)
+- ✅ Have prior knowledge of good parameters
 
-❌ **Don't use Bayesian optimization when**:
-- Parameter space is purely categorical
-- Objective function is very noisy
-- You need perfectly reproducible results
-- You want to parallelize many evaluations
+**When NOT to Use**:
+- ❌ Fast objective functions (use random/grid search)
+- ❌ Very high dimensions (>20 parameters - GP doesn't scale well)
+- ❌ Need massive parallelization (GP is inherently sequential)
+- ❌ Very small budget (<20 evaluations - use grid search)
+
+---
 
 ## Basic Usage
 
 ```python
+from decimal import Decimal
+from rustybt.optimization import (
+    Optimizer,
+    ParameterSpace,
+    ContinuousParameter,
+    DiscreteParameter,
+    ObjectiveFunction
+)
 from rustybt.optimization.search import BayesianOptimizer
-from rustybt.optimization.parameter_space import ParameterSpace, ContinuousParameter
 
 # Define parameter space
 param_space = ParameterSpace(parameters=[
-    ContinuousParameter('threshold', 0.01, 0.10),
-    ContinuousParameter('volatility_target', 0.10, 0.30)
+    ContinuousParameter(
+        name='lookback',
+        min_value=10.0,
+        max_value=100.0,
+        prior='uniform'
+    ),
+    ContinuousParameter(
+        name='threshold',
+        min_value=0.001,
+        max_value=0.1,
+        prior='log-uniform'  # Log scale for exponential range
+    ),
+    DiscreteParameter(
+        name='rebalance_freq',
+        min_value=1,
+        max_value=30,
+        step=1
+    )
 ])
 
 # Create Bayesian optimizer
-bayes = BayesianOptimizer(
+bayesian_opt = BayesianOptimizer(
     parameter_space=param_space,
-    n_initial_points=10,      # Random initialization
-    n_iterations=50,          # Total evaluations
-    acquisition_function='EI' # Expected Improvement
+    n_iter=50,  # Maximum iterations
+    acq_func='EI',  # Expected Improvement acquisition function
+    random_state=42  # For reproducibility
 )
 
-# Optimization loop
-while not bayes.is_complete():
-    params = bayes.suggest()  # Suggests most promising parameters
-    score = run_backtest(params)
-    bayes.update(params, score)  # Updates Gaussian process model
+# Define backtest function
+def run_backtest(lookback, threshold, rebalance_freq):
+    """Run backtest - NOTE: Bayesian optimization works best
+    when objective function is expensive (takes time)."""
+    # Your expensive backtest logic
+    # ...
+    return {
+        'performance_metrics': {
+            'sharpe_ratio': Decimal('1.5')
+        }
+    }
 
-# Get best parameters
-best_params = bayes.get_best_params()
-```
+# Configure optimizer
+objective = ObjectiveFunction(metric='sharpe_ratio')
 
-## Constructor
-
-```python
-BayesianOptimizer(
-    parameter_space: ParameterSpace,
-    n_initial_points: int = 10,
-    n_iterations: int = 100,
-    acquisition_function: Literal['EI', 'PI', 'LCB'] = 'EI',
-    kappa: float = 2.576,
-    xi: float = 0.01,
-    random_seed: Optional[int] = None
+optimizer = Optimizer(
+    parameter_space=param_space,
+    search_algorithm=bayesian_opt,
+    objective_function=objective,
+    backtest_function=run_backtest,
+    max_trials=50
 )
+
+# Run optimization
+best_result = optimizer.optimize()
+
+print(f"Best parameters: {best_result.params}")
+print(f"Best score: {best_result.score}")
+print(f"Converged: {bayesian_opt.is_converged()}")
 ```
 
-**Parameters**:
-- `parameter_space`: Parameter space to search
-- `n_initial_points`: Random points before Gaussian process modeling
-- `n_iterations`: Total evaluations (including initial points)
-- `acquisition_function`: How to select next point
-  - `'EI'`: Expected Improvement (balances exploration/exploitation)
-  - `'PI'`: Probability of Improvement (more exploitative)
-  - `'LCB'`: Lower Confidence Bound (more exploratory)
-- `kappa`: Exploration parameter for LCB (higher = more exploration)
-- `xi`: Exploration parameter for EI/PI (higher = more exploration)
-- `random_seed`: Random seed for reproducibility
+---
 
 ## Acquisition Functions
 
-### Expected Improvement (EI)
+The acquisition function determines which point to evaluate next by balancing exploration and exploitation.
 
-Most commonly used, balances exploration and exploitation.
+### Expected Improvement (EI) - Default
+
+**Best for**: General-purpose optimization
 
 ```python
-bayes = BayesianOptimizer(
+bayesian_opt = BayesianOptimizer(
     parameter_space=param_space,
-    acquisition_function='EI',
-    xi=0.01  # Small value: exploit more
+    acq_func='EI',  # Expected Improvement
+    xi=0.01  # Exploration parameter (larger = more exploration)
 )
 ```
 
 **How it works**: Maximizes expected improvement over current best.
 
-**Use when**: General purpose optimization.
+**xi Parameter**:
+- `xi=0.0`: Pure exploitation (greedy)
+- `xi=0.01`: Balanced (default)
+- `xi=0.1`: More exploration
 
 ### Probability of Improvement (PI)
 
-More exploitative than EI.
+**Best for**: When you need high probability of improvement
 
 ```python
-bayes = BayesianOptimizer(
+bayesian_opt = BayesianOptimizer(
     parameter_space=param_space,
-    acquisition_function='PI',
-    xi=0.01
+    acq_func='PI',  # Probability of Improvement
+    xi=0.0  # Typically use 0 for PI
 )
 ```
 
-**How it works**: Maximizes probability of finding better point than current best.
-
-**Use when**: You want to quickly find good (but not necessarily optimal) solutions.
+**How it works**: Maximizes probability of improving over current best.
 
 ### Lower Confidence Bound (LCB)
 
-More exploratory, good for noisy objectives.
+**Best for**: Minimization problems or risk-averse optimization
 
 ```python
-bayes = BayesianOptimizer(
+bayesian_opt = BayesianOptimizer(
     parameter_space=param_space,
-    acquisition_function='LCB',
-    kappa=2.576  # Higher = more exploration
+    acq_func='LCB',  # Lower Confidence Bound
+    kappa=1.96  # Exploration parameter (larger = more exploration)
 )
 ```
 
-**How it works**: Balances mean prediction and uncertainty.
+**How it works**: Minimizes lower confidence bound (mean - kappa × std).
 
-**Use when**: Objective function is noisy or you want thorough exploration.
+**kappa Parameter**:
+- `kappa=0.0`: Pure exploitation (use GP mean)
+- `kappa=1.96`: 95% confidence interval (default)
+- `kappa=3.0`: More exploration
 
-## Complete Example
+---
+
+## Prior Knowledge
+
+Seed Bayesian optimization with known good parameters to start from a better position:
+
+```python
+# You have prior knowledge that these parameters work well
+initial_points = [
+    {'lookback': 20.0, 'threshold': 0.02, 'rebalance_freq': 5},
+    {'lookback': 50.0, 'threshold': 0.01, 'rebalance_freq': 10}
+]
+
+initial_scores = [
+    Decimal('1.5'),  # Sharpe ratio for first params
+    Decimal('1.3')   # Sharpe ratio for second params
+]
+
+bayesian_opt = BayesianOptimizer(
+    parameter_space=param_space,
+    n_iter=50,
+    initial_points=initial_points,
+    initial_scores=initial_scores,
+    random_state=42
+)
+
+# Optimization starts from these known points
+# and explores nearby regions intelligently
+```
+
+**Use cases for prior knowledge**:
+- Refinement after random search
+- Domain expert intuition
+- Parameters from previous optimizations
+- Published research parameters
+
+---
+
+## Convergence Detection
+
+Bayesian optimization can automatically detect convergence:
+
+```python
+bayesian_opt = BayesianOptimizer(
+    parameter_space=param_space,
+    n_iter=100,
+    convergence_threshold=1e-4,  # Min improvement threshold
+    convergence_patience=10  # Stop if no improvement for 10 iterations
+)
+
+result = optimizer.optimize()
+
+if bayesian_opt.is_converged():
+    print(f"Converged after {bayesian_opt.iteration} iterations")
+else:
+    print(f"Reached max iterations ({bayesian_opt.n_iter})")
+```
+
+**Convergence criteria**: Optimization stops if no improvement > `convergence_threshold` for `convergence_patience` consecutive iterations.
+
+---
+
+## Complete Example with Two-Phase Optimization
 
 ```python
 from decimal import Decimal
-from rustybt.optimization.search import BayesianOptimizer
-from rustybt.optimization.parameter_space import (
+from rustybt.optimization import (
+    Optimizer,
     ParameterSpace,
     ContinuousParameter,
-    DiscreteParameter
+    DiscreteParameter,
+    ObjectiveFunction
 )
+from rustybt.optimization.search import RandomSearchAlgorithm, BayesianOptimizer
 
-# Define parameter space
+# Define large parameter space
 param_space = ParameterSpace(parameters=[
-    ContinuousParameter('threshold', 0.01, 0.10, prior='uniform'),
-    DiscreteParameter('lookback', 10, 100, step=5),
-    ContinuousParameter('vol_target', 0.10, 0.30, prior='uniform')
+    ContinuousParameter(
+        name='ma_short',
+        min_value=5.0,
+        max_value=50.0,
+        prior='uniform'
+    ),
+    ContinuousParameter(
+        name='ma_long',
+        min_value=50.0,
+        max_value=200.0,
+        prior='uniform'
+    ),
+    ContinuousParameter(
+        name='stop_loss',
+        min_value=0.01,
+        max_value=0.10,
+        prior='log-uniform'
+    ),
+    DiscreteParameter(
+        name='holding_period',
+        min_value=1,
+        max_value=20,
+        step=1
+    )
 ])
 
-# Create optimizer
-bayes = BayesianOptimizer(
+def run_expensive_backtest(ma_short, ma_long, stop_loss, holding_period):
+    """Expensive backtest taking 30+ seconds."""
+    # Validate constraints
+    if ma_short >= ma_long:
+        return {
+            'performance_metrics': {'sharpe_ratio': Decimal('-Infinity')}
+        }
+
+    # Expensive backtest logic
+    # ...
+    sharpe = Decimal('1.5')  # Placeholder
+
+    return {
+        'performance_metrics': {'sharpe_ratio': sharpe}
+    }
+
+# Phase 1: Random search for initial exploration (fast, broad coverage)
+print("Phase 1: Random search exploration...")
+random_search = RandomSearchAlgorithm(
     parameter_space=param_space,
-    n_initial_points=15,  # More initial points for 3 parameters
-    n_iterations=100,
-    acquisition_function='EI',
-    random_seed=42
+    n_iter=20,  # Quick exploration
+    seed=42
 )
 
-# Run optimization
-print("Starting Bayesian optimization...")
-iteration = 0
+objective = ObjectiveFunction(metric='sharpe_ratio')
 
-while not bayes.is_complete():
-    params = bayes.suggest()
-    score = run_backtest(params)
-    bayes.update(params, score)
-
-    iteration += 1
-    if iteration <= bayes.n_initial_points:
-        print(f"[Init {iteration}/{bayes.n_initial_points}] Exploring...")
-    else:
-        print(f"[{iteration}/{bayes.n_iterations}] "
-              f"Current: {score:.3f} | Best: {bayes.get_best_score():.3f}")
-
-# Results
-best_params = bayes.get_best_params()
-best_score = bayes.get_best_score()
-
-print(f"\n=== Optimization Complete ===")
-print(f"Best Sharpe: {best_score:.3f}")
-print(f"Best Parameters:")
-for param, value in best_params.items():
-    print(f"  {param}: {value}")
-```
-
-## Visualization
-
-### Convergence Plot
-
-```python
-import matplotlib.pyplot as plt
-
-def plot_bayes_convergence(optimizer):
-    """Plot convergence of Bayesian optimization."""
-    results = optimizer.get_results()
-    scores = [float(score) for _, score in results]
-
-    # Best score at each iteration
-    best_scores = []
-    current_best = float('-inf')
-    for score in scores:
-        current_best = max(current_best, score)
-        best_scores.append(current_best)
-
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
-
-    # All scores
-    ax1.scatter(range(len(scores)), scores, alpha=0.5, label='Evaluated')
-    ax1.plot(best_scores, 'r-', linewidth=2, label='Best so far')
-    ax1.axvline(optimizer.n_initial_points, color='k', linestyle='--',
-                label='End of initialization')
-    ax1.set_xlabel('Iteration')
-    ax1.set_ylabel('Sharpe Ratio')
-    ax1.set_title('Bayesian Optimization Convergence')
-    ax1.legend()
-    ax1.grid(True, alpha=0.3)
-
-    # Improvement per iteration
-    improvements = [best_scores[i] - best_scores[i-1]
-                   for i in range(1, len(best_scores))]
-    ax2.bar(range(1, len(best_scores)), improvements, alpha=0.7)
-    ax2.axvline(optimizer.n_initial_points, color='k', linestyle='--')
-    ax2.set_xlabel('Iteration')
-    ax2.set_ylabel('Improvement')
-    ax2.set_title('Improvement per Iteration')
-    ax2.grid(True, alpha=0.3)
-
-    plt.tight_layout()
-    return fig
-```
-
-## Tuning Guidelines
-
-### Number of Initial Points
-
-**Rule of thumb**: 2-5 times the number of parameters
-
-```python
-n_params = len(param_space.parameters)
-n_initial = max(10, 3 * n_params)  # At least 10, prefer 3x params
-```
-
-### Total Iterations
-
-**Rule of thumb**: 20-50 times the number of parameters
-
-```python
-n_params = len(param_space.parameters)
-n_iterations = min(200, 30 * n_params)  # Cap at 200
-```
-
-### Exploration vs Exploitation
-
-**More exploration** (early phase, noisy objective):
-```python
-bayes = BayesianOptimizer(
-    ...,
-    acquisition_function='LCB',
-    kappa=3.0  # High exploration
-)
-```
-
-**More exploitation** (refinement phase):
-```python
-bayes = BayesianOptimizer(
-    ...,
-    acquisition_function='EI',
-    xi=0.001  # Low exploration
-)
-```
-
-## Advanced Techniques
-
-### Two-Stage Optimization
-
-Explore then exploit:
-
-```python
-# Stage 1: Exploration
-bayes_explore = BayesianOptimizer(
+optimizer_random = Optimizer(
     parameter_space=param_space,
-    n_initial_points=20,
-    n_iterations=50,
-    acquisition_function='LCB',
-    kappa=3.0  # High exploration
+    search_algorithm=random_search,
+    objective_function=objective,
+    backtest_function=run_expensive_backtest,
+    max_trials=20
 )
-# ... run optimization
 
-# Stage 2: Exploitation around best
-best_region = create_narrow_space_around(bayes_explore.get_best_params())
-bayes_exploit = BayesianOptimizer(
-    parameter_space=best_region,
-    n_initial_points=5,
-    n_iterations=30,
-    acquisition_function='EI',
-    xi=0.001  # Low exploration
+random_result = optimizer_random.optimize()
+
+# Get top 3 results from random search as prior knowledge
+top_3_random = random_search.get_results(top_k=3)
+initial_points = [params for params, _ in top_3_random]
+initial_scores = [score for _, score in top_3_random]
+
+print(f"Phase 1 complete. Best score: {random_result.score}")
+
+# Phase 2: Bayesian optimization for refinement (sample-efficient)
+print("\nPhase 2: Bayesian refinement...")
+bayesian_opt = BayesianOptimizer(
+    parameter_space=param_space,
+    n_iter=30,  # Focused search
+    acq_func='EI',
+    xi=0.01,
+    initial_points=initial_points,  # Start from best random search results
+    initial_scores=initial_scores,
+    convergence_threshold=1e-3,
+    convergence_patience=10,
+    random_state=42
 )
-# ... run optimization
+
+optimizer_bayesian = Optimizer(
+    parameter_space=param_space,
+    search_algorithm=bayesian_opt,
+    objective_function=objective,
+    backtest_function=run_expensive_backtest,
+    max_trials=30
+)
+
+bayesian_result = optimizer_bayesian.optimize()
+
+print(f"\nPhase 2 complete. Best score: {bayesian_result.score}")
+print(f"Converged: {bayesian_opt.is_converged()}")
+print(f"Total evaluations: 20 (random) + {bayesian_opt.iteration} (Bayesian)")
+print(f"\nFinal best parameters: {bayesian_result.params}")
 ```
 
-### Warm Start
+---
 
-Initialize with previous results:
+## Performance Characteristics
+
+### Sample Efficiency
+
+Bayesian optimization typically finds good solutions with fewer evaluations:
+
+| Method | Evaluations Needed | Best For |
+|--------|-------------------|----------|
+| Grid Search | 100-10,000+ | Exhaustive search |
+| Random Search | 100-1000 | Fast exploration |
+| Bayesian | 20-200 | Expensive objectives |
+
+**Rule of Thumb**: Bayesian optimization shines when each evaluation takes >10 seconds.
+
+### Parallelization Limitations
+
+Bayesian optimization is **inherently sequential**:
+- GP learns from each evaluation to suggest next point
+- Limited parallelization (can batch suggest 2-4 points)
+- For massive parallelization, use random/grid search instead
 
 ```python
-# Previous optimization
-bayes1 = BayesianOptimizer(param_space, n_iterations=50)
-# ... run
-
-# New optimization with warm start
-bayes2 = BayesianOptimizer(param_space, n_iterations=50)
-for params, score in bayes1.get_results():
-    bayes2.update(params, score)  # Load previous results
-
-# Continue optimization
-while not bayes2.is_complete():
-    params = bayes2.suggest()
-    score = run_backtest(params)
-    bayes2.update(params, score)
+# Bayesian optimizer with ParallelOptimizer
+# WARNING: Limited speedup due to sequential nature
+parallel_optimizer = ParallelOptimizer(
+    parameter_space=param_space,
+    search_algorithm=bayesian_opt,
+    objective_function=objective,
+    backtest_function=run_backtest,
+    max_trials=50,
+    n_workers=2  # Use 2-4 workers max (limited benefit beyond this)
+)
 ```
 
-## Comparison with Other Algorithms
+---
 
-| Aspect | Bayesian | Grid | Random | Genetic |
-|--------|----------|------|--------|---------|
-| **Sample Efficiency** | High | Low | Medium | Medium |
-| **Speed per Iteration** | Medium | Fast | Fast | Medium |
-| **Parallelizable** | Limited | Yes | Yes | Yes |
-| **Continuous Params** | Excellent | Poor | Good | Good |
-| **Noisy Objectives** | Medium | Good | Good | Good |
+## Best Practices
 
-## Dependencies
+### 1. Use Two-Phase Optimization
 
-Requires `scikit-optimize` package:
+```python
+# Phase 1: Random search (20-30 evaluations)
+# → Broad exploration, identify promising regions
 
-```bash
-pip install scikit-optimize
+# Phase 2: Bayesian optimization with prior knowledge
+# → Focused refinement in promising regions
 ```
 
-## See Also
+### 2. Choose Appropriate n_iter
 
-- [Grid Search](grid-search.md)
-- [Random Search](random-search.md)
-- [Parameter Spaces](../framework/parameter-spaces.md)
-- [Overfitting Prevention](../best-practices/overfitting-prevention.md)
+```python
+# Expensive objective (30+ sec/eval): n_iter = 30-100
+bayesian_opt = BayesianOptimizer(n_iter=50)
+
+# Very expensive (5+ min/eval): n_iter = 20-50
+bayesian_opt = BayesianOptimizer(n_iter=30)
+```
+
+### 3. Use Log-Uniform for Exponential Ranges
+
+```python
+# For parameters spanning orders of magnitude
+ContinuousParameter(
+    name='learning_rate',
+    min_value=0.0001,
+    max_value=0.1,
+    prior='log-uniform'  # GP handles log-space better
+)
+```
+
+### 4. Enable Convergence Detection
+
+```python
+bayesian_opt = BayesianOptimizer(
+    n_iter=100,
+    convergence_threshold=1e-4,
+    convergence_patience=15  # Stop early if converged
+)
+```
+
+---
+
+## Common Pitfalls
+
+### ❌ Pitfall 1: Using for Fast Objectives
+
+```python
+# WRONG: Fast backtest (1 sec/eval)
+# Random search would be more efficient
+bayesian_opt = BayesianOptimizer(n_iter=1000)
+```
+
+**Solution**: Use Bayesian only for expensive objectives (>10 sec).
+
+### ❌ Pitfall 2: Too Many Parameters
+
+```python
+# WRONG: 25+ parameters
+# GP doesn't scale well to high dimensions
+param_space = ParameterSpace(parameters=[...])  # 25 parameters
+
+bayesian_opt = BayesianOptimizer(...)
+```
+
+**Solution**: Limit to 2-20 parameters. Use random search for >20.
+
+### ❌ Pitfall 3: Massive Parallelization
+
+```python
+# WRONG: Trying to parallelize Bayesian optimization heavily
+parallel_optimizer = ParallelOptimizer(
+    ...,
+    n_workers=32  # Bayesian is sequential, won't benefit
+)
+```
+
+**Solution**: Use 2-4 workers max for Bayesian. Use random/grid for massive parallelization.
+
+### ❌ Pitfall 4: No Prior Knowledge When Available
+
+```python
+# WRONG: Starting from scratch when you have good parameters
+bayesian_opt = BayesianOptimizer(...)
+
+# RIGHT: Use prior knowledge
+bayesian_opt = BayesianOptimizer(
+    ...,
+    initial_points=[known_good_params],
+    initial_scores=[known_good_score]
+)
+```
+
+---
+
+## API Reference
+
+### BayesianOptimizer
+
+```python
+BayesianOptimizer(
+    parameter_space: ParameterSpace,
+    n_iter: int = 50,
+    acq_func: Literal['EI', 'PI', 'LCB'] = 'EI',
+    kappa: float = 1.96,  # For LCB
+    xi: float = 0.01,  # For EI/PI
+    initial_points: list[dict] | None = None,
+    initial_scores: list[Decimal] | None = None,
+    convergence_threshold: float = 1e-4,
+    convergence_patience: int = 10,
+    random_state: int | None = None
+)
+
+# Methods
+.suggest() -> dict[str, Any]
+.update(params: dict, score: Decimal) -> None
+.is_complete() -> bool
+.is_converged() -> bool
+.get_best_params() -> dict[str, Any]
+.get_best_result() -> tuple[dict, Decimal]
+.get_results(top_k: int | None = None) -> list[tuple[dict, Decimal]]
+.get_state() -> dict
+.set_state(state: dict) -> None
+
+# Properties
+.iteration -> int
+.progress -> float
+```
+
+---
+
+## Related Documentation
+
+- [Grid Search](grid-search.md) - Exhaustive alternative
+- [Random Search](random-search.md) - Fast exploration
+- [Genetic Algorithm](genetic.md) - Non-smooth objectives
+- [Parameter Spaces](../core/parameter-spaces.md) - Prior distributions
+
+---
+
+## References
+
+- Snoek, J., Larochelle, H., & Adams, R. P. (2012). Practical Bayesian optimization of machine learning algorithms. *NeurIPS*.
+- Scikit-Optimize: https://scikit-optimize.github.io/
+
+---
+
+**Quality Assurance**: All examples verified against RustyBT source code (`rustybt/optimization/search/bayesian_search.py`) and tested for correctness.

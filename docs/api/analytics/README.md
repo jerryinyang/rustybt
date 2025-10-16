@@ -1,229 +1,410 @@
 # Analytics Suite
 
-Comprehensive tools for analyzing strategy performance, risk metrics, and trade statistics.
+Comprehensive analytics framework for backtest analysis, risk assessment, performance attribution, and trade diagnostics.
 
 ## Overview
 
-The analytics suite provides professional-grade analysis tools for understanding strategy performance, including risk metrics, performance attribution, trade analysis, and visualization capabilities.
+**Purpose**: Understand strategy performance beyond basic returns:
+- **Risk Metrics**: VaR, CVaR, stress tests, tail risk, beta analysis
+- **Performance Attribution**: Alpha/beta, factor exposures, timing/selection skill
+- **Trade Analysis**: Entry/exit quality, MAE/MFE, holding periods, cost impact
+- **Visualization**: Charts, heatmaps, distributions, timelines
+- **Report Generation**: Comprehensive backtest reports
 
-### Key Features
+**When to Use**:
+- ✅ After backtest completion for comprehensive analysis
+- ✅ Before deployment to understand risk profile
+- ✅ For investor reporting and documentation
+- ✅ To diagnose strategy weaknesses and improve execution
 
-- **Risk Analytics**: VaR, CVaR, drawdown analysis, volatility metrics
-- **Performance Attribution**: Alpha/beta decomposition, factor analysis
-- **Trade Analysis**: Win rates, profit factors, trade statistics
-- **Visualization**: Equity curves, drawdowns, distributions, custom charts
-- **Report Generation**: Professional PDF/HTML reports
-
-### Architecture
-
-```
-┌─────────────────────────────────────────────────────┐
-│              Backtest Results                        │
-├─────────────────────────────────────────────────────┤
-│               Analytics Layer                        │
-│   ┌──────────┬───────────┬──────────┐              │
-│   │   Risk   │ Attribution│  Trade   │              │
-│   │ Analytics│  Analysis  │ Analysis │              │
-│   └──────────┴───────────┴──────────┘              │
-├─────────────────────────────────────────────────────┤
-│          Visualization & Reporting                   │
-│   ┌──────────┬───────────┬──────────┐              │
-│   │  Charts  │Dashboards │ Reports  │              │
-│   └──────────┴───────────┴──────────┘              │
-└─────────────────────────────────────────────────────┘
-```
-
-## Quick Navigation
-
-### Risk Analysis
-- **[Risk Metrics](risk/metrics.md)** - Comprehensive risk calculations
-- **[VaR & CVaR](risk/var-cvar.md)** - Value at Risk and expected shortfall
-- **[Drawdown Analysis](risk/drawdown.md)** - Maximum drawdown and underwater periods
-
-### Performance Attribution
-- **Performance Attribution (Coming soon)** - Alpha/beta decomposition
-- **Factor Attribution (Coming soon)** - Factor exposure analysis
-- **Multi-Strategy Attribution (Coming soon)** - Portfolio-level attribution
-
-### Trade Analysis
-- **Trade Statistics (Coming soon)** - Win rates, profit factors, expectancy
-- **Trade Patterns (Coming soon)** - Entry/exit timing analysis
-- **Trade Timing (Coming soon)** - Holding period analysis
-
-### Visualization
-- **Charts (Coming soon)** - Equity curves, returns distributions
-- **Dashboards (Coming soon)** - Interactive dashboards
-- **Notebooks (Coming soon)** - Jupyter integration
+---
 
 ## Quick Start
 
-## Visualization Examples
-
-### Equity Curve with Drawdown
+### Risk Analysis
 
 ```python
-from rustybt.analytics import plot_equity_curve, plot_drawdown
-import matplotlib.pyplot as plt
+from rustybt.analytics.risk import RiskAnalytics
+import pandas as pd
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+# Load backtest results
+backtest_df = pd.read_parquet("backtest_results.parquet")  # Must have 'returns' or 'portfolio_value'
 
-# Equity curve
-plot_equity_curve(result, ax=ax1, benchmark=spy_returns)
-ax1.set_title('Portfolio Performance')
-
-# Drawdown
-plot_drawdown(result, ax=ax2, highlight_top_n=5)
-ax2.set_title('Drawdown Analysis')
-
-plt.tight_layout()
-plt.show()
-```
-
-### Returns Distribution
-
-```python
-from rustybt.analytics import plot_returns_distribution
-
-fig = plot_returns_distribution(
-    result,
-    bins=50,
-    show_normal=True,  # Overlay normal distribution
-    show_var=True      # Show VaR line
-)
-plt.show()
-```
-
-### Trade Scatter Plot
-
-```python
-from rustybt.analytics import TradeAnalyzer
-
-analyzer = TradeAnalyzer(result)
-fig = analyzer.plot_trade_scatter()
-plt.show()
-```
-
-## Best Practices
-
-### 1. Always Include Transaction Costs
-
-```python
-# Include realistic costs in backtest
-from rustybt.finance.commission import PerShareCommission
-from rustybt.finance.slippage import FixedSlippage
-
-result = run_backtest(
-    strategy,
-    commission=PerShareCommission(0.01),
-    slippage=FixedSlippage(0.001)
+# Initialize risk analytics
+risk = RiskAnalytics(
+    backtest_result=backtest_df,
+    confidence_levels=[0.95, 0.99],  # VaR confidence levels
+    benchmark_returns=spy_returns,    # Optional: for beta analysis
+    positions=positions_df            # Optional: for risk decomposition
 )
 
-# Then analyze
-risk = RiskAnalytics(result)
+# Calculate Value at Risk
+var_results = risk.calculate_var(method='historical')
+print(f"95% VaR: {var_results['var_95']}")  # Max expected loss at 95% confidence
+print(f"99% VaR: {var_results['var_99']}")  # Max expected loss at 99% confidence
+
+# Calculate Conditional VaR (tail risk)
+cvar_results = risk.calculate_cvar(method='historical')
+print(f"95% CVaR: {cvar_results['cvar_95']}")  # Average loss beyond VaR
+
+# Run stress tests
+stress_results = risk.run_stress_tests()
+print(f"2008 Crisis Loss: {stress_results['2008_financial_crisis']}")
+print(f"COVID Crash Loss: {stress_results['covid_crash']}")
+
+# Comprehensive risk report
+risk_report = risk.analyze_risk()
+print(risk_report['var'])
+print(risk_report['cvar'])
+print(risk_report['tail_risk'])
+print(risk_report['beta'])  # If benchmark provided
+
+# Visualize risk
+risk.plot_var_distribution(method='historical', confidence=0.95)
+risk.plot_stress_test_results()
 ```
 
-### 2. Use Multiple Metrics
+---
 
-Don't rely on single metric:
-
-```python
-metrics = risk.calculate_risk_metrics()
-
-# Check multiple metrics
-if (metrics['sharpe_ratio'] > 1.0 and
-    metrics['max_drawdown'] > -0.30 and
-    metrics['sortino_ratio'] > 1.5):
-    print("Strategy passes multi-metric screening")
-```
-
-### 3. Compare to Benchmark
+### Performance Attribution
 
 ```python
+from rustybt.analytics.attribution import PerformanceAttribution
+
+# Initialize attribution analyzer
 attrib = PerformanceAttribution(
-    backtest_result=result,
+    backtest_result=backtest_df,
+    benchmark_returns=spy_returns,
+    factor_returns=ff_factors_df,  # Optional: Fama-French factors
+    risk_free_rate=0.02             # Optional: risk-free rate (2%)
+)
+
+# Comprehensive attribution analysis
+results = attrib.analyze_attribution()
+
+# Alpha and beta
+print(f"Alpha: {results['alpha_beta']['alpha']:.4f}")
+print(f"Beta: {results['alpha_beta']['beta']:.4f}")
+print(f"Alpha significant: {results['alpha_beta']['alpha_significant']}")
+print(f"Information Ratio: {results['alpha_beta']['information_ratio']:.2f}")
+
+# Factor attribution (if factors provided)
+if 'factor_attribution' in results:
+    print("\nFactor Loadings:")
+    print(results['factor_attribution']['factor_loadings'])
+    print(f"\nR-squared: {results['factor_attribution']['r_squared']:.3f}")
+
+# Timing attribution
+if 'timing' in results:
+    print(f"\nTiming ability: {results['timing']['timing_coefficient']:.4f}")
+    print(f"Timing significant: {results['timing']['timing_significant']}")
+
+# Visualize attribution
+attrib.plot_alpha_over_time()
+attrib.plot_factor_exposures()
+```
+
+---
+
+### Trade Analysis
+
+```python
+from rustybt.analytics.trade_analysis import TradeAnalyzer
+
+# Initialize trade analyzer
+analyzer = TradeAnalyzer(backtest_result)
+
+# Analyze all trades
+analysis = analyzer.analyze_trades()
+
+# Summary statistics
+print(f"Total trades: {analysis['summary_stats']['total_trades']}")
+print(f"Win rate: {analysis['summary_stats']['win_rate']:.2%}")
+print(f"Profit factor: {analysis['summary_stats']['profit_factor']:.2f}")
+print(f"Average win: ${analysis['summary_stats']['avg_win']}")
+print(f"Average loss: ${analysis['summary_stats']['avg_loss']}")
+print(f"Largest win: ${analysis['summary_stats']['largest_win']}")
+print(f"Largest loss: ${analysis['summary_stats']['largest_loss']}")
+
+# Entry/exit quality
+print(f"\nAverage MAE: {analysis['mae_mfe']['avg_mae']:.2%}")
+print(f"Average MFE: {analysis['mae_mfe']['avg_mfe']:.2%}")
+
+# Holding period distribution
+print(f"\nAverage holding period: {analysis['holding_period']['avg_holding_hours']} hours")
+
+# Cost impact
+print(f"\nTotal commission: ${analysis['costs']['total_commission']}")
+print(f"Total slippage: ${analysis['costs']['total_slippage']}")
+print(f"Commission impact: {analysis['costs']['commission_pct_of_pnl']:.2%}")
+
+# Visualizations
+analyzer.plot_mae_vs_pnl()  # MAE scatter plot
+analyzer.plot_mfe_vs_pnl()  # MFE scatter plot
+analyzer.plot_trade_timeline()  # Trade timeline
+analyzer.plot_holding_period_distribution()  # Holding periods
+```
+
+---
+
+## Core Modules
+
+### Risk Analytics
+- **Module**: `rustybt.analytics.risk`
+- **Purpose**: VaR, CVaR, stress testing, beta analysis, tail risk
+- **Key Features**: Multiple VaR methods, scenario analysis, risk decomposition
+- **Documentation**: [Risk Metrics](risk/README.md)
+
+### Performance Attribution
+- **Module**: `rustybt.analytics.attribution`
+- **Purpose**: Decompose returns into alpha, beta, factors, timing, selection
+- **Key Features**: Multi-factor models, rolling attribution, timing tests
+- **Documentation**: [Performance Attribution](attribution/README.md)
+
+### Trade Analysis
+- **Module**: `rustybt.analytics.trade_analysis`
+- **Purpose**: Trade-level diagnostics and execution quality analysis
+- **Key Features**: MAE/MFE, entry/exit quality, cost impact, trade clustering
+- **Documentation**: [Trade Analysis](trade-analysis/README.md)
+
+### Visualization
+- **Module**: `rustybt.analytics.visualization`
+- **Purpose**: Charts, plots, heatmaps for backtest visualization
+- **Key Features**: Returns distribution, equity curve, drawdown chart, correlation heatmap
+- **Documentation**: [Visualization Tools](visualization.md)
+
+### Report Generation
+- **Module**: `rustybt.analytics.reports`
+- **Purpose**: Generate comprehensive backtest reports
+- **Key Features**: PDF/HTML export, customizable templates, multi-strategy comparison
+- **Documentation**: [Report Generation](reports.md)
+
+---
+
+## Complete Analysis Workflow
+
+```python
+from rustybt.analytics.risk import RiskAnalytics
+from rustybt.analytics.attribution import PerformanceAttribution
+from rustybt.analytics.trade_analysis import TradeAnalyzer
+from rustybt.analytics.reports import ReportGenerator
+import pandas as pd
+
+# Run backtest
+backtest_result = run_backtest(strategy, data)
+
+# 1. Risk Analysis
+risk = RiskAnalytics(
+    backtest_result=backtest_result.to_dataframe(),
+    confidence_levels=[0.95, 0.99],
     benchmark_returns=spy_returns
 )
 
-results = attrib.analyze_attribution()
+risk_report = risk.analyze_risk()
+print("\n=== Risk Analysis ===")
+print(f"95% VaR: {risk_report['var']['var_95']}")
+print(f"95% CVaR: {risk_report['cvar']['cvar_95']}")
+print(f"Beta: {risk_report['beta']['beta']}")
+print(f"Max drawdown: {risk_report['tail_risk']['max_loss_1d']}")
 
-# Strategy should beat benchmark on risk-adjusted basis
-if results['alpha_beta']['alpha_annualized'] > 0.05:
-    print("Positive alpha vs benchmark")
+# 2. Performance Attribution
+attribution = PerformanceAttribution(
+    backtest_result=backtest_result.to_dataframe(),
+    benchmark_returns=spy_returns
+)
+
+attrib_report = attribution.analyze_attribution()
+print("\n=== Attribution Analysis ===")
+print(f"Alpha: {attrib_report['alpha_beta']['alpha']}")
+print(f"Beta: {attrib_report['alpha_beta']['beta']}")
+print(f"Information Ratio: {attrib_report['alpha_beta']['information_ratio']}")
+
+# 3. Trade Analysis
+trade_analyzer = TradeAnalyzer(backtest_result)
+trade_report = trade_analyzer.analyze_trades()
+
+print("\n=== Trade Analysis ===")
+print(f"Win rate: {trade_report['summary_stats']['win_rate']:.2%}")
+print(f"Profit factor: {trade_report['summary_stats']['profit_factor']}")
+print(f"Average MAE: {trade_report['mae_mfe']['avg_mae']:.2%}")
+print(f"Average MFE: {trade_report['mae_mfe']['avg_mfe']:.2%}")
+
+# 4. Generate Comprehensive Report
+report_gen = ReportGenerator(
+    backtest_result=backtest_result,
+    risk_analysis=risk_report,
+    attribution_analysis=attrib_report,
+    trade_analysis=trade_report
+)
+
+report_gen.generate_report(
+    output_path='backtest_report.html',
+    format='html',
+    include_plots=True
+)
+
+print("\n✅ Comprehensive report saved to backtest_report.html")
 ```
 
-### 4. Analyze Trade Quality
+---
 
-```python
-analyzer = TradeAnalyzer(result)
-stats = analyzer.analyze_trades()
+## Key Metrics Reference
 
-# Good strategies have:
-# - Win rate >50%
-# - Profit factor >1.5
-# - Positive expectancy
-if (stats['win_rate'] > 0.50 and
-    stats['profit_factor'] > 1.5 and
-    stats['expectancy'] > 0):
-    print("High quality trades")
+### Risk Metrics
+
+| Metric | Description | Interpretation |
+|--------|-------------|----------------|
+| **VaR** | Maximum expected loss at confidence level | Lower = less downside risk |
+| **CVaR** | Average loss beyond VaR threshold | More conservative than VaR |
+| **Beta** | Market sensitivity | 1.0 = market, > 1.0 = more volatile |
+| **Skewness** | Return distribution asymmetry | Negative = more extreme losses |
+| **Kurtosis** | Fat tails indicator | High = more extreme events |
+| **Max Drawdown** | Largest peak-to-trough decline | Lower = less severe losses |
+| **Downside Deviation** | Volatility of negative returns | Lower = less downside risk |
+
+### Performance Metrics
+
+| Metric | Description | Interpretation |
+|--------|-------------|----------------|
+| **Alpha** | Excess return vs. benchmark | Positive = outperformance |
+| **Information Ratio** | Alpha / tracking error | Higher = better risk-adjusted alpha |
+| **R-squared** | Variance explained by benchmark | Higher = more market-driven |
+| **Tracking Error** | Volatility of excess returns | Lower = closer to benchmark |
+| **Factor Loadings** | Exposure to risk factors | Shows sources of return |
+
+### Trade Metrics
+
+| Metric | Description | Interpretation |
+|--------|-------------|----------------|
+| **Win Rate** | % of profitable trades | Higher = more consistent |
+| **Profit Factor** | Gross profit / gross loss | > 1.0 = profitable |
+| **MAE** | Max adverse excursion | Risk taken during trade |
+| **MFE** | Max favorable excursion | Profit potential captured |
+| **Avg Win / Avg Loss** | Reward/risk ratio | Higher = better risk/reward |
+
+---
+
+## Statistical Foundations
+
+### VaR Calculation Methods
+
+**1. Parametric VaR** (assumes normal distribution):
+```
+VaR = μ + z * σ
+where:
+  μ = mean daily return
+  σ = standard deviation of daily returns
+  z = z-score for confidence level (e.g., -1.645 for 95%)
 ```
 
-## Common Pitfalls
-
-### ❌ Ignoring Drawdowns
-
-```python
-# WRONG: Only looking at returns
-if annual_return > 0.20:
-    print("Good strategy!")
-
-# RIGHT: Consider drawdown
-if annual_return > 0.20 and max_drawdown > -0.25:
-    print("Good risk-adjusted strategy!")
+**2. Historical VaR** (empirical quantiles):
+```
+VaR = quantile(returns, 1 - confidence_level)
 ```
 
-### ❌ Cherry-Picking Metrics
-
-```python
-# WRONG: Only showing good metrics
-print(f"Sharpe: {metrics['sharpe_ratio']}")  # Only if good!
-
-# RIGHT: Show all key metrics
-print(f"Sharpe: {metrics['sharpe_ratio']}")
-print(f"Sortino: {metrics['sortino_ratio']}")
-print(f"Max DD: {metrics['max_drawdown']}")
-print(f"Calmar: {metrics['calmar_ratio']}")
+**3. Monte Carlo VaR** (simulation-based):
+```
+1. Simulate N returns from estimated distribution
+2. VaR = empirical quantile of simulated returns
 ```
 
-### ❌ Not Analyzing Trades
+### CVaR (Expected Shortfall)
 
-```python
-# WRONG: Only portfolio-level metrics
-risk_metrics = risk.calculate_risk_metrics()
-
-# RIGHT: Also analyze individual trades
-trade_stats = analyzer.analyze_trades()
-# Check win rate, profit factor, etc.
+```
+CVaR = E[R | R ≤ VaR]
+     = mean of returns below VaR threshold
 ```
 
-## Examples
+Properties:
+- CVaR ≥ VaR (in absolute terms)
+- More conservative risk measure
+- Captures tail risk better than VaR
 
-See `examples/analytics/` for complete examples:
+### Alpha and Beta
 
-- `comprehensive_analysis.py` - Full strategy analysis
-- `comparative_analysis.py` - Compare multiple strategies
-- `rolling_analysis.py` - Time-varying metrics
-- `factor_attribution.py` - Factor decomposition
-- `generate_report.py` - Professional PDF reports
+**Linear regression**:
+```
+R_portfolio = α + β * R_benchmark + ε
+
+where:
+  α (alpha) = intercept (excess return)
+  β (beta) = slope (market sensitivity)
+  ε = error term (idiosyncratic risk)
+```
+
+**Information Ratio**:
+```
+IR = α / TE
+where:
+  TE (tracking error) = std(R_portfolio - R_benchmark)
+```
+
+### MAE and MFE
+
+**MAE** (Maximum Adverse Excursion):
+```
+For long:  MAE = max(0, (entry_price - min_price) / entry_price)
+For short: MAE = max(0, (max_price - entry_price) / entry_price)
+```
+
+**MFE** (Maximum Favorable Excursion):
+```
+For long:  MFE = max(0, (max_price - entry_price) / entry_price)
+For short: MFE = max(0, (entry_price - min_price) / entry_price)
+```
+
+---
+
+## Best Practices
+
+### ✅ DO
+
+1. **Run comprehensive analysis** after every backtest (risk + attribution + trade)
+2. **Use multiple VaR methods** (parametric, historical, Monte Carlo) for robustness
+3. **Analyze tail risk** (skewness, kurtosis) beyond VaR/CVaR
+4. **Review MAE/MFE** to improve stop-loss and take-profit levels
+5. **Calculate beta** to understand market dependency
+6. **Examine trade distribution** for clustering and concentration risk
+7. **Document risk profile** before deploying strategies
+
+### ❌ DON'T
+
+1. **Rely on VaR alone** (use CVaR and stress tests for tail risk)
+2. **Ignore statistical significance** (check p-values for alpha)
+3. **Skip trade-level analysis** (aggregate metrics hide execution issues)
+4. **Use parametric VaR for non-normal returns** (use historical or Monte Carlo)
+5. **Forget transaction costs** (commission/slippage impact profitability)
+6. **Ignore correlation risk** (check asset correlation matrix)
+
+---
+
+## Performance Considerations
+
+### Risk Analytics
+- **Time Complexity**: O(n) for VaR/CVaR, O(n²) for correlation
+- **Memory**: O(n) for returns storage
+- **Typical Runtime**: < 1 second for 1000 observations
+
+### Performance Attribution
+- **Time Complexity**: O(n) for alpha/beta, O(n × f) for factor models
+- **Memory**: O(n × f) where f = number of factors
+- **Typical Runtime**: 1-5 seconds for factor models with 1000 observations
+
+### Trade Analysis
+- **Time Complexity**: O(t) where t = number of trades
+- **Memory**: O(t) for trade storage
+- **Typical Runtime**: < 1 second for 1000 trades
+
+---
 
 ## See Also
 
-- [Main Analytics API](../analytics-api.md)
-- [Optimization Documentation](../optimization/README.md)
-- [Live Trading Documentation](../live-trading/README.md)
-- [Examples & Tutorials](../../examples/README.md)
+- [Risk Metrics Documentation](risk/README.md)
+- [Performance Attribution](attribution/README.md)
+- [Trade Analysis](trade-analysis/README.md)
+- [Visualization Tools](visualization.md)
+- [Report Generation](reports.md)
 
-## Support
+---
 
-- **Issues**: [GitHub Issues](https://github.com/bmad-dev/rustybt/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/bmad-dev/rustybt/discussions)
-- **Documentation**: [Full API Reference](https://rustybt.readthedocs.io)
+*Last Updated: 2025-10-16 | RustyBT v1.0*

@@ -4,7 +4,7 @@
 
 ## Purpose
 
-This task maintains the integrity and completeness of the `docs/index.md` file by scanning all documentation files and ensuring they are properly indexed with descriptions. It handles both root-level documents and documents within subfolders, organizing them hierarchically.
+This task maintains the integrity and completeness of the `docs/internal/index.md` file by scanning all documentation files and ensuring they are properly indexed with descriptions. It handles both root-level documents and documents within subfolders, organizing them hierarchically.
 
 ## Task Instructions
 
@@ -13,12 +13,12 @@ You are now operating as a Documentation Indexer. Your goal is to ensure all doc
 ### Required Steps
 
 1. First, locate and scan:
-   - The `docs/` directory and all subdirectories
-   - The existing `docs/index.md` file (create if absent)
+   - The `docs/internal/` directory and all subdirectories
+   - The existing `docs/internal/index.md` file (create if absent)
    - All markdown (`.md`) and text (`.txt`) files in the documentation structure
    - Note the folder structure for hierarchical organization
 
-2. For the existing `docs/index.md`:
+2. For the existing `docs/internal/index.md`:
    - Parse current entries
    - Note existing file references and descriptions
    - Identify any broken links or missing files
@@ -41,7 +41,7 @@ You are now operating as a Documentation Indexer. Your goal is to ensure all doc
      - Provide option to update the path if file was moved
      - Log the decision (remove/update/keep) for final report
 
-5. Update `docs/index.md`:
+5. Update `docs/internal/index.md`:
    - Maintain existing structure and organization
    - Create level 2 sections (`##`) for each subfolder
    - List root-level documents first
@@ -166,8 +166,8 @@ For each file referenced in the index but not found in the filesystem:
 
 Please provide:
 
-1. Location of the `docs/` directory (default: `./docs`)
-2. Confirmation of write access to `docs/index.md`
+1. Location of the `docs/internal/` directory (default: `./docs`)
+2. Confirmation of write access to `docs/internal/index.md`
 3. Any specific categorization preferences
 4. Any files or directories to exclude from indexing (e.g., `.git`, `node_modules`)
 5. Whether to include hidden files/folders (starting with `.`)

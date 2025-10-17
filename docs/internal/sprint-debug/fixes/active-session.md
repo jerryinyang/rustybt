@@ -290,6 +290,6 @@ All notebooks that call setup_notebook() now execute successfully:
 
 **Session End:** 2025-10-17 23:45:00
 
-**Commit Hash:** [will be filled after commit]
+**Commit Hash:** 148df8b
 
 ---

@@ -357,7 +357,7 @@ N/A - Internal implementation fix, no user-facing API changes. Comprehensive doc
 
 ### Commit Hash
 
-[will be filled after commit]
+3b87a0e
 
 ### Branch
 

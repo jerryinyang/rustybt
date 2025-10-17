@@ -256,6 +256,170 @@ def _create_asset_metadata(
     return metadata_df
 
 
+def _transform_splits_for_writer(
+    splits_data: dict[str, object],  # dict[symbol -> pl.DataFrame]
+    asset_metadata: pd.DataFrame,
+) -> pd.DataFrame | None:
+    """Transform adapter splits data to SQLiteAdjustmentWriter format.
+
+    Args:
+        splits_data: Dictionary mapping symbol to DataFrame with columns:
+                     - date: Split effective date
+                     - symbol: Ticker symbol
+                     - split_ratio: Split ratio (e.g., 2.0 for 2:1 split)
+        asset_metadata: Asset metadata DataFrame with symbol-to-index mapping
+
+    Returns:
+        pandas DataFrame with columns {sid, effective_date, ratio} or None if no splits
+
+    Format expected by SQLiteAdjustmentWriter:
+        - sid: int (asset ID, 0-based index from asset_metadata)
+        - effective_date: datetime64 (split effective date)
+        - ratio: float (split ratio for price adjustment)
+
+    Example:
+        >>> splits_data = {"AAPL": pl.DataFrame({"date": [...], "symbol": ["AAPL"], "split_ratio": [2.0]})}
+        >>> asset_metadata = pd.DataFrame({"symbol": ["AAPL", "MSFT"], ...})
+        >>> splits_df = _transform_splits_for_writer(splits_data, asset_metadata)
+        >>> print(splits_df)
+           sid effective_date  ratio
+        0    0     2020-08-31    2.0
+    """
+    import polars as pl
+
+    if not splits_data:
+        logger.debug("adjustment_transform_no_splits")
+        return None
+
+    # Create symbol to SID mapping from asset_metadata
+    symbol_to_sid = {symbol: sid for sid, symbol in enumerate(asset_metadata["symbol"])}
+
+    all_splits = []
+    for symbol, split_df in splits_data.items():
+        if symbol not in symbol_to_sid:
+            logger.warning(
+                "adjustment_transform_unknown_symbol",
+                symbol=symbol,
+                data_type="splits",
+                note="Symbol not in asset metadata, skipping",
+            )
+            continue
+
+        sid = symbol_to_sid[symbol]
+
+        # Convert Polars to pandas if needed
+        if isinstance(split_df, pl.DataFrame):
+            split_df_pd = split_df.to_pandas()
+        else:
+            split_df_pd = split_df
+
+        # Transform to writer format
+        for _, row in split_df_pd.iterrows():
+            all_splits.append(
+                {
+                    "sid": sid,
+                    "effective_date": pd.to_datetime(row["date"]),
+                    "ratio": float(row["split_ratio"]),
+                }
+            )
+
+    if not all_splits:
+        logger.debug("adjustment_transform_no_splits_after_filtering")
+        return None
+
+    splits_df = pd.DataFrame(all_splits)
+    logger.info("adjustment_transform_splits_complete", count=len(splits_df))
+    return splits_df
+
+
+def _transform_dividends_for_writer(
+    dividends_data: dict[str, object],  # dict[symbol -> pl.DataFrame]
+    asset_metadata: pd.DataFrame,
+) -> pd.DataFrame | None:
+    """Transform adapter dividends data to SQLiteAdjustmentWriter format.
+
+    Args:
+        dividends_data: Dictionary mapping symbol to DataFrame with columns:
+                        - date: Dividend payment date
+                        - symbol: Ticker symbol
+                        - dividend: Dividend amount (Decimal or float)
+        asset_metadata: Asset metadata DataFrame with symbol-to-index mapping
+
+    Returns:
+        pandas DataFrame with columns {sid, ex_date, declared_date, record_date, pay_date, amount}
+        or None if no dividends
+
+    Format expected by SQLiteAdjustmentWriter:
+        - sid: int (asset ID, 0-based index from asset_metadata)
+        - ex_date: datetime64 (ex-dividend date)
+        - declared_date: datetime64 (or NaT if unknown)
+        - record_date: datetime64 (or NaT if unknown)
+        - pay_date: datetime64 (payment date)
+        - amount: float (dividend amount per share)
+
+    Note:
+        YFinance only provides ex_date and amount. Other dates are set to NaT (Not a Time).
+        SQLiteAdjustmentWriter handles NaT values correctly.
+
+    Example:
+        >>> dividends_data = {"AAPL": pl.DataFrame({"date": [...], "symbol": ["AAPL"], "dividend": [0.22]})}
+        >>> asset_metadata = pd.DataFrame({"symbol": ["AAPL", "MSFT"], ...})
+        >>> dividends_df = _transform_dividends_for_writer(dividends_data, asset_metadata)
+        >>> print(dividends_df)
+           sid    ex_date  ... pay_date  amount
+        0    0 2023-08-11  ... 2023-08-11    0.22
+    """
+    import polars as pl
+
+    if not dividends_data:
+        logger.debug("adjustment_transform_no_dividends")
+        return None
+
+    # Create symbol to SID mapping from asset_metadata
+    symbol_to_sid = {symbol: sid for sid, symbol in enumerate(asset_metadata["symbol"])}
+
+    all_dividends = []
+    for symbol, dividend_df in dividends_data.items():
+        if symbol not in symbol_to_sid:
+            logger.warning(
+                "adjustment_transform_unknown_symbol",
+                symbol=symbol,
+                data_type="dividends",
+                note="Symbol not in asset metadata, skipping",
+            )
+            continue
+
+        sid = symbol_to_sid[symbol]
+
+        # Convert Polars to pandas if needed
+        if isinstance(dividend_df, pl.DataFrame):
+            dividend_df_pd = dividend_df.to_pandas()
+        else:
+            dividend_df_pd = dividend_df
+
+        # Transform to writer format
+        for _, row in dividend_df_pd.iterrows():
+            dividend_date = pd.to_datetime(row["date"])
+            all_dividends.append(
+                {
+                    "sid": sid,
+                    "ex_date": dividend_date,  # Use date as ex_date
+                    "declared_date": pd.NaT,  # YFinance doesn't provide this
+                    "record_date": pd.NaT,  # YFinance doesn't provide this
+                    "pay_date": dividend_date,  # Use date as pay_date (best approximation)
+                    "amount": float(row["dividend"]),
+                }
+            )
+
+    if not all_dividends:
+        logger.debug("adjustment_transform_no_dividends_after_filtering")
+        return None
+
+    dividends_df = pd.DataFrame(all_dividends)
+    logger.info("adjustment_transform_dividends_complete", count=len(dividends_df))
+    return dividends_df
+
+
 def _create_bundle_from_adapter(
     adapter: object,  # BaseDataAdapter or any adapter with fetch_ohlcv method
     bundle_name: str,
@@ -456,6 +620,71 @@ def _create_bundle_from_adapter(
         writers["minute_bar_writer"].write(data_iter)
     else:
         raise ValueError(f"Unsupported frequency: {frequency}")
+
+    # Fetch and write corporate actions (splits/dividends) if adapter supports them
+    if (
+        "adjustment_writer" in writers
+        and hasattr(adapter, "fetch_splits")
+        and hasattr(adapter, "fetch_dividends")
+    ):
+        try:
+            logger.info(
+                "bridge_fetching_adjustments", bundle=bundle_name, symbols_count=len(symbols)
+            )
+
+            # Fetch splits and dividends (handle async adapters)
+            splits_result = adapter.fetch_splits(symbols)
+            if asyncio.iscoroutine(splits_result):
+                splits_data = asyncio.run(splits_result)
+            else:
+                splits_data = splits_result
+
+            dividends_result = adapter.fetch_dividends(symbols)
+            if asyncio.iscoroutine(dividends_result):
+                dividends_data = asyncio.run(dividends_result)
+            else:
+                dividends_data = dividends_result
+
+            # Transform to adjustment writer format (requires asset_metadata for SID mapping)
+            splits_df = _transform_splits_for_writer(splits_data, asset_metadata)
+            dividends_df = _transform_dividends_for_writer(dividends_data, asset_metadata)
+
+            # Write adjustments to database
+            writers["adjustment_writer"].write(
+                splits=splits_df,
+                dividends=dividends_df,
+            )
+
+            logger.info(
+                "bridge_adjustments_written",
+                bundle=bundle_name,
+                splits_count=len(splits_df) if splits_df is not None and not splits_df.empty else 0,
+                dividends_count=(
+                    len(dividends_df) if dividends_df is not None and not dividends_df.empty else 0
+                ),
+            )
+
+        except Exception as e:
+            logger.warning(
+                "bridge_adjustments_failed",
+                bundle=bundle_name,
+                error=str(e),
+                error_type=type(e).__name__,
+                note="Continuing without adjustments - strategies requiring corporate actions may fail",
+            )
+    elif "adjustment_writer" not in writers:
+        logger.debug(
+            "bridge_no_adjustment_writer",
+            bundle=bundle_name,
+            note="adjustment_writer not provided in writers dict",
+        )
+    else:
+        logger.debug(
+            "bridge_adapter_no_adjustments_support",
+            bundle=bundle_name,
+            adapter_type=type(adapter).__name__,
+            note="Adapter does not support fetch_splits/fetch_dividends",
+        )
 
     # Track metadata (provenance + quality)
     _track_api_bundle_metadata(bundle_name, adapter, df, start, end, frequency)
@@ -806,6 +1035,7 @@ def yfinance_profiling_bundle(
             "asset_db_writer": asset_db_writer,
             "daily_bar_writer": daily_bar_writer,
             "minute_bar_writer": minute_bar_writer,
+            "adjustment_writer": adjustment_writer,
         },
     )
 
@@ -879,6 +1109,7 @@ def ccxt_hourly_profiling_bundle(
             "asset_db_writer": asset_db_writer,
             "daily_bar_writer": daily_bar_writer,
             "minute_bar_writer": minute_bar_writer,
+            "adjustment_writer": adjustment_writer,
         },
     )
 
@@ -942,6 +1173,7 @@ def ccxt_minute_profiling_bundle(
             "asset_db_writer": asset_db_writer,
             "daily_bar_writer": daily_bar_writer,
             "minute_bar_writer": minute_bar_writer,
+            "adjustment_writer": adjustment_writer,
         },
     )
 
@@ -1009,6 +1241,7 @@ def csv_profiling_bundle(
             "asset_db_writer": asset_db_writer,
             "daily_bar_writer": daily_bar_writer,
             "minute_bar_writer": minute_bar_writer,
+            "adjustment_writer": adjustment_writer,
         },
     )
 

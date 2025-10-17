@@ -767,3 +767,290 @@ def test_transform_for_writer_datetime_index_type():
     # Verify index values match original timestamps (ignore index name)
     expected_dates = pd.date_range("2024-01-01", periods=5, freq="D")
     pd.testing.assert_index_equal(symbol_df.index, expected_dates, check_names=False)
+
+
+# ============================================================================
+# Adjustment Transformation Tests (Zero-Mock Enforcement)
+# ============================================================================
+
+
+def test_transform_splits_for_writer_with_real_data():
+    """Test splits transformation with real split data (NO MOCKS).
+
+    This test uses actual historical stock split data to ensure the transformation
+    correctly maps symbols to SIDs and formats data for SQLiteAdjustmentWriter.
+
+    Zero-Mock Enforcement: Uses real DataFrames with realistic split ratios.
+    """
+    import polars as pl
+
+    from rustybt.data.bundles.adapter_bundles import _transform_splits_for_writer
+
+    # Create asset metadata (as would be created by _create_asset_metadata)
+    asset_metadata = pd.DataFrame(
+        {
+            "symbol": ["AAPL", "TSLA", "GOOGL"],
+            "start_date": [pd.Timestamp("2020-01-01")] * 3,
+            "end_date": [pd.Timestamp("2024-01-01")] * 3,
+            "exchange": ["NASDAQ"] * 3,
+            "auto_close_date": [pd.Timestamp("2024-01-02")] * 3,
+        }
+    )
+
+    # Create real splits data (AAPL had 4:1 split on 2020-08-31, TSLA had 3:1 split on 2022-08-25)
+    splits_data = {
+        "AAPL": pl.DataFrame(
+            {
+                "date": [pd.Timestamp("2020-08-31")],
+                "symbol": ["AAPL"],
+                "split_ratio": [4.0],  # 4-for-1 split
+            }
+        ),
+        "TSLA": pl.DataFrame(
+            {
+                "date": [
+                    pd.Timestamp("2020-08-31"),  # 5-for-1 split
+                    pd.Timestamp("2022-08-25"),  # 3-for-1 split
+                ],
+                "symbol": ["TSLA", "TSLA"],
+                "split_ratio": [5.0, 3.0],
+            }
+        ),
+    }
+
+    # Transform
+    splits_df = _transform_splits_for_writer(splits_data, asset_metadata)
+
+    # Verify result
+    assert splits_df is not None, "Should return DataFrame when splits exist"
+    assert isinstance(splits_df, pd.DataFrame), "Result must be pandas DataFrame"
+    assert len(splits_df) == 3, "Should have 3 split records total"
+
+    # Verify columns
+    expected_columns = {"sid", "effective_date", "ratio"}
+    assert set(splits_df.columns) == expected_columns, f"Must have columns: {expected_columns}"
+
+    # Verify data types
+    assert (
+        splits_df["sid"].dtype == "int64" or splits_df["sid"].dtype == "int32"
+    ), "sid must be integer"
+    assert pd.api.types.is_datetime64_any_dtype(
+        splits_df["effective_date"]
+    ), "effective_date must be datetime"
+    assert pd.api.types.is_float_dtype(splits_df["ratio"]), "ratio must be float"
+
+    # Verify SID mapping (AAPL=0, TSLA=1 based on asset_metadata order)
+    aapl_splits = splits_df[splits_df["sid"] == 0]
+    assert len(aapl_splits) == 1, "AAPL should have 1 split"
+    assert aapl_splits.iloc[0]["ratio"] == 4.0, "AAPL split ratio must be 4.0"
+
+    tsla_splits = splits_df[splits_df["sid"] == 1]
+    assert len(tsla_splits) == 2, "TSLA should have 2 splits"
+    assert set(tsla_splits["ratio"]) == {5.0, 3.0}, "TSLA split ratios must be 5.0 and 3.0"
+
+    # Verify dates are correctly preserved
+    assert aapl_splits.iloc[0]["effective_date"] == pd.Timestamp("2020-08-31")
+
+
+def test_transform_splits_for_writer_empty_data():
+    """Test splits transformation with no split data (edge case)."""
+    from rustybt.data.bundles.adapter_bundles import _transform_splits_for_writer
+
+    asset_metadata = pd.DataFrame({"symbol": ["AAPL"], "start_date": [pd.Timestamp("2020-01-01")]})
+
+    # Test with empty dict
+    result = _transform_splits_for_writer({}, asset_metadata)
+    assert result is None, "Should return None when no splits data"
+
+
+def test_transform_splits_for_writer_unknown_symbol():
+    """Test splits transformation with symbol not in asset metadata."""
+    import polars as pl
+
+    from rustybt.data.bundles.adapter_bundles import _transform_splits_for_writer
+
+    asset_metadata = pd.DataFrame({"symbol": ["AAPL"]})
+
+    # Create splits for symbol not in metadata
+    splits_data = {
+        "UNKNOWN": pl.DataFrame(
+            {
+                "date": [pd.Timestamp("2020-08-31")],
+                "symbol": ["UNKNOWN"],
+                "split_ratio": [2.0],
+            }
+        )
+    }
+
+    # Transform
+    result = _transform_splits_for_writer(splits_data, asset_metadata)
+
+    # Should return None because no valid symbols
+    assert result is None, "Should return None when no valid symbols"
+
+
+def test_transform_dividends_for_writer_with_real_data():
+    """Test dividends transformation with real dividend data (NO MOCKS).
+
+    This test uses actual historical dividend data to ensure the transformation
+    correctly maps symbols to SIDs and formats data for SQLiteAdjustmentWriter.
+
+    Zero-Mock Enforcement: Uses real DataFrames with realistic dividend amounts.
+    """
+    import polars as pl
+
+    from rustybt.data.bundles.adapter_bundles import _transform_dividends_for_writer
+
+    # Create asset metadata
+    asset_metadata = pd.DataFrame(
+        {
+            "symbol": ["AAPL", "MSFT", "JNJ"],
+            "start_date": [pd.Timestamp("2020-01-01")] * 3,
+            "end_date": [pd.Timestamp("2024-01-01")] * 3,
+        }
+    )
+
+    # Create real dividend data (approximate historical values)
+    dividends_data = {
+        "AAPL": pl.DataFrame(
+            {
+                "date": [
+                    pd.Timestamp("2023-02-10"),
+                    pd.Timestamp("2023-05-12"),
+                    pd.Timestamp("2023-08-11"),
+                ],
+                "symbol": ["AAPL", "AAPL", "AAPL"],
+                "dividend": [0.23, 0.24, 0.24],  # Realistic quarterly dividends
+            }
+        ),
+        "MSFT": pl.DataFrame(
+            {
+                "date": [
+                    pd.Timestamp("2023-02-15"),
+                    pd.Timestamp("2023-05-17"),
+                ],
+                "symbol": ["MSFT", "MSFT"],
+                "dividend": [0.68, 0.68],
+            }
+        ),
+    }
+
+    # Transform
+    dividends_df = _transform_dividends_for_writer(dividends_data, asset_metadata)
+
+    # Verify result
+    assert dividends_df is not None, "Should return DataFrame when dividends exist"
+    assert isinstance(dividends_df, pd.DataFrame), "Result must be pandas DataFrame"
+    assert len(dividends_df) == 5, "Should have 5 dividend records total (3 AAPL + 2 MSFT)"
+
+    # Verify columns
+    expected_columns = {"sid", "ex_date", "declared_date", "record_date", "pay_date", "amount"}
+    assert set(dividends_df.columns) == expected_columns, f"Must have columns: {expected_columns}"
+
+    # Verify data types
+    assert dividends_df["sid"].dtype in ("int64", "int32"), "sid must be integer"
+    assert pd.api.types.is_datetime64_any_dtype(dividends_df["ex_date"]), "ex_date must be datetime"
+    assert pd.api.types.is_float_dtype(dividends_df["amount"]), "amount must be float"
+
+    # Verify SID mapping (AAPL=0, MSFT=1 based on asset_metadata order)
+    aapl_divs = dividends_df[dividends_df["sid"] == 0]
+    assert len(aapl_divs) == 3, "AAPL should have 3 dividends"
+    assert set(aapl_divs["amount"]) == {0.23, 0.24}, "AAPL dividend amounts must match"
+
+    msft_divs = dividends_df[dividends_df["sid"] == 1]
+    assert len(msft_divs) == 2, "MSFT should have 2 dividends"
+    assert all(msft_divs["amount"] == 0.68), "MSFT dividend amounts must be 0.68"
+
+    # Verify NaT values are set correctly for missing dates
+    assert (
+        dividends_df["declared_date"].isna().all()
+    ), "declared_date should be NaT (not provided by YFinance)"
+    assert (
+        dividends_df["record_date"].isna().all()
+    ), "record_date should be NaT (not provided by YFinance)"
+
+    # Verify ex_date and pay_date are the same (YFinance limitation)
+    assert (
+        dividends_df["ex_date"] == dividends_df["pay_date"]
+    ).all(), "ex_date and pay_date should match"
+
+
+def test_transform_dividends_for_writer_empty_data():
+    """Test dividends transformation with no dividend data (edge case)."""
+    from rustybt.data.bundles.adapter_bundles import _transform_dividends_for_writer
+
+    asset_metadata = pd.DataFrame({"symbol": ["AAPL"]})
+
+    # Test with empty dict
+    result = _transform_dividends_for_writer({}, asset_metadata)
+    assert result is None, "Should return None when no dividends data"
+
+
+def test_transform_dividends_for_writer_unknown_symbol():
+    """Test dividends transformation with symbol not in asset metadata."""
+    import polars as pl
+
+    from rustybt.data.bundles.adapter_bundles import _transform_dividends_for_writer
+
+    asset_metadata = pd.DataFrame({"symbol": ["AAPL"]})
+
+    # Create dividends for symbol not in metadata
+    dividends_data = {
+        "UNKNOWN": pl.DataFrame(
+            {
+                "date": [pd.Timestamp("2023-02-10")],
+                "symbol": ["UNKNOWN"],
+                "dividend": [0.50],
+            }
+        )
+    }
+
+    # Transform
+    result = _transform_dividends_for_writer(dividends_data, asset_metadata)
+
+    # Should return None because no valid symbols
+    assert result is None, "Should return None when no valid symbols"
+
+
+def test_transform_splits_and_dividends_pandas_input():
+    """Test transformation functions work with pandas DataFrames (not just Polars)."""
+    from rustybt.data.bundles.adapter_bundles import (
+        _transform_dividends_for_writer,
+        _transform_splits_for_writer,
+    )
+
+    asset_metadata = pd.DataFrame({"symbol": ["AAPL", "MSFT"]})
+
+    # Test with pandas DataFrame (not Polars)
+    splits_data_pandas = {
+        "AAPL": pd.DataFrame(
+            {
+                "date": [pd.Timestamp("2020-08-31")],
+                "symbol": ["AAPL"],
+                "split_ratio": [4.0],
+            }
+        )
+    }
+
+    dividends_data_pandas = {
+        "MSFT": pd.DataFrame(
+            {
+                "date": [pd.Timestamp("2023-02-15")],
+                "symbol": ["MSFT"],
+                "dividend": [0.68],
+            }
+        )
+    }
+
+    # Transform
+    splits_df = _transform_splits_for_writer(splits_data_pandas, asset_metadata)
+    dividends_df = _transform_dividends_for_writer(dividends_data_pandas, asset_metadata)
+
+    # Verify both work correctly
+    assert splits_df is not None, "Should handle pandas DataFrame for splits"
+    assert len(splits_df) == 1
+    assert splits_df.iloc[0]["sid"] == 0  # AAPL
+
+    assert dividends_df is not None, "Should handle pandas DataFrame for dividends"
+    assert len(dividends_df) == 1
+    assert dividends_df.iloc[0]["sid"] == 1  # MSFT

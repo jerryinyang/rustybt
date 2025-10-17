@@ -79,10 +79,15 @@ This downloads and caches free sample data from Yahoo Finance (20 top US stocks,
 ## Run the Backtest
 
 ```bash
-rustybt run -f my_strategy.py -b yfinance-profiling --start 2020-01-01 --end 2023-12-31
+rustybt run -f my_strategy.py -b yfinance-profiling --start 2024-01-01 --end 2025-09-30
 ```
 
 Note the `-b yfinance-profiling` flag to specify which data bundle to use.
+
+!!! important "Bundle Date Range"
+    The **yfinance-profiling** bundle fetches the last 2 years of data from today. The dates shown above (2024-01-01 to 2025-09-30) are examples that work with data ingested in October 2025.
+
+    If you ingested data at a different time, adjust your dates accordingly. Use dates within the last year of your ingested data to ensure the 300-day moving average has enough historical data.
 
 ## Alternative: Python API Execution
 
@@ -128,8 +133,8 @@ if __name__ == "__main__":
         initialize=initialize,
         handle_data=handle_data,
         bundle='yfinance-profiling',
-        start=pd.Timestamp('2020-01-01'),
-        end=pd.Timestamp('2023-12-31'),
+        start=pd.Timestamp('2024-01-01'),
+        end=pd.Timestamp('2025-09-30'),
         capital_base=10000,
         data_frequency='daily'
     )
@@ -174,7 +179,7 @@ RustyBT will display:
 rustybt ingest -b yfinance-profiling
 
 # Then run with the bundle flag
-rustybt run -f my_strategy.py -b yfinance-profiling --start 2020-01-01 --end 2023-12-31
+rustybt run -f my_strategy.py -b yfinance-profiling --start 2024-01-01 --end 2025-09-30
 ```
 
 **"Error: No bundle registered with the name 'yfinance-profiling'"**

@@ -112,7 +112,11 @@ def handle_data(context, data):
 Run the backtest:
 
 ```bash
-rustybt run -f strategy.py --start 2020-01-01 --end 2023-12-31
+# First, ingest sample data (only needed once)
+rustybt ingest -b yfinance-profiling
+
+# Run the backtest
+rustybt run -f strategy.py -b yfinance-profiling --start 2024-01-01 --end 2025-09-30
 ```
 
 ## Key Features

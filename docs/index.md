@@ -76,8 +76,11 @@ This downloads free sample data from Yahoo Finance (20 top US stocks, 2 years of
 **Step 3:** Run the backtest:
 
 ```bash
-rustybt run -f strategy.py -b yfinance-profiling --start 2020-01-01 --end 2023-12-31
+rustybt run -f strategy.py -b yfinance-profiling --start 2024-01-01 --end 2025-09-30
 ```
+
+!!! note "Dynamic Date Range"
+    The **yfinance-profiling** bundle fetches the last 2 years of data from today. Adjust dates to match your ingested data timeframe.
 
 **Alternative: Python API Execution**
 
@@ -106,8 +109,8 @@ if __name__ == "__main__":
         initialize=initialize,
         handle_data=handle_data,
         bundle='yfinance-profiling',
-        start=pd.Timestamp('2020-01-01'),
-        end=pd.Timestamp('2023-12-31'),
+        start=pd.Timestamp('2024-01-01'),
+        end=pd.Timestamp('2025-09-30'),
         capital_base=10000
     )
 

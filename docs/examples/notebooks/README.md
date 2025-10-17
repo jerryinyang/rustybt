@@ -11,77 +11,114 @@ This directory contains example Jupyter notebooks demonstrating RustyBT's capabi
 
 All 13 notebooks are now available! 🎉
 
-### Core Examples
-1. [**crypto_backtest_ccxt.ipynb**](crypto_backtest_ccxt.ipynb) - Cryptocurrency backtesting using CCXT adapter
-   - Multi-exchange data fetching (Binance, Coinbase, Kraken)
-   - Data validation and quality checks
-   - Simple moving average crossover strategy
-   - Performance analysis and visualization
+### ⭐ Recommended Starting Point
 
-2. [**equity_backtest_yfinance.ipynb**](equity_backtest_yfinance.ipynb) - Equity backtesting using yfinance
-   - Stock and ETF data ingestion
-   - Strategy development and testing
-   - Performance metrics calculation
+**[10_full_workflow.ipynb](10_full_workflow.ipynb)** - Complete end-to-end workflow
 
-### Getting Started
-3. [**01_getting_started.ipynb**](01_getting_started.ipynb) - Simple backtest walkthrough
-   - Setup and configuration
-   - Creating your first strategy
-   - Running backtests
-   - Visualizing results
+Complete workflow demonstrating the entire RustyBT pipeline from data ingestion to optimization.
 
-4. [**02_data_ingestion.ipynb**](02_data_ingestion.ipynb) - Data ingestion from multiple sources
-   - yfinance (stocks, ETFs)
-   - CCXT (cryptocurrencies)
-   - CSV import
-   - Data quality checks
+- Data ingestion → Strategy development → Backtesting → Analysis → Optimization
+- All major features demonstrated in one comprehensive example
+- Perfect introduction to the framework
 
-5. [**03_strategy_development.ipynb**](03_strategy_development.ipynb) - Building custom strategies
-   - Moving average crossover
-   - Mean reversion
-   - Momentum strategies
+---
 
-### Analysis & Optimization
-6. [**04_performance_analysis.ipynb**](04_performance_analysis.ipynb) - Deep dive into performance metrics
-   - Interactive visualizations
-   - Key metrics calculation
-   - Risk-adjusted returns
+### 🚀 Quick Start Examples
 
-7. [**05_optimization.ipynb**](05_optimization.ipynb) - Grid search and Bayesian optimization
-   - Parameter tuning
-   - Finding optimal parameters
-   - Avoiding overfitting
+Fast-track examples to get you backtesting immediately:
 
-8. [**06_walk_forward.ipynb**](06_walk_forward.ipynb) - Walk-forward optimization
-   - Robust validation
-   - Out-of-sample testing
-   - Performance degradation analysis
+**[crypto_backtest_ccxt.ipynb](crypto_backtest_ccxt.ipynb)** - Cryptocurrency backtesting with CCXT
 
-9. [**07_risk_analytics.ipynb**](07_risk_analytics.ipynb) - VaR, CVaR, and beta analysis
-   - Value at Risk calculations
-   - Risk metrics
-   - Drawdown analysis
+- Multi-exchange data fetching (Binance, Coinbase, Kraken)
+- Data validation and quality checks
+- Simple moving average crossover strategy
+- Performance analysis and visualization
 
-10. [**08_portfolio_construction.ipynb**](08_portfolio_construction.ipynb) - Multi-asset portfolio strategies
-    - Equal-weight portfolios
-    - Risk-parity allocation
-    - Rebalancing logic
+**[equity_backtest_yfinance.ipynb](equity_backtest_yfinance.ipynb)** - Stock backtesting with yfinance
 
-11. [**09_live_paper_trading.ipynb**](09_live_paper_trading.ipynb) - Paper trading setup and execution
-    - Real-time testing
-    - Paper broker setup
-    - Live monitoring
+- Stock and ETF data ingestion
+- Strategy development and testing
+- Performance metrics calculation
 
-### Complete Workflow
-12. [**10_full_workflow.ipynb**](10_full_workflow.ipynb) ⭐ **RECOMMENDED START** - Complete workflow from data to optimization
-    - Data ingestion → Strategy → Backtest → Analysis → Optimization
-    - Complete end-to-end example
-    - All features demonstrated
+---
 
-13. [**11_advanced_topics.ipynb**](11_advanced_topics.ipynb) - Custom indicators and multi-asset strategies
-    - Building custom indicators
-    - Advanced techniques
-    - Multi-asset correlation
+### 📚 Getting Started Tutorials
+
+Step-by-step tutorials for learning RustyBT fundamentals:
+
+**[01_getting_started.ipynb](01_getting_started.ipynb)** - Your first backtest
+
+- Setup and configuration
+- Creating your first strategy
+- Running backtests
+- Visualizing results
+
+**[02_data_ingestion.ipynb](02_data_ingestion.ipynb)** - Working with data sources
+
+- yfinance (stocks, ETFs)
+- CCXT (cryptocurrencies)
+- CSV import
+- Data quality checks
+
+**[03_strategy_development.ipynb](03_strategy_development.ipynb)** - Building trading strategies
+
+- Moving average crossover
+- Mean reversion strategies
+- Momentum strategies
+
+---
+
+### 📊 Analysis & Optimization
+
+Advanced techniques for strategy evaluation and improvement:
+
+**[04_performance_analysis.ipynb](04_performance_analysis.ipynb)** - Performance metrics deep dive
+
+- Interactive visualizations with Plotly
+- Key metrics calculation
+- Risk-adjusted returns
+
+**[05_optimization.ipynb](05_optimization.ipynb)** - Parameter optimization
+
+- Grid search optimization
+- Bayesian optimization
+- Finding optimal parameters
+- Avoiding overfitting
+
+**[06_walk_forward.ipynb](06_walk_forward.ipynb)** - Walk-forward validation
+
+- Robust validation techniques
+- Out-of-sample testing
+- Performance degradation analysis
+
+**[07_risk_analytics.ipynb](07_risk_analytics.ipynb)** - Risk metrics and analysis
+
+- Value at Risk (VaR) calculations
+- Conditional VaR (CVaR)
+- Beta analysis
+- Drawdown analysis
+
+**[08_portfolio_construction.ipynb](08_portfolio_construction.ipynb)** - Multi-asset portfolios
+
+- Equal-weight portfolios
+- Risk-parity allocation
+- Rebalancing logic
+
+**[09_live_paper_trading.ipynb](09_live_paper_trading.ipynb)** - Paper trading setup
+
+- Real-time testing
+- Paper broker configuration
+- Live monitoring
+
+---
+
+### 🔬 Advanced Topics
+
+**[11_advanced_topics.ipynb](11_advanced_topics.ipynb)** - Custom indicators and advanced techniques
+
+- Building custom technical indicators
+- Advanced strategy techniques
+- Multi-asset correlation analysis
 
 ## Features Demonstrated
 

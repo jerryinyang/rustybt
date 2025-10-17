@@ -60,6 +60,19 @@ def handle_data(context, data):
     )
 ```
 
+## Ingest Sample Data
+
+Before running your first backtest, you need to ingest some market data:
+
+```bash
+rustybt ingest -b quandl
+```
+
+This downloads and caches sample US stock data from Quandl. You only need to do this once.
+
+!!! note "Data Bundles"
+    RustyBT supports multiple data sources. See [CSV Data Import](../guides/csv-data-import.md) for custom data, or [Creating Data Adapters](../guides/creating-data-adapters.md) for live data sources.
+
 ## Run the Backtest
 
 ```bash
@@ -72,6 +85,36 @@ RustyBT will display:
 - Trade execution logs
 - Performance metrics
 - Final portfolio statistics
+
+## Troubleshooting
+
+### Common Issues
+
+**"no data for bundle 'quandl'"**
+```bash
+# Solution: Ingest data first
+rustybt ingest -b quandl
+```
+
+**"fatal: bad revision 'HEAD'" or Segmentation Fault**
+```bash
+# Solution: Reinstall rustybt
+pip install --upgrade --force-reinstall rustybt
+```
+
+This usually happens when installing from a non-git directory or with a corrupted installation.
+
+**"ModuleNotFoundError" or Import Errors**
+```bash
+# Solution: Check Python version and reinstall
+python --version  # Should be 3.12 or higher
+pip install --upgrade rustybt
+```
+
+**Data Issues**
+- For custom data: See [CSV Data Import Guide](../guides/csv-data-import.md)
+- For live data: See [Creating Data Adapters Guide](../guides/creating-data-adapters.md)
+- For debugging: See [Troubleshooting Guide](../guides/troubleshooting.md)
 
 ## Next Steps
 

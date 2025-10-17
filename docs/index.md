@@ -44,6 +44,8 @@ pip install rustybt[optimization]
 
 ### Your First Backtest
 
+**Step 1:** Create a strategy file `strategy.py`:
+
 ```python
 from rustybt.api import order_target, record, symbol
 
@@ -63,11 +65,22 @@ def handle_data(context, data):
         order_target(context.asset, 0)
 ```
 
-Run the backtest:
+**Step 2:** Ingest sample data (first time only):
+
+```bash
+rustybt ingest -b quandl
+```
+
+**Step 3:** Run the backtest:
 
 ```bash
 rustybt run -f strategy.py --start 2020-01-01 --end 2023-12-31
 ```
+
+!!! tip "Troubleshooting"
+    - **"no data for bundle"**: Run `rustybt ingest -b quandl` first
+    - **"fatal: bad revision 'HEAD'"**: Reinstall with `pip install --upgrade --force-reinstall rustybt`
+    - **Segmentation fault**: Check Python version (3.12+ required) and reinstall
 
 [Complete quick start guide →](getting-started/quickstart.md)
 

@@ -850,8 +850,8 @@ def analyze_cost_impact(strategy, with_costs=True):
 
 ## Related Documentation
 
-- [Slippage Models](./slippage-models-verified.md) - Price slippage modeling
-- [Commission Models](./commission-models-verified.md) - Transaction commission calculation
+- [Slippage Models](./slippage-models.md) - Price slippage modeling
+- [Commission Models](./commission-models.md) - Transaction commission calculation
 - [DecimalBlotter](../execution/decimal-blotter.md) - Order management system
 
 ---

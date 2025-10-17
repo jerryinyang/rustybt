@@ -10,7 +10,7 @@ Common data management issues and solutions.
 
 **Solutions**:
 1. **Enable caching**: Configure CacheManager with appropriate memory limits (see [Caching Guide](caching.md))
-2. **Use Parquet format**: Parquet bundles load 5-10x faster than HDF5 (see [Migration Guide](../catalog/migration.md))
+2. **Use Parquet format**: Parquet bundles load 5-10x faster than HDF5 (see [Migration Guide](../catalog/migration-guide.md))
 3. **Reduce data window**: Load smaller date ranges and use rolling windows in your strategy
 4. **Parallel loading**: Enable multi-worker data loading where supported
 
@@ -25,4 +25,4 @@ Common data management issues and solutions.
 
 - [Caching](caching.md) - Cache configuration
 - [Optimization](optimization.md) - Performance tuning
-- [Data Catalog](../catalog/bundles.md) - Bundle management
+- [Data Catalog](../catalog/bundle-system.md) - Bundle management

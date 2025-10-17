@@ -439,6 +439,5 @@ Use `is_paper=False` for production systems requiring full market data.
 ## See Also
 
 - [Base Adapter Framework](./base-adapter.md) - Core adapter interface
-- [API Provider Base](./api-provider-base.md) - BaseAPIProviderAdapter reference
 - [Polygon Adapter](./polygon-adapter.md) - Alternative US stock data provider
 - [YFinance Adapter](./yfinance-adapter.md) - Free alternative for US stocks

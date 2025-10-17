@@ -11,9 +11,9 @@
 This directory contains executable Python examples demonstrating RustyBT's features and capabilities. Each example is fully functional and can be run directly after installing RustyBT.
 
 For comprehensive API documentation and guides, see:
-- **Getting Started**: [../getting-started/](../getting-started/)
-- **User Guides**: [../guides/](../guides/)
-- **API Reference**: [../api/](../api/)
+- **Getting Started**: [Getting Started](../getting-started/installation.md)
+- **User Guides**: [User Guides](../guides/broker-setup-guide.md)
+- **API Reference**: [API Reference](../api/datasource-api.md)
 
 ---
 

@@ -551,9 +551,8 @@ Monthly Rebalancing (based on performance)
 ## Related Documentation
 
 - [Allocation Algorithms](allocation-algorithms.md) - Capital allocation strategies
-- [Risk Management](risk/README.md) - Portfolio risk controls
-- [Performance Metrics](../performance/metrics.md) - Detailed performance calculations
-- [TradingAlgorithm](../../backtesting/trading-algorithm.md) - Strategy base class
+- [Risk Management](risk-management.md) - Portfolio risk controls
+- [Performance Metrics](performance/metrics.md) - Detailed performance calculations
 
 ## Verification
 

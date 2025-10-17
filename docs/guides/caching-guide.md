@@ -60,11 +60,12 @@ The caching layer uses freshness policies to determine when cached data should b
 Refreshes daily data after market close:
 
 ```python
-from rustybt.data.sources import CachedDataSource, MarketCloseFreshnessPolicy
+from rustybt.data.sources.cached_source import CachedDataSource
+from rustybt.data.sources.freshness import MarketCloseFreshnessPolicy
 
 cached_source = CachedDataSource(
     adapter=yfinance_source,
-    freshness_policy=MarketCloseFreshnessPolicy(market_close_time="16:00", timezone="America/New_York")
+    freshness_policy=MarketCloseFreshnessPolicy()
 )
 ```
 
@@ -75,7 +76,8 @@ cached_source = CachedDataSource(
 Uses time-to-live (TTL) for data that updates continuously:
 
 ```python
-from rustybt.data.sources import TTLFreshnessPolicy
+from rustybt.data.sources.cached_source import CachedDataSource
+from rustybt.data.sources.freshness import TTLFreshnessPolicy
 
 # Refresh hourly data every 5 minutes
 cached_source = CachedDataSource(
@@ -91,16 +93,13 @@ cached_source = CachedDataSource(
 Combines market hours with TTL for intraday data:
 
 ```python
-from rustybt.data.sources import HybridFreshnessPolicy
+from rustybt.data.sources.cached_source import CachedDataSource
+from rustybt.data.sources.freshness import HybridFreshnessPolicy
 
 # Minute data: refresh every 60 seconds during market hours
 cached_source = CachedDataSource(
     adapter=alpaca_source,
-    freshness_policy=HybridFreshnessPolicy(
-        market_close_time="16:00",
-        timezone="America/New_York",
-        ttl_seconds=60
-    )
+    freshness_policy=HybridFreshnessPolicy(ttl_seconds=60)
 )
 ```
 
@@ -111,7 +110,7 @@ cached_source = CachedDataSource(
 `FreshnessPolicyFactory` automatically selects the appropriate policy based on frequency and data source:
 
 ```python
-from rustybt.data.sources import CachedDataSource
+from rustybt.data.sources.cached_source import CachedDataSource
 
 # Automatic policy selection
 cached_source = CachedDataSource(adapter=yfinance_source)
@@ -202,7 +201,7 @@ cache:
 ### Cache Statistics
 
 ```python
-from rustybt.data.sources import CachedDataSource
+from rustybt.data.sources.cached_source import CachedDataSource
 
 cached_source = CachedDataSource(adapter=source)
 
@@ -394,7 +393,7 @@ algo.data_portal.use_cache = True  # Stale data risk!
 For large backtests, pre-fetch data before running:
 
 ```python
-from rustybt.data.sources import CachedDataSource
+from rustybt.data.sources.cached_source import CachedDataSource
 
 cached_source = CachedDataSource(adapter=yfinance_source)
 
@@ -436,7 +435,7 @@ Match freshness to your trading frequency:
 ### Custom Freshness Policy
 
 ```python
-from rustybt.data.sources import CacheFreshnessPolicy
+from rustybt.data.sources.freshness import CacheFreshnessPolicy
 import pandas as pd
 
 class WeeklyFreshnessPolicy(CacheFreshnessPolicy):

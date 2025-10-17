@@ -641,5 +641,4 @@ Raised when asset ID not found in dataset.
 - [Data Portal](data-portal.md) - High-level data access interface
 - [PolarsDataPortal](polars-data-portal.md) - Modern portal using bar readers
 - [Daily Bar Readers](daily-bars.md) - Daily frequency implementations
-- [Minute Bar Readers](minute-bars.md) - Minute frequency implementations
 - [Bundle System](../catalog/bundle-system.md) - Data bundle management

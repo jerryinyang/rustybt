@@ -172,7 +172,8 @@ algo.run()  # Runs indefinitely until stopped
 ### Backtesting: Controlled Freshness
 
 ```python
-from rustybt.data.sources import CachedDataSource, MarketCloseFreshnessPolicy
+from rustybt.data.sources.cached_source import CachedDataSource
+from rustybt.data.sources.freshness import MarketCloseFreshnessPolicy
 
 cached_source = CachedDataSource(
     adapter=yfinance_source,

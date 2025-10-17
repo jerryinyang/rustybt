@@ -467,7 +467,7 @@ print(broker_positions)
 **Option 1: Use Polars (not pandas)**
 ```python
 # Switch to Polars-based data portal
-from rustybt.data.polars import PolarsDataPortal
+from rustybt.data.polars.data_portal import PolarsDataPortal
 data_portal = PolarsDataPortal(...)
 ```
 

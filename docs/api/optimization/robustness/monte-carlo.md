@@ -545,7 +545,6 @@ else:
 - [Robustness Testing Overview](README.md) - Main robustness documentation
 - [Noise Infusion](noise-infusion.md) - Price noise testing
 - [Sensitivity Analysis](sensitivity-analysis.md) - Parameter stability testing
-- [Walk-Forward Optimization](../advanced/walk-forward.md) - Temporal validation
 
 ---
 

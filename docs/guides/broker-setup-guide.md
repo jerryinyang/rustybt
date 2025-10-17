@@ -567,16 +567,30 @@ api_secret = os.getenv('BINANCE_API_SECRET')
 ### 2. Implement Circuit Breakers
 
 ```python
-from rustybt.live import CircuitBreaker, CircuitBreakerConfig
+from rustybt.live.circuit_breakers import (
+    DailyLossCircuitBreaker,
+    DrawdownCircuitBreaker,
+    CircuitBreakerManager
+)
 from decimal import Decimal
 
-config = CircuitBreakerConfig(
-    max_daily_loss=Decimal("5000"),     # Stop if lose $5k in a day
-    max_position_size=Decimal("50000"), # Max $50k per position
-    max_leverage=Decimal("2.0")         # Max 2x leverage
+# Create individual circuit breakers
+daily_loss_breaker = DailyLossCircuitBreaker(
+    limit=Decimal("-5000"),             # Stop if lose $5k in a day
+    initial_portfolio_value=Decimal("100000"),
+    is_percentage=False                 # Use absolute amount
 )
 
-breaker = CircuitBreaker(config)
+drawdown_breaker = DrawdownCircuitBreaker(
+    threshold=Decimal("-0.10"),         # Stop if 10% drawdown
+    initial_portfolio_value=Decimal("100000")
+)
+
+# Manage all breakers together
+breaker_manager = CircuitBreakerManager(
+    daily_loss_breaker=daily_loss_breaker,
+    drawdown_breaker=drawdown_breaker
+)
 ```
 
 ### 3. Monitor Rate Limits

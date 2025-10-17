@@ -160,26 +160,26 @@ crypto_adapter = CCXTAdapter(exchange_id='binance')
 
 ```python
 from rustybt.portfolio import PortfolioAllocator
-from rustybt.portfolio.allocation import RiskParityAllocator
+from rustybt.portfolio.allocation import RiskParityAllocation
 
 # Manage multiple strategies with intelligent allocation
 allocator = PortfolioAllocator(
     strategies=[strategy1, strategy2, strategy3],
-    allocation_algorithm=RiskParityAllocator()
+    allocation_algorithm=RiskParityAllocation()
 )
 ```
 
 ### Strategy Optimization
 
 ```python
-from rustybt.optimization import BayesianOptimizer
+from rustybt.optimization import Optimizer, WalkForwardOptimizer
 
 # Optimize strategy parameters
-optimizer = BayesianOptimizer(
-    param_space={'fast_ma': (10, 50), 'slow_ma': (50, 200)},
-    n_iterations=100
+optimizer = Optimizer(
+    strategy=my_strategy,
+    param_space={'fast_ma': (10, 50), 'slow_ma': (50, 200)}
 )
-results = optimizer.optimize(strategy)
+results = optimizer.optimize()
 ```
 
 ### Live Trading

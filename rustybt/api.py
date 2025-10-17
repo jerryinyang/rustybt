@@ -52,3 +52,31 @@ __all__ = [
     "slippage",
     "time_rules",
 ]
+
+
+def __dir__():
+    """Return all available attributes including dynamically registered API methods."""
+    # Ensure algorithm module is loaded to trigger @api_method registration
+    _ensure_algorithm_loaded()
+    return list(globals().keys()) + __all__
+
+
+def __getattr__(name):
+    """Lazy load API methods from algorithm module when accessed."""
+    # Ensure algorithm module is loaded to trigger @api_method registration
+    _ensure_algorithm_loaded()
+
+    # After algorithm loads, check if the attribute is now available
+    if name in globals():
+        return globals()[name]
+
+    # If not found, raise AttributeError
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+def _ensure_algorithm_loaded():
+    """Ensure algorithm module is loaded to trigger @api_method decorator registration."""
+    import sys
+
+    if "rustybt.algorithm" not in sys.modules:
+        from . import algorithm

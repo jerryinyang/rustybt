@@ -27,16 +27,18 @@ Configure financial calculation precision:
 
 ```python
 from decimal import Decimal, getcontext
+from rustybt.finance.decimal import DecimalLedger, DecimalConfig
 
 # Set global precision
 getcontext().prec = 28
 
-# Use Decimal for calculations
-from rustybt.finance.decimal import DecimalLedger
+# Configure decimal precision
+config = DecimalConfig()  # Uses defaults from config file
 
+# Use Decimal for calculations
 ledger = DecimalLedger(
     starting_cash=Decimal("100000.00"),
-    precision=8
+    config=config
 )
 ```
 
@@ -47,13 +49,14 @@ See [Decimal Precision Configuration](../guides/decimal-precision-configuration.
 Configure the intelligent caching system:
 
 ```python
-from rustybt.data.cache import CacheConfig
+from rustybt.data.polars.cache_manager import CacheManager
 
-cache_config = CacheConfig(
-    enabled=True,
-    max_size_gb=10,
-    freshness_hours=24,
-    compression=True
+# Initialize cache manager
+cache_manager = CacheManager(
+    db_path="./data/cache/metadata.db",
+    cache_directory="./data/cache",
+    hot_cache_size_mb=1024,     # 1 GB hot cache
+    cold_cache_size_mb=10240    # 10 GB cold cache
 )
 ```
 

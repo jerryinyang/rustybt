@@ -212,23 +212,19 @@ bb = BollingerBands(
 ### Statistical Factors
 
 ```python
-from rustybt.pipeline.factors.statistical import (
-    StandardDeviation,
-    LinearRegression,
-    RollingPearsonOfReturns
-)
+from rustybt.pipeline.factors import AnnualizedVolatility, SimpleBeta
+from rustybt.pipeline.factors.statistical import RollingPearsonOfReturns
 
 # Volatility
-volatility = StandardDeviation(
-    inputs=[USEquityPricing.close],
+volatility = AnnualizedVolatility(
     window_length=252  # Annual volatility
 )
 
 # Beta (vs market)
-beta = LinearRegression(
-    inputs=[returns, market_returns],
-    window_length=252
-).beta
+beta = SimpleBeta(
+    target=returns,
+    regression_length=252
+)
 
 # Correlation
 correlation = RollingPearsonOfReturns(
@@ -374,7 +370,7 @@ top_decile = momentum.percentile_between(90, 100)
 ```python
 # Multi-factor screen
 momentum = Returns(window_length=63)
-volatility = StandardDeviation(inputs=[USEquityPricing.close], window_length=252)
+volatility = AnnualizedVolatility(window_length=252)
 
 high_momentum = momentum.top(100)
 low_volatility = volatility.bottom(100)
@@ -486,7 +482,7 @@ Reuse factors across pipelines:
 ```python
 # Define factors once
 momentum = Returns(window_length=63)
-volatility = StandardDeviation(inputs=[USEquityPricing.close], window_length=252)
+volatility = AnnualizedVolatility(window_length=252)
 
 # Use in multiple places
 long_screen = momentum.top(50) & volatility.bottom(100)
@@ -581,8 +577,7 @@ def make_pipeline():
 
 ```python
 def make_pipeline():
-    volatility = StandardDeviation(
-        inputs=[USEquityPricing.close],
+    volatility = AnnualizedVolatility(
         window_length=252
     )
     low_vol = volatility.bottom(50)
@@ -598,8 +593,7 @@ def make_pipeline():
 ```python
 def make_pipeline():
     momentum = Returns(window_length=126)
-    volatility = StandardDeviation(
-        inputs=[USEquityPricing.close],
+    volatility = AnnualizedVolatility(
         window_length=252
     )
 

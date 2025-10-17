@@ -125,36 +125,46 @@ nav:
           - Troubleshooting: guides/troubleshooting.md
   - Examples & Tutorials:
       - Overview: examples/README.md
+      - Notebooks: examples/notebooks/README.md
   - API Reference:
       - Data Management:
           - Overview: api/data-management/README.md
           - Adapters:
-              - Overview: api/data-management/adapters/overview.md
-              - CCXT: api/data-management/adapters/ccxt.md
-              - YFinance: api/data-management/adapters/yfinance.md
-              - CSV: api/data-management/adapters/csv.md
-              - Polygon: api/data-management/adapters/polygon.md
-              - Alpaca: api/data-management/adapters/alpaca.md
-              - AlphaVantage: api/data-management/adapters/alphavantage.md
+              - Overview: api/data-management/adapters/README.md
+              - Selection Guide: api/data-management/adapters/adapter-selection-guide.md
+              - Base Adapter: api/data-management/adapters/base-adapter.md
+              - CCXT: api/data-management/adapters/ccxt-adapter.md
+              - YFinance: api/data-management/adapters/yfinance-adapter.md
+              - CSV: api/data-management/adapters/csv-adapter.md
+              - Polygon: api/data-management/adapters/polygon-adapter.md
+              - Alpaca: api/data-management/adapters/alpaca-adapter.md
+              - AlphaVantage: api/data-management/adapters/alphavantage-adapter.md
           - Catalog:
-              - Bundles: api/data-management/catalog/bundles.md
-              - Migration: api/data-management/catalog/migration.md
+              - Overview: api/data-management/catalog/README.md
+              - Architecture: api/data-management/catalog/architecture.md
+              - Catalog API: api/data-management/catalog/catalog-api.md
+              - Bundle System: api/data-management/catalog/bundle-system.md
+              - Metadata Tracking: api/data-management/catalog/metadata-tracking.md
+              - Migration Guide: api/data-management/catalog/migration-guide.md
           - Readers:
+              - Overview: api/data-management/readers/README.md
               - Data Portal: api/data-management/readers/data-portal.md
-              - Bar Readers: api/data-management/readers/bar-readers.md
-              - History Loader: api/data-management/readers/history-loader.md
-              - Continuous Futures: api/data-management/readers/continuous-futures.md
+              - Polars Data Portal: api/data-management/readers/polars-data-portal.md
+              - Bar Reader: api/data-management/readers/bar-reader.md
+              - Daily Bars: api/data-management/readers/daily-bars.md
           - FX System:
               - Overview: api/data-management/fx/overview.md
               - Providers: api/data-management/fx/providers.md
               - Storage: api/data-management/fx/storage.md
               - Converters: api/data-management/fx/converters.md
+              - FX & Caching: api/data-management/fx-and-caching.md
+          - Performance:
+              - Caching: api/data-management/performance/caching.md
+              - Optimization: api/data-management/performance/optimization.md
+              - Troubleshooting: api/data-management/performance/troubleshooting.md
           - Pipeline:
-              - Overview: api/data-management/pipeline/overview.md
-              - Factors: api/data-management/pipeline/factors.md
-              - Filters: api/data-management/pipeline/filters.md
-              - Loaders: api/data-management/pipeline/loaders.md
-              - Expressions: api/data-management/pipeline/expressions.md
+              - Overview: api/data-management/pipeline/README.md
+              - Computation API: api/computation/pipeline-api.md
       - Order Management:
           - Overview: api/order-management/README.md
           - Order Types:
@@ -162,46 +172,74 @@ nav:
               - Types Reference: api/order-types.md
           - Execution:
               - Blotter: api/order-management/execution/blotter.md
+              - Blotter System: api/order-management/execution/blotter-system.md
+              - Decimal Blotter: api/order-management/execution/decimal-blotter.md
+              - Execution Pipeline: api/order-management/execution/execution-pipeline.md
+              - Latency Models: api/order-management/execution/latency-models.md
+              - Partial Fills: api/order-management/execution/partial-fills.md
+              - Order Status Tracking: api/order-management/execution/order-status-tracking.md
           - Transaction Costs:
               - Slippage: api/order-management/transaction-costs/slippage.md
+              - Slippage Models: api/order-management/transaction-costs/slippage-models.md
               - Commissions: api/order-management/transaction-costs/commissions.md
+              - Commission Models: api/order-management/transaction-costs/commission-models.md
+              - Borrow Costs & Financing: api/order-management/transaction-costs/borrow-costs-financing.md
           - Workflows:
               - Order Lifecycle: api/order-management/workflows/order-lifecycle.md
               - Examples: api/order-management/workflows/examples.md
       - Portfolio Management:
           - Overview: api/portfolio-management/README.md
+          - Allocation:
+              - Allocation Algorithms: api/portfolio-management/allocation-algorithms.md
+              - Multi-Strategy Allocation: api/portfolio-management/allocation-multistrategy.md
+              - Portfolio Allocator: api/portfolio-management/portfolio-allocator.md
           - Multi-Strategy:
               - Allocators: api/portfolio-management/multi-strategy/allocators.md
           - Risk:
+              - Risk Management: api/portfolio-management/risk-management.md
+              - Risk Metrics: api/portfolio-management/risk-metrics.md
               - Position Limits: api/portfolio-management/risk/position-limits.md
+          - Performance:
+              - Performance Tracking: api/portfolio-management/performance-tracking.md
+              - Metrics: api/portfolio-management/performance/metrics.md
+          - Operations:
+              - Order Aggregation: api/portfolio-management/order-aggregation.md
+              - Analytics Suite: api/portfolio-management/analytics-suite.md
       - Optimization:
           - Overview: api/optimization/README.md
-          - Framework:
-              - Parameter Spaces: api/optimization/framework/parameter-spaces.md
-              - Objective Functions: api/optimization/framework/objective-functions.md
+          - Core:
+              - Parameter Spaces: api/optimization/core/parameter-spaces.md
+              - Objective Functions: api/optimization/core/objective-functions.md
           - Algorithms:
               - Grid Search: api/optimization/algorithms/grid-search.md
               - Random Search: api/optimization/algorithms/random-search.md
               - Bayesian: api/optimization/algorithms/bayesian.md
               - Genetic: api/optimization/algorithms/genetic.md
-          - Walk-Forward:
-              - Framework: api/optimization/walk-forward/framework.md
-              - Windows: api/optimization/walk-forward/windows.md
-              - Validation: api/optimization/walk-forward/validation.md
-          - Monte Carlo:
-              - Stability Testing: api/optimization/monte-carlo/stability-testing.md
-          - Parallel:
-              - Multiprocessing: api/optimization/parallel/multiprocessing.md
-          - Best Practices:
-              - Overfitting Prevention: api/optimization/best-practices/overfitting-prevention.md
+          - Robustness:
+              - Overview: api/optimization/robustness/README.md
+              - Monte Carlo: api/optimization/robustness/monte-carlo.md
+              - Noise Infusion: api/optimization/robustness/noise-infusion.md
+              - Sensitivity Analysis: api/optimization/robustness/sensitivity-analysis.md
       - Analytics:
           - Overview: api/analytics/README.md
+          - Reports: api/analytics/reports.md
+          - Visualization: api/analytics/visualization.md
+          - Attribution:
+              - Overview: api/analytics/attribution/README.md
           - Risk:
+              - Overview: api/analytics/risk/README.md
               - Metrics: api/analytics/risk/metrics.md
               - VaR & CVaR: api/analytics/risk/var-cvar.md
               - Drawdown: api/analytics/risk/drawdown.md
+          - Trade Analysis:
+              - Overview: api/analytics/trade-analysis/README.md
       - Live Trading:
           - Overview: api/live-trading/README.md
+          - Production Deployment: api/live-trading/production-deployment.md
+          - Core:
+              - Circuit Breakers: api/live-trading/core/circuit-breakers.md
+      - Testing:
+          - Overview: api/testing/README.md
       - API Overview Guides:
           - Datasource API: api/datasource-api.md
           - Optimization API: api/optimization-api.md

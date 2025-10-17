@@ -720,7 +720,6 @@ ci_upper = np.percentile(stability_scores, 97.5)
 - [Robustness Testing Overview](README.md) - Main robustness documentation
 - [Monte Carlo Permutation](monte-carlo.md) - Trade sequencing tests
 - [Noise Infusion](noise-infusion.md) - Price noise testing
-- [Walk-Forward Optimization](../advanced/walk-forward.md) - Temporal validation
 - [Bayesian Optimization](../algorithms/bayesian.md) - Efficient parameter search with built-in uncertainty
 
 ---

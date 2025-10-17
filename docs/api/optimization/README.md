@@ -149,7 +149,6 @@ The optimization framework uses a modular architecture with clear separation of 
 1. **[ParameterSpace](core/parameter-spaces.md)**: Defines search space with continuous, discrete, and categorical parameters
 2. **SearchAlgorithm**: Abstract interface for search strategies (grid, random, Bayesian, genetic)
 3. **[ObjectiveFunction](core/objective-functions.md)**: Extracts optimization metric from backtest results
-4. **[Optimizer](core/architecture.md)**: Main orchestrator coordinating the optimization loop
 5. **OptimizationResult**: Immutable record of a single trial
 
 ---
@@ -200,7 +199,6 @@ The optimization framework uses a modular architecture with clear separation of 
 ## Documentation Structure
 
 ### Core Framework
-- **[Architecture](core/architecture.md)** - System design and component interaction
 - **[Parameter Spaces](core/parameter-spaces.md)** - Defining optimization search spaces
 - **[Objective Functions](core/objective-functions.md)** - Extracting metrics from backtest results
 
@@ -430,17 +428,14 @@ Complete working examples available in `docs/examples/optimization/`:
 
 ## Next Steps
 
-1. **[Core Architecture](core/architecture.md)** - Understand system design
 2. **[Parameter Spaces](core/parameter-spaces.md)** - Define your search space
 3. **[Objective Functions](core/objective-functions.md)** - Choose or create your objective
-4. **[Search Algorithms](algorithms/)** - Select the right algorithm
+4. **Search Algorithms** - Select the right algorithm
 
 ---
 
 ## Related Documentation
 
-- [Backtesting Framework](../backtesting/README.md) - Running backtests
-- [Performance Metrics](../performance/README.md) - Available optimization metrics
 - [Analytics](../analytics/README.md) - Post-optimization analysis
 - [Live Trading](../live-trading/README.md) - Deploying optimized strategies
 

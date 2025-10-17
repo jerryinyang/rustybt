@@ -1,0 +1,150 @@
+[
+  {
+    "name": "01_getting_started.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/01_getting_started.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "requires_data",
+    "errors": [],
+    "warnings": [
+      "Notebook requires data bundle or external data source"
+    ]
+  },
+  {
+    "name": "02_data_ingestion.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/02_data_ingestion.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "requires_data",
+    "errors": [],
+    "warnings": [
+      "Notebook requires data bundle or external data source"
+    ]
+  },
+  {
+    "name": "03_strategy_development.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/03_strategy_development.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "not_tested",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "name": "04_performance_analysis.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/04_performance_analysis.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "not_tested",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "name": "05_optimization.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/05_optimization.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "not_tested",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "name": "06_walk_forward.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/06_walk_forward.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "not_tested",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "name": "07_risk_analytics.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/07_risk_analytics.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "not_tested",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "name": "08_portfolio_construction.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/08_portfolio_construction.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "not_tested",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "name": "09_live_paper_trading.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/09_live_paper_trading.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "not_tested",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "name": "10_full_workflow.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/10_full_workflow.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "requires_data",
+    "errors": [],
+    "warnings": [
+      "Notebook requires data bundle or external data source"
+    ]
+  },
+  {
+    "name": "11_advanced_topics.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/11_advanced_topics.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "not_tested",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "name": "crypto_backtest_ccxt.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/crypto_backtest_ccxt.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "not_tested",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "name": "equity_backtest_yfinance.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/equity_backtest_yfinance.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "requires_data",
+    "errors": [],
+    "warnings": [
+      "Notebook requires data bundle or external data source"
+    ]
+  },
+  {
+    "name": "report_generation.ipynb",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/docs/examples/notebooks/report_generation.ipynb",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "execution_status": "not_tested",
+    "errors": [],
+    "warnings": []
+  }
+]

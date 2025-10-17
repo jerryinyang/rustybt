@@ -1,18 +1,24 @@
 # Epic 11: Documentation Quality Framework & Epic 10 Complete Redo
 
 **Epic Type**: Documentation Infrastructure & Quality Remediation
-**Epic Status**: Approved - Ready for Implementation
-**Approval Date**: 2025-10-15
-**Estimated Effort**: 92-148 hours (12-19 days full-time)
-**Timeline**: 8-9 weeks
+**Epic Status**: Extended - Story 11.6 Added (Critical Gap)
+**Original Approval Date**: 2025-10-15
+**Extension Approval Date**: 2025-10-17
+**Original Estimated Effort**: 92-148 hours (12-19 days full-time)
+**Extended Effort**: 117-188 hours (15-24 days full-time) [+25-40 hours for Story 11.6]
+**Original Timeline**: 8-9 weeks
+**Extended Timeline**: 10-12 weeks [+2-3 weeks for Story 11.6]
 **Dependencies**: Supersedes Epic 10 (Stories 10.1, 10.2, 10.3)
 **Related Proposal**: `docs/qa/SPRINT_CHANGE_PROPOSAL_EPIC10_COMPLETE_REDO.md`
+**Extension Rationale**: Critical user-facing documentation gap discovered post-completion
 
 ---
 
 ## Epic Goal
 
-Establish a production-grade documentation quality framework and completely redo Epic 10 documentation with strict quality standards, automated validation, and framework expert review, ensuring all RustyBT documentation is accurate, executable, and trustworthy.
+Establish a production-grade documentation quality framework and completely redo Epic 10 documentation with strict quality standards, automated validation, and framework expert review, ensuring all RustyBT documentation (both API reference AND user-facing) is accurate, executable, and trustworthy.
+
+**Extension (Story 11.6)**: Address critical gap in user-facing documentation validation discovered after Stories 11.1-11.5 completion. Fix critical API export bug and validate all Home, Quick Start, Getting Started, User Guides, and Examples content.
 
 ---
 
@@ -381,6 +387,97 @@ Establish a production-grade documentation quality framework and completely redo
 - Verify quality framework was followed for every story
 - Ensure no shortcuts were taken
 - User trust depends on this validation
+
+---
+
+### Story 11.6: User-Facing Documentation Quality Validation (CRITICAL EXTENSION)
+
+**Duration**: 25-40 hours (Weeks 10-12)
+**Owner**: Dev Agent (with Framework Expert consultation)
+**Prerequisites**: Stories 11.1, 11.2, 11.3, 11.4, 11.5 MUST ALL be complete
+**Status**: 🚨 CRITICAL - Discovered Post-Epic 11 Completion
+
+**Why This Story Exists (Critical Gap Discovery)**:
+- Epic 11 focused ONLY on API Reference Documentation (Stories 11.2-11.4)
+- User-facing docs (Home, Quick Start, Getting Started, Guides, Examples) were NEVER validated
+- **CRITICAL BUG DISCOVERED**: `ImportError: cannot import name 'order_target' from 'rustybt.api'`
+- Root Cause: `rustybt/api.py` does NOT export core trading functions to users
+- Impact: Quick Start tutorial fails immediately for ALL new users
+- Gap: 33+ user-facing documents never validated with Epic 11 standards
+
+**What This Story Accomplishes**:
+- Fixes critical API export bug blocking new user onboarding
+- Validates ALL user-facing documentation (Home, Quick Start, Getting Started)
+- Tests ALL 20+ user guides with Epic 11 quality standards
+- Executes ALL 13 Jupyter notebooks + 20+ Python examples
+- Applies same rigorous quality framework to user documentation
+- Ensures new users can successfully complete Quick Start tutorial
+
+**Scope - 5 Critical Sections**:
+1. **Home Page** (`docs/index.md`) - First user touchpoint
+2. **Quick Start** (`docs/getting-started/quickstart.md`) - Critical user journey
+3. **Getting Started** (installation.md, configuration.md) - Onboarding docs
+4. **User Guides** (20+ guides in `/docs/guides/`) - Feature documentation
+5. **Examples & Tutorials** (13 notebooks + 20+ Python examples) - Learning materials
+
+**Key Deliverables**:
+1. API export bug fix in `rustybt/api.py`
+2. Corrected Home page with working import examples
+3. Validated Quick Start tutorial (tested end-to-end)
+4. Tested Getting Started (installation + configuration)
+5. Validated all 20+ user guides with working examples
+6. Executed all 13 Jupyter notebooks (100% pass)
+7. Tested all 20+ Python examples (100% pass)
+8. Automated test suite for user documentation
+9. Expert review and approval
+10. Story completion report with metrics
+
+**Quality Requirements** (Epic 11 Standards):
+- Phase 0: Fix API export bug FIRST (blocker for all other work)
+- Pre-flight checklist 100% complete before validation
+- All code examples executable (tested with automated harness)
+- All import statements verified to work
+- All CLI commands tested
+- Validation checklist 100% complete with evidence
+- Framework expert written approval
+- Zero known issues at story completion
+
+**Critical First Phase - API Export Bug Fix**:
+- **Task 0.1**: Analyze `rustybt/api.py` and identify missing exports
+- **Task 0.2**: Design fix (add exports vs update docs vs both)
+- **Task 0.3**: Implement fix and verify backward compatibility
+- **Task 0.4**: Test all documented import patterns
+- **BLOCKER**: Cannot proceed to documentation validation until fixed
+
+**Acceptance Criteria**:
+1. API export bug fixed - all documented imports work
+2. Home page validated - all code snippets execute
+3. Quick Start validated - completes successfully from scratch
+4. Getting Started validated - installation + configuration tested
+5. User guides validated - all 20+ guides tested
+6. Examples validated - 13 notebooks + 20+ examples execute
+7. Epic 11 quality compliance - checklists 100% complete
+8. Automated tests created - CI/CD integration
+9. Expert approval obtained - 95+ quality score
+10. Documentation consistency - no conflicting patterns
+11. mkdocs integration - site builds successfully
+12. Zero regressions - existing functionality verified
+
+**Course Change Instructions**:
+- This is an EXTENSION to Epic 11, not a replacement
+- Epic 11 (Stories 11.1-11.5) addressed API Reference docs only
+- This story addresses the critical gap in user-facing docs
+- Same rigorous Epic 11 standards apply
+- User onboarding depends on this story's success
+- Fix API export bug BEFORE any documentation work
+
+**Special Attention**:
+- 🚨 **CRITICAL BUG**: Quick Start fails with ImportError
+- 🚨 **ROOT CAUSE**: `rustybt/api.py` missing core function exports
+- 🚨 **USER IMPACT**: Every new user encounters this bug
+- 🚨 **PRIORITY**: Fix API bug first, then validate docs
+- ⚠️ **SCOPE**: 33+ files to validate (Home + Quick Start + Guides + Examples)
+- ⚠️ **TESTING**: All examples must execute, not just import check
 
 ---
 

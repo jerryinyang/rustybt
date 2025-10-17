@@ -671,7 +671,7 @@ class ComprehensiveAnalysis(TradingAlgorithm):
 - [Risk Management](../risk-management.md) - Portfolio risk controls
 - [Allocation Algorithms](../allocation-algorithms.md) - Capital allocation strategies
 - [Portfolio Allocator](../portfolio-allocator.md) - Multi-strategy management
-- [Transaction Costs](../../order-management/transaction-costs/) - Cost impact on performance
+- Transaction Costs - Cost impact on performance
 
 ## Verification
 

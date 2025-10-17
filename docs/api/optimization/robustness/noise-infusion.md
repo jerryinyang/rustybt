@@ -628,7 +628,6 @@ results = sim.run(test_data, lambda d: backtest(d, optimized_params))  # CORRECT
 - [Robustness Testing Overview](README.md) - Main robustness documentation
 - [Monte Carlo Permutation](monte-carlo.md) - Trade sequencing tests
 - [Sensitivity Analysis](sensitivity-analysis.md) - Parameter stability testing
-- [Walk-Forward Optimization](../advanced/walk-forward.md) - Temporal validation
 
 ---
 

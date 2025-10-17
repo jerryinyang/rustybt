@@ -390,6 +390,5 @@ print("✅ Use exchange suffixes for non-US stocks")
 ## See Also
 
 - [Base Adapter Framework](./base-adapter.md) - Core adapter interface
-- [API Provider Base](./api-provider-base.md) - BaseAPIProviderAdapter reference
 - [Polygon Adapter](./polygon-adapter.md) - Real-time alternative
 - [YFinance Adapter](./yfinance-adapter.md) - Free alternative for US stocks

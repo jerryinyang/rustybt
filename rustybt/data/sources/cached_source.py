@@ -15,7 +15,6 @@ import pandas as pd
 import polars as pl
 import structlog
 
-from rustybt.data.catalog import DataCatalog
 from rustybt.data.sources.base import DataSource, DataSourceMetadata
 
 logger = structlog.get_logger(__name__)
@@ -78,6 +77,10 @@ class CachedDataSource(DataSource):
 
         self.config = config or {}
         self.freshness_policy = freshness_policy  # Will be set by factory in Phase 2
+
+        # Lazy import to avoid circular dependency with DataCatalog
+        from rustybt.data.catalog import DataCatalog
+
         self.catalog = DataCatalog()
 
         # Thread-safe eviction lock

@@ -430,9 +430,7 @@ sim = NoiseInfusionSimulator(std_pct=0.02)    # 2% (conservative test)
 ## See Also
 
 - [Optimization Framework](../README.md) - Main optimization documentation
-- [Walk-Forward Optimization](../advanced/walk-forward.md) - Temporal robustness testing
 - [Bayesian Optimization](../algorithms/bayesian.md) - Efficient parameter search
-- [Best Practices Guide](../advanced/best-practices.md) - Overfitting prevention
 
 ---
 

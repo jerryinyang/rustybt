@@ -710,7 +710,7 @@ allocations = protected.calculate_allocations(strategies)
 
 - [Portfolio Allocator](portfolio-allocator.md) - Multi-strategy management system
 - [Risk Management](risk-management.md) - Position limits and exposure controls
-- [Performance Metrics](../performance/metrics.md) - Strategy performance tracking
+- [Performance Metrics](performance/metrics.md) - Strategy performance tracking
 
 ## Verification
 

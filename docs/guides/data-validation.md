@@ -231,7 +231,7 @@ data = await adapter.fetch(
 ### Validate in DataPortal
 
 ```python
-from rustybt.data.polars import PolarsDataPortal
+from rustybt.data.polars.data_portal import PolarsDataPortal
 from rustybt.data.polars.validation import DataValidator, ValidationConfig
 
 # Create data portal with validator

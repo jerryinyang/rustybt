@@ -65,4 +65,4 @@ print(f"Cache size: {stats['size_mb']:.2f} MB")
 
 - [Optimization Guide](optimization.md) - Advanced optimization techniques
 - [Troubleshooting](troubleshooting.md) - Performance debugging
-- [Data Catalog](../catalog/bundles.md) - Bundle caching
+- [Data Catalog](../catalog/bundle-system.md) - Bundle caching

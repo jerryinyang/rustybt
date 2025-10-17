@@ -1115,13 +1115,7 @@ if breakers.any_tripped():
 
 ## Further Reading
 
-- [Async Trading Engine](./core/async-engine.md) - Deep dive into async architecture
-- [State Management](./core/state-management.md) - Checkpoint and recovery patterns
-- [Position Reconciliation](./core/reconciliation.md) - Reconciliation strategies
 - [Circuit Breakers](./core/circuit-breakers.md) - All circuit breaker types
-- [Broker Integration](./brokers/README.md) - Broker adapter implementations
-- [WebSocket Streaming](./streaming/README.md) - Real-time data streaming
-- [Shadow Trading](./shadow/README.md) - Parallel validation
 - [Production Deployment](./production-deployment.md) - Deployment guide
 
 ---

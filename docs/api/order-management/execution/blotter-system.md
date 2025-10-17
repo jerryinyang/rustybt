@@ -203,8 +203,7 @@ blotter = SimulationBlotter(cancel_policy=NeverCancel())
 ## Related Documentation
 
 - [Order Types](../order-types.md) - All available execution styles
-- [Transaction Costs](../transaction-costs/) - Slippage and commission models
-- [Order Tracking Example](../workflows/order-tracking.md) - Complete examples
+- Transaction Costs - Slippage and commission models
 
 ## Verification
 

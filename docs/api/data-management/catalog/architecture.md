@@ -529,7 +529,4 @@ lru_entries = catalog.get_lru_cache_entries()
 
 ## References
 
-- [Database Schema](../../../../rustybt/assets/asset_db_schema.py) - SQLAlchemy schema definitions
-- [BundleMetadata Implementation](../../../../rustybt/data/bundles/metadata.py) - Core catalog class
-- [BundleMetadataTracker Implementation](../../../../rustybt/data/metadata_tracker.py) - Ingestion helper
 - [Catalog API Reference](catalog-api.md) - Complete API documentation

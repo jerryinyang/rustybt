@@ -18,7 +18,6 @@
 
 These algorithmic order types are **OUT OF SCOPE** per PRD and were incorrectly documented in Story 10.2. They do not exist in the RustyBT codebase and have been removed from this documentation.
 
-**For full correction details**, see: [CORRECTIONS_SUMMARY.md](CORRECTIONS_SUMMARY.md)
 
 ---
 
@@ -1910,16 +1909,14 @@ def handle_data(context, data):
 ### Transaction Costs
 - [Slippage Models](transaction-costs/slippage.md) - Price impact and market friction modeling
 - [Commission Models](transaction-costs/commissions.md) - Broker fee calculation
-- [Borrow Costs](transaction-costs/borrow-costs.md) - Short selling costs (Story 4.5)
-- [Overnight Financing](transaction-costs/overnight-financing.md) - Leverage costs (Story 4.6)
+- [Borrow Costs](transaction-costs/borrow-costs-financing.md) - Short selling costs (Story 4.5)
+- [Overnight Financing](transaction-costs/borrow-costs-financing.md) - Leverage costs (Story 4.6)
 
 ### Execution Systems
 - [Latency Simulation](execution/latency-models.md) - Order submission and execution delays (Story 4.1)
 - [Partial Fill Models](execution/partial-fills.md) - Realistic fill simulation (Story 4.2)
-- [Execution Engine](execution/engine.md) - Integrated execution pipeline
 
 ### Portfolio Management
-- [Portfolio Construction](../portfolio-management/construction.md) - Position sizing and allocation
 - [Risk Management](../portfolio-management/risk/position-limits.md) - Position limits and controls
 - [Multi-Strategy Allocation](../portfolio-management/multi-strategy/allocators.md) - Capital allocation (Story 4.8)
 
@@ -1930,7 +1927,6 @@ def handle_data(context, data):
 1. **Learn Order Lifecycle**: Understand how orders transition through states → [Order Lifecycle](workflows/order-lifecycle.md)
 2. **Model Transaction Costs**: Add realistic slippage and commissions → [Slippage Models](transaction-costs/slippage.md)
 3. **Study Examples**: See real-world order patterns → [Order Examples](workflows/examples.md)
-4. **Implement Execution Engine**: Combine latency, slippage, and partial fills → [Execution Engine](execution/engine.md)
 
 ---
 

@@ -184,7 +184,7 @@ All data flows through validation layers:
 3. **Temporal Consistency**: Checks for gaps and ordering
 4. **Decimal Precision**: Financial-grade arithmetic (28 decimal places)
 
-See [Data Quality](readers/bar-readers.md#data-quality) for details.
+See [Data Readers](readers/README.md) for details.
 
 ## Performance Considerations
 

@@ -469,8 +469,7 @@ def custom_function(backtest_result: dict[str, Any]) -> Decimal:
 ## Related Documentation
 
 - [Parameter Spaces](parameter-spaces.md) - Defining search spaces
-- [Architecture](architecture.md) - Optimization system design
-- [Search Algorithms](../algorithms/) - Algorithm selection
+- Search Algorithms - Algorithm selection
 
 ---
 

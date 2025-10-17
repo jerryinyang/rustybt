@@ -429,9 +429,8 @@ ParameterSpace(
 
 ## Related Documentation
 
-- [Architecture](architecture.md) - Optimization system design
 - [Objective Functions](objective-functions.md) - Defining optimization metrics
-- [Search Algorithms](../algorithms/) - Algorithm selection guide
+- Search Algorithms - Algorithm selection guide
 
 ---
 

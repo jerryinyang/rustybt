@@ -24,7 +24,7 @@ This documentation covers the complete risk management system with all APIs veri
 
 1. [Core Concepts](#core-concepts)
 2. [RiskLimits Configuration](#risklimits-configuration)
-3. [RiskManager - Main System](#riskmanager---main-system)
+3. [RiskManager - Main System](#riskmanager-main-system)
 4. [Pre-Trade Risk Checks](#pre-trade-risk-checks)
 5. [Real-Time Risk Metrics](#real-time-risk-metrics)
 6. [Value at Risk (VaR)](#value-at-risk-var)

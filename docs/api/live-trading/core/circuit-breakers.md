@@ -743,5 +743,3 @@ engine = LiveTradingEngine(..., circuit_breakers=coordinator)
 
 - [Live Trading Overview](../README.md)
 - [Production Deployment](../production-deployment.md)
-- [State Management](./state-management.md)
-- [Position Reconciliation](./reconciliation.md)

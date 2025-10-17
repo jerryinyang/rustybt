@@ -886,7 +886,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
 from rustybt.data.catalog import DataCatalog
 ```
 
-All `DataCatalog` methods delegate to `BundleMetadata`. See [Migration Guide](migration.md) for details.
+All `DataCatalog` methods delegate to `BundleMetadata`. See [Migration Guide](migration-guide.md) for details.
 
 ---
 

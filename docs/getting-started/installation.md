@@ -106,11 +106,11 @@ pip install -e ".[dev,test]"
 Verify your installation:
 
 ```bash
-# Check RustyBT version
-rustybt --version
-
-# Run a quick test
+# Check RustyBT version and import
 python -c "import rustybt; print(rustybt.__version__)"
+
+# Verify CLI is available
+rustybt --help
 ```
 
 ## Next Steps

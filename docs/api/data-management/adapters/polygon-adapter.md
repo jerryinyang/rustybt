@@ -565,7 +565,6 @@ adapter = PolygonAdapter(tier="developer", asset_type="stocks")  # 100 req/min
 ## See Also
 
 - [Base Adapter Framework](./base-adapter.md) - Core adapter interface
-- [API Provider Base](./api-provider-base.md) - BaseAPIProviderAdapter reference
 - [YFinance Adapter](./yfinance-adapter.md) - Free alternative for US stocks
 - [Alpaca Adapter](./alpaca-adapter.md) - Another professional data provider
 - [Data Catalog](../catalog/README.md) - Bundle metadata management

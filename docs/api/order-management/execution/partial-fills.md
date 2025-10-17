@@ -52,7 +52,6 @@ OrderTracker                         # Tracks partial fill state
 
 **These methods should NOT be imported**. They are automatically available in your strategy class when you inherit from `TradingAlgorithm`. The import statements in examples are shown for documentation purposes only.
 
-For more information, see the [TradingAlgorithm API documentation](../../algorithm-api.md).
 
 ---
 
@@ -905,7 +904,6 @@ def analyze(context, results):
 
 ### Execution Systems
 - [Latency Models](latency-models.md) - Execution delay simulation
-- [Execution Engine](engine.md) - Integrated execution pipeline
 
 ### Transaction Costs
 - [Slippage Models](../transaction-costs/slippage.md) - Price impact from fills
@@ -916,7 +914,6 @@ def analyze(context, results):
 ## Next Steps
 
 1. **Learn Latency Models**: Understand execution delays → [Latency Models](latency-models.md)
-2. **Integrate Execution Engine**: Combine fills with latency and slippage → [Execution Engine](engine.md)
 3. **Model Slippage**: Account for price impact → [Slippage Models](../transaction-costs/slippage.md)
 4. **Study Order Lifecycle**: See how fills affect order states → [Order Lifecycle](../workflows/order-lifecycle.md)
 

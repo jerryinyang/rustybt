@@ -1,0 +1,319 @@
+[
+  {
+    "name": "allocation_algorithms_tutorial.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/allocation_algorithms_tutorial.py",
+    "category": "portfolio",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "attribution_analysis_example.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/attribution_analysis_example.py",
+    "category": "analytics",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "backtest_paper_full_validation.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/backtest_paper_full_validation.py",
+    "category": "other",
+    "passed": false,
+    "syntax_valid": true,
+    "imports_valid": false,
+    "is_live_trading": false,
+    "errors": [
+      "Import errors:\nfrom rustybt.live.data_feed import SimulatedMarketDataFeed \u2192 cannot import name 'SimulatedMarketDataFeed' from 'rustybt.live.data_feed' (/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/live/data_feed.py)"
+    ],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "backtest_with_cache.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/backtest_with_cache.py",
+    "category": "caching",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "borrow_cost_tutorial.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/borrow_cost_tutorial.py",
+    "category": "transaction_costs",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "cache_warming.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/cache_warming.py",
+    "category": "caching",
+    "passed": false,
+    "syntax_valid": true,
+    "imports_valid": false,
+    "is_live_trading": false,
+    "errors": [
+      "Import errors:\nfrom rustybt.data.sources import CachedDataSource, DataSourceRegistry \u2192 cannot import name 'CachedDataSource' from 'rustybt.data.sources' (/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/sources/__init__.py)"
+    ],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "custom_broker_adapter.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/custom_broker_adapter.py",
+    "category": "live_trading",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": [
+      "Potential hardcoded API key",
+      "Potential hardcoded API secret"
+    ]
+  },
+  {
+    "name": "custom_data_adapter.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/custom_data_adapter.py",
+    "category": "data_ingestion",
+    "passed": false,
+    "syntax_valid": true,
+    "imports_valid": false,
+    "is_live_trading": false,
+    "errors": [
+      "Import errors:\nfrom rustybt.data.sources.base import DataSource, DataSourceMetadata, DataValidationError, NetworkError, RateLimitError, with_retry \u2192 cannot import name 'DataValidationError' from 'rustybt.data.sources.base' (/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/sources/base.py)\nfrom rustybt.data.bundles.adapter_bundles import ingest_from_datasource \u2192 cannot import name 'ingest_from_datasource' from 'rustybt.data.bundles.adapter_bundles' (/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/bundles/adapter_bundles.py)"
+    ],
+    "warnings": [],
+    "security_warnings": [
+      "Potential hardcoded API key"
+    ]
+  },
+  {
+    "name": "generate_backtest_report.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/generate_backtest_report.py",
+    "category": "analytics",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "high_frequency_custom_triggers.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/high_frequency_custom_triggers.py",
+    "category": "advanced",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "ingest_ccxt.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/ingest_ccxt.py",
+    "category": "data_ingestion",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "ingest_yfinance.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/ingest_yfinance.py",
+    "category": "data_ingestion",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "latency_simulation_tutorial.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/latency_simulation_tutorial.py",
+    "category": "transaction_costs",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "live_trading.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/live_trading.py",
+    "category": "live_trading",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": true,
+    "errors": [],
+    "warnings": [
+      "Live trading example - cannot execute safely"
+    ],
+    "security_warnings": []
+  },
+  {
+    "name": "live_trading_simple.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/live_trading_simple.py",
+    "category": "live_trading",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": true,
+    "errors": [],
+    "warnings": [
+      "Live trading example - cannot execute safely"
+    ],
+    "security_warnings": []
+  },
+  {
+    "name": "overnight_financing_tutorial.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/overnight_financing_tutorial.py",
+    "category": "transaction_costs",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "paper_trading_simple.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/paper_trading_simple.py",
+    "category": "paper_trading",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "paper_trading_validation.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/paper_trading_validation.py",
+    "category": "paper_trading",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "pipeline_tutorial.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/pipeline_tutorial.py",
+    "category": "pipeline",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "portfolio_allocator_tutorial.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/portfolio_allocator_tutorial.py",
+    "category": "portfolio",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "rust_optimized_indicators.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/rust_optimized_indicators.py",
+    "category": "advanced",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "shadow_trading_dashboard.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/shadow_trading_dashboard.py",
+    "category": "shadow_trading",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "shadow_trading_simple.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/shadow_trading_simple.py",
+    "category": "shadow_trading",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "slippage_models_tutorial.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/slippage_models_tutorial.py",
+    "category": "transaction_costs",
+    "passed": true,
+    "syntax_valid": true,
+    "imports_valid": true,
+    "is_live_trading": false,
+    "errors": [],
+    "warnings": [],
+    "security_warnings": []
+  },
+  {
+    "name": "websocket_streaming.py",
+    "path": "/Users/jerryinyang/Code/bmad-dev/rustybt/examples/websocket_streaming.py",
+    "category": "advanced",
+    "passed": false,
+    "syntax_valid": true,
+    "imports_valid": false,
+    "is_live_trading": false,
+    "errors": [
+      "Import errors:\nfrom rustybt.live.streaming.models import StreamingBar \u2192 cannot import name 'StreamingBar' from 'rustybt.live.streaming.models' (/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/live/streaming/models.py)"
+    ],
+    "warnings": [],
+    "security_warnings": []
+  }
+]

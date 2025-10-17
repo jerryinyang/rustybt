@@ -31,6 +31,7 @@ from rustybt.analytics.attribution import (
 )
 from rustybt.analytics.notebook import (
     async_backtest,
+    create_progress_iterator,
     setup_notebook,
 )
 from rustybt.analytics.reports import (
@@ -71,6 +72,7 @@ __all__ = [
     "TradeAnalysisError",
     "TradeAnalyzer",
     "async_backtest",
+    "create_progress_iterator",
     "plot_drawdown",
     "plot_equity_curve",
     "plot_returns_distribution",

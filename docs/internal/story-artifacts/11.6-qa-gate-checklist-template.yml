@@ -1,0 +1,1181 @@
+# Story 11.6: QA Gate Checklist - Developer Working Document
+#
+# PURPOSE: Task-level tracking for all QA gates during Story 11.6 implementation
+# USAGE: Developer agent updates this file as each gate is validated
+# LOCATION: Copy this to story-artifacts/ and update throughout implementation
+#
+# STATUS VALUES:
+#   NOT_STARTED - Gate validation not begun
+#   IN_PROGRESS - Currently validating
+#   PASS        - All criteria met, evidence documented
+#   FAIL        - Criteria not met, issues documented
+#   BLOCKED     - External dependency blocking progress
+#   SKIPPED     - Gate determined not applicable with justification
+#
+# EVIDENCE REQUIREMENTS:
+#   - Test execution results (pytest output, command results)
+#   - Code snippets (before/after for fixes)
+#   - Validation artifacts (reports, analysis documents)
+#   - Expert review feedback
+
+story: "11.6"
+title: "User-Facing Documentation Quality Validation"
+started: null
+completed: null
+developer: null
+
+# =============================================================================
+# PHASE 0: API EXPORT BUG FIX (CRITICAL BLOCKER)
+# Must complete BEFORE any documentation validation work
+# Estimated Time: 3-5 hours
+# =============================================================================
+
+phase_0:
+  name: "API Export Bug Fix"
+  status: NOT_STARTED
+  started: null
+  completed: null
+  blocker: true  # Must complete before proceeding to Phase 1
+
+  task_0_1:
+    name: "Analyze API Export Structure"
+    acceptance_criteria: ["AC #1"]
+    status: NOT_STARTED
+
+    checklist:
+      - item: "Read rustybt/api.py and identify current __all__ exports"
+        status: NOT_STARTED
+        evidence: null
+
+      - item: "Read rustybt/api.pyi and identify type stub definitions"
+        status: NOT_STARTED
+        evidence: null
+
+      - item: "Grep all user-facing docs for import statements"
+        status: NOT_STARTED
+        command: "grep -r 'from rustybt' docs/index.md docs/getting-started/ docs/guides/ docs/examples/"
+        evidence: null
+
+      - item: "Document all functions referenced in user docs"
+        status: NOT_STARTED
+        evidence: "docs/internal/story-artifacts/11.6-api-export-gap-analysis.md"
+
+      - item: "Identify gap: functions documented but not exported"
+        status: NOT_STARTED
+        evidence: "docs/internal/story-artifacts/11.6-api-export-gap-analysis.md#gap-summary"
+
+    qa_gate: QA-0.1
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "Complete list of documented APIs vs exported APIs"
+      - "Gap analysis with missing exports identified"
+      - "Source references for each documented import"
+    pass_criteria: "100% of documented APIs mapped to implementation status"
+    artifact: "docs/internal/story-artifacts/11.6-api-export-gap-analysis.md"
+
+  task_0_2:
+    name: "Design API Export Fix"
+    acceptance_criteria: ["AC #1"]
+    status: NOT_STARTED
+    depends_on: ["task_0_1"]
+
+    checklist:
+      - item: "Determine which functions to add to __all__"
+        status: NOT_STARTED
+        evidence: null
+
+      - item: "Verify backward compatibility concerns"
+        status: NOT_STARTED
+        test: "Review existing imports, check for naming conflicts"
+        evidence: null
+
+      - item: "Review TradingAlgorithm @api_method decorator pattern"
+        status: NOT_STARTED
+        file: "rustybt/algorithm.py or relevant file"
+        evidence: null
+
+      - item: "Design solution: Add exports vs Update docs vs Both"
+        status: NOT_STARTED
+        decision: null
+        rationale: null
+
+      - item: "Document design approach and get expert input"
+        status: NOT_STARTED
+        evidence: "docs/internal/story-artifacts/11.6-api-export-fix-design.md"
+
+    qa_gate: "QA-0.1 (continued)"
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "Clear solution design documented"
+      - "Backward compatibility impact assessed"
+      - "Approach validated by framework expert"
+    artifact: "docs/internal/story-artifacts/11.6-api-export-fix-design.md"
+
+  task_0_3:
+    name: "Implement API Export Fix"
+    acceptance_criteria: ["AC #1", "AC #2"]
+    status: NOT_STARTED
+    depends_on: ["task_0_2"]
+
+    checklist:
+      - item: "Add missing functions to rustybt/api.py __all__"
+        status: NOT_STARTED
+        file: "rustybt/api.py"
+        evidence: "git diff rustybt/api.py"
+
+      - item: "Verify consistency between .py and .pyi files"
+        status: NOT_STARTED
+        files: ["rustybt/api.py", "rustybt/api.pyi"]
+        evidence: null
+
+      - item: "Create comprehensive import test"
+        status: NOT_STARTED
+        file: "tests/documentation/test_imports.py"
+        evidence: null
+
+      - item: "Test: from rustybt.api import order_target, record, symbol"
+        status: NOT_STARTED
+        test_command: "python -c 'from rustybt.api import order_target, record, symbol; print(\"SUCCESS\")'"
+        result: null
+
+      - item: "Run existing test suite (verify no regressions)"
+        status: NOT_STARTED
+        test_command: "pytest tests/ -v"
+        result: null
+
+      - item: "Document correct import patterns"
+        status: NOT_STARTED
+        evidence: "docs/internal/story-artifacts/11.6-api-export-fix-design.md#import-patterns"
+
+    qa_gate: QA-0.2
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "All documented imports execute without ImportError"
+      - "rustybt/api.pyi matches rustybt/api.py"
+      - "Comprehensive import test created and passing"
+      - "Full test suite passes (zero regressions)"
+    pass_criteria: "100% of documented import patterns work"
+    test_results: null
+
+  task_0_4:
+    name: "Verify API Export Fix"
+    acceptance_criteria: ["AC #1", "AC #2"]
+    status: NOT_STARTED
+    depends_on: ["task_0_3"]
+
+    checklist:
+      - item: "Test all import patterns from user documentation"
+        status: NOT_STARTED
+        test_file: "tests/documentation/test_imports.py"
+        result: null
+
+      - item: "Verify backward compatibility (existing code still works)"
+        status: NOT_STARTED
+        test_command: "pytest tests/ -v --tb=short"
+        result: null
+
+      - item: "Run automated verification script"
+        status: NOT_STARTED
+        script: "tests/documentation/test_imports.py"
+        result: null
+
+      - item: "Get expert review of API fix"
+        status: NOT_STARTED
+        reviewer: "James (framework expert)"
+        feedback: null
+
+      - item: "Document changes in story artifact"
+        status: NOT_STARTED
+        evidence: "docs/internal/story-artifacts/11.6-api-export-fix-design.md#implementation"
+
+    qa_gate: QA-0.3
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "Zero test failures after changes"
+      - "Zero regressions in existing functionality"
+      - "Expert approval obtained"
+      - "All documented imports verified"
+    pass_criteria: "Expert approval + Zero regressions + 100% import success"
+    blocker_removed: NOT_STARTED  # Must be YES before Phase 1
+
+# =============================================================================
+# PHASE 1: HOME & QUICK START VALIDATION
+# Estimated Time: 6-8 hours
+# Prerequisites: Phase 0 complete
+# =============================================================================
+
+phase_1:
+  name: "Home & Quick Start Validation"
+  status: NOT_STARTED
+  started: null
+  completed: null
+  depends_on: ["phase_0"]
+
+  task_1_1:
+    name: "Home Page (index.md) Validation"
+    acceptance_criteria: ["AC #3"]
+    status: NOT_STARTED
+
+    checklist:
+      - item: "Update API imports in Quick Start snippet (lines 48-64)"
+        status: NOT_STARTED
+        file: "docs/index.md"
+        lines: "48-64"
+        evidence: "git diff docs/index.md"
+
+      - item: "Test 'Your First Backtest' example"
+        status: NOT_STARTED
+        test_file: "tests/documentation/test_home_examples.py::test_first_backtest"
+        result: null
+
+      - item: "Execute all feature highlight code snippets"
+        status: NOT_STARTED
+        snippets_tested: null
+        result: null
+
+      - item: "Verify all badge links (PyPI, CI, codecov)"
+        status: NOT_STARTED
+        tool: "link-checker or manual verification"
+        result: null
+
+      - item: "Test all navigation links"
+        status: NOT_STARTED
+        broken_links: null
+
+      - item: "Verify project status accuracy"
+        status: NOT_STARTED
+        checked: null
+
+      - item: "Run automated link checker"
+        status: NOT_STARTED
+        command: "linkchecker docs/index.md"
+        result: null
+
+    qa_gate: QA-1.1
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "100% of code snippets execute successfully"
+      - "100% of links are valid"
+      - "All CLI commands verified to work"
+      - "Automated tests created and passing"
+    pass_criteria: "100% code success + 100% link validity"
+    artifact: "docs/internal/story-artifacts/11.6-home-validation-report.md"
+    test_file: "tests/documentation/test_home_examples.py"
+
+  task_1_2:
+    name: "Quick Start Tutorial Validation"
+    acceptance_criteria: ["AC #4"]
+    status: NOT_STARTED
+
+    checklist:
+      - item: "Update import statement (line 20)"
+        status: NOT_STARTED
+        file: "docs/getting-started/quickstart.md"
+        line: 20
+        evidence: "git diff docs/getting-started/quickstart.md"
+
+      - item: "Test complete my_strategy.py example"
+        status: NOT_STARTED
+        test_command: "python my_strategy.py"
+        result: null
+
+      - item: "Verify data.history() field names correct"
+        status: NOT_STARTED
+        fields_checked: ["price", "close", "open", "high", "low", "volume"]
+        result: null
+
+      - item: "Test rustybt run CLI command"
+        status: NOT_STARTED
+        test_command: "rustybt run -f my_strategy.py --start 2020-01-01 --end 2023-12-31"
+        result: null
+
+      - item: "Execute Quick Start from scratch in clean environment"
+        status: NOT_STARTED
+        environment: "Docker or virtualenv"
+        result: null
+
+      - item: "Verify 'Next Steps' links all work"
+        status: NOT_STARTED
+        broken_links: null
+
+      - item: "Create automated Quick Start test"
+        status: NOT_STARTED
+        test_file: "tests/documentation/test_quickstart_tutorial.py"
+        evidence: null
+
+    qa_gate: QA-1.2
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "Quick Start completes successfully from scratch"
+      - "All CLI commands work"
+      - "All code examples execute"
+      - "All links valid"
+      - "Automated test created and passing"
+    pass_criteria: "End-to-end Quick Start success in clean environment"
+    artifact: "docs/internal/story-artifacts/11.6-quickstart-validation-report.md"
+    test_file: "tests/documentation/test_quickstart_tutorial.py"
+
+# =============================================================================
+# PHASE 2: GETTING STARTED VALIDATION
+# Estimated Time: 4-6 hours
+# Prerequisites: Phase 1 complete
+# =============================================================================
+
+phase_2:
+  name: "Getting Started Validation"
+  status: NOT_STARTED
+  started: null
+  completed: null
+  depends_on: ["phase_1"]
+
+  task_2_1:
+    name: "Installation Guide Validation"
+    acceptance_criteria: ["AC #5"]
+    status: NOT_STARTED
+
+    checklist:
+      - item: "Test PyPI installation in clean Python 3.12 environment"
+        status: NOT_STARTED
+        test_command: "pip install rustybt"
+        environment: "Python 3.12 virtualenv"
+        result: null
+
+      - item: "Test source installation"
+        status: NOT_STARTED
+        test_command: "pip install -e ."
+        result: null
+
+      - item: "Verify all dependencies install correctly"
+        status: NOT_STARTED
+        dependencies_checked: null
+        result: null
+
+      - item: "Test optional feature installations"
+        status: NOT_STARTED
+        features: ["optimization", "live-trading", "analytics"]
+        result: null
+
+      - item: "Verify Python version requirements (3.12+)"
+        status: NOT_STARTED
+        versions_tested: []
+        result: null
+
+      - item: "Document common installation issues"
+        status: NOT_STARTED
+        issues_found: []
+        documented_in: "docs/getting-started/installation.md#troubleshooting"
+
+      - item: "Create installation verification script"
+        status: NOT_STARTED
+        script: "tests/documentation/test_getting_started.py::test_installation"
+        evidence: null
+
+    qa_gate: QA-2.1
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "Installation succeeds in clean Python 3.12+ environment"
+      - "All dependencies resolve correctly"
+      - "Optional features install successfully"
+      - "Common issues documented"
+    pass_criteria: "Clean environment installation success"
+    artifact: "docs/internal/story-artifacts/11.6-installation-validation-report.md"
+    test_file: "tests/documentation/test_getting_started.py"
+
+  task_2_2:
+    name: "Configuration Guide Validation"
+    acceptance_criteria: ["AC #6"]
+    status: NOT_STARTED
+
+    checklist:
+      - item: "Test all configuration examples"
+        status: NOT_STARTED
+        examples_tested: []
+        result: null
+
+      - item: "Verify configuration file paths"
+        status: NOT_STARTED
+        paths_checked: []
+        result: null
+
+      - item: "Test environment variables (see Technical Implementation Guidance)"
+        status: NOT_STARTED
+        variables_tested:
+          core:
+            - name: "RUSTYBT_DATA_DIR"
+              status: NOT_STARTED
+            - name: "RUSTYBT_CONFIG_PATH"
+              status: NOT_STARTED
+            - name: "RUSTYBT_CACHE_DIR"
+              status: NOT_STARTED
+          live_trading:
+            - name: "BINANCE_API_KEY"
+              status: NOT_STARTED
+            - name: "BINANCE_API_SECRET"
+              status: NOT_STARTED
+            - name: "BYBIT_API_KEY"
+              status: NOT_STARTED
+            - name: "BYBIT_API_SECRET"
+              status: NOT_STARTED
+            - name: "BROKER_TESTNET_MODE"
+              status: NOT_STARTED
+          data_sources:
+            - name: "YFINANCE_RATE_LIMIT"
+              status: NOT_STARTED
+            - name: "CCXT_EXCHANGE"
+              status: NOT_STARTED
+          logging:
+            - name: "RUSTYBT_LOG_LEVEL"
+              status: NOT_STARTED
+            - name: "RUSTYBT_DEBUG_MODE"
+              status: NOT_STARTED
+
+      - item: "Test data bundle configuration"
+        status: NOT_STARTED
+        result: null
+
+      - item: "Test trading calendar configuration"
+        status: NOT_STARTED
+        result: null
+
+      - item: "Document configuration best practices"
+        status: NOT_STARTED
+        documented_in: "docs/getting-started/configuration.md#best-practices"
+
+    qa_gate: QA-2.2
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "All configuration examples execute successfully"
+      - "All environment variables tested"
+      - "Configuration paths verified correct"
+      - "Best practices documented"
+    pass_criteria: "100% configuration example success"
+    artifact: "docs/internal/story-artifacts/11.6-configuration-validation-report.md"
+    test_file: "tests/documentation/test_getting_started.py::test_configuration"
+
+# =============================================================================
+# PHASE 3: USER GUIDES VALIDATION
+# Estimated Time: 8-12 hours
+# Prerequisites: Phase 2 complete
+# =============================================================================
+
+phase_3:
+  name: "User Guides Validation (20+ Guides)"
+  status: NOT_STARTED
+  started: null
+  completed: null
+  depends_on: ["phase_2"]
+
+  task_3_1:
+    name: "Validate Priority User Guides"
+    acceptance_criteria: ["AC #7"]
+    status: NOT_STARTED
+
+    priority_guides:
+      - guide: "decimal-precision-configuration.md"
+        status: NOT_STARTED
+        examples_tested: null
+        issues_found: []
+        result: null
+
+      - guide: "caching-system.md"
+        status: NOT_STARTED
+        config_verified: false
+        result: null
+
+      - guide: "creating-data-adapters.md"
+        status: NOT_STARTED
+        adapter_example_tested: false
+        result: null
+
+      - guide: "csv-data-import.md"
+        status: NOT_STARTED
+        csv_import_tested: false
+        sample_data_used: null
+        result: null
+
+      - guide: "testnet-setup-guide.md"
+        status: NOT_STARTED
+        config_steps_verified: false
+        result: null
+
+      - guide: "pipeline-api-guide.md"
+        status: NOT_STARTED
+        pipeline_examples_tested: null
+        result: null
+
+      - guide: "broker-setup-guide.md"
+        status: NOT_STARTED
+        setup_steps_verified: false
+        result: null
+
+      - guide: "production-checklist.md"
+        status: NOT_STARTED
+        completeness_reviewed: false
+        result: null
+
+      - guide: "troubleshooting.md"
+        status: NOT_STARTED
+        solutions_verified: false
+        result: null
+
+      - guide: "exception-handling-guide.md"
+        status: NOT_STARTED
+        patterns_tested: null
+        result: null
+
+    qa_gate: QA-3.1
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "All 10 priority guides validated"
+      - "All code examples execute successfully"
+      - "Configuration steps verified"
+      - "Issues documented and fixed"
+    pass_criteria: "100% priority guide code examples execute"
+    artifact: "docs/internal/story-artifacts/11.6-user-guides-validation-report.md"
+
+  task_3_2:
+    name: "Validate Remaining User Guides"
+    acceptance_criteria: ["AC #8"]
+    status: NOT_STARTED
+    depends_on: ["task_3_1"]
+
+    checklist:
+      - item: "Enumerate all guides in docs/guides/"
+        status: NOT_STARTED
+        command: "find docs/guides -name '*.md' -type f"
+        total_guides: null
+
+      - item: "Test code examples in each remaining guide"
+        status: NOT_STARTED
+        guides_tested: []
+        guides_pending: []
+
+      - item: "Verify cross-references and links"
+        status: NOT_STARTED
+        broken_links_found: []
+
+      - item: "Update outdated information"
+        status: NOT_STARTED
+        updates_made: []
+
+      - item: "Document common pitfalls"
+        status: NOT_STARTED
+        pitfalls_added_to: []
+
+    qa_gate: QA-3.2
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "100% of user guides enumerated and tracked"
+      - "100% of code examples tested"
+      - "All cross-references verified"
+      - "Outdated info updated"
+    pass_criteria: "100% guide validation complete"
+    artifact: "docs/internal/story-artifacts/11.6-user-guides-validation-report.md"
+    test_file: "tests/documentation/test_user_guides.py"
+
+# =============================================================================
+# PHASE 4: EXAMPLES & TUTORIALS VALIDATION
+# Estimated Time: 6-10 hours
+# Prerequisites: Phase 3 complete
+# =============================================================================
+
+phase_4:
+  name: "Examples & Tutorials Validation"
+  status: NOT_STARTED
+  started: null
+  completed: null
+  depends_on: ["phase_3"]
+
+  task_4_1:
+    name: "Validate Jupyter Notebooks"
+    acceptance_criteria: ["AC #9"]
+    status: NOT_STARTED
+
+    notebooks:
+      - notebook: "01_getting_started.ipynb"
+        status: NOT_STARTED
+        result: null
+      - notebook: "02_data_ingestion.ipynb"
+        status: NOT_STARTED
+        result: null
+      - notebook: "03_strategy_development.ipynb"
+        status: NOT_STARTED
+        result: null
+      - notebook: "04_backtest_execution.ipynb"
+        status: NOT_STARTED
+        result: null
+      - notebook: "05_performance_analysis.ipynb"
+        status: NOT_STARTED
+        result: null
+      - notebook: "06_optimization.ipynb"
+        status: NOT_STARTED
+        result: null
+      - notebook: "07_walk_forward_analysis.ipynb"
+        status: NOT_STARTED
+        result: null
+      - notebook: "08_portfolio_construction.ipynb"
+        status: NOT_STARTED
+        result: null
+      - notebook: "09_risk_analytics.ipynb"
+        status: NOT_STARTED
+        result: null
+      - notebook: "10_full_workflow.ipynb"
+        status: NOT_STARTED
+        result: null
+      - notebook: "11_advanced_topics.ipynb"
+        status: NOT_STARTED
+        result: null
+      - notebook: "12_crypto_backtest.ipynb"
+        status: NOT_STARTED
+        result: null
+      - notebook: "13_equity_backtest.ipynb"
+        status: NOT_STARTED
+        result: null
+
+    checklist:
+      - item: "Fix broken imports in notebooks"
+        status: NOT_STARTED
+        notebooks_fixed: []
+
+      - item: "Verify notebook outputs are correct"
+        status: NOT_STARTED
+        notebooks_verified: []
+
+      - item: "Update notebooks with correct import patterns"
+        status: NOT_STARTED
+        notebooks_updated: []
+
+      - item: "Create automated notebook execution test"
+        status: NOT_STARTED
+        test_command: "pytest --nbmake docs/examples/notebooks/*.ipynb"
+        result: null
+
+    qa_gate: QA-4.1
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "All 13 notebooks execute end-to-end without errors"
+      - "Import statements corrected"
+      - "Outputs verified as correct"
+      - "Automated test created"
+    pass_criteria: "100% notebook execution success"
+    artifact: "docs/internal/story-artifacts/11.6-notebooks-validation-report.md"
+    test_command: "pytest --nbmake docs/examples/notebooks/*.ipynb"
+
+  task_4_2:
+    name: "Validate Python Examples"
+    acceptance_criteria: ["AC #10"]
+    status: NOT_STARTED
+
+    example_categories:
+      data_ingestion:
+        status: NOT_STARTED
+        examples: []
+        result: null
+
+      live_trading:
+        status: NOT_STARTED
+        examples: []
+        result: null
+
+      portfolio_allocation:
+        status: NOT_STARTED
+        examples: []
+        result: null
+
+      optimization:
+        status: NOT_STARTED
+        examples: []
+        result: null
+
+      transaction_costs:
+        status: NOT_STARTED
+        examples: []
+        result: null
+
+      analytics:
+        status: NOT_STARTED
+        examples: []
+        result: null
+
+    checklist:
+      - item: "Enumerate all Python examples in /examples/"
+        status: NOT_STARTED
+        command: "find examples -name '*.py' -type f"
+        total_examples: null
+
+      - item: "Test all examples by category"
+        status: NOT_STARTED
+        examples_tested: []
+
+      - item: "Fix broken examples"
+        status: NOT_STARTED
+        examples_fixed: []
+
+      - item: "Create automated examples test suite"
+        status: NOT_STARTED
+        test_file: "tests/documentation/test_examples.py"
+        result: null
+
+    qa_gate: QA-4.2
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "100% of Python examples execute successfully"
+      - "Broken examples fixed"
+      - "Automated test suite created"
+      - "Test suite integrated into CI/CD"
+    pass_criteria: "100% example execution success"
+    artifact: "docs/internal/story-artifacts/11.6-examples-validation-report.md"
+    test_file: "tests/documentation/test_examples.py"
+
+# =============================================================================
+# PHASE 5: QUALITY ASSURANCE & EXPERT REVIEW
+# Estimated Time: 4-6 hours
+# Prerequisites: Phase 4 complete
+# =============================================================================
+
+phase_5:
+  name: "Quality Assurance & Expert Review"
+  status: NOT_STARTED
+  started: null
+  completed: null
+  depends_on: ["phase_4"]
+
+  task_5_1:
+    name: "Epic 11 Quality Compliance"
+    acceptance_criteria: ["AC #11"]
+    status: NOT_STARTED
+
+    checklist:
+      - item: "Apply DOCUMENTATION_QUALITY_STANDARDS.md to all user docs"
+        status: NOT_STARTED
+        docs_reviewed: []
+
+      - item: "Complete DOCUMENTATION_CREATION_CHECKLIST.md for each section"
+        status: NOT_STARTED
+        sections_completed: []
+
+      - item: "Complete DOCUMENTATION_VALIDATION_CHECKLIST.md for each section"
+        status: NOT_STARTED
+        sections_validated: []
+
+      - item: "Verify zero fabricated APIs or incorrect import paths"
+        status: NOT_STARTED
+        verification_method: "Automated import test + manual review"
+        result: null
+
+      - item: "Verify all code examples tested BEFORE documenting"
+        status: NOT_STARTED
+        evidence: "All phase artifacts show testing evidence"
+
+      - item: "Verify all CLI commands work"
+        status: NOT_STARTED
+        commands_tested: []
+
+    qa_gate: QA-5.1
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "100% quality checklist completion"
+      - "Zero fabricated APIs"
+      - "All examples tested before documenting"
+      - "All CLI commands verified"
+    pass_criteria: "100% Epic 11 compliance"
+    evidence: "All phase artifacts + quality checklists"
+
+  task_5_2:
+    name: "Automated Testing Implementation"
+    acceptance_criteria: ["AC #12"]
+    status: NOT_STARTED
+
+    test_suites:
+      - suite: "Home page automated tests"
+        file: "tests/documentation/test_home_examples.py"
+        status: NOT_STARTED
+        tests_count: null
+
+      - suite: "Quick Start automated tests"
+        file: "tests/documentation/test_quickstart_tutorial.py"
+        status: NOT_STARTED
+        tests_count: null
+
+      - suite: "Getting Started automated tests"
+        file: "tests/documentation/test_getting_started.py"
+        status: NOT_STARTED
+        tests_count: null
+
+      - suite: "User Guides automated tests"
+        file: "tests/documentation/test_user_guides.py"
+        status: NOT_STARTED
+        tests_count: null
+
+      - suite: "Notebook execution tests"
+        integration: "pytest-nbmake in CI/CD"
+        status: NOT_STARTED
+
+      - suite: "Examples execution tests"
+        file: "tests/documentation/test_examples.py"
+        status: NOT_STARTED
+        tests_count: null
+
+    checklist:
+      - item: "All test suites created"
+        status: NOT_STARTED
+        suites_created: []
+
+      - item: "All tests passing locally"
+        status: NOT_STARTED
+        test_command: "pytest tests/documentation/ -v"
+        result: null
+
+      - item: "CI/CD integration implemented"
+        status: NOT_STARTED
+        workflow_file: ".github/workflows/docs-validation.yml"
+        evidence: null
+
+      - item: "CI/CD pipeline passing"
+        status: NOT_STARTED
+        ci_run_url: null
+
+    qa_gate: QA-5.2
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "All automated tests created"
+      - "All tests passing"
+      - "CI/CD integration complete"
+      - "CI/CD pipeline green"
+    pass_criteria: "All automated tests pass + CI/CD green"
+    test_results: "pytest tests/documentation/ -v"
+    ci_workflow: ".github/workflows/docs-validation.yml"
+
+  task_5_3:
+    name: "Expert Review & Approval"
+    acceptance_criteria: ["AC #13"]
+    status: NOT_STARTED
+
+    review_items:
+      - item: "Submit all artifacts for expert review"
+        status: NOT_STARTED
+        artifacts_submitted: []
+
+      - item: "Expert reviews API import fixes"
+        status: NOT_STARTED
+        reviewer: "James"
+        feedback: null
+
+      - item: "Expert reviews corrected examples"
+        status: NOT_STARTED
+        reviewer: "James"
+        examples_reviewed: []
+
+      - item: "Expert validates usage patterns"
+        status: NOT_STARTED
+        reviewer: "James"
+        patterns_validated: []
+
+      - item: "Address expert feedback"
+        status: NOT_STARTED
+        feedback_items: []
+        addressed: []
+
+      - item: "Obtain written approval"
+        status: NOT_STARTED
+        approval_obtained: false
+
+      - item: "Verify quality score 95+"
+        status: NOT_STARTED
+        score: null
+
+    qa_gate: QA-5.3
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "Expert review completed"
+      - "All feedback addressed"
+      - "Written approval obtained"
+      - "Quality score 95+"
+    pass_criteria: "Expert approval with 95+ quality score"
+    artifact: "docs/internal/story-artifacts/expert-reviews/11.6-expert-review.md"
+
+# =============================================================================
+# PHASE 6: INTEGRATION & FINAL VALIDATION
+# Estimated Time: 2-3 hours
+# Prerequisites: Phase 5 complete
+# =============================================================================
+
+phase_6:
+  name: "Integration & Final Validation"
+  status: NOT_STARTED
+  started: null
+  completed: null
+  depends_on: ["phase_5"]
+
+  task_6_1:
+    name: "Documentation Consistency Check"
+    acceptance_criteria: ["AC #14"]
+    status: NOT_STARTED
+
+    checklist:
+      - item: "Verify consistent import patterns across all user docs"
+        status: NOT_STARTED
+        inconsistencies_found: []
+
+      - item: "Verify consistent terminology"
+        status: NOT_STARTED
+        examples: ["data bundle vs bundle", "backtest vs back-test"]
+        inconsistencies_found: []
+
+      - item: "Verify consistent code style in examples"
+        status: NOT_STARTED
+        style_guide: "PEP 8 + project conventions"
+        issues_found: []
+
+      - item: "Check all cross-references work correctly"
+        status: NOT_STARTED
+        broken_refs: []
+
+      - item: "Review navigation structure is logical"
+        status: NOT_STARTED
+        issues_found: []
+
+    qa_gate: QA-6.1
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "Zero inconsistencies in import patterns"
+      - "Zero inconsistencies in terminology"
+      - "Consistent code style throughout"
+      - "All cross-references valid"
+      - "Logical navigation structure"
+    pass_criteria: "Zero inconsistencies found"
+
+  task_6_2:
+    name: "mkdocs Integration Validation"
+    acceptance_criteria: ["AC #15"]
+    status: NOT_STARTED
+
+    checklist:
+      - item: "Run mkdocs build --strict"
+        status: NOT_STARTED
+        command: "mkdocs build --strict"
+        result: null
+        warnings: []
+        errors: []
+
+      - item: "Verify all user-facing pages render correctly"
+        status: NOT_STARTED
+        pages_checked: []
+        rendering_issues: []
+
+      - item: "Check navigation includes all guides"
+        status: NOT_STARTED
+        missing_guides: []
+
+      - item: "Run broken link checker"
+        status: NOT_STARTED
+        tool: "linkchecker or similar"
+        broken_links: []
+
+      - item: "Test code highlighting works for all examples"
+        status: NOT_STARTED
+        languages_checked: ["python", "bash", "yaml", "json"]
+        issues_found: []
+
+    qa_gate: QA-6.2
+    gate_status: NOT_STARTED
+    gate_criteria:
+      - "mkdocs build --strict passes with zero warnings"
+      - "All pages render correctly"
+      - "Navigation complete"
+      - "Zero broken links"
+      - "Code highlighting works"
+    pass_criteria: "Documentation site builds successfully with zero warnings"
+    artifact: "docs/internal/story-artifacts/11.6-mkdocs-validation-report.md"
+    build_command: "mkdocs build --strict"
+
+  task_6_3:
+    name: "Story Completion Report"
+    status: NOT_STARTED
+
+    checklist:
+      - item: "Document all fixes made"
+        status: NOT_STARTED
+        fixes_list: []
+
+      - item: "Document all tests created"
+        status: NOT_STARTED
+        tests_list: []
+
+      - item: "Calculate and document quality metrics"
+        status: NOT_STARTED
+        metrics: {}
+
+      - item: "Document lessons learned"
+        status: NOT_STARTED
+        lessons: []
+
+      - item: "Provide recommendations for maintenance"
+        status: NOT_STARTED
+        recommendations: []
+
+      - item: "Verify all acceptance criteria met"
+        status: NOT_STARTED
+        criteria_status: {}
+
+    artifact: "docs/internal/story-artifacts/11.6-completion-report.md"
+
+# =============================================================================
+# DEFINITION OF DONE - FINAL CHECKLIST
+# All must be PASS before story completion
+# =============================================================================
+
+definition_of_done:
+  dod_1:
+    name: "API Export Bug Fixed"
+    status: NOT_STARTED
+    criteria: "All documented imports execute successfully"
+    evidence: "tests/documentation/test_imports.py PASS"
+
+  dod_2:
+    name: "Home Page Validated"
+    status: NOT_STARTED
+    criteria: "All code snippets and links verified"
+    evidence: "tests/documentation/test_home_examples.py PASS"
+
+  dod_3:
+    name: "Quick Start Tutorial Validated"
+    status: NOT_STARTED
+    criteria: "Completes successfully from scratch"
+    evidence: "tests/documentation/test_quickstart_tutorial.py PASS"
+
+  dod_4:
+    name: "Getting Started Validated"
+    status: NOT_STARTED
+    criteria: "Installation and configuration tested"
+    evidence: "tests/documentation/test_getting_started.py PASS"
+
+  dod_5:
+    name: "User Guides Validated"
+    status: NOT_STARTED
+    criteria: "All 20+ guides tested and corrected"
+    evidence: "tests/documentation/test_user_guides.py PASS"
+
+  dod_6:
+    name: "Examples Validated"
+    status: NOT_STARTED
+    criteria: "All 13 notebooks + 20+ Python examples execute"
+    evidence: "pytest --nbmake + test_examples.py PASS"
+
+  dod_7:
+    name: "Quality Standards Met"
+    status: NOT_STARTED
+    criteria: "Epic 11 checklists 100% complete"
+    evidence: "All quality checklists signed off"
+
+  dod_8:
+    name: "Automated Tests Created"
+    status: NOT_STARTED
+    criteria: "CI/CD integration for user docs"
+    evidence: ".github/workflows/docs-validation.yml passing"
+
+  dod_9:
+    name: "Expert Approval Obtained"
+    status: NOT_STARTED
+    criteria: "Written approval with 95+ quality score"
+    evidence: "expert-reviews/11.6-expert-review.md"
+
+  dod_10:
+    name: "Documentation Site Builds"
+    status: NOT_STARTED
+    criteria: "mkdocs build --strict passes"
+    evidence: "mkdocs build --strict output"
+
+  dod_11:
+    name: "No Regressions"
+    status: NOT_STARTED
+    criteria: "Existing functionality verified unchanged"
+    evidence: "pytest tests/ -v PASS"
+
+# =============================================================================
+# SUCCESS METRICS TRACKING
+# =============================================================================
+
+success_metrics:
+  quantitative:
+    import_success_rate:
+      target: "100%"
+      actual: null
+      calculation: "successful_imports / total_documented_imports"
+
+    code_example_success_rate:
+      target: "100%"
+      actual: null
+      calculation: "executing_examples / total_examples"
+
+    link_validity_rate:
+      target: "100%"
+      actual: null
+      calculation: "valid_links / total_links"
+
+    notebook_execution_rate:
+      target: "100%"
+      actual: null
+      calculation: "executing_notebooks / 13"
+
+    python_example_success_rate:
+      target: "100%"
+      actual: null
+      calculation: "executing_python_examples / total_python_examples"
+
+    automated_test_coverage:
+      target: "100%"
+      actual: null
+      calculation: "user_docs_with_tests / total_user_docs"
+
+  qualitative:
+    user_journey_completeness:
+      target: "New user can install → configure → run first backtest without errors"
+      actual: null
+      verified: false
+
+    documentation_accuracy:
+      target: "Zero fabricated APIs, zero incorrect import paths"
+      actual: null
+      verified: false
+
+    expert_quality_score:
+      target: "95+"
+      actual: null
+      reviewer: "James"
+
+    user_acceptance:
+      target: "Positive feedback from user testing Quick Start"
+      actual: null
+      tested: false
+
+# =============================================================================
+# NOTES & ISSUES LOG
+# =============================================================================
+
+notes: []
+
+issues_discovered:
+  # Format:
+  # - issue_id: "I-001"
+  #   severity: CRITICAL|HIGH|MEDIUM|LOW
+  #   description: ""
+  #   location: ""
+  #   discovered_in: "task_X_Y"
+  #   status: OPEN|FIXED|DEFERRED
+  #   resolution: ""
+
+# =============================================================================
+# COMPLETION SUMMARY
+# =============================================================================
+
+completion_summary:
+  story_complete: false
+  all_gates_pass: false
+  definition_of_done_met: false
+  expert_approval: false
+  ready_for_merge: false
+
+  completion_report: "docs/internal/story-artifacts/11.6-completion-report.md"
+  final_quality_score: null
+  story_closed_date: null

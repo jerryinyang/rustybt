@@ -104,15 +104,15 @@ asyncio.run(stream_binance())
 
 ### Data Format
 
-WebSocket adapters return `StreamingBar` objects:
+WebSocket adapters return `OHLCVBar` objects:
 
 ```python
-from rustybt.live.streaming.models import StreamingBar
+from rustybt.live.streaming import OHLCVBar
 
 @dataclass
-class StreamingBar:
+class OHLCVBar:
     symbol: str               # 'BTC/USDT'
-    timestamp: pd.Timestamp   # UTC timestamp
+    timestamp: datetime       # UTC timestamp (bar start)
     open: Decimal             # Bar open price
     high: Decimal             # Bar high price
     low: Decimal              # Bar low price
@@ -141,7 +141,7 @@ class BarAggregator:
         self._ticks = deque(maxlen=1000)
         self._current_bar = None
 
-    def add_tick(self, tick: StreamingBar):
+    def add_tick(self, tick: OHLCVBar):
         """Add tick and update current bar."""
         if self._current_bar is None:
             # Start new bar
@@ -327,7 +327,7 @@ class RobustWebSocketAdapter:
 Validate incoming data for anomalies:
 
 ```python
-def validate_bar(bar: StreamingBar) -> bool:
+def validate_bar(bar: OHLCVBar) -> bool:
     """Validate streaming bar data."""
     # Check OHLCV relationships
     if bar.high < bar.low:

@@ -540,7 +540,6 @@ random_search.set_state(state)
 - [Grid Search](grid-search.md) - Exhaustive alternative
 - [Bayesian Optimization](bayesian.md) - Sample-efficient refinement
 - [Parameter Spaces](../core/parameter-spaces.md) - Distribution priors
-- [Parallel Optimization](../advanced/parallel-optimization.md) - Multi-core execution
 
 ---
 

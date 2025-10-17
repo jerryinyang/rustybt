@@ -161,7 +161,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
 - [Catalog API Reference](catalog-api.md) - Complete API documentation
 - [Bundle Management](bundle-system.md) - Bundle lifecycle and operations
 - [Metadata Tracking](metadata-tracking.md) - Ingestion metadata tracking
-- [Migration Guide](migration.md) - HDF5/bcolz to Parquet migration
+- [Migration Guide](migration-guide.md) - HDF5/bcolz to Parquet migration
 
 ## Key Features
 
@@ -257,4 +257,3 @@ BundleMetadata.add_symbol("yfinance-daily", "AAPL", "equity", "NASDAQ")
 
 - [Data Adapters](../adapters/README.md) - Data source adapters
 - [Bundle Ingestion](bundle-system.md) - Creating and managing bundles
-- [Cache Management](cache-management.md) - Cache optimization strategies

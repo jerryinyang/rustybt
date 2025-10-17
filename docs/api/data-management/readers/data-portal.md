@@ -562,4 +562,3 @@ portfolio_value = price * Decimal(str(quantity))  # Decimal math
 - [PolarsDataPortal](polars-data-portal.md) - Modern Decimal-precision portal (recommended)
 - [Bar Readers](bar-reader.md) - Bar reader interface and implementations
 - [Bundle System](../catalog/bundle-system.md) - Data bundle management
-- [TradingAlgorithm](../../trading/algorithm.md) - Integration with strategies

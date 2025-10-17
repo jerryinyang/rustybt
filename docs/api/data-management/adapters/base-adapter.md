@@ -621,7 +621,5 @@ print("✅ Pattern demonstrated: Always log important events for debugging")
 
 ## See Also
 
-- [API Provider Base](./api-provider-base.md) - Extended adapter for API-based sources
 - [YFinance Adapter](./yfinance-adapter.md) - Production example
 - [CSV Adapter](./csv-adapter.md) - File-based adapter example
-- [Creating Custom Adapters](./custom-adapters.md) - Step-by-step guide

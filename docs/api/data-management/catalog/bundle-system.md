@@ -868,4 +868,4 @@ def test_custom_bundle():
 - [Catalog Overview](README.md) - Bundle metadata management
 - [Data Adapters](../adapters/README.md) - Data source adapters
 - [Metadata Tracking](metadata-tracking.md) - Automatic metadata collection
-- [Migration Guide](migration.md) - HDF5/Bcolz to Parquet migration
+- [Migration Guide](migration-guide.md) - HDF5/Bcolz to Parquet migration

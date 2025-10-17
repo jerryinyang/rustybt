@@ -486,7 +486,6 @@ grid_search.set_state(state)
 - [Random Search](random-search.md) - Better for large spaces
 - [Bayesian Optimization](bayesian.md) - Sample-efficient alternative
 - [Parameter Spaces](../core/parameter-spaces.md) - Defining search spaces
-- [Parallel Optimization](../advanced/parallel-optimization.md) - Multi-core execution
 
 ---
 

@@ -477,7 +477,7 @@ Example CSV files are provided in `examples/data/`:
 Use CSVAdapter with the data catalog for caching:
 
 ```python
-from rustybt.data.polars import DataCatalog
+from rustybt.data.catalog import DataCatalog
 from rustybt.data.adapters import CSVAdapter, CSVConfig, SchemaMapping
 
 # Create adapter

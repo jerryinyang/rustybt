@@ -581,6 +581,5 @@ df = reader.load_daily_bars(
 
 - [PolarsDataPortal](polars-data-portal.md) - High-level data access using daily readers
 - [Bar Readers](bar-reader.md) - Bar reader interface and dispatch
-- [Minute Bar Readers](minute-bars.md) - Minute-frequency data
 - [Bundle System](../catalog/bundle-system.md) - Data bundle management
 - [Data Ingestion](../catalog/README.md) - Creating daily bar bundles

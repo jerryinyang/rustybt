@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+
 import rustybt.api
 from rustybt.utils.algo_instance import get_algo_instance, set_algo_instance
 from rustybt.utils.compat import wraps
@@ -55,8 +57,11 @@ def api_method(f):
         return getattr(algo_instance, f.__name__)(*args, **kwargs)
 
     # Add functor to rustybt.api
-    setattr(rustybt.api, f.__name__, wrapped)
-    rustybt.api.__all__.append(f.__name__)
+    # Use sys.modules to avoid circular import issues during package initialization
+    api_module = sys.modules.get("rustybt.api")
+    if api_module is not None:
+        setattr(api_module, f.__name__, wrapped)
+        api_module.__all__.append(f.__name__)
     f.is_api_method = True
     return f
 

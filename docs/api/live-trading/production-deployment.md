@@ -775,6 +775,3 @@ reconciliations = db.query("SELECT * FROM reconciliation_reports WHERE severity 
 
 - [Live Trading Overview](./README.md)
 - [Circuit Breakers](./core/circuit-breakers.md)
-- [State Management](./core/state-management.md)
-- [Position Reconciliation](./core/reconciliation.md)
-- [Shadow Trading](./shadow/README.md)

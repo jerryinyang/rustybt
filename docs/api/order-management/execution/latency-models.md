@@ -54,7 +54,6 @@ LatencyComponents (Composite Models)
 
 **These methods should NOT be imported**. They are automatically available in your strategy class when you inherit from `TradingAlgorithm`. The import statements in examples are shown for documentation purposes only.
 
-For more information, see the [TradingAlgorithm API documentation](../../algorithm-api.md).
 
 ---
 
@@ -1038,7 +1037,6 @@ def handle_data(context, data):
 
 ### Execution Systems
 - [Partial Fill Models](partial-fills.md) - Realistic order fill simulation
-- [Execution Engine](engine.md) - Integrated execution pipeline with latency
 
 ### Transaction Costs
 - [Slippage Models](../transaction-costs/slippage.md) - Price impact modeling
@@ -1049,7 +1047,6 @@ def handle_data(context, data):
 ## Next Steps
 
 1. **Learn Partial Fills**: Understand realistic order fill behavior → [Partial Fill Models](partial-fills.md)
-2. **Integrate Execution Engine**: Combine latency with slippage and fills → [Execution Engine](engine.md)
 3. **Model Transaction Costs**: Add realistic slippage and commissions → [Slippage Models](../transaction-costs/slippage.md)
 4. **Study Order Lifecycle**: See how latency affects order states → [Order Lifecycle](../workflows/order-lifecycle.md)
 

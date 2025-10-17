@@ -122,11 +122,9 @@ data = asyncio.run(fetch_and_validate())
 ## Next Steps
 
 - [Base Adapter Framework](./base-adapter.md) - Detailed BaseDataAdapter reference
-- [API Provider Adapters](./api-provider-base.md) - BaseAPIProviderAdapter reference
 - [CCXT Adapter](./ccxt-adapter.md) - Crypto exchange data
 - [YFinance Adapter](./yfinance-adapter.md) - Stock and ETF data
 - [CSV Adapter](./csv-adapter.md) - Local file data
-- [Creating Custom Adapters](./custom-adapters.md) - Extend the framework
 
 ## See Also
 

@@ -162,7 +162,7 @@ from rustybt.finance.commission import (
 )
 ```
 
-### 7. Borrow Costs (transaction-costs/borrow-costs.md)
+### 7. Borrow Costs (transaction-costs/borrow-costs-financing.md)
 
 **Status**: ✅ Validated
 

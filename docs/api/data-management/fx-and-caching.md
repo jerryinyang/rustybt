@@ -1115,7 +1115,7 @@ cache.clear_cache(backtest_id="old-backtest")
 - [Data Adapters](adapters/README.md) - Data source adapters (YFinance, CCXT, etc.)
 - [Data Catalog](catalog/README.md) - Bundle metadata and catalog system
 - [Pipeline API](../computation/pipeline-api.md) - Pipeline factors, filters, and loaders
-- [Performance Optimization](../performance/optimization.md) - Performance tuning guide
+- [Performance Optimization](performance/optimization.md) - Performance tuning guide
 
 ---
 

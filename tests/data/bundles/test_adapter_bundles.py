@@ -534,3 +534,236 @@ def test_deprecation_warnings_emitted(zipline_bundle_args):
         with pytest.warns(DeprecationWarning, match="csv_profiling_bundle"):
             with patch("rustybt.data.bundles.adapter_bundles.CSVAdapter"):
                 csv_profiling_bundle(**zipline_bundle_args)
+
+
+# ============================================================================
+# Transformation Layer Tests (Issue #3 Fix - NO MOCKS)
+# ============================================================================
+
+
+def test_transform_for_writer_polars_dataframe():
+    """Test transformation with real Polars DataFrame (no mocks)."""
+    import polars as pl
+
+    from rustybt.data.bundles.adapter_bundles import _transform_for_writer
+
+    # Create realistic OHLCV data for multiple symbols
+    df = pl.DataFrame(
+        {
+            "timestamp": (
+                [pd.Timestamp("2024-01-01") + pd.Timedelta(days=i) for i in range(5)]
+                + [pd.Timestamp("2024-01-01") + pd.Timedelta(days=i) for i in range(5)]
+                + [pd.Timestamp("2024-01-01") + pd.Timedelta(days=i) for i in range(5)]
+            ),
+            "symbol": ["AAPL"] * 5 + ["MSFT"] * 5 + ["GOOGL"] * 5,
+            "open": [150.0 + i for i in range(5)]
+            + [300.0 + i for i in range(5)]
+            + [2800.0 + i for i in range(5)],
+            "high": [155.0 + i for i in range(5)]
+            + [305.0 + i for i in range(5)]
+            + [2850.0 + i for i in range(5)],
+            "low": [148.0 + i for i in range(5)]
+            + [298.0 + i for i in range(5)]
+            + [2790.0 + i for i in range(5)],
+            "close": [152.0 + i for i in range(5)]
+            + [302.0 + i for i in range(5)]
+            + [2820.0 + i for i in range(5)],
+            "volume": [1000000.0] * 15,
+        }
+    )
+
+    symbols = ["AAPL", "MSFT", "GOOGL"]
+
+    # Transform to (sid, df) tuples
+    result = list(_transform_for_writer(df, symbols, "test-bundle"))
+
+    # Verify correct number of tuples
+    assert len(result) == 3, f"Expected 3 tuples, got {len(result)}"
+
+    # Verify tuple structure: (sid, pandas_df)
+    for sid, symbol_df in result:
+        assert isinstance(sid, int), f"SID should be int, got {type(sid)}"
+        assert isinstance(
+            symbol_df, pd.DataFrame
+        ), f"DataFrame should be pandas, got {type(symbol_df)}"
+
+        # Verify SID is sequential (0, 1, 2)
+        assert sid >= 0 and sid < 3, f"SID {sid} out of range"
+
+        # Verify DataFrame has correct number of rows (5 per symbol)
+        assert len(symbol_df) == 5, f"Symbol {sid} should have 5 rows, got {len(symbol_df)}"
+
+        # Verify DataFrame has datetime index
+        assert isinstance(
+            symbol_df.index, pd.DatetimeIndex
+        ), f"Index should be DatetimeIndex, got {type(symbol_df.index)}"
+
+        # Verify DataFrame has required columns
+        required_cols = ["open", "high", "low", "close", "volume"]
+        for col in required_cols:
+            assert col in symbol_df.columns, f"Missing required column: {col}"
+
+        # Verify symbol column was dropped (writer doesn't need it)
+        assert "symbol" not in symbol_df.columns, "Symbol column should be dropped"
+
+        # Verify OHLCV values are correct (no data corruption)
+        assert (symbol_df["high"] >= symbol_df["low"]).all(), "High should be >= Low"
+        assert (symbol_df["high"] >= symbol_df["open"]).all(), "High should be >= Open"
+        assert (symbol_df["high"] >= symbol_df["close"]).all(), "High should be >= Close"
+
+
+def test_transform_for_writer_pandas_dataframe():
+    """Test transformation with real pandas DataFrame (no mocks)."""
+    from rustybt.data.bundles.adapter_bundles import _transform_for_writer
+
+    # Create realistic pandas DataFrame
+    df = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2024-01-01", periods=10, freq="D").tolist() * 2,
+            "symbol": ["AAPL"] * 10 + ["MSFT"] * 10,
+            "open": list(range(100, 110)) + list(range(200, 210)),
+            "high": list(range(105, 115)) + list(range(205, 215)),
+            "low": list(range(95, 105)) + list(range(195, 205)),
+            "close": list(range(102, 112)) + list(range(202, 212)),
+            "volume": [1000000] * 20,
+        }
+    )
+
+    symbols = ["AAPL", "MSFT"]
+
+    # Transform
+    result = list(_transform_for_writer(df, symbols, "test-bundle"))
+
+    # Verify correct transformation
+    assert len(result) == 2
+    assert result[0][0] == 0  # First SID
+    assert result[1][0] == 1  # Second SID
+    assert len(result[0][1]) == 10  # 10 rows for AAPL
+    assert len(result[1][1]) == 10  # 10 rows for MSFT
+
+
+def test_transform_for_writer_missing_symbol_data():
+    """Test transformation handles symbols with no data (no mocks)."""
+    import polars as pl
+
+    from rustybt.data.bundles.adapter_bundles import _transform_for_writer
+
+    # Create data with only 2 of 3 requested symbols
+    df = pl.DataFrame(
+        {
+            "timestamp": pd.date_range("2024-01-01", periods=5, freq="D").tolist() * 2,
+            "symbol": ["AAPL"] * 5 + ["MSFT"] * 5,
+            "open": list(range(100, 105)) + list(range(200, 205)),
+            "high": list(range(105, 110)) + list(range(205, 210)),
+            "low": list(range(95, 100)) + list(range(195, 200)),
+            "close": list(range(102, 107)) + list(range(202, 207)),
+            "volume": [1000000] * 10,
+        }
+    )
+
+    # Request 3 symbols but data only has 2
+    symbols = ["AAPL", "GOOGL", "MSFT"]  # GOOGL has no data
+
+    # Transform
+    result = list(_transform_for_writer(df, symbols, "test-bundle"))
+
+    # Should only yield 2 tuples (AAPL and MSFT)
+    assert len(result) == 2, "Should skip symbols with no data"
+
+    # Verify SIDs are consecutive (0, 1) despite skipping GOOGL
+    sids = [sid for sid, _ in result]
+    assert sids == [0, 1], f"SIDs should be consecutive, got {sids}"
+
+
+def test_transform_for_writer_missing_symbol_column():
+    """Test transformation raises error if symbol column missing (no mocks)."""
+    import polars as pl
+
+    from rustybt.data.bundles.adapter_bundles import _transform_for_writer
+
+    # Create DataFrame without symbol column
+    df = pl.DataFrame(
+        {
+            "timestamp": pd.date_range("2024-01-01", periods=5, freq="D"),
+            "open": list(range(100, 105)),
+            "high": list(range(105, 110)),
+            "low": list(range(95, 100)),
+            "close": list(range(102, 107)),
+            "volume": [1000000] * 5,
+        }
+    )
+
+    symbols = ["AAPL"]
+
+    # Should raise ValueError
+    with pytest.raises(ValueError, match="missing 'symbol' column"):
+        list(_transform_for_writer(df, symbols, "test-bundle"))
+
+
+def test_transform_for_writer_preserves_ohlcv_values():
+    """Test transformation preserves exact OHLCV values (no mocks, no rounding)."""
+    import polars as pl
+
+    from rustybt.data.bundles.adapter_bundles import _transform_for_writer
+
+    # Create data with precise decimal values
+    df = pl.DataFrame(
+        {
+            "timestamp": [pd.Timestamp("2024-01-01"), pd.Timestamp("2024-01-02")],
+            "symbol": ["AAPL", "AAPL"],
+            "open": [123.456789, 124.567890],
+            "high": [125.678901, 126.789012],
+            "low": [121.234567, 122.345678],
+            "close": [124.567890, 125.678901],
+            "volume": [1234567.0, 2345678.0],
+        }
+    )
+
+    symbols = ["AAPL"]
+
+    # Transform
+    result = list(_transform_for_writer(df, symbols, "test-bundle"))
+
+    # Verify values preserved
+    sid, symbol_df = result[0]
+    assert sid == 0
+    assert symbol_df.iloc[0]["open"] == pytest.approx(123.456789, rel=1e-9)
+    assert symbol_df.iloc[0]["high"] == pytest.approx(125.678901, rel=1e-9)
+    assert symbol_df.iloc[1]["close"] == pytest.approx(125.678901, rel=1e-9)
+
+
+def test_transform_for_writer_datetime_index_type():
+    """Test transformation creates proper datetime index (no mocks)."""
+    import polars as pl
+
+    from rustybt.data.bundles.adapter_bundles import _transform_for_writer
+
+    # Create data with timestamp column
+    df = pl.DataFrame(
+        {
+            "timestamp": pd.date_range("2024-01-01", periods=5, freq="D"),
+            "symbol": ["AAPL"] * 5,
+            "open": [100.0] * 5,
+            "high": [105.0] * 5,
+            "low": [95.0] * 5,
+            "close": [102.0] * 5,
+            "volume": [1000000.0] * 5,
+        }
+    )
+
+    symbols = ["AAPL"]
+
+    # Transform
+    result = list(_transform_for_writer(df, symbols, "test-bundle"))
+
+    sid, symbol_df = result[0]
+
+    # Verify index is DatetimeIndex
+    assert isinstance(symbol_df.index, pd.DatetimeIndex), "Index must be DatetimeIndex"
+
+    # Verify index is sorted
+    assert symbol_df.index.is_monotonic_increasing, "Index must be sorted"
+
+    # Verify index values match original timestamps (ignore index name)
+    expected_dates = pd.date_range("2024-01-01", periods=5, freq="D")
+    pd.testing.assert_index_equal(symbol_df.index, expected_dates, check_names=False)

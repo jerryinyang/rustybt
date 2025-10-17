@@ -81,7 +81,9 @@ def _create_bundle_from_adapter(
 
     # Fetch data from adapter (handle both sync and async adapters)
     try:
-        fetch_result = adapter.fetch_ohlcv(symbols=symbols, start=start, end=end, frequency=frequency)
+        fetch_result = adapter.fetch_ohlcv(
+            symbols=symbols, start=start, end=end, frequency=frequency
+        )
 
         # If the result is a coroutine, await it
         if asyncio.iscoroutine(fetch_result):
@@ -101,6 +103,7 @@ def _create_bundle_from_adapter(
 
     # Check if dataframe is empty (handle both Polars and pandas)
     import polars as pl
+
     is_empty = df.is_empty() if isinstance(df, pl.DataFrame) else df.empty
 
     if is_empty:
@@ -128,11 +131,23 @@ def _create_bundle_from_adapter(
 
     logger.info("bridge_fetch_complete", bundle=bundle_name, row_count=len(df))
 
+    # Transform flat DataFrame to (sid, df) tuples for bundle writer
+    try:
+        data_iter = _transform_for_writer(df, symbols, bundle_name)
+    except Exception as e:
+        logger.error(
+            "bridge_transform_failed",
+            bundle=bundle_name,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise ValueError(f"Data transformation failed for bundle '{bundle_name}': {e}") from e
+
     # Write to bundle via Zipline writers
     if frequency == "1d":
-        writers["daily_bar_writer"].write(df)
+        writers["daily_bar_writer"].write(data_iter)
     elif frequency in ["1h", "1m", "5m", "15m"]:
-        writers["minute_bar_writer"].write(df)
+        writers["minute_bar_writer"].write(data_iter)
     else:
         raise ValueError(f"Unsupported frequency: {frequency}")
 
@@ -140,6 +155,161 @@ def _create_bundle_from_adapter(
     _track_api_bundle_metadata(bundle_name, adapter, df, start, end, frequency)
 
     logger.info("bridge_ingest_complete", bundle=bundle_name)
+
+
+def _transform_for_writer(
+    df: object,  # pl.DataFrame or pd.DataFrame
+    symbols: list[str],
+    bundle_name: str,
+) -> object:  # Iterator[tuple[int, pd.DataFrame]]
+    """Transform flat DataFrame into (sid, df) tuples for bundle writer.
+
+    The bundle writer expects an iterable of (sid, dataframe) tuples where:
+    - sid is an integer security identifier (0, 1, 2, ...)
+    - dataframe is a pandas DataFrame with OHLCV data for that security
+
+    This function:
+    1. Detects DataFrame type (Polars or pandas)
+    2. Extracts unique symbols from the data
+    3. Assigns sequential SIDs to each symbol
+    4. Splits the data by symbol
+    5. Converts to pandas if needed
+    6. Yields (sid, pandas_df) tuples
+
+    Args:
+        df: Flat DataFrame with all symbols combined (Polars or pandas)
+        symbols: List of symbols that were requested
+        bundle_name: Bundle name for logging
+
+    Yields:
+        Tuple of (sid, pandas_df) for each symbol
+
+    Raises:
+        ValueError: If symbol column is missing or data cannot be split
+
+    Example:
+        >>> df = pl.DataFrame({
+        ...     "timestamp": [...],
+        ...     "symbol": ["AAPL", "AAPL", "MSFT", "MSFT"],
+        ...     "open": [...],
+        ...     "high": [...],
+        ...     "low": [...],
+        ...     "close": [...],
+        ...     "volume": [...]
+        ... })
+        >>> symbols = ["AAPL", "MSFT"]
+        >>> for sid, symbol_df in _transform_for_writer(df, symbols, "test-bundle"):
+        ...     print(f"SID {sid}: {len(symbol_df)} rows")
+        SID 0: 252 rows
+        SID 1: 252 rows
+    """
+    import polars as pl
+
+    # Detect DataFrame type
+    is_polars = isinstance(df, pl.DataFrame)
+
+    # Validate symbol column exists
+    if is_polars:
+        if "symbol" not in df.columns:
+            raise ValueError(
+                f"Bundle '{bundle_name}': DataFrame missing 'symbol' column. "
+                f"Columns: {df.columns}"
+            )
+    else:  # pandas
+        if "symbol" not in df.columns:
+            raise ValueError(
+                f"Bundle '{bundle_name}': DataFrame missing 'symbol' column. "
+                f"Columns: {list(df.columns)}"
+            )
+
+    # Get unique symbols from data (actual symbols with data)
+    if is_polars:
+        symbols_in_data = df["symbol"].unique().to_list()
+    else:  # pandas
+        symbols_in_data = df["symbol"].unique().tolist()
+
+    logger.info(
+        "bridge_transform_start",
+        bundle=bundle_name,
+        requested_symbols=len(symbols),
+        symbols_with_data=len(symbols_in_data),
+    )
+
+    # Iterate over requested symbols and assign SIDs
+    sid = 0
+    for symbol in symbols:
+        # Check if symbol has data
+        if symbol not in symbols_in_data:
+            logger.warning(
+                "bridge_symbol_no_data",
+                bundle=bundle_name,
+                symbol=symbol,
+                sid_skipped=sid,
+            )
+            # Skip this symbol but don't increment SID
+            # (SIDs should be consecutive only for symbols with data)
+            continue
+
+        # Filter data for this symbol
+        if is_polars:
+            symbol_df_polars = df.filter(pl.col("symbol") == symbol)
+
+            # Drop symbol column (writer doesn't need it)
+            symbol_df_polars = symbol_df_polars.drop("symbol")
+
+            # Convert to pandas (writer expects pandas)
+            symbol_df_pandas = symbol_df_polars.to_pandas()
+        else:  # pandas
+            symbol_df_pandas = df[df["symbol"] == symbol].copy()
+
+            # Drop symbol column
+            symbol_df_pandas = symbol_df_pandas.drop(columns=["symbol"])
+
+        # Validate DataFrame is not empty
+        if symbol_df_pandas.empty:
+            logger.warning(
+                "bridge_empty_after_filter",
+                bundle=bundle_name,
+                symbol=symbol,
+                sid=sid,
+            )
+            continue
+
+        # Set index to timestamp/date for Zipline compatibility
+        # (Zipline expects datetime index)
+        if "timestamp" in symbol_df_pandas.columns:
+            symbol_df_pandas = symbol_df_pandas.set_index("timestamp")
+        elif "date" in symbol_df_pandas.columns:
+            symbol_df_pandas = symbol_df_pandas.set_index("date")
+        else:
+            logger.warning(
+                "bridge_no_datetime_index",
+                bundle=bundle_name,
+                symbol=symbol,
+                sid=sid,
+                columns=list(symbol_df_pandas.columns),
+            )
+
+        logger.debug(
+            "bridge_symbol_transformed",
+            bundle=bundle_name,
+            symbol=symbol,
+            sid=sid,
+            rows=len(symbol_df_pandas),
+        )
+
+        # Yield (sid, dataframe) tuple
+        yield sid, symbol_df_pandas
+
+        # Increment SID for next symbol
+        sid += 1
+
+    logger.info(
+        "bridge_transform_complete",
+        bundle=bundle_name,
+        total_sids=sid,
+        symbols_processed=sid,
+    )
 
 
 def _track_api_bundle_metadata(
@@ -196,7 +366,7 @@ def _track_api_bundle_metadata(
 
     # Create a temporary data file path for metadata tracking
     # (In real implementation, this would be the actual bundle output path)
-    data_file = Path(f"/tmp/{bundle_name}.parquet")
+    data_file = Path(f"/tmp/{bundle_name}.parquet")  # nosec B108
 
     # Create the temporary file to avoid FileNotFoundError in metadata tracking
     # In production, the bundle writers would create real files
@@ -282,9 +452,7 @@ def yfinance_profiling_bundle(
 
     DEPRECATED: Use DataSource.ingest_to_bundle() in v2.0
     """
-    _deprecation_warning(
-        "yfinance_profiling_bundle", "YFinanceDataSource.ingest_to_bundle()"
-    )
+    _deprecation_warning("yfinance_profiling_bundle", "YFinanceDataSource.ingest_to_bundle()")
 
     # Top 20 liquid US stocks (market cap weighted, BRK.B excluded due to yfinance issues)
     symbols = [
@@ -356,9 +524,7 @@ def ccxt_hourly_profiling_bundle(
 
     DEPRECATED: Use DataSource.ingest_to_bundle() in v2.0
     """
-    _deprecation_warning(
-        "ccxt_hourly_profiling_bundle", "CCXTDataSource.ingest_to_bundle()"
-    )
+    _deprecation_warning("ccxt_hourly_profiling_bundle", "CCXTDataSource.ingest_to_bundle()")
 
     # Top 20 crypto pairs by volume (Binance)
     symbols = [
@@ -430,9 +596,7 @@ def ccxt_minute_profiling_bundle(
 
     DEPRECATED: Use DataSource.ingest_to_bundle() in v2.0
     """
-    _deprecation_warning(
-        "ccxt_minute_profiling_bundle", "CCXTDataSource.ingest_to_bundle()"
-    )
+    _deprecation_warning("ccxt_minute_profiling_bundle", "CCXTDataSource.ingest_to_bundle()")
 
     # Top 10 crypto pairs (subset of hourly)
     symbols = [

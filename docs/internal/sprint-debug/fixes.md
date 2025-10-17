@@ -11,6 +11,7 @@ This document tracks all fixes applied during sprint debugging sessions. Each ba
 ## Active Session
 
 **Session Start:** 2025-10-17 16:10:00
+**Session End:** 2025-10-17 16:35:00
 **Focus Areas:** Bundle ingestion validation failures, Incomplete data handling, Production quality improvements
 
 ### Current Batch (Completed)
@@ -19,7 +20,153 @@ This document tracks all fixes applied during sprint debugging sessions. Each ba
 - [x] Bundle ingestion failing completely due to single invalid row
 - [x] Incomplete/invalid current-day data causing validation errors
 - [x] All-or-nothing validation approach (too strict for real-world data)
-- [x] Quick start examples working end-to-end
+- [x] Quick start Python API working end-to-end
+- [x] Package built and pushed (v0.1.2.dev10)
+
+**Known Issues (For Next Session):**
+- [ ] CLI quick start fails with incomplete adjustments database
+- [ ] Adapter bundles create empty adjustments.sqlite (missing mergers/dividends/splits tables)
+- [ ] Strategies requiring corporate actions fail with sqlite3.OperationalError
+
+---
+
+## Next Session Planning
+
+### Issue: Incomplete Adjustments Database in Adapter Bundles
+
+**Priority:** 🟡 MEDIUM - Blocks CLI quick start, but Python API works
+
+**Current Status:**
+- Bundle ingestion creates empty `adjustments.sqlite` (0 bytes)
+- Missing required tables: `mergers`, `dividends`, `splits`, `stock_dividend_payouts`
+- CLI strategies using `data.history()` fail with: `sqlite3.OperationalError: no such table: mergers`
+
+**Error Flow:**
+```
+rustybt run -f strategy.py -b yfinance-profiling --start 2024-01-01 --end 2025-10-15 --no-benchmark
+  ↓
+data.history(asset, "price", bar_count=50, frequency="1d")
+  ↓
+history_loader._ensure_sliding_windows()
+  ↓
+adj_reader.load_pricing_adjustments()
+  ↓
+adjustments_reader.get_adjustments_for_sid("mergers", sid)
+  ↓
+sqlite3.OperationalError: no such table: mergers
+```
+
+**Root Cause:**
+Adapter bundles only write bar data via `daily_bar_writer` and `minute_bar_writer`. The `adjustment_writer` is passed to bundle functions but never used:
+
+```python
+# In adapter_bundles.py yfinance_profiling_bundle():
+def yfinance_profiling_bundle(
+    environ,
+    asset_db_writer,      # ✅ NOW USED (after our fix)
+    minute_bar_writer,    # ✅ USED
+    daily_bar_writer,     # ✅ USED
+    adjustment_writer,    # ❌ NEVER USED
+    calendar,
+    start_session,
+    end_session,
+    cache,
+    show_progress,
+    output_dir,
+):
+    # ...
+    _create_bundle_from_adapter(
+        adapter=adapter,
+        bundle_name="yfinance-profiling",
+        symbols=symbols,
+        start=start,
+        end=end,
+        frequency="1d",
+        writers={
+            "asset_db_writer": asset_db_writer,
+            "daily_bar_writer": daily_bar_writer,
+            "minute_bar_writer": minute_bar_writer,
+            # adjustment_writer NOT PASSED ❌
+        },
+    )
+```
+
+**Investigation Tasks:**
+
+1. **Schema Analysis:**
+   - Examine `rustybt/data/adjustments.py` SQLiteAdjustmentWriter
+   - Review required table schemas (mergers, dividends, splits, stock_dividend_payouts)
+   - Check `rustybt/data/bundles/csvdir.py` for reference implementation
+
+2. **Data Fetching:**
+   - YFinance adapter already has `fetch_dividends()` and `fetch_splits()` methods (rustybt/data/adapters/yfinance_adapter.py:199-299)
+   - These methods are implemented but never called during ingestion
+   - Need to integrate into `_create_bundle_from_adapter()` flow
+
+3. **Writer Integration:**
+   - Pass `adjustment_writer` to `_create_bundle_from_adapter()`
+   - Call `adapter.fetch_splits()` and `adapter.fetch_dividends()`
+   - Transform to adjustment_writer expected format
+   - Write adjustments before completing ingestion
+
+**Proposed Solution Approach:**
+
+```python
+# In _create_bundle_from_adapter():
+
+# After writing bar data...
+
+# Fetch corporate actions if adapter supports them
+if hasattr(adapter, 'fetch_splits') and hasattr(adapter, 'fetch_dividends'):
+    try:
+        # Fetch splits and dividends
+        splits = await_if_async(adapter.fetch_splits(symbols))
+        dividends = await_if_async(adapter.fetch_dividends(symbols))
+
+        # Transform to adjustment writer format
+        splits_df = _transform_splits_for_writer(splits, asset_metadata)
+        dividends_df = _transform_dividends_for_writer(dividends, asset_metadata)
+
+        # Write adjustments
+        writers["adjustment_writer"].write(
+            splits=splits_df,
+            dividends=dividends_df,
+        )
+
+        logger.info("bridge_adjustments_written",
+                   splits_count=len(splits_df),
+                   dividends_count=len(dividends_df))
+    except Exception as e:
+        logger.warning("bridge_adjustments_failed",
+                      error=str(e),
+                      note="Continuing without adjustments")
+```
+
+**Files to Modify:**
+- `rustybt/data/bundles/adapter_bundles.py`
+  - Add adjustment fetching and writing to `_create_bundle_from_adapter()`
+  - Add `_transform_splits_for_writer()` helper
+  - Add `_transform_dividends_for_writer()` helper
+  - Pass `adjustment_writer` in all bundle functions
+
+**Reference Files:**
+- `rustybt/data/bundles/csvdir.py` (lines 182-194) - Shows adjustment_writer.write() usage
+- `rustybt/data/adjustments.py` - SQLiteAdjustmentWriter implementation
+- `rustybt/data/adapters/yfinance_adapter.py` (lines 199-299) - Existing fetch methods
+
+**Testing Plan:**
+1. Test with strategy requiring adjustments
+2. Verify mergers/dividends/splits tables created
+3. Check `data.history()` works correctly
+4. Validate adjustment data accuracy
+
+**Acceptance Criteria:**
+- ✅ CLI quick start works: `rustybt run -f strategy.py -b yfinance-profiling`
+- ✅ adjustments.sqlite contains all required tables with data
+- ✅ Strategies using `data.history()` execute without errors
+- ✅ Split/dividend adjustments reflected in historical prices
+
+**Estimated Effort:** 2-3 hours
 
 ---
 

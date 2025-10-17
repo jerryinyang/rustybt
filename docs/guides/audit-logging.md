@@ -420,6 +420,52 @@ class CustomStrategy(TradingAlgorithm):
             self.order(context.asset, 100)
 ```
 
+### Running Strategies with Audit Logging
+
+Once you've configured audit logging in your strategy, execute it to generate logs:
+
+#### CLI Method
+
+```bash
+rustybt run -f custom_strategy.py -b yfinance-profiling --start 2020-01-01 --end 2023-12-31
+```
+
+Logs will be written to the configured directory (default: `~/.rustybt/logs/`).
+
+#### Python API Method
+
+```python
+from rustybt.utils.run_algo import run_algorithm
+import pandas as pd
+
+if __name__ == "__main__":
+    result = run_algorithm(
+        algorithm_class=CustomStrategy,
+        bundle='yfinance-profiling',
+        start=pd.Timestamp('2020-01-01'),
+        end=pd.Timestamp('2023-12-31'),
+        capital_base=100000
+    )
+
+    print(f"Backtest complete. Check logs at: ~/.rustybt/logs/")
+    print(f"Total return: {result['returns'].iloc[-1]:.2%}")
+```
+
+#### Analyzing Audit Logs
+
+After running your strategy, you can analyze the structured logs:
+
+```python
+import json
+
+# Read and parse structured logs
+with open('~/.rustybt/logs/rustybt.log') as f:
+    for line in f:
+        log_entry = json.loads(line)
+        if log_entry['event_type'] == 'order_placed':
+            print(f"Order: {log_entry['asset']} @ {log_entry['price']}")
+```
+
 ## Troubleshooting
 
 ### Logs not appearing

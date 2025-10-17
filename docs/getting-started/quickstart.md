@@ -84,6 +84,79 @@ rustybt run -f my_strategy.py -b yfinance-profiling --start 2020-01-01 --end 202
 
 Note the `-b yfinance-profiling` flag to specify which data bundle to use.
 
+## Alternative: Python API Execution
+
+You can also run strategies directly from Python without the CLI. This provides a more Pythonic workflow with better IDE integration and debugging support.
+
+Update your `my_strategy.py` to include execution code:
+
+```python
+from rustybt.api import order_target, record, symbol
+from rustybt.utils.run_algo import run_algorithm
+import pandas as pd
+
+def initialize(context):
+    """Initialize strategy - called once at start."""
+    context.i = 0
+    context.asset = symbol('AAPL')
+
+def handle_data(context, data):
+    """Handle each bar of data - called on every trading day."""
+    context.i += 1
+    if context.i < 300:
+        return
+
+    # Compute moving averages
+    short_mavg = data.history(context.asset, 'price', bar_count=100, frequency="1d").mean()
+    long_mavg = data.history(context.asset, 'price', bar_count=300, frequency="1d").mean()
+
+    # Trading logic
+    if short_mavg > long_mavg:
+        order_target(context.asset, 100)
+    elif short_mavg < long_mavg:
+        order_target(context.asset, 0)
+
+    # Record values for analysis
+    record(
+        AAPL=data.current(context.asset, 'price'),
+        short_mavg=short_mavg,
+        long_mavg=long_mavg
+    )
+
+if __name__ == "__main__":
+    result = run_algorithm(
+        initialize=initialize,
+        handle_data=handle_data,
+        bundle='yfinance-profiling',
+        start=pd.Timestamp('2020-01-01'),
+        end=pd.Timestamp('2023-12-31'),
+        capital_base=10000,
+        data_frequency='daily'
+    )
+
+    print(f"\n{'='*50}")
+    print("Backtest Results")
+    print(f"{'='*50}")
+    print(f"Total return: {result['returns'].iloc[-1]:.2%}")
+    print(f"Sharpe ratio: {result['sharpe']:.2f}")
+    print(f"Max drawdown: {result['max_drawdown']:.2%}")
+    print(f"{'='*50}\n")
+```
+
+Then run with:
+
+```bash
+python my_strategy.py
+```
+
+**Benefits of Python API**:
+
+- ✅ Standard Python development workflow
+- ✅ Easy debugging with IDE breakpoints
+- ✅ Better integration with notebooks and scripts
+- ✅ Direct access to results DataFrame for analysis
+- ✅ More Pythonic and familiar to Python developers
+
 ## Understanding the Output
 
 RustyBT will display:

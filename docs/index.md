@@ -79,6 +79,44 @@ This downloads free sample data from Yahoo Finance (20 top US stocks, 2 years of
 rustybt run -f strategy.py -b yfinance-profiling --start 2020-01-01 --end 2023-12-31
 ```
 
+**Alternative: Python API Execution**
+
+You can also run strategies directly from Python without the CLI:
+
+```python
+# strategy.py
+from rustybt.api import order_target, symbol
+from rustybt.utils.run_algo import run_algorithm
+import pandas as pd
+
+def initialize(context):
+    context.asset = symbol('AAPL')
+
+def handle_data(context, data):
+    short_mavg = data.history(context.asset, 'price', bar_count=100, frequency="1d").mean()
+    long_mavg = data.history(context.asset, 'price', bar_count=300, frequency="1d").mean()
+
+    if short_mavg > long_mavg:
+        order_target(context.asset, 100)
+    elif short_mavg < long_mavg:
+        order_target(context.asset, 0)
+
+if __name__ == "__main__":
+    result = run_algorithm(
+        initialize=initialize,
+        handle_data=handle_data,
+        bundle='yfinance-profiling',
+        start=pd.Timestamp('2020-01-01'),
+        end=pd.Timestamp('2023-12-31'),
+        capital_base=10000
+    )
+
+    print(f"\nBacktest Complete!")
+    print(f"Total return: {result['returns'].iloc[-1]:.2%}")
+```
+
+Then run with: `python strategy.py`
+
 !!! tip "Troubleshooting"
     - **"no data for bundle"**: Run `rustybt ingest -b yfinance-profiling` first
     - **"fatal: bad revision 'HEAD'"**: Reinstall with `pip install --upgrade --force-reinstall rustybt`

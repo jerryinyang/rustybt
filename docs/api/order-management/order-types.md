@@ -1897,6 +1897,62 @@ def handle_data(context, data):
             delattr(context, 'entry_price')
 ```
 
+### Running the Examples
+
+Once you've defined your strategy with order types, you can execute it using either the CLI or Python API.
+
+#### CLI Method
+
+Save your strategy to a file (e.g., `mean_reversion.py`) and run:
+
+```bash
+rustybt run -f mean_reversion.py -b yfinance-profiling --start 2020-01-01 --end 2023-12-31
+```
+
+#### Python API Method
+
+Add execution code to your strategy file:
+
+```python
+# mean_reversion.py
+from rustybt.utils.run_algo import run_algorithm
+import pandas as pd
+
+# ... (strategy functions from examples above) ...
+
+if __name__ == "__main__":
+    result = run_algorithm(
+        initialize=initialize,
+        handle_data=handle_data,
+        bundle='yfinance-profiling',
+        start=pd.Timestamp('2020-01-01'),
+        end=pd.Timestamp('2023-12-31'),
+        capital_base=10000
+    )
+
+    # Analyze results
+    print("\n" + "="*50)
+    print("Backtest Results")
+    print("="*50)
+    print(f"Total return: {result['returns'].iloc[-1]:.2%}")
+    print(f"Sharpe ratio: {result['sharpe']:.2f}")
+    print(f"Max drawdown: {result['max_drawdown']:.2%}")
+
+    # Access order history
+    if 'orders' in result:
+        print(f"\nTotal orders: {len(result['orders'])}")
+        print(f"Filled orders: {result['orders']['status'].eq('filled').sum()}")
+```
+
+Then run with:
+
+```bash
+python mean_reversion.py
+```
+
+!!! tip "Accessing Order Details"
+    The `result` DataFrame includes an `orders` sub-DataFrame with complete order history, including order types, prices, fills, and statuses. Use this for detailed execution analysis.
+
 ---
 
 ## Related Documentation

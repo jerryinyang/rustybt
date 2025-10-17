@@ -406,6 +406,95 @@ def calculate_position_size(self, context, data, asset):
 - **Calculations (Coming soon)** - Performance calculations
 - **Interpretation (Coming soon)** - Understanding metrics
 
+## Complete Example
+
+This complete example demonstrates portfolio management in a runnable strategy:
+
+```python
+from rustybt.api import symbol, order_target_percent, record
+from rustybt.algorithm import TradingAlgorithm
+from rustybt.utils.run_algo import run_algorithm
+import pandas as pd
+
+class PortfolioMonitoringStrategy(TradingAlgorithm):
+    """Strategy that monitors and logs portfolio state."""
+
+    def initialize(self):
+        """Initialize strategy with assets and settings."""
+        self.assets = [symbol('AAPL'), symbol('MSFT'), symbol('GOOGL')]
+        self.max_position_size = 0.3  # 30% max per position
+        self.rebalance_interval = 5  # days
+        self.day_count = 0
+
+    def handle_data(self, context, data):
+        """Monitor portfolio and rebalance periodically."""
+        self.day_count += 1
+
+        # Access portfolio state
+        portfolio = context.portfolio
+        print(f"\n--- Day {self.day_count} Portfolio Status ---")
+        print(f"Portfolio Value: ${portfolio.portfolio_value:,.2f}")
+        print(f"Cash: ${portfolio.cash:,.2f}")
+        print(f"Positions Value: ${portfolio.positions_value:,.2f}")
+        print(f"Total P&L: ${portfolio.pnl:,.2f} ({portfolio.returns:.2%})")
+
+        # Monitor individual positions
+        print("\nCurrent Positions:")
+        for asset, position in portfolio.positions.items():
+            pnl = (position.last_sale_price - position.cost_basis) * position.amount
+            pnl_pct = (position.last_sale_price / position.cost_basis - 1) * 100
+            print(f"  {asset.symbol}: {position.amount} shares @ ${position.last_sale_price:.2f}")
+            print(f"    Cost: ${position.cost_basis:.2f}, P&L: ${pnl:,.2f} ({pnl_pct:.1f}%)")
+
+        # Record metrics
+        record(
+            portfolio_value=portfolio.portfolio_value,
+            cash=portfolio.cash,
+            num_positions=len(portfolio.positions)
+        )
+
+        # Rebalance periodically
+        if self.day_count % self.rebalance_interval == 0:
+            self.rebalance(context, data)
+
+    def rebalance(self, context, data):
+        """Equal-weight rebalancing across assets."""
+        target_weight = 1.0 / len(self.assets)
+
+        for asset in self.assets:
+            # Check position size limit
+            if target_weight <= self.max_position_size:
+                order_target_percent(asset, target_weight)
+            else:
+                order_target_percent(asset, self.max_position_size)
+
+if __name__ == "__main__":
+    result = run_algorithm(
+        algorithm_class=PortfolioMonitoringStrategy,
+        bundle='yfinance-profiling',
+        start=pd.Timestamp('2020-01-01'),
+        end=pd.Timestamp('2023-12-31'),
+        capital_base=100000
+    )
+
+    # Print final results
+    print("\n" + "="*50)
+    print("Final Portfolio Analysis")
+    print("="*50)
+    print(f"Total Return: {result['returns'].iloc[-1]:.2%}")
+    print(f"Sharpe Ratio: {result['sharpe']:.2f}")
+    print(f"Max Drawdown: {result['max_drawdown']:.2%}")
+    print(f"Final Value: ${result['portfolio_value'].iloc[-1]:,.2f}")
+```
+
+Run this example with:
+
+```bash
+python portfolio_monitoring_strategy.py
+```
+
+This will show you daily portfolio status updates and perform periodic rebalancing across multiple assets.
+
 ## Best Practices
 
 ### ✅ DO

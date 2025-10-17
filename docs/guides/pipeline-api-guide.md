@@ -431,6 +431,44 @@ class MomentumStrategy(TradingAlgorithm):
             self.order_target_percent(asset, weight)
 ```
 
+## Running Pipeline Strategies
+
+Once you've defined your pipeline strategy, you can run it using either the CLI or Python API.
+
+### CLI Method
+
+Save your strategy class to a file (e.g., `momentum_strategy.py`) and run:
+
+```bash
+rustybt run -f momentum_strategy.py -b yfinance-profiling --start 2020-01-01 --end 2023-12-31
+```
+
+### Python API Method
+
+For more control and integration with your development workflow:
+
+```python
+from rustybt.utils.run_algo import run_algorithm
+import pandas as pd
+
+if __name__ == "__main__":
+    result = run_algorithm(
+        algorithm_class=MomentumStrategy,
+        bundle='yfinance-profiling',
+        start=pd.Timestamp('2020-01-01'),
+        end=pd.Timestamp('2023-12-31'),
+        capital_base=100000
+    )
+
+    # Access results
+    print(f"Total return: {result['returns'].iloc[-1]:.2%}")
+    print(f"Sharpe ratio: {result['sharpe']:.2f}")
+    print(f"Max drawdown: {result['max_drawdown']:.2%}")
+```
+
+!!! tip "Running Class-Based Strategies"
+    When using `run_algorithm()` with class-based strategies (like those using Pipeline), pass `algorithm_class` instead of `initialize` and `handle_data` functions.
+
 ### Multiple Pipelines
 
 ```python

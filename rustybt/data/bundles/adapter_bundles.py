@@ -22,7 +22,10 @@ from rustybt.data.adapters.ccxt_adapter import CCXTAdapter
 from rustybt.data.adapters.csv_adapter import CSVAdapter
 from rustybt.data.adapters.yfinance_adapter import YFinanceAdapter
 from rustybt.data.bundles.core import register
-from rustybt.data.metadata_tracker import track_api_bundle_metadata, track_csv_bundle_metadata
+from rustybt.data.metadata_tracker import (
+    track_api_bundle_metadata,
+    track_csv_bundle_metadata,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -64,6 +67,8 @@ def _create_bundle_from_adapter(
     2. Writes to Parquet via writers
     3. Tracks metadata automatically
     """
+    import asyncio
+
     logger.info(
         "bridge_ingest_start",
         bundle=bundle_name,
@@ -74,11 +79,51 @@ def _create_bundle_from_adapter(
         frequency=frequency,
     )
 
-    # Fetch data from adapter
-    df = adapter.fetch_ohlcv(symbols=symbols, start=start, end=end, frequency=frequency)
+    # Fetch data from adapter (handle both sync and async adapters)
+    try:
+        fetch_result = adapter.fetch_ohlcv(symbols=symbols, start=start, end=end, frequency=frequency)
 
-    if df.empty:
+        # If the result is a coroutine, await it
+        if asyncio.iscoroutine(fetch_result):
+            df = asyncio.run(fetch_result)
+        else:
+            df = fetch_result
+    except Exception as e:
+        logger.error(
+            "bridge_fetch_failed",
+            bundle=bundle_name,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        # Try to continue with a subset of symbols if possible
+        logger.warning("bridge_skipping_problematic_symbols", bundle=bundle_name)
+        return
+
+    # Check if dataframe is empty (handle both Polars and pandas)
+    import polars as pl
+    is_empty = df.is_empty() if isinstance(df, pl.DataFrame) else df.empty
+
+    if is_empty:
         logger.warning("bridge_no_data", bundle=bundle_name, symbols=symbols)
+        return
+
+    # Drop rows with NULL values in critical columns (common with failed downloads)
+    if isinstance(df, pl.DataFrame):
+        initial_count = len(df)
+        df = df.drop_nulls(subset=["open", "high", "low", "close"])
+        dropped_count = initial_count - len(df)
+        if dropped_count > 0:
+            logger.warning(
+                "bridge_dropped_null_rows",
+                bundle=bundle_name,
+                dropped=dropped_count,
+                remaining=len(df),
+            )
+
+    # Check again after cleaning
+    is_empty = df.is_empty() if isinstance(df, pl.DataFrame) else df.empty
+    if is_empty:
+        logger.warning("bridge_no_data_after_cleaning", bundle=bundle_name)
         return
 
     logger.info("bridge_fetch_complete", bundle=bundle_name, row_count=len(df))
@@ -237,9 +282,11 @@ def yfinance_profiling_bundle(
 
     DEPRECATED: Use DataSource.ingest_to_bundle() in v2.0
     """
-    _deprecation_warning("yfinance_profiling_bundle", "YFinanceDataSource.ingest_to_bundle()")
+    _deprecation_warning(
+        "yfinance_profiling_bundle", "YFinanceDataSource.ingest_to_bundle()"
+    )
 
-    # Top 50 liquid US stocks (market cap weighted)
+    # Top 20 liquid US stocks (market cap weighted, BRK.B excluded due to yfinance issues)
     symbols = [
         "AAPL",
         "MSFT",
@@ -248,7 +295,6 @@ def yfinance_profiling_bundle(
         "NVDA",
         "META",
         "TSLA",
-        "BRK.B",
         "V",
         "JNJ",
         "WMT",
@@ -262,35 +308,6 @@ def yfinance_profiling_bundle(
         "XOM",
         "COST",
         "ABBV",
-        "PFE",
-        "AVGO",
-        "KO",
-        "CSCO",
-        "CRM",
-        "ACN",
-        "TMO",
-        "ABT",
-        "NKE",
-        "LLY",
-        "ADBE",
-        "PEP",
-        "MRK",
-        "TXN",
-        "ORCL",
-        "NFLX",
-        "QCOM",
-        "DHR",
-        "CMCSA",
-        "WFC",
-        "MDT",
-        "NEE",
-        "UNP",
-        "BMY",
-        "CVX",
-        "PM",
-        "INTC",
-        "AMGN",
-        "RTX",
     ]
 
     # Date range: 2 years back from today
@@ -308,7 +325,10 @@ def yfinance_profiling_bundle(
         start=start,
         end=end,
         frequency="1d",
-        writers={"daily_bar_writer": daily_bar_writer, "minute_bar_writer": minute_bar_writer},
+        writers={
+            "daily_bar_writer": daily_bar_writer,
+            "minute_bar_writer": minute_bar_writer,
+        },
     )
 
 
@@ -336,7 +356,9 @@ def ccxt_hourly_profiling_bundle(
 
     DEPRECATED: Use DataSource.ingest_to_bundle() in v2.0
     """
-    _deprecation_warning("ccxt_hourly_profiling_bundle", "CCXTDataSource.ingest_to_bundle()")
+    _deprecation_warning(
+        "ccxt_hourly_profiling_bundle", "CCXTDataSource.ingest_to_bundle()"
+    )
 
     # Top 20 crypto pairs by volume (Binance)
     symbols = [
@@ -377,7 +399,10 @@ def ccxt_hourly_profiling_bundle(
         start=start,
         end=end,
         frequency="1h",
-        writers={"daily_bar_writer": daily_bar_writer, "minute_bar_writer": minute_bar_writer},
+        writers={
+            "daily_bar_writer": daily_bar_writer,
+            "minute_bar_writer": minute_bar_writer,
+        },
     )
 
 
@@ -405,7 +430,9 @@ def ccxt_minute_profiling_bundle(
 
     DEPRECATED: Use DataSource.ingest_to_bundle() in v2.0
     """
-    _deprecation_warning("ccxt_minute_profiling_bundle", "CCXTDataSource.ingest_to_bundle()")
+    _deprecation_warning(
+        "ccxt_minute_profiling_bundle", "CCXTDataSource.ingest_to_bundle()"
+    )
 
     # Top 10 crypto pairs (subset of hourly)
     symbols = [
@@ -436,7 +463,10 @@ def ccxt_minute_profiling_bundle(
         start=start,
         end=end,
         frequency="1m",
-        writers={"daily_bar_writer": daily_bar_writer, "minute_bar_writer": minute_bar_writer},
+        writers={
+            "daily_bar_writer": daily_bar_writer,
+            "minute_bar_writer": minute_bar_writer,
+        },
     )
 
 
@@ -499,7 +529,10 @@ def csv_profiling_bundle(
         start=start,
         end=end,
         frequency="1d",  # Assume daily for CSV
-        writers={"daily_bar_writer": daily_bar_writer, "minute_bar_writer": minute_bar_writer},
+        writers={
+            "daily_bar_writer": daily_bar_writer,
+            "minute_bar_writer": minute_bar_writer,
+        },
     )
 
     # Track CSV-specific metadata

@@ -71,7 +71,7 @@ def handle_data(context, data):
 rustybt ingest -b yfinance-profiling
 ```
 
-This downloads free sample data from Yahoo Finance (50 top US stocks, 2 years of history). No API key required!
+This downloads free sample data from Yahoo Finance (20 top US stocks, 2 years of history). No API key required!
 
 **Step 3:** Run the backtest:
 

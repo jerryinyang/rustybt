@@ -7,52 +7,52 @@ This directory contains example Jupyter notebooks demonstrating RustyBT's capabi
 All 13 notebooks are now available! 🎉
 
 ### Core Examples
-1. **crypto_backtest_ccxt.ipynb** - Cryptocurrency backtesting using CCXT adapter
+1. [**crypto_backtest_ccxt.ipynb**](crypto_backtest_ccxt.ipynb) - Cryptocurrency backtesting using CCXT adapter
    - Multi-exchange data fetching (Binance, Coinbase, Kraken)
    - Data validation and quality checks
    - Simple moving average crossover strategy
    - Performance analysis and visualization
 
-2. **equity_backtest_yfinance.ipynb** - Equity backtesting using yfinance
+2. [**equity_backtest_yfinance.ipynb**](equity_backtest_yfinance.ipynb) - Equity backtesting using yfinance
    - Stock and ETF data ingestion
    - Strategy development and testing
    - Performance metrics calculation
 
 ### Getting Started
-3. **01_getting_started.ipynb** - Simple backtest walkthrough
+3. [**01_getting_started.ipynb**](01_getting_started.ipynb) - Simple backtest walkthrough
    - Setup and configuration
    - Creating your first strategy
    - Running backtests
    - Visualizing results
 
-4. **02_data_ingestion.ipynb** - Data ingestion from multiple sources
+4. [**02_data_ingestion.ipynb**](02_data_ingestion.ipynb) - Data ingestion from multiple sources
    - yfinance (stocks, ETFs)
    - CCXT (cryptocurrencies)
    - CSV import
    - Data quality checks
 
-5. **03_strategy_development.ipynb** - Building custom strategies
+5. [**03_strategy_development.ipynb**](03_strategy_development.ipynb) - Building custom strategies
    - Moving average crossover
    - Mean reversion
    - Momentum strategies
 
 ### Analysis & Optimization
-6. **04_performance_analysis.ipynb** - Deep dive into performance metrics
+6. [**04_performance_analysis.ipynb**](04_performance_analysis.ipynb) - Deep dive into performance metrics
    - Interactive visualizations
    - Key metrics calculation
    - Risk-adjusted returns
 
-7. **05_optimization.ipynb** - Grid search and Bayesian optimization
+7. [**05_optimization.ipynb**](05_optimization.ipynb) - Grid search and Bayesian optimization
    - Parameter tuning
    - Finding optimal parameters
    - Avoiding overfitting
 
-8. **06_walk_forward.ipynb** - Walk-forward optimization
+8. [**06_walk_forward.ipynb**](06_walk_forward.ipynb) - Walk-forward optimization
    - Robust validation
    - Out-of-sample testing
    - Performance degradation analysis
 
-9. **07_risk_analytics.ipynb** - VaR, CVaR, and beta analysis
+9. [**07_risk_analytics.ipynb**](07_risk_analytics.ipynb) - VaR, CVaR, and beta analysis
    - Value at Risk calculations
    - Risk metrics
    - Drawdown analysis

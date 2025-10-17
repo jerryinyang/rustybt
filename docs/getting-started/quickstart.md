@@ -68,7 +68,7 @@ Before running your first backtest, you need to ingest some market data:
 rustybt ingest -b yfinance-profiling
 ```
 
-This downloads and caches free sample data from Yahoo Finance (50 top US stocks, 2 years of history). **No API key required!** You only need to do this once.
+This downloads and caches free sample data from Yahoo Finance (20 top US stocks, 2 years of history). **No API key required!** You only need to do this once.
 
 !!! note "Data Bundles"
     RustyBT supports multiple data sources:

@@ -41,6 +41,100 @@ def _deprecation_warning(function_name: str, replacement: str):
     )
 
 
+def _create_asset_metadata(
+    df: object,  # pl.DataFrame or pd.DataFrame
+    symbols: list[str],
+    start: pd.Timestamp,
+    end: pd.Timestamp,
+    bundle_name: str,
+) -> pd.DataFrame:
+    """
+    Create asset metadata DataFrame from OHLCV data.
+
+    Args:
+        df: DataFrame with OHLCV data (must have 'symbol' and 'timestamp'/'date' columns)
+        symbols: List of symbols
+        start: Requested start date
+        end: Requested end date
+        bundle_name: Bundle name for exchange field
+
+    Returns:
+        pandas DataFrame with asset metadata containing:
+        - symbol: Symbol name
+        - start_date: First date of data for this symbol
+        - end_date: Last date of data for this symbol
+        - exchange: Exchange name (derived from bundle_name)
+        - auto_close_date: Date when asset stops trading (end_date + 1 day)
+
+    Raises:
+        ValueError: If required columns are missing or data is invalid
+    """
+    import numpy as np
+    import polars as pl
+
+    # Convert to pandas if needed
+    if isinstance(df, pl.DataFrame):
+        # Find the timestamp column (could be 'timestamp', 'date', 'Date', or 'Timestamp')
+        timestamp_col = None
+        for col in ["timestamp", "date", "Date", "Timestamp"]:
+            if col in df.columns:
+                timestamp_col = col
+                break
+
+        if timestamp_col is None:
+            raise ValueError(f"No timestamp column found in DataFrame. Columns: {df.columns}")
+
+        # Group by symbol and get min/max timestamps
+        metadata_df = (
+            df.group_by("symbol")
+            .agg(
+                [
+                    pl.col(timestamp_col).min().alias("start_date"),
+                    pl.col(timestamp_col).max().alias("end_date"),
+                ]
+            )
+            .to_pandas()
+        )
+    else:
+        # pandas DataFrame
+        timestamp_col = None
+        for col in ["timestamp", "date", "Date", "Timestamp"]:
+            if col in df.columns:
+                timestamp_col = col
+                break
+
+        if timestamp_col is None:
+            # Try using the index if it's a DatetimeIndex
+            if isinstance(df.index, pd.DatetimeIndex):
+                metadata_df = df.groupby("symbol").agg({"index": [np.min, np.max]}).reset_index()
+                metadata_df.columns = ["symbol", "start_date", "end_date"]
+            else:
+                raise ValueError(f"No timestamp column found in DataFrame. Columns: {df.columns}")
+        else:
+            metadata_df = df.groupby("symbol")[timestamp_col].agg(["min", "max"]).reset_index()
+            metadata_df.columns = ["symbol", "start_date", "end_date"]
+
+    # Ensure datetime types
+    metadata_df["start_date"] = pd.to_datetime(metadata_df["start_date"])
+    metadata_df["end_date"] = pd.to_datetime(metadata_df["end_date"])
+
+    # Set exchange name (derived from bundle name)
+    exchange_name = bundle_name.upper().replace("-", "_")
+    metadata_df["exchange"] = exchange_name
+
+    # Set auto_close_date (end_date + 1 day)
+    metadata_df["auto_close_date"] = metadata_df["end_date"] + pd.Timedelta(days=1)
+
+    logger.info(
+        "asset_metadata_created",
+        bundle=bundle_name,
+        symbol_count=len(metadata_df),
+        date_range=f"{metadata_df['start_date'].min()} to {metadata_df['end_date'].max()}",
+    )
+
+    return metadata_df
+
+
 def _create_bundle_from_adapter(
     adapter: object,  # BaseDataAdapter or any adapter with fetch_ohlcv method
     bundle_name: str,
@@ -64,8 +158,10 @@ def _create_bundle_from_adapter(
 
     This function:
     1. Fetches data from adapter
-    2. Writes to Parquet via writers
-    3. Tracks metadata automatically
+    2. Creates asset metadata
+    3. Writes asset database
+    4. Transforms and writes bar data
+    5. Tracks metadata automatically
     """
     import asyncio
 
@@ -130,6 +226,40 @@ def _create_bundle_from_adapter(
         return
 
     logger.info("bridge_fetch_complete", bundle=bundle_name, row_count=len(df))
+
+    # Create asset metadata before transformation (need full dataframe with all symbols)
+    try:
+        asset_metadata = _create_asset_metadata(df, symbols, start, end, bundle_name)
+        logger.info(
+            "bridge_asset_metadata_created", bundle=bundle_name, asset_count=len(asset_metadata)
+        )
+    except Exception as e:
+        logger.error(
+            "bridge_asset_metadata_failed",
+            bundle=bundle_name,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise ValueError(f"Asset metadata creation failed for bundle '{bundle_name}': {e}") from e
+
+    # Write asset database (required for bundle loading)
+    try:
+        # Create exchanges DataFrame
+        exchange_name = bundle_name.upper().replace("-", "_")
+        exchanges = pd.DataFrame(
+            data=[[exchange_name, exchange_name, "US"]],
+            columns=["exchange", "canonical_name", "country_code"],
+        )
+        writers["asset_db_writer"].write(equities=asset_metadata, exchanges=exchanges)
+        logger.info("bridge_asset_db_written", bundle=bundle_name, exchange=exchange_name)
+    except Exception as e:
+        logger.error(
+            "bridge_asset_db_write_failed",
+            bundle=bundle_name,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise ValueError(f"Asset database write failed for bundle '{bundle_name}': {e}") from e
 
     # Transform flat DataFrame to (sid, df) tuples for bundle writer
     try:
@@ -497,6 +627,7 @@ def yfinance_profiling_bundle(
         end=end,
         frequency="1d",
         writers={
+            "asset_db_writer": asset_db_writer,
             "daily_bar_writer": daily_bar_writer,
             "minute_bar_writer": minute_bar_writer,
         },
@@ -569,6 +700,7 @@ def ccxt_hourly_profiling_bundle(
         end=end,
         frequency="1h",
         writers={
+            "asset_db_writer": asset_db_writer,
             "daily_bar_writer": daily_bar_writer,
             "minute_bar_writer": minute_bar_writer,
         },
@@ -631,6 +763,7 @@ def ccxt_minute_profiling_bundle(
         end=end,
         frequency="1m",
         writers={
+            "asset_db_writer": asset_db_writer,
             "daily_bar_writer": daily_bar_writer,
             "minute_bar_writer": minute_bar_writer,
         },
@@ -697,6 +830,7 @@ def csv_profiling_bundle(
         end=end,
         frequency="1d",  # Assume daily for CSV
         writers={
+            "asset_db_writer": asset_db_writer,
             "daily_bar_writer": daily_bar_writer,
             "minute_bar_writer": minute_bar_writer,
         },

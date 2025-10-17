@@ -208,7 +208,8 @@ namespaces = false
 [tool.setuptools_scm]
 write_to = "rustybt/_version.py"
 version_scheme = 'guess-next-dev'
-local_scheme = 'dirty-tag'
+local_scheme = 'no-local-version'
+fallback_version = "0.1.2.dev0"
 
 [tool.setuptools.package-data]
 "*" = [

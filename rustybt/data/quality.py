@@ -45,14 +45,45 @@ def calculate_quality_metrics(
     if missing_cols:
         raise ValueError(f"Missing required columns: {missing_cols}")
 
+    # Handle case where date column is not found
     if date_column not in data.columns:
-        raise ValueError(f"Date column '{date_column}' not found in data")
+        # Try common alternative column names
+        alternative_names = ["timestamp", "datetime", "Date", "Timestamp"]
+        found_column = None
+
+        for alt_name in alternative_names:
+            if alt_name in data.columns:
+                found_column = alt_name
+                break
+
+        if found_column:
+            # Use the alternative column name
+            date_column = found_column
+        else:
+            # Check if it's in the index (common after transformation)
+            if hasattr(data, "index") and isinstance(data.index, (pd.DatetimeIndex, pd.Index)):
+                # Reset index to make date a column for analysis
+                data_with_date = data.reset_index()
+                if "index" in data_with_date.columns:
+                    data_with_date = data_with_date.rename(columns={"index": date_column})
+                elif date_column in data_with_date.columns:
+                    # Already has the right column name after reset_index
+                    pass
+                else:
+                    raise ValueError(f"Date column '{date_column}' not found in data or index")
+                data = data_with_date
+            else:
+                raise ValueError(f"Date column '{date_column}' not found in data")
 
     # Calculate row count
     row_count = len(data)
 
     # Calculate date range
-    dates_series = data[date_column].to_pandas()
+    dates_series = (
+        data[date_column].to_pandas()
+        if hasattr(data[date_column], "to_pandas")
+        else data[date_column]
+    )
     if not isinstance(dates_series.iloc[0], pd.Timestamp):
         dates_series = pd.to_datetime(dates_series)
 

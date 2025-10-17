@@ -350,7 +350,10 @@ def _track_api_bundle_metadata(
 
     # Convert pandas DataFrame to polars for quality metrics calculation
     # (track_api_bundle_metadata expects polars DataFrame)
-    pl_df = pl.from_pandas(df) if not df.empty else None
+    if isinstance(df, pl.DataFrame):
+        pl_df = df if not df.is_empty() else None
+    else:  # pandas DataFrame
+        pl_df = pl.from_pandas(df) if not df.empty else None
 
     # Get calendar for quality metrics
     try:
@@ -446,7 +449,7 @@ def yfinance_profiling_bundle(
     YFinance profiling bundle for Story 7.1 (Daily scenario).
 
     Fetches:
-    - 50 top liquid US stocks
+    - 20 top liquid US stocks
     - 2 years of daily data
     - For profiling Python implementation baseline
 

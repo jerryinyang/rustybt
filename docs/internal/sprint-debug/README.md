@@ -17,18 +17,19 @@ This directory contains documentation and tracking for sprint debugging sessions
 Each debugging session should follow this structure:
 
 1. **Review Current State**
-   - Check `fixes.md` for recent fixes and patterns
+   - Check `fixes/` directory for recent fixes and patterns
+   - Review active session at `fixes/active-session.md`
    - Review `KNOWN_ISSUES.md` in `docs/internal/`
    - Identify focus areas (framework code, documentation, tests, etc.)
 
 2. **Create Session Timestamp**
    - All fixes are batched and timestamped
    - Format: `YYYY-MM-DD HH:MM:SS`
-   - Record in `fixes.md` before committing
+   - Record in `fixes/active-session.md` before committing
 
 ### 2. ⚠️ MANDATORY Pre-Flight Checklist
 
-**BEFORE starting ANY fix batch, complete the appropriate pre-flight checklist in `fixes.md`:**
+**BEFORE starting ANY fix batch, complete the appropriate pre-flight checklist in `fixes/active-session.md`:**
 
 #### For Documentation Updates:
 - Verify content exists in source code
@@ -46,7 +47,7 @@ Each debugging session should follow this structure:
 - Verify testing environment works
 - Complete impact analysis
 
-**See `fixes.md` template for complete checklists. These are MANDATORY - no fixes without pre-flight completion.**
+**See `fixes/active-session.md` template for complete checklists. These are MANDATORY - no fixes without pre-flight completion.**
 
 ### 3. Debugging Process
 
@@ -68,7 +69,7 @@ Each debugging session should follow this structure:
 
 ### 4. Fix Documentation
 
-For **each batch of fixes**, document in `fixes.md`:
+For **each batch of fixes**, document in `fixes/active-session.md`:
 
 ```markdown
 ## [YYYY-MM-DD HH:MM:SS] - Batch Description
@@ -118,7 +119,7 @@ Before committing any batch of fixes:
 - [ ] No zero-mock violations: `scripts/detect_mocks.py`
 - [ ] Documentation builds without warnings: `mkdocs build --strict`
 - [ ] Git status clean (no unintended changes)
-- [ ] Fix batch documented in `fixes.md` with completed checklist
+- [ ] Fix batch documented in `fixes/active-session.md` with completed checklist
 
 ### 6. Commit and Push
 
@@ -130,14 +131,14 @@ fix(sprint-debug): [brief description of batch]
 - Fix 2 summary
 - Fix 3 summary
 
-Refs: docs/internal/sprint-debug/fixes.md [timestamp]
+Refs: docs/internal/sprint-debug/fixes/ [timestamp]
 ```
 
 **Process:**
-1. Document fixes in `fixes.md` with timestamp
+1. Document fixes in `fixes/active-session.md` with timestamp
 2. Stage all changes: `git add .`
 3. Commit with descriptive message
-4. Update `fixes.md` with commit hash
+4. Update `fixes/active-session.md` with commit hash
 5. Push to remote: `git push origin [branch]`
 
 ## Directory Structure
@@ -145,9 +146,18 @@ Refs: docs/internal/sprint-debug/fixes.md [timestamp]
 ```
 sprint-debug/
 ├── README.md              # This file - session guide
-├── fixes.md               # Chronological fix log
-├── patterns.md            # Common issues and patterns (future)
-└── metrics.md             # Sprint debugging metrics (future)
+└── fixes/                 # Sharded fix documentation directory
+    ├── index.md                          # Table of contents for all fixes
+    ├── active-session.md                 # Current active debugging session
+    ├── fix-history.md                    # Historical fix overview
+    ├── common-issues-patterns.md         # Common issue patterns identified
+    ├── summary-statistics.md             # Session statistics and metrics
+    ├── next-session-prep.md              # Preparation notes for next session
+    ├── previous-session-planning-completed.md  # Prior session planning
+    ├── session-closed-all-known-issues-resolved.md  # Closure notes
+    └── completed/                        # Completed fixes archive
+        ├── 2025-10-17-HHMMSS-*.md        # Timestamped fix entries
+        └── ...
 ```
 
 ## Best Practices

@@ -81,8 +81,8 @@ def setup_notebook() -> None:
     ipython = get_ipython()
     if ipython is not None:
         # Load tqdm extension for better progress bars
-        ipython.magic("load_ext autoreload")
-        ipython.magic("autoreload 2")
+        ipython.run_line_magic("load_ext", "autoreload")
+        ipython.run_line_magic("autoreload", "2")
 
     print("✅ Notebook environment configured successfully")
     print("   - Async/await support enabled")

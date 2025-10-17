@@ -177,6 +177,12 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
         # Convert to Polars and standardize
         df_polars = self._pandas_to_polars(df_pandas)
         df_polars = self.standardize(df_polars)
+
+        # Lenient validation: Filter out rows with invalid OHLCV relationships before validation
+        # This prevents validation errors from incomplete/invalid intraday data
+        df_polars = self._filter_invalid_rows_lenient(df_polars)
+
+        # Now validate the cleaned data
         self.validate(df_polars)
 
         # Log successful fetch
@@ -305,6 +311,63 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
             ValidationError: If data validation fails
         """
         return validate_ohlcv_relationships(df)
+
+    def _filter_invalid_rows_lenient(self, df: pl.DataFrame) -> pl.DataFrame:
+        """Filter out rows with invalid OHLCV relationships (lenient mode).
+
+        This method removes rows that violate OHLCV constraints rather than failing.
+        Useful for handling incomplete/invalid intraday data from yfinance.
+
+        OHLCV validity rules:
+        - high >= low (always)
+        - high >= open (always)
+        - high >= close (always)
+        - low <= open (always)
+        - low <= close (always)
+        - All prices > 0 (non-negative)
+
+        Args:
+            df: DataFrame with potentially invalid rows
+
+        Returns:
+            DataFrame with only valid rows
+
+        Example:
+            >>> df_cleaned = adapter._filter_invalid_rows_lenient(df_raw)
+        """
+        initial_count = len(df)
+
+        # Build validity mask (all conditions must be True)
+        validity_mask = (
+            (pl.col("high") >= pl.col("low"))
+            & (pl.col("high") >= pl.col("open"))
+            & (pl.col("high") >= pl.col("close"))
+            & (pl.col("low") <= pl.col("open"))
+            & (pl.col("low") <= pl.col("close"))
+            & (pl.col("open") > 0)
+            & (pl.col("high") > 0)
+            & (pl.col("low") > 0)
+            & (pl.col("close") > 0)
+        )
+
+        # Filter to keep only valid rows
+        df_valid = df.filter(validity_mask)
+        dropped_count = initial_count - len(df_valid)
+
+        if dropped_count > 0:
+            # Get invalid rows for logging
+            df_invalid = df.filter(~validity_mask)
+            affected_symbols = df_invalid.select("symbol").unique().to_series().to_list()
+
+            logger.warning(
+                "yfinance_filtered_invalid_rows",
+                dropped_count=dropped_count,
+                remaining_count=len(df_valid),
+                affected_symbols=affected_symbols,
+                reason="invalid_ohlcv_relationships",
+            )
+
+        return df_valid
 
     def standardize(self, df: pl.DataFrame) -> pl.DataFrame:
         """Convert to standard schema.

@@ -41,6 +41,127 @@ def _deprecation_warning(function_name: str, replacement: str):
     )
 
 
+def _filter_invalid_ohlcv_rows(df: object) -> tuple[object, object]:
+    """
+    Filter out rows with invalid OHLCV relationships.
+
+    OHLCV validity rules:
+    - high >= low (always)
+    - high >= open (always)
+    - high >= close (always)
+    - low <= open (always)
+    - low <= close (always)
+    - All prices > 0 (non-negative)
+
+    Args:
+        df: DataFrame (Polars or pandas) with OHLCV data
+
+    Returns:
+        Tuple of (valid_df, invalid_df) where:
+        - valid_df: Rows that pass all OHLCV validation checks
+        - invalid_df: Rows that fail any OHLCV validation check
+
+    Example:
+        >>> valid, invalid = _filter_invalid_ohlcv_rows(df)
+        >>> logger.warning(f"Dropped {len(invalid)} invalid rows")
+    """
+    import polars as pl
+
+    # Convert to Polars if pandas
+    is_pandas = not isinstance(df, pl.DataFrame)
+    if is_pandas:
+        df = pl.from_pandas(df)
+
+    # Build validity mask (all conditions must be True)
+    validity_mask = (
+        (pl.col("high") >= pl.col("low"))
+        & (pl.col("high") >= pl.col("open"))
+        & (pl.col("high") >= pl.col("close"))
+        & (pl.col("low") <= pl.col("open"))
+        & (pl.col("low") <= pl.col("close"))
+        & (pl.col("open") > 0)
+        & (pl.col("high") > 0)
+        & (pl.col("low") > 0)
+        & (pl.col("close") > 0)
+    )
+
+    # Split into valid and invalid
+    valid_df = df.filter(validity_mask)
+    invalid_df = df.filter(~validity_mask)
+
+    # Convert back to pandas if input was pandas
+    if is_pandas:
+        valid_df = valid_df.to_pandas()
+        invalid_df = invalid_df.to_pandas()
+
+    return valid_df, invalid_df
+
+
+def _adjust_end_date_for_market_hours(end: pd.Timestamp, bundle_name: str) -> pd.Timestamp:
+    """
+    Adjust end date to avoid fetching incomplete current-day data during market hours.
+
+    If the end date is today and we're during market hours, adjust to yesterday
+    to avoid incomplete/invalid intraday data.
+
+    Args:
+        end: Requested end date
+        bundle_name: Bundle name for logging
+
+    Returns:
+        Adjusted end date (yesterday if today and market open, otherwise unchanged)
+
+    Example:
+        >>> end = pd.Timestamp('2025-10-17')  # Today
+        >>> adjusted = _adjust_end_date_for_market_hours(end, 'yfinance-profiling')
+        >>> # If market is open: adjusted = '2025-10-16'
+        >>> # If market is closed: adjusted = '2025-10-17'
+    """
+    import pandas as pd
+
+    # Get current time
+    now = pd.Timestamp.now(tz="UTC")
+    today = now.normalize()
+
+    # Normalize end date for comparison (remove time component)
+    end_normalized = end.normalize()
+
+    # Make both timezone-aware or both timezone-naive for comparison
+    if end_normalized.tz is None and today.tz is not None:
+        # end is naive, today is aware - localize end to UTC
+        end_normalized = end_normalized.tz_localize("UTC")
+    elif end_normalized.tz is not None and today.tz is None:
+        # end is aware, today is naive - localize today to UTC
+        today = today.tz_localize("UTC")
+
+    # If end date is today (or in the future)
+    if end_normalized >= today:
+        # Check if we're during typical market hours (9:30 AM - 4:00 PM ET)
+        # Convert to US/Eastern timezone
+        now_et = now.tz_convert("US/Eastern")
+        hour = now_et.hour
+        minute = now_et.minute
+
+        # Market hours: 9:30 AM - 4:00 PM ET
+        market_open = (hour > 9) or (hour == 9 and minute >= 30)
+        market_close = hour >= 16
+
+        if market_open and not market_close:
+            # During market hours - use yesterday
+            adjusted_end = today - pd.Timedelta(days=1)
+            logger.info(
+                "adjusted_end_date_for_market_hours",
+                bundle=bundle_name,
+                original_end=str(end),
+                adjusted_end=str(adjusted_end),
+                reason="market_currently_open",
+                current_time_et=now_et.strftime("%Y-%m-%d %H:%M:%S %Z"),
+            )
+            return adjusted_end
+
+    return end
+
+
 def _create_asset_metadata(
     df: object,  # pl.DataFrame or pd.DataFrame
     symbols: list[str],
@@ -165,6 +286,12 @@ def _create_bundle_from_adapter(
     """
     import asyncio
 
+    from rustybt.exceptions import DataValidationError
+
+    # Smart date handling: Avoid fetching incomplete current-day data
+    original_end = end
+    end = _adjust_end_date_for_market_hours(end, bundle_name)
+
     logger.info(
         "bridge_ingest_start",
         bundle=bundle_name,
@@ -186,6 +313,17 @@ def _create_bundle_from_adapter(
             df = asyncio.run(fetch_result)
         else:
             df = fetch_result
+    except DataValidationError as e:
+        # Validation failed completely - cannot recover
+        logger.error(
+            "bridge_validation_failed_cannot_recover",
+            bundle=bundle_name,
+            error=str(e),
+            error_type=type(e).__name__,
+            recommendation="Try adjusting date range or check data quality at source",
+        )
+        logger.warning("bridge_skipping_bundle_due_to_validation_failure", bundle=bundle_name)
+        return
     except Exception as e:
         logger.error(
             "bridge_fetch_failed",
@@ -193,7 +331,6 @@ def _create_bundle_from_adapter(
             error=str(e),
             error_type=type(e).__name__,
         )
-        # Try to continue with a subset of symbols if possible
         logger.warning("bridge_skipping_problematic_symbols", bundle=bundle_name)
         return
 
@@ -224,6 +361,45 @@ def _create_bundle_from_adapter(
     if is_empty:
         logger.warning("bridge_no_data_after_cleaning", bundle=bundle_name)
         return
+
+    # Lenient validation: Filter out rows with invalid OHLCV relationships
+    # This is a safety net to handle edge cases that passed the adapter's validation
+    df_valid, df_invalid = _filter_invalid_ohlcv_rows(df)
+
+    invalid_count = (
+        len(df_invalid)
+        if isinstance(df_invalid, pl.DataFrame)
+        else len(df_invalid) if hasattr(df_invalid, "__len__") else 0
+    )
+
+    if invalid_count > 0:
+        # Get affected symbols for logging
+        if isinstance(df_invalid, pl.DataFrame):
+            affected_symbols = df_invalid.select("symbol").unique().to_series().to_list()
+        else:
+            affected_symbols = df_invalid["symbol"].unique().tolist()
+
+        logger.warning(
+            "bridge_filtered_invalid_ohlcv_rows",
+            bundle=bundle_name,
+            invalid_count=invalid_count,
+            valid_count=len(df_valid),
+            affected_symbols=affected_symbols[:10],  # Log first 10
+            total_affected_symbols=len(affected_symbols),
+        )
+
+        # Use the valid data only
+        df = df_valid
+
+        # Check if we have any valid data left
+        is_empty = df.is_empty() if isinstance(df, pl.DataFrame) else df.empty
+        if is_empty:
+            logger.error(
+                "bridge_no_valid_data_after_filtering",
+                bundle=bundle_name,
+                all_rows_invalid=True,
+            )
+            return
 
     logger.info("bridge_fetch_complete", bundle=bundle_name, row_count=len(df))
 

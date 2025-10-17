@@ -82,6 +82,11 @@ plugins:
             show_root_heading: true
             show_source: true
             members_order: source
+  - mkdocs-jupyter:
+      include_source: true
+      execute: false
+      allow_errors: false
+      kernel_name: python3
 
 extra:
   social:
@@ -125,7 +130,24 @@ nav:
           - Troubleshooting: guides/troubleshooting.md
   - Examples & Tutorials:
       - Overview: examples/README.md
-      - Notebooks: examples/notebooks/README.md
+      - Notebooks:
+          - Overview: examples/notebooks/README.md
+          - Core Examples:
+              - Crypto Backtesting (CCXT): examples/notebooks/crypto_backtest_ccxt.ipynb
+              - Equity Backtesting (yfinance): examples/notebooks/equity_backtest_yfinance.ipynb
+          - Getting Started:
+              - 01. Getting Started: examples/notebooks/01_getting_started.ipynb
+              - 02. Data Ingestion: examples/notebooks/02_data_ingestion.ipynb
+              - 03. Strategy Development: examples/notebooks/03_strategy_development.ipynb
+              - 04. Performance Analysis: examples/notebooks/04_performance_analysis.ipynb
+              - 05. Optimization: examples/notebooks/05_optimization.ipynb
+              - 06. Walk-Forward Testing: examples/notebooks/06_walk_forward.ipynb
+              - 07. Risk Analytics: examples/notebooks/07_risk_analytics.ipynb
+              - 08. Portfolio Construction: examples/notebooks/08_portfolio_construction.ipynb
+              - 09. Live Paper Trading: examples/notebooks/09_live_paper_trading.ipynb
+          - Complete Workflows:
+              - 10. Full Workflow (⭐ Recommended): examples/notebooks/10_full_workflow.ipynb
+              - 11. Advanced Topics: examples/notebooks/11_advanced_topics.ipynb
   - API Reference:
       - Data Management:
           - Overview: api/data-management/README.md

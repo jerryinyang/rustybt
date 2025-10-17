@@ -2,6 +2,11 @@
 
 This directory contains example Jupyter notebooks demonstrating RustyBT's capabilities for interactive backtesting, analysis, and optimization.
 
+!!! tip "Viewing Notebooks"
+    **On this documentation site**: All notebooks are rendered and viewable in the **Notebooks menu** (left sidebar)
+    **On GitHub**: Click the links below to view notebooks in the repository
+    **Locally**: Download and open in Jupyter Lab/Notebook
+
 ## Available Notebooks
 
 All 13 notebooks are now available! 🎉

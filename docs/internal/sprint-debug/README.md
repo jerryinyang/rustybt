@@ -26,7 +26,29 @@ Each debugging session should follow this structure:
    - Format: `YYYY-MM-DD HH:MM:SS`
    - Record in `fixes.md` before committing
 
-### 2. Debugging Process
+### 2. ⚠️ MANDATORY Pre-Flight Checklist
+
+**BEFORE starting ANY fix batch, complete the appropriate pre-flight checklist in `fixes.md`:**
+
+#### For Documentation Updates:
+- Verify content exists in source code
+- Test ALL code examples
+- Verify ALL API signatures match source
+- Ensure realistic data (no "foo", "bar")
+- Read quality standards
+- Prepare testing environment
+
+#### For Framework Code Updates:
+- Understand code to be modified
+- Review coding standards & zero-mock enforcement
+- Plan testing strategy (NO MOCKS)
+- Ensure complete type hints
+- Verify testing environment works
+- Complete impact analysis
+
+**See `fixes.md` template for complete checklists. These are MANDATORY - no fixes without pre-flight completion.**
+
+### 3. Debugging Process
 
 #### Framework Debugging
 - Run existing tests: `pytest tests/`
@@ -44,7 +66,7 @@ Each debugging session should follow this structure:
 - Check for outdated information
 - Validate API documentation matches implementation
 
-### 3. Fix Documentation
+### 4. Fix Documentation
 
 For **each batch of fixes**, document in `fixes.md`:
 
@@ -84,20 +106,21 @@ For **each batch of fixes**, document in `fixes.md`:
 ---
 ```
 
-### 4. Verification Checklist
+### 5. Verification Checklist
 
 Before committing any batch of fixes:
 
+- [ ] **Pre-flight checklist completed** (in fixes.md batch entry)
 - [ ] All tests pass: `pytest tests/ -v`
 - [ ] Linting clean: `ruff check rustybt/`
 - [ ] Type checking passes: `mypy rustybt/ --strict`
 - [ ] Black formatting: `black rustybt/ tests/ --check`
-- [ ] No zero-mock violations
-- [ ] Documentation builds without warnings
+- [ ] No zero-mock violations: `scripts/detect_mocks.py`
+- [ ] Documentation builds without warnings: `mkdocs build --strict`
 - [ ] Git status clean (no unintended changes)
-- [ ] Fix batch documented in `fixes.md`
+- [ ] Fix batch documented in `fixes.md` with completed checklist
 
-### 5. Commit and Push
+### 6. Commit and Push
 
 **Commit Message Format:**
 ```

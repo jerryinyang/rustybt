@@ -57,23 +57,23 @@ All 13 notebooks are now available! 🎉
    - Risk metrics
    - Drawdown analysis
 
-10. **08_portfolio_construction.ipynb** - Multi-asset portfolio strategies
+10. [**08_portfolio_construction.ipynb**](08_portfolio_construction.ipynb) - Multi-asset portfolio strategies
     - Equal-weight portfolios
     - Risk-parity allocation
     - Rebalancing logic
 
-11. **09_live_paper_trading.ipynb** - Paper trading setup and execution
+11. [**09_live_paper_trading.ipynb**](09_live_paper_trading.ipynb) - Paper trading setup and execution
     - Real-time testing
     - Paper broker setup
     - Live monitoring
 
 ### Complete Workflow
-12. **10_full_workflow.ipynb** ⭐ **RECOMMENDED START** - Complete workflow from data to optimization
+12. [**10_full_workflow.ipynb**](10_full_workflow.ipynb) ⭐ **RECOMMENDED START** - Complete workflow from data to optimization
     - Data ingestion → Strategy → Backtest → Analysis → Optimization
     - Complete end-to-end example
     - All features demonstrated
 
-13. **11_advanced_topics.ipynb** - Custom indicators and multi-asset strategies
+13. [**11_advanced_topics.ipynb**](11_advanced_topics.ipynb) - Custom indicators and multi-asset strategies
     - Building custom indicators
     - Advanced techniques
     - Multi-asset correlation

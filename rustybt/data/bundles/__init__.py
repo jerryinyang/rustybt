@@ -15,6 +15,11 @@ def _register_adapter_bundles():
         pass
 
 
+# Register adapter bundles by default for user convenience
+# This makes yfinance-profiling and other free bundles available out-of-the-box
+_register_adapter_bundles()
+
+
 # Attempt to register profiling bundles if available (used by performance tests)
 try:  # pragma: no cover - optional dependency for profiling scenarios
     import scripts.profiling.setup_profiling_data  # noqa: F401

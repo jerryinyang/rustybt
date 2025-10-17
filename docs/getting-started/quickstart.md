@@ -65,19 +65,24 @@ def handle_data(context, data):
 Before running your first backtest, you need to ingest some market data:
 
 ```bash
-rustybt ingest -b quandl
+rustybt ingest -b yfinance-profiling
 ```
 
-This downloads and caches sample US stock data from Quandl. You only need to do this once.
+This downloads and caches free sample data from Yahoo Finance (50 top US stocks, 2 years of history). **No API key required!** You only need to do this once.
 
 !!! note "Data Bundles"
-    RustyBT supports multiple data sources. See [CSV Data Import](../guides/csv-data-import.md) for custom data, or [Creating Data Adapters](../guides/creating-data-adapters.md) for live data sources.
+    RustyBT supports multiple data sources:
+    - **yfinance-profiling**: Free Yahoo Finance data (recommended for quick start)
+    - **csvdir**: Your own CSV files - see [CSV Data Import](../guides/csv-data-import.md)
+    - **Custom adapters**: Live data sources - see [Creating Data Adapters](../guides/creating-data-adapters.md)
 
 ## Run the Backtest
 
 ```bash
-rustybt run -f my_strategy.py --start 2020-01-01 --end 2023-12-31
+rustybt run -f my_strategy.py -b yfinance-profiling --start 2020-01-01 --end 2023-12-31
 ```
+
+Note the `-b yfinance-profiling` flag to specify which data bundle to use.
 
 ## Understanding the Output
 
@@ -90,10 +95,19 @@ RustyBT will display:
 
 ### Common Issues
 
-**"no data for bundle 'quandl'"**
+**"no data for bundle"**
 ```bash
 # Solution: Ingest data first
-rustybt ingest -b quandl
+rustybt ingest -b yfinance-profiling
+
+# Then run with the bundle flag
+rustybt run -f my_strategy.py -b yfinance-profiling --start 2020-01-01 --end 2023-12-31
+```
+
+**"Error: No bundle registered with the name 'yfinance-profiling'"**
+```bash
+# Solution: Upgrade to latest rustybt version
+pip install --upgrade rustybt
 ```
 
 **"fatal: bad revision 'HEAD'" or Segmentation Fault**
@@ -109,6 +123,15 @@ This usually happens when installing from a non-git directory or with a corrupte
 # Solution: Check Python version and reinstall
 python --version  # Should be 3.12 or higher
 pip install --upgrade rustybt
+```
+
+**"Quandl API key required"**
+
+If you see errors about Quandl requiring an API key, you're using the old default bundle. Switch to the free Yahoo Finance bundle:
+
+```bash
+rustybt ingest -b yfinance-profiling
+rustybt run -f my_strategy.py -b yfinance-profiling --start 2020-01-01 --end 2023-12-31
 ```
 
 **Data Issues**

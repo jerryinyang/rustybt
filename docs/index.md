@@ -68,17 +68,19 @@ def handle_data(context, data):
 **Step 2:** Ingest sample data (first time only):
 
 ```bash
-rustybt ingest -b quandl
+rustybt ingest -b yfinance-profiling
 ```
+
+This downloads free sample data from Yahoo Finance (50 top US stocks, 2 years of history). No API key required!
 
 **Step 3:** Run the backtest:
 
 ```bash
-rustybt run -f strategy.py --start 2020-01-01 --end 2023-12-31
+rustybt run -f strategy.py -b yfinance-profiling --start 2020-01-01 --end 2023-12-31
 ```
 
 !!! tip "Troubleshooting"
-    - **"no data for bundle"**: Run `rustybt ingest -b quandl` first
+    - **"no data for bundle"**: Run `rustybt ingest -b yfinance-profiling` first
     - **"fatal: bad revision 'HEAD'"**: Reinstall with `pip install --upgrade --force-reinstall rustybt`
     - **Segmentation fault**: Check Python version (3.12+ required) and reinstall
 

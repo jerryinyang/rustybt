@@ -285,16 +285,13 @@ class MomentumStrategy(TradingAlgorithm):
         """Monitor and log."""
         self.log.info(f"Portfolio value: ${context.portfolio.portfolio_value:,.2f}")
 
-# Run with Python API
-if __name__ == "__main__":
-    result = run_algorithm(
-        algorithm_class=MomentumStrategy,  # Pass class, not functions
-        bundle='yfinance-profiling',
-        start=pd.Timestamp('2020-01-01'),
-        end=pd.Timestamp('2023-12-31'),
-        capital_base=100000
-    )
+# Save to momentum_strategy.py and run with CLI
+# rustybt run -f momentum_strategy.py -b yfinance-profiling \
+#   --start 2020-01-01 --end 2023-12-31 --capital-base 100000
 ```
+
+!!! important "Class-Based Strategies Require CLI"
+    Strategies inheriting from `TradingAlgorithm` **must** be run using the CLI (`rustybt run -f`). The Python API `run_algorithm()` function does not support class-based strategies.
 
 **Advantages:**
 - Organized code structure

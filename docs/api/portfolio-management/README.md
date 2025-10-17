@@ -468,30 +468,25 @@ class PortfolioMonitoringStrategy(TradingAlgorithm):
             else:
                 order_target_percent(asset, self.max_position_size)
 
+# Save to portfolio_monitoring_strategy.py and run with CLI
 if __name__ == "__main__":
-    result = run_algorithm(
-        algorithm_class=PortfolioMonitoringStrategy,
-        bundle='yfinance-profiling',
-        start=pd.Timestamp('2020-01-01'),
-        end=pd.Timestamp('2023-12-31'),
-        capital_base=100000
-    )
-
-    # Print final results
-    print("\n" + "="*50)
-    print("Final Portfolio Analysis")
-    print("="*50)
-    print(f"Total Return: {result['returns'].iloc[-1]:.2%}")
-    print(f"Sharpe Ratio: {result['sharpe']:.2f}")
-    print(f"Max Drawdown: {result['max_drawdown']:.2%}")
-    print(f"Final Value: ${result['portfolio_value'].iloc[-1]:,.2f}")
+    # This class-based strategy must be run using the CLI
+    print("Save this file and run with:")
+    print("rustybt run -f portfolio_monitoring_strategy.py \\")
+    print("  -b yfinance-profiling --start 2020-01-01 --end 2023-12-31 \\")
+    print("  --capital-base 100000")
 ```
 
-Run this example with:
+Run this example with CLI:
 
 ```bash
-python portfolio_monitoring_strategy.py
+rustybt run -f portfolio_monitoring_strategy.py \
+  -b yfinance-profiling --start 2020-01-01 --end 2023-12-31 \
+  --capital-base 100000
 ```
+
+!!! important "Class-Based Strategies Require CLI"
+    The `PortfolioMonitoringStrategy` class inherits from `TradingAlgorithm` and **must** be run using the CLI. The Python API `run_algorithm()` function only supports function-based strategies.
 
 This will show you daily portfolio status updates and perform periodic rebalancing across multiple assets.
 

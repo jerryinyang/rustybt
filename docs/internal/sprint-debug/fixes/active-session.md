@@ -421,6 +421,6 @@ These are framework code issues, not caused by documentation changes.
 - Temporal isolation guaranteed via data.history() and context.prices
 - Professional-grade documentation
 
-**Commit Hash:** [To be filled after commit]
+**Commit Hash:** 971b6d2
 
 ---

@@ -736,6 +736,6 @@ Fix missing sidebar references for Python tutorial files in `docs/examples/` doc
 - Users can now find relevant tutorials directly from sidebar
 - Better alignment between filesystem structure and documentation navigation
 
-**Commit Hash:** [pending]
+**Commit Hash:** ecd6783
 
 ---

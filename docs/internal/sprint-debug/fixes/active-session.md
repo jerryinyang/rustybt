@@ -612,6 +612,6 @@ fix(docs): Remove duplicate examples/ directory - establish docs/examples/ as ca
 Refs: docs/internal/sprint-debug/fixes/active-session.md [2025-10-18 02:00:00]
 ```
 
-**Commit Hash:** [To be filled after commit]
+**Commit Hash:** 181bc83
 
 ---

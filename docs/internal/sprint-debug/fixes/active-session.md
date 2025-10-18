@@ -615,3 +615,127 @@ Refs: docs/internal/sprint-debug/fixes/active-session.md [2025-10-18 02:00:00]
 **Commit Hash:** 181bc83
 
 ---
+
+## New Batch: Sidebar Navigation - Python Tutorial References
+
+**Timestamp:** 2025-10-18 09:34:22
+**Focus Area:** Documentation/Navigation - MkDocs Sidebar Enhancement
+
+### Pre-Flight Checklist - Documentation Updates
+
+- [x] **Verify content exists in source code**: Confirmed 25 Python files in docs/examples/ and 5 in docs/examples/optimization/
+- [x] **Test ALL code examples**: Not modifying examples, only adding navigation references
+- [x] **Verify ALL API signatures match source**: Not changing code, only sidebar configuration
+- [x] **Ensure realistic data (no "foo", "bar")**: Not modifying example content
+- [x] **Read quality standards**: Documentation should be discoverable and well-organized
+- [x] **Prepare testing environment**: MkDocs build verified successful
+
+### User Request
+
+Fix missing sidebar references for Python tutorial files in `docs/examples/` documentation. The "Examples and Tutorials" sidebar only referenced notebooks from `docs/examples/notebooks/`, but did not include any of the 30 Python tutorial files in the examples directory and optimization subdirectory.
+
+### Issues Found
+
+1. **Missing Python Tutorials in Sidebar**: 25 Python tutorial files in `docs/examples/` not referenced in navigation
+2. **Missing Optimization Examples**: 5 Python files in `docs/examples/optimization/` not referenced
+3. **Poor Discoverability**: Users browsing documentation sidebar could not find these valuable tutorials
+4. **Navigation Gap**: README.md in examples/ only mentions notebooks, not Python tutorials
+
+### Discovery
+
+**Files in docs/examples/ (not in sidebar):**
+- Data Ingestion: ingest_ccxt.py, ingest_yfinance.py, custom_data_adapter.py
+- Backtesting: backtest_with_cache.py, backtest_paper_full_validation.py, cache_warming.py, generate_backtest_report.py
+- Live & Paper Trading: live_trading.py, live_trading_simple.py, paper_trading_simple.py, paper_trading_validation.py, shadow_trading_simple.py, shadow_trading_dashboard.py
+- Portfolio: portfolio_allocator_tutorial.py, allocation_algorithms_tutorial.py, attribution_analysis_example.py
+- Transaction Costs: slippage_models_tutorial.py, borrow_cost_tutorial.py, overnight_financing_tutorial.py
+- Advanced: high_frequency_custom_triggers.py, latency_simulation_tutorial.py, pipeline_tutorial.py, websocket_streaming.py, rust_optimized_indicators.py, custom_broker_adapter.py
+
+**Files in docs/examples/optimization/ (not in sidebar):**
+- bayesian_optimization_5param.py
+- grid_search_ma_crossover.py
+- parallel_optimization_example.py
+- random_search_vs_grid.py
+- walk_forward_analysis.py
+
+**Total Missing Files:** 30 Python tutorials
+
+### Fixes Applied
+
+**Updated mkdocs.yml** - Added new "Python Tutorials" section under "Examples & Tutorials" with organized subsections:
+
+1. **Data Ingestion** (3 files)
+   - CCXT Data Ingestion
+   - YFinance Data Ingestion
+   - Custom Data Adapter
+
+2. **Backtesting** (4 files)
+   - Backtest with Cache
+   - Full Validation (Backtest & Paper)
+   - Cache Warming
+   - Generate Backtest Report
+
+3. **Live & Paper Trading** (6 files)
+   - Live Trading (Simple & Advanced)
+   - Paper Trading (Simple & Validation)
+   - Shadow Trading (Simple & Dashboard)
+
+4. **Portfolio Management** (3 files)
+   - Portfolio Allocator Tutorial
+   - Allocation Algorithms
+   - Attribution Analysis
+
+5. **Transaction Costs** (3 files)
+   - Slippage Models
+   - Borrow Costs
+   - Overnight Financing
+
+6. **Advanced Features** (6 files)
+   - High-Frequency Custom Triggers
+   - Latency Simulation
+   - Pipeline API
+   - WebSocket Streaming
+   - Rust-Optimized Indicators
+   - Custom Broker Adapter
+
+7. **Optimization Examples** (5 files)
+   - Grid Search MA Crossover
+   - Random Search vs Grid
+   - Bayesian Optimization (5 Params)
+   - Parallel Optimization
+   - Walk-Forward Analysis
+
+### Verification Checklist
+
+- [x] **All files exist**: Verified 30 Python files exist in filesystem
+- [x] **MkDocs builds successfully**: `mkdocs build --strict` completed in 47.04 seconds
+- [x] **No build errors**: Build completed without errors (only informational warnings about unincluded files)
+- [x] **Jupyter plugin converts files**: All .py files successfully converted to notebook format by mkdocs-jupyter
+- [x] **Logical organization**: Files grouped by functional category for easy discovery
+- [x] **Consistent naming**: Display names are clear and descriptive
+
+### Files Modified
+
+**Changed:**
+- `mkdocs.yml` - Added 30 Python tutorial references organized in 7 categories
+
+### Summary
+
+**Before:** Only Jupyter notebooks visible in sidebar (14 notebooks)
+**After:** Complete Examples & Tutorials section with notebooks + organized Python tutorials (14 notebooks + 30 Python files = 44 total examples)
+
+**Key Improvements:**
+1. ✅ All 30 Python tutorial files now discoverable via sidebar navigation
+2. ✅ Logical categorization by feature area (Data, Backtesting, Live Trading, etc.)
+3. ✅ Improved user experience - users can browse all available examples
+4. ✅ MkDocs build verified successful (47.04 seconds)
+5. ✅ No breaking changes - only additions to navigation structure
+
+**Impact:**
+- **+100% increase** in discoverable example content (14 → 44 examples)
+- Users can now find relevant tutorials directly from sidebar
+- Better alignment between filesystem structure and documentation navigation
+
+**Commit Hash:** [pending]
+
+---

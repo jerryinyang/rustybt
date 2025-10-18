@@ -148,6 +148,44 @@ nav:
           - Complete Workflows:
               - 10. Full Workflow (⭐ Recommended): examples/notebooks/10_full_workflow.ipynb
               - 11. Advanced Topics: examples/notebooks/11_advanced_topics.ipynb
+      - Python Tutorials:
+          - Data Ingestion:
+              - CCXT Data Ingestion: examples/ingest_ccxt.py
+              - YFinance Data Ingestion: examples/ingest_yfinance.py
+              - Custom Data Adapter: examples/custom_data_adapter.py
+          - Backtesting:
+              - Backtest with Cache: examples/backtest_with_cache.py
+              - Full Validation (Backtest & Paper): examples/backtest_paper_full_validation.py
+              - Cache Warming: examples/cache_warming.py
+              - Generate Backtest Report: examples/generate_backtest_report.py
+          - Live & Paper Trading:
+              - Live Trading (Simple): examples/live_trading_simple.py
+              - Live Trading (Advanced): examples/live_trading.py
+              - Paper Trading (Simple): examples/paper_trading_simple.py
+              - Paper Trading Validation: examples/paper_trading_validation.py
+              - Shadow Trading (Simple): examples/shadow_trading_simple.py
+              - Shadow Trading Dashboard: examples/shadow_trading_dashboard.py
+          - Portfolio Management:
+              - Portfolio Allocator Tutorial: examples/portfolio_allocator_tutorial.py
+              - Allocation Algorithms: examples/allocation_algorithms_tutorial.py
+              - Attribution Analysis: examples/attribution_analysis_example.py
+          - Transaction Costs:
+              - Slippage Models: examples/slippage_models_tutorial.py
+              - Borrow Costs: examples/borrow_cost_tutorial.py
+              - Overnight Financing: examples/overnight_financing_tutorial.py
+          - Advanced Features:
+              - High-Frequency Custom Triggers: examples/high_frequency_custom_triggers.py
+              - Latency Simulation: examples/latency_simulation_tutorial.py
+              - Pipeline API: examples/pipeline_tutorial.py
+              - WebSocket Streaming: examples/websocket_streaming.py
+              - Rust-Optimized Indicators: examples/rust_optimized_indicators.py
+              - Custom Broker Adapter: examples/custom_broker_adapter.py
+          - Optimization Examples:
+              - Grid Search MA Crossover: examples/optimization/grid_search_ma_crossover.py
+              - Random Search vs Grid: examples/optimization/random_search_vs_grid.py
+              - Bayesian Optimization (5 Params): examples/optimization/bayesian_optimization_5param.py
+              - Parallel Optimization: examples/optimization/parallel_optimization_example.py
+              - Walk-Forward Analysis: examples/optimization/walk_forward_analysis.py
   - API Reference:
       - Data Management:
           - Overview: api/data-management/README.md

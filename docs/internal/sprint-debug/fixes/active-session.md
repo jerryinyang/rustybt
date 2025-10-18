@@ -422,6 +422,10 @@ These are framework code issues, not caused by documentation changes.
 - Temporal isolation guaranteed via data.history() and context.prices
 - Professional-grade documentation
 
-**Commit Hash:** 971b6d2
+**Commit Hash:** 971b6d2 (initial - wrong location), 526ecc1 (corrected location)
+
+**Note:** Initial commit modified wrong directory (`examples/notebooks/`). Commit 526ecc1
+corrects this by moving changes to proper location (`docs/examples/notebooks/`) and
+reverting the incorrect file.
 
 ---

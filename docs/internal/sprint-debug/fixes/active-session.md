@@ -310,7 +310,7 @@ All notebooks that call setup_notebook() now execute successfully:
 
 ### User Request
 
-Improve `examples/notebooks/03_strategy_development.ipynb` to:
+Improve `docs/examples/notebooks/03_strategy_development.ipynb` to:
 - Add comprehensive examples demonstrating all RustyBT capabilities
 - Show different entry methods (market, limit orders)
 - Show different exit methods (stop-loss, take-profit, trailing stops)
@@ -383,7 +383,8 @@ Completely rewrote with 4 comprehensive strategies:
 
 ### Files Modified
 
-- `examples/notebooks/03_strategy_development.ipynb`
+- `docs/examples/notebooks/03_strategy_development.ipynb` (correct location)
+- `examples/notebooks/03_strategy_development.ipynb` (reverted - was modified by mistake)
 
 ### Verification Checklist
 

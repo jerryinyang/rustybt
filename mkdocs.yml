@@ -105,6 +105,9 @@ nav:
       - Configuration: getting-started/configuration.md
   - User Guides:
       - Decimal Precision: guides/decimal-precision-configuration.md
+      - Backtesting:
+          - Backtest Output Organization: guides/backtest-output-organization.md
+          - Strategy Code Capture: guides/strategy-code-capture.md
       - Data Management:
           - CSV Data Import: guides/csv-data-import.md
           - Data Ingestion: guides/data-ingestion.md
@@ -279,6 +282,10 @@ nav:
               - Monte Carlo: api/optimization/robustness/monte-carlo.md
               - Noise Infusion: api/optimization/robustness/noise-infusion.md
               - Sensitivity Analysis: api/optimization/robustness/sensitivity-analysis.md
+      - Backtesting:
+          - Overview: api/backtest/README.md
+          - Artifact Manager: api/backtest/artifact-manager.md
+          - Code Capture: api/backtest/code-capture.md
       - Analytics:
           - Overview: api/analytics/README.md
           - Reports: api/analytics/reports.md

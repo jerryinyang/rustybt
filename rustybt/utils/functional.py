@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def,no-untyped-call,var-annotated"
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Iterator

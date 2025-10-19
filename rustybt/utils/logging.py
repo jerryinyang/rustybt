@@ -46,7 +46,7 @@ def mask_sensitive_data(
 
 def configure_logging(
     log_dir: Path | None = None,
-    log_level: str = "INFO",
+    log_level: str = "WARNING",
     log_to_console: bool = True,
     log_to_file: bool = True,
 ) -> None:
@@ -55,6 +55,7 @@ def configure_logging(
     Args:
         log_dir: Directory for log files (defaults to ./logs)
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+                   Default: WARNING (reduces noise in notebooks/console)
         log_to_console: Whether to log to console
         log_to_file: Whether to log to file
 

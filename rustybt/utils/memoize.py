@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def,no-untyped-call,var-annotated,override,name-match,index,attr-defined,has-type,type-arg"
 """
 Tools for memoization of function results.
 """

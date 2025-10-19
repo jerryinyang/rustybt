@@ -1,0 +1,16 @@
+# Explicit code capture configuration for momentum strategy
+# This file tells RustyBT exactly which files to capture during backtesting
+
+files:
+  # Main strategy entry point
+  - my_strategy.py
+
+  # Utility modules
+  - utils/indicators.py
+  - utils/risk.py
+
+  # Configuration
+  - config/params.json
+
+  # Documentation
+  - README.md

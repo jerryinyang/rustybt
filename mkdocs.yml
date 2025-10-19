@@ -147,7 +147,6 @@ nav:
               - 09. Live Paper Trading: examples/notebooks/09_live_paper_trading.ipynb
           - Complete Workflows:
               - 10. Full Workflow (⭐ Recommended): examples/notebooks/10_full_workflow.ipynb
-              - 11. Advanced Topics: examples/notebooks/11_advanced_topics.ipynb
       - Python Tutorials:
           - Data Ingestion:
               - CCXT Data Ingestion: examples/ingest_ccxt.py

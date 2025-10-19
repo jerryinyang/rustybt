@@ -30,6 +30,7 @@ import rustybt.protocol
 import rustybt.utils.events
 from rustybt._protocol import handle_non_market_minutes
 from rustybt.assets import Asset, Equity, Future
+from rustybt.backtest.artifact_manager import BacktestArtifactManager
 from rustybt.data import bundles as bundle_loader
 from rustybt.data.data_portal import DataPortal as LegacyDataPortal
 from rustybt.data.polars.data_portal import PolarsDataPortal
@@ -236,6 +237,10 @@ class TradingAlgorithm:
         capital_changes=None,
         get_pipeline_loader=None,
         create_event_context=None,
+        # Backtest artifact management
+        backtest_output_enabled=True,
+        backtest_output_base_dir="backtests",
+        code_capture_enabled=True,
         **initialize_kwargs,
     ):
         # List of trading controls to be used to validate orders.
@@ -466,6 +471,17 @@ class TradingAlgorithm:
 
         self.restrictions = NoRestrictions()
 
+        # Initialize backtest artifact manager
+        self.artifact_manager = BacktestArtifactManager(
+            base_dir=backtest_output_base_dir,
+            enabled=backtest_output_enabled and not live_trading,
+            code_capture_enabled=code_capture_enabled,
+        )
+        self.backtest_id = None
+        # Note: output_dir is a read-only property that delegates to artifact_manager
+        self._strategy_entry_point = None
+        self._captured_files = []
+
     def init_engine(self, get_loader):
         """Construct and store a PipelineEngine from loader.
 
@@ -670,6 +686,40 @@ class TradingAlgorithm:
         else:
             assert self.asset_finder is not None, "Have data portal without asset_finder."
 
+        # Initialize backtest artifacts (ID generation and directory creation)
+        if self.artifact_manager.enabled:
+            # Create directory structure (output_dir is accessible via property)
+            self.artifact_manager.create_directory_structure()
+            self.backtest_id = self.artifact_manager.backtest_id
+            logger = structlog.get_logger(__name__)
+            logger.info(
+                "backtest_started",
+                backtest_id=self.backtest_id,
+                output_dir=str(self.output_dir),
+            )
+
+            # Capture strategy code if enabled
+            if self.artifact_manager.code_capture_enabled:
+                # Determine strategy entry point
+                try:
+                    import inspect
+                    from pathlib import Path
+
+                    # Try to get the file of the class that was instantiated
+                    strategy_file = inspect.getfile(type(self))
+                    self._strategy_entry_point = Path(strategy_file).resolve()
+
+                    # Capture strategy code and dependencies
+                    self._captured_files = self.artifact_manager.capture_strategy_code(
+                        entry_point=self._strategy_entry_point
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "strategy_entry_point_detection_failed",
+                        error=str(e),
+                        backtest_id=self.backtest_id,
+                    )
+
         # Create zipline and loop through simulated_trading.
         # Each iteration returns a perf dictionary
         try:
@@ -684,6 +734,36 @@ class TradingAlgorithm:
         finally:
             self.data_portal = None
             self.metrics_tracker = None
+
+        # Generate and write backtest metadata (final step)
+        if self.artifact_manager.enabled:
+            try:
+                # Get data bundle info from DataCatalog if available
+                data_bundle_info = self.artifact_manager.get_data_bundle_info()
+
+                # Generate metadata (use empty path if entry point detection failed)
+                if self._strategy_entry_point is None:
+                    from pathlib import Path
+
+                    self._strategy_entry_point = Path("<unknown>")
+
+                metadata = self.artifact_manager.generate_metadata(
+                    strategy_entry_point=self._strategy_entry_point,
+                    captured_files=self._captured_files,
+                    data_bundle_info=data_bundle_info,
+                )
+
+                # Write metadata to JSON file
+                self.artifact_manager.write_metadata(metadata)
+
+            except Exception as e:
+                # Log error but don't fail backtest
+                logger = structlog.get_logger(__name__)
+                logger.error(
+                    "metadata_generation_failed",
+                    backtest_id=self.backtest_id,
+                    error=str(e),
+                )
 
         return daily_stats
 
@@ -1606,6 +1686,64 @@ class TradingAlgorithm:
     def account(self):
         self._sync_last_sale_prices()
         return self.metrics_tracker.account
+
+    @property
+    def output_dir(self):
+        """Get the backtest output directory path.
+
+        Returns:
+        -------
+        output_dir : pathlib.Path or None
+            The absolute path to the backtest output directory, or None if
+            artifact management is disabled or the backtest hasn't been run yet.
+
+        Example:
+        -------
+        >>> algo = TradingAlgorithm(...)
+        >>> results = algo.run()
+        >>> print(algo.output_dir)
+        /path/to/backtests/20251018_143527_123
+        """
+        return self.artifact_manager.output_dir if self.artifact_manager.enabled else None
+
+    def get_output_path(self, filename: str, subdir: str = "results"):
+        """Get output path for a file within the backtest directory.
+
+        This is a convenience method that delegates to the artifact manager's
+        get_output_path method. It allows strategies to easily obtain paths
+        for saving custom outputs.
+
+        Parameters
+        ----------
+        filename : str
+            Name of file (can include nested path like 'reports/file.html')
+        subdir : str, optional
+            Subdirectory within backtest dir ('results', 'code', 'metadata').
+            Default is 'results'.
+
+        Returns:
+        -------
+        output_path : pathlib.Path
+            Absolute path to the output file location
+
+        Raises:
+        ------
+        BacktestArtifactError
+            If artifact management is disabled or directory structure not created
+
+        Example:
+        -------
+        >>> class MyStrategy(TradingAlgorithm):
+        ...     def analyze(self, context, perf):
+        ...         # Save custom analysis
+        ...         custom_path = self.get_output_path('custom_analysis.csv')
+        ...         analysis_df.to_csv(custom_path)
+        """
+        if not self.artifact_manager.enabled:
+            from rustybt.backtest.artifact_manager import BacktestArtifactError
+
+            raise BacktestArtifactError("Artifact management is disabled. Cannot get output path.")
+        return self.artifact_manager.get_output_path(filename, subdir=subdir)
 
     def set_logger(self, logger):
         self.logger = logger

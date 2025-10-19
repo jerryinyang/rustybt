@@ -43,4 +43,6 @@ class FinancialModelMeta(ABCMeta):
 
 
 class AllowedAssetMarker(FinancialModelMeta):
-    pass
+    """Marker class for models that specify allowed_asset_types."""
+
+    allowed_asset_types: tuple[type, ...] = ()

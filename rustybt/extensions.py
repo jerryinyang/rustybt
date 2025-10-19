@@ -256,4 +256,4 @@ def create_registry(interface):
 extensible = create_registry
 
 # A global dictionary for storing instances of Registry:
-custom_types: dict[str, type] = {}
+custom_types: dict[type, Registry] = {}

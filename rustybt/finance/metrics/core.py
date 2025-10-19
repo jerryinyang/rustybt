@@ -20,7 +20,9 @@ def _make_metrics_set_core():
     load : callable
         The function which loads the ingested metrics sets back into memory.
     """
-    _metrics_sets = {}
+    from typing import Any
+
+    _metrics_sets: dict[str, Any] = {}
     # Expose _metrics_sets through a proxy so that users cannot mutate this
     # accidentally. Users may go through `register` to update this which will
     # warn when trampling another metrics set.

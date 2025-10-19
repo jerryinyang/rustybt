@@ -207,7 +207,7 @@ def _run(
             raise _RunAlgoError(str(e))
 
     try:
-        perf = TradingAlgorithm(
+        algo = TradingAlgorithm(
             namespace=namespace,
             data_portal=data,
             get_pipeline_loader=choose_loader,
@@ -236,7 +236,13 @@ def _run(
                     "script": algotext,
                 }
             ),
-        ).run()
+        )
+        perf = algo.run()
+
+        # Attach backtest metadata to results DataFrame for export functions
+        perf.attrs["backtest_id"] = algo.backtest_id
+        perf.attrs["output_dir"] = str(algo.output_dir) if algo.output_dir else None
+
     except NoBenchmark:
         raise _RunAlgoError(
             (

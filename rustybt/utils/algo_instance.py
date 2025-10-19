@@ -13,13 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import threading
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from rustybt.algorithm import TradingAlgorithm
 
 context = threading.local()
 
 
-def get_algo_instance():
+def get_algo_instance() -> "TradingAlgorithm | None":
     return getattr(context, "algorithm", None)
 
 
-def set_algo_instance(algo):
+def set_algo_instance(algo: Any) -> None:
     context.algorithm = algo

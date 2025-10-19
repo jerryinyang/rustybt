@@ -9,7 +9,7 @@ This directory contains example Jupyter notebooks demonstrating RustyBT's capabi
 
 ## Available Notebooks
 
-All 13 notebooks are now available! 🎉
+All 12 notebooks are now available! 🎉
 
 ### ⭐ Recommended Starting Point
 
@@ -111,14 +111,6 @@ Advanced techniques for strategy evaluation and improvement:
 - Live monitoring
 
 ---
-
-### 🔬 Advanced Topics
-
-**[11_advanced_topics.ipynb](11_advanced_topics.ipynb)** - Custom indicators and advanced techniques
-
-- Building custom technical indicators
-- Advanced strategy techniques
-- Multi-asset correlation analysis
 
 ## Features Demonstrated
 

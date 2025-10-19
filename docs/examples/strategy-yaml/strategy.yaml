@@ -1,0 +1,70 @@
+# strategy.yaml - Explicit Strategy Code Capture Configuration
+#
+# This file allows you to explicitly specify which files should be captured
+# when running a backtest, giving you full control over what gets saved to
+# the backtest output directory.
+#
+# WHEN TO USE:
+# - Complex projects where import analysis might miss dynamically loaded modules
+# - Projects with non-Python files you want to include (configs, data, docs)
+# - When you need precise control over what gets captured
+#
+# HOW IT WORKS:
+# If strategy.yaml exists in the same directory as your strategy entry point,
+# RustyBT will use this file list instead of automatic import analysis.
+#
+# PRECEDENCE RULE:
+# strategy.yaml presence ALWAYS takes precedence over configuration settings.
+
+# Required field: list of files to capture (relative to strategy directory)
+files:
+  # Main strategy file
+  - my_strategy.py
+
+  # Helper modules and utilities
+  - utils/indicators.py
+  - utils/helpers.py
+  - utils/risk_management.py
+
+  # Configuration files (non-Python files supported!)
+  - config/strategy_config.json
+  - config/risk_params.yaml
+
+  # Data files
+  - data/reference_data.csv
+
+  # Documentation
+  - README.md
+  - CHANGELOG.md
+
+# NOTES:
+# - All paths are relative to the directory containing strategy.yaml
+# - Directory structure is preserved in the backtest output
+# - If a file doesn't exist, a warning is logged but backtest continues
+# - Empty files list is valid (only captures files explicitly listed)
+# - Non-Python files (.json, .yaml, .md, .csv, etc.) are fully supported
+
+# EXAMPLE STRUCTURE:
+# my_strategy_project/
+# ├── my_strategy.py          # Entry point
+# ├── strategy.yaml           # This file
+# ├── utils/
+# │   ├── indicators.py
+# │   ├── helpers.py
+# │   └── risk_management.py
+# ├── config/
+# │   ├── strategy_config.json
+# │   └── risk_params.yaml
+# └── README.md
+#
+# After backtest:
+# backtests/20251018_143527_123/code/
+# ├── my_strategy.py
+# ├── utils/
+# │   ├── indicators.py
+# │   ├── helpers.py
+# │   └── risk_management.py
+# ├── config/
+# │   ├── strategy_config.json
+# │   └── risk_params.yaml
+# └── README.md

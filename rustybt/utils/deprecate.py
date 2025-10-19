@@ -15,11 +15,14 @@
 # limitations under the License.
 
 import warnings
+from typing import Any, Callable, TypeVar
 
 from rustybt.utils.compat import wraps
 
+F = TypeVar("F", bound=Callable[..., Any])
 
-def deprecated(msg=None, stacklevel=2):
+
+def deprecated(msg: str | None = None, stacklevel: int = 2) -> Callable[[F], F]:
     """
     Used to mark a function as deprecated.
 
@@ -37,9 +40,9 @@ def deprecated(msg=None, stacklevel=2):
     def function_a(*args, **kwargs):
     """
 
-    def deprecated_dec(fn):
+    def deprecated_dec(fn: F) -> F:
         @wraps(fn)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             warnings.warn(
                 msg or "Function %s is deprecated." % fn.__name__,
                 category=DeprecationWarning,
@@ -47,6 +50,6 @@ def deprecated(msg=None, stacklevel=2):
             )
             return fn(*args, **kwargs)
 
-        return wrapper
+        return wrapper  # type: ignore[return-value]
 
     return deprecated_dec

@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def,no-untyped-call,var-annotated"
 import operator as op
 
 from toolz import peek

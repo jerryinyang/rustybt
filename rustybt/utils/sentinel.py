@@ -22,8 +22,12 @@ def is_sentinel(obj: Any) -> bool:
     return isinstance(obj, _Sentinel)
 
 
+# Cache for sentinel instances
+_sentinel_cache: dict[str, type[_Sentinel]] = {}
+
+
 def sentinel(name: str, doc: str | None = None) -> type[_Sentinel]:
-    cache: dict[str, type[_Sentinel]] = sentinel._cache
+    cache: dict[str, type[_Sentinel]] = _sentinel_cache
     try:
         value = cache[name]  # memoized
     except KeyError:
@@ -96,6 +100,3 @@ def sentinel(name: str, doc: str | None = None) -> type[_Sentinel]:
 
     cache[name] = Sentinel  # cache result
     return Sentinel
-
-
-sentinel._cache: dict[str, type[_Sentinel]] = {}  # type: ignore[attr-defined,misc]

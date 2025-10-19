@@ -468,3 +468,123 @@ class DataCatalog:
     def count_quality_metrics(self) -> int:
         """Count total number of quality metric records."""
         return BundleMetadata.count_quality_records()
+
+    # ========================================================================
+    # Backtest-Dataset Linkage Methods (Story X3.7)
+    # ========================================================================
+
+    def get_bundles_for_backtest(self, backtest_id: str) -> list[str]:
+        """Get list of bundle names used in a backtest.
+
+        Args:
+            backtest_id: Backtest identifier (e.g., "20251018_143527_123")
+
+        Returns:
+            List of bundle names used in the backtest
+
+        Example:
+            >>> catalog = DataCatalog()
+            >>> bundles = catalog.get_bundles_for_backtest("20251018_143527_123")
+            >>> assert "quandl" in bundles
+        """
+        from rustybt.assets.asset_db_schema import backtest_data_links
+
+        with Session(self.engine) as session:
+            stmt = (
+                select(backtest_data_links.c.bundle_name)
+                .where(backtest_data_links.c.backtest_id == backtest_id)
+                .distinct()
+            )
+            results = session.execute(stmt).fetchall()
+
+            return [row.bundle_name for row in results]
+
+    def get_bundle_name(self) -> str:
+        """Get the most recently accessed bundle name.
+
+        This is a convenience method for single-bundle scenarios.
+        For multi-bundle scenarios, use get_bundles_for_backtest().
+
+        Returns:
+            Most recently accessed bundle name, or "unknown" if none found
+
+        Example:
+            >>> catalog = DataCatalog()
+            >>> bundle_name = catalog.get_bundle_name()
+        """
+        from rustybt.assets.asset_db_schema import bundle_metadata
+
+        with Session(self.engine) as session:
+            stmt = select(bundle_metadata.c.bundle_name).order_by(
+                bundle_metadata.c.updated_at.desc()
+            )
+            result = session.execute(stmt).first()
+
+            if result is None:
+                return "unknown"
+
+            return result.bundle_name
+
+    def link_backtest_to_bundles(self, backtest_id: str, bundle_names: list[str]) -> None:
+        """Link backtest to bundles in database.
+
+        Creates records in backtest_data_links table to track which bundles
+        were used in a backtest for data provenance.
+
+        Args:
+            backtest_id: Backtest identifier (e.g., "20251018_143527_123")
+            bundle_names: List of bundle names used in the backtest
+
+        Raises:
+            ValueError: If bundle_names is empty
+
+        Example:
+            >>> catalog = DataCatalog()
+            >>> catalog.link_backtest_to_bundles("20251018_143527_123", ["quandl"])
+        """
+        if not bundle_names:
+            raise ValueError("bundle_names cannot be empty")
+
+        from rustybt.assets.asset_db_schema import backtest_data_links
+
+        accessed_at = int(time.time())
+
+        with Session(self.engine) as session:
+            # Batch insert for efficiency
+            records = [
+                {
+                    "backtest_id": backtest_id,
+                    "bundle_name": bundle_name,
+                    "accessed_at": accessed_at,
+                }
+                for bundle_name in bundle_names
+            ]
+
+            stmt = backtest_data_links.insert()
+            session.execute(stmt, records)
+            session.commit()
+
+    def get_backtests_using_bundle(self, bundle_name: str) -> list[str]:
+        """Get list of backtest IDs that used a specific bundle.
+
+        Args:
+            bundle_name: Bundle name to query
+
+        Returns:
+            List of backtest IDs that used this bundle
+
+        Example:
+            >>> catalog = DataCatalog()
+            >>> backtests = catalog.get_backtests_using_bundle("quandl")
+        """
+        from rustybt.assets.asset_db_schema import backtest_data_links
+
+        with Session(self.engine) as session:
+            stmt = (
+                select(backtest_data_links.c.backtest_id)
+                .where(backtest_data_links.c.bundle_name == bundle_name)
+                .distinct()
+            )
+            results = session.execute(stmt).fetchall()
+
+            return [row.backtest_id for row in results]

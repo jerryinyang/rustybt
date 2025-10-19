@@ -14,7 +14,7 @@ import sqlalchemy as sa
 # assets database
 # NOTE: When upgrading this remember to add a downgrade in:
 # .asset_db_migrations
-ASSET_DB_VERSION = 9
+ASSET_DB_VERSION = 10
 
 # A frozenset of the names of all tables in the assets db
 # NOTE: When modifying this schema, update the ASSET_DB_VERSION value
@@ -32,6 +32,7 @@ asset_db_table_names = frozenset(
         "bundle_cache",
         "cache_statistics",
         "bundle_symbols",
+        "backtest_data_links",
     }
 )
 
@@ -365,3 +366,36 @@ bundle_symbols = sa.Table(
 # Indexes for bundle_symbols
 sa.Index("idx_bundle_symbols_bundle", bundle_symbols.c.bundle_name)
 sa.Index("idx_bundle_symbols_symbol", bundle_symbols.c.symbol)
+
+# Backtest data links table (Story X3.7: Integrate Backtest Runs with DataCatalog)
+# Links backtests to the datasets (bundles) they used for data provenance tracking
+backtest_data_links = sa.Table(
+    "backtest_data_links",
+    metadata,
+    sa.Column(
+        "id",
+        sa.Integer,
+        primary_key=True,
+        autoincrement=True,
+    ),
+    sa.Column(
+        "backtest_id",
+        sa.Text,
+        nullable=False,
+    ),
+    sa.Column(
+        "bundle_name",
+        sa.Text,
+        sa.ForeignKey("bundle_metadata.bundle_name"),
+        nullable=False,
+    ),
+    sa.Column(
+        "accessed_at",
+        sa.Integer,
+        nullable=False,
+    ),
+)
+
+# Indexes for backtest_data_links
+sa.Index("idx_backtest_data_links_backtest_id", backtest_data_links.c.backtest_id)
+sa.Index("idx_backtest_data_links_bundle_name", backtest_data_links.c.bundle_name)

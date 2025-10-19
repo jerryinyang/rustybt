@@ -77,6 +77,11 @@ def setup_notebook() -> None:
     pd.set_option("display.width", None)
     pd.set_option("display.float_format", "{:.6f}".format)
 
+    # Configure logging to reduce verbosity in notebooks
+    from rustybt.utils.logging import configure_logging
+
+    configure_logging(log_level="WARNING", log_to_file=False)
+
     # Check if we're in a Jupyter notebook
     ipython = get_ipython()
     if ipython is not None:

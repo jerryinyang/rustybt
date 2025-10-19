@@ -2,7 +2,7 @@ from functools import total_ordering
 
 from iso4217 import Currency as ISO4217Currency
 
-_ALL_CURRENCIES = {}
+_ALL_CURRENCIES: dict[str, "Currency"] = {}
 
 
 @total_ordering
@@ -21,6 +21,10 @@ class Currency:
     name : str
         Plain english name for the currency, e.g., 'US Dollar'.
     """
+
+    # Private attributes set in __new__
+    _code: str
+    _name: str
 
     def __new__(cls, code):
         try:

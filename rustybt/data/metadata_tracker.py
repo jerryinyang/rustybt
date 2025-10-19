@@ -2,26 +2,34 @@
 
 import time
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import polars as pl
 from exchange_calendars import ExchangeCalendar
 
-from rustybt.data.catalog import DataCatalog
 from rustybt.data.quality import calculate_quality_metrics
 from rustybt.utils.checksum import calculate_checksum, calculate_checksum_multiple
+
+if TYPE_CHECKING:
+    from rustybt.data.catalog import DataCatalog
 
 
 class BundleMetadataTracker:
     """Tracks metadata and quality metrics during bundle ingestion."""
 
-    def __init__(self, catalog: DataCatalog | None = None):
+    def __init__(self, catalog: "DataCatalog | None" = None):
         """Initialize metadata tracker.
 
         Args:
             catalog: DataCatalog instance. If None, creates default catalog.
         """
-        self.catalog = catalog if catalog is not None else DataCatalog()
+        if catalog is None:
+            # Lazy import to avoid circular dependency
+            from rustybt.data.catalog import DataCatalog
+
+            catalog = DataCatalog()
+
+        self.catalog = catalog
 
     def record_bundle_ingestion(
         self,

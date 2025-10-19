@@ -1,0 +1,6 @@
+{
+  "position_size": 0.1,
+  "lookback_period": 20,
+  "momentum_threshold": 0.0,
+  "description": "Momentum strategy parameters"
+}

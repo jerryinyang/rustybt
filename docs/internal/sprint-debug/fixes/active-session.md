@@ -83,7 +83,7 @@
 - `docs/guides/data-ingestion.md` (CLI options table and validation section)
 - `tests/scripts/test_bundle_cli.py` (test coverage for validation persistence)
 
-**Commit Hash:** [will be filled after commit]
+**Commit Hash:** 9cafc93
 
 ---
 

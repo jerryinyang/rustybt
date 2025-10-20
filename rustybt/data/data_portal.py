@@ -572,7 +572,7 @@ class DataPortal:
 
         for asset in assets:
             adjustments_for_asset = []
-            split_adjustments = self._get_adjustment_list(asset, self._splits_dict, "SPLITS")
+            split_adjustments = self._get_adjustment_list(asset, self._splits_dict, "splits")
             for adj_dt, adj in split_adjustments:
                 if dt < adj_dt.tz_localize(dt.tzinfo) <= perspective_dt:
                     adjustments_for_asset.append(split_adj_factor(adj))
@@ -580,7 +580,7 @@ class DataPortal:
                     break
 
             if field != "volume":
-                merger_adjustments = self._get_adjustment_list(asset, self._mergers_dict, "MERGERS")
+                merger_adjustments = self._get_adjustment_list(asset, self._mergers_dict, "mergers")
                 for adj_dt, adj in merger_adjustments:
                     if dt < adj_dt <= perspective_dt:
                         adjustments_for_asset.append(adj)
@@ -590,7 +590,7 @@ class DataPortal:
                 dividend_adjustments = self._get_adjustment_list(
                     asset,
                     self._dividends_dict,
-                    "DIVIDENDS",
+                    "dividends",
                 )
                 for adj_dt, adj in dividend_adjustments:
                     if dt < adj_dt.tz_localize(dt.tzinfo) <= perspective_dt:

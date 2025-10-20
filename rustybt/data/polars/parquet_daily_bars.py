@@ -135,11 +135,12 @@ class PolarsParquetDailyReader:
             raise FileNotFoundError(f"Daily bars directory not found: {self.daily_bars_path}")
 
         # Check cache
-        if self._use_cache(start_date, end_date):
+        if self._use_cache(start_date, end_date, fields):
             logger.debug(
                 "using_cached_data",
                 start_date=str(start_date),
                 end_date=str(end_date),
+                fields=fields,
             )
             df = self._filter_cached_data(sids, start_date, end_date, fields)
             return df
@@ -162,8 +163,10 @@ class PolarsParquetDailyReader:
                 f"No data found for {len(sids)} assets between {start_date} and {end_date}"
             )
 
-        # Validate OHLCV relationships
-        validate_ohlcv_relationships(df)
+        # Validate OHLCV relationships ONLY if all required columns are present
+        required_ohlcv_cols = {"open", "high", "low", "close"}
+        if required_ohlcv_cols.issubset(set(fields)):
+            validate_ohlcv_relationships(df)
 
         # Update cache if enabled
         if self.enable_cache:
@@ -269,15 +272,16 @@ class PolarsParquetDailyReader:
 
         return df.select(["sid", field])
 
-    def _use_cache(self, start_date: date, end_date: date) -> bool:
-        """Check if cache can be used for date range.
+    def _use_cache(self, start_date: date, end_date: date, fields: list[str]) -> bool:
+        """Check if cache can be used for date range and fields.
 
         Args:
             start_date: Query start date
             end_date: Query end date
+            fields: Fields needed for query
 
         Returns:
-            True if cache contains requested date range
+            True if cache contains requested date range AND all requested fields
         """
         if not self.enable_cache or self._cache is None:
             return False
@@ -285,8 +289,15 @@ class PolarsParquetDailyReader:
         if self._cache_date_range is None:
             return False
 
+        # Check date range
         cache_start, cache_end = self._cache_date_range
-        return start_date >= cache_start and end_date <= cache_end
+        date_range_ok = start_date >= cache_start and end_date <= cache_end
+
+        # Check if all requested fields are in cache
+        cached_columns = set(self._cache.columns)
+        fields_ok = all(field in cached_columns for field in fields)
+
+        return date_range_ok and fields_ok
 
     def _filter_cached_data(
         self,

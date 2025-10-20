@@ -556,20 +556,80 @@ def _make_bundle_core():
         metadata = BundleMetadata.get(name)
         if metadata is not None:
             # This is a Parquet bundle created by ingest-unified
-            # Full integration with run_algorithm() requires reader interface adaptation
-            source_type = metadata.get("source_type", "unknown")
-            raise NotImplementedError(
-                f"Bundle '{name}' is a Parquet bundle created by 'rustybt ingest-unified {source_type}'.\n\n"
-                f"Parquet bundles are not yet fully integrated with run_algorithm().\n"
-                f"This is a known limitation tracked in GitHub issue #XXX.\n\n"
-                f"WORKAROUND OPTIONS:\n"
-                f"1. Use traditional bundle ingestion for backtesting:\n"
-                f"   rustybt ingest -b {name}  # if bundle has ingest function\n\n"
-                f"2. Access Parquet data directly (advanced):\n"
-                f"   from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader\n"
-                f"   reader = PolarsParquetDailyReader('~/.zipline/data/bundles/{name}')\n"
-                f"   df = reader.load_daily_bars(sids=[1], start_date=..., end_date=...)\n\n"
-                f"Full Parquet bundle integration is coming in the next release."
+            # Load using Parquet reader adapter
+            from pathlib import Path
+
+            from rustybt.data.polars.parquet_adjustments import ParquetAdjustmentReader
+            from rustybt.data.polars.parquet_asset_finder import ParquetAssetFinder
+            from rustybt.data.polars.parquet_bar_reader import ParquetDailyBarReader
+            from rustybt.data.polars.parquet_minute_bar_reader import ParquetMinuteBarReader
+
+            bundle_path_str = pth.data_path(["bundles", name], environ=environ)
+            bundle_path = Path(bundle_path_str)
+
+            # Get calendar from metadata (default to NYSE)
+            calendar_name = metadata.get("calendar", "NYSE")
+
+            # Get date range from metadata
+            start_date = metadata.get("start_date")
+            end_date = metadata.get("end_date")
+
+            if start_date is None or end_date is None:
+                raise ValueError(
+                    f"Bundle '{name}' metadata is missing start_date or end_date. "
+                    f"Bundle may be corrupted. Try re-ingesting with 'rustybt ingest-unified'."
+                )
+
+            # Convert Unix timestamps to pandas Timestamps
+            start_session = pd.Timestamp(start_date, unit="s")
+            end_session = pd.Timestamp(end_date, unit="s")
+
+            # Create Parquet asset finder (reads from metadata.db)
+            asset_finder = ParquetAssetFinder(bundle_name=name)
+
+            # Create Parquet daily bar reader
+            daily_bar_reader = ParquetDailyBarReader(
+                bundle_path=str(bundle_path),
+                calendar_name=calendar_name,
+                start_session=start_session,
+                end_session=end_session,
+            )
+
+            # Create Parquet minute bar reader if minute data exists
+            minute_bars_path = bundle_path / "minute_bars"
+            if minute_bars_path.exists() and any(minute_bars_path.iterdir()):
+                minute_bar_reader = ParquetMinuteBarReader(
+                    bundle_path=str(bundle_path),
+                    calendar_name=calendar_name,
+                    start_session=start_session,
+                    end_session=end_session,
+                )
+                log.info("Loaded minute bar reader for bundle '%s'", name)
+            else:
+                minute_bar_reader = None
+                log.info("No minute data found for bundle '%s'", name)
+
+            # Create Parquet adjustment reader
+            try:
+                adjustment_reader = ParquetAdjustmentReader(bundle_path=str(bundle_path))
+                log.info("Loaded adjustment reader for bundle '%s'", name)
+            except Exception as e:
+                log.warning("Could not load adjustment reader for bundle '%s': %s", name, str(e))
+                adjustment_reader = None
+
+            log.info(
+                "Loading Parquet bundle '%s' with calendar '%s' (%s to %s)",
+                name,
+                calendar_name,
+                start_session.date(),
+                end_session.date(),
+            )
+
+            return BundleData(
+                asset_finder=asset_finder,
+                equity_minute_bar_reader=minute_bar_reader,
+                equity_daily_bar_reader=daily_bar_reader,
+                adjustment_reader=adjustment_reader,
             )
 
         # Traditional Bcolz bundle - use existing logic

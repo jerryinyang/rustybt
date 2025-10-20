@@ -91,13 +91,79 @@
 
 **Additional Issues Identified (2025-10-20 15:00:00):**
 
-### Issue #3: Python API Cannot Find Bundles Created by CLI
-**Problem:** Bundles created with `rustybt ingest-unified` are not recognized by `run_algorithm()` with `bundle="mag-7"` parameter.
+### Issue #3: Parquet bundles not recognized by run_algorithm() ✅ COMPLETED
 
-**Reproduction:**
-1. Run CLI: `rustybt ingest-unified yfinance --symbols AAPL --bundle mag-7 --start 2000-01-01 --end 2025-01-01 --frequency 1d`
-2. Verify with: `rustybt bundle list` (shows bundle exists)
-3. Run Python API: `run_algorithm(..., bundle="mag-7", ...)`
+**Problem:** Bundles created with `rustybt ingest-unified` were not recognized by `run_algorithm()`.
+
+**Root Cause:** `bundles.load()` raised `NotImplementedError` for Parquet bundles because they lacked BarReader interface adapters.
+
+**Solution Implemented:**
+1. Created `ParquetDailyBarReader` - BarReader adapter for Parquet bundles
+   - Implements full BarReader interface (load_raw_arrays, get_value, get_last_traded_dt, etc.)
+   - Converts Polars DataFrames to NumPy arrays for compatibility
+   - Handles session calendar alignment
+   - Provides currency_codes support
+
+2. Created `ParquetAssetFinder` - AssetFinder for Parquet metadata
+   - Reads symbols from metadata.db instead of assets.db
+   - Creates Asset/Equity objects on-the-fly from bundle metadata
+   - Supports lookup_symbol with country_code parameter
+   - Compatible with existing AssetFinder interface
+
+3. Updated `bundles.load()` to detect and load Parquet bundles
+   - Detects Parquet bundles by checking for metadata via BundleMetadata.get()
+   - Creates ParquetAssetFinder and ParquetDailyBarReader
+   - Returns BundleData with None for minute_bar_reader and adjustment_reader
+   - Falls back to traditional Bcolz loading for legacy bundles
+
+4. Updated `run_algo.py` to handle None readers
+   - Handles None minute_bar_reader by using daily reader's first_trading_day
+   - Handles None adjustment_reader by passing None to USEquityPricingLoader
+   - Maintains backward compatibility with Bcolz bundles
+
+**Files Created:**
+- `rustybt/data/polars/parquet_bar_reader.py` - ParquetDailyBarReader implementation
+- `rustybt/data/polars/parquet_asset_finder.py` - ParquetAssetFinder implementation
+- `docs/internal/sprint-debug/fixes/zipline-folder-organization.md` - Complete .zipline folder documentation
+
+**Files Modified:**
+- `rustybt/data/bundles/core.py` - Updated load() to support Parquet bundles
+- `rustybt/utils/run_algo.py` - Handle None readers gracefully
+
+**Test Results:**
+```python
+# Successful integration test
+result = run_algorithm(
+    initialize=initialize,
+    handle_data=handle_data,
+    bundle="mag-7",  # Parquet bundle
+    start=pd.Timestamp("2024-01-01"),
+    end=pd.Timestamp("2024-01-31"),
+    capital_base=10000,
+)
+# ✓ Returns 21 rows with complete backtest results
+```
+
+**Status:** ✅ COMPLETED - Parquet bundles now fully integrated with run_algorithm()
+
+---
+
+### Issue #4: .zipline folder organization ✅ COMPLETED
+
+**Problem:** No documentation existed for .zipline folder structure, causing confusion about bundle organization.
+
+**Solution:** Created comprehensive documentation covering:
+- Complete directory structure for both Parquet and Bcolz bundles
+- Metadata database schemas
+- Bundle management commands
+- Integration with run_algorithm()
+- Migration path from Bcolz to Parquet
+- Best practices and troubleshooting
+
+**File Created:**
+- `docs/internal/sprint-debug/fixes/zipline-folder-organization.md`
+
+**Status:** ✅ COMPLETED
 4. Error: Bundle not recognized
 
 **Investigation needed:**

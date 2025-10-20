@@ -168,7 +168,12 @@ def _run(
         else:
             click.echo(algotext)
 
-    first_trading_day = bundle_data.equity_minute_bar_reader.first_trading_day
+    # Handle Parquet bundles that don't have minute data
+    if bundle_data.equity_minute_bar_reader is not None:
+        first_trading_day = bundle_data.equity_minute_bar_reader.first_trading_day
+    else:
+        # Use daily bar reader's first trading day for daily-only bundles
+        first_trading_day = bundle_data.equity_daily_bar_reader.first_trading_day
 
     data = DataPortal(
         bundle_data.asset_finder,
@@ -181,10 +186,18 @@ def _run(
         future_daily_reader=bundle_data.equity_daily_bar_reader,
     )
 
-    pipeline_loader = USEquityPricingLoader.without_fx(
-        bundle_data.equity_daily_bar_reader,
-        bundle_data.adjustment_reader,
-    )
+    # Handle adjustment_reader being None for Parquet bundles
+    if bundle_data.adjustment_reader is not None:
+        pipeline_loader = USEquityPricingLoader.without_fx(
+            bundle_data.equity_daily_bar_reader,
+            bundle_data.adjustment_reader,
+        )
+    else:
+        # For Parquet bundles without adjustments, create loader with None
+        pipeline_loader = USEquityPricingLoader.without_fx(
+            bundle_data.equity_daily_bar_reader,
+            None,
+        )
 
     def choose_loader(column):
         if column in USEquityPricing.columns:

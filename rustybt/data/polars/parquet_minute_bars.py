@@ -1,7 +1,7 @@
 """Polars-based minute bars reader with Decimal precision.
 
-This module provides efficient reading of minute-level OHLCV bars from Parquet
-files with Decimal columns for financial-grade precision.
+This module provides efficient reading of minute OHLCV bars from Parquet files
+with Decimal columns for financial-grade precision.
 
 Parquet Structure:
     data/bundles/<bundle_name>/minute_bars/
@@ -9,15 +9,16 @@ Parquet Structure:
     │   ├── month=01/
     │   │   ├── day=01/
     │   │   │   └── data.parquet
-    │   │   └── day=02/
-    │   │       └── data.parquet
+    │   │   ├── day=02/
+    │   │   │   └── data.parquet
+    │   │   └── ...
     │   └── month=02/
     │       └── ...
     └── year=2023/
         └── ...
 """
 
-from datetime import date, datetime, time
+from datetime import date, datetime
 from pathlib import Path
 
 import polars as pl
@@ -35,18 +36,15 @@ class PolarsParquetMinuteReader:
     This reader uses Polars lazy evaluation and partition pruning for
     efficient data loading from partitioned Parquet files.
 
-    Supports sub-second resolution (microsecond timestamps) for cryptocurrency
-    markets that trade 24/7.
-
     Attributes:
-        bundle_path: Path to bundle directory
+        bundle_path: Path to bundle directory (e.g., "data/bundles/quandl")
         minute_bars_path: Path to minute bars directory
-        cache: In-memory cache for most recent trading day
+        cache: In-memory cache for recently accessed data
 
     Example:
-        >>> reader = PolarsParquetMinuteReader("data/bundles/binance")
+        >>> reader = PolarsParquetMinuteReader("data/bundles/quandl")
         >>> df = reader.load_minute_bars(
-        ...     sids=[1],
+        ...     sids=[1, 2, 3],
         ...     start_dt=datetime(2023, 1, 1, 9, 30),
         ...     end_dt=datetime(2023, 1, 1, 16, 0)
         ... )
@@ -62,15 +60,15 @@ class PolarsParquetMinuteReader:
         """Initialize reader with bundle directory path.
 
         Args:
-            bundle_path: Path to bundle directory (e.g., "data/bundles/binance")
-            enable_cache: Enable caching of most recent trading day (default: True)
+            bundle_path: Path to bundle directory (e.g., "data/bundles/quandl")
+            enable_cache: Enable in-memory caching for hot data (default: True)
             enable_metadata_catalog: Enable metadata catalog integration (default: True)
         """
         self.bundle_path = Path(bundle_path)
         self.minute_bars_path = self.bundle_path / "minute_bars"
         self.enable_cache = enable_cache
         self._cache: pl.DataFrame | None = None
-        self._cache_date: date | None = None
+        self._cache_date_range: tuple[datetime, datetime] | None = None
 
         # Initialize metadata catalog
         self.enable_metadata_catalog = enable_metadata_catalog
@@ -104,15 +102,15 @@ class PolarsParquetMinuteReader:
 
         Args:
             sids: List of asset IDs (sids) to load
-            start_dt: Start datetime (inclusive, UTC)
-            end_dt: End datetime (inclusive, UTC)
+            start_dt: Start datetime (inclusive)
+            end_dt: End datetime (inclusive)
             fields: Columns to load (default: all OHLCV columns)
 
         Returns:
             Polars DataFrame with Decimal columns for OHLCV data
 
         Schema:
-            timestamp: pl.Datetime("us")
+            dt: pl.Datetime
             sid: pl.Int64
             open: pl.Decimal(18, 8)
             high: pl.Decimal(18, 8)
@@ -125,13 +123,14 @@ class PolarsParquetMinuteReader:
             DataError: If no data found or validation fails
 
         Example:
-            >>> reader = PolarsParquetMinuteReader("data/bundles/binance")
+            >>> reader = PolarsParquetMinuteReader("data/bundles/quandl")
             >>> df = reader.load_minute_bars(
-            ...     sids=[1],
-            ...     start_dt=datetime(2023, 1, 1, 0, 0),
-            ...     end_dt=datetime(2023, 1, 1, 23, 59)
+            ...     sids=[1, 2],
+            ...     start_dt=datetime(2023, 1, 1, 9, 30),
+            ...     end_dt=datetime(2023, 1, 1, 16, 0)
             ... )
             >>> assert len(df) > 0
+            >>> assert df["dt"].min() >= datetime(2023, 1, 1, 9, 30)
         """
         fields = fields or ["open", "high", "low", "close", "volume"]
 
@@ -139,8 +138,8 @@ class PolarsParquetMinuteReader:
         if not self.minute_bars_path.exists():
             raise FileNotFoundError(f"Minute bars directory not found: {self.minute_bars_path}")
 
-        # Check cache for single-day queries
-        if self._use_cache(start_dt.date(), end_dt.date()):
+        # Check cache
+        if self._use_cache(start_dt, end_dt):
             logger.debug(
                 "using_cached_data",
                 start_dt=str(start_dt),
@@ -154,9 +153,9 @@ class PolarsParquetMinuteReader:
             parquet_pattern = str(self.minute_bars_path / "**" / "*.parquet")
             df = (
                 pl.scan_parquet(parquet_pattern)
-                .filter(pl.col("timestamp").is_between(start_dt, end_dt, closed="both"))
+                .filter(pl.col("dt").is_between(start_dt, end_dt, closed="both"))
                 .filter(pl.col("sid").is_in(sids))
-                .select(["timestamp", "sid"] + fields)
+                .select(["dt", "sid"] + fields)
                 .collect()
             )
         except Exception as e:
@@ -168,9 +167,9 @@ class PolarsParquetMinuteReader:
         # Validate OHLCV relationships
         validate_ohlcv_relationships(df)
 
-        # Update cache for single-day queries
-        if self.enable_cache and start_dt.date() == end_dt.date():
-            self._update_cache(df, start_dt.date())
+        # Update cache if enabled
+        if self.enable_cache:
+            self._update_cache(df, start_dt, end_dt)
 
         logger.info(
             "minute_bars_loaded",
@@ -182,30 +181,8 @@ class PolarsParquetMinuteReader:
 
         return df
 
-    def load_trading_day(
-        self, sids: list[int], target_date: date, fields: list[str] | None = None
-    ) -> pl.DataFrame:
-        """Load all minute bars for a trading day.
-
-        Args:
-            sids: List of asset IDs
-            target_date: Target trading date
-            fields: Columns to load (default: all OHLCV)
-
-        Returns:
-            DataFrame with minute bars for entire day
-
-        Example:
-            >>> reader = PolarsParquetMinuteReader("data/bundles/binance")
-            >>> df = reader.load_trading_day([1], date(2023, 1, 1))
-        """
-        start_dt = datetime.combine(target_date, time.min)
-        end_dt = datetime.combine(target_date, time.max)
-
-        return self.load_minute_bars(sids, start_dt, end_dt, fields)
-
-    def get_last_available_datetime(self, sid: int) -> datetime | None:
-        """Get the last available timestamp for an asset.
+    def get_last_available_dt(self, sid: int) -> datetime | None:
+        """Get the last available minute for an asset.
 
         Args:
             sid: Asset ID
@@ -214,28 +191,28 @@ class PolarsParquetMinuteReader:
             Last available datetime or None if no data
 
         Example:
-            >>> reader = PolarsParquetMinuteReader("data/bundles/binance")
-            >>> last_dt = reader.get_last_available_datetime(sid=1)
+            >>> reader = PolarsParquetMinuteReader("data/bundles/quandl")
+            >>> last_dt = reader.get_last_available_dt(sid=1)
         """
         try:
             parquet_pattern = str(self.minute_bars_path / "**" / "*.parquet")
             result = (
                 pl.scan_parquet(parquet_pattern)
                 .filter(pl.col("sid") == sid)
-                .select(pl.col("timestamp").max().alias("last_timestamp"))
+                .select(pl.col("dt").max().alias("last_dt"))
                 .collect()
             )
 
-            if len(result) == 0 or result["last_timestamp"][0] is None:
+            if len(result) == 0 or result["last_dt"][0] is None:
                 return None
 
-            return result["last_timestamp"][0]
+            return result["last_dt"][0]
         except Exception as e:
-            logger.error("get_last_datetime_failed", sid=sid, error=str(e))
+            logger.error("get_last_dt_failed", sid=sid, error=str(e))
             return None
 
-    def get_first_available_datetime(self, sid: int) -> datetime | None:
-        """Get the first available timestamp for an asset.
+    def get_first_available_dt(self, sid: int) -> datetime | None:
+        """Get the first available minute for an asset.
 
         Args:
             sid: Asset ID
@@ -244,24 +221,24 @@ class PolarsParquetMinuteReader:
             First available datetime or None if no data
 
         Example:
-            >>> reader = PolarsParquetMinuteReader("data/bundles/binance")
-            >>> first_dt = reader.get_first_available_datetime(sid=1)
+            >>> reader = PolarsParquetMinuteReader("data/bundles/quandl")
+            >>> first_dt = reader.get_first_available_dt(sid=1)
         """
         try:
             parquet_pattern = str(self.minute_bars_path / "**" / "*.parquet")
             result = (
                 pl.scan_parquet(parquet_pattern)
                 .filter(pl.col("sid") == sid)
-                .select(pl.col("timestamp").min().alias("first_timestamp"))
+                .select(pl.col("dt").min().alias("first_dt"))
                 .collect()
             )
 
-            if len(result) == 0 or result["first_timestamp"][0] is None:
+            if len(result) == 0 or result["first_dt"][0] is None:
                 return None
 
-            return result["first_timestamp"][0]
+            return result["first_dt"][0]
         except Exception as e:
-            logger.error("get_first_datetime_failed", sid=sid, error=str(e))
+            logger.error("get_first_dt_failed", sid=sid, error=str(e))
             return None
 
     def load_spot_value(
@@ -281,36 +258,37 @@ class PolarsParquetMinuteReader:
             DataFrame with sid and field value
 
         Example:
-            >>> reader = PolarsParquetMinuteReader("data/bundles/binance")
-            >>> df = reader.load_spot_value([1], datetime(2023, 1, 1, 10, 30), "close")
+            >>> reader = PolarsParquetMinuteReader("data/bundles/quandl")
+            >>> df = reader.load_spot_value([1, 2], datetime(2023, 1, 15, 10, 30), "close")
+            >>> assert "close" in df.columns
         """
-        df = self.load_minute_bars(sids=sids, start_dt=target_dt, end_dt=target_dt, fields=[field])
+        df = self.load_minute_bars(
+            sids=sids,
+            start_dt=target_dt,
+            end_dt=target_dt,
+            fields=[field],
+        )
 
         return df.select(["sid", field])
 
-    def _use_cache(self, start_date: date, end_date: date) -> bool:
-        """Check if cache can be used for date range.
-
-        Cache is only used for single-day queries.
+    def _use_cache(self, start_dt: datetime, end_dt: datetime) -> bool:
+        """Check if cache can be used for datetime range.
 
         Args:
-            start_date: Query start date
-            end_date: Query end date
+            start_dt: Query start datetime
+            end_dt: Query end datetime
 
         Returns:
-            True if cache contains requested date
+            True if cache contains requested datetime range
         """
         if not self.enable_cache or self._cache is None:
             return False
 
-        if self._cache_date is None:
+        if self._cache_date_range is None:
             return False
 
-        # Only use cache for single-day queries
-        if start_date != end_date:
-            return False
-
-        return start_date == self._cache_date
+        cache_start, cache_end = self._cache_date_range
+        return start_dt >= cache_start and end_dt <= cache_end
 
     def _filter_cached_data(
         self,
@@ -334,36 +312,37 @@ class PolarsParquetMinuteReader:
             raise DataError("Cache is None but _use_cache returned True")
 
         df = (
-            self._cache.filter(pl.col("timestamp").is_between(start_dt, end_dt, closed="both"))
+            self._cache.filter(pl.col("dt").is_between(start_dt, end_dt, closed="both"))
             .filter(pl.col("sid").is_in(sids))
-            .select(["timestamp", "sid"] + fields)
+            .select(["dt", "sid"] + fields)
         )
 
         return df
 
-    def _update_cache(self, df: pl.DataFrame, target_date: date) -> None:
+    def _update_cache(self, df: pl.DataFrame, start_dt: datetime, end_dt: datetime) -> None:
         """Update cache with loaded data.
 
         Args:
             df: Loaded DataFrame
-            target_date: Date of loaded data
+            start_dt: Start datetime of loaded data
+            end_dt: End datetime of loaded data
         """
         self._cache = df
-        self._cache_date = target_date
+        self._cache_date_range = (start_dt, end_dt)
 
         logger.debug(
             "cache_updated",
             row_count=len(df),
-            date=str(target_date),
+            date_range=f"{start_dt} to {end_dt}",
         )
 
     def clear_cache(self) -> None:
         """Clear in-memory cache.
 
         Example:
-            >>> reader = PolarsParquetMinuteReader("data/bundles/binance")
+            >>> reader = PolarsParquetMinuteReader("data/bundles/quandl")
             >>> reader.clear_cache()
         """
         self._cache = None
-        self._cache_date = None
+        self._cache_date_range = None
         logger.debug("cache_cleared")

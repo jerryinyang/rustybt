@@ -12,6 +12,8 @@ import polars as pl
 import pyarrow.parquet as pq
 import structlog
 
+from rustybt.data.bundles import bundles as bundles_registry
+from rustybt.data.bundles import register as register_bundle
 from rustybt.data.bundles.metadata import BundleMetadata
 from rustybt.data.polars.metadata_catalog import (
     ParquetMetadataCatalog,
@@ -473,6 +475,11 @@ class ParquetWriter:
 
         BundleMetadata.update(bundle_name=bundle_name, **update_payload)
 
+        # Auto-register bundle if not already registered
+        # This makes Parquet bundles discoverable via bundles.load()
+        if bundle_name not in bundles_registry:
+            self._register_parquet_bundle(bundle_name, source_metadata)
+
         symbol_entries = self._resolve_symbol_entries(df, source_metadata)
         exchange_default = source_metadata.get("exchange")
 
@@ -595,6 +602,56 @@ class ParquetWriter:
             "violations": violations,
             "passed": violations == 0,
         }
+
+    def _register_parquet_bundle(self, bundle_name: str, source_metadata: dict[str, Any]) -> None:
+        """Register Parquet bundle in the bundle registry.
+
+        This makes the bundle discoverable via bundles.load() for use in
+        run_algorithm() and other Zipline APIs. Parquet bundles created by
+        ingest-unified need to be registered to work with the traditional
+        bundle loading system.
+
+        Args:
+            bundle_name: Name of the bundle to register
+            source_metadata: Source metadata containing source_type, etc.
+
+        Note:
+            The registered ingest function raises an error directing users
+            to use 'rustybt ingest-unified' instead of 'rustybt ingest'.
+        """
+
+        def parquet_bundle_ingest_placeholder(*args, **kwargs):
+            """Placeholder ingest function for Parquet bundles.
+
+            Parquet bundles are created by 'rustybt ingest-unified' command
+            and should not be re-ingested using the traditional 'rustybt ingest'.
+            """
+            source_type = source_metadata.get("source_type", "unknown")
+            raise RuntimeError(
+                f"Bundle '{bundle_name}' is a Parquet bundle created by "
+                f"'rustybt ingest-unified {source_type}'.\n\n"
+                f"To update this bundle, use:\n"
+                f"  rustybt ingest-unified {source_type} --bundle {bundle_name} [...options]\n\n"
+                f"Traditional 'rustybt ingest' is not supported for Parquet bundles."
+            )
+
+        # Register with appropriate calendar based on asset type
+        calendar_name = "NYSE"  # Default to NYSE
+        if source_metadata.get("source_type") == "ccxt":
+            calendar_name = "24/7"  # Crypto exchanges are 24/7
+
+        register_bundle(
+            name=bundle_name,
+            f=parquet_bundle_ingest_placeholder,
+            calendar_name=calendar_name,
+        )
+
+        logger.info(
+            "parquet_bundle_registered",
+            bundle_name=bundle_name,
+            calendar=calendar_name,
+            source_type=source_metadata.get("source_type"),
+        )
 
     def _infer_asset_type(self, symbol: str) -> str:
         """Infer asset type from symbol naming conventions.

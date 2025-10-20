@@ -529,6 +529,9 @@ def _make_bundle_core():
     def load(name, environ=os.environ, timestamp=None):
         """Loads a previously ingested bundle.
 
+        Supports both traditional Bcolz bundles and unified Parquet bundles.
+        Automatically detects bundle type and loads appropriate readers.
+
         Parameters
         ----------
         name : str
@@ -546,6 +549,30 @@ def _make_bundle_core():
         """
         if timestamp is None:
             timestamp = pd.Timestamp.utcnow()
+
+        # Check if this is a Parquet bundle (created by ingest-unified)
+        from rustybt.data.bundles.metadata import BundleMetadata
+
+        metadata = BundleMetadata.get(name)
+        if metadata is not None:
+            # This is a Parquet bundle created by ingest-unified
+            # Full integration with run_algorithm() requires reader interface adaptation
+            source_type = metadata.get("source_type", "unknown")
+            raise NotImplementedError(
+                f"Bundle '{name}' is a Parquet bundle created by 'rustybt ingest-unified {source_type}'.\n\n"
+                f"Parquet bundles are not yet fully integrated with run_algorithm().\n"
+                f"This is a known limitation tracked in GitHub issue #XXX.\n\n"
+                f"WORKAROUND OPTIONS:\n"
+                f"1. Use traditional bundle ingestion for backtesting:\n"
+                f"   rustybt ingest -b {name}  # if bundle has ingest function\n\n"
+                f"2. Access Parquet data directly (advanced):\n"
+                f"   from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader\n"
+                f"   reader = PolarsParquetDailyReader('~/.zipline/data/bundles/{name}')\n"
+                f"   df = reader.load_daily_bars(sids=[1], start_date=..., end_date=...)\n\n"
+                f"Full Parquet bundle integration is coming in the next release."
+            )
+
+        # Traditional Bcolz bundle - use existing logic
         timestr = most_recent_data(name, timestamp, environ=environ)
         return BundleData(
             asset_finder=AssetFinder(

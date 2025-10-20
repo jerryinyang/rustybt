@@ -556,4 +556,47 @@ def test_strategy_execution(sample_strategy):
 - Semantic versioning: MAJOR.MINOR.PATCH
 - Document breaking changes prominently
 
+**Documentation Privacy Requirements:**
+
+All public-facing documentation must be free of personal and sensitive information:
+
+- **FORBIDDEN in Public Docs**:
+  - Personal file paths (e.g., `/Users/username/`, `/home/username/`)
+  - Development workspace paths (e.g., `/Users/jerryinyang/Code/bmad-dev/`)
+  - Email addresses
+  - API keys, tokens, or credentials
+  - Private IP addresses (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+  - Machine names or hostnames
+  - Real personal names in example data
+
+- **Required Practices**:
+  - Use generic paths in examples: `/workspace/`, `/project/`, or relative paths
+  - Clear all Jupyter notebook outputs before committing
+  - Use placeholder data: `user@example.com`, `127.0.0.1`, `PLACEHOLDER_KEY`
+  - Run privacy scanner before committing: `bash scripts/check_personal_info.sh`
+  - Verify notebooks are clean: `python scripts/clear_notebook_outputs.py <notebook>`
+
+- **Automated Enforcement**:
+  - Pre-commit hook: Blocks commits with personal info in docs
+  - CI/CD: GitHub Actions runs privacy check on all PRs
+  - Notebook validation: Ensures notebooks have no output cells
+
+- **Example - BAD vs GOOD**:
+  ```python
+  # ❌ BAD - Personal path exposed
+  df = pd.read_csv("/Users/john/data/stocks.csv")
+
+  # ✅ GOOD - Generic or relative path
+  df = pd.read_csv("data/stocks.csv")
+  # or
+  from pathlib import Path
+  data_dir = Path.home() / "rustybt_data"
+  df = pd.read_csv(data_dir / "stocks.csv")
+  ```
+
+**Privacy Scanning Tools**:
+- `scripts/check_personal_info.sh` - Scan all public docs for personal info
+- `scripts/clear_notebook_outputs.py` - Clear Jupyter notebook outputs
+- Run before every commit affecting documentation
+
 ---

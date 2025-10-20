@@ -733,7 +733,7 @@ PDF reports are multi-page documents:
 4. **Don't Hardcode Paths**:
    ```python
    # L Hardcoded path
-   generator.generate_report("/Users/john/reports/report.html")
+   generator.generate_report("/absolute/hardcoded/path/report.html")
 
    #  Use configurable paths
    from pathlib import Path

@@ -1,0 +1,132 @@
+name: Documentation Privacy Check
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/privacy-check.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/privacy-check.yml'
+
+jobs:
+  privacy-scan:
+    name: Scan Documentation for Personal Information
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: |
+          chmod +x scripts/check_personal_info.sh
+          chmod +x scripts/clear_notebook_outputs.py
+
+      - name: Run Privacy Scanner
+        id: privacy_check
+        run: |
+          bash scripts/check_personal_info.sh
+        continue-on-error: true
+
+      - name: Check for notebook outputs
+        run: |
+          echo "Checking for Jupyter notebooks with outputs..."
+          NOTEBOOKS_WITH_OUTPUTS=0
+
+          for notebook in $(find docs/examples docs/api docs/guides -name "*.ipynb" 2>/dev/null); do
+            if grep -q '"outputs": \[' "$notebook" && ! grep -q '"outputs": \[\]' "$notebook"; then
+              echo "⚠️  Warning: $notebook has output cells that should be cleared"
+              NOTEBOOKS_WITH_OUTPUTS=$((NOTEBOOKS_WITH_OUTPUTS + 1))
+            fi
+          done
+
+          if [ $NOTEBOOKS_WITH_OUTPUTS -gt 0 ]; then
+            echo ""
+            echo "::warning::Found $NOTEBOOKS_WITH_OUTPUTS notebook(s) with output cells"
+            echo "::notice::Run 'python scripts/clear_notebook_outputs.py <notebook>' to clear outputs"
+          fi
+
+      - name: Report Results
+        if: always()
+        run: |
+          if [ "${{ steps.privacy_check.outcome }}" == "failure" ]; then
+            echo "::error::Privacy check failed - personal information found in documentation"
+            echo "::notice::Review the scan results above and fix the issues"
+            echo "::notice::Run 'bash scripts/check_personal_info.sh' locally to test your fixes"
+            exit 1
+          elif [ "${{ steps.privacy_check.outcome }}" == "success" ]; then
+            echo "✅ Privacy check passed - no personal information found"
+          fi
+
+  notebook-outputs-check:
+    name: Verify Notebooks Have No Outputs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check notebook outputs
+        run: |
+          python3 << 'EOF'
+          import json
+          import sys
+          from pathlib import Path
+
+          notebooks_with_outputs = []
+
+          # Check public-facing notebooks
+          public_dirs = [
+              "docs/examples",
+              "docs/api",
+              "docs/guides",
+              "docs/getting-started"
+          ]
+
+          for dir_path in public_dirs:
+              path = Path(dir_path)
+              if not path.exists():
+                  continue
+
+              for notebook in path.rglob("*.ipynb"):
+                  try:
+                      with open(notebook, 'r') as f:
+                          nb = json.load(f)
+
+                      # Check if any code cells have outputs
+                      for cell in nb.get('cells', []):
+                          if cell.get('cell_type') == 'code':
+                              outputs = cell.get('outputs', [])
+                              if outputs:
+                                  notebooks_with_outputs.append(str(notebook))
+                                  break
+                  except Exception as e:
+                      print(f"Error checking {notebook}: {e}")
+
+          if notebooks_with_outputs:
+              print("❌ Found notebooks with output cells:")
+              for nb in notebooks_with_outputs:
+                  print(f"  - {nb}")
+              print("\n💡 To fix:")
+              print("  python scripts/clear_notebook_outputs.py " + " ".join(notebooks_with_outputs))
+              sys.exit(1)
+          else:
+              print("✅ All notebooks have clean outputs")
+              sys.exit(0)
+          EOF
+
+      - name: Fail if outputs found
+        if: failure()
+        run: |
+          echo "::error::Notebooks contain output cells that should be cleared"
+          echo "::notice::Run 'python scripts/clear_notebook_outputs.py docs/examples/notebooks/*.ipynb'"
+          exit 1

@@ -79,6 +79,14 @@ repos:
         pass_filenames: false
         description: "Scans production code for mock patterns (mock, fake, stub, dummy names)"
 
+      - id: check-personal-info
+        name: Check for Personal Information in Docs
+        entry: bash scripts/check_personal_info.sh
+        language: system
+        pass_filenames: false
+        description: "Scans documentation for personal paths, emails, API keys, and other sensitive info"
+        files: ^docs/(examples|api|guides|getting-started|about|index\.md)
+
 # Configuration for specific hooks
 default_language_version:
   python: python3.12

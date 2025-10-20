@@ -270,5 +270,5 @@ adapters:
 
 - **Documentation**: Complete API reference at [rustybt.readthedocs.io](https://rustybt.readthedocs.io)
 - **Examples**: See `examples/` directory for complete strategies
-- **Issues**: Report bugs at [GitHub Issues](https://github.com/bmad-dev/rustybt/issues)
-- **Discussions**: Community forum at [GitHub Discussions](https://github.com/bmad-dev/rustybt/discussions)
+- **Issues**: Report bugs at [GitHub Issues](https://github.com/jerryinyang/rustybt/issues)
+- **Discussions**: Community forum at [GitHub Discussions](https://github.com/jerryinyang/rustybt/discussions)

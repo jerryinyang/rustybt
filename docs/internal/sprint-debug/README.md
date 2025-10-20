@@ -25,7 +25,7 @@ Each debugging session should follow this structure:
 2. **Create Session Timestamp**
    - All fixes are batched and timestamped
    - Format: `YYYY-MM-DD HH:MM:SS`
-   - Record in `fixes/active-session.md` before committing
+   - Record in `fixes/active-session.md` before committing.
 
 ### 2. ⚠️ MANDATORY Pre-Flight Checklist
 

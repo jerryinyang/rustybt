@@ -996,6 +996,17 @@ def bundle_validate(bundle_name: str):
     else:
         console.print("[green]✓ No missing trading days detected[/green]")
 
+    # Persist validation results to metadata
+    import time
+
+    validation_passed = not has_errors
+    BundleMetadata.update(
+        bundle_name=bundle_name,
+        validation_passed=validation_passed,
+        validation_timestamp=int(time.time()),
+        ohlcv_violations=invalid_ohlcv,
+    )
+
     if has_errors:
         console.print("\n[red]Overall: FAILED[/red]")
         raise click.exceptions.Exit(1)

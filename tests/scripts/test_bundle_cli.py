@@ -95,6 +95,67 @@ def test_bundle_validate_passes(runner: CliRunner, prepared_bundle: str):
     assert result.exit_code == 0
     assert "Overall: PASSED" in result.output
 
+    # Verify validation status was persisted to metadata
+    metadata = BundleMetadata.get(prepared_bundle)
+    assert metadata is not None
+    assert metadata.get("validation_passed") is True
+    assert metadata.get("validation_timestamp") is not None
+    assert metadata.get("ohlcv_violations") == 0
+
+
+def test_bundle_validate_fails_with_invalid_ohlcv(tmp_path, monkeypatch, runner: CliRunner):
+    """Test that validation fails and persists failure status for invalid OHLCV data."""
+    zipline_root = tmp_path / ".zipline"
+    bundles_dir = zipline_root / "data" / "bundles"
+    bundles_dir.mkdir(parents=True)
+
+    monkeypatch.setenv("ZIPLINE_ROOT", str(zipline_root))
+
+    db_path = zipline_root / f"assets-{ASSET_DB_VERSION}.db"
+    BundleMetadata.set_db_path(str(db_path))
+    BundleMetadata._get_engine()
+
+    bundle_name = "invalid-bundle"
+    bundle_path = bundles_dir / bundle_name
+
+    writer = ParquetWriter(str(bundle_path))
+
+    # Create invalid data: high < low (OHLCV violation)
+    df = pl.DataFrame(
+        {
+            "date": [date(2025, 1, 1)],
+            "sid": [1],
+            "open": [Decimal("100.00")],
+            "high": [Decimal("99.00")],  # Invalid: high < low
+            "low": [Decimal("101.00")],
+            "close": [Decimal("100.50")],
+            "volume": [Decimal("1000000")],
+        }
+    ).cast(DAILY_BARS_SCHEMA, strict=False)
+
+    writer.write_daily_bars(
+        df,
+        bundle_name=bundle_name,
+        source_metadata={
+            "source_type": "test",
+            "source_url": "https://example.com",
+            "api_version": "v1",
+            "symbols": ["TEST"],
+        },
+    )
+
+    result = runner.invoke(main, ["bundle", "validate", bundle_name])
+    assert result.exit_code == 1
+    assert "Overall: FAILED" in result.output
+    assert "violate OHLCV constraints" in result.output
+
+    # Verify validation failure was persisted to metadata
+    metadata = BundleMetadata.get(bundle_name)
+    assert metadata is not None
+    assert metadata.get("validation_passed") is False
+    assert metadata.get("validation_timestamp") is not None
+    assert metadata.get("ohlcv_violations") == 1
+
 
 def test_bundle_migrate_dry_run_invokes_script(monkeypatch, runner: CliRunner):
     calls: dict[str, tuple] = {}

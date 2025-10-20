@@ -264,8 +264,6 @@ rustybt ingest-unified <source> [options]
 | `--frequency` | Data frequency | `--frequency 1d` |
 | `--bundle` | Bundle name | `--bundle my-data` |
 | `--api-key` | API key (if required) | `--api-key YOUR_KEY` |
-| `--no-cache` | Disable caching | `--no-cache` |
-| `--validate` | Validate after ingestion | `--validate` |
 
 ### Frequency Options
 
@@ -350,11 +348,31 @@ asyncio.run(main())
 
 ### Validation After Ingestion
 
+After ingesting data, validate bundle quality using the CLI:
+
+```bash
+# Ingest data
+rustybt ingest-unified yfinance --bundle my-stocks --symbols AAPL \
+    --start 2023-01-01 --end 2023-12-31 --frequency 1d
+
+# Validate bundle quality
+rustybt bundle validate my-stocks
+```
+
+The validation command checks:
+- OHLCV relationship constraints (High ≥ Low, Close/Open in range)
+- Duplicate timestamps
+- Symbol metadata consistency
+- Missing trading days
+
+**Validation results are automatically persisted** to bundle metadata and displayed in `rustybt bundle list` and `rustybt bundle info`.
+
+Python API equivalent:
+
 ```python
 import asyncio
 import pandas as pd
 from rustybt.data.sources import DataSourceRegistry
-from rustybt.data.bundles.metadata import BundleMetadata
 
 async def main():
     source = DataSourceRegistry.get_source("yfinance")
@@ -367,13 +385,10 @@ async def main():
         frequency="1d"
     )
 
-    # Validate bundle
-    metadata = BundleMetadata.load("my-stocks")
-    assert metadata.quality_score > 0.95, "Low quality data detected"
-    assert metadata.missing_data_pct < 0.05, "Too much missing data"
-
 asyncio.run(main())
 ```
+
+Then run `rustybt bundle validate my-stocks` to validate and persist results.
 
 ---
 

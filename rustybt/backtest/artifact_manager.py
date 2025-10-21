@@ -92,6 +92,8 @@ class BacktestArtifactManager:
         self.code_capture_enabled = code_capture_enabled
         self._backtest_id: str | None = None
         self._output_dir: Path | None = None
+        # T037: Store detection result for metadata generation
+        self._entry_point_detection_result: Any | None = None
 
         if self.enabled:
             self._validate_base_directory()
@@ -330,18 +332,23 @@ class BacktestArtifactManager:
 
     def capture_strategy_code(
         self,
-        entry_point: Path,
+        strategy_file: Path | None = None,
         project_root: Path | None = None,
+        use_entry_point_detection: bool = True,
     ) -> list[Path]:
-        """Capture strategy code by analyzing imports and copying files.
+        """Capture strategy code with automatic entry point detection or YAML config.
 
-        This method uses static import analysis to identify all local modules
-        imported by the strategy and copies them to the code/ subdirectory
-        while preserving directory structure.
+        T037: Updated to use entry point detection for 90%+ storage optimization.
+
+        Precedence (CR-003: 100% backward compatibility):
+        1. YAML file exists → Use YAML (explicit always wins)
+        2. Entry point detection enabled → Detect and capture entry point only (NEW default)
+        3. Fallback → Import analysis (old behavior)
 
         Args:
-            entry_point: Path to strategy entry point file
+            strategy_file: Path to strategy entry point file (optional if using auto-detection)
             project_root: Project root directory (auto-detected if None)
+            use_entry_point_detection: Enable automatic entry point detection (default: True)
 
         Returns:
             List of captured file paths (in destination directory)
@@ -352,8 +359,15 @@ class BacktestArtifactManager:
         Example:
             >>> manager = BacktestArtifactManager()
             >>> manager.create_directory_structure()
-            >>> captured = manager.capture_strategy_code(Path("my_strategy.py"))
+            >>> # NEW: Automatic entry point detection
+            >>> captured = manager.capture_strategy_code()
             >>> print(f"Captured {len(captured)} files")
+            >>>
+            >>> # OLD: Explicit strategy file
+            >>> captured = manager.capture_strategy_code(
+            ...     strategy_file=Path("my_strategy.py"),
+            ...     use_entry_point_detection=False
+            ... )
         """
         if not self.enabled or not self.code_capture_enabled:
             logger.debug("code_capture_disabled")
@@ -369,31 +383,34 @@ class BacktestArtifactManager:
 
         try:
             capture = StrategyCodeCapture()
-
-            # Auto-detect project root if not provided
-            if project_root is None:
-                project_root = capture.find_project_root(entry_point)
-                logger.debug("project_root_detected", project_root=str(project_root))
-
-            # Analyze imports to find all local files
-            local_files = capture.analyze_imports(entry_point, project_root)
-
-            logger.debug(
-                "imports_analyzed",
-                entry_point=str(entry_point),
-                local_files_found=len(local_files),
-            )
-
-            # Copy files to code directory
             code_dir = self.get_code_dir()
-            captured_files = capture.copy_strategy_files(local_files, code_dir, project_root)
 
-            logger.info(
-                "code_captured",
-                backtest_id=self._backtest_id,
-                files_captured=len(captured_files),
-                entry_point=str(entry_point),
+            # Use new capture_strategy_code() method with entry point detection
+            captured_files, detection_result = capture.capture_strategy_code(
+                entry_point=strategy_file,
+                dest_dir=code_dir,
+                project_root=project_root,
+                use_entry_point_detection=use_entry_point_detection,
             )
+
+            # Store detection result for metadata generation (T037)
+            self._entry_point_detection_result = detection_result
+
+            if detection_result:
+                logger.info(
+                    "code_captured_with_detection",
+                    backtest_id=self._backtest_id,
+                    files_captured=len(captured_files),
+                    detection_method=detection_result.detection_method,
+                    confidence=detection_result.confidence,
+                    execution_context=detection_result.execution_context,
+                )
+            else:
+                logger.info(
+                    "code_captured",
+                    backtest_id=self._backtest_id,
+                    files_captured=len(captured_files),
+                )
 
             return captured_files
 
@@ -405,7 +422,7 @@ class BacktestArtifactManager:
             logger.error(
                 "code_capture_failed",
                 backtest_id=self._backtest_id,
-                entry_point=str(entry_point),
+                strategy_file=str(strategy_file) if strategy_file else "auto-detect",
                 error=str(e),
                 error_type=type(e).__name__,
             )
@@ -564,7 +581,7 @@ class BacktestArtifactManager:
 
         # Get framework version
         try:
-            from rustybt import __version__ as framework_version
+            from rustybt import __version__ as framework_version  # type: ignore[attr-defined]
         except ImportError:
             framework_version = "unknown"
 
@@ -587,6 +604,42 @@ class BacktestArtifactManager:
                 # Fallback to string representation
                 captured_files_rel.append(str(f))
 
+        # T038-T040: Include code capture metadata from entry point detection
+        code_capture_metadata: dict[str, Any] = {
+            "code_capture_mode": "unknown",
+            "entry_point_file": None,
+            "captured_files": captured_files_rel,
+            "total_code_size_bytes": sum(f.stat().st_size for f in captured_files if f.exists()),
+            "detection_method": "not_detected",
+            "detection_warnings": [],
+            "yaml_config_used": False,
+        }
+
+        # Add detection result if available (T039)
+        if self._entry_point_detection_result:
+            detection = self._entry_point_detection_result
+            code_capture_metadata.update(
+                {
+                    "detection_method": detection.detection_method,
+                    "detection_confidence": detection.confidence,
+                    "detection_warnings": detection.warnings,
+                    "execution_context": detection.execution_context,
+                    "fallback_used": detection.fallback_used,
+                }
+            )
+
+            if detection.detected_file:
+                code_capture_metadata["entry_point_file"] = str(detection.detected_file)
+
+            # Determine code capture mode
+            if detection.detection_method == "yaml_override":
+                code_capture_metadata["code_capture_mode"] = "yaml"
+                code_capture_metadata["yaml_config_used"] = True
+            elif detection.detection_method in ("inspect", "fallback"):
+                code_capture_metadata["code_capture_mode"] = "entry_point"
+            elif detection.detection_method == "failed":
+                code_capture_metadata["code_capture_mode"] = "disabled"
+
         metadata: dict[str, Any] = {
             "backtest_id": self._backtest_id,
             "timestamp": timestamp,
@@ -595,6 +648,7 @@ class BacktestArtifactManager:
             "strategy_entry_point": str(strategy_entry_point),
             "captured_files": captured_files_rel,
             "data_bundle_info": data_bundle_info,
+            "code_capture": code_capture_metadata,  # T038: New code_capture section
         }
 
         logger.debug("metadata_generated", backtest_id=self._backtest_id)

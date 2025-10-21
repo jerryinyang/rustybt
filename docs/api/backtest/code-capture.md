@@ -2,7 +2,13 @@
 
 ## Overview
 
-The `StrategyCodeCapture` class handles automatic discovery and copying of strategy source code files. It supports two capture modes: import analysis (automatic) and strategy.yaml (explicit configuration).
+The `StrategyCodeCapture` class handles automatic discovery and copying of strategy source code files. It supports three capture modes:
+
+1. **Entry point detection** (default) - Stores only the file containing `run_algorithm()` call
+2. **Strategy.yaml** (explicit configuration) - Stores files listed in YAML
+3. **Import analysis** (deprecated) - Automatically discovers all imported local modules
+
+**New in v1.x**: Default behavior changed to entry point detection for storage efficiency during optimization runs.
 
 ## Class Definition
 
@@ -65,6 +71,139 @@ capturer = StrategyCodeCapture(
     mode='strategy_yaml'
 )
 ```
+
+## Data Classes
+
+### `EntryPointDetectionResult`
+
+```python
+@dataclass
+class EntryPointDetectionResult:
+    detected_file: Path | None
+    detection_method: str
+    confidence: str
+    warnings: list[str]
+```
+
+Result from entry point detection analysis.
+
+**Attributes:**
+
+- **`detected_file`** (`Path | None`)<br>
+  Path to detected entry point file, or `None` if detection failed
+
+- **`detection_method`** (`str`)<br>
+  Method used for detection:
+  - `'inspect_stack'`: Runtime stack introspection (most reliable)
+  - `'ipython'`: Jupyter notebook detection
+  - `'frozen'`: PyInstaller/frozen app detection
+  - `'fallback'`: Best-effort detection
+
+- **`confidence`** (`str`)<br>
+  Confidence level: `'high'`, `'medium'`, `'low'`
+
+- **`warnings`** (`list[str]`)<br>
+  List of warnings encountered during detection
+
+**Example:**
+
+```python
+from rustybt.backtest.code_capture import StrategyCodeCapture
+
+capturer = StrategyCodeCapture()
+result = capturer.detect_entry_point()
+
+if result.detected_file:
+    print(f"Entry point: {result.detected_file}")
+    print(f"Method: {result.detection_method}")
+    print(f"Confidence: {result.confidence}")
+else:
+    print("Detection failed")
+    print(f"Warnings: {result.warnings}")
+```
+
+## Methods
+
+### `detect_entry_point`
+
+```python
+def detect_entry_point(self) -> EntryPointDetectionResult
+```
+
+Detect the entry point file containing the `run_algorithm()` call using runtime introspection.
+
+This method uses `inspect.stack()` to analyze the call stack and identify the file from which `run_algorithm()` was invoked. This is the core new feature in v1.x that enables storage-efficient code capture during optimization runs.
+
+**Returns:** `EntryPointDetectionResult` with detection details
+
+**Raises:** Does not raise exceptions - failures are captured in result warnings
+
+**Detection Methods:**
+
+1. **Standard Python script** (`inspect_stack`): Analyzes stack frames to find `run_algorithm()` caller
+2. **Jupyter notebook** (`ipython`): Uses IPython metadata when available
+3. **Frozen application** (`frozen`): Detects PyInstaller/cx_Freeze packaged apps
+4. **Interactive REPL** (`fallback`): Best-effort detection for interactive sessions
+
+**Example:**
+
+```python
+from rustybt.backtest.code_capture import StrategyCodeCapture
+
+capturer = StrategyCodeCapture()
+
+# Detect entry point
+result = capturer.detect_entry_point()
+
+if result.detected_file:
+    print(f"✓ Entry point detected: {result.detected_file}")
+    print(f"  Method: {result.detection_method}")
+    print(f"  Confidence: {result.confidence}")
+
+    if result.warnings:
+        print(f"  Warnings: {len(result.warnings)}")
+        for warning in result.warnings:
+            print(f"    - {warning}")
+else:
+    print("✗ Entry point detection failed")
+    print("  Create strategy.yaml to explicitly specify files")
+    for warning in result.warnings:
+        print(f"  - {warning}")
+```
+
+**Usage in different contexts:**
+
+```python
+# Standard script execution (best case)
+# Running: python my_strategy.py
+result = capturer.detect_entry_point()
+# → detected_file: Path('my_strategy.py')
+# → detection_method: 'inspect_stack'
+# → confidence: 'high'
+
+# Jupyter notebook
+# Running from notebook cell
+result = capturer.detect_entry_point()
+# → detected_file: Path('Untitled.ipynb') or Path('<notebook>.ipynb')
+# → detection_method: 'ipython'
+# → confidence: 'medium'
+
+# Frozen application (PyInstaller)
+result = capturer.detect_entry_point()
+# → detected_file: Path('my_strategy.py') (from bundled source)
+# → detection_method: 'frozen'
+# → confidence: 'medium'
+
+# Interactive REPL (lowest confidence)
+# Running: python -i
+result = capturer.detect_entry_point()
+# → detected_file: Path('<stdin>') or None
+# → detection_method: 'fallback'
+# → confidence: 'low'
+# → warnings: ['Interactive session detected - use strategy.yaml for reliability']
+```
+
+---
 
 ## Methods
 

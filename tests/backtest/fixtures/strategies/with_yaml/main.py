@@ -1,9 +1,11 @@
 """Main entry point for YAML-configured strategy."""
 
-from rustybt import run_algorithm
-from custom_helpers import calculate_signal
 import json
 from pathlib import Path
+
+from custom_helpers import calculate_signal
+
+from rustybt import run_algorithm
 
 
 def initialize(context):

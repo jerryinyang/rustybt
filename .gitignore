@@ -78,6 +78,8 @@ site/*
 # Project specific
 tmp/
 temp/
+specs/
+CLAUDE.md
 .cache/
 *.log
 *.db

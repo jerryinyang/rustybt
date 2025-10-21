@@ -44,17 +44,22 @@ Install the latest stable release from PyPI:
 # Install RustyBT
 pip install rustybt
 
-# Or install with optional features
+# Install with all optional features (recommended for most users)
+pip install rustybt[full]          # All user-facing features (optimization + benchmarks)
+
+# Or install specific features
 pip install rustybt[optimization]  # Strategy optimization tools
-pip install rustybt[dev]           # Development tools
-pip install rustybt[test]          # Testing tools
+pip install rustybt[benchmarks]    # Performance profiling tools
+pip install rustybt[dev]           # Development tools (for contributors)
+pip install rustybt[test]          # Testing tools (for contributors)
 ```
 
 **Available extras:**
-- `optimization` - Strategy optimization (scikit-learn, genetic algorithms)
+- `full` / `all` - **All optional features** (optimization + benchmarks) - ~500MB
+- `optimization` - Strategy optimization (scikit-learn, genetic algorithms, ray)
+- `benchmarks` - Performance profiling (pytest-benchmark, memory_profiler, snakeviz)
 - `dev` - Development tools (jupyter, jupyterlab, ruff, mypy, black, type stubs)
 - `test` - Testing tools (pytest, hypothesis, coverage)
-- `benchmarks` - Performance profiling tools
 - `docs` - Documentation generation (MkDocs with Material theme)
 
 ### From Source (Development)

@@ -1,0 +1,17 @@
+files:
+  # Main strategy file
+  - main.py
+
+  # Custom helper module
+  - custom_helpers.py
+
+  # Configuration files
+  - config/params.json
+
+  # Documentation
+  - README.md
+
+# Optional metadata
+description: "Test strategy with explicit YAML configuration"
+version: "1.0.0"
+author: "Test Suite"

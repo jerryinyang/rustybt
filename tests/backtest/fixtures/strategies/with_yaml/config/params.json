@@ -1,0 +1,5 @@
+{
+  "symbols": ["AAPL", "MSFT", "GOOGL"],
+  "threshold": 0.6,
+  "risk_limit": 0.02
+}

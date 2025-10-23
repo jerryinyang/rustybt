@@ -488,7 +488,7 @@ class SharedBundleContext:
                     self.cleanup()
                 else:
                     self.close()
-            except Exception as e:  # noqa: S110
+            except Exception:  # noqa: S110
                 # Suppress exceptions during garbage collection cleanup
                 # Logging here could fail if logger is already destroyed
                 pass

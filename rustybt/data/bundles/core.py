@@ -4,6 +4,7 @@ import os
 import shutil
 import warnings
 from collections import namedtuple
+from typing import Mapping, Optional
 
 import click
 import pandas as pd
@@ -526,7 +527,11 @@ def _make_bundle_core():
                 f"maybe you need to run: $ zipline ingest -b {bundle_name}",
             )
 
-    def load(name, environ=os.environ, timestamp=None):
+    def load(
+        name: str,
+        environ: Optional[Mapping[str, str]] = None,
+        timestamp: Optional[pd.Timestamp] = None,
+    ) -> BundleData:
         """Loads a previously ingested bundle.
 
         Supports both traditional Bcolz bundles and unified Parquet bundles.
@@ -547,6 +552,8 @@ def _make_bundle_core():
         bundle_data : BundleData
             The raw data readers for this bundle.
         """
+        if environ is None:
+            environ = os.environ
         if timestamp is None:
             timestamp = pd.Timestamp.utcnow()
 

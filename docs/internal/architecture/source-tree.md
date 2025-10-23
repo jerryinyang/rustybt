@@ -103,18 +103,28 @@ rustybt/                                  # Root package
 │   ├── validation.py                    # EXTEND: Decimal validation
 │   └── security.py                      # NEW: Credential encryption
 │
-├── optimization/                        # NEW: Strategy optimization (Epic 5)
+├── optimization/                        # DUAL PURPOSE: Strategy optimization (Epic 5) + Performance optimization (Epic X4)
 │   ├── __init__.py
+│   │
+│   ├── # === Epic 5: Strategy Optimization ===
 │   ├── optimizer.py                     # Optimizer framework
+│   ├── parallel_optimizer.py            # Parallel execution (MODIFIED in X4)
 │   ├── search/                          # Search algorithms
 │   │   ├── __init__.py
-│   │   ├── grid_search.py
-│   │   ├── random_search.py
-│   │   ├── bayesian_search.py
-│   │   └── genetic_algorithm.py
+│   │   ├── grid_search.py              # Grid search optimization
+│   │   ├── random_search.py            # Random search
+│   │   ├── bayesian_search.py          # Bayesian optimization
+│   │   └── genetic_algorithm.py        # Genetic algorithms
 │   ├── walk_forward.py                  # Walk-forward optimization
 │   ├── monte_carlo.py                   # Monte Carlo simulation
-│   └── sensitivity.py                   # Parameter sensitivity analysis
+│   ├── sensitivity.py                   # Parameter sensitivity analysis
+│   │
+│   ├── # === Epic X4: Performance Optimization (Phase 6A) ===
+│   ├── caching.py                       # NEW: CachedAssetList, PreGroupedData (70% speedup)
+│   ├── dataportal_ext.py                # NEW: HistoryCache multi-tier LRU (20-25% speedup)
+│   ├── bundle_pool.py                   # NEW: BundleConnectionPool singleton (8-12% speedup)
+│   ├── cache_invalidation.py            # NEW: BundleVersionMetadata, SHA256 tracking
+│   └── config.py                        # NEW: OptimizationConfig with feature flags
 │
 ├── api_layer/                           # NEW: RESTful/WebSocket API (Epic 9)
 │   ├── __init__.py
@@ -148,15 +158,35 @@ rustybt/                                  # Root package
 │   ├── bundle.py                        # EXTEND: Add migration command
 │   └── live.py                          # NEW: Live trading commands
 │
-└── rust/                                # NEW: Rust optimization modules (Epic 7)
-    ├── Cargo.toml                       # Rust package manifest
-    ├── src/
-    │   ├── lib.rs                       # PyO3 module entry point
-    │   ├── decimal.rs                   # Decimal arithmetic operations
-    │   ├── data.rs                      # Data processing pipelines
-    │   └── indicators.rs                # Technical indicators
-    └── build.rs                         # Build script
+└── benchmarks/                          # NEW: Performance benchmarking infrastructure (Epic X4)
+    ├── __init__.py
+    ├── models.py                        # PerformanceThreshold, BenchmarkResult dataclasses
+    ├── profiling.py                     # Profiling infrastructure (cProfile, line_profiler)
+    ├── reporter.py                      # Report generation with percentage contributions
+    ├── threshold.py                     # 5% minimum improvement threshold validation
+    ├── sequential.py                    # Sequential optimization evaluation
+    ├── comparisons.py                   # Functional equivalence testing
+    └── baseline/                        # Pure Python baseline implementations
+        ├── __init__.py
+        ├── python_indicators.py         # Pure Python SMA, EMA (replacing Rust)
+        ├── python_data_ops.py           # Pure Python data operations
+        └── python_decimal_ops.py        # Pure Python Decimal operations
 ```
+
+## Directories Marked for Removal (Epic X4 - Phase 4)
+
+```
+rust/                                    # TO BE REMOVED - Phase 4 of Epic X4
+├── Cargo.toml                          # Rust build configuration (REMOVE)
+├── src/
+│   ├── lib.rs                          # Rust library entry (REMOVE)
+│   ├── indicators.rs                   # SMA, EMA, rolling operations (REMOVE - <1% impact)
+│   ├── data_ops.rs                     # Window slice, fillna (REMOVE - <1% impact)
+│   └── decimal_ops.rs                  # Decimal operations (REMOVE - <1% impact)
+└── target/                              # Rust build artifacts (REMOVE)
+```
+
+**Removal Rationale**: Phase 3 profiling revealed Rust micro-operations contribute <2% to end-to-end workflow performance. Real bottlenecks are in data access layer (87% user code overhead, 58.4% DataPortal overhead). See `specs/002-performance-benchmarking-optimization/profiling-results/` for detailed analysis.
 
 ## Integration with Zipline Structure
 
@@ -176,12 +206,12 @@ rustybt/                                  # Root package
 - `optimization/`: Optimization framework
 - `api_layer/`: REST/WebSocket API
 - `analytics/`: Advanced analytics
-- `rust/`: Rust performance modules
+- `benchmarks/`: Performance benchmarking infrastructure
 
 **Migration Path:**
 1. Epics 1-5: Parallel implementation (Zipline float + RustyBT Decimal coexist)
 2. Epic 6: Add live trading (no Zipline equivalent)
-3. Epic 7: Add Rust optimization (transparent to users)
+3. Epic 7: Performance optimization (profiling-driven, pure Python)
 4. Epic 8-9: Add analytics and API (additive features)
 
 ---

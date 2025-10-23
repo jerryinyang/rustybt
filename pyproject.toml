@@ -101,7 +101,6 @@ documentation = 'https://jerryinyang.github.io/rustybt/'
 requires = [
     'setuptools>=64.0.0',  # Modern setuptools with better PEP 517/660 support
     "setuptools_scm[toml]>=8.0",  # Updated for better pyproject.toml integration
-    'setuptools-rust>=1.5.0',
     'wheel>=0.36.0',
     'Cython>=0.29.21,<3.2.0',
     'numpy>=2.0.0 ; python_version>"3.9"',
@@ -253,8 +252,6 @@ markers = [
     "live: marks tests requiring live API access (network dependent)",
     "validation: marks tests as validation tests (backtest vs paper correlation)",
     "ib_integration: marks tests requiring IB paper account (skip by default)",
-    "rust: marks tests requiring Rust extensions (skip if not built)",
-    "rust_equivalence: marks tests that validate Rust/Python equivalence (AC6)",
     "property: property-based tests using hypothesis",
     "exchange_integration: marks tests requiring exchange integration",
     "websocket_integration: marks tests requiring WebSocket connectivity",
@@ -417,8 +414,6 @@ line-ending = "auto"
 "rustybt/lib/**/*.py" = ["D", "ANN", "ARG", "BLE", "N", "UP", "E501", "B", "RUF", "W", "SIM", "C4"]
 # Legacy sources modules
 "rustybt/sources/**/*.py" = ["D", "ANN", "ARG", "E501", "N", "UP", "RUF", "BLE"]
-# Rust optimizations module
-"rustybt/rust_optimizations.py" = ["D", "ANN", "ARG", "UP", "RUF", "N", "E", "W", "SIM", "B"]
 # Core init and main
 "rustybt/__main__.py" = ["ALL"]
 # Specific legacy files with remaining issues (take precedence over wildcards)
@@ -535,7 +530,6 @@ module = [
     "rustybt.extensions",
     "rustybt.dispatch",
     "rustybt.protocol",
-    "rustybt.rust_optimizations",
     "rustybt.zipline_warnings",
     # Assets and instruments
     "rustybt.assets.*",

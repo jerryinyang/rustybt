@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """
-Minimal setup.py for building Cython and Rust extensions.
+Minimal setup.py for building Cython extensions.
 
 This file is kept separate from package metadata (now in pyproject.toml) to handle
 extension building which is not yet fully supported in pure pyproject.toml.
 
 Architecture:
 - Package metadata, dependencies, scripts: pyproject.toml
-- Extension building (Cython, Rust): This file
+- Extension building (Cython): This file
 - Package discovery: Explicit configuration in pyproject.toml
 """
 
@@ -16,7 +16,6 @@ from pathlib import Path
 import numpy
 from Cython.Build import cythonize
 from setuptools import Extension
-from setuptools_rust import Binding, RustExtension
 
 ROOT_DIR = Path(__file__).parent.resolve()
 
@@ -127,14 +126,6 @@ def default_setup_kwargs():
     """Return the keyword arguments to pass to setuptools.setup()."""
     return {
         "ext_modules": cythonize(ext_modules, **ext_options),
-        "rust_extensions": [
-            RustExtension(
-                "rustybt._rustybt",
-                path=str(ROOT_DIR / "rust" / "crates" / "rustybt" / "Cargo.toml"),
-                binding=Binding.PyO3,
-                debug=False,
-            )
-        ],
         "include_dirs": [numpy.get_include()],
         "zip_safe": False,
     }

@@ -81,7 +81,23 @@ class DataNotFoundError(DataError):
         super().__init__(message or self.message, context=merged_context, cause=cause)
 
 
-class DataValidationError(DataError):
+class DataAdapterError(DataError):
+    message = "Data adapter error"
+
+    def __init__(
+        self,
+        message: str | None = None,
+        *,
+        adapter: str | None = None,
+        attempt: int | None = None,
+        context: Mapping[str, Any] | None = None,
+        cause: BaseException | None = None,
+    ) -> None:
+        merged_context = {"adapter": adapter, "attempt": attempt, **_normalise_context(context)}
+        super().__init__(message or self.message, context=merged_context, cause=cause)
+
+
+class DataValidationError(DataAdapterError):
     message = "Data validation failed"
 
     def __init__(
@@ -89,11 +105,17 @@ class DataValidationError(DataError):
         message: str | None = None,
         *,
         invalid_rows: Any | None = None,
+        adapter: str | None = None,
         context: Mapping[str, Any] | None = None,
         cause: BaseException | None = None,
     ) -> None:
         merged_context = {"invalid_rows": invalid_rows, **_normalise_context(context)}
-        super().__init__(message or self.message, context=merged_context, cause=cause)
+        super().__init__(message or self.message, adapter=adapter, context=merged_context, cause=cause)
+
+    @property
+    def invalid_rows(self) -> Any | None:
+        """Get the invalid rows from context."""
+        return self.context.get("invalid_rows")
 
 
 class LookaheadError(DataError):
@@ -111,26 +133,6 @@ class LookaheadError(DataError):
         merged_context = {
             "requested_dt": requested_dt,
             "current_dt": current_dt,
-            **_normalise_context(context),
-        }
-        super().__init__(message or self.message, context=merged_context, cause=cause)
-
-
-class DataAdapterError(DataError):
-    message = "Data adapter error"
-
-    def __init__(
-        self,
-        message: str | None = None,
-        *,
-        adapter: str | None = None,
-        attempt: int | None = None,
-        context: Mapping[str, Any] | None = None,
-        cause: BaseException | None = None,
-    ) -> None:
-        merged_context = {
-            "adapter": adapter,
-            "attempt": attempt,
             **_normalise_context(context),
         }
         super().__init__(message or self.message, context=merged_context, cause=cause)

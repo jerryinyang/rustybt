@@ -1260,7 +1260,7 @@ class TestCodeCaptureIntegration:
 
         # Capture strategy code with entry point detection enabled
         captured_files = manager.capture_strategy_code(
-            strategy_file=strategy_file,
+            entry_point=strategy_file,
             project_root=project,
         )
 
@@ -1340,7 +1340,7 @@ class TestCodeCaptureIntegration:
 
         # Capture strategy code
         captured_files = manager.capture_strategy_code(
-            strategy_file=strategy_file,
+            entry_point=strategy_file,
             project_root=project,
         )
 
@@ -1419,7 +1419,7 @@ files:
 
         # Capture with YAML present
         captured_files = manager.capture_strategy_code(
-            strategy_file=strategy_file,
+            entry_point=strategy_file,
             project_root=project,
         )
 
@@ -1448,7 +1448,7 @@ files:
 
         # Attempt to capture - should handle gracefully
         captured_files = manager.capture_strategy_code(
-            strategy_file=strategy_file,
+            entry_point=strategy_file,
             project_root=project,
         )
 
@@ -1476,7 +1476,7 @@ files:
 
         # Capture
         captured_files = manager.capture_strategy_code(
-            strategy_file=strategy_file,
+            entry_point=strategy_file,
             project_root=project,
         )
 
@@ -1514,7 +1514,7 @@ files:
             manager.create_directory_structure()
 
             captured = manager.capture_strategy_code(
-                strategy_file=strategy_file,
+                entry_point=strategy_file,
                 project_root=project,
             )
 

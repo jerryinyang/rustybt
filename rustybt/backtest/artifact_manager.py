@@ -332,9 +332,8 @@ class BacktestArtifactManager:
 
     def capture_strategy_code(
         self,
-        strategy_file: Path | None = None,
+        entry_point: Path | None = None,
         project_root: Path | None = None,
-        use_entry_point_detection: bool = True,
     ) -> list[Path]:
         """Capture strategy code with automatic entry point detection or YAML config.
 
@@ -342,13 +341,12 @@ class BacktestArtifactManager:
 
         Precedence (CR-003: 100% backward compatibility):
         1. YAML file exists → Use YAML (explicit always wins)
-        2. Entry point detection enabled → Detect and capture entry point only (NEW default)
-        3. Fallback → Import analysis (old behavior)
+        2. No YAML → Detect and capture entry point only (NEW default)
+        3. Detection fails → Skip code capture gracefully
 
         Args:
-            strategy_file: Path to strategy entry point file (optional if using auto-detection)
+            entry_point: Path to strategy entry point file (optional if using auto-detection)
             project_root: Project root directory (auto-detected if None)
-            use_entry_point_detection: Enable automatic entry point detection (default: True)
 
         Returns:
             List of captured file paths (in destination directory)
@@ -359,14 +357,13 @@ class BacktestArtifactManager:
         Example:
             >>> manager = BacktestArtifactManager()
             >>> manager.create_directory_structure()
-            >>> # NEW: Automatic entry point detection
+            >>> # Automatic entry point detection
             >>> captured = manager.capture_strategy_code()
             >>> print(f"Captured {len(captured)} files")
             >>>
-            >>> # OLD: Explicit strategy file
+            >>> # Explicit strategy file
             >>> captured = manager.capture_strategy_code(
-            ...     strategy_file=Path("my_strategy.py"),
-            ...     use_entry_point_detection=False
+            ...     entry_point=Path("my_strategy.py")
             ... )
         """
         if not self.enabled or not self.code_capture_enabled:
@@ -387,10 +384,9 @@ class BacktestArtifactManager:
 
             # Use new capture_strategy_code() method with entry point detection
             captured_files, detection_result = capture.capture_strategy_code(
-                entry_point=strategy_file,
+                entry_point=entry_point,
                 dest_dir=code_dir,
                 project_root=project_root,
-                use_entry_point_detection=use_entry_point_detection,
             )
 
             # Store detection result for metadata generation (T037)
@@ -422,7 +418,7 @@ class BacktestArtifactManager:
             logger.error(
                 "code_capture_failed",
                 backtest_id=self._backtest_id,
-                strategy_file=str(strategy_file) if strategy_file else "auto-detect",
+                entry_point=str(entry_point) if entry_point else "auto-detect",
                 error=str(e),
                 error_type=type(e).__name__,
             )

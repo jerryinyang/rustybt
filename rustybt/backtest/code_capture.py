@@ -182,14 +182,51 @@ class StrategyCodeCapture:
                     # Special handling for Jupyter notebooks
                     if execution_context == "notebook":
                         warnings.append(f"Jupyter notebook detected: {detected_path.name}")
-                        return EntryPointDetectionResult(
-                            detected_file=detected_path,
-                            detection_method="inspect",
-                            confidence=0.8,  # Slightly lower confidence for notebooks
-                            fallback_used=False,
-                            warnings=warnings,
-                            execution_context=execution_context,
+
+                        # Try to find the actual .ipynb file instead of the temp IPython file
+                        logger.warning(
+                            "attempting_notebook_detection",
+                            temp_file=str(detected_path),
+                            cwd=str(Path.cwd()),
                         )
+                        notebook_path = self._detect_jupyter_notebook()
+
+                        if notebook_path:
+                            logger.warning(
+                                "notebook_path_found",
+                                notebook=str(notebook_path),
+                                exists=notebook_path.exists(),
+                            )
+
+                        if notebook_path and notebook_path.exists():
+                            logger.info("notebook_file_detected", notebook=str(notebook_path))
+                            return EntryPointDetectionResult(
+                                detected_file=notebook_path,
+                                detection_method="inspect",
+                                confidence=0.9,  # High confidence - we found the actual notebook
+                                fallback_used=False,
+                                warnings=warnings,
+                                execution_context=execution_context,
+                            )
+                        else:
+                            # Could not find .ipynb file, skip code capture for notebooks
+                            logger.warning(
+                                "notebook_detection_failed",
+                                notebook_path=str(notebook_path) if notebook_path else "None",
+                                cwd=str(Path.cwd()),
+                            )
+                            warnings.append("Could not locate .ipynb file for code capture")
+                            warnings.append(
+                                "Code capture will be skipped for this notebook execution"
+                            )
+                            return EntryPointDetectionResult(
+                                detected_file=None,
+                                detection_method="failed",
+                                confidence=0.0,
+                                fallback_used=True,
+                                warnings=warnings,
+                                execution_context=execution_context,
+                            )
 
                     # Standard file execution - highest confidence
                     logger.info("entry_point_detected", path=str(detected_path), method="inspect")
@@ -293,28 +330,62 @@ class StrategyCodeCapture:
 
             ipython = get_ipython()
             if ipython is None:
+                logger.info("notebook_detection_no_ipython")
                 return None
 
-            # Try to get notebook path from IPython
-            # Note: This is best-effort and may not work in all Jupyter environments
-            connection_file = (
-                getattr(ipython, "config", {}).get("IPKernelApp", {}).get("connection_file", "")
+            logger.warning("notebook_detection_starting", cwd=str(Path.cwd()))
+
+            # Strategy 1: Try to get notebook name from __vsc_ipynb_file__ (VS Code Jupyter)
+            import sys
+
+            if hasattr(sys, "__vsc_ipynb_file__"):
+                notebook_path = Path(sys.__vsc_ipynb_file__)
+                logger.warning(
+                    "notebook_detection_vscode_attr_found",
+                    path=str(notebook_path),
+                    exists=notebook_path.exists(),
+                    suffix=notebook_path.suffix,
+                )
+                if notebook_path.exists() and notebook_path.suffix == ".ipynb":
+                    logger.warning("notebook_detected_vscode", path=str(notebook_path))
+                    return notebook_path
+
+            # Strategy 2: Check current working directory for .ipynb files
+            notebook_dir = Path.cwd()
+            ipynb_files = list(notebook_dir.glob("*.ipynb"))
+            logger.warning(
+                "notebook_detection_strategy2",
+                notebook_dir=str(notebook_dir),
+                found_notebooks=len(ipynb_files),
+                notebooks=[str(f) for f in ipynb_files],
             )
 
-            if connection_file:
-                # Extract notebook name from connection file path
-                # Connection files are usually in format: kernel-<notebook_id>.json
-                notebook_dir = Path.cwd()
-                # Look for .ipynb files in current directory
-                ipynb_files = list(notebook_dir.glob("*.ipynb"))
+            if len(ipynb_files) == 1:
+                # Only one notebook in directory, likely the current one
+                logger.warning("notebook_detected_single_file", path=str(ipynb_files[0]))
+                return ipynb_files[0]
 
-                if len(ipynb_files) == 1:
-                    # Only one notebook in directory, likely the current one
-                    return ipynb_files[0]
+            # Strategy 3: If multiple notebooks, try to find the most recently modified one
+            # (assumes user is working on the most recent notebook)
+            if len(ipynb_files) > 1:
+                most_recent = max(ipynb_files, key=lambda p: p.stat().st_mtime)
+                logger.warning(
+                    "notebook_detected_recent",
+                    path=str(most_recent),
+                    total_notebooks=len(ipynb_files),
+                )
+                return most_recent
 
-        except (ImportError, AttributeError, Exception):
+            logger.warning("notebook_detection_no_notebooks_found")
+            return None
+
+        except (ImportError, AttributeError, Exception) as e:
             # Jupyter notebook detection failed - this is expected in non-notebook environments
-            logger.debug("jupyter_notebook_detection_failed")
+            logger.warning(
+                "jupyter_notebook_detection_failed",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
 
         return None
 
@@ -871,7 +942,7 @@ class StrategyCodeCapture:
 
     def capture_strategy_code(
         self, entry_point: Path, dest_dir: Path, project_root: Path | None = None
-    ) -> list[Path]:
+    ) -> tuple[list[Path], EntryPointDetectionResult]:
         """Capture strategy code using YAML (if present) or entry point detection.
 
         NEW BEHAVIOR: Captures only the entry point file by default (90%+ storage reduction).
@@ -887,15 +958,17 @@ class StrategyCodeCapture:
             project_root: Project root directory (auto-detected if None)
 
         Returns:
-            List of captured file paths (destinations)
+            Tuple of (captured_files, detection_result):
+                - captured_files: List of captured file paths (destinations)
+                - detection_result: EntryPointDetectionResult with metadata
 
         Example:
             >>> capture = StrategyCodeCapture()
-            >>> files = capture.capture_strategy_code(
+            >>> files, detection = capture.capture_strategy_code(
             ...     Path("strategies/my_strategy.py"),
             ...     Path("backtests/20251018_143527_123/code")
             ... )
-            >>> print(f"Captured {len(files)} files")
+            >>> print(f"Captured {len(files)} files with method {detection.detection_method}")
         """
         if project_root is None:
             project_root = self.find_project_root(entry_point)
@@ -909,7 +982,17 @@ class StrategyCodeCapture:
                 "using_yaml_code_capture",
                 reason="strategy.yaml found (explicit configuration)",
             )
-            return self._capture_from_yaml(yaml_config, strategy_dir, dest_dir)
+            captured_files = self._capture_from_yaml(yaml_config, strategy_dir, dest_dir)
+            # Create detection result for YAML case
+            yaml_detection = EntryPointDetectionResult(
+                detected_file=entry_point,
+                detection_method="yaml_override",
+                confidence=1.0,
+                execution_context="yaml",
+                warnings=[],
+                fallback_used=False,
+            )
+            return (captured_files, yaml_detection)
 
         # Rule 2: No YAML → use entry point detection (NEW DEFAULT BEHAVIOR)
         logger.info(
@@ -934,9 +1017,10 @@ class StrategyCodeCapture:
             )
 
             # Copy only the entry point file
-            return self.copy_strategy_files(
+            captured_files = self.copy_strategy_files(
                 [detection_result.detected_file], dest_dir, project_root
             )
+            return (captured_files, detection_result)
 
         # Rule 3: Detection failed → skip code capture gracefully
         logger.warning(
@@ -945,7 +1029,7 @@ class StrategyCodeCapture:
             context=detection_result.execution_context,
             message="Code capture will be skipped. Use strategy.yaml for explicit file list.",
         )
-        return []
+        return ([], detection_result)
 
     def find_project_root(self, entry_point: Path) -> Path:
         """Find project root by looking for markers.

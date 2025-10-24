@@ -92,7 +92,7 @@ class TestOptimizationStorageReduction:
             # Capture with import analysis (OLD behavior - simulated by forcing YAML fallback)
             # In real implementation, this would use use_entry_point_detection=False
             captured = manager.capture_strategy_code(
-                strategy_file=strategy_file,
+                entry_point=strategy_file,
                 project_root=optimization_project,
             )
 
@@ -118,7 +118,7 @@ class TestOptimizationStorageReduction:
             # Capture with entry point detection (NEW behavior)
             # In real implementation, this would use use_entry_point_detection=True
             captured = manager.capture_strategy_code(
-                strategy_file=strategy_file,
+                entry_point=strategy_file,
                 project_root=optimization_project,
             )
 
@@ -166,7 +166,7 @@ class TestOptimizationStorageReduction:
             manager.create_directory_structure()
 
             captured = manager.capture_strategy_code(
-                strategy_file=strategy_file,
+                entry_point=strategy_file,
                 project_root=optimization_project,
             )
 
@@ -205,7 +205,7 @@ class TestOptimizationStorageReduction:
             manager.create_directory_structure()
 
             captured = manager.capture_strategy_code(
-                strategy_file=strategy_file,
+                entry_point=strategy_file,
                 project_root=optimization_project,
             )
 
@@ -238,7 +238,7 @@ class TestOptimizationStorageReduction:
             output_dir = manager.create_directory_structure()
 
             captured = manager.capture_strategy_code(
-                strategy_file=strategy_file,
+                entry_point=strategy_file,
                 project_root=optimization_project,
             )
 
@@ -279,7 +279,7 @@ class TestOptimizationStorageReduction:
             manager.create_directory_structure()
 
             captured = manager.capture_strategy_code(
-                strategy_file=strategy_file,
+                entry_point=strategy_file,
                 project_root=optimization_project,
             )
 
@@ -374,7 +374,7 @@ files:
             manager.create_directory_structure()
 
             captured = manager.capture_strategy_code(
-                strategy_file=strategy_file,
+                entry_point=strategy_file,
                 project_root=project,
             )
 
@@ -403,7 +403,7 @@ files:
             manager.create_directory_structure()
 
             captured = manager.capture_strategy_code(
-                strategy_file=strategy_file,
+                entry_point=strategy_file,
                 project_root=optimization_project,
             )
 

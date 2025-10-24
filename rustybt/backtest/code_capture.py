@@ -10,10 +10,12 @@ reproducibility and audit purposes.
 
 import ast
 import importlib.util
+import inspect
 import shutil
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import structlog
 import yaml
@@ -27,6 +29,46 @@ class CodeCaptureError(BacktestArtifactError):
     """Exception raised for code capture errors."""
 
     pass
+
+
+@dataclass
+class EntryPointDetectionResult:
+    """Result of entry point detection process.
+
+    Attributes:
+        detected_file: Absolute path to detected entry point file, or None if detection failed
+        detection_method: Method used to detect entry point
+        confidence: Confidence level in detection accuracy (1.0 = certain, 0.0 = failed)
+        fallback_used: Whether fallback strategy was used due to primary detection failure
+        warnings: Warning messages generated during detection
+        execution_context: Detected execution environment
+    """
+
+    detected_file: Path | None
+    detection_method: Literal["inspect", "ast_analysis", "yaml_override", "fallback", "failed"]
+    confidence: float
+    fallback_used: bool
+    warnings: list[str] = field(default_factory=list)
+    execution_context: Literal["file", "notebook", "interactive", "frozen", "unknown"] = "unknown"
+
+
+@dataclass
+class CodeCaptureConfiguration:
+    """Configuration for determining which code files to capture during a backtest run.
+
+    Attributes:
+        mode: Capture mode determining which files to store
+        entry_point_path: Absolute path to detected entry point file
+        yaml_path: Absolute path to strategy.yaml configuration
+        additional_files: Additional files specified in YAML config
+        enabled: Whether code capture is enabled for this backtest
+    """
+
+    mode: Literal["entry_point", "yaml", "disabled"]
+    entry_point_path: Path | None = None
+    yaml_path: Path | None = None
+    additional_files: list[Path] = field(default_factory=list)
+    enabled: bool = True
 
 
 class StrategyCodeCapture:
@@ -57,6 +99,224 @@ class StrategyCodeCapture:
         # Cache for module specs to avoid repeated lookups
         self._module_spec_cache: dict[str, importlib.machinery.ModuleSpec | None] = {}
         self.code_capture_mode = code_capture_mode
+
+    def detect_entry_point(self) -> EntryPointDetectionResult:
+        """Detect the file containing the run_algorithm() call using runtime introspection.
+
+        Uses inspect.stack() to walk up the call stack and identify the file that
+        invoked run_algorithm(). Handles edge cases like Jupyter notebooks, interactive
+        sessions, and frozen applications.
+
+        Returns:
+            EntryPointDetectionResult with detection outcome, confidence, and warnings
+
+        Example:
+            >>> capture = StrategyCodeCapture()
+            >>> result = capture.detect_entry_point()
+            >>> if result.detected_file:
+            ...     print(f"Entry point: {result.detected_file}")
+            >>> else:
+            ...     print(f"Detection failed: {result.warnings}")
+        """
+        warnings: list[str] = []
+
+        # Detect execution context first
+        execution_context = self._detect_execution_context()
+
+        # Handle special contexts that can't use standard detection
+        if execution_context == "frozen":
+            warnings.append(
+                "Frozen application detected - code capture not supported in compiled executables"
+            )
+            warnings.append("Use strategy.yaml for explicit file list if needed")
+            return EntryPointDetectionResult(
+                detected_file=None,
+                detection_method="failed",
+                confidence=0.0,
+                fallback_used=True,
+                warnings=warnings,
+                execution_context=execution_context,
+            )
+
+        if execution_context == "interactive":
+            warnings.append("Interactive session detected - cannot determine source file")
+            warnings.append("Code capture will be skipped unless strategy.yaml is provided")
+            return EntryPointDetectionResult(
+                detected_file=None,
+                detection_method="failed",
+                confidence=0.0,
+                fallback_used=True,
+                warnings=warnings,
+                execution_context=execution_context,
+            )
+
+        # Try inspect.stack() for standard file or notebook execution
+        stack = inspect.stack()
+
+        try:
+            # Walk up the call stack looking for run_algorithm call
+            for frame_info in stack:
+                filename = frame_info.filename
+
+                # Skip framework files (rustybt/*)
+                if "rustybt" in Path(filename).parts:
+                    continue
+
+                # Skip standard library and site-packages
+                if (
+                    "site-packages" in filename
+                    or "/lib/python" in filename
+                    or "\\lib\\python" in filename
+                ):
+                    continue
+
+                # Skip built-in or special files
+                if filename.startswith("<") or filename == "<string>":
+                    continue
+
+                # Check if this frame mentions run_algorithm in code context
+                code_context = frame_info.code_context
+                if code_context and any("run_algorithm" in line for line in code_context):
+                    detected_path = Path(filename).resolve()
+
+                    # Special handling for Jupyter notebooks
+                    if execution_context == "notebook":
+                        warnings.append(f"Jupyter notebook detected: {detected_path.name}")
+                        return EntryPointDetectionResult(
+                            detected_file=detected_path,
+                            detection_method="inspect",
+                            confidence=0.8,  # Slightly lower confidence for notebooks
+                            fallback_used=False,
+                            warnings=warnings,
+                            execution_context=execution_context,
+                        )
+
+                    # Standard file execution - highest confidence
+                    logger.info("entry_point_detected", path=str(detected_path), method="inspect")
+                    return EntryPointDetectionResult(
+                        detected_file=detected_path,
+                        detection_method="inspect",
+                        confidence=1.0,
+                        fallback_used=False,
+                        warnings=warnings,
+                        execution_context=execution_context,
+                    )
+
+            # No frame with run_algorithm found
+            warnings.append("Could not find run_algorithm() in call stack")
+            warnings.append("This may occur with dynamic code execution or unusual import patterns")
+
+            # Attempt fallback for Jupyter notebooks
+            if execution_context == "notebook":
+                notebook_path = self._detect_jupyter_notebook()
+                if notebook_path:
+                    warnings.append(f"Using fallback detection for notebook: {notebook_path.name}")
+                    return EntryPointDetectionResult(
+                        detected_file=notebook_path,
+                        detection_method="fallback",
+                        confidence=0.7,
+                        fallback_used=True,
+                        warnings=warnings,
+                        execution_context=execution_context,
+                    )
+
+            # Detection failed
+            warnings.append("Code capture will be skipped unless strategy.yaml is provided")
+            return EntryPointDetectionResult(
+                detected_file=None,
+                detection_method="failed",
+                confidence=0.0,
+                fallback_used=True,
+                warnings=warnings,
+                execution_context=execution_context,
+            )
+
+        except Exception as e:  # noqa: BLE001
+            # Catch any unexpected errors during stack inspection
+            logger.warning("entry_point_detection_error", error=str(e), error_type=type(e).__name__)
+            warnings.append(f"Entry point detection error: {type(e).__name__}")
+            warnings.append("Code capture will be skipped unless strategy.yaml is provided")
+            return EntryPointDetectionResult(
+                detected_file=None,
+                detection_method="failed",
+                confidence=0.0,
+                fallback_used=True,
+                warnings=warnings,
+                execution_context="unknown",
+            )
+
+    def _detect_execution_context(
+        self,
+    ) -> Literal["file", "notebook", "interactive", "frozen", "unknown"]:
+        """Detect the execution environment.
+
+        Returns:
+            Execution context type
+        """
+        # Check for frozen application (PyInstaller, cx_Freeze)
+        if getattr(sys, "frozen", False):
+            return "frozen"
+
+        # Check for Jupyter/IPython
+        try:
+            # Try importing IPython to detect notebook environment
+            from IPython import get_ipython
+
+            ipython = get_ipython()
+            if ipython is not None:
+                # Check if running in notebook (not just IPython shell)
+                if "IPKernelApp" in ipython.config:
+                    return "notebook"
+                # IPython shell is still interactive
+                return "interactive"
+        except ImportError:
+            pass
+
+        # Check for interactive session by examining sys.argv and stdin
+        if hasattr(sys, "ps1"):  # Python interactive mode
+            return "interactive"
+
+        if not sys.argv or sys.argv[0] in ("", "-c", "-m"):
+            return "interactive"
+
+        # Default to file execution
+        return "file"
+
+    def _detect_jupyter_notebook(self) -> Path | None:
+        """Attempt to detect Jupyter notebook filename.
+
+        Returns:
+            Path to notebook file or None if cannot determine
+        """
+        try:
+            from IPython import get_ipython
+
+            ipython = get_ipython()
+            if ipython is None:
+                return None
+
+            # Try to get notebook path from IPython
+            # Note: This is best-effort and may not work in all Jupyter environments
+            connection_file = (
+                getattr(ipython, "config", {}).get("IPKernelApp", {}).get("connection_file", "")
+            )
+
+            if connection_file:
+                # Extract notebook name from connection file path
+                # Connection files are usually in format: kernel-<notebook_id>.json
+                notebook_dir = Path.cwd()
+                # Look for .ipynb files in current directory
+                ipynb_files = list(notebook_dir.glob("*.ipynb"))
+
+                if len(ipynb_files) == 1:
+                    # Only one notebook in directory, likely the current one
+                    return ipynb_files[0]
+
+        except (ImportError, AttributeError, Exception):
+            # Jupyter notebook detection failed - this is expected in non-notebook environments
+            logger.debug("jupyter_notebook_detection_failed")
+
+        return None
 
     def analyze_imports(self, entry_point: Path, project_root: Path) -> list[Path]:
         """Extract all local module imports from Python file recursively.
@@ -612,9 +872,14 @@ class StrategyCodeCapture:
     def capture_strategy_code(
         self, entry_point: Path, dest_dir: Path, project_root: Path | None = None
     ) -> list[Path]:
-        """Capture strategy code using YAML (if present) or import analysis.
+        """Capture strategy code using YAML (if present) or entry point detection.
 
-        Precedence Rule: strategy.yaml presence always wins, regardless of config.
+        NEW BEHAVIOR: Captures only the entry point file by default (90%+ storage reduction).
+
+        Precedence Rule:
+        1. strategy.yaml exists → use YAML file list (explicit always wins)
+        2. No YAML → detect entry point using inspect.stack(), capture only that file
+        3. Detection fails → skip code capture gracefully (don't fail backtest)
 
         Args:
             entry_point: Path to strategy entry point file
@@ -637,31 +902,50 @@ class StrategyCodeCapture:
 
         strategy_dir = entry_point.parent
 
-        # Try YAML first (Rule 1: YAML file exists → use it, explicit always wins)
+        # Rule 1: YAML file exists → use it (explicit always wins)
         yaml_config = self.load_strategy_yaml(strategy_dir)
         if yaml_config:
             logger.info(
                 "using_yaml_code_capture",
-                reason="strategy.yaml found (explicit)",
+                reason="strategy.yaml found (explicit configuration)",
             )
             return self._capture_from_yaml(yaml_config, strategy_dir, dest_dir)
 
-        # Rule 2: No YAML but mode="strategy_yaml" → warn and fall back
-        if self.code_capture_mode == "strategy_yaml":
-            logger.warning(
-                "yaml_not_found_fallback",
-                mode="strategy_yaml",
-                fallback="import_analysis",
-                message="strategy.yaml not found, using import analysis instead",
+        # Rule 2: No YAML → use entry point detection (NEW DEFAULT BEHAVIOR)
+        logger.info(
+            "using_entry_point_detection",
+            reason="no strategy.yaml found, using entry point detection for storage optimization",
+        )
+
+        # Detect entry point using inspect.stack()
+        detection_result = self.detect_entry_point()
+
+        # Log warnings from detection
+        for warning in detection_result.warnings:
+            logger.warning("entry_point_detection_warning", message=warning)
+
+        # If detection succeeded, capture only the detected file
+        if detection_result.detected_file:
+            logger.info(
+                "entry_point_capture_mode",
+                file=str(detection_result.detected_file),
+                method=detection_result.detection_method,
+                confidence=detection_result.confidence,
             )
 
-        # Rule 3: Default → import analysis
-        logger.info(
-            "using_import_analysis",
-            reason="no strategy.yaml found",
+            # Copy only the entry point file
+            return self.copy_strategy_files(
+                [detection_result.detected_file], dest_dir, project_root
+            )
+
+        # Rule 3: Detection failed → skip code capture gracefully
+        logger.warning(
+            "code_capture_skipped",
+            reason=f"Entry point detection failed ({detection_result.detection_method})",
+            context=detection_result.execution_context,
+            message="Code capture will be skipped. Use strategy.yaml for explicit file list.",
         )
-        imports = self.analyze_imports(entry_point, project_root)
-        return self.copy_strategy_files(imports, dest_dir, project_root)
+        return []
 
     def find_project_root(self, entry_point: Path) -> Path:
         """Find project root by looking for markers.

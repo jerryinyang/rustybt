@@ -4,6 +4,10 @@ Shared bundle context for cross-worker bundle sharing.
 This module provides SharedBundleContext to enable bundle data sharing across
 multiprocessing worker processes, reducing redundant bundle loading overhead.
 
+QA Re-evaluation (2025-10-23): Modified to use fork() multiprocessing on Unix/macOS/Linux
+to avoid pickle serialization of sqlite3.Connection objects. Workers inherit bundle via
+copy-on-write memory, eliminating serialization overhead and architectural constraints.
+
 Constitutional requirements:
 - CR-001: Decimal precision for financial data
 - CR-004: Complete type hints
@@ -11,10 +15,10 @@ Constitutional requirements:
 """
 
 import hashlib
-import pickle  # noqa: S403 - Used for internal bundle serialization only, not untrusted data
+import os
 import struct
 from dataclasses import dataclass
-from multiprocessing import Lock, shared_memory
+from multiprocessing import Lock
 from typing import Optional
 
 import structlog
@@ -22,6 +26,9 @@ import structlog
 from rustybt.data.bundles.core import BundleData, load
 
 logger = structlog.get_logger()
+
+# Platform detection: fork() available on Unix/macOS/Linux, not Windows
+SUPPORTS_FORK = os.name != "nt"  # 'nt' is Windows
 
 
 @dataclass

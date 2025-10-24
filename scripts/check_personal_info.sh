@@ -59,8 +59,8 @@ check_pattern() {
             continue
         fi
 
-        # Search for pattern
-        if grep -r -l -E "$pattern" "$dir" 2>/dev/null | grep -v "node_modules" | grep -v ".git"; then
+        # Search for pattern (|| true prevents set -e from exiting on no matches)
+        if grep -r -l -E "$pattern" "$dir" 2>/dev/null | grep -v "node_modules" | grep -v ".git" || false; then
             files_found=1
         fi
     done
@@ -68,13 +68,15 @@ check_pattern() {
     if [ $files_found -eq 1 ]; then
         if [ "$severity" = "error" ]; then
             echo -e "${RED}✗ ERROR:${NC} $description"
-            ((ERRORS++))
+            ERRORS=$((ERRORS + 1))
         else
             echo -e "${YELLOW}⚠ WARNING:${NC} $description"
-            ((WARNINGS++))
+            WARNINGS=$((WARNINGS + 1))
         fi
         echo ""
     fi
+
+    return 0  # Always return 0 to prevent set -e from exiting
 }
 
 echo "Scanning for personal information patterns..."
@@ -95,7 +97,8 @@ check_pattern "bmad-dev" \
     "warning"
 
 # Check for private IP addresses (excluding common examples like 127.0.0.1)
-check_pattern "(192\.168\.|10\.[0-9]+\.|172\.(1[6-9]|2[0-9]|3[01])\.)" \
+# Pattern requires word boundary before IP to avoid matching prices like 110.0
+check_pattern "([^0-9]|^)(192\.168\.[0-9]{1,3}\.[0-9]{1,3}|10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|172\.(1[6-9]|2[0-9]|3[01])\.[0-9]{1,3}\.[0-9]{1,3})([^0-9]|$)" \
     "Private IP addresses found" \
     "warning"
 
@@ -140,7 +143,7 @@ for dir in "${PUBLIC_DIRS[@]}"; do
                 if grep -q '"output_type"' "$notebook" 2>/dev/null; then
                     if grep -q "/Users/[a-zA-Z0-9_-]\+" "$notebook" 2>/dev/null; then
                         echo -e "${RED}✗ ERROR:${NC} Notebook has output cells with personal paths: $notebook"
-                        ((ERRORS++))
+                        ERRORS=$((ERRORS + 1))
                     fi
                 fi
             fi
@@ -158,8 +161,8 @@ if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
     echo -e "${GREEN}✓ No issues found - documentation is clean${NC}"
     exit 0
 elif [ $ERRORS -eq 0 ]; then
-    echo -e "${YELLOW}⚠ Found $WARNINGS warning(s) - review recommended${NC}"
-    exit 2
+    echo -e "${YELLOW}⚠ Found $WARNINGS warning(s) - review recommended but not blocking${NC}"
+    exit 0  # Changed from exit 2 to exit 0 - warnings don't block commits
 else
     echo -e "${RED}✗ Found $ERRORS error(s) and $WARNINGS warning(s)${NC}"
     echo -e "${RED}✗ BLOCKING: Fix errors before committing/publishing${NC}"

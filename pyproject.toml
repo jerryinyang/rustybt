@@ -170,6 +170,7 @@ optimization = [
     'matplotlib>=3.5.0',
     'tqdm>=4.0.0',
     'psutil>=5.0.0',
+    'hpbandster>=0.7.4',  # BOHB multi-fidelity optimization (Story X4.7)
     'ray[default]>=2.0.0; extra == "ray"',
 ]
 
@@ -188,6 +189,10 @@ docs = [
     'sphinx_markdown_tables',
     'm2r2',
 ]
+
+# Meta-extras for convenient installation (Story 001)
+full = ['rustybt[optimization]', 'rustybt[benchmarks]']
+all = ['rustybt[optimization]', 'rustybt[benchmarks]']
 
 [project.scripts]
 rustybt = 'rustybt.__main__:main'

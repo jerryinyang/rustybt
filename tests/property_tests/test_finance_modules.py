@@ -13,10 +13,12 @@ import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
+from rustybt.finance.decimal.blotter import DecimalBlotter  # noqa: F401
+
 # Import from the specific modules we're testing so coverage script detects them
 from rustybt.finance.slippage import FixedSlippage  # noqa: F401
-from rustybt.finance.decimal.blotter import DecimalBlotter  # noqa: F401
-from rustybt.finance.metrics.core import calculate_sharpe  # noqa: F401
+
+# Note: calculate_sharpe doesn't exist in metrics.core - tests use simplified implementation
 
 # Set decimal precision for tests
 getcontext().prec = 10

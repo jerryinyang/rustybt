@@ -1,0 +1,56 @@
+         673135 function calls (672935 primitive calls) in 0.892 seconds
+
+   Ordered by: cumulative time
+   List reduced from 146 to 50 due to restriction <50>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.013    0.013    0.892    0.892 /Users/jerryinyang/Code/bmad-dev/rustybt/scripts/benchmarks/profile_extended_heavy_operations.py:110(simulate_batch_initialization)
+        1    0.415    0.415    0.588    0.588 /Users/jerryinyang/Code/bmad-dev/rustybt/scripts/benchmarks/profile_extended_heavy_operations.py:59(create_synthetic_bundle_data)
+      300    0.000    0.000    0.271    0.001 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/deprecation.py:84(wrapper)
+      300    0.001    0.000    0.270    0.001 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/opt_flags.py:312(wrapper)
+      300    0.001    0.000    0.269    0.001 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py:2184(collect)
+      300    0.267    0.001    0.267    0.001 {method 'collect' of 'builtins.PyLazyFrame' objects}
+      100    0.000    0.000    0.159    0.002 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/series/utils.py:99(wrapper)
+      100    0.000    0.000    0.157    0.002 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py:10009(select_seq)
+        1    0.000    0.000    0.109    0.109 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py:359(__init__)
+        1    0.000    0.000    0.109    0.109 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/construction/dataframe.py:447(sequence_to_pydf)
+        1    0.000    0.000    0.109    0.109 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/functools.py:927(wrapper)
+        1    0.000    0.000    0.109    0.109 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/construction/dataframe.py:696(_sequence_of_dict_to_pydf)
+        1    0.109    0.109    0.109    0.109 {built-in method from_dicts}
+      100    0.000    0.000    0.074    0.001 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py:5101(filter)
+      100    0.000    0.000    0.048    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/group_by.py:130(agg)
+   252000    0.020    0.000    0.020    0.000 {built-in method builtins.abs}
+   126000    0.015    0.000    0.015    0.000 {built-in method builtins.max}
+   126100    0.014    0.000    0.014    0.000 {built-in method builtins.min}
+   126100    0.014    0.000    0.014    0.000 {method 'append' of 'list' objects}
+      100    0.000    0.000    0.006    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/expr/expr.py:5776(is_in)
+      600    0.000    0.000    0.006    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/parse/expr.py:21(parse_into_expression)
+      100    0.001    0.000    0.005    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/functions/lit.py:31(lit)
+  200/100    0.000    0.000    0.004    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/series/series.py:274(__init__)
+  200/100    0.001    0.000    0.004    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/construction/series.py:76(sequence_to_pyseries)
+      400    0.000    0.000    0.002    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/parse/expr.py:79(parse_into_list_of_expressions)
+      100    0.000    0.000    0.002    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py:4145(filter)
+      100    0.001    0.000    0.002    0.000 {built-in method new_from_any_values}
+      400    0.000    0.000    0.002    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/parse/expr.py:152(_parse_positional_inputs)
+      100    0.001    0.000    0.002    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py:4060(_filter)
+     6603    0.001    0.000    0.002    0.000 {built-in method builtins.isinstance}
+      500    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/functions/col.py:182(__call__)
+      400    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/parse/expr.py:161(_parse_inputs_as_iterable)
+      100    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py:4568(select_seq)
+      100    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py:4598(group_by)
+      100    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/series/series.py:4358(to_list)
+      100    0.001    0.000    0.001    0.000 {method 'to_list' of 'builtins.PySeries' objects}
+      500    0.001    0.000    0.001    0.000 {method 'cumprod' of 'numpy.ndarray' objects}
+      500    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/functions/col.py:37(_create_col)
+     1300    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/wrap.py:24(wrap_expr)
+     1800    0.000    0.000    0.001    0.000 <frozen abc>:117(__instancecheck__)
+      100    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/group_by.py:34(agg)
+      200    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py:1258(__getitem__)
+      300    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py:9882(lazy)
+      200    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/opt_flags.py:143(_eager)
+      200    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/getitem.py:128(get_df_item_by_key)
+     1300    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/expr/expr.py:143(_from_pyexpr)
+     3000    0.001    0.000    0.001    0.000 {built-in method __new__ of type object at 0x1033e82b0}
+      200    0.000    0.000    0.001    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py:8835(get_column)
+     1800    0.001    0.000    0.001    0.000 {built-in method _abc._abc_instancecheck}
+      400    0.000    0.000    0.000    0.000 /Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/parse/expr.py:186(_is_iterable)

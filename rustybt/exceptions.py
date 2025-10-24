@@ -110,7 +110,9 @@ class DataValidationError(DataAdapterError):
         cause: BaseException | None = None,
     ) -> None:
         merged_context = {"invalid_rows": invalid_rows, **_normalise_context(context)}
-        super().__init__(message or self.message, adapter=adapter, context=merged_context, cause=cause)
+        super().__init__(
+            message or self.message, adapter=adapter, context=merged_context, cause=cause
+        )
 
     @property
     def invalid_rows(self) -> Any | None:

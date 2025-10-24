@@ -5,6 +5,9 @@ These tests verify that:
 2. Backtests produce identical results with/without Rust (AC6)
 3. Rust-optimized backtests complete faster (AC5)
 4. Configuration passes correctly from Python to Rust (AC4)
+
+NOTE: Rust optimizations were removed in Epic X4 Phase 4 as they provided <2% performance improvement.
+This file is preserved for historical reference but all tests are skipped.
 """
 
 import math
@@ -13,7 +16,9 @@ import pandas as pd
 import polars as pl
 import pytest
 
-from rustybt.rust_optimizations import RUST_AVAILABLE, rust_ema, rust_pairwise_op, rust_sma
+# Rust was removed in Epic X4 - skip all tests
+RUST_AVAILABLE = False
+pytestmark = pytest.mark.skip(reason="Rust optimizations removed in Epic X4 Phase 4")
 
 
 @pytest.mark.integration

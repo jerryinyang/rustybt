@@ -8,12 +8,17 @@ import ccxt
 import pytest
 
 from rustybt.assets import Equity
-from rustybt.live.brokers.ccxt_adapter import (
-    CCXTBrokerAdapter,
-    CCXTConnectionError,
-    CCXTOrderRejectError,
-    CCXTRateLimitError,
+from rustybt.exceptions import (
+    BrokerConnectionError,
+    BrokerRateLimitError,
+    OrderRejectedError,
 )
+from rustybt.live.brokers.ccxt_adapter import CCXTBrokerAdapter
+
+# Backward compatibility aliases
+CCXTConnectionError = BrokerConnectionError
+CCXTOrderRejectError = OrderRejectedError
+CCXTRateLimitError = BrokerRateLimitError
 
 
 @pytest.fixture

@@ -21,6 +21,11 @@ This installs the core package with minimal dependencies suitable for production
 ### Installation with Optional Features
 
 ```bash
+# Full installation - everything you need for optimization and analysis (NEW!)
+pip install rustybt[full]
+# OR
+pip install rustybt[all]
+
 # Strategy optimization tools (scikit-learn, genetic algorithms)
 pip install rustybt[optimization]
 
@@ -36,11 +41,15 @@ pip install rustybt[optimization,dev,test]
 
 ### Available Extras
 
+- **`full`** or **`all`** - Complete installation with optimization and benchmarking tools (recommended for most users)
 - `optimization` - Strategy optimization (scikit-learn, genetic algorithms, walk-forward)
+- `benchmarks` - Performance profiling tools (cProfile, memory-profiler)
 - `dev` - Development tools (jupyter, jupyterlab, ruff, mypy, black, type stubs)
 - `test` - Testing tools (pytest, hypothesis, coverage)
-- `benchmarks` - Performance profiling tools (cProfile, memory-profiler)
 - `docs` - Documentation generation (MkDocs with Material theme)
+
+!!! tip "Quick Start Recommendation"
+    For most users, we recommend `pip install rustybt[full]` which includes optimization and benchmarking tools without dev/test dependencies.
 
 ### Using a Virtual Environment (Recommended)
 

@@ -1,0 +1,1007 @@
+{
+  "total_calls": 252113,
+  "primitive_calls": 251726,
+  "total_time": 0.3819727500000001,
+  "functions": [
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/scripts/benchmarks/run_production_profiling.py",
+      "line": 178,
+      "function": "run_grid_search_workflow",
+      "ncalls": 1,
+      "tottime": 0.001383405,
+      "cumtime": 0.381948542,
+      "percall_tottime": 0.001383405,
+      "percall_cumtime": 0.381948542
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/scripts/benchmarks/run_production_profiling.py",
+      "line": 99,
+      "function": "simple_ma_crossover_backtest",
+      "ncalls": 100,
+      "tottime": 0.024918434000000003,
+      "cumtime": 0.36046625400000004,
+      "percall_tottime": 0.00024918434000000006,
+      "percall_cumtime": 0.0036046625400000002
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/deprecation.py",
+      "line": 84,
+      "function": "wrapper",
+      "ncalls": 2100,
+      "tottime": 0.0017909310000000002,
+      "cumtime": 0.22268135900000002,
+      "percall_tottime": 8.528242857142857e-07,
+      "percall_cumtime": 0.0001060387423809524
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/opt_flags.py",
+      "line": 312,
+      "function": "wrapper",
+      "ncalls": 2100,
+      "tottime": 0.004720328,
+      "cumtime": 0.22089042800000003,
+      "percall_tottime": 2.2477752380952383e-06,
+      "percall_cumtime": 0.0001051859180952381
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py",
+      "line": 2184,
+      "function": "collect",
+      "ncalls": 2100,
+      "tottime": 0.006303105000000001,
+      "cumtime": 0.212565252,
+      "percall_tottime": 3.001478571428572e-06,
+      "percall_cumtime": 0.00010122154857142857
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'collect' of 'builtins.PyLazyFrame' objects>",
+      "ncalls": 2100,
+      "tottime": 0.196994528,
+      "cumtime": 0.196994528,
+      "percall_tottime": 9.38069180952381e-05,
+      "percall_cumtime": 9.38069180952381e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py",
+      "line": 5101,
+      "function": "filter",
+      "ncalls": 1000,
+      "tottime": 0.002603406,
+      "cumtime": 0.15252101,
+      "percall_tottime": 2.603406e-06,
+      "percall_cumtime": 0.00015252101
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py",
+      "line": 5696,
+      "function": "sort",
+      "ncalls": 1000,
+      "tottime": 0.0036884440000000004,
+      "cumtime": 0.09824213000000001,
+      "percall_tottime": 3.6884440000000005e-06,
+      "percall_cumtime": 9.824213000000001e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/series/utils.py",
+      "line": 99,
+      "function": "wrapper",
+      "ncalls": 100,
+      "tottime": 0.00047996000000000003,
+      "cumtime": 0.023092241000000003,
+      "percall_tottime": 4.799600000000001e-06,
+      "percall_cumtime": 0.00023092241000000004
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py",
+      "line": 4145,
+      "function": "filter",
+      "ncalls": 1000,
+      "tottime": 0.001141597,
+      "cumtime": 0.022443009,
+      "percall_tottime": 1.1415970000000001e-06,
+      "percall_cumtime": 2.2443009e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py",
+      "line": 4060,
+      "function": "_filter",
+      "ncalls": 1000,
+      "tottime": 0.004671847000000001,
+      "cumtime": 0.021085839000000002,
+      "percall_tottime": 4.671847000000001e-06,
+      "percall_cumtime": 2.1085839e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py",
+      "line": 10009,
+      "function": "select_seq",
+      "ncalls": 100,
+      "tottime": 0.00045842200000000005,
+      "cumtime": 0.020619998,
+      "percall_tottime": 4.584220000000001e-06,
+      "percall_cumtime": 0.00020619998
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/scripts/benchmarks/run_production_profiling.py",
+      "line": 43,
+      "function": "create_synthetic_price_data",
+      "ncalls": 1,
+      "tottime": 0.007388912,
+      "cumtime": 0.016710917000000002,
+      "percall_tottime": 0.007388912,
+      "percall_cumtime": 0.016710917000000002
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/expr/expr.py",
+      "line": 193,
+      "function": "__eq__",
+      "ncalls": 1000,
+      "tottime": 0.0013994180000000001,
+      "cumtime": 0.011931528,
+      "percall_tottime": 1.3994180000000002e-06,
+      "percall_cumtime": 1.1931528e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/numpy/_core/numeric.py",
+      "line": 806,
+      "function": "convolve",
+      "ncalls": 2000,
+      "tottime": 0.0031867640000000003,
+      "cumtime": 0.011843319000000001,
+      "percall_tottime": 1.5933820000000002e-06,
+      "percall_cumtime": 5.9216595000000005e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/parse/expr.py",
+      "line": 21,
+      "function": "parse_into_expression",
+      "ncalls": 2100,
+      "tottime": 0.001539514,
+      "cumtime": 0.009594387000000001,
+      "percall_tottime": 7.331019047619048e-07,
+      "percall_cumtime": 4.568755714285715e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method builtins.isinstance>",
+      "ncalls": 33302,
+      "tottime": 0.005985137000000001,
+      "cumtime": 0.009408767,
+      "percall_tottime": 1.797230496666867e-07,
+      "percall_cumtime": 2.8252858687165935e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py",
+      "line": 359,
+      "function": "__init__",
+      "ncalls": 1,
+      "tottime": 3.333e-06,
+      "cumtime": 0.0080075,
+      "percall_tottime": 3.333e-06,
+      "percall_cumtime": 0.0080075
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/construction/dataframe.py",
+      "line": 447,
+      "function": "sequence_to_pydf",
+      "ncalls": 1,
+      "tottime": 3.2500000000000002e-06,
+      "cumtime": 0.008003542,
+      "percall_tottime": 3.2500000000000002e-06,
+      "percall_cumtime": 0.008003542
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/functools.py",
+      "line": 927,
+      "function": "wrapper",
+      "ncalls": 1,
+      "tottime": 5.167000000000001e-06,
+      "cumtime": 0.007996167,
+      "percall_tottime": 5.167000000000001e-06,
+      "percall_cumtime": 0.007996167
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/construction/dataframe.py",
+      "line": 696,
+      "function": "_sequence_of_dict_to_pydf",
+      "ncalls": 1,
+      "tottime": 8.168e-06,
+      "cumtime": 0.007977625,
+      "percall_tottime": 8.168e-06,
+      "percall_cumtime": 0.007977625
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method from_dicts>",
+      "ncalls": 1,
+      "tottime": 0.007820833000000001,
+      "cumtime": 0.007967166000000001,
+      "percall_tottime": 0.007820833000000001,
+      "percall_cumtime": 0.007967166000000001
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/functions/lit.py",
+      "line": 31,
+      "function": "lit",
+      "ncalls": 1000,
+      "tottime": 0.003108598,
+      "cumtime": 0.007547077,
+      "percall_tottime": 3.108598e-06,
+      "percall_cumtime": 7.547077e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method numpy._core._multiarray_umath.correlate>",
+      "ncalls": 2000,
+      "tottime": 0.007125226,
+      "cumtime": 0.007125226,
+      "percall_tottime": 3.562613e-06,
+      "percall_cumtime": 3.562613e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/opt_flags.py",
+      "line": 143,
+      "function": "_eager",
+      "ncalls": 2100,
+      "tottime": 0.0027471350000000004,
+      "cumtime": 0.006823934,
+      "percall_tottime": 1.308159523809524e-06,
+      "percall_cumtime": 3.2494923809523813e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method numpy.array>",
+      "ncalls": 4100,
+      "tottime": 0.006762622,
+      "cumtime": 0.006762622,
+      "percall_tottime": 1.64942e-06,
+      "percall_cumtime": 1.64942e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py",
+      "line": 9882,
+      "function": "lazy",
+      "ncalls": 2100,
+      "tottime": 0.001164322,
+      "cumtime": 0.006345703,
+      "percall_tottime": 5.544390476190476e-07,
+      "percall_cumtime": 3.0217633333333336e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/parse/expr.py",
+      "line": 79,
+      "function": "parse_into_list_of_expressions",
+      "ncalls": 1100,
+      "tottime": 0.00048827200000000004,
+      "cumtime": 0.005280698,
+      "percall_tottime": 4.438836363636364e-07,
+      "percall_cumtime": 4.8006345454545455e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/numpy/lib/_function_base_impl.py",
+      "line": 1391,
+      "function": "diff",
+      "ncalls": 1000,
+      "tottime": 0.004551118000000001,
+      "cumtime": 0.0052593380000000006,
+      "percall_tottime": 4.5511180000000004e-06,
+      "percall_cumtime": 5.259338e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py",
+      "line": 1258,
+      "function": "__getitem__",
+      "ncalls": 1100,
+      "tottime": 0.000532634,
+      "cumtime": 0.0050005810000000005,
+      "percall_tottime": 4.842127272727273e-07,
+      "percall_cumtime": 4.5459827272727276e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/parse/expr.py",
+      "line": 152,
+      "function": "_parse_positional_inputs",
+      "ncalls": 1100,
+      "tottime": 0.000920557,
+      "cumtime": 0.004792426000000001,
+      "percall_tottime": 8.3687e-07,
+      "percall_cumtime": 4.3567509090909096e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/getitem.py",
+      "line": 128,
+      "function": "get_df_item_by_key",
+      "ncalls": 1100,
+      "tottime": 0.001012665,
+      "cumtime": 0.004467947,
+      "percall_tottime": 9.206045454545455e-07,
+      "percall_cumtime": 4.06177e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/numpy/_core/numeric.py",
+      "line": 171,
+      "function": "ones",
+      "ncalls": 2000,
+      "tottime": 0.003281786,
+      "cumtime": 0.004428015,
+      "percall_tottime": 1.640893e-06,
+      "percall_cumtime": 2.2140075000000004e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/functions/col.py",
+      "line": 182,
+      "function": "__call__",
+      "ncalls": 1100,
+      "tottime": 0.000718979,
+      "cumtime": 0.003938988,
+      "percall_tottime": 6.536172727272727e-07,
+      "percall_cumtime": 3.5808981818181817e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'extend' of 'list' objects>",
+      "ncalls": 3000,
+      "tottime": 0.0023860440000000004,
+      "cumtime": 0.0039038460000000003,
+      "percall_tottime": 7.953480000000001e-07,
+      "percall_cumtime": 1.301282e-06
+    },
+    {
+      "filename": "<frozen abc>",
+      "line": 117,
+      "function": "__instancecheck__",
+      "ncalls": 7203,
+      "tottime": 0.001588023,
+      "cumtime": 0.003651796,
+      "percall_tottime": 2.2046688879633488e-07,
+      "percall_cumtime": 5.069826461196723e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/wrap.py",
+      "line": 24,
+      "function": "wrap_expr",
+      "ncalls": 4200,
+      "tottime": 0.0015497590000000002,
+      "cumtime": 0.003570965,
+      "percall_tottime": 3.6899023809523815e-07,
+      "percall_cumtime": 8.502297619047619e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/various.py",
+      "line": 79,
+      "function": "_is_generator",
+      "ncalls": 1000,
+      "tottime": 0.000901083,
+      "cumtime": 0.003519682,
+      "percall_tottime": 9.01083e-07,
+      "percall_cumtime": 3.5196820000000003e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/series/series.py",
+      "line": 4568,
+      "function": "to_numpy",
+      "ncalls": 1000,
+      "tottime": 0.000516307,
+      "cumtime": 0.00348306,
+      "percall_tottime": 5.16307e-07,
+      "percall_cumtime": 3.48306e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'lazy' of 'builtins.PyDataFrame' objects>",
+      "ncalls": 2100,
+      "tottime": 0.003398084,
+      "cumtime": 0.003398084,
+      "percall_tottime": 1.618135238095238e-06,
+      "percall_cumtime": 1.618135238095238e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/parse/expr.py",
+      "line": 161,
+      "function": "_parse_inputs_as_iterable",
+      "ncalls": 1100,
+      "tottime": 0.001143474,
+      "cumtime": 0.003360131,
+      "percall_tottime": 1.0395218181818183e-06,
+      "percall_cumtime": 3.0546645454545456e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/functions/col.py",
+      "line": 37,
+      "function": "_create_col",
+      "ncalls": 1100,
+      "tottime": 0.001080023,
+      "cumtime": 0.0032200090000000002,
+      "percall_tottime": 9.81839090909091e-07,
+      "percall_cumtime": 2.9272809090909095e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py",
+      "line": 8835,
+      "function": "get_column",
+      "ncalls": 1100,
+      "tottime": 0.0006927680000000001,
+      "cumtime": 0.0031269590000000003,
+      "percall_tottime": 6.297890909090909e-07,
+      "percall_cumtime": 2.8426900000000005e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'to_numpy' of 'builtins.PySeries' objects>",
+      "ncalls": 1000,
+      "tottime": 0.0026540860000000004,
+      "cumtime": 0.0029667530000000004,
+      "percall_tottime": 2.654086e-06,
+      "percall_cumtime": 2.9667530000000003e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py",
+      "line": 1570,
+      "function": "sort",
+      "ncalls": 1000,
+      "tottime": 0.001264626,
+      "cumtime": 0.0029037290000000003,
+      "percall_tottime": 1.264626e-06,
+      "percall_cumtime": 2.9037290000000004e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'std' of 'numpy.ndarray' objects>",
+      "ncalls": 100,
+      "tottime": 7.3581e-05,
+      "cumtime": 0.002749749,
+      "percall_tottime": 7.3581e-07,
+      "percall_cumtime": 2.749749e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_dependencies.py",
+      "line": 211,
+      "function": "_check_for_numpy",
+      "ncalls": 4000,
+      "tottime": 0.0022365080000000003,
+      "cumtime": 0.0026812570000000003,
+      "percall_tottime": 5.591270000000001e-07,
+      "percall_cumtime": 6.703142500000001e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/numpy/_core/_methods.py",
+      "line": 220,
+      "function": "_std",
+      "ncalls": 100,
+      "tottime": 0.00030151500000000003,
+      "cumtime": 0.002676168,
+      "percall_tottime": 3.0151500000000003e-06,
+      "percall_cumtime": 2.676168e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/wrap.py",
+      "line": 12,
+      "function": "wrap_df",
+      "ncalls": 2200,
+      "tottime": 0.001380633,
+      "cumtime": 0.002606232,
+      "percall_tottime": 6.275604545454545e-07,
+      "percall_cumtime": 1.184650909090909e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/opt_flags.py",
+      "line": 152,
+      "function": "__copy__",
+      "ncalls": 2100,
+      "tottime": 0.0011897370000000002,
+      "cumtime": 0.0025860640000000003,
+      "percall_tottime": 5.665414285714287e-07,
+      "percall_cumtime": 1.2314590476190479e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/opt_flags.py",
+      "line": 35,
+      "function": "__init__",
+      "ncalls": 2100,
+      "tottime": 0.001653074,
+      "cumtime": 0.002464225,
+      "percall_tottime": 7.871780952380953e-07,
+      "percall_cumtime": 1.1734404761904763e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method builtins.len>",
+      "ncalls": 20261,
+      "tottime": 0.0022297740000000003,
+      "cumtime": 0.0024633990000000002,
+      "percall_tottime": 1.1005251468338188e-07,
+      "percall_cumtime": 1.2158328809042002e-07
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method __new__ of type object at 0x106b082b0>",
+      "ncalls": 14000,
+      "tottime": 0.0024482040000000003,
+      "cumtime": 0.0024482040000000003,
+      "percall_tottime": 1.748717142857143e-07,
+      "percall_cumtime": 1.748717142857143e-07
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'tolist' of 'numpy.ndarray' objects>",
+      "ncalls": 1000,
+      "tottime": 0.002443031,
+      "cumtime": 0.002443031,
+      "percall_tottime": 2.443031e-06,
+      "percall_cumtime": 2.443031e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py",
+      "line": 4568,
+      "function": "select_seq",
+      "ncalls": 100,
+      "tottime": 0.00030803600000000003,
+      "cumtime": 0.00240587,
+      "percall_tottime": 3.0803600000000004e-06,
+      "percall_cumtime": 2.40587e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/various.py",
+      "line": 114,
+      "function": "is_bool_sequence",
+      "ncalls": 1000,
+      "tottime": 0.000815611,
+      "cumtime": 0.002388388,
+      "percall_tottime": 8.156110000000001e-07,
+      "percall_cumtime": 2.388388e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/numpy/_core/_methods.py",
+      "line": 150,
+      "function": "_var",
+      "ncalls": 100,
+      "tottime": 0.0016414090000000001,
+      "cumtime": 0.0023364980000000002,
+      "percall_tottime": 1.6414090000000002e-05,
+      "percall_cumtime": 2.3364980000000003e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py",
+      "line": 182,
+      "function": "_select_engine",
+      "ncalls": 2100,
+      "tottime": 0.000630228,
+      "cumtime": 0.0022232140000000003,
+      "percall_tottime": 3.0010857142857147e-07,
+      "percall_cumtime": 1.0586733333333334e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<get_engine_affinity>",
+      "ncalls": 4200,
+      "tottime": 0.0021565290000000003,
+      "cumtime": 0.0021565290000000003,
+      "percall_tottime": 5.134592857142858e-07,
+      "percall_cumtime": 5.134592857142858e-07
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method _abc._abc_instancecheck>",
+      "ncalls": 7203,
+      "tottime": 0.001647442,
+      "cumtime": 0.002063773,
+      "percall_tottime": 2.287160905178398e-07,
+      "percall_cumtime": 2.8651575732333753e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/expr/expr.py",
+      "line": 143,
+      "function": "_from_pyexpr",
+      "ncalls": 4200,
+      "tottime": 0.0012221010000000002,
+      "cumtime": 0.0020212060000000002,
+      "percall_tottime": 2.9097642857142864e-07,
+      "percall_cumtime": 4.812395238095238e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/wrap.py",
+      "line": 16,
+      "function": "wrap_ldf",
+      "ncalls": 2100,
+      "tottime": 0.0009144660000000001,
+      "cumtime": 0.001783297,
+      "percall_tottime": 4.3546e-07,
+      "percall_cumtime": 8.491890476190477e-07
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'with_optimizations' of 'builtins.PyLazyFrame' objects>",
+      "ncalls": 2100,
+      "tottime": 0.00174853,
+      "cumtime": 0.00174853,
+      "percall_tottime": 8.326333333333334e-07,
+      "percall_cumtime": 8.326333333333334e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py",
+      "line": 429,
+      "function": "_from_pyldf",
+      "ncalls": 4200,
+      "tottime": 0.001067515,
+      "cumtime": 0.0017241560000000001,
+      "percall_tottime": 2.541702380952381e-07,
+      "percall_cumtime": 4.1051333333333336e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/various.py",
+      "line": 136,
+      "function": "is_sequence",
+      "ncalls": 1000,
+      "tottime": 0.000509181,
+      "cumtime": 0.0017021400000000002,
+      "percall_tottime": 5.09181e-07,
+      "percall_cumtime": 1.7021400000000002e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'mean' of 'numpy.ndarray' objects>",
+      "ncalls": 100,
+      "tottime": 0.00010546100000000001,
+      "cumtime": 0.001459376,
+      "percall_tottime": 1.05461e-06,
+      "percall_cumtime": 1.4593760000000001e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/optimization/search/grid_search.py",
+      "line": 177,
+      "function": "update",
+      "ncalls": 100,
+      "tottime": 0.000287001,
+      "cumtime": 0.00143329,
+      "percall_tottime": 2.87001e-06,
+      "percall_cumtime": 1.43329e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/numpy/_core/_methods.py",
+      "line": 117,
+      "function": "_mean",
+      "ncalls": 100,
+      "tottime": 0.000435475,
+      "cumtime": 0.001353915,
+      "percall_tottime": 4.35475e-06,
+      "percall_cumtime": 1.353915e-05
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+      "ncalls": 400,
+      "tottime": 0.001352621,
+      "cumtime": 0.001352621,
+      "percall_tottime": 3.3815525e-06,
+      "percall_cumtime": 3.3815525e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py",
+      "line": 4107,
+      "function": "<genexpr>",
+      "ncalls": 2000,
+      "tottime": 0.000534611,
+      "cumtime": 0.0013466790000000001,
+      "percall_tottime": 2.673055e-07,
+      "percall_cumtime": 6.733395000000001e-07
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'get' of 'dict' objects>",
+      "ncalls": 8443,
+      "tottime": 0.00132533,
+      "cumtime": 0.00132533,
+      "percall_tottime": 1.5697382446997513e-07,
+      "percall_cumtime": 1.5697382446997513e-07
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'get_column' of 'builtins.PyDataFrame' objects>",
+      "ncalls": 1100,
+      "tottime": 0.001319359,
+      "cumtime": 0.001319359,
+      "percall_tottime": 1.1994172727272727e-06,
+      "percall_cumtime": 1.1994172727272727e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/wrap.py",
+      "line": 20,
+      "function": "wrap_s",
+      "ncalls": 1300,
+      "tottime": 0.000588229,
+      "cumtime": 0.0012697890000000001,
+      "percall_tottime": 4.524838461538462e-07,
+      "percall_cumtime": 9.767607692307693e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/frame.py",
+      "line": 203,
+      "function": "_gpu_engine_callback",
+      "ncalls": 2100,
+      "tottime": 0.0009573450000000001,
+      "cumtime": 0.001256818,
+      "percall_tottime": 4.5587857142857144e-07,
+      "percall_cumtime": 5.984847619047619e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/dataframe/frame.py",
+      "line": 522,
+      "function": "_from_pydf",
+      "ncalls": 2200,
+      "tottime": 0.0007918140000000001,
+      "cumtime": 0.0012255990000000002,
+      "percall_tottime": 3.599154545454546e-07,
+      "percall_cumtime": 5.570904545454546e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/opt_flags.py",
+      "line": 158,
+      "function": "no_optimizations",
+      "ncalls": 2100,
+      "tottime": 0.000650822,
+      "cumtime": 0.0012055870000000002,
+      "percall_tottime": 3.099152380952381e-07,
+      "percall_cumtime": 5.740890476190477e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/_utils/parse/expr.py",
+      "line": 186,
+      "function": "_is_iterable",
+      "ncalls": 1100,
+      "tottime": 0.000277857,
+      "cumtime": 0.001090422,
+      "percall_tottime": 2.5259727272727273e-07,
+      "percall_cumtime": 9.912927272727272e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/optimization/base.py",
+      "line": 81,
+      "function": "validate_suggested_params",
+      "ncalls": 100,
+      "tottime": 0.000145908,
+      "cumtime": 0.001089502,
+      "percall_tottime": 1.4590800000000002e-06,
+      "percall_cumtime": 1.089502e-05
+    },
+    {
+      "filename": "<frozen importlib._bootstrap>",
+      "line": 1390,
+      "function": "_handle_fromlist",
+      "ncalls": 1000,
+      "tottime": 0.0007433720000000001,
+      "cumtime": 0.001029262,
+      "percall_tottime": 7.43372e-07,
+      "percall_cumtime": 1.029262e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<lit>",
+      "ncalls": 1000,
+      "tottime": 0.000989651,
+      "cumtime": 0.000989651,
+      "percall_tottime": 9.89651e-07,
+      "percall_cumtime": 9.89651e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/optimization/parameter_space.py",
+      "line": 107,
+      "function": "validate_params",
+      "ncalls": 100,
+      "tottime": 0.0006545310000000001,
+      "cumtime": 0.0009435940000000001,
+      "percall_tottime": 6.5453100000000005e-06,
+      "percall_cumtime": 9.43594e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'sort' of 'builtins.PyLazyFrame' objects>",
+      "ncalls": 1000,
+      "tottime": 0.000916508,
+      "cumtime": 0.000916508,
+      "percall_tottime": 9.16508e-07,
+      "percall_cumtime": 9.16508e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/lazyframe/opt_flags.py",
+      "line": 63,
+      "function": "_from_pyoptflags",
+      "ncalls": 2100,
+      "tottime": 0.0005747650000000001,
+      "cumtime": 0.000898818,
+      "percall_tottime": 2.736976190476191e-07,
+      "percall_cumtime": 4.2800857142857144e-07
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method numpy.empty>",
+      "ncalls": 2000,
+      "tottime": 0.000886212,
+      "cumtime": 0.000886212,
+      "percall_tottime": 4.43106e-07,
+      "percall_cumtime": 4.43106e-07
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'select_seq' of 'builtins.PyLazyFrame' objects>",
+      "ncalls": 100,
+      "tottime": 0.0008748730000000001,
+      "cumtime": 0.0008748730000000001,
+      "percall_tottime": 8.74873e-06,
+      "percall_cumtime": 8.74873e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/logging/__init__.py",
+      "line": 1509,
+      "function": "info",
+      "ncalls": 10,
+      "tottime": 3.2665e-05,
+      "cumtime": 0.000847333,
+      "percall_tottime": 3.2665e-06,
+      "percall_cumtime": 8.47333e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/logging/__init__.py",
+      "line": 1640,
+      "function": "_log",
+      "ncalls": 10,
+      "tottime": 2.2502000000000002e-05,
+      "cumtime": 0.0008102080000000001,
+      "percall_tottime": 2.2502e-06,
+      "percall_cumtime": 8.102080000000001e-05
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<col>",
+      "ncalls": 1100,
+      "tottime": 0.0008065430000000001,
+      "cumtime": 0.0008065430000000001,
+      "percall_tottime": 7.332209090909091e-07,
+      "percall_cumtime": 7.332209090909091e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/series/series.py",
+      "line": 380,
+      "function": "_from_pyseries",
+      "ncalls": 1300,
+      "tottime": 0.00044694000000000005,
+      "cumtime": 0.00068156,
+      "percall_tottime": 3.4380000000000005e-07,
+      "percall_cumtime": 5.242769230769231e-07
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'prod' of 'numpy.ndarray' objects>",
+      "ncalls": 100,
+      "tottime": 0.000106427,
+      "cumtime": 0.0006535110000000001,
+      "percall_tottime": 1.06427e-06,
+      "percall_cumtime": 6.535110000000001e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'filter' of 'builtins.PyLazyFrame' objects>",
+      "ncalls": 1000,
+      "tottime": 0.0006293420000000001,
+      "cumtime": 0.0006293420000000001,
+      "percall_tottime": 6.29342e-07,
+      "percall_cumtime": 6.29342e-07
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'eq' of 'builtins.PyExpr' objects>",
+      "ncalls": 1000,
+      "tottime": 0.000603261,
+      "cumtime": 0.000603261,
+      "percall_tottime": 6.03261e-07,
+      "percall_cumtime": 6.03261e-07
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'append' of 'list' objects>",
+      "ncalls": 4043,
+      "tottime": 0.000573778,
+      "cumtime": 0.000573778,
+      "percall_tottime": 1.4191887212465993e-07,
+      "percall_cumtime": 1.4191887212465993e-07
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'no_optimizations' of 'builtins.PyOptFlags' objects>",
+      "ncalls": 2100,
+      "tottime": 0.000554765,
+      "cumtime": 0.000554765,
+      "percall_tottime": 2.6417380952380953e-07,
+      "percall_cumtime": 2.6417380952380953e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/numpy/_core/_methods.py",
+      "line": 53,
+      "function": "_prod",
+      "ncalls": 100,
+      "tottime": 3.7627000000000004e-05,
+      "cumtime": 0.000547084,
+      "percall_tottime": 3.7627e-07,
+      "percall_cumtime": 5.47084e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pydantic/main.py",
+      "line": 240,
+      "function": "__init__",
+      "ncalls": 3,
+      "tottime": 6.416e-06,
+      "cumtime": 0.0005313340000000001,
+      "percall_tottime": 2.1386666666666665e-06,
+      "percall_cumtime": 0.00017711133333333335
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'validate_python' of 'pydantic_core._pydantic_core.SchemaValidator' objects>",
+      "ncalls": 3,
+      "tottime": 0.000432418,
+      "cumtime": 0.0005249180000000001,
+      "percall_tottime": 0.00014413933333333334,
+      "percall_cumtime": 0.00017497266666666669
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/numpy/_core/_methods.py",
+      "line": 75,
+      "function": "_count_reduce_items",
+      "ncalls": 200,
+      "tottime": 0.000462141,
+      "cumtime": 0.00049888,
+      "percall_tottime": 2.310705e-06,
+      "percall_cumtime": 2.4944e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'copy' of 'builtins.PyOptFlags' objects>",
+      "ncalls": 2100,
+      "tottime": 0.000497509,
+      "cumtime": 0.000497509,
+      "percall_tottime": 2.3690904761904763e-07,
+      "percall_cumtime": 2.3690904761904763e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/polars/series/series.py",
+      "line": 4358,
+      "function": "to_list",
+      "ncalls": 100,
+      "tottime": 4.2414000000000004e-05,
+      "cumtime": 0.000490166,
+      "percall_tottime": 4.2414000000000004e-07,
+      "percall_cumtime": 4.90166e-06
+    }
+  ]
+}

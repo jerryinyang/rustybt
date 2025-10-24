@@ -43,8 +43,6 @@ class OptimizationConfig:
         enable_history_cache: Enable multi-tier DataPortal history cache (default: True, Story X4.5)
         enable_shared_bundle_context: Enable shared bundle context optimization (default: False, Story X4.7 Phase 6B)
         enable_persistent_worker_pool: Enable persistent worker pool optimization (default: False, Story X4.7 Phase 6B)
-        enable_bohb_optimizer: Enable BOHB multi-fidelity optimizer (default: False, Story X4.7 Phase 6B)
-        enable_ray_scheduler: Enable Ray distributed scheduler (default: False, Story X4.7 Phase 6B)
     """
 
     thresholds: Dict[tuple[str, str], PerformanceThreshold]
@@ -64,11 +62,13 @@ class OptimizationConfig:
     tier2_maxsize: int = 256  # Maximum LRU cache entries
     permanent_windows: tuple[int, ...] = (20, 50, 200)  # Permanent cache windows
     enable_history_cache: bool = True  # Enable multi-tier history cache
-    # Story X4.7 Phase 6B: Heavy operations optimization feature flags
-    enable_shared_bundle_context: bool = False  # Shared bundle across workers
-    enable_persistent_worker_pool: bool = False  # Persistent worker pool
-    enable_bohb_optimizer: bool = False  # BOHB multi-fidelity optimization
-    enable_ray_scheduler: bool = False  # Ray distributed scheduler
+    # Story X4.7 Phase 6B: Heavy operations optimization feature flags (74.97% speedup)
+    enable_shared_bundle_context: bool = (
+        False  # Shared bundle across workers (REJECTED - serialization issues)
+    )
+    enable_persistent_worker_pool: bool = (
+        True  # Persistent worker pool (ACCEPTED - enabled by default)
+    )
 
     def should_use_bundle_pool(self) -> bool:
         """Check if bundle pooling is enabled.
@@ -197,8 +197,6 @@ class OptimizationConfig:
         enable_persistent_worker_pool = (
             os.getenv("RUSTYBT_ENABLE_PERSISTENT_POOL", "false").lower() == "true"
         )
-        enable_bohb_optimizer = os.getenv("RUSTYBT_ENABLE_BOHB", "false").lower() == "true"
-        enable_ray_scheduler = os.getenv("RUSTYBT_ENABLE_RAY", "false").lower() == "true"
 
         # Validate cache_size_gb must be positive
         if cache_size_gb <= 0:
@@ -221,8 +219,6 @@ class OptimizationConfig:
             max_bundle_pool_size=max_bundle_pool_size,
             enable_shared_bundle_context=enable_shared_bundle_context,
             enable_persistent_worker_pool=enable_persistent_worker_pool,
-            enable_bohb_optimizer=enable_bohb_optimizer,
-            enable_ray_scheduler=enable_ray_scheduler,
         )
 
     @classmethod

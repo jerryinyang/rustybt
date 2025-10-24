@@ -184,7 +184,7 @@ class StrategyCodeCapture:
                         warnings.append(f"Jupyter notebook detected: {detected_path.name}")
 
                         # Try to find the actual .ipynb file instead of the temp IPython file
-                        logger.warning(
+                        logger.debug(
                             "attempting_notebook_detection",
                             temp_file=str(detected_path),
                             cwd=str(Path.cwd()),
@@ -192,7 +192,7 @@ class StrategyCodeCapture:
                         notebook_path = self._detect_jupyter_notebook()
 
                         if notebook_path:
-                            logger.warning(
+                            logger.debug(
                                 "notebook_path_found",
                                 notebook=str(notebook_path),
                                 exists=notebook_path.exists(),
@@ -333,27 +333,27 @@ class StrategyCodeCapture:
                 logger.info("notebook_detection_no_ipython")
                 return None
 
-            logger.warning("notebook_detection_starting", cwd=str(Path.cwd()))
+            logger.debug("notebook_detection_starting", cwd=str(Path.cwd()))
 
             # Strategy 1: Try to get notebook name from __vsc_ipynb_file__ (VS Code Jupyter)
             import sys
 
             if hasattr(sys, "__vsc_ipynb_file__"):
                 notebook_path = Path(sys.__vsc_ipynb_file__)
-                logger.warning(
+                logger.debug(
                     "notebook_detection_vscode_attr_found",
                     path=str(notebook_path),
                     exists=notebook_path.exists(),
                     suffix=notebook_path.suffix,
                 )
                 if notebook_path.exists() and notebook_path.suffix == ".ipynb":
-                    logger.warning("notebook_detected_vscode", path=str(notebook_path))
+                    logger.debug("notebook_detected_vscode", path=str(notebook_path))
                     return notebook_path
 
             # Strategy 2: Check current working directory for .ipynb files
             notebook_dir = Path.cwd()
             ipynb_files = list(notebook_dir.glob("*.ipynb"))
-            logger.warning(
+            logger.debug(
                 "notebook_detection_strategy2",
                 notebook_dir=str(notebook_dir),
                 found_notebooks=len(ipynb_files),
@@ -362,21 +362,21 @@ class StrategyCodeCapture:
 
             if len(ipynb_files) == 1:
                 # Only one notebook in directory, likely the current one
-                logger.warning("notebook_detected_single_file", path=str(ipynb_files[0]))
+                logger.debug("notebook_detected_single_file", path=str(ipynb_files[0]))
                 return ipynb_files[0]
 
             # Strategy 3: If multiple notebooks, try to find the most recently modified one
             # (assumes user is working on the most recent notebook)
             if len(ipynb_files) > 1:
                 most_recent = max(ipynb_files, key=lambda p: p.stat().st_mtime)
-                logger.warning(
+                logger.debug(
                     "notebook_detected_recent",
                     path=str(most_recent),
                     total_notebooks=len(ipynb_files),
                 )
                 return most_recent
 
-            logger.warning("notebook_detection_no_notebooks_found")
+            logger.debug("notebook_detection_no_notebooks_found")
             return None
 
         except (ImportError, AttributeError, Exception) as e:

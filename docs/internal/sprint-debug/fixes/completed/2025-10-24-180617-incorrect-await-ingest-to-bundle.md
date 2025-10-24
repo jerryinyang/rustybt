@@ -1,6 +1,6 @@
 # [2025-10-24 18:06:17] - Incorrect await usage with ingest_to_bundle in documentation
 
-**Commit:** [Pending]
+**Commit:** ace2267
 **Focus Area:** Documentation (CRITICAL)
 **Severity:** 🔴 CRITICAL
 
@@ -241,7 +241,7 @@ N/A - Documentation-only changes
 
 ## Commit Hash
 
-`[pending]`
+`ace2267`
 
 ---
 
@@ -253,9 +253,10 @@ N/A - Documentation-only changes
 
 ## Notes
 
-- This is a critical blocker for new users
-- Must fix ALL occurrences across documentation
-- Should consider adding CI validation for code examples
-- Need to determine if `ingest_to_bundle` SHOULD be async (design question)
+- ✅ RESOLVED: Critical blocker for new users - all 23 user-facing occurrences fixed
+- All code examples now copy-paste executable
+- Confirmed with source code: All 6 adapters use `def ingest_to_bundle` (synchronous by design)
+- Future improvement: Add CI validation to test documentation code examples automatically
+- Decision: `ingest_to_bundle` is intentionally synchronous (calls async `fetch()` internally but blocks until complete)
 
 ---

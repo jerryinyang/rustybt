@@ -15,7 +15,7 @@ from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 # Import from the specific modules we're testing so coverage script detects them
-from rustybt.data.polars.data_portal import DataPortal  # noqa: F401
+from rustybt.data.polars.data_portal import PolarsDataPortal  # noqa: F401
 
 
 class TestPolarsDataPortalProperties:

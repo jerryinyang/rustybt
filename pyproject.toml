@@ -101,7 +101,6 @@ documentation = 'https://jerryinyang.github.io/rustybt/'
 requires = [
     'setuptools>=64.0.0',  # Modern setuptools with better PEP 517/660 support
     "setuptools_scm[toml]>=8.0",  # Updated for better pyproject.toml integration
-    'setuptools-rust>=1.5.0',
     'wheel>=0.36.0',
     'Cython>=0.29.21,<3.2.0',
     'numpy>=2.0.0 ; python_version>"3.9"',
@@ -171,6 +170,7 @@ optimization = [
     'matplotlib>=3.5.0',
     'tqdm>=4.0.0',
     'psutil>=5.0.0',
+    'hpbandster>=0.7.4',  # BOHB multi-fidelity optimization (Story X4.7)
     'ray[default]>=2.0.0; extra == "ray"',
 ]
 
@@ -190,32 +190,9 @@ docs = [
     'm2r2',
 ]
 
-# Meta-extras for convenient installation (Story: 001-storage-install-improvements)
-# Install all user-facing optional features with: pip install rustybt[full]
-full = [
-    'scikit-learn>=1.3.0',
-    'scikit-optimize>=0.9.0',
-    'deap>=1.4.0',
-    'matplotlib>=3.5.0',
-    'tqdm>=4.0.0',
-    'psutil>=5.0.0',
-    'pytest-benchmark>=3.4.1',
-    'memory_profiler>=0.61.0',
-    'snakeviz>=2.2.0',
-]
-
-# Alias for 'full' - equivalent installation
-all = [
-    'scikit-learn>=1.3.0',
-    'scikit-optimize>=0.9.0',
-    'deap>=1.4.0',
-    'matplotlib>=3.5.0',
-    'tqdm>=4.0.0',
-    'psutil>=5.0.0',
-    'pytest-benchmark>=3.4.1',
-    'memory_profiler>=0.61.0',
-    'snakeviz>=2.2.0',
-]
+# Meta-extras for convenient installation (Story 001)
+full = ['rustybt[optimization]', 'rustybt[benchmarks]']
+all = ['rustybt[optimization]', 'rustybt[benchmarks]']
 
 [project.scripts]
 rustybt = 'rustybt.__main__:main'
@@ -280,8 +257,6 @@ markers = [
     "live: marks tests requiring live API access (network dependent)",
     "validation: marks tests as validation tests (backtest vs paper correlation)",
     "ib_integration: marks tests requiring IB paper account (skip by default)",
-    "rust: marks tests requiring Rust extensions (skip if not built)",
-    "rust_equivalence: marks tests that validate Rust/Python equivalence (AC6)",
     "property: property-based tests using hypothesis",
     "exchange_integration: marks tests requiring exchange integration",
     "websocket_integration: marks tests requiring WebSocket connectivity",
@@ -444,8 +419,6 @@ line-ending = "auto"
 "rustybt/lib/**/*.py" = ["D", "ANN", "ARG", "BLE", "N", "UP", "E501", "B", "RUF", "W", "SIM", "C4"]
 # Legacy sources modules
 "rustybt/sources/**/*.py" = ["D", "ANN", "ARG", "E501", "N", "UP", "RUF", "BLE"]
-# Rust optimizations module
-"rustybt/rust_optimizations.py" = ["D", "ANN", "ARG", "UP", "RUF", "N", "E", "W", "SIM", "B"]
 # Core init and main
 "rustybt/__main__.py" = ["ALL"]
 # Specific legacy files with remaining issues (take precedence over wildcards)
@@ -562,7 +535,6 @@ module = [
     "rustybt.extensions",
     "rustybt.dispatch",
     "rustybt.protocol",
-    "rustybt.rust_optimizations",
     "rustybt.zipline_warnings",
     # Assets and instruments
     "rustybt.assets.*",

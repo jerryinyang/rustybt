@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1200">
+  <style>
+    .bar { fill: #e74c3c; stroke: #c0392b; stroke-width: 1; }
+    .bar:hover { fill: #c0392b; }
+    .func-name { font-family: monospace; font-size: 12px; fill: #2c3e50; }
+    .location { font-family: monospace; font-size: 10px; fill: #7f8c8d; }
+    .percent { font-family: monospace; font-size: 11px; fill: #2c3e50; font-weight: bold; }
+    .title { font-family: Arial, sans-serif; font-size: 20px; fill: #2c3e50; font-weight: bold; }
+    .subtitle { font-family: Arial, sans-serif; font-size: 12px; fill: #7f8c8d; }
+  </style>
+
+  <!-- Title -->
+  <text x="20" y="30" class="title">GridSearch Optimization</text>
+  <text x="20" y="50" class="subtitle">Top 30 functions by cumulative time (≥0.5% of total runtime: 0.079s)</text>
+
+  <!-- Bars -->
+  <g>
+    <!-- Function 1: grid_search_workflow -->
+    <rect x="350" y="80" width="999.6396812213511" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="95" text-anchor="end" class="func-name">
+      grid_search_workflow
+    </text>
+    <text x="340" y="108" text-anchor="end" class="location">
+      profile_extended_heavy_operations.py:379
+    </text>
+    <text x="1359.639681221351" y="100" class="percent">
+      99.96% (0.079s, 1 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 2: simple_backtest_task -->
+    <rect x="350" y="115" width="998.1936130148932" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="130" text-anchor="end" class="func-name">
+      simple_backtest_task
+    </text>
+    <text x="340" y="143" text-anchor="end" class="location">
+      profile_extended_heavy_operations.py:223
+    </text>
+    <text x="1358.1936130148933" y="135" class="percent">
+      99.82% (0.079s, 5 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 3: create_synthetic_bundle_data -->
+    <rect x="350" y="150" width="726.0155331680693" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="165" text-anchor="end" class="func-name">
+      create_synthetic_bundle_data
+    </text>
+    <text x="340" y="178" text-anchor="end" class="location">
+      profile_extended_heavy_operations.py:59
+    </text>
+    <text x="1086.0155331680694" y="170" class="percent">
+      72.60% (0.057s, 5 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 4: __init__ -->
+    <rect x="350" y="185" width="204.5691859985926" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="200" text-anchor="end" class="func-name">
+      __init__
+    </text>
+    <text x="340" y="213" text-anchor="end" class="location">
+      frame.py:359
+    </text>
+    <text x="564.5691859985926" y="205" class="percent">
+      20.46% (0.016s, 5 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 5: sequence_to_pydf -->
+    <rect x="350" y="220" width="204.05404274474256" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="235" text-anchor="end" class="func-name">
+      sequence_to_pydf
+    </text>
+    <text x="340" y="248" text-anchor="end" class="location">
+      dataframe.py:447
+    </text>
+    <text x="564.0540427447426" y="240" class="percent">
+      20.41% (0.016s, 5 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 6: wrapper -->
+    <rect x="350" y="255" width="203.43378115351217" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="270" text-anchor="end" class="func-name">
+      wrapper
+    </text>
+    <text x="340" y="283" text-anchor="end" class="location">
+      functools.py:927
+    </text>
+    <text x="563.4337811535122" y="275" class="percent">
+      20.34% (0.016s, 5 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 7: _sequence_of_dict_to_pydf -->
+    <rect x="350" y="290" width="202.63864779016916" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="305" text-anchor="end" class="func-name">
+      _sequence_of_dict_to_pydf
+    </text>
+    <text x="340" y="318" text-anchor="end" class="location">
+      dataframe.py:696
+    </text>
+    <text x="562.6386477901692" y="310" class="percent">
+      20.26% (0.016s, 5 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 8: <built-in method from_dicts> -->
+    <rect x="350" y="325" width="201.8197138093035" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="340" text-anchor="end" class="func-name">
+      <built-in method from_dicts>
+    </text>
+    <text x="340" y="353" text-anchor="end" class="location">
+      ~:0
+    </text>
+    <text x="561.8197138093035" y="345" class="percent">
+      20.18% (0.016s, 5 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 9: wrapper -->
+    <rect x="350" y="360" width="160.19447526422246" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="375" text-anchor="end" class="func-name">
+      wrapper
+    </text>
+    <text x="340" y="388" text-anchor="end" class="location">
+      deprecation.py:84
+    </text>
+    <text x="520.1944752642224" y="380" class="percent">
+      16.02% (0.013s, 105 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 10: wrapper -->
+    <rect x="350" y="395" width="158.9783359855954" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="410" text-anchor="end" class="func-name">
+      wrapper
+    </text>
+    <text x="340" y="423" text-anchor="end" class="location">
+      opt_flags.py:312
+    </text>
+    <text x="518.9783359855954" y="415" class="percent">
+      15.90% (0.013s, 105 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 11: collect -->
+    <rect x="350" y="430" width="152.58107996728532" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="445" text-anchor="end" class="func-name">
+      collect
+    </text>
+    <text x="340" y="458" text-anchor="end" class="location">
+      frame.py:2184
+    </text>
+    <text x="512.5810799672853" y="450" class="percent">
+      15.26% (0.012s, 105 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 12: <method 'collect' of 'builtins.PyLazyFrame' objects> -->
+    <rect x="350" y="465" width="141.0575361225409" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="480" text-anchor="end" class="func-name">
+      <method 'collect' of 'builtins.PyLazy...
+    </text>
+    <text x="340" y="493" text-anchor="end" class="location">
+      ~:0
+    </text>
+    <text x="501.0575361225409" y="485" class="percent">
+      14.11% (0.011s, 105 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 13: filter -->
+    <rect x="350" y="500" width="108.78339155629665" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="515" text-anchor="end" class="func-name">
+      filter
+    </text>
+    <text x="340" y="528" text-anchor="end" class="location">
+      frame.py:5101
+    </text>
+    <text x="468.78339155629664" y="520" class="percent">
+      10.88% (0.009s, 50 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 14: sort -->
+    <rect x="350" y="535" width="76.8411115408269" height="30"
+          style="fill: #e67e22; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="550" text-anchor="end" class="func-name">
+      sort
+    </text>
+    <text x="340" y="563" text-anchor="end" class="location">
+      frame.py:5696
+    </text>
+    <text x="436.8411115408269" y="555" class="percent">
+      7.68% (0.006s, 50 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 15: <built-in method builtins.abs> -->
+    <rect x="350" y="570" width="25.151394498088475" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="585" text-anchor="end" class="func-name">
+      <built-in method builtins.abs>
+    </text>
+    <text x="340" y="598" text-anchor="end" class="location">
+      ~:0
+    </text>
+    <text x="385.15139449808845" y="590" class="percent">
+      2.52% (0.002s, 25,200 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 16: <built-in method builtins.max> -->
+    <rect x="350" y="605" width="19.09065664090486" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="620" text-anchor="end" class="func-name">
+      <built-in method builtins.max>
+    </text>
+    <text x="340" y="633" text-anchor="end" class="location">
+      ~:0
+    </text>
+    <text x="379.09065664090485" y="625" class="percent">
+      1.91% (0.002s, 12,600 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 17: <method 'append' of 'list' objects> -->
+    <rect x="350" y="640" width="18.49054378768379" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="655" text-anchor="end" class="func-name">
+      <method 'append' of 'list' objects>
+    </text>
+    <text x="340" y="668" text-anchor="end" class="location">
+      ~:0
+    </text>
+    <text x="378.4905437876838" y="660" class="percent">
+      1.85% (0.001s, 12,655 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 18: <built-in method builtins.min> -->
+    <rect x="350" y="675" width="18.359038084792083" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="690" text-anchor="end" class="func-name">
+      <built-in method builtins.min>
+    </text>
+    <text x="340" y="703" text-anchor="end" class="location">
+      ~:0
+    </text>
+    <text x="378.3590380847921" y="695" class="percent">
+      1.84% (0.001s, 12,700 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 19: filter -->
+    <rect x="350" y="710" width="16.130199648760208" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="725" text-anchor="end" class="func-name">
+      filter
+    </text>
+    <text x="340" y="738" text-anchor="end" class="location">
+      frame.py:4145
+    </text>
+    <text x="376.1301996487602" y="730" class="percent">
+      1.61% (0.001s, 50 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 20: wrapper -->
+    <rect x="350" y="745" width="15.521540383066952" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="760" text-anchor="end" class="func-name">
+      wrapper
+    </text>
+    <text x="340" y="773" text-anchor="end" class="location">
+      utils.py:99
+    </text>
+    <text x="375.52154038306696" y="765" class="percent">
+      1.55% (0.001s, 5 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 21: _filter -->
+    <rect x="350" y="780" width="15.04074762088926" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="795" text-anchor="end" class="func-name">
+      _filter
+    </text>
+    <text x="340" y="808" text-anchor="end" class="location">
+      frame.py:4060
+    </text>
+    <text x="375.04074762088925" y="800" class="percent">
+      1.50% (0.001s, 50 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 22: select_seq -->
+    <rect x="350" y="815" width="11.751849715013924" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="830" text-anchor="end" class="func-name">
+      select_seq
+    </text>
+    <text x="340" y="843" text-anchor="end" class="location">
+      frame.py:10009
+    </text>
+    <text x="371.7518497150139" y="835" class="percent">
+      1.18% (0.001s, 5 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 23: __eq__ -->
+    <rect x="350" y="850" width="9.638489288454105" height="30"
+          style="fill: #3498db; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="865" text-anchor="end" class="func-name">
+      __eq__
+    </text>
+    <text x="340" y="878" text-anchor="end" class="location">
+      expr.py:193
+    </text>
+    <text x="369.6384892884541" y="870" class="percent">
+      0.96% (0.001s, 50 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 24: mean -->
+    <rect x="350" y="885" width="7.65988067990896" height="30"
+          style="fill: #3498db; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="900" text-anchor="end" class="func-name">
+      mean
+    </text>
+    <text x="340" y="913" text-anchor="end" class="location">
+      fromnumeric.py:3735
+    </text>
+    <text x="367.65988067990895" y="905" class="percent">
+      0.77% (0.001s, 50 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 25: parse_into_expression -->
+    <rect x="350" y="920" width="7.654998827087312" height="30"
+          style="fill: #3498db; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="935" text-anchor="end" class="func-name">
+      parse_into_expression
+    </text>
+    <text x="340" y="948" text-anchor="end" class="location">
+      expr.py:21
+    </text>
+    <text x="367.6549988270873" y="940" class="percent">
+      0.77% (0.001s, 105 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 26: <built-in method builtins.isinstance> -->
+    <rect x="350" y="955" width="6.5553392887711075" height="30"
+          style="fill: #3498db; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="970" text-anchor="end" class="func-name">
+      <built-in method builtins.isinstance>
+    </text>
+    <text x="340" y="983" text-anchor="end" class="location">
+      ~:0
+    </text>
+    <text x="366.5553392887711" y="975" class="percent">
+      0.66% (0.001s, 1,660 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 27: _mean -->
+    <rect x="350" y="990" width="6.268717467523" height="30"
+          style="fill: #3498db; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="1005" text-anchor="end" class="func-name">
+      _mean
+    </text>
+    <text x="340" y="1018" text-anchor="end" class="location">
+      _methods.py:117
+    </text>
+    <text x="366.268717467523" y="1010" class="percent">
+      0.63% (0.000s, 50 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 28: lit -->
+    <rect x="350" y="1025" width="6.016699740691196" height="30"
+          style="fill: #3498db; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="1040" text-anchor="end" class="func-name">
+      lit
+    </text>
+    <text x="340" y="1053" text-anchor="end" class="location">
+      lit.py:31
+    </text>
+    <text x="366.0166997406912" y="1045" class="percent">
+      0.60% (0.000s, 50 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 29: _eager -->
+    <rect x="350" y="1060" width="5.741933847724234" height="30"
+          style="fill: #3498db; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="1075" text-anchor="end" class="func-name">
+      _eager
+    </text>
+    <text x="340" y="1088" text-anchor="end" class="location">
+      opt_flags.py:143
+    </text>
+    <text x="365.7419338477242" y="1080" class="percent">
+      0.57% (0.000s, 105 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 30: convolve -->
+    <rect x="350" y="1095" width="5.157658485864819" height="30"
+          style="fill: #3498db; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="1110" text-anchor="end" class="func-name">
+      convolve
+    </text>
+    <text x="340" y="1123" text-anchor="end" class="location">
+      numeric.py:806
+    </text>
+    <text x="365.15765848586483" y="1115" class="percent">
+      0.52% (0.000s, 50 calls)
+    </text>
+  </g>
+
+  <!-- Legend -->
+  <text x="20" y="1160" class="subtitle">Color coding:</text>
+  <rect x="20" y="1165" width="15" height="15" fill="#e74c3c" stroke="#2c3e50"/>
+  <text x="40" y="1176" class="location">≥10% (Critical)</text>
+  <rect x="150" y="1165" width="15" height="15" fill="#e67e22" stroke="#2c3e50"/>
+  <text x="170" y="1176" class="location">≥5% (Major)</text>
+  <rect x="280" y="1165" width="15" height="15" fill="#f39c12" stroke="#2c3e50"/>
+  <text x="300" y="1176" class="location">≥1% (Notable)</text>
+  <rect x="410" y="1165" width="15" height="15" fill="#3498db" stroke="#2c3e50"/>
+  <text x="430" y="1176" class="location">&lt;1% (Minor)</text>
+
+  <!-- Footer -->
+  <text x="1390" y="1190" text-anchor="end" class="location">
+    Generated by RustyBT Profiling Infrastructure
+  </text>
+</svg>

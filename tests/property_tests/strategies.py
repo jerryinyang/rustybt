@@ -245,3 +245,7 @@ def return_series(
     """
     size = draw(st.integers(min_value=min_size, max_value=max_size))
     return [draw(decimal_returns(min_return, max_return)) for _ in range(size)]
+
+
+# Alias for backward compatibility
+decimal_returns_series = return_series

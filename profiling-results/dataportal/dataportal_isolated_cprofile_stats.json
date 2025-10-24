@@ -1,0 +1,1007 @@
+{
+  "total_calls": 1296979,
+  "primitive_calls": 1276102,
+  "total_time": 0.7745031269999985,
+  "functions": [
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/scripts/benchmarks/profile_dataportal_isolated.py",
+      "line": 45,
+      "function": "profile_dataportal_history_calls",
+      "ncalls": 1,
+      "tottime": 0.0041637010000000006,
+      "cumtime": 0.7745248330000001,
+      "percall_tottime": 0.0041637010000000006,
+      "percall_cumtime": 0.7745248330000001
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/data_portal.py",
+      "line": 826,
+      "function": "get_history_window",
+      "ncalls": 2000,
+      "tottime": 0.002331456,
+      "cumtime": 0.452639852,
+      "percall_tottime": 1.165728e-06,
+      "percall_cumtime": 0.000226319926
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/data_portal.py",
+      "line": 738,
+      "function": "_get_history_daily_window",
+      "ncalls": 2000,
+      "tottime": 0.005189219,
+      "cumtime": 0.44805324500000004,
+      "percall_tottime": 2.5946095000000003e-06,
+      "percall_cumtime": 0.00022402662250000003
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/bundles/core.py",
+      "line": 529,
+      "function": "load",
+      "ncalls": 1,
+      "tottime": 0.00011941500000000001,
+      "cumtime": 0.31298512500000003,
+      "percall_tottime": 0.00011941500000000001,
+      "percall_cumtime": 0.31298512500000003
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/polars/parquet_bar_reader.py",
+      "line": 62,
+      "function": "__init__",
+      "ncalls": 1,
+      "tottime": 4.6166000000000005e-05,
+      "cumtime": 0.29290466600000004,
+      "percall_tottime": 4.6166000000000005e-05,
+      "percall_cumtime": 0.29290466600000004
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/utils/calendar_utils.py",
+      "line": 27,
+      "function": "get_calendar",
+      "ncalls": 2,
+      "tottime": 2.2875e-05,
+      "cumtime": 0.29257125,
+      "percall_tottime": 1.14375e-05,
+      "percall_cumtime": 0.146285625
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/calendar_utils.py",
+      "line": 226,
+      "function": "get_calendar",
+      "ncalls": 2,
+      "tottime": 2.525e-05,
+      "cumtime": 0.292548375,
+      "percall_tottime": 1.2625e-05,
+      "percall_cumtime": 0.1462741875
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/calendar_utils.py",
+      "line": 204,
+      "function": "_fabricate",
+      "ncalls": 1,
+      "tottime": 2.25e-05,
+      "cumtime": 0.29243687500000004,
+      "percall_tottime": 2.25e-05,
+      "percall_cumtime": 0.29243687500000004
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/exchange_calendar.py",
+      "line": 287,
+      "function": "__init__",
+      "ncalls": 1,
+      "tottime": 0.000100624,
+      "cumtime": 0.292414375,
+      "percall_tottime": 0.000100624,
+      "percall_cumtime": 0.292414375
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexes/datetimes.py",
+      "line": 821,
+      "function": "date_range",
+      "ncalls": 54,
+      "tottime": 0.00016599300000000002,
+      "cumtime": 0.16061379,
+      "percall_tottime": 3.0739444444444447e-06,
+      "percall_cumtime": 0.0029743294444444447
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/datetimes.py",
+      "line": 399,
+      "function": "_generate_range",
+      "ncalls": 54,
+      "tottime": 0.0033585340000000003,
+      "cumtime": 0.160286587,
+      "percall_tottime": 6.219507407407407e-05,
+      "percall_cumtime": 0.00296827012962963
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/datetimes.py",
+      "line": 2729,
+      "function": "_generate_range",
+      "ncalls": 13144,
+      "tottime": 0.10506686200000001,
+      "cumtime": 0.155781272,
+      "percall_tottime": 7.993522671941572e-06,
+      "percall_cumtime": 1.185189227023737e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/frame.py",
+      "line": 698,
+      "function": "__init__",
+      "ncalls": 2002,
+      "tottime": 0.008921935,
+      "cumtime": 0.149896822,
+      "percall_tottime": 4.456510989010989e-06,
+      "percall_cumtime": 7.487353746253747e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/functools.py",
+      "line": 1023,
+      "function": "__get__",
+      "ncalls": 6,
+      "tottime": 1.7917e-05,
+      "cumtime": 0.14189500000000002,
+      "percall_tottime": 2.986166666666667e-06,
+      "percall_cumtime": 0.02364916666666667
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/tseries/holiday.py",
+      "line": 443,
+      "function": "holidays",
+      "ncalls": 4,
+      "tottime": 0.00014850100000000002,
+      "cumtime": 0.14038345800000002,
+      "percall_tottime": 3.7125250000000005e-05,
+      "percall_cumtime": 0.035095864500000004
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/tseries/holiday.py",
+      "line": 249,
+      "function": "dates",
+      "ncalls": 53,
+      "tottime": 0.0005112900000000001,
+      "cumtime": 0.136758497,
+      "percall_tottime": 9.646981132075473e-06,
+      "percall_cumtime": 0.002580349
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/data_portal.py",
+      "line": 753,
+      "function": "_get_history_daily_window_data",
+      "ncalls": 2000,
+      "tottime": 0.000962783,
+      "cumtime": 0.13386524400000002,
+      "percall_tottime": 4.813915e-07,
+      "percall_cumtime": 6.693262200000001e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/data_portal.py",
+      "line": 963,
+      "function": "_get_daily_window_data",
+      "ncalls": 2000,
+      "tottime": 0.005368549,
+      "cumtime": 0.132902461,
+      "percall_tottime": 2.6842745e-06,
+      "percall_cumtime": 6.64512305e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/internals/construction.py",
+      "line": 237,
+      "function": "ndarray_to_mgr",
+      "ncalls": 2001,
+      "tottime": 0.010828975000000001,
+      "cumtime": 0.12518003,
+      "percall_tottime": 5.411781609195403e-06,
+      "percall_cumtime": 6.25587356321839e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/history_loader.py",
+      "line": 438,
+      "function": "history",
+      "ncalls": 2000,
+      "tottime": 0.006141525,
+      "cumtime": 0.12356185,
+      "percall_tottime": 3.0707625000000002e-06,
+      "percall_cumtime": 6.1780925e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/exchange_calendar.py",
+      "line": 718,
+      "function": "day",
+      "ncalls": 1,
+      "tottime": 0.010187723000000001,
+      "cumtime": 0.11305375000000001,
+      "percall_tottime": 0.010187723000000001,
+      "percall_cumtime": 0.11305375000000001
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/utils/memoize.py",
+      "line": 142,
+      "function": "wrapper",
+      "ncalls": 2000,
+      "tottime": 0.005271413,
+      "cumtime": 0.10235759800000001,
+      "percall_tottime": 2.6357065e-06,
+      "percall_cumtime": 5.1178799e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/history_loader.py",
+      "line": 334,
+      "function": "_ensure_sliding_windows",
+      "ncalls": 2000,
+      "tottime": 0.00510996,
+      "cumtime": 0.087805934,
+      "percall_tottime": 2.55498e-06,
+      "percall_cumtime": 4.3902967e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexes/base.py",
+      "line": 5385,
+      "function": "__getitem__",
+      "ncalls": 10339,
+      "tottime": 0.008152526,
+      "cumtime": 0.08463084500000001,
+      "percall_tottime": 7.885217138988297e-07,
+      "percall_cumtime": 8.185592900667377e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/internals/construction.py",
+      "line": 742,
+      "function": "_get_axes",
+      "ncalls": 2001,
+      "tottime": 0.001363211,
+      "cumtime": 0.084239488,
+      "percall_tottime": 6.812648675662169e-07,
+      "percall_cumtime": 4.209869465267366e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexes/base.py",
+      "line": 7659,
+      "function": "ensure_index",
+      "ncalls": 4129,
+      "tottime": 0.005906481000000001,
+      "cumtime": 0.082927518,
+      "percall_tottime": 1.4304870428675226e-06,
+      "percall_cumtime": 2.0084165173165418e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexes/base.py",
+      "line": 475,
+      "function": "__new__",
+      "ncalls": 2087,
+      "tottime": 0.011462268000000001,
+      "cumtime": 0.078620046,
+      "percall_tottime": 5.492222328701486e-06,
+      "percall_cumtime": 3.7671320555821754e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/tseries/holiday.py",
+      "line": 308,
+      "function": "_reference_dates",
+      "ncalls": 53,
+      "tottime": 0.0006542900000000001,
+      "cumtime": 0.07153595700000001,
+      "percall_tottime": 1.2345094339622643e-05,
+      "percall_cumtime": 0.0013497350377358493
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/exchange_calendar.py",
+      "line": 1660,
+      "function": "minute_to_session",
+      "ncalls": 2000,
+      "tottime": 0.004127185,
+      "cumtime": 0.055998885000000005,
+      "percall_tottime": 2.0635925e-06,
+      "percall_cumtime": 2.79994425e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/utils/memoize.py",
+      "line": 299,
+      "function": "wrapper",
+      "ncalls": 2000,
+      "tottime": 0.001305542,
+      "cumtime": 0.054732004,
+      "percall_tottime": 6.52771e-07,
+      "percall_cumtime": 2.7366002e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/tseries/holiday.py",
+      "line": 343,
+      "function": "_apply_rule",
+      "ncalls": 53,
+      "tottime": 0.000154804,
+      "cumtime": 0.053492417,
+      "percall_tottime": 2.9208301886792453e-06,
+      "percall_cumtime": 0.0010092908867924528
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/data_portal.py",
+      "line": 725,
+      "function": "_get_days_for_window",
+      "ncalls": 2000,
+      "tottime": 0.002221208,
+      "cumtime": 0.053426462,
+      "percall_tottime": 1.1106040000000001e-06,
+      "percall_cumtime": 2.6713231000000002e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/datetimelike.py",
+      "line": 390,
+      "function": "__getitem__",
+      "ncalls": 10357,
+      "tottime": 0.010054371000000001,
+      "cumtime": 0.051662951000000006,
+      "percall_tottime": 9.707802452447621e-07,
+      "percall_cumtime": 4.9882157960799464e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/ops/common.py",
+      "line": 62,
+      "function": "new_method",
+      "ncalls": 274,
+      "tottime": 0.000243672,
+      "cumtime": 0.048992334000000005,
+      "percall_tottime": 8.893138686131387e-07,
+      "percall_cumtime": 0.00017880413868613142
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/exchange_calendar.py",
+      "line": 2665,
+      "function": "_special_dates",
+      "ncalls": 2,
+      "tottime": 7.241700000000001e-05,
+      "cumtime": 0.048700749,
+      "percall_tottime": 3.6208500000000004e-05,
+      "percall_cumtime": 0.0243503745
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/exchange_calendar.py",
+      "line": 2744,
+      "function": "_calculate_special_closes",
+      "ncalls": 1,
+      "tottime": 4.9376e-05,
+      "cumtime": 0.048560500000000006,
+      "percall_tottime": 4.9376e-05,
+      "percall_cumtime": 0.048560500000000006
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/construction.py",
+      "line": 517,
+      "function": "sanitize_array",
+      "ncalls": 2151,
+      "tottime": 0.010671926,
+      "cumtime": 0.047085761000000004,
+      "percall_tottime": 4.96137889353789e-06,
+      "percall_cumtime": 2.189017247791725e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/_mixins.py",
+      "line": 78,
+      "function": "method",
+      "ncalls": 25,
+      "tottime": 3.896e-05,
+      "cumtime": 0.046000666,
+      "percall_tottime": 1.5584e-06,
+      "percall_cumtime": 0.00184002664
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method builtins.isinstance>",
+      "ncalls": 194088,
+      "tottime": 0.028121136,
+      "cumtime": 0.044704350000000004,
+      "percall_tottime": 1.4488858662050206e-07,
+      "percall_cumtime": 2.303303140843329e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arraylike.py",
+      "line": 98,
+      "function": "__add__",
+      "ncalls": 29,
+      "tottime": 1.6328e-05,
+      "cumtime": 0.043994831000000005,
+      "percall_tottime": 5.630344827586207e-07,
+      "percall_cumtime": 0.0015170631379310346
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexes/base.py",
+      "line": 7293,
+      "function": "_arith_method",
+      "ncalls": 29,
+      "tottime": 3.3625000000000004e-05,
+      "cumtime": 0.043978503,
+      "percall_tottime": 1.1594827586206899e-06,
+      "percall_cumtime": 0.001516500103448276
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/base.py",
+      "line": 1380,
+      "function": "_arith_method",
+      "ncalls": 29,
+      "tottime": 0.000200618,
+      "cumtime": 0.043939378,
+      "percall_tottime": 6.917862068965518e-06,
+      "percall_cumtime": 0.0015151509655172415
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexes/base.py",
+      "line": 3191,
+      "function": "__iadd__",
+      "ncalls": 24,
+      "tottime": 1.9872000000000002e-05,
+      "cumtime": 0.043503415000000004,
+      "percall_tottime": 8.280000000000001e-07,
+      "percall_cumtime": 0.0018126422916666669
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/ops/array_ops.py",
+      "line": 240,
+      "function": "arithmetic_op",
+      "ncalls": 29,
+      "tottime": 2.629e-05,
+      "cumtime": 0.042592832000000004,
+      "percall_tottime": 9.065517241379311e-07,
+      "percall_cumtime": 0.0014687183448275863
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method _operator.add>",
+      "ncalls": 29,
+      "tottime": 1.8081000000000002e-05,
+      "cumtime": 0.042515832,
+      "percall_tottime": 6.234827586206897e-07,
+      "percall_cumtime": 0.0014660631724137932
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/datetimelike.py",
+      "line": 1385,
+      "function": "__add__",
+      "ncalls": 29,
+      "tottime": 0.00012379400000000001,
+      "cumtime": 0.042468581000000005,
+      "percall_tottime": 4.268758620689656e-06,
+      "percall_cumtime": 0.001464433827586207
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/datetimes.py",
+      "line": 795,
+      "function": "_add_offset",
+      "ncalls": 20,
+      "tottime": 0.010724586000000001,
+      "cumtime": 0.041942253000000006,
+      "percall_tottime": 0.0005362293,
+      "percall_cumtime": 0.0020971126500000004
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/utils/pandas_utils.py",
+      "line": 10,
+      "function": "days_at_time",
+      "ncalls": 5,
+      "tottime": 8.129200000000001e-05,
+      "cumtime": 0.038254250000000004,
+      "percall_tottime": 1.62584e-05,
+      "percall_cumtime": 0.007650850000000001
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/exchange_calendar.py",
+      "line": 83,
+      "function": "_group_times",
+      "ncalls": 4,
+      "tottime": 4.1502000000000003e-05,
+      "cumtime": 0.037958501000000006,
+      "percall_tottime": 1.0375500000000001e-05,
+      "percall_cumtime": 0.009489625250000001
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/dateutil/relativedelta.py",
+      "line": 528,
+      "function": "__mul__",
+      "ncalls": 5698,
+      "tottime": 0.008716888,
+      "cumtime": 0.037938117,
+      "percall_tottime": 1.529815373815374e-06,
+      "percall_cumtime": 6.6581461916461915e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexes/datetimes.py",
+      "line": 286,
+      "function": "tz_localize",
+      "ncalls": 5,
+      "tottime": 1.1918e-05,
+      "cumtime": 0.037552542,
+      "percall_tottime": 2.3836e-06,
+      "percall_cumtime": 0.0075105084
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/datetimes.py",
+      "line": 925,
+      "function": "tz_localize",
+      "ncalls": 5,
+      "tottime": 0.036912793,
+      "cumtime": 0.037520292000000004,
+      "percall_tottime": 0.0073825586,
+      "percall_cumtime": 0.007504058400000001
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/base.py",
+      "line": 1342,
+      "function": "searchsorted",
+      "ncalls": 4014,
+      "tottime": 0.0037773790000000004,
+      "cumtime": 0.037061384,
+      "percall_tottime": 9.410510712506229e-07,
+      "percall_cumtime": 9.233030393622323e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/dateutil/relativedelta.py",
+      "line": 437,
+      "function": "__radd__",
+      "ncalls": 5698,
+      "tottime": 0.001665983,
+      "cumtime": 0.036488808000000005,
+      "percall_tottime": 2.923803088803089e-07,
+      "percall_cumtime": 6.4037922077922085e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexes/base.py",
+      "line": 5437,
+      "function": "_getitem_slice",
+      "ncalls": 2128,
+      "tottime": 0.0031885900000000003,
+      "cumtime": 0.035719424,
+      "percall_tottime": 1.4983975563909776e-06,
+      "percall_cumtime": 1.6785443609022555e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/calendar_helpers.py",
+      "line": 153,
+      "function": "parse_timestamp",
+      "ncalls": 2236,
+      "tottime": 0.005172617,
+      "cumtime": 0.035483518000000006,
+      "percall_tottime": 2.3133349731663684e-06,
+      "percall_cumtime": 1.5869194096601076e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/dateutil/relativedelta.py",
+      "line": 354,
+      "function": "__add__",
+      "ncalls": 5698,
+      "tottime": 0.017292712000000002,
+      "cumtime": 0.034822825,
+      "percall_tottime": 3.0348739908739913e-06,
+      "percall_cumtime": 6.111411898911899e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/_mixins.py",
+      "line": 278,
+      "function": "__getitem__",
+      "ncalls": 10357,
+      "tottime": 0.007965728,
+      "cumtime": 0.034645837,
+      "percall_tottime": 7.691153809018056e-07,
+      "percall_cumtime": 3.345161436709472e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/utils/pandas_utils.py",
+      "line": 112,
+      "function": "find_in_sorted_index",
+      "ncalls": 2008,
+      "tottime": 0.002212505,
+      "cumtime": 0.032928160000000005,
+      "percall_tottime": 1.1018451195219123e-06,
+      "percall_cumtime": 1.6398486055776893e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/utils/memoize.py",
+      "line": 192,
+      "function": "__init__",
+      "ncalls": 4000,
+      "tottime": 0.006752939,
+      "cumtime": 0.032398419000000005,
+      "percall_tottime": 1.68823475e-06,
+      "percall_cumtime": 8.09960475e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/exchange_calendar.py",
+      "line": 1294,
+      "function": "_minute_oob",
+      "ncalls": 2000,
+      "tottime": 0.00140273,
+      "cumtime": 0.030142064000000003,
+      "percall_tottime": 7.013650000000001e-07,
+      "percall_cumtime": 1.5071032000000001e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/dateutil/relativedelta.py",
+      "line": 105,
+      "function": "__init__",
+      "ncalls": 5789,
+      "tottime": 0.007290202000000001,
+      "cumtime": 0.029844440000000003,
+      "percall_tottime": 1.259319744342719e-06,
+      "percall_cumtime": 5.155370530316117e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/exchange_calendar.py",
+      "line": 906,
+      "function": "minutes_nanos",
+      "ncalls": 1,
+      "tottime": 3.5830000000000003e-06,
+      "cumtime": 0.028735625,
+      "percall_tottime": 3.5830000000000003e-06,
+      "percall_cumtime": 0.028735625
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/_mixins.py",
+      "line": 240,
+      "function": "searchsorted",
+      "ncalls": 4014,
+      "tottime": 0.0026803060000000004,
+      "cumtime": 0.02799762,
+      "percall_tottime": 6.677394120577978e-07,
+      "percall_cumtime": 6.9749925261584455e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/exchange_calendar.py",
+      "line": 901,
+      "function": "minutes",
+      "ncalls": 1,
+      "tottime": 2.042e-06,
+      "cumtime": 0.027304959,
+      "percall_tottime": 2.042e-06,
+      "percall_cumtime": 0.027304959
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/exchange_calendar.py",
+      "line": 889,
+      "function": "_minutes",
+      "ncalls": 1,
+      "tottime": 0.002300958,
+      "cumtime": 0.027302667000000003,
+      "percall_tottime": 0.002300958,
+      "percall_cumtime": 0.027302667000000003
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/history_loader.py",
+      "line": 530,
+      "function": "_array",
+      "ncalls": 8,
+      "tottime": 3.2999e-05,
+      "cumtime": 0.026343041,
+      "percall_tottime": 4.124875e-06,
+      "percall_cumtime": 0.003292880125
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/dispatch_bar_reader.py",
+      "line": 98,
+      "function": "load_raw_arrays",
+      "ncalls": 8,
+      "tottime": 0.000173578,
+      "cumtime": 0.026223875,
+      "percall_tottime": 2.169725e-05,
+      "percall_cumtime": 0.003277984375
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/polars/parquet_bar_reader.py",
+      "line": 124,
+      "function": "load_raw_arrays",
+      "ncalls": 8,
+      "tottime": 0.000378265,
+      "cumtime": 0.025489124000000002,
+      "percall_tottime": 4.7283125e-05,
+      "percall_cumtime": 0.0031861405000000002
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/datetimes.py",
+      "line": 547,
+      "function": "_box_func",
+      "ncalls": 8159,
+      "tottime": 0.011354920000000001,
+      "cumtime": 0.024479346000000003,
+      "percall_tottime": 1.3917048657923766e-06,
+      "percall_cumtime": 3.0002875352371617e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/toolz/sandbox/core.py",
+      "line": 98,
+      "function": "unzip",
+      "ncalls": 4000,
+      "tottime": 0.008315648,
+      "cumtime": 0.021601405,
+      "percall_tottime": 2.078912e-06,
+      "percall_cumtime": 5.40035125e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/exchange_calendars/calendar_helpers.py",
+      "line": 59,
+      "function": "compute_minutes",
+      "ncalls": 1,
+      "tottime": 0.009819605,
+      "cumtime": 0.021500667,
+      "percall_tottime": 0.009819605,
+      "percall_cumtime": 0.021500667
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/utils/memoize.py",
+      "line": 234,
+      "function": "__getitem__",
+      "ncalls": 2000,
+      "tottime": 0.001878323,
+      "cumtime": 0.020802353000000003,
+      "percall_tottime": 9.391615e-07,
+      "percall_cumtime": 1.0401176500000002e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/datetimelike.py",
+      "line": 733,
+      "function": "_validate_setitem_value",
+      "ncalls": 4015,
+      "tottime": 0.0018354360000000002,
+      "cumtime": 0.020459121,
+      "percall_tottime": 4.571447073474471e-07,
+      "percall_cumtime": 5.095671481942715e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/utils/memoize.py",
+      "line": 240,
+      "function": "__setitem__",
+      "ncalls": 2000,
+      "tottime": 0.001759675,
+      "cumtime": 0.019551864000000002,
+      "percall_tottime": 8.798375e-07,
+      "percall_cumtime": 9.775932000000002e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/datetimelike.py",
+      "line": 583,
+      "function": "_validate_scalar",
+      "ncalls": 4015,
+      "tottime": 0.002970702,
+      "cumtime": 0.018547227,
+      "percall_tottime": 7.399008717310087e-07,
+      "percall_cumtime": 4.619483686176837e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexes/datetimes.py",
+      "line": 582,
+      "function": "get_loc",
+      "ncalls": 2115,
+      "tottime": 0.004174962,
+      "cumtime": 0.017874859,
+      "percall_tottime": 1.9739773049645388e-06,
+      "percall_cumtime": 8.451469976359337e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method builtins.len>",
+      "ncalls": 71307,
+      "tottime": 0.011754418,
+      "cumtime": 0.016324112,
+      "percall_tottime": 1.6484241378826763e-07,
+      "percall_cumtime": 2.2892720209797078e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/dtypes/generic.py",
+      "line": 42,
+      "function": "_instancecheck",
+      "ncalls": 28332,
+      "tottime": 0.007294510000000001,
+      "cumtime": 0.016265182,
+      "percall_tottime": 2.5746541013694767e-07,
+      "percall_cumtime": 5.740922631653254e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/bundles/metadata.py",
+      "line": 254,
+      "function": "get",
+      "ncalls": 1,
+      "tottime": 6.254100000000001e-05,
+      "cumtime": 0.016046417,
+      "percall_tottime": 6.254100000000001e-05,
+      "percall_cumtime": 0.016046417
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexes/base.py",
+      "line": 843,
+      "function": "_engine",
+      "ncalls": 2143,
+      "tottime": 0.007673073000000001,
+      "cumtime": 0.015602008,
+      "percall_tottime": 3.5805286980867946e-06,
+      "percall_cumtime": 7.280451703219785e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/datetimes.py",
+      "line": 527,
+      "function": "_unbox_scalar",
+      "ncalls": 4123,
+      "tottime": 0.006367826,
+      "cumtime": 0.015168616000000001,
+      "percall_tottime": 1.544464225078826e-06,
+      "percall_cumtime": 3.6790240116420084e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method builtins.any>",
+      "ncalls": 11595,
+      "tottime": 0.008529925,
+      "cumtime": 0.014718891000000001,
+      "percall_tottime": 7.356554549374731e-07,
+      "percall_cumtime": 1.2694170763260026e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/dtypes/cast.py",
+      "line": 123,
+      "function": "maybe_convert_platform",
+      "ncalls": 2002,
+      "tottime": 0.006567305000000001,
+      "cumtime": 0.013439942000000002,
+      "percall_tottime": 3.280372127872128e-06,
+      "percall_cumtime": 6.713257742257743e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method builtins.getattr>",
+      "ncalls": 101087,
+      "tottime": 0.011642813,
+      "cumtime": 0.012276823000000001,
+      "percall_tottime": 1.1517616508552039e-07,
+      "percall_cumtime": 1.2144808926963904e-07
+    },
+    {
+      "filename": "<frozen importlib._bootstrap>",
+      "line": 1349,
+      "function": "_find_and_load",
+      "ncalls": 17,
+      "tottime": 8.0794e-05,
+      "cumtime": 0.011619875,
+      "percall_tottime": 4.752588235294118e-06,
+      "percall_cumtime": 0.0006835220588235294
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/dtypes/cast.py",
+      "line": 1166,
+      "function": "maybe_infer_to_datetimelike",
+      "ncalls": 2023,
+      "tottime": 0.006784221,
+      "cumtime": 0.011562376000000001,
+      "percall_tottime": 3.353544735541275e-06,
+      "percall_cumtime": 5.715460207612457e-06
+    },
+    {
+      "filename": "<frozen importlib._bootstrap>",
+      "line": 1304,
+      "function": "_find_and_load_unlocked",
+      "ncalls": 17,
+      "tottime": 6.563000000000001e-05,
+      "cumtime": 0.011286167000000001,
+      "percall_tottime": 3.860588235294118e-06,
+      "percall_cumtime": 0.0006638921764705883
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/polars/parquet_daily_bars.py",
+      "line": 87,
+      "function": "load_daily_bars",
+      "ncalls": 8,
+      "tottime": 0.00016041200000000002,
+      "cumtime": 0.011138001000000002,
+      "percall_tottime": 2.0051500000000003e-05,
+      "percall_cumtime": 0.0013922501250000002
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/calendar.py",
+      "line": 167,
+      "function": "monthrange",
+      "ncalls": 5698,
+      "tottime": 0.0028405920000000003,
+      "cumtime": 0.011127161,
+      "percall_tottime": 4.985243945243945e-07,
+      "percall_cumtime": 1.9528187083187083e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method numpy.arange>",
+      "ncalls": 9276,
+      "tottime": 0.010797968000000002,
+      "cumtime": 0.010797968000000002,
+      "percall_tottime": 1.1640758947822339e-06,
+      "percall_cumtime": 1.1640758947822339e-06
+    },
+    {
+      "filename": "<frozen importlib._bootstrap>",
+      "line": 911,
+      "function": "_load_unlocked",
+      "ncalls": 17,
+      "tottime": 4.9244000000000005e-05,
+      "cumtime": 0.010364831000000001,
+      "percall_tottime": 2.8967058823529414e-06,
+      "percall_cumtime": 0.0006096959411764707
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/datetimes.py",
+      "line": 771,
+      "function": "_assert_tzawareness_compat",
+      "ncalls": 6266,
+      "tottime": 0.004623885,
+      "cumtime": 0.010349562000000001,
+      "percall_tottime": 7.37932492818385e-07,
+      "percall_cumtime": 1.65170156399617e-06
+    },
+    {
+      "filename": "<frozen importlib._bootstrap_external>",
+      "line": 1020,
+      "function": "exec_module",
+      "ncalls": 17,
+      "tottime": 3.6666000000000004e-05,
+      "cumtime": 0.010115791,
+      "percall_tottime": 2.156823529411765e-06,
+      "percall_cumtime": 0.0005950465294117648
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/rustybt/data/bundles/metadata.py",
+      "line": 95,
+      "function": "_get_engine",
+      "ncalls": 2,
+      "tottime": 1.9792e-05,
+      "cumtime": 0.009727834000000001,
+      "percall_tottime": 9.896e-06,
+      "percall_cumtime": 0.004863917000000001
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexes/base.py",
+      "line": 6500,
+      "function": "map",
+      "ncalls": 20,
+      "tottime": 0.00014753500000000002,
+      "cumtime": 0.009481665,
+      "percall_tottime": 7.376750000000001e-06,
+      "percall_cumtime": 0.00047408325
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/dtypes/generic.py",
+      "line": 37,
+      "function": "_check",
+      "ncalls": 28332,
+      "tottime": 0.0062296420000000005,
+      "cumtime": 0.008930219000000001,
+      "percall_tottime": 2.1988006494423268e-07,
+      "percall_cumtime": 3.151990328956657e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/arrays/datetimes.py",
+      "line": 578,
+      "function": "tz",
+      "ncalls": 14628,
+      "tottime": 0.005729222,
+      "cumtime": 0.008831908000000001,
+      "percall_tottime": 3.916613344271261e-07,
+      "percall_cumtime": 6.037672955974843e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/indexes/base.py",
+      "line": 650,
+      "function": "_simple_new",
+      "ncalls": 4394,
+      "tottime": 0.006506125000000001,
+      "cumtime": 0.008778253,
+      "percall_tottime": 1.4806838871187984e-06,
+      "percall_cumtime": 1.997781747837961e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/.venv/lib/python3.13/site-packages/pandas/core/base.py",
+      "line": 895,
+      "function": "_map_values",
+      "ncalls": 20,
+      "tottime": 3.8542000000000005e-05,
+      "cumtime": 0.008515584000000001,
+      "percall_tottime": 1.9271e-06,
+      "percall_cumtime": 0.00042577920000000006
+    }
+  ]
+}

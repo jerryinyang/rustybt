@@ -265,7 +265,8 @@ class TestPipelineFactorPerformance:
 
         # Verify calculation
         assert len(result) == len(df)
-        assert isinstance(result.dtype, pl.Decimal)
+        # SMA returns float64 (rolling_mean converts to float)
+        assert result.dtype == pl.Float64
 
     def test_benchmark_returns_calculation(self, benchmark, benchmark_bundle):
         """Benchmark Returns factor calculation."""

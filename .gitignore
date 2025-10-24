@@ -77,6 +77,7 @@ site/*
 
 # Project specific
 tmp/
+specs/
 temp/
 specs/
 CLAUDE.md
@@ -176,3 +177,32 @@ secrets.json
 # Experiments (exclude entire directory - experimental/research code)
 experiments/
 rustybt/_version.py
+
+# Rust (for when Rust components exist)
+target/
+debug/
+release/
+*.rs.bk
+*.rlib
+*.prof*
+
+# Benchmarking and Profiling Output
+# Note: Keep .md and .svg files in profiling-results/ for documentation
+profiling-results/*.log
+profiling-results/*.prof
+profiling-results/*.lprof
+profiling-results/*.json
+profiling-results/*.stats
+profiling-results/*.memprof
+profiling-results/flame_graphs/*.prof
+profiling-results/flame_graphs/*.lprof
+profiling-results/archive/
+benchmark-results/
+*.prof
+*.lprof
+*.memprof
+
+# Optimization Caches (Epic 002/003)
+.optimization_cache/
+.bundle_pool/
+.pregrouped_data/

@@ -1,0 +1,1007 @@
+{
+  "total_calls": 8742,
+  "primitive_calls": 8722,
+  "total_time": 2.7836732499999997,
+  "functions": [
+    {
+      "filename": "/Users/jerryinyang/Code/bmad-dev/rustybt/scripts/benchmarks/profile_extended_heavy_operations.py",
+      "line": 279,
+      "function": "profile_parallel_coordinator",
+      "ncalls": 1,
+      "tottime": 5.2333e-05,
+      "cumtime": 2.783273417,
+      "percall_tottime": 5.2333e-05,
+      "percall_cumtime": 2.783273417
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 738,
+      "function": "__exit__",
+      "ncalls": 1,
+      "tottime": 1.3292e-05,
+      "cumtime": 2.783220292,
+      "percall_tottime": 1.3292e-05,
+      "percall_cumtime": 2.783220292
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 654,
+      "function": "terminate",
+      "ncalls": 1,
+      "tottime": 9.1458e-05,
+      "cumtime": 2.783204333,
+      "percall_tottime": 9.1458e-05,
+      "percall_cumtime": 2.783204333
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/util.py",
+      "line": 197,
+      "function": "__call__",
+      "ncalls": 15,
+      "tottime": 7.4455e-05,
+      "cumtime": 2.747872832,
+      "percall_tottime": 4.963666666666667e-06,
+      "percall_cumtime": 0.18319152213333334
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 680,
+      "function": "_terminate_pool",
+      "ncalls": 1,
+      "tottime": 5.5754e-05,
+      "cumtime": 2.74752775,
+      "percall_tottime": 5.5754e-05,
+      "percall_cumtime": 2.74752775
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 671,
+      "function": "_help_stuff_finish",
+      "ncalls": 1,
+      "tottime": 1.8085e-05,
+      "cumtime": 2.7198710000000004,
+      "percall_tottime": 1.8085e-05,
+      "percall_cumtime": 2.7198710000000004
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'acquire' of '_multiprocessing.SemLock' objects>",
+      "ncalls": 1,
+      "tottime": 0.00021387400000000002,
+      "cumtime": 2.719841041,
+      "percall_tottime": 0.00021387400000000002,
+      "percall_cumtime": 2.719841041
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/threading.py",
+      "line": 998,
+      "function": "_bootstrap",
+      "ncalls": 3,
+      "tottime": 6.166000000000001e-06,
+      "cumtime": 2.719627167,
+      "percall_tottime": 2.0553333333333334e-06,
+      "percall_cumtime": 0.9065423890000001
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/threading.py",
+      "line": 1025,
+      "function": "_bootstrap_inner",
+      "ncalls": 3,
+      "tottime": 4.3247e-05,
+      "cumtime": 2.719625583,
+      "percall_tottime": 1.4415666666666666e-05,
+      "percall_cumtime": 0.906541861
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py",
+      "line": 202,
+      "function": "send",
+      "ncalls": 33,
+      "tottime": 8.774600000000001e-05,
+      "cumtime": 2.71958679,
+      "percall_tottime": 2.6589696969696973e-06,
+      "percall_cumtime": 0.08241172090909091
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/threading.py",
+      "line": 981,
+      "function": "run",
+      "ncalls": 3,
+      "tottime": 2.5543000000000003e-05,
+      "cumtime": 2.719560625,
+      "percall_tottime": 8.514333333333334e-06,
+      "percall_cumtime": 0.9065202083333334
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 527,
+      "function": "_handle_tasks",
+      "ncalls": 1,
+      "tottime": 1.6791000000000002e-05,
+      "cumtime": 2.719547458,
+      "percall_tottime": 1.6791000000000002e-05,
+      "percall_cumtime": 2.719547458
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py",
+      "line": 406,
+      "function": "_send_bytes",
+      "ncalls": 38,
+      "tottime": 0.000105959,
+      "cumtime": 2.719003834,
+      "percall_tottime": 2.7883947368421056e-06,
+      "percall_cumtime": 0.07155273247368421
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method posix.write>",
+      "ncalls": 70,
+      "tottime": 0.00025237,
+      "cumtime": 2.7187217030000004,
+      "percall_tottime": 3.6052857142857145e-06,
+      "percall_cumtime": 0.038838881471428575
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py",
+      "line": 381,
+      "function": "_send",
+      "ncalls": 38,
+      "tottime": 4.3045000000000005e-05,
+      "cumtime": 2.7186938360000004,
+      "percall_tottime": 1.132763157894737e-06,
+      "percall_cumtime": 0.07154457463157896
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 573,
+      "function": "_handle_results",
+      "ncalls": 1,
+      "tottime": 8.8917e-05,
+      "cumtime": 2.718116083,
+      "percall_tottime": 8.8917e-05,
+      "percall_cumtime": 2.718116083
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 506,
+      "function": "_handle_workers",
+      "ncalls": 1,
+      "tottime": 0.000177381,
+      "cumtime": 2.7175845830000003,
+      "percall_tottime": 0.000177381,
+      "percall_cumtime": 2.7175845830000003
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py",
+      "line": 390,
+      "function": "_recv",
+      "ncalls": 56,
+      "tottime": 0.000204908,
+      "cumtime": 2.712781917,
+      "percall_tottime": 3.6590714285714287e-06,
+      "percall_cumtime": 0.048442534232142856
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method posix.read>",
+      "ncalls": 56,
+      "tottime": 2.7117207110000003,
+      "cumtime": 2.712527542,
+      "percall_tottime": 0.04842358412500001,
+      "percall_cumtime": 0.04843799182142857
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py",
+      "line": 246,
+      "function": "recv",
+      "ncalls": 26,
+      "tottime": 9.0622e-05,
+      "cumtime": 2.702194458,
+      "percall_tottime": 3.4854615384615385e-06,
+      "percall_cumtime": 0.10393055607692309
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py",
+      "line": 429,
+      "function": "_recv_bytes",
+      "ncalls": 28,
+      "tottime": 0.000236457,
+      "cumtime": 2.70182021,
+      "percall_tottime": 8.444892857142857e-06,
+      "percall_cumtime": 0.09649357892857144
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 305,
+      "function": "_repopulate_pool",
+      "ncalls": 1,
+      "tottime": 2.0916e-05,
+      "cumtime": 0.034998583,
+      "percall_tottime": 2.0916e-05,
+      "percall_cumtime": 0.034998583
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 314,
+      "function": "_repopulate_pool_static",
+      "ncalls": 1,
+      "tottime": 0.000386042,
+      "cumtime": 0.034977667000000004,
+      "percall_tottime": 0.000386042,
+      "percall_cumtime": 0.034977667000000004
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/process.py",
+      "line": 110,
+      "function": "start",
+      "ncalls": 8,
+      "tottime": 0.000449124,
+      "cumtime": 0.033827208000000004,
+      "percall_tottime": 5.61405e-05,
+      "percall_cumtime": 0.0042284010000000006
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/context.py",
+      "line": 286,
+      "function": "_Popen",
+      "ncalls": 8,
+      "tottime": 0.000313002,
+      "cumtime": 0.033194251,
+      "percall_tottime": 3.912525e-05,
+      "percall_cumtime": 0.004149281375
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/popen_spawn_posix.py",
+      "line": 30,
+      "function": "__init__",
+      "ncalls": 8,
+      "tottime": 6.9999e-05,
+      "cumtime": 0.032810873000000004,
+      "percall_tottime": 8.749875e-06,
+      "percall_cumtime": 0.0041013591250000005
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/popen_fork.py",
+      "line": 16,
+      "function": "__init__",
+      "ncalls": 8,
+      "tottime": 0.000510916,
+      "cumtime": 0.032740874,
+      "percall_tottime": 6.38645e-05,
+      "percall_cumtime": 0.00409260925
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/popen_spawn_posix.py",
+      "line": 38,
+      "function": "_launch",
+      "ncalls": 8,
+      "tottime": 0.0010660510000000002,
+      "cumtime": 0.032036793,
+      "percall_tottime": 0.00013325637500000002,
+      "percall_cumtime": 0.004004599125
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/process.py",
+      "line": 142,
+      "function": "join",
+      "ncalls": 3,
+      "tottime": 1.5377000000000002e-05,
+      "cumtime": 0.027355418000000003,
+      "percall_tottime": 5.125666666666667e-06,
+      "percall_cumtime": 0.009118472666666667
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/popen_fork.py",
+      "line": 25,
+      "function": "poll",
+      "ncalls": 239,
+      "tottime": 0.00013478,
+      "cumtime": 0.0273362,
+      "percall_tottime": 5.639330543933055e-07,
+      "percall_cumtime": 0.0001143774058577406
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/popen_fork.py",
+      "line": 37,
+      "function": "wait",
+      "ncalls": 3,
+      "tottime": 0.000390002,
+      "cumtime": 0.027336043,
+      "percall_tottime": 0.00013000066666666668,
+      "percall_cumtime": 0.009112014333333333
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method posix.waitpid>",
+      "ncalls": 239,
+      "tottime": 0.027195294000000002,
+      "cumtime": 0.027195294000000002,
+      "percall_tottime": 0.00011378784100418411,
+      "percall_cumtime": 0.00011378784100418411
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/util.py",
+      "line": 439,
+      "function": "spawnv_passfds",
+      "ncalls": 8,
+      "tottime": 0.000638959,
+      "cumtime": 0.025479917,
+      "percall_tottime": 7.9869875e-05,
+      "percall_cumtime": 0.003184989625
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method _posixsubprocess.fork_exec>",
+      "ncalls": 8,
+      "tottime": 0.024682209,
+      "cumtime": 0.024682209,
+      "percall_tottime": 0.003085276125,
+      "percall_cumtime": 0.003085276125
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 500,
+      "function": "_wait_for_updates",
+      "ncalls": 24,
+      "tottime": 0.00010186800000000001,
+      "cumtime": 0.014465871000000002,
+      "percall_tottime": 4.244500000000001e-06,
+      "percall_cumtime": 0.0006027446250000001
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py",
+      "line": 1134,
+      "function": "wait",
+      "ncalls": 51,
+      "tottime": 0.00029091500000000004,
+      "cumtime": 0.014058085000000001,
+      "percall_tottime": 5.7042156862745106e-06,
+      "percall_cumtime": 0.0002756487254901961
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/reduction.py",
+      "line": 58,
+      "function": "dump",
+      "ncalls": 16,
+      "tottime": 0.000125167,
+      "cumtime": 0.00261625,
+      "percall_tottime": 7.8229375e-06,
+      "percall_cumtime": 0.000163515625
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'dump' of '_pickle.Pickler' objects>",
+      "ncalls": 54,
+      "tottime": 0.001568245,
+      "cumtime": 0.002249912,
+      "percall_tottime": 2.9041574074074074e-05,
+      "percall_cumtime": 4.166503703703704e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py",
+      "line": 253,
+      "function": "poll",
+      "ncalls": 27,
+      "tottime": 5.4172e-05,
+      "cumtime": 0.00155367,
+      "percall_tottime": 2.0063703703703705e-06,
+      "percall_cumtime": 5.7543333333333335e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/queues.py",
+      "line": 372,
+      "function": "empty",
+      "ncalls": 26,
+      "tottime": 3.8996000000000004e-05,
+      "cumtime": 0.001485374,
+      "percall_tottime": 1.499846153846154e-06,
+      "percall_cumtime": 5.712976923076923e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py",
+      "line": 439,
+      "function": "_poll",
+      "ncalls": 27,
+      "tottime": 5.246e-05,
+      "cumtime": 0.001325875,
+      "percall_tottime": 1.942962962962963e-06,
+      "percall_cumtime": 4.910648148148148e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/selectors.py",
+      "line": 340,
+      "function": "register",
+      "ncalls": 267,
+      "tottime": 0.00026363,
+      "cumtime": 0.0011943350000000001,
+      "percall_tottime": 9.873782771535581e-07,
+      "percall_cumtime": 4.473164794007491e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/selectors.py",
+      "line": 385,
+      "function": "select",
+      "ncalls": 51,
+      "tottime": 0.000191034,
+      "cumtime": 0.001148123,
+      "percall_tottime": 3.745764705882353e-06,
+      "percall_cumtime": 2.251221568627451e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 333,
+      "function": "_maintain_pool",
+      "ncalls": 24,
+      "tottime": 3.6249000000000005e-05,
+      "cumtime": 0.0010838730000000002,
+      "percall_tottime": 1.5103750000000001e-06,
+      "percall_cumtime": 4.516137500000001e-05
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'poll' of 'select.poll' objects>",
+      "ncalls": 51,
+      "tottime": 0.000933668,
+      "cumtime": 0.000933668,
+      "percall_tottime": 1.830721568627451e-05,
+      "percall_cumtime": 1.830721568627451e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/spawn.py",
+      "line": 160,
+      "function": "get_preparation_data",
+      "ncalls": 8,
+      "tottime": 0.00029925000000000004,
+      "cumtime": 0.0008606660000000001,
+      "percall_tottime": 3.7406250000000005e-05,
+      "percall_cumtime": 0.00010758325000000001
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/selectors.py",
+      "line": 238,
+      "function": "register",
+      "ncalls": 267,
+      "tottime": 0.000329109,
+      "cumtime": 0.0008500000000000001,
+      "percall_tottime": 1.2326179775280898e-06,
+      "percall_cumtime": 3.1835205992509364e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 179,
+      "function": "Process",
+      "ncalls": 8,
+      "tottime": 0.000123916,
+      "cumtime": 0.0006998340000000001,
+      "percall_tottime": 1.54895e-05,
+      "percall_cumtime": 8.747925000000001e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/reduction.py",
+      "line": 38,
+      "function": "__init__",
+      "ncalls": 54,
+      "tottime": 0.00028220700000000003,
+      "cumtime": 0.0006988760000000001,
+      "percall_tottime": 5.226055555555556e-06,
+      "percall_cumtime": 1.294214814814815e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/threading.py",
+      "line": 869,
+      "function": "__init__",
+      "ncalls": 3,
+      "tottime": 0.000565253,
+      "cumtime": 0.000684875,
+      "percall_tottime": 0.0001884176666666667,
+      "percall_cumtime": 0.00022829166666666668
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/spawn.py",
+      "line": 83,
+      "function": "get_command_line",
+      "ncalls": 8,
+      "tottime": 0.00037312600000000005,
+      "cumtime": 0.000643667,
+      "percall_tottime": 4.6640750000000006e-05,
+      "percall_cumtime": 8.0458375e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/reduction.py",
+      "line": 48,
+      "function": "dumps",
+      "ncalls": 38,
+      "tottime": 0.000141251,
+      "cumtime": 0.000614208,
+      "percall_tottime": 3.7171315789473686e-06,
+      "percall_cumtime": 1.6163368421052632e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/process.py",
+      "line": 80,
+      "function": "__init__",
+      "ncalls": 8,
+      "tottime": 0.00049367,
+      "cumtime": 0.000575918,
+      "percall_tottime": 6.170875e-05,
+      "percall_cumtime": 7.198975e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 289,
+      "function": "_join_exited_workers",
+      "ncalls": 24,
+      "tottime": 9.253700000000001e-05,
+      "cumtime": 0.000518374,
+      "percall_tottime": 3.8557083333333336e-06,
+      "percall_cumtime": 2.1598916666666668e-05
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method _io.open>",
+      "ncalls": 8,
+      "tottime": 0.000491792,
+      "cumtime": 0.000491792,
+      "percall_tottime": 6.1474e-05,
+      "percall_cumtime": 6.1474e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/process.py",
+      "line": 224,
+      "function": "exitcode",
+      "ncalls": 200,
+      "tottime": 0.000125381,
+      "cumtime": 0.000440709,
+      "percall_tottime": 6.26905e-07,
+      "percall_cumtime": 2.203545e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method posix.getcwd>",
+      "ncalls": 8,
+      "tottime": 0.00040124800000000005,
+      "cumtime": 0.00040124800000000005,
+      "percall_tottime": 5.0156000000000006e-05,
+      "percall_cumtime": 5.0156000000000006e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/selectors.py",
+      "line": 219,
+      "function": "_fileobj_lookup",
+      "ncalls": 267,
+      "tottime": 9.524800000000001e-05,
+      "cumtime": 0.000373135,
+      "percall_tottime": 3.567340823970038e-07,
+      "percall_cumtime": 1.3975093632958802e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/threading.py",
+      "line": 953,
+      "function": "start",
+      "ncalls": 3,
+      "tottime": 1.1126e-05,
+      "cumtime": 0.000371083,
+      "percall_tottime": 3.7086666666666668e-06,
+      "percall_cumtime": 0.00012369433333333333
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 284,
+      "function": "_get_worker_sentinels",
+      "ncalls": 24,
+      "tottime": 8.1494e-05,
+      "cumtime": 0.000360791,
+      "percall_tottime": 3.3955833333333334e-06,
+      "percall_cumtime": 1.5032958333333333e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/threading.py",
+      "line": 641,
+      "function": "wait",
+      "ncalls": 4,
+      "tottime": 0.000250751,
+      "cumtime": 0.00034137500000000004,
+      "percall_tottime": 6.268775e-05,
+      "percall_cumtime": 8.534375000000001e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/context.py",
+      "line": 110,
+      "function": "SimpleQueue",
+      "ncalls": 3,
+      "tottime": 1.6122000000000003e-05,
+      "cumtime": 0.000295124,
+      "percall_tottime": 5.3740000000000006e-06,
+      "percall_cumtime": 9.837466666666667e-05
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'copy' of 'dict' objects>",
+      "ncalls": 62,
+      "tottime": 0.00028838000000000003,
+      "cumtime": 0.00028838000000000003,
+      "percall_tottime": 4.651290322580645e-06,
+      "percall_cumtime": 4.651290322580645e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py",
+      "line": 1184,
+      "function": "reduce_connection",
+      "ncalls": 32,
+      "tottime": 0.00012112300000000001,
+      "cumtime": 0.00028820800000000003,
+      "percall_tottime": 3.7850937500000004e-06,
+      "percall_cumtime": 9.006500000000001e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/util.py",
+      "line": 178,
+      "function": "__init__",
+      "ncalls": 15,
+      "tottime": 0.000275416,
+      "cumtime": 0.000285624,
+      "percall_tottime": 1.8361066666666666e-05,
+      "percall_cumtime": 1.90416e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/selectors.py",
+      "line": 21,
+      "function": "_fileobj_to_fd",
+      "ncalls": 267,
+      "tottime": 0.000158383,
+      "cumtime": 0.000277887,
+      "percall_tottime": 5.931947565543072e-07,
+      "percall_cumtime": 1.0407752808988764e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/queues.py",
+      "line": 359,
+      "function": "__init__",
+      "ncalls": 3,
+      "tottime": 8.499000000000001e-06,
+      "cumtime": 0.00027725000000000004,
+      "percall_tottime": 2.8330000000000002e-06,
+      "percall_cumtime": 9.241666666666669e-05
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method _pickle.loads>",
+      "ncalls": 28,
+      "tottime": 0.000245456,
+      "cumtime": 0.000245456,
+      "percall_tottime": 8.766285714285715e-06,
+      "percall_cumtime": 8.766285714285715e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/context.py",
+      "line": 65,
+      "function": "Lock",
+      "ncalls": 6,
+      "tottime": 9.624000000000001e-06,
+      "cumtime": 0.000238208,
+      "percall_tottime": 1.6040000000000002e-06,
+      "percall_cumtime": 3.970133333333333e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 345,
+      "function": "_setup_queues",
+      "ncalls": 1,
+      "tottime": 1.209e-06,
+      "cumtime": 0.00023337500000000002,
+      "percall_tottime": 1.209e-06,
+      "percall_cumtime": 0.00023337500000000002
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/subprocess.py",
+      "line": 306,
+      "function": "_args_from_interpreter_flags",
+      "ncalls": 8,
+      "tottime": 0.000137123,
+      "cumtime": 0.000231833,
+      "percall_tottime": 1.7140375e-05,
+      "percall_cumtime": 2.8979125e-05
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method builtins.hasattr>",
+      "ncalls": 216,
+      "tottime": 0.000159841,
+      "cumtime": 0.00022546300000000002,
+      "percall_tottime": 7.400046296296296e-07,
+      "percall_cumtime": 1.0438101851851852e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/synchronize.py",
+      "line": 168,
+      "function": "__init__",
+      "ncalls": 6,
+      "tottime": 3.124e-06,
+      "cumtime": 0.00022533200000000002,
+      "percall_tottime": 5.206666666666666e-07,
+      "percall_cumtime": 3.7555333333333336e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/synchronize.py",
+      "line": 50,
+      "function": "__init__",
+      "ncalls": 6,
+      "tottime": 5.45e-05,
+      "cumtime": 0.00022220800000000002,
+      "percall_tottime": 9.083333333333333e-06,
+      "percall_cumtime": 3.703466666666667e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/util.py",
+      "line": 425,
+      "function": "_flush_std_streams",
+      "ncalls": 8,
+      "tottime": 0.000138209,
+      "cumtime": 0.00019316500000000003,
+      "percall_tottime": 1.7276125e-05,
+      "percall_cumtime": 2.4145625000000003e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/queues.py",
+      "line": 389,
+      "function": "put",
+      "ncalls": 5,
+      "tottime": 2.2627000000000002e-05,
+      "cumtime": 0.00018870800000000002,
+      "percall_tottime": 4.525400000000001e-06,
+      "percall_cumtime": 3.7741600000000005e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/synchronize.py",
+      "line": 84,
+      "function": "_cleanup",
+      "ncalls": 6,
+      "tottime": 6.8873e-05,
+      "cumtime": 0.000182957,
+      "percall_tottime": 1.1478833333333334e-05,
+      "percall_cumtime": 3.0492833333333334e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/selectors.py",
+      "line": 336,
+      "function": "__init__",
+      "ncalls": 51,
+      "tottime": 0.00010866700000000001,
+      "cumtime": 0.00018179400000000001,
+      "percall_tottime": 2.1307254901960785e-06,
+      "percall_cumtime": 3.564588235294118e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method posix.close>",
+      "ncalls": 54,
+      "tottime": 0.00017262900000000002,
+      "cumtime": 0.00017262900000000002,
+      "percall_tottime": 3.1968333333333334e-06,
+      "percall_cumtime": 3.1968333333333334e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'getbuffer' of '_io.BytesIO' objects>",
+      "ncalls": 72,
+      "tottime": 0.00017179400000000002,
+      "cumtime": 0.00017179400000000002,
+      "percall_tottime": 2.386027777777778e-06,
+      "percall_cumtime": 2.386027777777778e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method 'update' of 'dict' objects>",
+      "ncalls": 62,
+      "tottime": 0.00016979,
+      "cumtime": 0.00016979,
+      "percall_tottime": 2.7385483870967744e-06,
+      "percall_cumtime": 2.7385483870967744e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method posix.pipe>",
+      "ncalls": 27,
+      "tottime": 0.00016354000000000002,
+      "cumtime": 0.00016354000000000002,
+      "percall_tottime": 6.0570370370370376e-06,
+      "percall_cumtime": 6.0570370370370376e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/resource_tracker.py",
+      "line": 106,
+      "function": "ensure_running",
+      "ncalls": 20,
+      "tottime": 6.9955e-05,
+      "cumtime": 0.00015683100000000002,
+      "percall_tottime": 3.49775e-06,
+      "percall_cumtime": 7.841550000000001e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/synchronize.py",
+      "line": 100,
+      "function": "__getstate__",
+      "ncalls": 32,
+      "tottime": 0.00013241700000000002,
+      "cumtime": 0.00015354300000000002,
+      "percall_tottime": 4.1380312500000005e-06,
+      "percall_cumtime": 4.7982187500000005e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 385,
+      "function": "_guarded_task_generation",
+      "ncalls": 26,
+      "tottime": 1.7662e-05,
+      "cumtime": 0.00015049800000000002,
+      "percall_tottime": 6.793076923076924e-07,
+      "percall_cumtime": 5.788384615384617e-06
+    },
+    {
+      "filename": "<string>",
+      "line": 1,
+      "function": "<lambda>",
+      "ncalls": 267,
+      "tottime": 8.1017e-05,
+      "cumtime": 0.000147756,
+      "percall_tottime": 3.0343445692883894e-07,
+      "percall_cumtime": 5.533932584269663e-07
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/process.py",
+      "line": 61,
+      "function": "_cleanup",
+      "ncalls": 8,
+      "tottime": 6.712600000000001e-05,
+      "cumtime": 0.00014337600000000002,
+      "percall_tottime": 8.390750000000001e-06,
+      "percall_cumtime": 1.7922000000000002e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/selectors.py",
+      "line": 206,
+      "function": "__exit__",
+      "ncalls": 51,
+      "tottime": 3.9084e-05,
+      "cumtime": 0.000139001,
+      "percall_tottime": 7.663529411764706e-07,
+      "percall_cumtime": 2.7255098039215685e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py",
+      "line": 169,
+      "function": "fileno",
+      "ncalls": 107,
+      "tottime": 0.000116948,
+      "cumtime": 0.00013603900000000002,
+      "percall_tottime": 1.0929719626168224e-06,
+      "percall_cumtime": 1.2713925233644862e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 633,
+      "function": "_get_tasks",
+      "ncalls": 26,
+      "tottime": 0.00013258600000000002,
+      "cumtime": 0.000132836,
+      "percall_tottime": 5.099461538461539e-06,
+      "percall_cumtime": 5.1090769230769235e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/process.py",
+      "line": 347,
+      "function": "__reduce__",
+      "ncalls": 16,
+      "tottime": 0.00010966800000000001,
+      "cumtime": 0.000130168,
+      "percall_tottime": 6.8542500000000005e-06,
+      "percall_cumtime": 8.1355e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/process.py",
+      "line": 247,
+      "function": "sentinel",
+      "ncalls": 384,
+      "tottime": 9.5883e-05,
+      "cumtime": 0.00012908100000000002,
+      "percall_tottime": 2.496953125e-07,
+      "percall_cumtime": 3.3614843750000005e-07
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<method '__exit__' of '_io._IOBase' objects>",
+      "ncalls": 8,
+      "tottime": 0.00012770900000000002,
+      "cumtime": 0.00012770900000000002,
+      "percall_tottime": 1.5963625000000003e-05,
+      "percall_cumtime": 1.5963625000000003e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/resource_tracker.py",
+      "line": 193,
+      "function": "_send",
+      "ncalls": 12,
+      "tottime": 3.2092000000000004e-05,
+      "cumtime": 0.00012742,
+      "percall_tottime": 2.674333333333334e-06,
+      "percall_cumtime": 1.0618333333333333e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/resource_tracker.py",
+      "line": 102,
+      "function": "getfd",
+      "ncalls": 8,
+      "tottime": 3.3002e-05,
+      "cumtime": 0.000125918,
+      "percall_tottime": 4.12525e-06,
+      "percall_cumtime": 1.573975e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py",
+      "line": 809,
+      "function": "_set",
+      "ncalls": 25,
+      "tottime": 4.4542e-05,
+      "cumtime": 0.00012575000000000002,
+      "percall_tottime": 1.7816800000000001e-06,
+      "percall_cumtime": 5.030000000000001e-06
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/queues.py",
+      "line": 375,
+      "function": "__getstate__",
+      "ncalls": 16,
+      "tottime": 9.866700000000001e-05,
+      "cumtime": 0.00010974800000000001,
+      "percall_tottime": 6.166687500000001e-06,
+      "percall_cumtime": 6.8592500000000004e-06
+    },
+    {
+      "filename": "<frozen importlib._bootstrap>",
+      "line": 645,
+      "function": "parent",
+      "ncalls": 54,
+      "tottime": 8.979100000000001e-05,
+      "cumtime": 0.00010833500000000001,
+      "percall_tottime": 1.6627962962962965e-06,
+      "percall_cumtime": 2.006203703703704e-06
+    },
+    {
+      "filename": "~",
+      "line": 0,
+      "function": "<built-in method _thread.start_joinable_thread>",
+      "ncalls": 3,
+      "tottime": 0.00010125000000000001,
+      "cumtime": 0.00010125000000000001,
+      "percall_tottime": 3.375e-05,
+      "percall_cumtime": 3.375e-05
+    },
+    {
+      "filename": "/Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/process.py",
+      "line": 128,
+      "function": "terminate",
+      "ncalls": 8,
+      "tottime": 4.124000000000001e-06,
+      "cumtime": 9.991700000000001e-05,
+      "percall_tottime": 5.155000000000001e-07,
+      "percall_cumtime": 1.2489625000000002e-05
+    }
+  ]
+}

@@ -26,15 +26,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
-
       - name: Install build dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install numpy Cython>=0.29.21 setuptools-rust
+          python -m pip install numpy Cython>=0.29.21
 
       - name: Install package (non-editable for proper module exposure)
         run: |
@@ -144,38 +139,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
-
-      - name: Cache Rust build artifacts
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            rust/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('rust/Cargo.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: Install dependencies (including setuptools-rust)
+      - name: Install dependencies
         run: |
-          uv pip install setuptools-rust --system
           uv pip install -e ".[dev,test]" --system
-
-      - name: Check Rust compilation
-        run: |
-          cd rust
-          cargo check --workspace --verbose
-          cargo clippy --workspace -- -D warnings
-
-      - name: Verify Rust extension is built
-        run: |
-          python -c "from rustybt import rust_sum; print(f'rust_sum(2, 3) = {rust_sum(2, 3)}')"
 
       - name: Run tests with coverage
         run: |
@@ -282,27 +248,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
-
-      - name: Cache Rust build artifacts
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            rust/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('rust/Cargo.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
       - name: Install dependencies
         run: |
-          uv pip install setuptools-rust --system
           uv pip install -e ".[dev,test]" --system
 
       - name: Setup profiling bundles

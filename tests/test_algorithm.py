@@ -111,7 +111,7 @@ from rustybt.testing import (
 from rustybt.testing.predicates import assert_equal
 from rustybt.utils import factory
 from rustybt.utils.api_support import ZiplineAPI
-from rustybt.utils.calendar_utils import get_calendar, register_calendar
+from rustybt.utils.calendar_utils import get_calendar, register_calendar_alias
 from rustybt.utils.context_tricks import CallbackManager, nop_context
 from rustybt.utils.events import (
     Always,
@@ -121,7 +121,15 @@ from rustybt.utils.events import (
     date_rules,
     time_rules,
 )
-from rustybt.utils.pandas_utils import PerformanceWarning
+
+# Import PerformanceWarning from pandas.errors (pandas 1.5+) or warnings module
+try:
+    from pandas.errors import PerformanceWarning
+except ImportError:
+    # Fallback for older pandas versions
+    class PerformanceWarning(Warning):
+        pass
+
 
 # Import CI detection variables
 
@@ -1482,7 +1490,7 @@ class TestAlgoScript(zf.WithMakeAlgo, zf.ZiplineTestCase):
 
     @classmethod
     def make_equity_info(cls):
-        register_calendar("TEST", get_calendar("NYSE"), force=True)
+        register_calendar_alias("TEST", "NYSE", force=True)
 
         data = make_simple_equity_info(
             cls.sids,

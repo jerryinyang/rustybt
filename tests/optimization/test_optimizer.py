@@ -62,7 +62,7 @@ class TestOptimizer:
             ]
         )
 
-        search_alg = RandomSearchAlgorithm(param_space, n_trials=10, seed=42)
+        search_alg = RandomSearchAlgorithm(param_space, n_iter=10, seed=42)
         obj_func = ObjectiveFunction(metric="sharpe_ratio")
 
         optimizer = Optimizer(
@@ -86,7 +86,7 @@ class TestOptimizer:
             ]
         )
 
-        search_alg = RandomSearchAlgorithm(param_space, n_trials=10)
+        search_alg = RandomSearchAlgorithm(param_space, n_iter=10)
         obj_func = ObjectiveFunction(metric="sharpe_ratio")
 
         with pytest.raises(ValueError):
@@ -106,7 +106,7 @@ class TestOptimizer:
             ]
         )
 
-        search_alg = RandomSearchAlgorithm(param_space, n_trials=5, seed=42)
+        search_alg = RandomSearchAlgorithm(param_space, n_iter=5, seed=42)
         obj_func = ObjectiveFunction(metric="sharpe_ratio")
 
         optimizer = Optimizer(
@@ -142,7 +142,7 @@ class TestOptimizer:
             ]
         )
 
-        search_alg = RandomSearchAlgorithm(param_space, n_trials=10, seed=42)
+        search_alg = RandomSearchAlgorithm(param_space, n_iter=10, seed=42)
         obj_func = ObjectiveFunction(metric="sharpe_ratio")
 
         optimizer = Optimizer(
@@ -174,7 +174,7 @@ class TestOptimizer:
             ]
         )
 
-        search_alg = RandomSearchAlgorithm(param_space, n_trials=20, seed=42)
+        search_alg = RandomSearchAlgorithm(param_space, n_iter=20, seed=42)
         obj_func = ObjectiveFunction(metric="sharpe_ratio")
 
         optimizer = Optimizer(
@@ -214,7 +214,7 @@ class TestOptimizer:
             ]
         )
 
-        search_alg = RandomSearchAlgorithm(param_space, n_trials=20, seed=42)
+        search_alg = RandomSearchAlgorithm(param_space, n_iter=20, seed=42)
         obj_func = ObjectiveFunction(metric="sharpe_ratio")
 
         optimizer = Optimizer(
@@ -250,7 +250,7 @@ class TestOptimizer:
             ]
         )
 
-        search_alg = RandomSearchAlgorithm(param_space, n_trials=5, seed=42)
+        search_alg = RandomSearchAlgorithm(param_space, n_iter=5, seed=42)
         obj_func = ObjectiveFunction(metric="sharpe_ratio")
 
         optimizer = Optimizer(
@@ -281,7 +281,7 @@ class TestOptimizer:
             ]
         )
 
-        search_alg = RandomSearchAlgorithm(param_space, n_trials=10, seed=42)
+        search_alg = RandomSearchAlgorithm(param_space, n_iter=10, seed=42)
         obj_func = ObjectiveFunction(metric="sharpe_ratio")
 
         optimizer = Optimizer(
@@ -311,7 +311,7 @@ class TestOptimizer:
             ]
         )
 
-        search_alg = RandomSearchAlgorithm(param_space, n_trials=5)
+        search_alg = RandomSearchAlgorithm(param_space, n_iter=5)
         obj_func = ObjectiveFunction(metric="sharpe_ratio")
 
         optimizer = Optimizer(
@@ -338,7 +338,7 @@ class TestOptimizer:
                 ]
             )
 
-            search_alg = RandomSearchAlgorithm(param_space, n_trials=10, seed=42)
+            search_alg = RandomSearchAlgorithm(param_space, n_iter=10, seed=42)
             obj_func = ObjectiveFunction(metric="sharpe_ratio")
 
             optimizer = Optimizer(
@@ -358,7 +358,7 @@ class TestOptimizer:
             assert len(checkpoint_files) > 0
 
             # Load checkpoint into new optimizer
-            search_alg2 = RandomSearchAlgorithm(param_space, n_trials=10, seed=42)
+            search_alg2 = RandomSearchAlgorithm(param_space, n_iter=10, seed=42)
             optimizer2 = Optimizer(
                 parameter_space=param_space,
                 search_algorithm=search_alg2,
@@ -384,7 +384,7 @@ class TestOptimizer:
                 ]
             )
 
-            search_alg = RandomSearchAlgorithm(param_space, n_trials=5, seed=42)
+            search_alg = RandomSearchAlgorithm(param_space, n_iter=5, seed=42)
             obj_func = ObjectiveFunction(metric="sharpe_ratio")
 
             optimizer = Optimizer(

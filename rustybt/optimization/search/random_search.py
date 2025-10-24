@@ -417,8 +417,14 @@ class RandomSearchAlgorithm(SearchAlgorithm):
         # Restore numpy RNG state
         self._rng.bit_generator.state = state["rng_state"]
 
-        # Restore duplicate tracking
-        self._seen_params = set(state["seen_params"])
+        # Restore duplicate tracking (convert lists back to tuples for hashability)
+        # Helper to recursively convert lists to tuples (JSON serialization converts tuples to lists)
+        def to_tuple(obj):
+            if isinstance(obj, list):
+                return tuple(to_tuple(item) for item in obj)
+            return obj
+
+        self._seen_params = {to_tuple(params) for params in state["seen_params"]}
         self._duplicate_count = state["duplicate_count"]
 
         # Restore best result

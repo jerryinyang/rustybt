@@ -41,9 +41,6 @@
 | **Scheduling** | APScheduler | 3.x+ | Task scheduling | Market open/close triggers, custom intervals |
 | **Validation** | pydantic | 2.x+ | Data validation | API request/response validation, config management |
 | **Property Testing** | hypothesis | 6.x+ | Property-based tests | Decimal arithmetic validation (NFR5) |
-| **Rust** | Rust | 1.90+ | Performance optimization | Post-profiling optimization (Epic 7) |
-| **Rust Bindings** | PyO3 | 0.26+ | Python/Rust bridge | Python 3.12-3.14 support, free-threaded |
-| **Rust Decimal** | rust-decimal | 1.37+ | Rust Decimal type | Performance-critical Decimal operations |
 
 ## Technology Stack Rationale
 
@@ -84,6 +81,19 @@
 | **h5py / tables (PyTables)** | Slow for large datasets, poor interoperability, replaced by Parquet |
 | **pandas** (as primary) | Still supported for compatibility but Polars is primary |
 | **numpy** (for storage) | Still used for numerical operations but not primary data structure |
-| **Cython** (for new code) | Rust provides better performance and safety, keep existing Cython modules until profiled |
+| **Cython** (for new code) | Complex to maintain, keep existing Cython modules until profiled |
+
+## Removed Technologies (Epic X4 - Phase 4)
+
+**Note**: Epic X4 profiling revealed Rust micro-operations provide <2% end-to-end impact on optimization workflows. Complete removal simplifies build system and establishes pure Python baseline for benchmarking.
+
+| Technology | Reason for Removal | Impact Analysis |
+|------------|-------------------|-----------------|
+| **Rust micro-operations** | <2% end-to-end workflow impact, unnecessary complexity | Profiling showed 87% overhead in data wrangling, 0.6% in computation (already optimal) |
+| **PyO3 bindings** | Rust removal dependency | No longer needed after Rust removal |
+| **maturin** | Rust build tool, no longer needed | Simplifies build system, removes Rust toolchain requirement |
+| **setuptools-rust** | Rust compilation integration | Simplifies CI/CD pipeline, faster builds |
+
+**Key Finding**: Phase 3 profiling (see `specs/002-performance-benchmarking-optimization/profiling-results/`) revealed actual bottlenecks are in data access layer (87% user code overhead, 58.4% DataPortal overhead), not computation. Simple caching and pre-grouping strategies yield 70-95% speedup vs. <2% from Rust micro-operations.
 
 ---

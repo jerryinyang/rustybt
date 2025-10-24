@@ -7,7 +7,7 @@ from packaging.version import Version
 from toolz import merge
 
 from rustybt import run_algorithm
-from rustybt.utils.calendar_utils import get_calendar, register_calendar
+from rustybt.utils.calendar_utils import get_calendar, register_calendar_alias
 
 NUMPY2 = Version(numpy.__version__) >= Version("2.0.0")
 if not NUMPY2:
@@ -79,7 +79,7 @@ def run_example(example_modules, example_name, environ, benchmark_returns=None):
     """Run an example module from rustybt.examples."""
     mod = example_modules[example_name]
 
-    register_calendar("YAHOO", get_calendar("NYSE"), force=True)
+    register_calendar_alias("YAHOO", "NYSE", force=True)
 
     return run_algorithm(
         initialize=getattr(mod, "initialize", None),

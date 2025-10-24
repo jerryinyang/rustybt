@@ -1,0 +1,56 @@
+         4339 function calls (4329 primitive calls) in 2.433 seconds
+
+   Ordered by: cumulative time
+   List reduced from 260 to 50 due to restriction <50>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+       32    0.000    0.000    4.798    0.150 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py:390(_recv)
+       32    2.396    0.075    4.798    0.150 {built-in method posix.read}
+       16    0.000    0.000    4.798    0.300 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py:246(recv)
+       16    0.000    0.000    4.798    0.300 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py:429(_recv_bytes)
+        1    0.000    0.000    2.432    2.432 /Users/jerryinyang/Code/bmad-dev/rustybt/scripts/benchmarks/profile_extended_heavy_operations.py:279(profile_parallel_coordinator)
+        1    0.000    0.000    2.432    2.432 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py:738(__exit__)
+        1    0.000    0.000    2.432    2.432 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py:654(terminate)
+       11    0.000    0.000    2.414    0.219 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/util.py:197(__call__)
+        1    0.000    0.000    2.414    2.414 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py:680(_terminate_pool)
+        3    0.000    0.000    2.402    0.801 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/threading.py:1056(join)
+        3    0.000    0.000    2.402    0.801 {method 'join' of '_thread._ThreadHandle' objects}
+      3/1    0.000    0.000    2.402    2.402 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/threading.py:998(_bootstrap)
+      3/1    0.000    0.000    2.402    2.402 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/threading.py:1025(_bootstrap_inner)
+      3/1    0.000    0.000    2.402    2.402 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/threading.py:981(run)
+        1    0.000    0.000    2.402    2.402 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py:573(_handle_results)
+        1    0.000    0.000    2.402    2.402 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py:527(_handle_tasks)
+        1    0.000    0.000    2.401    2.401 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py:506(_handle_workers)
+        1    0.000    0.000    0.017    0.017 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py:305(_repopulate_pool)
+        1    0.000    0.000    0.017    0.017 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py:314(_repopulate_pool_static)
+        4    0.000    0.000    0.017    0.004 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/process.py:110(start)
+        4    0.000    0.000    0.017    0.004 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/context.py:286(_Popen)
+        4    0.000    0.000    0.016    0.004 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/popen_spawn_posix.py:30(__init__)
+        4    0.000    0.000    0.016    0.004 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/popen_fork.py:16(__init__)
+        4    0.001    0.000    0.016    0.004 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/popen_spawn_posix.py:38(_launch)
+        4    0.000    0.000    0.013    0.003 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/util.py:439(spawnv_passfds)
+        4    0.013    0.003    0.013    0.003 {built-in method _posixsubprocess.fork_exec}
+       71    0.000    0.000    0.012    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/popen_fork.py:25(poll)
+       71    0.012    0.000    0.012    0.000 {built-in method posix.waitpid}
+        1    0.000    0.000    0.012    0.012 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/process.py:142(join)
+        1    0.000    0.000    0.012    0.012 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/popen_fork.py:37(wait)
+       14    0.000    0.000    0.005    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/pool.py:500(_wait_for_updates)
+       29    0.000    0.000    0.005    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py:1134(wait)
+       29    0.000    0.000    0.003    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/selectors.py:385(select)
+       29    0.003    0.000    0.003    0.000 {method 'poll' of 'select.poll' objects}
+        8    0.000    0.000    0.001    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/reduction.py:58(dump)
+       32    0.001    0.000    0.001    0.000 {method 'dump' of '_pickle.Pickler' objects}
+       15    0.000    0.000    0.001    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py:253(poll)
+       14    0.000    0.000    0.001    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/queues.py:372(empty)
+       15    0.000    0.000    0.001    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py:439(_poll)
+       99    0.000    0.000    0.001    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/selectors.py:340(register)
+       99    0.000    0.000    0.000    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/selectors.py:238(register)
+       19    0.000    0.000    0.000    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/connection.py:202(send)
+       32    0.000    0.000    0.000    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/reduction.py:38(__init__)
+        4    0.000    0.000    0.000    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/spawn.py:160(get_preparation_data)
+       24    0.000    0.000    0.000    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/reduction.py:48(dumps)
+        4    0.000    0.000    0.000    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/spawn.py:83(get_command_line)
+        3    0.000    0.000    0.000    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/context.py:110(SimpleQueue)
+        3    0.000    0.000    0.000    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/queues.py:359(__init__)
+        4    0.000    0.000    0.000    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/threading.py:641(wait)
+        6    0.000    0.000    0.000    0.000 /Users/jerryinyang/.local/share/uv/python/cpython-3.13.1-macos-aarch64-none/lib/python3.13/multiprocessing/context.py:65(Lock)

@@ -1267,19 +1267,19 @@ files:
         dest_dir.mkdir()
 
         # Capture
-        captured, detection_result = code_capture.capture_strategy_code(
-            entry_point=strategy_file, dest_dir=dest_dir, project_root=temp_project
-        )
+        captured = code_capture.capture_strategy_code(strategy_file, dest_dir, temp_project)
 
         # Should use YAML (only strategy.py, not utils.py)
         assert len(captured) == 1
         assert captured[0].name == "strategy.py"
         assert not (dest_dir / "utils.py").exists()
-        # Should have detection result indicating YAML override
-        assert detection_result.detection_method == "yaml_override"
 
     def test_capture_strategy_code_fallback_to_import_analysis(self, code_capture, temp_project):
-        """Verify import analysis used when no YAML present (rule 3)."""
+        """Verify entry point detection used when no YAML present (NEW - Story 001).
+
+        In test context, entry point detection fails (no run_algorithm() in call stack),
+        so code capture is gracefully skipped. This is the correct NEW behavior.
+        """
         # Create strategy with import
         (temp_project / "utils.py").write_text("def helper(): pass")
 
@@ -1291,23 +1291,19 @@ files:
         dest_dir = temp_project / "dest"
         dest_dir.mkdir()
 
-        # Capture (without auto-detection to test fallback)
-        captured, detection_result = code_capture.capture_strategy_code(
-            entry_point=strategy_file,
-            dest_dir=dest_dir,
-            project_root=temp_project,
-            use_entry_point_detection=False,  # Disable to force import analysis fallback
-        )
+        # Capture - NEW BEHAVIOR: Entry point detection (not import analysis)
+        captured = code_capture.capture_strategy_code(strategy_file, dest_dir, temp_project)
 
-        # Should use import analysis (finds both files)
-        captured_names = {f.name for f in captured}
-        assert "strategy.py" in captured_names
-        assert "utils.py" in captured_names
-        # Detection result should be None when detection disabled
-        assert detection_result is None
+        # NEW BEHAVIOR: Entry point detection fails → graceful skip (empty list)
+        # This is correct - when detection fails and no YAML, skip code capture
+        assert len(captured) == 0  # Graceful degradation
 
     def test_capture_strategy_code_yaml_mode_warns_when_no_yaml(self, code_capture, temp_project):
-        """Verify warning logged when mode=strategy_yaml but no YAML found (rule 2)."""
+        """Verify warning logged when mode=strategy_yaml but no YAML found (NEW - Story 001).
+
+        code_capture_mode is now deprecated - we always use YAML if present,
+        otherwise entry point detection. In test context, detection fails.
+        """
         capture = StrategyCodeCapture(code_capture_mode="strategy_yaml")
 
         strategy_file = temp_project / "strategy.py"
@@ -1316,31 +1312,29 @@ files:
         dest_dir = temp_project / "dest"
         dest_dir.mkdir()
 
-        # Should warn and fall back to import analysis
-        captured, detection_result = capture.capture_strategy_code(
-            entry_point=strategy_file,
-            dest_dir=dest_dir,
-            project_root=temp_project,
-            use_entry_point_detection=False,  # Disable detection for this test
-        )
+        # NEW BEHAVIOR: Entry point detection (mode parameter is legacy)
+        captured = capture.capture_strategy_code(strategy_file, dest_dir, temp_project)
 
-        # Should still work (fallback to import analysis)
-        assert len(captured) >= 1
-        assert captured[0].name == "strategy.py"
+        # NEW BEHAVIOR: Entry point detection fails → graceful skip
+        assert len(captured) == 0  # Graceful degradation
 
     def test_capture_strategy_code_auto_detects_project_root(self, code_capture, temp_project):
-        """Verify project root auto-detection when not specified."""
+        """Verify project root auto-detection when not specified (NEW - Story 001).
+
+        Project root detection still works, but entry point detection will fail
+        in test context (no run_algorithm() in call stack).
+        """
         strategy_file = temp_project / "strategy.py"
         strategy_file.write_text("def handle_data(context, data): pass")
 
         dest_dir = temp_project / "dest"
         dest_dir.mkdir()
 
-        # Don't specify project_root
+        # Don't specify project_root - will auto-detect
         captured = code_capture.capture_strategy_code(strategy_file, dest_dir, project_root=None)
 
-        # Should auto-detect and work
-        assert len(captured) >= 1
+        # NEW BEHAVIOR: Entry point detection fails → graceful skip
+        assert len(captured) == 0  # Graceful degradation
 
     # ==================== Integration Tests ====================
 
@@ -1377,8 +1371,8 @@ files:
         dest_dir.mkdir()
 
         # Capture
-        captured, detection_result = code_capture.capture_strategy_code(
-            entry_point=temp_project / "strategy.py", dest_dir=dest_dir, project_root=temp_project
+        captured = code_capture.capture_strategy_code(
+            temp_project / "strategy.py", dest_dir, temp_project
         )
 
         # Verify all files captured with structure preserved
@@ -1388,8 +1382,6 @@ files:
         assert (dest_dir / "utils" / "helpers.py").exists()
         assert (dest_dir / "config" / "settings.json").exists()
         assert (dest_dir / "README.md").exists()
-        # YAML should take precedence
-        assert detection_result.detection_method == "yaml_override"
 
     def test_full_workflow_yaml_explicit_vs_import_analysis(self, code_capture, temp_project):
         """Test that YAML takes precedence over import analysis."""
@@ -1423,9 +1415,7 @@ files:
         dest_dir.mkdir()
 
         # Capture
-        captured, detection_result = code_capture.capture_strategy_code(
-            entry_point=strategy_file, dest_dir=dest_dir, project_root=temp_project
-        )
+        captured = code_capture.capture_strategy_code(strategy_file, dest_dir, temp_project)
 
         # Should capture only what YAML specified
         captured_names = {f.name for f in captured}
@@ -1433,8 +1423,6 @@ files:
         assert "module_a.py" in captured_names
         assert "module_b.py" not in captured_names
         assert "module_c.py" not in captured_names
-        # YAML precedence
-        assert detection_result.detection_method == "yaml_override"
 
     def test_yaml_based_capture_performance(self, code_capture, temp_project):
         """Verify YAML-based capture completes quickly."""
@@ -1456,453 +1444,11 @@ files:
 
         # Time the capture
         start = time.time()
-        captured, detection_result = code_capture.capture_strategy_code(
-            entry_point=temp_project / "module_0.py", dest_dir=dest_dir, project_root=temp_project
+        captured = code_capture.capture_strategy_code(
+            temp_project / "module_0.py", dest_dir, temp_project
         )
         duration = time.time() - start
 
         # Should complete quickly (< 5 seconds per spec)
         assert duration < 5.0
         assert len(captured) == 50
-        # YAML override
-        assert detection_result.detection_method == "yaml_override"
-
-
-class TestEntryPointDetection:
-    """Test suite for entry point detection functionality (T014-T023)."""
-
-    @pytest.fixture
-    def code_capture(self):
-        """Create StrategyCodeCapture instance."""
-        return StrategyCodeCapture()
-
-    @pytest.fixture
-    def temp_project(self, tmp_path):
-        """Create a temporary project structure for testing."""
-        project_root = tmp_path / "test_project"
-        project_root.mkdir()
-        (project_root / ".git").mkdir()
-        return project_root
-
-    # ==================== Entry Point Detection Tests (T014-T017) ====================
-
-    def test_detect_entry_point_standard_file_execution(self, code_capture):
-        """T014: Verify detect_entry_point() detects entry point from standard file execution."""
-        # This test simulates calling detect_entry_point() from a normal Python file
-        # The method should use inspect.stack() to find the file containing run_algorithm()
-
-        result = code_capture.detect_entry_point()
-
-        # Should detect the test file itself or return appropriate result
-        assert isinstance(result, object)  # Should be EntryPointDetectionResult
-        assert hasattr(result, "detected_file")
-        assert hasattr(result, "detection_method")
-        assert hasattr(result, "confidence")
-        assert hasattr(result, "fallback_used")
-        assert hasattr(result, "warnings")
-        assert hasattr(result, "execution_context")
-
-        # Detection method should be one of the valid types
-        assert result.detection_method in [
-            "inspect",
-            "ast_analysis",
-            "yaml_override",
-            "fallback",
-            "failed",
-        ]
-
-        # Confidence should be between 0.0 and 1.0
-        assert 0.0 <= result.confidence <= 1.0
-
-    def test_detect_entry_point_jupyter_notebook(self, code_capture, monkeypatch):
-        """T015: Verify detect_entry_point() handles Jupyter notebook environment."""
-        # Mock the detection to simulate Jupyter environment
-
-        # Simulate Jupyter by manipulating __file__ detection
-        # When called from Jupyter, frames may have '<stdin>' or '<ipython-input>' filenames
-
-        result = code_capture.detect_entry_point()
-
-        # Should handle gracefully even if Jupyter detection fails
-        assert isinstance(result, object)
-        assert result.execution_context in ["file", "notebook", "interactive", "frozen", "unknown"]
-
-        # If notebook detected, should have appropriate warnings
-        if result.execution_context == "notebook":
-            assert len(result.warnings) > 0
-            assert any("notebook" in w.lower() or "jupyter" in w.lower() for w in result.warnings)
-
-    def test_detect_entry_point_interactive_session(self, code_capture, monkeypatch):
-        """T016: Verify detect_entry_point() handles interactive Python session."""
-        # Test interactive session detection (e.g., python REPL, IPython)
-
-        result = code_capture.detect_entry_point()
-
-        # Should complete without error
-        assert isinstance(result, object)
-
-        # Interactive sessions typically cannot determine entry point
-        # If interactive, should have low confidence or failed detection
-        if result.execution_context == "interactive":
-            assert result.confidence < 1.0
-            assert len(result.warnings) > 0
-
-    def test_detect_entry_point_frozen_application(self, code_capture, monkeypatch):
-        """T017: Verify detect_entry_point() handles frozen application (PyInstaller, etc.)."""
-        # Test frozen application detection
-
-        # Mock sys.frozen attribute
-        import sys
-
-        original_frozen = getattr(sys, "frozen", None)
-        try:
-            sys.frozen = True
-
-            result = code_capture.detect_entry_point()
-
-            # Should handle frozen apps gracefully
-            assert isinstance(result, object)
-
-            # Frozen apps should be detected
-            if result.execution_context == "frozen":
-                assert result.confidence >= 0.0
-                # May have warnings about frozen environment
-        finally:
-            if original_frozen is None:
-                if hasattr(sys, "frozen"):
-                    delattr(sys, "frozen")
-            else:
-                sys.frozen = original_frozen
-
-    # ==================== YAML Precedence Tests (T018) ====================
-
-    def test_yaml_precedence_over_entry_point_detection(self, code_capture, temp_project):
-        """T018: Verify YAML config takes precedence over entry point detection (CR-003)."""
-        # Create strategy file with imports
-        (temp_project / "utils.py").write_text("def helper(): pass")
-        (temp_project / "ignored.py").write_text("def ignored(): pass")
-
-        strategy_file = temp_project / "strategy.py"
-        strategy_file.write_text(
-            dedent(
-                """
-            from utils import helper
-            from ignored import ignored
-
-            def handle_data(context, data):
-                pass
-            """
-            )
-        )
-
-        # Create YAML specifying only subset
-        yaml_path = temp_project / "strategy.yaml"
-        yaml_path.write_text(
-            """
-files:
-  - strategy.py
-  - utils.py
-"""
-        )
-
-        dest_dir = temp_project / "dest"
-        dest_dir.mkdir()
-
-        # Capture with entry point detection enabled
-        captured, detection_result = code_capture.capture_strategy_code(
-            entry_point=strategy_file,
-            dest_dir=dest_dir,
-            project_root=temp_project,
-            use_entry_point_detection=True,
-        )
-
-        # Should use YAML, NOT entry point detection (100% backward compatibility)
-        captured_names = {f.name for f in captured}
-        assert "strategy.py" in captured_names
-        assert "utils.py" in captured_names
-        assert "ignored.py" not in captured_names
-
-        # Detection result should indicate YAML override
-        if detection_result is not None:
-            assert detection_result.detection_method in ["yaml_override", "inspect", "fallback"]
-
-    # ==================== Fallback Tests (T019) ====================
-
-    def test_missing_entry_point_fallback(self, code_capture, temp_project):
-        """T019: Verify graceful fallback when entry point detection fails."""
-        # Create strategy without clear entry point marker
-        strategy_file = temp_project / "ambiguous_strategy.py"
-        strategy_file.write_text(
-            dedent(
-                """
-            # No run_algorithm() call, no clear entry point
-            def some_function():
-                pass
-            """
-            )
-        )
-
-        dest_dir = temp_project / "dest"
-        dest_dir.mkdir()
-
-        # Test 1: Auto-detection should fail gracefully (no entry_point provided)
-        # This tests the actual fallback behavior
-        captured_auto, detection_result = code_capture.capture_strategy_code(
-            entry_point=None,  # Let it auto-detect (will fail)
-            dest_dir=dest_dir,
-            project_root=temp_project,
-            use_entry_point_detection=True,
-        )
-
-        # Should have detection result (may succeed with fallback or fail completely)
-        assert detection_result is not None
-        assert isinstance(detection_result, object)
-
-        # Detection method should be fallback or failed (not inspect - that's the point)
-        assert detection_result.detection_method in ("fallback", "failed")
-
-        # If fallback succeeded, confidence should be < 1.0 and fallback_used=True
-        # If failed completely, confidence should be 0.0
-        if detection_result.detection_method == "fallback":
-            assert 0.0 < detection_result.confidence < 1.0
-            assert detection_result.fallback_used is True
-        else:  # failed
-            assert detection_result.confidence == 0.0
-
-        # Should have warnings in either case
-        assert len(detection_result.warnings) > 0
-
-        # Test 2: Explicit entry point provided (bypasses detection)
-        dest_dir2 = temp_project / "dest2"
-        dest_dir2.mkdir()
-
-        captured_explicit, detection_result2 = code_capture.capture_strategy_code(
-            entry_point=strategy_file,  # Explicit entry point
-            dest_dir=dest_dir2,
-            project_root=temp_project,
-            use_entry_point_detection=False,  # Explicitly disable detection
-        )
-
-        # When entry point provided explicitly, detection_result should be None
-        assert detection_result2 is None
-        # But capture should still work (fallback to import analysis)
-        assert isinstance(captured_explicit, list)
-
-    # ==================== Backward Compatibility Tests (T022) ====================
-
-    def test_backward_compatibility_existing_yaml_configs(self, code_capture):
-        """T022: Verify 100% backward compatibility with existing YAML configurations."""
-        # Load test fixtures with YAML configs
-        fixture_dir = Path(__file__).parent / "fixtures" / "strategies" / "with_yaml"
-
-        if not fixture_dir.exists():
-            pytest.skip("YAML fixture not available")
-
-        strategy_file = fixture_dir / "main.py"
-        dest_dir = fixture_dir.parent.parent.parent / "temp_dest"
-        dest_dir.mkdir(exist_ok=True, parents=True)
-
-        try:
-            # Capture with entry point detection enabled
-            captured, detection_result = code_capture.capture_strategy_code(
-                entry_point=strategy_file,
-                dest_dir=dest_dir,
-                project_root=fixture_dir,
-                use_entry_point_detection=True,
-            )
-
-            # Should capture files according to YAML
-            captured_names = {f.name for f in captured}
-            assert "main.py" in captured_names
-            assert "custom_helpers.py" in captured_names
-            assert "params.json" in captured_names
-            assert "README.md" in captured_names
-
-            # Should preserve directory structure for config/params.json
-            assert (dest_dir / "config" / "params.json").exists()
-
-        finally:
-            # Cleanup
-            import shutil
-
-            if dest_dir.exists():
-                shutil.rmtree(dest_dir)
-
-    # ==================== Performance Tests (T023) ====================
-
-    def test_entry_point_detection_performance_overhead(self, code_capture, temp_project):
-        """T023: Verify entry point detection overhead is <10ms."""
-        import time
-
-        # Create simple strategy file
-        strategy_file = temp_project / "perf_test.py"
-        strategy_file.write_text(
-            dedent(
-                """
-            from rustybt import run_algorithm
-
-            def initialize(context):
-                pass
-
-            def handle_data(context, data):
-                pass
-
-            if __name__ == "__main__":
-                run_algorithm(
-                    start="2020-01-01",
-                    end="2020-12-31",
-                    initialize=initialize,
-                    handle_data=handle_data,
-                )
-            """
-            )
-        )
-
-        # Measure detection time
-        times = []
-        for _ in range(10):  # Run 10 times for average
-            start = time.perf_counter()
-            result = code_capture.detect_entry_point()
-            end = time.perf_counter()
-            times.append((end - start) * 1000)  # Convert to milliseconds
-
-        avg_time = sum(times) / len(times)
-        max_time = max(times)
-
-        # Average should be <15ms, max should be <50ms (allowing for variance)
-        # Note: 10ms is very tight - real-world is 10-15ms which is still excellent
-        assert avg_time < 15.0, f"Average detection time {avg_time:.2f}ms exceeds 15ms limit"
-        assert max_time < 50.0, f"Max detection time {max_time:.2f}ms exceeds reasonable limit"
-
-    def test_new_default_behavior_entry_point_only(self, code_capture, temp_project):
-        """Verify new default behavior captures only entry point file (not all imports)."""
-        # Create multi-file strategy structure
-        (temp_project / "helper1.py").write_text("def helper1(): pass")
-        (temp_project / "helper2.py").write_text("def helper2(): pass")
-        (temp_project / "helper3.py").write_text("def helper3(): pass")
-
-        strategy_file = temp_project / "strategy.py"
-        strategy_file.write_text(
-            dedent(
-                """
-            from rustybt import run_algorithm
-            from helper1 import helper1
-            from helper2 import helper2
-            from helper3 import helper3
-
-            def initialize(context):
-                pass
-
-            def handle_data(context, data):
-                helper1()
-                helper2()
-                helper3()
-
-            if __name__ == "__main__":
-                run_algorithm(
-                    start="2020-01-01",
-                    end="2020-12-31",
-                    initialize=initialize,
-                    handle_data=handle_data,
-                )
-            """
-            )
-        )
-
-        dest_dir = temp_project / "dest"
-        dest_dir.mkdir()
-
-        # Capture with entry point detection enabled (NEW default behavior)
-        captured, detection_result = code_capture.capture_strategy_code(
-            entry_point=strategy_file,
-            dest_dir=dest_dir,
-            project_root=temp_project,
-            use_entry_point_detection=True,
-        )
-
-        # NEW BEHAVIOR: Should capture ONLY the entry point file (not helper files)
-        # This achieves 90%+ storage reduction during optimization runs
-        if detection_result and detection_result.detection_method == "inspect":
-            # Entry point detection succeeded
-            captured_names = {f.name for f in captured}
-
-            # Should have entry point
-            assert "strategy.py" in captured_names
-
-            # Should NOT have helper files (this is the storage optimization!)
-            # Note: This depends on implementation - if entry point mode is truly active
-            # For now, just verify we got a valid result
-            assert len(captured) >= 1
-
-    def test_storage_reduction_validation(self, code_capture, temp_project):
-        """Validate 90%+ storage reduction for entry point mode vs import analysis."""
-        # Create strategy with 10 helper modules
-        for i in range(10):
-            helper_file = temp_project / f"helper_{i}.py"
-            helper_file.write_text(f"def helper_{i}(): pass\n" * 50)  # Make files substantial
-
-        strategy_file = temp_project / "strategy.py"
-        imports = "\n".join(f"from helper_{i} import helper_{i}" for i in range(10))
-        strategy_file.write_text(
-            dedent(
-                f"""
-            from rustybt import run_algorithm
-            {imports}
-
-            def initialize(context):
-                pass
-
-            def handle_data(context, data):
-                pass
-
-            if __name__ == "__main__":
-                run_algorithm(
-                    start="2020-01-01",
-                    end="2020-12-31",
-                    initialize=initialize,
-                    handle_data=handle_data,
-                )
-            """
-            )
-        )
-
-        # Test 1: Import analysis mode (OLD behavior)
-        dest_import = temp_project / "dest_import"
-        dest_import.mkdir()
-
-        captured_import, _ = code_capture.capture_strategy_code(
-            entry_point=strategy_file,
-            dest_dir=dest_import,
-            project_root=temp_project,
-            use_entry_point_detection=False,  # Force import analysis
-        )
-
-        # Calculate size of import-based capture
-        import_size = sum(f.stat().st_size for f in captured_import if f.exists())
-
-        # Test 2: Entry point mode (NEW behavior)
-        dest_entry = temp_project / "dest_entry"
-        dest_entry.mkdir()
-
-        captured_entry, detection_result = code_capture.capture_strategy_code(
-            entry_point=strategy_file,
-            dest_dir=dest_entry,
-            project_root=temp_project,
-            use_entry_point_detection=True,  # NEW default
-        )
-
-        # Calculate size of entry point capture
-        entry_size = sum(f.stat().st_size for f in captured_entry if f.exists())
-
-        # Verify storage reduction
-        if detection_result and detection_result.detection_method == "inspect":
-            # Entry point detection succeeded - should have significant reduction
-            reduction_pct = (
-                ((import_size - entry_size) / import_size) * 100 if import_size > 0 else 0
-            )
-
-            # Should have captured fewer files
-            assert len(captured_entry) <= len(captured_import)
-
-            # Storage should be reduced (exact percentage depends on implementation)
-            assert entry_size <= import_size

@@ -76,15 +76,6 @@ if os.name == "nt":
     _()
     del _
 
-# Import Rust extensions (if available)
-try:
-    from rustybt._rustybt import rust_sum
-
-    _RUST_AVAILABLE = True
-except ImportError:
-    _RUST_AVAILABLE = False
-    rust_sum = None  # type: ignore[assignment]
-
 __all__ = [
     "Blotter",
     "TradingAlgorithm",
@@ -96,7 +87,6 @@ __all__ = [
     "gens",
     "get_calendar",
     "run_algorithm",
-    "rust_sum",
     "utils",
 ]
 

@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1200">
+  <style>
+    .bar { fill: #e74c3c; stroke: #c0392b; stroke-width: 1; }
+    .bar:hover { fill: #c0392b; }
+    .func-name { font-family: monospace; font-size: 12px; fill: #2c3e50; }
+    .location { font-family: monospace; font-size: 10px; fill: #7f8c8d; }
+    .percent { font-family: monospace; font-size: 11px; fill: #2c3e50; font-weight: bold; }
+    .title { font-family: Arial, sans-serif; font-size: 20px; fill: #2c3e50; font-weight: bold; }
+    .subtitle { font-family: Arial, sans-serif; font-size: 12px; fill: #7f8c8d; }
+  </style>
+
+  <!-- Title -->
+  <text x="20" y="30" class="title">Parallel Coordinator - 16 Workers</text>
+  <text x="20" y="50" class="subtitle">Top 30 functions by cumulative time (≥0.5% of total runtime: 5.009s)</text>
+
+  <!-- Bars -->
+  <g>
+    <!-- Function 1: profile_parallel_coordinator -->
+    <rect x="350" y="80" width="999.8950471602612" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="95" text-anchor="end" class="func-name">
+      profile_parallel_coordinator
+    </text>
+    <text x="340" y="108" text-anchor="end" class="location">
+      profile_extended_heavy_operations.py:279
+    </text>
+    <text x="1359.8950471602611" y="100" class="percent">
+      99.99% (5.008s, 1 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 2: __exit__ -->
+    <rect x="350" y="115" width="999.8816202087378" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="130" text-anchor="end" class="func-name">
+      __exit__
+    </text>
+    <text x="340" y="143" text-anchor="end" class="location">
+      pool.py:738
+    </text>
+    <text x="1359.8816202087378" y="135" class="percent">
+      99.99% (5.008s, 1 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 3: terminate -->
+    <rect x="350" y="150" width="999.8794988502259" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="165" text-anchor="end" class="func-name">
+      terminate
+    </text>
+    <text x="340" y="178" text-anchor="end" class="location">
+      pool.py:654
+    </text>
+    <text x="1359.879498850226" y="170" class="percent">
+      99.99% (5.008s, 1 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 4: __call__ -->
+    <rect x="350" y="185" width="983.5733227549059" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="200" text-anchor="end" class="func-name">
+      __call__
+    </text>
+    <text x="340" y="213" text-anchor="end" class="location">
+      util.py:197
+    </text>
+    <text x="1343.5733227549058" y="205" class="percent">
+      98.36% (4.926s, 23 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 5: _terminate_pool -->
+    <rect x="350" y="220" width="983.4868298271954" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="235" text-anchor="end" class="func-name">
+      _terminate_pool
+    </text>
+    <text x="340" y="248" text-anchor="end" class="location">
+      pool.py:680
+    </text>
+    <text x="1343.4868298271954" y="240" class="percent">
+      98.35% (4.926s, 1 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 6: wait -->
+    <rect x="350" y="255" width="968.9836100077827" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="270" text-anchor="end" class="func-name">
+      wait
+    </text>
+    <text x="340" y="283" text-anchor="end" class="location">
+      connection.py:1134
+    </text>
+    <text x="1328.9836100077828" y="275" class="percent">
+      96.90% (4.853s, 78 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 7: select -->
+    <rect x="350" y="290" width="967.514572532539" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="305" text-anchor="end" class="func-name">
+      select
+    </text>
+    <text x="340" y="318" text-anchor="end" class="location">
+      selectors.py:385
+    </text>
+    <text x="1327.514572532539" y="310" class="percent">
+      96.75% (4.846s, 78 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 8: _help_stuff_finish -->
+    <rect x="350" y="325" width="967.2319660500226" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="340" text-anchor="end" class="func-name">
+      _help_stuff_finish
+    </text>
+    <text x="340" y="353" text-anchor="end" class="location">
+      pool.py:671
+    </text>
+    <text x="1327.2319660500225" y="345" class="percent">
+      96.72% (4.844s, 1 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 9: <method 'acquire' of '_multiprocessing.SemLock' objects> -->
+    <rect x="350" y="360" width="967.1803712168361" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="375" text-anchor="end" class="func-name">
+      <method 'acquire' of '_multiprocessin...
+    </text>
+    <text x="340" y="388" text-anchor="end" class="location">
+      ~:0
+    </text>
+    <text x="1327.1803712168362" y="380" class="percent">
+      96.72% (4.844s, 1 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 10: <method 'poll' of 'select.poll' objects> -->
+    <rect x="350" y="395" width="965.8821499214421" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="410" text-anchor="end" class="func-name">
+      <method 'poll' of 'select.poll' objects>
+    </text>
+    <text x="340" y="423" text-anchor="end" class="location">
+      ~:0
+    </text>
+    <text x="1325.882149921442" y="415" class="percent">
+      96.59% (4.838s, 78 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 11: _bootstrap -->
+    <rect x="350" y="430" width="965.0396459494378" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="445" text-anchor="end" class="func-name">
+      _bootstrap
+    </text>
+    <text x="340" y="458" text-anchor="end" class="location">
+      threading.py:998
+    </text>
+    <text x="1325.0396459494377" y="450" class="percent">
+      96.50% (4.833s, 3 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 12: _bootstrap_inner -->
+    <rect x="350" y="465" width="965.039113463494" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="480" text-anchor="end" class="func-name">
+      _bootstrap_inner
+    </text>
+    <text x="340" y="493" text-anchor="end" class="location">
+      threading.py:1025
+    </text>
+    <text x="1325.039113463494" y="485" class="percent">
+      96.50% (4.833s, 3 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 13: run -->
+    <rect x="350" y="500" width="965.0257200543924" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="515" text-anchor="end" class="func-name">
+      run
+    </text>
+    <text x="340" y="528" text-anchor="end" class="location">
+      threading.py:981
+    </text>
+    <text x="1325.0257200543924" y="520" class="percent">
+      96.50% (4.833s, 3 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 14: _handle_results -->
+    <rect x="350" y="535" width="965.023923138947" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="550" text-anchor="end" class="func-name">
+      _handle_results
+    </text>
+    <text x="340" y="563" text-anchor="end" class="location">
+      pool.py:573
+    </text>
+    <text x="1325.0239231389469" y="555" class="percent">
+      96.50% (4.833s, 1 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 15: poll -->
+    <rect x="350" y="570" width="964.888788508756" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="585" text-anchor="end" class="func-name">
+      poll
+    </text>
+    <text x="340" y="598" text-anchor="end" class="location">
+      connection.py:253
+    </text>
+    <text x="1324.888788508756" y="590" class="percent">
+      96.49% (4.833s, 40 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 16: _poll -->
+    <rect x="350" y="605" width="964.770083875112" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="620" text-anchor="end" class="func-name">
+      _poll
+    </text>
+    <text x="340" y="633" text-anchor="end" class="location">
+      connection.py:439
+    </text>
+    <text x="1324.770083875112" y="625" class="percent">
+      96.48% (4.832s, 40 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 17: _handle_workers -->
+    <rect x="350" y="640" width="958.9787915091354" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="655" text-anchor="end" class="func-name">
+      _handle_workers
+    </text>
+    <text x="340" y="668" text-anchor="end" class="location">
+      pool.py:506
+    </text>
+    <text x="1318.9787915091354" y="660" class="percent">
+      95.90% (4.803s, 1 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 18: _recv -->
+    <rect x="350" y="675" width="953.1909679885977" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="690" text-anchor="end" class="func-name">
+      _recv
+    </text>
+    <text x="340" y="703" text-anchor="end" class="location">
+      connection.py:390
+    </text>
+    <text x="1313.1909679885975" y="695" class="percent">
+      95.32% (4.774s, 104 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 19: <built-in method posix.read> -->
+    <rect x="350" y="710" width="953.0656920351697" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="725" text-anchor="end" class="func-name">
+      <built-in method posix.read>
+    </text>
+    <text x="340" y="738" text-anchor="end" class="location">
+      ~:0
+    </text>
+    <text x="1313.0656920351698" y="730" class="percent">
+      95.31% (4.774s, 104 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 20: recv -->
+    <rect x="350" y="745" width="953.0309680417865" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="760" text-anchor="end" class="func-name">
+      recv
+    </text>
+    <text x="340" y="773" text-anchor="end" class="location">
+      connection.py:246
+    </text>
+    <text x="1313.0309680417865" y="765" class="percent">
+      95.30% (4.773s, 51 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 21: _recv_bytes -->
+    <rect x="350" y="780" width="952.8539888412735" height="30"
+          style="fill: #e74c3c; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="795" text-anchor="end" class="func-name">
+      _recv_bytes
+    </text>
+    <text x="340" y="808" text-anchor="end" class="location">
+      connection.py:429
+    </text>
+    <text x="1312.8539888412733" y="800" class="percent">
+      95.29% (4.772s, 52 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 22: _repopulate_pool -->
+    <rect x="350" y="815" width="16.27100287307514" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="830" text-anchor="end" class="func-name">
+      _repopulate_pool
+    </text>
+    <text x="340" y="843" text-anchor="end" class="location">
+      pool.py:305
+    </text>
+    <text x="376.27100287307513" y="835" class="percent">
+      1.63% (0.081s, 1 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 23: _repopulate_pool_static -->
+    <rect x="350" y="850" width="16.27001277266467" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="865" text-anchor="end" class="func-name">
+      _repopulate_pool_static
+    </text>
+    <text x="340" y="878" text-anchor="end" class="location">
+      pool.py:314
+    </text>
+    <text x="376.2700127726647" y="870" class="percent">
+      1.63% (0.081s, 1 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 24: poll -->
+    <rect x="350" y="885" width="15.735723125190601" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="900" text-anchor="end" class="func-name">
+      poll
+    </text>
+    <text x="340" y="913" text-anchor="end" class="location">
+      popen_fork.py:25
+    </text>
+    <text x="375.7357231251906" y="905" class="percent">
+      1.57% (0.079s, 763 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 25: <built-in method posix.waitpid> -->
+    <rect x="350" y="920" width="15.654634720168158" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="935" text-anchor="end" class="func-name">
+      <built-in method posix.waitpid>
+    </text>
+    <text x="340" y="948" text-anchor="end" class="location">
+      ~:0
+    </text>
+    <text x="375.65463472016813" y="940" class="percent">
+      1.57% (0.078s, 763 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 26: join -->
+    <rect x="350" y="955" width="15.574697938289008" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="970" text-anchor="end" class="func-name">
+      join
+    </text>
+    <text x="340" y="983" text-anchor="end" class="location">
+      process.py:142
+    </text>
+    <text x="375.57469793828903" y="975" class="percent">
+      1.56% (0.078s, 3 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 27: wait -->
+    <rect x="350" y="990" width="15.537619786014874" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="1005" text-anchor="end" class="func-name">
+      wait
+    </text>
+    <text x="340" y="1018" text-anchor="end" class="location">
+      popen_fork.py:37
+    </text>
+    <text x="375.5376197860149" y="1010" class="percent">
+      1.55% (0.078s, 3 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 28: start -->
+    <rect x="350" y="1025" width="15.43914742200091" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="1040" text-anchor="end" class="func-name">
+      start
+    </text>
+    <text x="340" y="1053" text-anchor="end" class="location">
+      process.py:110
+    </text>
+    <text x="375.43914742200093" y="1045" class="percent">
+      1.54% (0.077s, 16 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 29: _Popen -->
+    <rect x="350" y="1060" width="15.157032296030193" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="1075" text-anchor="end" class="func-name">
+      _Popen
+    </text>
+    <text x="340" y="1088" text-anchor="end" class="location">
+      context.py:286
+    </text>
+    <text x="375.1570322960302" y="1080" class="percent">
+      1.52% (0.076s, 16 calls)
+    </text>
+  </g>
+  <g>
+    <!-- Function 30: __init__ -->
+    <rect x="350" y="1095" width="14.996108335365362" height="30"
+          style="fill: #f39c12; stroke: #2c3e50; stroke-width: 1;" />
+    <text x="340" y="1110" text-anchor="end" class="func-name">
+      __init__
+    </text>
+    <text x="340" y="1123" text-anchor="end" class="location">
+      popen_spawn_posix.py:30
+    </text>
+    <text x="374.99610833536536" y="1115" class="percent">
+      1.50% (0.075s, 16 calls)
+    </text>
+  </g>
+
+  <!-- Legend -->
+  <text x="20" y="1160" class="subtitle">Color coding:</text>
+  <rect x="20" y="1165" width="15" height="15" fill="#e74c3c" stroke="#2c3e50"/>
+  <text x="40" y="1176" class="location">≥10% (Critical)</text>
+  <rect x="150" y="1165" width="15" height="15" fill="#e67e22" stroke="#2c3e50"/>
+  <text x="170" y="1176" class="location">≥5% (Major)</text>
+  <rect x="280" y="1165" width="15" height="15" fill="#f39c12" stroke="#2c3e50"/>
+  <text x="300" y="1176" class="location">≥1% (Notable)</text>
+  <rect x="410" y="1165" width="15" height="15" fill="#3498db" stroke="#2c3e50"/>
+  <text x="430" y="1176" class="location">&lt;1% (Minor)</text>
+
+  <!-- Footer -->
+  <text x="1390" y="1190" text-anchor="end" class="location">
+    Generated by RustyBT Profiling Infrastructure
+  </text>
+</svg>

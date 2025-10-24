@@ -284,13 +284,14 @@ N/A - Already on main
 
 ## PyPI Release
 
-**REQUIRED** - Code changes made to `rustybt/` directory
+**STATUS**: Version already exists on PyPI (published previously)
 
-[To be completed after commit and verification]
-- Version: [0.1.X]
-- Released: [date]
-- PyPI: https://pypi.org/project/rustybt/[version]/
-- Built from commit: [hash]
+- Version: 0.3.3.dev8
+- PyPI: https://pypi.org/project/rustybt/0.3.3.dev8/
+- Built from commit: 0aff35fce448da0c46f9fafc0905b906cfd0d610
+- Note: This dev version already includes the forex validation fix
+
+**Next Release**: For stable release, the fix will be included in version 0.3.3 or later
 
 ---
 

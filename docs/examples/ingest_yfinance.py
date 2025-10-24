@@ -7,15 +7,13 @@ Usage:
     python examples/ingest_yfinance.py
 """
 
-import asyncio
-
 import pandas as pd
 
 from rustybt.data.bundles.metadata import BundleMetadata
 from rustybt.data.sources import DataSourceRegistry
 
 
-async def main():
+def main():
     """Ingest stock data from Yahoo Finance."""
     print("=" * 60)
     print("Yahoo Finance Data Ingestion Example")
@@ -40,7 +38,7 @@ async def main():
     print(f"  Frequency: {frequency}")
 
     # Ingest data to bundle
-    bundle_path = await source.ingest_to_bundle(
+    bundle_path = source.ingest_to_bundle(
         bundle_name=bundle_name,
         symbols=symbols,
         start=start,
@@ -72,4 +70,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

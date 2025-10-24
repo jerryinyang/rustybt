@@ -54,7 +54,7 @@ from rustybt.data.sources import DataSourceRegistry
 import pandas as pd
 
 source = DataSourceRegistry.get_source("yfinance")
-await source.ingest_to_bundle(
+source.ingest_to_bundle(
     bundle_name="my-stocks",
     symbols=["AAPL", "MSFT"],
     start=pd.Timestamp("2023-01-01"),
@@ -305,7 +305,7 @@ asyncio.run(main())
 **Solution**: Re-ingest data with new system:
 ```python
 source = DataSourceRegistry.get_source("yfinance")
-await source.ingest_to_bundle(
+source.ingest_to_bundle(
     bundle_name="my-stocks",
     symbols=old_symbols,  # Use symbols from old bundle
     start=old_start,

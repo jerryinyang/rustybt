@@ -7,15 +7,13 @@ Usage:
     python examples/ingest_ccxt.py
 """
 
-import asyncio
-
 import pandas as pd
 
 from rustybt.data.bundles.metadata import BundleMetadata
 from rustybt.data.sources import DataSourceRegistry
 
 
-async def main():
+def main():
     """Ingest crypto data from Binance via CCXT."""
     print("=" * 60)
     print("CCXT (Binance) Cryptocurrency Ingestion Example")
@@ -42,7 +40,7 @@ async def main():
     print("  Note: This may take a few minutes for hourly data...")
 
     # Ingest data to bundle
-    bundle_path = await source.ingest_to_bundle(
+    bundle_path = source.ingest_to_bundle(
         bundle_name=bundle_name,
         symbols=symbols,
         start=start,
@@ -81,4 +79,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

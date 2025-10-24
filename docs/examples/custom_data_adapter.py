@@ -493,7 +493,7 @@ async def main():
 
     # Create bundle
     print("\n[4/4] Creating bundle...")
-    bundle_path = await source.ingest_to_bundle(
+    bundle_path = source.ingest_to_bundle(
         bundle_name="custom-example",
         symbols=["AAPL", "MSFT"],
         start=pd.Timestamp("2023-01-01"),

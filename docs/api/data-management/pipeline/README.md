@@ -174,74 +174,64 @@ print(f"Missing data: {metadata.missing_data_pct:.2%}")
 ### Basic Ingestion
 
 ```python
-import asyncio
 import pandas as pd
 from rustybt.data.sources import DataSourceRegistry
 
-async def ingest_stock_data():
-    # Get data source
-    source = DataSourceRegistry.get_source("yfinance")
+# Get data source
+source = DataSourceRegistry.get_source("yfinance")
 
-    # Ingest to bundle
-    bundle_path = await source.ingest_to_bundle(
-        bundle_name="my_stocks",
-        symbols=["AAPL", "MSFT", "GOOGL"],
-        start=pd.Timestamp("2023-01-01"),
-        end=pd.Timestamp("2023-12-31"),
-        frequency="1d"
-    )
+# Ingest to bundle
+bundle_path = source.ingest_to_bundle(
+    bundle_name="my_stocks",
+    symbols=["AAPL", "MSFT", "GOOGL"],
+    start=pd.Timestamp("2023-01-01"),
+    end=pd.Timestamp("2023-12-31"),
+    frequency="1d"
+)
 
-    print(f"✓ Bundle created: {bundle_path}")
-
-asyncio.run(ingest_stock_data())
+print(f"✓ Bundle created: {bundle_path}")
 ```
 
 ### Crypto Ingestion
 
 ```python
-async def ingest_crypto_data():
-    # Get CCXT source for Binance
-    source = DataSourceRegistry.get_source("ccxt", exchange="binance")
+# Get CCXT source for Binance
+source = DataSourceRegistry.get_source("ccxt", exchange="binance")
 
-    # Ingest hourly crypto data
-    bundle_path = await source.ingest_to_bundle(
-        bundle_name="crypto_hourly",
-        symbols=["BTC/USDT", "ETH/USDT"],
-        start=pd.Timestamp("2024-01-01"),
-        end=pd.Timestamp("2024-01-31"),
-        frequency="1h"
-    )
+# Ingest hourly crypto data
+bundle_path = source.ingest_to_bundle(
+    bundle_name="crypto_hourly",
+    symbols=["BTC/USDT", "ETH/USDT"],
+    start=pd.Timestamp("2024-01-01"),
+    end=pd.Timestamp("2024-01-31"),
+    frequency="1h"
+)
 
-    print(f"✓ Crypto bundle created: {bundle_path}")
-
-asyncio.run(ingest_crypto_data())
+print(f"✓ Crypto bundle created: {bundle_path}")
 ```
 
 ### Custom CSV Ingestion
 
 ```python
-async def ingest_custom_data():
-    # Get CSV source
-    source = DataSourceRegistry.get_source("csv")
+# Get CSV source
+source = DataSourceRegistry.get_source("csv")
 
-    # Ingest from CSV file
-    bundle_path = await source.ingest_to_bundle(
-        bundle_name="custom_data",
-        csv_path="data/my_data.csv",
-        symbol_column="ticker",
-        date_column="date",
-        price_columns={
-            "open": "Open",
-            "high": "High",
-            "low": "Low",
-            "close": "Close",
-            "volume": "Volume"
-        }
-    )
+# Ingest from CSV file
+bundle_path = source.ingest_to_bundle(
+    bundle_name="custom_data",
+    csv_path="data/my_data.csv",
+    symbol_column="ticker",
+    date_column="date",
+    price_columns={
+        "open": "Open",
+        "high": "High",
+        "low": "Low",
+        "close": "Close",
+        "volume": "Volume"
+    }
+)
 
-    print(f"✓ Custom bundle created: {bundle_path}")
-
-asyncio.run(ingest_custom_data())
+print(f"✓ Custom bundle created: {bundle_path}")
 ```
 
 ## Pipeline Configuration
@@ -373,7 +363,7 @@ metadata = BundleMetadata.load("my_bundle")
 last_date = metadata.end_date
 
 # Ingest only new data
-await source.ingest_to_bundle(
+source.ingest_to_bundle(
     bundle_name="my_bundle",
     symbols=symbols,
     start=last_date + pd.Timedelta(days=1),
@@ -406,7 +396,7 @@ Handle failures gracefully:
 from rustybt.data.polars.validation import DataError
 
 try:
-    bundle_path = await source.ingest_to_bundle(...)
+    bundle_path = source.ingest_to_bundle(...)
 except DataError as e:
     # Data quality issue
     logger.error(f"Data quality failure: {e}")
@@ -451,7 +441,7 @@ async def safe_ingest(bundle_name, **kwargs):
         await clean_bundle_range(bundle_name, kwargs["start"], kwargs["end"])
 
     # Ingest (will not duplicate)
-    await source.ingest_to_bundle(bundle_name=bundle_name, **kwargs)
+    source.ingest_to_bundle(bundle_name=bundle_name, **kwargs)
 ```
 
 ## Performance Optimization

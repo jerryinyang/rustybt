@@ -118,7 +118,7 @@ async def main():
     )
 
     # Ingest to bundle
-    await source.ingest_to_bundle(
+    source.ingest_to_bundle(
         bundle_name="stocks-2023",
         symbols=["AAPL", "MSFT", "GOOGL"],
         start=pd.Timestamp("2023-01-01"),

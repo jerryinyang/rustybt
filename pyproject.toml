@@ -41,7 +41,7 @@ dependencies = [
     'bottleneck >=1.0.0',
     'click >=4.0.0',
     'empyrical-reloaded >=0.5.7',
-    'h5py >=2.7.1',
+    # 'h5py >=2.7.1',  # Moved to optional - RustyBT uses Parquet, h5py is legacy only
     'intervaltree >=2.1.0',
     'iso3166 >=2.1.1',
     'iso4217 >=1.6.20180829',
@@ -60,7 +60,7 @@ dependencies = [
     'statsmodels >=0.6.1',
     # ta-lib is not available for Numpy 2.0 => optional
     #    'ta-lib >=0.4.09',
-    'tables >=3.4.3',
+    # 'tables >=3.4.3',  # Moved to optional - RustyBT uses Parquet, PyTables is legacy only
     'toolz >=0.8.2',
     "exchange-calendars>=4.2.4",
     # RustyBT additions
@@ -191,9 +191,15 @@ docs = [
     'm2r2',
 ]
 
+# Legacy HDF5 support (optional - RustyBT uses Parquet by default)
+legacy = [
+    'h5py>=2.7.1',
+    'tables>=3.4.3',
+]
+
 # Meta-extras for convenient installation (Story 001)
-full = ['rustybt[optimization]', 'rustybt[benchmarks]']
-all = ['rustybt[optimization]', 'rustybt[benchmarks]']
+full = ['rustybt[optimization]', 'rustybt[benchmarks]', 'rustybt[legacy]']
+all = ['rustybt[optimization]', 'rustybt[benchmarks]', 'rustybt[legacy]']
 
 [project.scripts]
 rustybt = 'rustybt.__main__:main'

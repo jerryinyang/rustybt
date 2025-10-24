@@ -48,41 +48,70 @@ Does it require code changes?
 
 ### Fast Track Steps:
 
-1. **Immediate Assessment** (2 minutes)
+1. **Immediate Assessment**
    - Confirm issue severity
    - Verify reproducibility
    - Check if workaround exists
 
-2. **Create Fix Document** (5 minutes)
+2. **Create Fix Branch**
+   ```bash
+   # Branch naming: fix/YYYYMMDD-HHMMSS-brief-description
+   TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+   git checkout -b "fix/${TIMESTAMP}-[brief-description]"
+   ```
+
+3. **Create Fix Document**
    ```bash
    cd docs/internal/sprint-debug/fixes/
    cp active-session.md "completed/$(date +%Y-%m-%d-%H%M%S)-critical-[brief-title].md"
    ```
 
-3. **Complete Mandatory Pre-Flight** (see section below)
+4. **Complete Mandatory Pre-Flight** (see section below)
 
-4. **Implement Fix** (time varies)
+5. **Implement Fix**
 
-5. **Verify & Commit** (10 minutes)
+6. **Verify & Commit**
    - Run verification checklist
    - Commit with descriptive message
    - Update fix document with commit hash
+   - Push branch: `git push -u origin fix/${TIMESTAMP}-[brief-description]`
 
-6. **Document for Users** (5 minutes)
+7. **QA Review** (see QA Review Guide)
+   - Request review using QA agent or manual review
+   - Address feedback if needed
+   - Get approval
+
+8. **Merge & Cleanup**
+   ```bash
+   git checkout main
+   git merge fix/${TIMESTAMP}-[brief-description]
+   git push origin main
+   git branch -d fix/${TIMESTAMP}-[brief-description]
+   git push origin --delete fix/${TIMESTAMP}-[brief-description]
+   ```
+
+9. **Document for Users**
    - Update KNOWN_ISSUES.md if needed
    - Consider release note if deployed
-
-**Total Time Budget**: Aim for <2 hours from discovery to commit.
 
 ---
 
 ## Standard Workflow: Documentation Fixes
 
-### Step 1: Issue Discovery & Documentation
+### Step 1: Issue Discovery & Branch Creation
 
 **When you discover an issue** (via error message, confusion, or testing):
 
-1. **Capture the context immediately**:
+1. **Create fix branch** (MANDATORY):
+   ```bash
+   # Branch naming: fix/YYYYMMDD-HHMMSS-brief-description
+   TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+   git checkout -b "fix/${TIMESTAMP}-[brief-description]"
+
+   # Example: fix/20251024-143000-quickstart-date-mismatch
+   ```
+
+2. **Capture the context immediately**:
    ```markdown
    ## User-Reported Issue
    **User Error**: [exact error message or confusion]
@@ -92,7 +121,7 @@ Does it require code changes?
    **Impact**: [who/how many users affected]
    ```
 
-2. **Create timestamped fix document**:
+3. **Create timestamped fix document**:
    ```bash
    # Format: YYYY-MM-DD-HHMMSS-brief-description.md
    cd docs/internal/sprint-debug/fixes/
@@ -227,7 +256,7 @@ Does it require code changes?
 ...
 ```
 
-### Step 6: Commit & Document
+### Step 6: Commit & Push Branch
 
 **Create descriptive commit**:
 ```bash
@@ -239,6 +268,9 @@ git commit -m "fix(docs): [brief description]
 - Fix 3 summary
 
 Refs: docs/internal/sprint-debug/fixes/[timestamp]-[title].md"
+
+# Push to remote for review
+git push -u origin fix/[timestamp]-[brief-description]
 ```
 
 **Update fix document with metadata**:
@@ -247,7 +279,7 @@ Refs: docs/internal/sprint-debug/fixes/[timestamp]-[title].md"
 `abc1234`
 
 ## Branch
-`main`
+`fix/[timestamp]-[brief-description]`
 
 ## Files Modified
 - `path/to/file1.ext` - [what changed]
@@ -265,7 +297,51 @@ Refs: docs/internal/sprint-debug/fixes/[timestamp]-[title].md"
 - [User impact assessment]
 ```
 
-### Step 7: Update Index
+### Step 7: Request QA Review
+
+**Initiate review** (see `QA-REVIEW-GUIDE.md` for details):
+```bash
+# Option 1: Use QA agent (recommended)
+# Provide QA agent with:
+# - Branch name: fix/[timestamp]-[brief-description]
+# - Fix document path: docs/internal/sprint-debug/fixes/completed/[timestamp]-[title].md
+
+# Option 2: Manual review
+# Tag reviewer or self-review using QA checklist
+```
+
+**Review outcome**:
+- ✅ **Approved**: Proceed to Step 8 (merge)
+- ❌ **Changes requested**: Address feedback, update commit, push again, repeat Step 7
+
+### Step 8: Merge & Cleanup
+
+**After QA approval**:
+```bash
+# Switch to main branch
+git checkout main
+
+# Merge fix branch
+git merge fix/[timestamp]-[brief-description]
+
+# Push merged changes
+git push origin main
+
+# Delete local branch
+git branch -d fix/[timestamp]-[brief-description]
+
+# Delete remote branch
+git push origin --delete fix/[timestamp]-[brief-description]
+```
+
+**Update fix document**:
+```markdown
+## Merge Status
+✅ Merged to main on [date]
+Branch deleted: fix/[timestamp]-[brief-description]
+```
+
+### Step 9: Update Index
 
 **Add entry to fixes/index.md**:
 ```bash
@@ -278,7 +354,10 @@ Refs: docs/internal/sprint-debug/fixes/[timestamp]-[title].md"
 
 ### Step 1-2: Same as Documentation Workflow
 
-Follow Steps 1-2 above to capture context and create fix document.
+Follow Steps 1-3 above to:
+1. Create fix branch (MANDATORY)
+2. Capture context
+3. Create fix document
 
 ### Step 3: Mandatory Pre-Flight Checklist (Code)
 
@@ -354,9 +433,9 @@ Follow Steps 1-2 above to capture context and create fix document.
 ...
 ```
 
-### Step 6-7: Verification & Commit
+### Step 6-9: Verification, Commit, Review & Merge
 
-Same as documentation workflow, but ensure ALL checks pass (no N/A for code changes).
+Same as documentation workflow Steps 6-9, but ensure ALL checks pass (no N/A for code changes).
 
 **Required for code changes**:
 - ✅ All tests pass
@@ -364,6 +443,12 @@ Same as documentation workflow, but ensure ALL checks pass (no N/A for code chan
 - ✅ Type checking passes
 - ✅ No mock violations
 - ✅ 90%+ coverage (if possible)
+
+**Then follow**:
+- Step 6: Commit & push branch
+- Step 7: Request QA review
+- Step 8: Merge & cleanup (after approval)
+- Step 9: Update index
 
 ---
 
@@ -701,12 +786,25 @@ docs/internal/sprint-debug/
 
 ## Escalation Criteria
 
-**Escalate to full feature planning when**:
-- Fix requires >3 hours of work
-- Multiple components affected
-- Architectural changes needed
-- Multiple coordinated stories required
-- Risk assessment needed
+**Escalate to full feature planning when the fix requires 3+ coordinated stories**.
+
+**Use sprint fix workflow for**:
+- ✅ Single cohesive fix (even if substantial)
+- ✅ One logical change that can be implemented and tested as a unit
+- ✅ Updates that don't require breaking into multiple independent stories
+- ✅ Fixes of any complexity as long as they're a single fix
+
+**Escalate to epic/PRD when**:
+- ❌ Requires 3+ separate stories to implement
+- ❌ Multiple independent changes that should be tracked separately
+- ❌ Changes that need phased rollout across stories
+- ❌ Work that needs to be distributed across multiple development cycles
+
+**Examples**:
+- ✅ **Sprint Fix**: Adding complete adjustments database (even if large) - single cohesive feature
+- ✅ **Sprint Fix**: Rewriting data ingestion logic (even if complex) - one logical change
+- ❌ **Escalate**: "Add user authentication" - needs multiple stories (login UI, backend auth, session management, etc.)
+- ❌ **Escalate**: "Implement portfolio analytics" - needs multiple stories (metrics engine, visualization, export, etc.)
 
 **Escalation Path**:
 1. Document issue in `docs/internal/KNOWN_ISSUES.md`
@@ -721,16 +819,22 @@ docs/internal/sprint-debug/
 **If you are an AI agent (like Claude Code) handling user-reported issues**:
 
 ### Do's:
+✅ **ALWAYS create a fix branch first** (MANDATORY - see Step 1)
 ✅ Always complete the mandatory pre-flight checklist
 ✅ Document every step in timestamped fix file
 ✅ Test all code examples before committing
 ✅ Verify API signatures against source code
 ✅ Use real implementations (no mocks)
 ✅ Follow TDD: tests before implementation
+✅ **Request QA review before merging** (see QA-REVIEW-GUIDE.md)
+✅ **Merge to main only after QA approval**
+✅ **Delete branch after successful merge**
 ✅ Ask user for clarification if needed
 ✅ Escalate if issue is larger than expected
 
 ### Don'ts:
+❌ **Work directly on main branch** (ALWAYS use fix branch)
+❌ **Merge without QA approval** (ALWAYS get review first)
 ❌ Skip pre-flight checklist "for efficiency"
 ❌ Guess at API signatures without verification
 ❌ Use "foo"/"bar" in examples
@@ -738,6 +842,7 @@ docs/internal/sprint-debug/
 ❌ Mix unrelated fixes in one commit
 ❌ Skip documentation updates
 ❌ Use mocking frameworks (violates CR-002)
+❌ **Leave fix branches unmerged or undeleted**
 
 ### Handling Ambiguity:
 - If fix scope is unclear: Ask user
@@ -755,6 +860,7 @@ docs/internal/sprint-debug/
 
 ## References
 
+- **QA Review Guide**: `QA-REVIEW-GUIDE.md` (in this directory) - How to review fixes
 - **Main Sprint Debug Guide**: `README.md` (in this directory)
 - **Active Session Template**: `fixes/active-session.md`
 - **Fix History**: `fixes/fix-history.md`
@@ -787,3 +893,4 @@ Contact project maintainer or open issue in `docs/internal/KNOWN_ISSUES.md`.
 
 **Version History**:
 - 2025-10-24: Initial version created based on existing sprint-debug workflow
+- 2025-10-24: Added mandatory branching workflow and QA review process

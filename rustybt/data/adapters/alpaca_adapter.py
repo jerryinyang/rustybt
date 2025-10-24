@@ -21,6 +21,7 @@ from rustybt.data.adapters.utils import (
     build_symbol_sid_map,
     normalize_symbols,
     prepare_ohlcv_frame,
+    run_async,
 )
 from rustybt.data.polars.parquet_writer import ParquetWriter
 from rustybt.data.sources.base import DataSource, DataSourceMetadata
@@ -72,7 +73,7 @@ class AlpacaAdapter(BaseAPIProviderAdapter, DataSource):
         super().__init__(
             name=f"alpaca_{'paper' if is_paper else 'live'}",
             api_key_env_var="ALPACA_API_KEY",
-            api_secret_env_var="ALPACA_API_SECRET",
+            api_secret_env_var="ALPACA_API_SECRET",  # nosec B106 - env var name, not password
             requests_per_minute=200,  # 200 req/min for data API
             base_url="https://data.alpaca.markets",
         )
@@ -291,7 +292,7 @@ class AlpacaAdapter(BaseAPIProviderAdapter, DataSource):
 
         all_data = []
         for symbol in normalized_symbols:
-            df_symbol = asyncio.run(self.fetch_ohlcv(symbol, start, end, frequency))
+            df_symbol = run_async(self.fetch_ohlcv(symbol, start, end, frequency))
             if not df_symbol.is_empty():
                 all_data.append(df_symbol)
 

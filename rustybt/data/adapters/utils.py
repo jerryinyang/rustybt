@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+import asyncio
+from collections.abc import Awaitable, Iterable
+from typing import TypeVar
 
 import polars as pl
+
+T = TypeVar("T")
 
 INTRADAY_FREQUENCIES: set[str] = {
     "1m",
@@ -19,6 +23,55 @@ INTRADAY_FREQUENCIES: set[str] = {
     "60min",
     "1hour",
 }
+
+
+def run_async(coro: Awaitable[T]) -> T:
+    """Run async coroutine from sync context, handling existing event loops.
+
+    This function safely runs async code from synchronous context,
+    automatically detecting and handling existing event loops (e.g., Jupyter).
+
+    Args:
+        coro: Async coroutine to execute
+
+    Returns:
+        Result from coroutine execution
+
+    Raises:
+        Any exception raised by the coroutine
+
+    Example:
+        >>> async def fetch_data():
+        ...     return await some_async_function()
+        >>> result = run_async(fetch_data())  # Works in both Jupyter and scripts
+
+    Implementation:
+        - If no event loop exists: Uses asyncio.run() (creates new loop)
+        - If event loop exists (Jupyter): Creates task in existing loop
+        - Handles nested asyncio by detecting running loops
+    """
+    try:
+        # Try to get the running loop (will raise if none exists)
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        # No running loop - safe to use asyncio.run()
+        return asyncio.run(coro)
+    else:
+        # Running loop exists (e.g., Jupyter) - need to run in that loop
+        # We can't use loop.run_until_complete() because the loop is already running
+        # Instead, we need to use a different approach with nest_asyncio
+        try:
+            import nest_asyncio
+
+            nest_asyncio.apply(loop)
+            return loop.run_until_complete(coro)
+        except ImportError:
+            # nest_asyncio not available - provide helpful error
+            raise RuntimeError(
+                "Cannot run async code from sync context with existing event loop. "
+                "Install nest_asyncio: pip install nest_asyncio\n"
+                "This is required for Jupyter notebook environments."
+            ) from None
 
 
 def normalize_symbols(symbols: Iterable[str]) -> list[str]:

@@ -26,6 +26,7 @@ from rustybt.data.adapters.utils import (
     build_symbol_sid_map,
     normalize_symbols,
     prepare_ohlcv_frame,
+    run_async,
 )
 from rustybt.data.polars.parquet_writer import ParquetWriter
 from rustybt.data.sources.base import DataSource, DataSourceMetadata
@@ -459,7 +460,7 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
 
         normalized_symbols = normalize_symbols(symbols)
 
-        df = asyncio.run(self.fetch(normalized_symbols, start, end, frequency))
+        df = run_async(self.fetch(normalized_symbols, start, end, frequency))
         if df.is_empty():
             logger.warning(
                 "ccxt_no_data",

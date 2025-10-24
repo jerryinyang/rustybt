@@ -25,6 +25,7 @@ from rustybt.data.adapters.utils import (
     build_symbol_sid_map,
     normalize_symbols,
     prepare_ohlcv_frame,
+    run_async,
 )
 from rustybt.data.polars.parquet_writer import ParquetWriter
 from rustybt.data.sources.base import DataSource, DataSourceMetadata
@@ -419,7 +420,7 @@ class CSVAdapter(BaseDataAdapter, DataSource):
                     )
                     logger.info("date_parsing_succeeded", format=fmt, method="auto_detect")
                     return result_df
-                except Exception:  # noqa: BLE001, S112
+                except Exception:  # noqa: BLE001, S112  # nosec B112
                     # Continue trying other formats - polars can raise various exceptions
                     continue
 
@@ -434,7 +435,7 @@ class CSVAdapter(BaseDataAdapter, DataSource):
                 )
                 logger.info("date_parsing_succeeded", format="epoch_seconds", method="auto_detect")
                 return result_df
-            except Exception:  # noqa: BLE001, S110
+            except Exception:  # noqa: BLE001, S110  # nosec B110
                 # Not epoch seconds, try milliseconds - polars can raise various exceptions
                 pass
 
@@ -451,7 +452,7 @@ class CSVAdapter(BaseDataAdapter, DataSource):
                     "date_parsing_succeeded", format="epoch_milliseconds", method="auto_detect"
                 )
                 return result_df
-            except Exception:  # noqa: BLE001, S110
+            except Exception:  # noqa: BLE001, S110  # nosec B110
                 # Not epoch milliseconds either - polars can raise various exceptions
                 pass
 
@@ -681,7 +682,7 @@ class CSVAdapter(BaseDataAdapter, DataSource):
             frequency=frequency,
         )
 
-        df = asyncio.run(self.fetch(symbols, start, end, frequency))
+        df = run_async(self.fetch(symbols, start, end, frequency))
         if df.is_empty():
             logger.warning(
                 "csv_no_data",

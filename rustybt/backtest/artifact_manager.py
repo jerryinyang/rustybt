@@ -64,6 +64,7 @@ class BacktestArtifactManager:
         base_dir: str = "backtests",
         enabled: bool = True,
         code_capture_enabled: bool = True,
+        code_capture_log_level: str | None = None,
     ) -> None:
         """Initialize BacktestArtifactManager.
 
@@ -73,10 +74,16 @@ class BacktestArtifactManager:
                      ~/.zipline/backtests/ for consistency with bundle storage.
             enabled: Whether artifact management is enabled (default: True)
             code_capture_enabled: Whether code capture is enabled (default: True)
+            code_capture_log_level: Logging level for code capture (default: None = "INFO")
+                     Options: "DEBUG", "INFO", "WARNING", "ERROR"
+                     Can be overridden via RUSTYBT_CODE_CAPTURE_LOG_LEVEL env var
+                     Use "DEBUG" for detailed notebook/entry point detection logs
 
         Raises:
             BacktestArtifactError: If base_dir is not writable when enabled
         """
+        import os
+
         # Resolve base_dir to absolute path
         base_path = Path(base_dir)
         if not base_path.is_absolute():
@@ -90,6 +97,11 @@ class BacktestArtifactManager:
 
         self.enabled = enabled
         self.code_capture_enabled = code_capture_enabled
+
+        # Determine log level: parameter > env var > default ("INFO")
+        self.code_capture_log_level = (
+            code_capture_log_level or os.getenv("RUSTYBT_CODE_CAPTURE_LOG_LEVEL", "INFO").upper()
+        )
         self._backtest_id: str | None = None
         self._output_dir: Path | None = None
         # T037: Store detection result for metadata generation
@@ -379,7 +391,7 @@ class BacktestArtifactManager:
         from rustybt.backtest.code_capture import StrategyCodeCapture
 
         try:
-            capture = StrategyCodeCapture()
+            capture = StrategyCodeCapture(log_level=self.code_capture_log_level)
             code_dir = self.get_code_dir()
 
             # Use new capture_strategy_code() method with entry point detection

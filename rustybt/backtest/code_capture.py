@@ -89,16 +89,44 @@ class StrategyCodeCapture:
         >>> print(f"Captured {len(files)} files")
     """
 
-    def __init__(self, code_capture_mode: str = "import_analysis") -> None:
+    def __init__(self, code_capture_mode: str = "import_analysis", log_level: str = "INFO") -> None:
         """Initialize StrategyCodeCapture.
 
         Args:
             code_capture_mode: Code capture mode - "import_analysis" (default) or "strategy_yaml"
                 Note: If strategy.yaml exists, it always takes precedence regardless of this setting
+            log_level: Logging level for code capture operations (default: "INFO")
+                Options: "DEBUG", "INFO", "WARNING", "ERROR"
+                Use "DEBUG" to see detailed notebook detection and entry point capture logs
         """
         # Cache for module specs to avoid repeated lookups
         self._module_spec_cache: dict[str, importlib.machinery.ModuleSpec | None] = {}
         self.code_capture_mode = code_capture_mode
+        self.log_level = log_level.upper()
+
+        # Convert string log level to logging level constant
+        import logging
+
+        self._log_level_int = getattr(logging, self.log_level, logging.INFO)
+
+    def _log(self, message: str, **kwargs: Any) -> None:  # noqa: ANN401
+        """Log at the configured level for code capture operations.
+
+        Args:
+            message: Log event name
+            **kwargs: Additional context for the log message
+        """
+        import logging
+
+        # Use the configured log level for code capture operations
+        if self._log_level_int <= logging.DEBUG:
+            logger.debug(message, **kwargs)
+        elif self._log_level_int <= logging.INFO:
+            logger.info(message, **kwargs)
+        elif self._log_level_int <= logging.WARNING:
+            logger.warning(message, **kwargs)
+        else:
+            logger.error(message, **kwargs)
 
     def detect_entry_point(self) -> EntryPointDetectionResult:
         """Detect the file containing the run_algorithm() call using runtime introspection.
@@ -184,7 +212,7 @@ class StrategyCodeCapture:
                         warnings.append(f"Jupyter notebook detected: {detected_path.name}")
 
                         # Try to find the actual .ipynb file instead of the temp IPython file
-                        logger.debug(
+                        self._log(
                             "attempting_notebook_detection",
                             temp_file=str(detected_path),
                             cwd=str(Path.cwd()),
@@ -192,7 +220,7 @@ class StrategyCodeCapture:
                         notebook_path = self._detect_jupyter_notebook()
 
                         if notebook_path:
-                            logger.debug(
+                            self._log(
                                 "notebook_path_found",
                                 notebook=str(notebook_path),
                                 exists=notebook_path.exists(),
@@ -333,27 +361,27 @@ class StrategyCodeCapture:
                 logger.info("notebook_detection_no_ipython")
                 return None
 
-            logger.debug("notebook_detection_starting", cwd=str(Path.cwd()))
+            self._log("notebook_detection_starting", cwd=str(Path.cwd()))
 
             # Strategy 1: Try to get notebook name from __vsc_ipynb_file__ (VS Code Jupyter)
             import sys
 
             if hasattr(sys, "__vsc_ipynb_file__"):
                 notebook_path = Path(sys.__vsc_ipynb_file__)
-                logger.debug(
+                self._log(
                     "notebook_detection_vscode_attr_found",
                     path=str(notebook_path),
                     exists=notebook_path.exists(),
                     suffix=notebook_path.suffix,
                 )
                 if notebook_path.exists() and notebook_path.suffix == ".ipynb":
-                    logger.debug("notebook_detected_vscode", path=str(notebook_path))
+                    self._log("notebook_detected_vscode", path=str(notebook_path))
                     return notebook_path
 
             # Strategy 2: Check current working directory for .ipynb files
             notebook_dir = Path.cwd()
             ipynb_files = list(notebook_dir.glob("*.ipynb"))
-            logger.debug(
+            self._log(
                 "notebook_detection_strategy2",
                 notebook_dir=str(notebook_dir),
                 found_notebooks=len(ipynb_files),
@@ -362,21 +390,21 @@ class StrategyCodeCapture:
 
             if len(ipynb_files) == 1:
                 # Only one notebook in directory, likely the current one
-                logger.debug("notebook_detected_single_file", path=str(ipynb_files[0]))
+                self._log("notebook_detected_single_file", path=str(ipynb_files[0]))
                 return ipynb_files[0]
 
             # Strategy 3: If multiple notebooks, try to find the most recently modified one
             # (assumes user is working on the most recent notebook)
             if len(ipynb_files) > 1:
                 most_recent = max(ipynb_files, key=lambda p: p.stat().st_mtime)
-                logger.debug(
+                self._log(
                     "notebook_detected_recent",
                     path=str(most_recent),
                     total_notebooks=len(ipynb_files),
                 )
                 return most_recent
 
-            logger.debug("notebook_detection_no_notebooks_found")
+            self._log("notebook_detection_no_notebooks_found")
             return None
 
         except (ImportError, AttributeError, Exception) as e:

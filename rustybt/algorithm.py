@@ -241,6 +241,7 @@ class TradingAlgorithm:
         backtest_output_enabled=True,
         backtest_output_base_dir="backtests",
         code_capture_enabled=True,
+        code_capture_log_level=None,
         **initialize_kwargs,
     ):
         # List of trading controls to be used to validate orders.
@@ -476,6 +477,7 @@ class TradingAlgorithm:
             base_dir=backtest_output_base_dir,
             enabled=backtest_output_enabled and not live_trading,
             code_capture_enabled=code_capture_enabled,
+            code_capture_log_level=code_capture_log_level,
         )
         self.backtest_id = None
         # Note: output_dir is a read-only property that delegates to artifact_manager

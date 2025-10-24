@@ -133,14 +133,51 @@ INFO - Falling back to YAML configuration or skipping code capture
 
 ## Troubleshooting
 
+### Debugging Code Capture Issues
+
+**New in v0.3.2**: You can control the verbosity of code capture logging to debug issues.
+
+**Set log level to DEBUG to see detailed diagnostics**:
+
+```python
+# Option 1: Via parameter
+run_algorithm(
+    ...,
+    code_capture_log_level="DEBUG"
+)
+
+# Option 2: Via environment variable
+import os
+os.environ['RUSTYBT_CODE_CAPTURE_LOG_LEVEL'] = 'DEBUG'
+
+# Option 3: In .env file
+RUSTYBT_CODE_CAPTURE_LOG_LEVEL=DEBUG
+```
+
+**Available log levels**:
+- `DEBUG` - Shows all diagnostic messages (notebook detection, entry point analysis, file capture)
+- `INFO` (default) - Shows essential informational messages only
+- `WARNING` - Only warnings and errors
+- `ERROR` - Only error messages
+
+**Example DEBUG output**:
+```
+DEBUG - attempting_notebook_detection: temp_file=/tmp/ipykernel_123/456.py, cwd=/path/to/project
+DEBUG - notebook_detection_starting: cwd=/path/to/project
+DEBUG - notebook_detection_strategy2: found_notebooks=1, notebooks=[sample.ipynb]
+DEBUG - notebook_detected_single_file: path=sample.ipynb
+INFO - notebook_file_detected: notebook=sample.ipynb
+```
+
 ### Entry Point Not Detected
 
 **Symptom**: Warning message about failed entry point detection, or no code files stored.
 
 **Solution**:
-1. Create `strategy.yaml` with explicit file list
-2. Ensure `run_algorithm()` is called directly in your script (not nested in functions)
-3. Verify you're running a standard Python script (not interactive session)
+1. **Enable DEBUG logging** to see detailed detection information
+2. Create `strategy.yaml` with explicit file list
+3. Ensure `run_algorithm()` is called directly in your script (not nested in functions)
+4. Verify you're running a standard Python script (not interactive session)
 
 ### YAML Files Not Found
 
@@ -196,8 +233,8 @@ For advanced use cases, you can access code capture programmatically:
 ```python
 from rustybt.backtest.code_capture import StrategyCodeCapture
 
-# Manually trigger code capture
-capturer = StrategyCodeCapture()
+# Manually trigger code capture with custom log level
+capturer = StrategyCodeCapture(log_level="DEBUG")
 result = capturer.detect_entry_point()
 
 if result.detected_file:
@@ -207,6 +244,14 @@ if result.detected_file:
 else:
     print("Entry point detection failed")
 ```
+
+### Configuration Parameters
+
+**`code_capture_log_level`** (str, optional)
+- Controls verbosity of code capture logging
+- Options: `"DEBUG"`, `"INFO"` (default), `"WARNING"`, `"ERROR"`
+- Can be set via parameter or `RUSTYBT_CODE_CAPTURE_LOG_LEVEL` environment variable
+- Available in: `run_algorithm()`, `TradingAlgorithm()`, `BacktestArtifactManager()`, `StrategyCodeCapture()`
 
 ## Best Practices
 

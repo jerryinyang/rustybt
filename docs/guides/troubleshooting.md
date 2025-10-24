@@ -644,7 +644,65 @@ chmod 755 ~/.rustybt/logs
 grep LOG_DIR .env
 ```
 
-### Issue 7.2: Log Files Growing Too Large
+### Issue 7.2: Code Capture Not Working / Debugging Code Capture
+
+**Symptoms:**
+```bash
+# No code files stored in backtest output
+$ ls backtests/20251024_143354_773/code/
+# Empty or missing
+```
+
+**New in v0.3.2: Configurable Log Level**
+
+Enable DEBUG logging to diagnose code capture issues:
+
+```python
+from rustybt import run_algorithm
+
+# Enable DEBUG level for detailed diagnostics
+run_algorithm(
+    ...,
+    code_capture_log_level="DEBUG"  # Shows all detection steps
+)
+```
+
+Or via environment variable:
+
+```bash
+export RUSTYBT_CODE_CAPTURE_LOG_LEVEL=DEBUG
+python my_strategy.py
+```
+
+**DEBUG output shows**:
+- Entry point detection process
+- Notebook detection (if running in Jupyter)
+- File discovery and capture operations
+- YAML configuration loading
+- Success/failure reasons
+
+**Example DEBUG output**:
+```
+DEBUG - attempting_notebook_detection: temp_file=/tmp/ipykernel_123/456.py
+DEBUG - notebook_detection_strategy2: found_notebooks=1
+DEBUG - notebook_detected_single_file: path=/path/to/sample.ipynb
+INFO - notebook_file_detected: notebook=/path/to/sample.ipynb
+```
+
+**Common solutions**:
+1. **Entry point not detected in script**: Create `strategy.yaml` with explicit file list
+2. **Jupyter notebook not detected**: Ensure only one `.ipynb` file in directory, or use `strategy.yaml`
+3. **Interactive REPL**: Not supported for auto-detection, use `strategy.yaml`
+
+**Log levels**:
+- `DEBUG` - All diagnostic messages (use for troubleshooting)
+- `INFO` (default) - Essential messages only
+- `WARNING` - Only warnings and errors
+- `ERROR` - Only critical errors
+
+See [Code Capture Guide](../user-guide/code-capture.md#debugging-code-capture-issues) for details.
+
+### Issue 7.3: Log Files Growing Too Large
 
 **Symptoms:**
 ```bash
@@ -674,7 +732,7 @@ sudo logrotate -d /etc/logrotate.d/rustybt
 sudo logrotate -f /etc/logrotate.d/rustybt
 ```
 
-### Issue 7.3: Alerts Not Being Sent
+### Issue 7.4: Alerts Not Being Sent
 
 **Symptoms:**
 ```python

@@ -19,6 +19,9 @@ RUSTYBT_DECIMAL_PRECISION=8
 # Logging
 RUSTYBT_LOG_LEVEL=INFO
 RUSTYBT_LOG_FILE=/path/to/logs/rustybt.log
+
+# Code capture logging (v0.3.2+)
+RUSTYBT_CODE_CAPTURE_LOG_LEVEL=INFO
 ```
 
 ## Decimal Precision Configuration
@@ -97,6 +100,32 @@ structlog.configure(
     logger_factory=structlog.stdlib.LoggerFactory(),
 )
 ```
+
+### Code Capture Logging
+
+**New in v0.3.2**: Control the verbosity of code capture operations:
+
+```python
+from rustybt import run_algorithm
+
+# Option 1: Set via parameter
+run_algorithm(
+    ...,
+    code_capture_log_level="DEBUG"  # DEBUG, INFO, WARNING, or ERROR
+)
+
+# Option 2: Set via environment variable
+import os
+os.environ['RUSTYBT_CODE_CAPTURE_LOG_LEVEL'] = 'DEBUG'
+```
+
+**Use cases**:
+- **`DEBUG`**: Troubleshooting notebook detection, entry point analysis, or file capture issues
+- **`INFO`** (default): Essential messages only
+- **`WARNING`**: Only warnings and errors
+- **`ERROR`**: Only critical errors
+
+See [Code Capture Guide](../user-guide/code-capture.md#debugging-code-capture-issues) for detailed examples.
 
 ## Performance Configuration
 

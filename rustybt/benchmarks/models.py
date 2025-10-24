@@ -192,7 +192,7 @@ class BenchmarkResultSet:
             return False
 
         # Statistical significance (simplified: CI doesn't overlap baseline mean)
-        ci_lower, ci_upper = self.execution_time_ci_95
+        _ci_lower, ci_upper = self.execution_time_ci_95
         return ci_upper < baseline_mean  # Optimized CI entirely below baseline mean
 
 

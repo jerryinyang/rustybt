@@ -18,7 +18,7 @@ from typing import Any
 import scipy.stats as stats
 
 from .exceptions import InsufficientDataError, ThresholdEvaluationError
-from .models import BenchmarkResultSet, PerformanceThreshold
+from .models import BenchmarkResult, BenchmarkResultSet, PerformanceThreshold
 
 
 def create_threshold(
@@ -162,7 +162,7 @@ def evaluate_threshold(
     optimized_times_float = [float(t) for t in optimized_times]
 
     # One-tailed paired t-test (optimized should be faster than matched baseline)
-    t_statistic, p_value = stats.ttest_rel(
+    _t_statistic, p_value = stats.ttest_rel(
         baseline_times_float, optimized_times_float, alternative="greater"  # baseline > optimized
     )
 
@@ -175,7 +175,8 @@ def evaluate_threshold(
     optimized_ci_95 = optimized_results.execution_time_ci_95
 
     # Memory increase percentage check
-    # Handle edge case where baseline memory is 0 (e.g., trivial workloads or disabled memory profiling)
+    # Handle edge case where baseline memory is 0
+    # (e.g., trivial workloads or disabled memory profiling)
     if baseline_results.memory_peak_max == 0:
         # If baseline is 0, check if optimized is also near-zero (within 1MB threshold)
         passes_memory_check = optimized_results.memory_peak_max <= Decimal("1.0")

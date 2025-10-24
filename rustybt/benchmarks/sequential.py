@@ -121,7 +121,6 @@ def evaluate_single_optimization(
     }
 
     # STEP 1: Functional Equivalence Testing (BLOCKING)
-    print(f"\n[{optimization.component_id}] Step 1: Testing functional equivalence...")
 
     try:
         validate_functional_equivalence(
@@ -132,15 +131,12 @@ def evaluate_single_optimization(
             comparison_mode="array",
         )
         result["functional_equivalence_passed"] = True
-        print(f"[{optimization.component_id}] ✓ Functional equivalence validated")
 
     except FunctionalEquivalenceError as e:
         result["decision_rationale"] = f"REJECTED: Functional equivalence failed - {e}"
-        print(f"[{optimization.component_id}] ✗ Functional equivalence FAILED: {e}")
         return result  # BLOCKING - cannot proceed to benchmarking
 
     # STEP 2: Baseline Benchmarking
-    print(f"[{optimization.component_id}] Step 2: Running baseline benchmarks...")
 
     try:
         baseline_results = run_benchmark_suite(
@@ -153,16 +149,12 @@ def evaluate_single_optimization(
             output_dir=output_dir,
         )
         result["baseline_results"] = baseline_results
-        print(
-            f"[{optimization.component_id}] ✓ Baseline: {baseline_results.execution_time_mean:.3f}s mean"
-        )
 
     except Exception as e:
         result["decision_rationale"] = f"REJECTED: Baseline benchmarking failed - {e}"
         raise SequentialEvaluationError(f"Baseline benchmarking failed: {e}") from e
 
     # STEP 3: Optimized Benchmarking
-    print(f"[{optimization.component_id}] Step 3: Running optimized benchmarks...")
 
     try:
         optimized_results = run_benchmark_suite(
@@ -175,16 +167,12 @@ def evaluate_single_optimization(
             output_dir=output_dir,
         )
         result["optimized_results"] = optimized_results
-        print(
-            f"[{optimization.component_id}] ✓ Optimized: {optimized_results.execution_time_mean:.3f}s mean"
-        )
 
     except Exception as e:
         result["decision_rationale"] = f"REJECTED: Optimized benchmarking failed - {e}"
         raise SequentialEvaluationError(f"Optimized benchmarking failed: {e}") from e
 
     # STEP 4: Threshold Evaluation
-    print(f"[{optimization.component_id}] Step 4: Evaluating against threshold...")
 
     try:
         threshold_eval = evaluate_threshold(
@@ -198,15 +186,9 @@ def evaluate_single_optimization(
         if threshold_eval["passes_threshold"]:
             result["decision"] = "accepted"
             result["decision_rationale"] = threshold_eval["decision_rationale"]
-            print(
-                f"[{optimization.component_id}] ✓ ACCEPTED: {threshold_eval['improvement_percent']:.2f}% improvement"
-            )
         else:
             result["decision"] = "rejected"
             result["decision_rationale"] = threshold_eval["decision_rationale"]
-            print(
-                f"[{optimization.component_id}] ✗ REJECTED: {threshold_eval['decision_rationale']}"
-            )
 
     except Exception as e:
         result["decision_rationale"] = f"REJECTED: Threshold evaluation failed - {e}"
@@ -285,29 +267,13 @@ def evaluate_optimization_sequence(
         detailed_findings="",
     )
 
-    print(f"\n{'='*80}")
-    print("SEQUENTIAL OPTIMIZATION EVALUATION")
-    print(f"{'='*80}")
-    print(f"Total optimizations: {len(sorted_optimizations)}")
-    print(f"Goal: {goal_improvement_percent}% cumulative improvement")
-    print(f"Threshold: {threshold.min_improvement_percent}% minimum per optimization")
-    print(f"{'='*80}\n")
-
     # Evaluate optimizations sequentially
     for idx, optimization in enumerate(sorted_optimizations):
         report.current_evaluation_index = idx
 
-        print(f"\n[Evaluation {idx + 1}/{len(sorted_optimizations)}] {optimization.component_name}")
-        print(f"  Priority Rank: #{optimization.priority_rank}")
-        print(
-            f"  Expected Impact: {optimization.expected_impact_range[0]}-{optimization.expected_impact_range[1]}%"
-        )
-        print(f"  Complexity: {optimization.complexity_level}")
-
         # Get evaluation configuration
         config = evaluation_configs.get(optimization.component_id)
         if not config:
-            print(f"  ⚠ WARNING: No evaluation config for {optimization.component_id}, skipping")
             report.skipped_optimizations.append(optimization.component_id)
             continue
 
@@ -336,18 +302,13 @@ def evaluate_optimization_sequence(
             if eval_result["decision"] == "accepted":
                 optimization.status = "accepted"
                 report.accepted_optimizations.append(optimization.component_id)
-                print("  ✓ ACCEPTED")
             else:
                 optimization.status = "rejected"
                 report.rejected_optimizations.append(optimization.component_id)
-                print("  ✗ REJECTED")
 
             # Check cumulative progress
-            cumulative = report.cumulative_improvement_percent
-            print(f"  Cumulative improvement: {cumulative:.2f}%")
 
-        except Exception as e:
-            print(f"  ✗ ERROR: {e}")
+        except Exception as e:  # noqa: BLE001 - catch all for error reporting
             optimization.status = "rejected"
             optimization.decision_rationale = f"Evaluation error: {e}"
             report.rejected_optimizations.append(optimization.component_id)
@@ -358,12 +319,10 @@ def evaluate_optimization_sequence(
             and report.cumulative_improvement_percent >= goal_improvement_percent
         ):
             report.goal_achieved = True
-            report.stop_reason = f"Goal achieved: {report.cumulative_improvement_percent:.2f}% >= {goal_improvement_percent}%"
-            print(f"\n{'='*80}")
-            print(
-                f"🎯 GOAL ACHIEVED: {report.cumulative_improvement_percent:.2f}% cumulative improvement"
+            report.stop_reason = (
+                f"Goal achieved: {report.cumulative_improvement_percent:.2f}% "
+                f">= {goal_improvement_percent}%"
             )
-            print(f"{'='*80}")
             # Mark remaining as skipped
             for remaining in sorted_optimizations[idx + 1 :]:
                 report.skipped_optimizations.append(remaining.component_id)
@@ -371,9 +330,6 @@ def evaluate_optimization_sequence(
 
         # Check for diminishing returns
         if not report.should_continue_evaluation():
-            print(f"\n{'='*80}")
-            print(f"⏹ STOPPING: {report.stop_reason}")
-            print(f"{'='*80}")
             break
 
     # Generate executive summary
@@ -494,7 +450,3 @@ Report ID: {report.report_id}
 Generated: {report.report_date}
 """
     md_file.write_text(md_content)
-
-    print("\n📄 Report saved:")
-    print(f"   JSON: {report_file}")
-    print(f"   Markdown: {md_file}")

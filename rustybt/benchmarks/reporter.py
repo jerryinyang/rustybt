@@ -77,7 +77,7 @@ class BottleneckAnalysisReport:
         """
         self.bottlenecks = []
 
-        for func_key, (cc, nc, tt, ct, callers) in self.stats.stats.items():
+        for func_key, (_cc, nc, tt, ct, _callers) in self.stats.stats.items():
             filename, line, func_name = func_key
 
             # Calculate percentage of total time
@@ -148,14 +148,14 @@ class BottleneckAnalysisReport:
                         "function": bottleneck["function"],
                         "percall_time": percall_time,
                         "ncalls": bottleneck["ncalls"],
-                        "issue": "High per-call time may indicate memory allocation or I/O bottleneck",
+                        "issue": (
+                            "High per-call time may indicate memory allocation or I/O bottleneck"
+                        ),
                     }
                 )
 
     def _generate_recommendations(self) -> None:
-        """
-        Generate actionable optimization recommendations based on analysis.
-        """
+        """Generate actionable optimization recommendations based on analysis."""
         self.recommendations = []
 
         # Recommendation 1: Top bottleneck
@@ -178,7 +178,6 @@ class BottleneckAnalysisReport:
 
         # Recommendation 3: Variable costs
         if self.variable_costs:
-            variable_total = sum(b["percent_cumtime"] for b in self.variable_costs)
             high_call_funcs = [b for b in self.variable_costs if b["ncalls"] > 1000]
 
             if high_call_funcs:
@@ -258,8 +257,10 @@ class BottleneckAnalysisReport:
 - **Total Bottlenecks Identified**: {summary['total_bottlenecks_identified']} (>0.5% of runtime)
 - **Major Bottlenecks** (>5%): {summary['bottlenecks_gt_5_percent']}
 - **Critical Bottlenecks** (>10%): {summary['bottlenecks_gt_10_percent']}
-- **Fixed Costs**: {summary['fixed_costs_percent']:.1f}% of runtime ({summary['fixed_costs_count']} functions)
-- **Variable Costs**: {summary['variable_costs_percent']:.1f}% of runtime ({summary['variable_costs_count']} functions)
+- **Fixed Costs**: {summary['fixed_costs_percent']:.1f}% of runtime \
+({summary['fixed_costs_count']} functions)
+- **Variable Costs**: {summary['variable_costs_percent']:.1f}% of runtime \
+({summary['variable_costs_count']} functions)
 
 ---
 
@@ -270,7 +271,13 @@ class BottleneckAnalysisReport:
 """
 
         for idx, bottleneck in enumerate(summary["top_5_bottlenecks"], 1):
-            md += f"| {idx} | `{bottleneck['function']}` | {bottleneck['percent_cumtime']:.2f}% | {bottleneck['cumtime_seconds']:.3f} | {bottleneck['ncalls']} | {bottleneck['cost_type']} |\n"
+            md += (
+                f"| {idx} | `{bottleneck['function']}` | "
+                f"{bottleneck['percent_cumtime']:.2f}% | "
+                f"{bottleneck['cumtime_seconds']:.3f} | "
+                f"{bottleneck['ncalls']} | "
+                f"{bottleneck['cost_type']} |\n"
+            )
 
         md += "\n---\n\n## Detailed Bottleneck Breakdown\n\n"
 
@@ -296,7 +303,10 @@ class BottleneckAnalysisReport:
         md += "Functions called many times (data processing, loops):\n\n"
 
         for cost in self.variable_costs[:10]:  # Top 10 variable costs
-            md += f"- `{cost['function']}`: {cost['percent_cumtime']:.2f}% ({cost['ncalls']:,} calls)\n"
+            md += (
+                f"- `{cost['function']}`: "
+                f"{cost['percent_cumtime']:.2f}% ({cost['ncalls']:,} calls)\n"
+            )
 
         if self.memory_issues:
             md += "\n---\n\n## Memory Efficiency Issues\n\n"

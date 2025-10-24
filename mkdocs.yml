@@ -180,7 +180,6 @@ nav:
               - Latency Simulation: examples/latency_simulation_tutorial.py
               - Pipeline API: examples/pipeline_tutorial.py
               - WebSocket Streaming: examples/websocket_streaming.py
-              - Rust-Optimized Indicators: examples/rust_optimized_indicators.py
               - Custom Broker Adapter: examples/custom_broker_adapter.py
           - Optimization Examples:
               - Grid Search MA Crossover: examples/optimization/grid_search_ma_crossover.py

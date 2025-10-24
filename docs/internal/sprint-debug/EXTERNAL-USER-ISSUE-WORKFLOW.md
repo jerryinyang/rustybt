@@ -770,17 +770,18 @@ docs/internal/sprint-debug/
 7. Add copy-paste test to prevent regression
 8. Verify & commit
 
-### Scenario 4: Missing Feature (Quick Win)
+### Scenario 4: Missing Feature or Enhancement
 
 **Workflow**:
-1. Assess if truly "quick win" (<2 hours) or needs full feature planning
-2. If quick: Create `completed/[timestamp]-add-[feature].md`
+1. Assess if single cohesive change or needs 3+ stories
+2. If single fix: Create `completed/[timestamp]-add-[feature].md`
 3. Complete **code** pre-flight checklist
 4. Write tests for new feature (TDD)
-5. Implement feature (minimal scope)
+5. Implement feature
 6. Add documentation
 7. Verify & commit
-8. If NOT quick: Escalate to PM agent for epic creation
+8. Request QA review and merge
+9. If needs 3+ stories: Escalate to PM agent for epic creation
 
 ---
 
@@ -894,3 +895,4 @@ Contact project maintainer or open issue in `docs/internal/KNOWN_ISSUES.md`.
 **Version History**:
 - 2025-10-24: Initial version created based on existing sprint-debug workflow
 - 2025-10-24: Added mandatory branching workflow and QA review process
+- 2025-10-24: Updated escalation criteria - focus on "3+ stories" not time/complexity; removed time constraints

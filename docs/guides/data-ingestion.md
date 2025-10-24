@@ -2,15 +2,6 @@
 
 **Last Updated**: 2024-10-11
 
-## Prerequisites
-
-**For Jupyter Notebook Users**: Install `nest_asyncio` for proper event loop handling:
-```bash
-pip install nest_asyncio
-```
-
-This is required because Jupyter runs its own async event loop.
-
 ## Quick Start
 
 Ingest stock data from Yahoo Finance in one line:

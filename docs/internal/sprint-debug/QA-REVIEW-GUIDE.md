@@ -560,7 +560,7 @@ Fix is complete, well-documented, and tested. All verification checks pass.
 - Introduces regressions
 - Violates constitutional requirements
 - Requires architectural discussion
-- Too large for quick fix (needs epic)
+- **Requires 3+ separate stories** (needs epic creation and breakdown)
 
 **Action**:
 ```markdown
@@ -737,7 +737,7 @@ Add this section to the fix document:
 1. **Read this entire guide** before starting review
 2. **Follow steps 1-11 sequentially** - do not skip
 3. **Document your findings** as you go
-4. **Be thorough but efficient** - aim for <30 minute review
+4. **Be thorough** - sprint fixes can be substantial; review depth should match fix complexity
 5. **Use templates** provided above
 6. **Be specific** in feedback - reference file:line when possible
 7. **Test examples** manually - don't assume they work
@@ -746,7 +746,7 @@ Add this section to the fix document:
 
 - **When to approve**: All checks pass, no red flags, confident in quality
 - **When to request changes**: Minor issues, fixable quickly, clear guidance provided
-- **When to block**: Fundamental issues, constitutional violations, scope too large
+- **When to block**: Fundamental issues, constitutional violations, requires 3+ separate stories
 
 ### Communication:
 
@@ -782,20 +782,20 @@ Add this section to the fix document:
 | Gate files | Required (.gate-epic-review) | NOT required |
 | PRD review | Required | NOT required |
 | Architecture review | Required | NOT required |
-| Scope | Large, multi-story | Small, single fix |
+| Scope | Multi-story (3+) | Single cohesive fix |
 | Review depth | Deep, comprehensive | Focused, targeted |
-| Review time | Hours to days | <30 minutes |
+| Complexity | Any | Any (as long as single fix) |
 | Approval process | Multi-stage | Single review |
 | Documentation | Full PRD + Architecture | Fix document only |
 
-**Key principle**: Issue fixes are lightweight. Review should be thorough but fast.
+**Key principle**: Sprint fixes are for single cohesive changes (even if substantial). Escalate only when work requires 3+ separate stories.
 
 ---
 
 ## FAQ
 
 **Q: What if the fix is larger than expected?**
-**A**: If fix requires >3 hours or multiple coordinated changes, BLOCK and recommend escalation to full epic process using `/pm` agent.
+**A**: Size/complexity alone is NOT a reason to escalate. Only BLOCK and escalate if the fix requires 3+ separate stories to implement. A large but cohesive single fix is acceptable for sprint workflow.
 
 **Q: What if I'm not sure if fix is correct?**
 **A**: Request changes and ask developer to provide more context, testing evidence, or justification.
@@ -837,3 +837,4 @@ Otherwise, request more tests.
 
 **Version History**:
 - 2025-10-24: Initial version created for external user issue fix reviews
+- 2025-10-24: Updated escalation criteria - focus on "3+ stories" not time/complexity

@@ -47,8 +47,13 @@ def run_async(coro: Awaitable[T]) -> T:
 
     Implementation:
         - If no event loop exists: Uses asyncio.run() (creates new loop)
-        - If event loop exists (Jupyter): Creates task in existing loop
-        - Handles nested asyncio by detecting running loops
+        - If event loop exists (Jupyter): Uses nest_asyncio to enable nested loops
+        - nest_asyncio is a core dependency, always available
+
+    Note:
+        This function uses nest_asyncio which is a core dependency of rustybt.
+        It automatically patches the event loop to allow nested asyncio.run() calls,
+        which is required for Jupyter notebook support.
     """
     try:
         # Try to get the running loop (will raise if none exists)
@@ -57,21 +62,12 @@ def run_async(coro: Awaitable[T]) -> T:
         # No running loop - safe to use asyncio.run()
         return asyncio.run(coro)
     else:
-        # Running loop exists (e.g., Jupyter) - need to run in that loop
-        # We can't use loop.run_until_complete() because the loop is already running
-        # Instead, we need to use a different approach with nest_asyncio
-        try:
-            import nest_asyncio
+        # Running loop exists (e.g., Jupyter) - use nest_asyncio
+        # nest_asyncio is a core dependency, so it's always available
+        import nest_asyncio
 
-            nest_asyncio.apply(loop)
-            return loop.run_until_complete(coro)
-        except ImportError:
-            # nest_asyncio not available - provide helpful error
-            raise RuntimeError(
-                "Cannot run async code from sync context with existing event loop. "
-                "Install nest_asyncio: pip install nest_asyncio\n"
-                "This is required for Jupyter notebook environments."
-            ) from None
+        nest_asyncio.apply(loop)
+        return loop.run_until_complete(coro)
 
 
 def normalize_symbols(symbols: Iterable[str]) -> list[str]:

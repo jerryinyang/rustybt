@@ -529,6 +529,7 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
         start: pd.Timestamp,
         end: pd.Timestamp,
         frequency: str,
+        asset_type: str | None = None,
         **kwargs,
     ) -> None:
         """Ingest YFinance data into bundle (Parquet + metadata).
@@ -539,12 +540,25 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
             start: Start timestamp for data range
             end: End timestamp for data range
             frequency: Time resolution (e.g., "1d", "1h", "1m")
+            asset_type: Optional asset type override ('forex', 'crypto', 'equity', 'future').
+                       If None, will be inferred from symbol patterns.
             **kwargs: Additional parameters (ignored for YFinance)
 
         Raises:
             NetworkError: If data fetch fails
             ValidationError: If data validation fails
             IOError: If bundle write fails
+
+        Example:
+            >>> source = DataSourceRegistry.get_source("yfinance")
+            >>> source.ingest_to_bundle(
+            ...     bundle_name="forex-data",
+            ...     symbols=["EURUSD=X", "GBPJPY=X"],
+            ...     start=pd.Timestamp("2023-01-01"),
+            ...     end=pd.Timestamp("2023-12-31"),
+            ...     frequency="1d",
+            ...     asset_type="forex"  # Explicit override
+            ... )
         """
         logger.info(
             "yfinance_ingest_start",
@@ -590,6 +604,7 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
                 df_prepared,
                 bundle_name=bundle_name,
                 source_metadata=source_metadata,
+                asset_type=asset_type,
             )
         else:
             writer.write_minute_bars(df_prepared)

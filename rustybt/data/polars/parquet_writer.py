@@ -90,6 +90,7 @@ class ParquetWriter:
         dataset_id: int | None = None,
         source_metadata: dict | None = None,
         bundle_name: str | None = None,
+        asset_type: str | None = None,
     ) -> Path:
         """Write daily bars to Parquet with partitioning and auto-populate metadata.
 
@@ -102,6 +103,8 @@ class ParquetWriter:
             dataset_id: Optional dataset ID for metadata tracking
             source_metadata: Source provenance metadata (source_type, source_url, api_version)
             bundle_name: Bundle name for unified metadata tracking
+            asset_type: Manual asset type override ('forex', 'crypto', 'equity', 'future').
+                       If None, will be inferred from symbols.
 
         Returns:
             Path to written Parquet file
@@ -116,7 +119,8 @@ class ParquetWriter:
             ...     "open": [Decimal("100.12345678")],
             ... }, schema=DAILY_BARS_SCHEMA)
             >>> metadata = {"source_type": "yfinance", "source_url": "https://..."}
-            >>> writer.write_daily_bars(df, compression="zstd", source_metadata=metadata, bundle_name="test-bundle")
+            >>> writer.write_daily_bars(df, compression="zstd", source_metadata=metadata,
+            ...                         bundle_name="test-bundle", asset_type="forex")
         """
         df_cast = df.cast(DAILY_BARS_SCHEMA, strict=False)
 
@@ -154,6 +158,7 @@ class ParquetWriter:
                 bundle_name=bundle_name,
                 output_path=output_path,
                 source_metadata=source_metadata,
+                asset_type=asset_type,
             )
 
         logger.info(
@@ -405,8 +410,17 @@ class ParquetWriter:
         bundle_name: str,
         output_path: Path,
         source_metadata: dict[str, Any],
+        asset_type: str | None = None,
     ) -> None:
-        """Populate unified metadata after successful write."""
+        """Populate unified metadata after successful write with smart gap detection.
+
+        Args:
+            df: DataFrame that was written
+            bundle_name: Name of the bundle
+            output_path: Path where data was written
+            source_metadata: Metadata about the data source
+            asset_type: Optional manual asset type override. If None, will be inferred.
+        """
         current_time = int(time.time())
 
         row_count = len(df)
@@ -448,9 +462,74 @@ class ParquetWriter:
                 missing_days_list = [d.isoformat() for d in missing_dates]
                 missing_days_count = len(missing_dates)
 
+        # === ASSET-AWARE GAP VALIDATION ===
+
+        # Determine asset type (from parameter, source metadata, or inferred from symbols)
+        detected_asset_type = asset_type  # Manual override takes precedence
+        if not detected_asset_type:
+            # Try to get from source_metadata
+            detected_asset_type = source_metadata.get("asset_type")
+
+        if not detected_asset_type:
+            # Infer from symbols in the data
+            symbols_in_data = []
+            if "symbol" in df.columns:
+                symbols_in_data = df.select("symbol").unique().to_series().to_list()
+            elif source_metadata.get("symbols"):
+                symbols_in_data = source_metadata["symbols"]
+
+            # Infer from first symbol if available
+            if symbols_in_data:
+                detected_asset_type = self._infer_asset_type(symbols_in_data[0])
+            else:
+                detected_asset_type = "equity"  # Default fallback
+
+        # Analyze gap pattern to distinguish regular vs irregular gaps
+        gap_pattern_analysis = self._analyze_gap_pattern(
+            missing_dates=missing_dates, all_dates=normalized_dates
+        )
+
+        # Validate OHLCV relationships
         validation_result = self._validate_ohlcv(df)
         violations = validation_result["violations"]
-        validation_passed = validation_result["passed"] and missing_days_count == 0
+
+        # Asset-aware gap validation logic:
+        # - Crypto (24/7 markets): FAIL if gaps exist AND they're irregular (data quality issue)
+        # - Forex/Stocks: PASS if gaps are regular (weekends/holidays), FAIL if irregular
+        # - Futures: Similar to stocks, allow regular gaps
+        # - Unknown: Conservative - allow regular gaps only
+
+        enforce_no_gaps = detected_asset_type == "crypto"
+        allow_regular_gaps = detected_asset_type in ("forex", "equity", "future", "unknown")
+
+        if enforce_no_gaps:
+            # Crypto: gaps should never exist (24/7 trading)
+            # But if they do exist and are irregular, it's a data quality issue
+            gap_validation_passed = (
+                missing_days_count == 0 or gap_pattern_analysis["is_regular_pattern"]
+            )
+        elif allow_regular_gaps:
+            # Forex/Stocks: regular gaps (weekends/holidays) are OK
+            # Only fail if gaps are irregular (data quality issue)
+            gap_validation_passed = (
+                missing_days_count == 0 or gap_pattern_analysis["is_regular_pattern"]
+            )
+        else:
+            # Fallback: no gaps allowed
+            gap_validation_passed = missing_days_count == 0
+
+        validation_passed = validation_result["passed"] and gap_validation_passed
+
+        # Log gap analysis for debugging
+        if missing_days_count > 0:
+            logger.info(
+                "gap_validation_applied",
+                asset_type=detected_asset_type,
+                missing_days=missing_days_count,
+                gap_pattern=gap_pattern_analysis["analysis_summary"],
+                is_regular_pattern=gap_pattern_analysis["is_regular_pattern"],
+                validation_passed=gap_validation_passed,
+            )
 
         update_payload: dict[str, Any] = {
             "source_type": source_metadata.get("source_type", "unknown"),
@@ -620,11 +699,14 @@ class ParquetWriter:
             to use 'rustybt ingest-unified' instead of 'rustybt ingest'.
         """
 
-        def parquet_bundle_ingest_placeholder(*args, **kwargs):
-            """Placeholder ingest function for Parquet bundles.
+        def parquet_bundle_ingest_disabled(*args, **kwargs):
+            """Ingest function for Parquet bundles that raises informative error.
 
             Parquet bundles are created by 'rustybt ingest-unified' command
             and should not be re-ingested using the traditional 'rustybt ingest'.
+
+            Raises:
+                RuntimeError: Always raised with instructions to use ingest-unified
             """
             source_type = source_metadata.get("source_type", "unknown")
             raise RuntimeError(
@@ -642,7 +724,7 @@ class ParquetWriter:
 
         register_bundle(
             name=bundle_name,
-            f=parquet_bundle_ingest_placeholder,
+            f=parquet_bundle_ingest_disabled,
             calendar_name=calendar_name,
         )
 
@@ -653,24 +735,375 @@ class ParquetWriter:
             source_type=source_metadata.get("source_type"),
         )
 
-    def _infer_asset_type(self, symbol: str) -> str:
-        """Infer asset type from symbol naming conventions.
+    def _analyze_gap_pattern(
+        self,
+        missing_dates: list[date],
+        all_dates: list[date],
+    ) -> dict[str, Any]:
+        """Analyze gap pattern to distinguish regular (weekend/holiday) vs irregular (data quality) gaps.
+
+        Uses statistical analysis to detect if gaps follow a predictable pattern:
+        - Regular gaps: Consistent weekly pattern (weekends), predictable spacing
+        - Irregular gaps: Random distribution, varying lengths, unpredictable
 
         Args:
-            symbol: Symbol string (e.g., 'AAPL', 'BTC/USDT', 'ESH25')
+            missing_dates: List of dates with missing data
+            all_dates: List of all dates present in the data
 
         Returns:
-            Asset type: 'equity', 'crypto', 'future', or 'unknown'
+            dict with:
+                - is_regular_pattern: bool, True if gaps appear intentional (weekends/holidays)
+                - weekend_gap_ratio: float, ratio of weekend gaps to total gaps
+                - max_gap_days: int, longest consecutive gap
+                - gap_length_variance: float, variance in gap lengths (high = irregular)
+                - analysis_summary: str, human-readable interpretation
+
+        Example:
+            >>> # Forex data with weekend gaps
+            >>> missing = [date(2023, 1, 7), date(2023, 1, 8), ...]  # Saturdays/Sundays
+            >>> present = [date(2023, 1, 2), date(2023, 1, 3), ...]  # Weekdays
+            >>> result = _analyze_gap_pattern(missing, present)
+            >>> result['is_regular_pattern']  # True (weekend pattern)
+            True
         """
-        # Crypto patterns: BTC/USDT, ETH-USD
-        if "/" in symbol or "-" in symbol:
-            return "crypto"
+        if not missing_dates or len(missing_dates) == 0:
+            return {
+                "is_regular_pattern": True,
+                "weekend_gap_ratio": 0.0,
+                "max_gap_days": 0,
+                "gap_length_variance": 0.0,
+                "analysis_summary": "No gaps detected",
+            }
 
-        # Futures patterns: ESH25, NQM24 (contract code + month + year)
-        if len(symbol) >= 4 and symbol[-2:].isdigit():
-            return "future"
+        if len(all_dates) < 7:
+            # Not enough data to determine pattern
+            return {
+                "is_regular_pattern": False,
+                "weekend_gap_ratio": 0.0,
+                "max_gap_days": len(missing_dates),
+                "gap_length_variance": 0.0,
+                "analysis_summary": "Insufficient data to analyze gap pattern (< 7 days)",
+            }
 
-        # Default to equity
+        # === WEEKEND DETECTION ===
+        # Count how many missing dates are weekends (Saturday=5, Sunday=6)
+        weekend_gaps = sum(1 for d in missing_dates if d.weekday() in (5, 6))
+        weekend_gap_ratio = weekend_gaps / len(missing_dates) if missing_dates else 0.0
+
+        # === GAP LENGTH ANALYSIS ===
+        # Find consecutive gap sequences
+        missing_set = set(missing_dates)
+        all_dates_sorted = sorted(all_dates)
+
+        if all_dates_sorted:
+            full_range_start = all_dates_sorted[0]
+            full_range_end = all_dates_sorted[-1]
+        else:
+            return {
+                "is_regular_pattern": False,
+                "weekend_gap_ratio": 0.0,
+                "max_gap_days": 0,
+                "gap_length_variance": 0.0,
+                "analysis_summary": "No date data available",
+            }
+
+        # Build full date range and identify gap sequences
+        gap_lengths: list[int] = []
+        current_gap_length = 0
+        max_gap_days = 0
+
+        current_date = full_range_start
+        while current_date <= full_range_end:
+            if current_date in missing_set:
+                current_gap_length += 1
+                max_gap_days = max(max_gap_days, current_gap_length)
+            else:
+                if current_gap_length > 0:
+                    gap_lengths.append(current_gap_length)
+                    current_gap_length = 0
+            current_date += timedelta(days=1)
+
+        # Add final gap if range ends with gap
+        if current_gap_length > 0:
+            gap_lengths.append(current_gap_length)
+
+        # === GAP VARIANCE ANALYSIS ===
+        # Regular patterns (weekends) have low variance: mostly 2-day gaps
+        # Irregular patterns (missing data) have high variance: random lengths
+        gap_length_variance = 0.0
+        if gap_lengths:
+            mean_gap = sum(gap_lengths) / len(gap_lengths)
+            gap_length_variance = sum((g - mean_gap) ** 2 for g in gap_lengths) / len(gap_lengths)
+
+        # === PATTERN CLASSIFICATION ===
+        # Criteria for regular pattern (likely weekends/holidays):
+        # 1. High weekend ratio (>60% of gaps are weekends)
+        # 2. Low gap variance (<2.0 indicates consistent 2-day weekend gaps)
+        # 3. Max gap not excessive (<=4 days for long weekends)
+
+        is_regular_weekend = (
+            weekend_gap_ratio > 0.6 and gap_length_variance < 2.0 and max_gap_days <= 4
+        )
+
+        # Criteria for regular holiday pattern:
+        # - Moderate weekend ratio (40-60%) + very low variance (<1.5)
+        # - Suggests mix of weekends + occasional holidays
+        is_regular_holiday = (
+            0.4 <= weekend_gap_ratio <= 0.6 and gap_length_variance < 1.5 and max_gap_days <= 4
+        )
+
+        is_regular_pattern = is_regular_weekend or is_regular_holiday
+
+        # === SUMMARY ===
+        if is_regular_weekend:
+            summary = (
+                f"Regular weekend pattern detected ({weekend_gap_ratio:.1%} weekend gaps, "
+                f"variance={gap_length_variance:.2f})"
+            )
+        elif is_regular_holiday:
+            summary = (
+                f"Regular weekend+holiday pattern detected ({weekend_gap_ratio:.1%} weekend gaps, "
+                f"variance={gap_length_variance:.2f})"
+            )
+        else:
+            summary = (
+                f"Irregular gap pattern detected ({weekend_gap_ratio:.1%} weekend gaps, "
+                f"variance={gap_length_variance:.2f}, max_gap={max_gap_days} days) - "
+                f"possible data quality issue"
+            )
+
+        logger.debug(
+            "gap_pattern_analyzed",
+            total_gaps=len(missing_dates),
+            weekend_gaps=weekend_gaps,
+            weekend_ratio=weekend_gap_ratio,
+            max_gap_days=max_gap_days,
+            gap_variance=gap_length_variance,
+            is_regular=is_regular_pattern,
+        )
+
+        return {
+            "is_regular_pattern": is_regular_pattern,
+            "weekend_gap_ratio": weekend_gap_ratio,
+            "max_gap_days": max_gap_days,
+            "gap_length_variance": gap_length_variance,
+            "analysis_summary": summary,
+        }
+
+    def _infer_asset_type(self, symbol: str) -> str:
+        """Infer asset type from symbol naming conventions with robust pattern matching.
+
+        Handles multiple formats for forex and crypto symbols from different providers.
+
+        Args:
+            symbol: Symbol string (e.g., 'AAPL', 'BTC/USDT', 'EURUSD=X', 'ESH25')
+
+        Returns:
+            Asset type: 'forex', 'crypto', 'equity', 'future', or 'unknown'
+
+        Examples:
+            >>> _infer_asset_type('EURUSD=X')  # yfinance forex
+            'forex'
+            >>> _infer_asset_type('EUR/USD')   # Standard forex
+            'forex'
+            >>> _infer_asset_type('EURUSD')    # Broker-style forex
+            'forex'
+            >>> _infer_asset_type('BTC/USDT')  # Crypto with slash
+            'crypto'
+            >>> _infer_asset_type('BTCUSDT')   # Binance-style crypto
+            'crypto'
+            >>> _infer_asset_type('ESH25')     # Future contract
+            'future'
+            >>> _infer_asset_type('AAPL')      # Stock
+            'equity'
+        """
+        symbol_upper = symbol.upper().strip()
+
+        # === FOREX DETECTION ===
+
+        # Pattern 1: Yahoo Finance forex suffix (EURUSD=X, GBPJPY=X)
+        if symbol_upper.endswith("=X"):
+            return "forex"
+
+        # Pattern 2: Forex with separator (EUR/USD, GBP-JPY)
+        if "/" in symbol_upper or "-" in symbol_upper:
+            # Check if it looks like crypto first (to avoid false positives)
+            parts = symbol_upper.replace("/", "-").split("-")
+            if len(parts) == 2:
+                base, quote = parts
+                # Common crypto base currencies
+                crypto_bases = {
+                    "BTC",
+                    "ETH",
+                    "USDT",
+                    "USDC",
+                    "BNB",
+                    "SOL",
+                    "ADA",
+                    "XRP",
+                    "DOT",
+                    "DOGE",
+                    "AVAX",
+                    "MATIC",
+                    "LINK",
+                    "UNI",
+                    "ATOM",
+                    "LTC",
+                    "BCH",
+                    "XLM",
+                    "ALGO",
+                    "VET",
+                    "FIL",
+                    "AAVE",
+                    "EOS",
+                }
+                # Common crypto quote currencies
+                crypto_quotes = {"USDT", "USDC", "BUSD", "USD", "BTC", "ETH", "BNB", "EUR"}
+
+                # If base is known crypto symbol, it's crypto
+                if base in crypto_bases:
+                    return "crypto"
+
+                # If both parts are 3-letter currency codes, likely forex
+                if len(base) == 3 and len(quote) == 3:
+                    # Common fiat currency codes
+                    fiat_codes = {
+                        "USD",
+                        "EUR",
+                        "GBP",
+                        "JPY",
+                        "CHF",
+                        "AUD",
+                        "CAD",
+                        "NZD",
+                        "SEK",
+                        "NOK",
+                        "DKK",
+                        "SGD",
+                        "HKD",
+                        "KRW",
+                        "CNY",
+                        "INR",
+                        "MXN",
+                        "ZAR",
+                        "TRY",
+                        "BRL",
+                        "RUB",
+                        "PLN",
+                        "THB",
+                        "IDR",
+                    }
+                    if base in fiat_codes or quote in fiat_codes:
+                        return "forex"
+
+                # If quote is common crypto quote, it's crypto
+                if quote in crypto_quotes:
+                    return "crypto"
+
+        # Pattern 3: 6-character forex pair (EURUSD, GBPJPY, USDJPY)
+        if len(symbol_upper) == 6 and symbol_upper.isalpha():
+            # Split into potential currency codes
+            base_curr = symbol_upper[:3]
+            quote_curr = symbol_upper[3:]
+
+            # Major and minor currency codes
+            currency_codes = {
+                "USD",
+                "EUR",
+                "GBP",
+                "JPY",
+                "CHF",
+                "AUD",
+                "CAD",
+                "NZD",
+                "SEK",
+                "NOK",
+                "DKK",
+                "SGD",
+                "HKD",
+                "KRW",
+                "CNY",
+                "INR",
+                "MXN",
+                "ZAR",
+                "TRY",
+                "BRL",
+                "RUB",
+                "PLN",
+                "THB",
+                "IDR",
+                "CZK",
+                "HUF",
+                "ILS",
+                "CLP",
+                "PHP",
+                "AED",
+                "SAR",
+                "MYR",
+            }
+
+            # Both parts are currency codes = forex
+            if base_curr in currency_codes and quote_curr in currency_codes:
+                return "forex"
+
+        # === CRYPTO DETECTION ===
+
+        # Pattern 1: Known crypto suffixes (BTCUSDT, ETHUSDC, SOLUSD)
+        crypto_quote_suffixes = ["USDT", "USDC", "BUSD", "USD", "BTC", "ETH", "BNB", "EUR", "TUSD"]
+        for suffix in crypto_quote_suffixes:
+            if symbol_upper.endswith(suffix) and len(symbol_upper) > len(suffix):
+                base = symbol_upper[: -len(suffix)]
+                # Base should be 2-5 chars for crypto
+                if 2 <= len(base) <= 5:
+                    return "crypto"
+
+        # Pattern 2: Known crypto base prefixes (BTCUSD, ETHUSD, SOLUSD)
+        crypto_bases = {
+            "BTC",
+            "ETH",
+            "SOL",
+            "ADA",
+            "XRP",
+            "DOT",
+            "DOGE",
+            "AVAX",
+            "MATIC",
+            "LINK",
+            "UNI",
+            "ATOM",
+            "LTC",
+            "BCH",
+            "XLM",
+            "ALGO",
+            "VET",
+            "FIL",
+            "AAVE",
+            "EOS",
+            "XTZ",
+            "EGLD",
+            "THETA",
+            "CAKE",
+        }
+        for base in crypto_bases:
+            if symbol_upper.startswith(base):
+                return "crypto"
+
+        # === FUTURES DETECTION ===
+
+        # Pattern: Contract code + month code + year (ESH25, NQM24, GCZ23)
+        # Typical format: 1-3 letter code + 1 letter month + 2 digit year
+        if len(symbol_upper) >= 4:
+            # Check if last 2 chars are digits (year)
+            if symbol_upper[-2:].isdigit():
+                # Check if char before year is alpha (month code)
+                if len(symbol_upper) >= 3 and symbol_upper[-3].isalpha():
+                    # Check if remaining prefix is 1-3 alphas (product code)
+                    prefix = symbol_upper[:-3]
+                    if 1 <= len(prefix) <= 3 and prefix.isalpha():
+                        return "future"
+
+        # === DEFAULT ===
+        # If no patterns matched, default to equity
         return "equity"
 
 

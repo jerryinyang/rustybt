@@ -139,6 +139,7 @@ dev = [
     'mypy>=1.10.0',
     'black>=24.1',
     'hypothesis>=6.0',
+    'twine>=6.0.0',  # For uploading to PyPI
     # Jupyter notebook tools for development and strategy exploration
     'jupyter>=1.0.0',
     'jupyterlab>=4.0.0',

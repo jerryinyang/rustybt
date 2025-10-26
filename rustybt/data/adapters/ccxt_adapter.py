@@ -245,6 +245,10 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
             }
         )
 
+        # Sort by timestamp and symbol for multi-symbol fetches
+        # This ensures validation passes when multiple symbols are fetched sequentially
+        df = df.sort(["timestamp", "symbol"])
+
         # Standardize and validate
         df = self.standardize(df)
         self.validate(df)

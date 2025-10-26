@@ -196,7 +196,7 @@ print(f"✓ Bundle created: {bundle_path}")
 
 ```python
 # Get CCXT source for Binance
-source = DataSourceRegistry.get_source("ccxt", exchange="binance")
+source = DataSourceRegistry.get_source("ccxt", exchange_id="binance")
 
 # Ingest hourly crypto data
 bundle_path = source.ingest_to_bundle(

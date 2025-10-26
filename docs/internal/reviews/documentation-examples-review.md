@@ -159,7 +159,7 @@ Below are precise updates with acceptance criteria.
   from rustybt.data.sources import DataSourceRegistry
 
   async def main():
-      source = DataSourceRegistry.get_source("ccxt", exchange="binance")
+      source = DataSourceRegistry.get_source("ccxt", exchange_id="binance")
       await source.ingest_to_bundle(
           bundle_name="crypto-hourly",
           symbols=["BTC/USDT", "ETH/USDT"],

@@ -86,7 +86,7 @@ rustybt ingest-unified yfinance \
 from rustybt.data.sources import DataSourceRegistry
 import pandas as pd
 
-source = DataSourceRegistry.get_source("ccxt", exchange="binance")
+source = DataSourceRegistry.get_source("ccxt", exchange_id="binance")
 source.ingest_to_bundle(
     bundle_name="crypto-hourly",
     symbols=["BTC/USDT", "ETH/USDT", "SOL/USDT"],

@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from decimal import Decimal, getcontext
 from enum import Enum
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import ccxt
 import pandas as pd
@@ -342,10 +342,10 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
 
         return df
 
-    @with_retry(max_retries=3, initial_delay=1.0, backoff_factor=2.0)
+    @with_retry(max_retries=3, initial_delay=1.0, backoff_factor=2.0)  # type: ignore[misc]
     async def _fetch_ohlcv_batch(
         self, symbol: str, timeframe: str, since: int, limit: int = 1000
-    ) -> list:
+    ) -> list[list[int | float]]:
         """Fetch single OHLCV batch with retry logic.
 
         Wraps exchange.fetch_ohlcv with automatic retry on network errors.
@@ -417,7 +417,7 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
 
     async def _fetch_with_pagination(
         self, symbol: str, timeframe: str, since: int, until: int
-    ) -> list:
+    ) -> list[list[int | float | str]]:
         """Fetch OHLCV data with pagination for large date ranges.
 
         CCXT exchanges typically limit responses to 500-1000 bars per request.
@@ -687,7 +687,7 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
         end: pd.Timestamp,
         frequency: str,
         resume: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Ingest CCXT data into bundle (Parquet + metadata) with resumable progress tracking.
 

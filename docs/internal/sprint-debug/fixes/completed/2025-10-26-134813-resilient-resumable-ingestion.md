@@ -653,3 +653,33 @@ The fix is now ready for re-review. All critical and high-severity issues have b
 The code quality standards are now met, and the enhancement is ready for approval and merge to main.
 
 ---
+
+## Merge Status
+
+✅ **MERGED TO MAIN** on 2025-10-26
+
+**Merge Commit:** f87030c
+**Merge Strategy:** No fast-forward (--no-ff)
+**Branch Deleted:** fix/20251026-134813-resilient-resumable-ingestion (local and remote)
+
+**Summary:**
+- Initial implementation: 1ff83f2
+- QA fixes: b6b6409
+- Documentation: 5bc896d
+- Merged to main: f87030c
+
+**Changes Merged:**
+- 4 files changed
+- 1,712 insertions (+)
+- 95 deletions (-)
+- Net: +1,617 lines
+
+**Feature Status:** ✅ DEPLOYED TO MAIN
+
+Users can now benefit from:
+- Automatic retry with exponential backoff for network errors
+- Resumable ingestion with per-symbol progress tracking
+- Robust error handling and recovery
+- Comprehensive test coverage (20 tests, CR-002 compliant)
+
+---

@@ -2,13 +2,17 @@
 
 This module provides integration with the CCXT library to fetch historical
 OHLCV data from cryptocurrency exchanges with standardized schema, rate
-limiting, and error handling.
+limiting, error handling, and resumable ingestion with progress tracking.
 """
 
 import asyncio
+import json
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from decimal import Decimal, getcontext
+from enum import Enum
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import ccxt
 import pandas as pd
@@ -21,6 +25,7 @@ from rustybt.data.adapters.base import (
     NetworkError,
     RateLimitError,
     validate_ohlcv_relationships,
+    with_retry,
 )
 from rustybt.data.adapters.utils import (
     build_symbol_sid_map,
@@ -36,6 +41,86 @@ from rustybt.utils.paths import data_path, ensure_directory
 getcontext().prec = 28
 
 logger = structlog.get_logger()
+
+
+# ============================================================================
+# Progress Tracking for Resumable Ingestion
+# ============================================================================
+
+
+class IngestionStatus(str, Enum):
+    """Status of symbol ingestion."""
+
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+@dataclass
+class SymbolProgress:
+    """Progress tracking for individual symbol ingestion."""
+
+    symbol: str
+    status: IngestionStatus
+    start_date: str  # ISO format timestamp
+    end_date: str  # ISO format timestamp
+    rows_ingested: int = 0
+    started_at: str | None = None  # ISO format timestamp
+    completed_at: str | None = None  # ISO format timestamp
+    error_message: str | None = None
+
+
+@dataclass
+class IngestionProgress:
+    """Overall ingestion progress for a bundle."""
+
+    bundle_name: str
+    frequency: str
+    exchange_id: str
+    total_symbols: int
+    symbols: dict[str, SymbolProgress]
+    started_at: str  # ISO format timestamp
+    last_updated: str | None = None  # ISO format timestamp
+
+    def get_pending_symbols(self) -> list[str]:
+        """Get list of symbols that haven't been completed yet."""
+        return [
+            symbol
+            for symbol, progress in self.symbols.items()
+            if progress.status
+            in (IngestionStatus.PENDING, IngestionStatus.FAILED, IngestionStatus.IN_PROGRESS)
+        ]
+
+    def get_completed_symbols(self) -> list[str]:
+        """Get list of successfully completed symbols."""
+        return [
+            symbol
+            for symbol, progress in self.symbols.items()
+            if progress.status == IngestionStatus.COMPLETED
+        ]
+
+    def mark_in_progress(self, symbol: str) -> None:
+        """Mark symbol as in progress."""
+        if symbol in self.symbols:
+            self.symbols[symbol].status = IngestionStatus.IN_PROGRESS
+            self.symbols[symbol].started_at = datetime.now(UTC).isoformat()
+            self.last_updated = datetime.now(UTC).isoformat()
+
+    def mark_completed(self, symbol: str, rows_ingested: int) -> None:
+        """Mark symbol as completed."""
+        if symbol in self.symbols:
+            self.symbols[symbol].status = IngestionStatus.COMPLETED
+            self.symbols[symbol].rows_ingested = rows_ingested
+            self.symbols[symbol].completed_at = datetime.now(UTC).isoformat()
+            self.last_updated = datetime.now(UTC).isoformat()
+
+    def mark_failed(self, symbol: str, error: str) -> None:
+        """Mark symbol as failed with error message."""
+        if symbol in self.symbols:
+            self.symbols[symbol].status = IngestionStatus.FAILED
+            self.symbols[symbol].error_message = error
+            self.last_updated = datetime.now(UTC).isoformat()
 
 
 class CCXTAdapter(BaseDataAdapter, DataSource):
@@ -257,13 +342,86 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
 
         return df
 
+    @with_retry(max_retries=3, initial_delay=1.0, backoff_factor=2.0)  # type: ignore[misc]
+    async def _fetch_ohlcv_batch(
+        self, symbol: str, timeframe: str, since: int, limit: int = 1000
+    ) -> list[list[int | float]]:
+        """Fetch single OHLCV batch with retry logic.
+
+        Wraps exchange.fetch_ohlcv with automatic retry on network errors.
+        Uses exponential backoff with jitter to handle transient failures.
+
+        Args:
+            symbol: Trading pair symbol (e.g., "BTC/USDT")
+            timeframe: CCXT timeframe string (e.g., "1h")
+            since: Start timestamp in Unix milliseconds
+            limit: Maximum bars to fetch per request
+
+        Returns:
+            List of OHLCV data: [[timestamp, o, h, l, c, v], ...]
+
+        Raises:
+            NetworkError: If API request fails after retries
+            InvalidDataError: If symbol is invalid (not retried)
+            RateLimitError: If rate limit exceeded (not retried)
+        """
+        try:
+            # Fetch batch (CCXT handles async internally for some exchanges)
+            if asyncio.iscoroutinefunction(self.exchange.fetch_ohlcv):
+                ohlcv = await self.exchange.fetch_ohlcv(
+                    symbol=symbol,
+                    timeframe=timeframe,
+                    since=since,
+                    limit=limit,
+                )
+            else:
+                # Some CCXT exchanges don't support async, run in executor
+                from functools import partial
+
+                loop = asyncio.get_event_loop()
+                ohlcv = await loop.run_in_executor(
+                    None,
+                    partial(
+                        self.exchange.fetch_ohlcv,
+                        symbol=symbol,
+                        timeframe=timeframe,
+                        since=since,
+                        limit=limit,
+                    ),
+                )
+
+            return ohlcv if ohlcv else []
+
+        except ccxt.NetworkError as e:
+            # Retry decorator will catch and retry NetworkError
+            raise NetworkError(f"CCXT network error for {self.exchange_id}: {e}") from e
+        except ccxt.ExchangeNotAvailable as e:
+            # Retry decorator will catch and retry NetworkError
+            raise NetworkError(f"Exchange {self.exchange_id} unavailable: {e}") from e
+        except ccxt.BadSymbol as e:
+            # Invalid symbol - don't retry, fail immediately
+            raise InvalidDataError(f"Invalid symbol {symbol}: {e}") from e
+        except ccxt.RateLimitExceeded as e:
+            # Rate limit - don't retry here, let rate limiter handle it
+            raise RateLimitError(f"Rate limit exceeded on {self.exchange_id}: {e}") from e
+        except Exception as e:
+            # Catch-all for unexpected CCXT errors - treat as network error for retry
+            logger.error(
+                "ccxt_unexpected_error",
+                exchange=self.exchange_id,
+                symbol=symbol,
+                error_type=type(e).__name__,
+                error=str(e),
+            )
+            raise NetworkError(f"Unexpected CCXT error for {self.exchange_id}: {e}") from e
+
     async def _fetch_with_pagination(
         self, symbol: str, timeframe: str, since: int, until: int
-    ) -> list:
+    ) -> list[list[int | float | str]]:
         """Fetch OHLCV data with pagination for large date ranges.
 
         CCXT exchanges typically limit responses to 500-1000 bars per request.
-        This method handles pagination automatically.
+        This method handles pagination automatically with retry logic for each batch.
 
         Args:
             symbol: Trading pair symbol (e.g., "BTC/USDT")
@@ -275,7 +433,7 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
             List of OHLCV data with symbol appended: [[timestamp, o, h, l, c, v, symbol], ...]
 
         Raises:
-            NetworkError: If API request fails
+            NetworkError: If API request fails after retries
             InvalidDataError: If symbol is invalid
             RateLimitError: If rate limit exceeded
         """
@@ -286,65 +444,29 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
             # Apply rate limiting
             await self.rate_limiter.acquire()
 
-            try:
-                # Fetch batch (CCXT handles async internally for some exchanges)
-                if asyncio.iscoroutinefunction(self.exchange.fetch_ohlcv):
-                    ohlcv = await self.exchange.fetch_ohlcv(
-                        symbol=symbol,
-                        timeframe=timeframe,
-                        since=current_since,
-                        limit=1000,  # Max bars per request
-                    )
-                else:
-                    # Some CCXT exchanges don't support async, run in executor
-                    from functools import partial
+            # Fetch batch with automatic retry logic
+            ohlcv = await self._fetch_ohlcv_batch(
+                symbol=symbol,
+                timeframe=timeframe,
+                since=current_since,
+                limit=1000,
+            )
 
-                    loop = asyncio.get_event_loop()
-                    ohlcv = await loop.run_in_executor(
-                        None,
-                        partial(
-                            self.exchange.fetch_ohlcv,
-                            symbol=symbol,
-                            timeframe=timeframe,
-                            since=current_since,
-                            limit=1000,
-                        ),
-                    )
+            if not ohlcv:
+                break
 
-                if not ohlcv:
-                    break
+            # Filter out data beyond until timestamp
+            ohlcv_filtered = [row for row in ohlcv if row[0] <= until]
 
-                # Filter out data beyond until timestamp
-                ohlcv_filtered = [row for row in ohlcv if row[0] <= until]
+            # Add symbol to each row
+            ohlcv_with_symbol = [[*row, symbol] for row in ohlcv_filtered]
+            all_ohlcv.extend(ohlcv_with_symbol)
 
-                # Add symbol to each row
-                ohlcv_with_symbol = [[*row, symbol] for row in ohlcv_filtered]
-                all_ohlcv.extend(ohlcv_with_symbol)
+            # Update since for next iteration
+            if ohlcv[-1][0] >= until:
+                break
 
-                # Update since for next iteration
-                if ohlcv[-1][0] >= until:
-                    break
-
-                current_since = ohlcv[-1][0] + 1  # Last timestamp + 1ms
-
-            except ccxt.NetworkError as e:
-                raise NetworkError(f"CCXT network error for {self.exchange_id}: {e}") from e
-            except ccxt.ExchangeNotAvailable as e:
-                raise NetworkError(f"Exchange {self.exchange_id} unavailable: {e}") from e
-            except ccxt.BadSymbol as e:
-                raise InvalidDataError(f"Invalid symbol {symbol}: {e}") from e
-            except ccxt.RateLimitExceeded as e:
-                raise RateLimitError(f"Rate limit exceeded on {self.exchange_id}: {e}") from e
-            except Exception as e:
-                # Catch-all for unexpected CCXT errors
-                logger.error(
-                    "ccxt_unexpected_error",
-                    exchange=self.exchange_id,
-                    symbol=symbol,
-                    error_type=type(e).__name__,
-                    error=str(e),
-                )
-                raise NetworkError(f"Unexpected CCXT error for {self.exchange_id}: {e}") from e
+            current_since = ohlcv[-1][0] + 1  # Last timestamp + 1ms
 
         logger.info(
             "ccxt_pagination_complete",
@@ -427,6 +549,136 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
     # DataSource Interface Implementation
     # ========================================================================
 
+    def _get_progress_file_path(self, bundle_name: str) -> Path:
+        """Get path to ingestion progress file for bundle.
+
+        Args:
+            bundle_name: Name of the bundle
+
+        Returns:
+            Path to progress JSON file
+
+        Example:
+            >>> adapter._get_progress_file_path("crypto-hourly")
+            Path("data/bundles/crypto-hourly/.ingestion_progress.json")
+        """
+        from rustybt.utils.paths import data_path
+
+        bundle_dir = Path(data_path(["bundles", bundle_name]))
+        return bundle_dir / ".ingestion_progress.json"
+
+    def _load_progress(self, bundle_name: str) -> IngestionProgress | None:
+        """Load ingestion progress from file if exists.
+
+        Args:
+            bundle_name: Name of the bundle
+
+        Returns:
+            IngestionProgress object if file exists and is valid, None otherwise
+        """
+        progress_file = self._get_progress_file_path(bundle_name)
+
+        if not progress_file.exists():
+            return None
+
+        try:
+            with open(progress_file) as f:
+                data = json.load(f)
+
+            # Reconstruct SymbolProgress objects
+            symbols = {}
+            for symbol, symbol_data in data["symbols"].items():
+                symbols[symbol] = SymbolProgress(
+                    symbol=symbol_data["symbol"],
+                    status=IngestionStatus(symbol_data["status"]),
+                    start_date=symbol_data["start_date"],
+                    end_date=symbol_data["end_date"],
+                    rows_ingested=symbol_data.get("rows_ingested", 0),
+                    started_at=symbol_data.get("started_at"),
+                    completed_at=symbol_data.get("completed_at"),
+                    error_message=symbol_data.get("error_message"),
+                )
+
+            progress = IngestionProgress(
+                bundle_name=data["bundle_name"],
+                frequency=data["frequency"],
+                exchange_id=data["exchange_id"],
+                total_symbols=data["total_symbols"],
+                symbols=symbols,
+                started_at=data["started_at"],
+                last_updated=data.get("last_updated"),
+            )
+
+            logger.info(
+                "progress_loaded",
+                bundle=bundle_name,
+                completed=len(progress.get_completed_symbols()),
+                pending=len(progress.get_pending_symbols()),
+                total=progress.total_symbols,
+            )
+
+            return progress
+
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
+            logger.warning(
+                "progress_file_corrupted",
+                bundle=bundle_name,
+                error=str(e),
+                action="starting_fresh",
+            )
+            return None
+
+    def _save_progress(self, progress: IngestionProgress) -> None:
+        """Save ingestion progress to file.
+
+        Args:
+            progress: IngestionProgress object to save
+        """
+        progress_file = self._get_progress_file_path(progress.bundle_name)
+        progress_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # Convert to dict for JSON serialization
+        data = {
+            "bundle_name": progress.bundle_name,
+            "frequency": progress.frequency,
+            "exchange_id": progress.exchange_id,
+            "total_symbols": progress.total_symbols,
+            "started_at": progress.started_at,
+            "last_updated": progress.last_updated,
+            "symbols": {
+                symbol: {
+                    "symbol": symbol_progress.symbol,
+                    "status": symbol_progress.status.value,
+                    "start_date": symbol_progress.start_date,
+                    "end_date": symbol_progress.end_date,
+                    "rows_ingested": symbol_progress.rows_ingested,
+                    "started_at": symbol_progress.started_at,
+                    "completed_at": symbol_progress.completed_at,
+                    "error_message": symbol_progress.error_message,
+                }
+                for symbol, symbol_progress in progress.symbols.items()
+            },
+        }
+
+        # Atomic write using temp file
+        temp_file = progress_file.with_suffix(".json.tmp")
+        try:
+            with open(temp_file, "w") as f:
+                json.dump(data, f, indent=2)
+            temp_file.replace(progress_file)
+
+            logger.debug(
+                "progress_saved",
+                bundle=progress.bundle_name,
+                completed=len(progress.get_completed_symbols()),
+                pending=len(progress.get_pending_symbols()),
+            )
+        except Exception as e:
+            logger.error("progress_save_failed", bundle=progress.bundle_name, error=str(e))
+            if temp_file.exists():
+                temp_file.unlink()
+            raise
+
     def ingest_to_bundle(
         self,
         bundle_name: str,
@@ -434,9 +686,14 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
         start: pd.Timestamp,
         end: pd.Timestamp,
         frequency: str,
-        **kwargs,
+        resume: bool = True,
+        **kwargs: Any,
     ) -> None:
-        """Ingest CCXT data into bundle (Parquet + metadata).
+        """Ingest CCXT data into bundle (Parquet + metadata) with resumable progress tracking.
+
+        Implements per-symbol ingestion with automatic progress tracking. If ingestion
+        is interrupted, it can be resumed from where it left off by re-running with the
+        same parameters.
 
         Args:
             bundle_name: Name of bundle to create/update
@@ -444,72 +701,188 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
             start: Start timestamp for data range
             end: End timestamp for data range
             frequency: Time resolution (e.g., "1d", "1h", "1m")
-            **kwargs: Additional parameters (ignored for CCXT)
+            resume: Whether to resume from existing progress (default: True)
+            **kwargs: Additional parameters (e.g., timezone="UTC")
 
         Raises:
-            NetworkError: If data fetch fails
+            NetworkError: If data fetch fails after retries
             ValidationError: If data validation fails
             IOError: If bundle write fails
+
+        Note:
+            Progress is tracked in `.ingestion_progress.json` in the bundle directory.
+            To force re-ingestion of all symbols, set resume=False.
         """
+        normalized_symbols = normalize_symbols(symbols)
+
+        # Load or create progress tracking
+        progress = None
+        if resume:
+            progress = self._load_progress(bundle_name)
+
+        if progress is None:
+            # Create new progress tracker
+            symbols_dict = {
+                symbol: SymbolProgress(
+                    symbol=symbol,
+                    status=IngestionStatus.PENDING,
+                    start_date=start.isoformat(),
+                    end_date=end.isoformat(),
+                )
+                for symbol in normalized_symbols
+            }
+            progress = IngestionProgress(
+                bundle_name=bundle_name,
+                frequency=frequency,
+                exchange_id=self.exchange_id,
+                total_symbols=len(normalized_symbols),
+                symbols=symbols_dict,
+                started_at=datetime.now(UTC).isoformat(),
+            )
+            self._save_progress(progress)
+
+        # Get symbols that need to be ingested
+        pending_symbols = progress.get_pending_symbols()
+        completed_symbols = progress.get_completed_symbols()
+
         logger.info(
             "ccxt_ingest_start",
             bundle=bundle_name,
             exchange=self.exchange_id,
-            symbols=symbols[:5] if len(symbols) > 5 else symbols,
-            symbol_count=len(symbols),
+            total_symbols=len(normalized_symbols),
+            completed_symbols=len(completed_symbols),
+            pending_symbols=len(pending_symbols),
+            resume=resume,
             start=start,
             end=end,
             frequency=frequency,
         )
 
-        normalized_symbols = normalize_symbols(symbols)
-
-        df = run_async(self.fetch(normalized_symbols, start, end, frequency))
-        if df.is_empty():
-            logger.warning(
-                "ccxt_no_data",
+        if not pending_symbols:
+            logger.info(
+                "ccxt_ingest_already_complete",
                 bundle=bundle_name,
                 exchange=self.exchange_id,
-                symbols=normalized_symbols,
-                frequency=frequency,
+                total_symbols=len(normalized_symbols),
             )
             return
 
-        symbol_map = build_symbol_sid_map(normalized_symbols)
-        df_prepared, frame_type = prepare_ohlcv_frame(df, symbol_map, frequency)
-
+        # Prepare bundle directory and writer
         bundle_dir = Path(data_path(["bundles", bundle_name]))
         ensure_directory(str(bundle_dir))
-
         writer = ParquetWriter(str(bundle_dir))
 
         metadata = self.get_metadata()
-        source_metadata = {
-            "source_type": metadata.source_type,
-            "source_url": metadata.source_url,
-            "api_version": metadata.api_version,
-            "symbols": list(symbol_map.keys()),
-            "exchange": self.exchange_id,
-            "timezone": kwargs.get("timezone", "UTC"),
-        }
+        timezone = kwargs.get("timezone", "UTC")
 
-        if frame_type == "daily":
-            writer.write_daily_bars(
-                df_prepared,
-                bundle_name=bundle_name,
-                source_metadata=source_metadata,
-            )
-        else:
-            writer.write_minute_bars(df_prepared)
+        # Ingest symbols one by one with progress tracking
+        for symbol in pending_symbols:
+            try:
+                # Mark as in progress
+                progress.mark_in_progress(symbol)
+                self._save_progress(progress)
+
+                logger.info(
+                    "ccxt_symbol_ingest_start",
+                    bundle=bundle_name,
+                    symbol=symbol,
+                    progress=f"{len(completed_symbols) + 1}/{len(normalized_symbols)}",
+                )
+
+                # Fetch data for this symbol only
+                df = run_async(self.fetch([symbol], start, end, frequency))
+
+                if df.is_empty():
+                    logger.warning(
+                        "ccxt_no_data_for_symbol",
+                        bundle=bundle_name,
+                        symbol=symbol,
+                    )
+                    # Mark as completed with 0 rows (no data available for this symbol)
+                    progress.mark_completed(symbol, rows_ingested=0)
+                    self._save_progress(progress)
+                    completed_symbols.append(symbol)
+                    continue
+
+                # Prepare data for writing
+                symbol_map = build_symbol_sid_map([symbol])
+                df_prepared, frame_type = prepare_ohlcv_frame(df, symbol_map, frequency)
+
+                # Prepare source metadata
+                source_metadata = {
+                    "source_type": metadata.source_type,
+                    "source_url": metadata.source_url,
+                    "api_version": metadata.api_version,
+                    "symbols": [symbol],
+                    "exchange": self.exchange_id,
+                    "timezone": timezone,
+                }
+
+                # Write to bundle
+                if frame_type == "daily":
+                    writer.write_daily_bars(
+                        df_prepared,
+                        bundle_name=bundle_name,
+                        source_metadata=source_metadata,
+                    )
+                else:
+                    writer.write_minute_bars(df_prepared)
+
+                # Mark as completed
+                progress.mark_completed(symbol, rows_ingested=len(df_prepared))
+                self._save_progress(progress)
+                completed_symbols.append(symbol)
+
+                logger.info(
+                    "ccxt_symbol_ingest_complete",
+                    bundle=bundle_name,
+                    symbol=symbol,
+                    rows=len(df_prepared),
+                    progress=f"{len(completed_symbols)}/{len(normalized_symbols)}",
+                )
+
+            except (NetworkError, InvalidDataError, RateLimitError) as e:
+                # Mark symbol as failed but continue with other symbols
+                error_msg = f"{type(e).__name__}: {str(e)}"
+                progress.mark_failed(symbol, error=error_msg)
+                self._save_progress(progress)
+
+                logger.error(
+                    "ccxt_symbol_ingest_failed",
+                    bundle=bundle_name,
+                    symbol=symbol,
+                    error=error_msg,
+                    will_retry_on_next_run=True,
+                )
+
+                # Continue with next symbol instead of failing entire ingestion
+                continue
+
+        # Final summary
+        final_completed = progress.get_completed_symbols()
+        final_pending = progress.get_pending_symbols()
 
         logger.info(
             "ccxt_ingest_complete",
             bundle=bundle_name,
             exchange=self.exchange_id,
-            rows=len(df_prepared),
-            frame_type=frame_type,
+            completed=len(final_completed),
+            failed=len(
+                [s for s in progress.symbols.values() if s.status == IngestionStatus.FAILED]
+            ),
+            total=len(normalized_symbols),
             bundle_path=str(bundle_dir),
         )
+
+        # If there are still pending/failed symbols, inform user
+        if final_pending:
+            logger.warning(
+                "ccxt_ingest_incomplete",
+                bundle=bundle_name,
+                pending_symbols=final_pending[:5] if len(final_pending) > 5 else final_pending,
+                total_pending=len(final_pending),
+                message="Re-run ingestion to retry failed symbols",
+            )
 
     def get_metadata(self) -> DataSourceMetadata:
         """Get CCXT source metadata.

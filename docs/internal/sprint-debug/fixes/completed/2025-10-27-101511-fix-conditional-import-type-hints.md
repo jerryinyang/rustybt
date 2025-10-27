@@ -292,9 +292,89 @@ def handle_data(context: Context, data) -> None:
 - [x] Black formatting: `black rustybt/ tests/ --check` ✓ All done!
 - [x] No zero-mock violations (no mocks used)
 - [x] Manual runtime test: ✓ All symbols accessible and callable
-- [ ] Manual IDE test: Verify autocomplete works for `TradingAlgorithm` (requires IDE restart)
+- [❌] Manual IDE test: Type hints still not working in IDE (see Known Issues below)
 - [ ] Manual type checker test: Verify mypy recognizes types (requires full test env)
 - [x] Pre-flight checklist completed above
+
+---
+
+## ⚠️ Known Issues - Type Hints Still Not Working in IDE
+
+**Status**: Code changes complete, but IDE integration not working yet
+
+**What was implemented:**
+- ✅ TYPE_CHECKING blocks added to all modules
+- ✅ Context type alias created in api.py and api.pyi
+- ✅ Lazy loading preserved for performance
+- ✅ All tests pass
+- ✅ Runtime behavior correct
+
+**What's NOT working:**
+- ❌ IDE autocomplete for `context.asset_finder`, `context.portfolio`, etc.
+- ❌ Type hints not showing in IDEs (VS Code, PyCharm, etc.)
+- ❌ `date_rules`, `time_rules` still show as `Any` in some contexts
+
+**Potential root causes:**
+1. **Package not reinstalled**: IDE type checkers may be reading old installed package, not source changes
+   - Solution: Run `pip install -e .` or `uv pip install -e .` to reinstall in editable mode
+
+2. **IDE cache not cleared**: Type checker cache may have stale information
+   - Solution: Restart IDE or clear type checker cache (e.g., `Cmd+Shift+P` > "Reload Window" in VS Code)
+
+3. **Stub file not being found**: `.pyi` file location may not be recognized
+   - Current: `rustybt/api.pyi` (should be correct location)
+   - May need: Package metadata update or `py.typed` marker file
+
+4. **TYPE_CHECKING imports not being picked up**: Type checkers may not see the conditional imports
+   - May need: Direct imports in stub file instead of TYPE_CHECKING blocks
+
+5. **Circular import preventing type resolution**: TradingAlgorithm import in api.py may cause issues
+   - May need: Forward references or Protocol classes instead
+
+**Root cause identified:**
+The issue is with **class-based vs function-based strategies**:
+
+1. **Function-based strategies** (like `examples/buyapple.py`):
+   - Use `def initialize(context: Context)` ✅ Context type works
+   - `context` is passed as parameter by framework
+
+2. **Class-based strategies** (like `temp/strategies/aura.py`):
+   - Inherit from `TradingAlgorithm`
+   - `def initialize(self, context)` where `context` IS `self`
+   - Should use `self.asset_finder` NOT `context.asset_finder`
+   - OR type hint: `def initialize(self: TradingAlgorithm, context) -> None:`
+
+**The correct fix for class-based strategies:**
+
+```python
+from rustybt import TradingAlgorithm
+
+class Aura(TradingAlgorithm):
+    def initialize(self, context) -> None:
+        # WRONG: context.asset_finder (no autocomplete)
+        # RIGHT: self.asset_finder (full autocomplete!)
+        all_sids = self.asset_finder.equities_sids  # ✅ Works!
+        all_equities = self.asset_finder.retrieve_equities(all_sids)
+```
+
+OR if you want to keep using `context`:
+```python
+from rustybt import TradingAlgorithm
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from rustybt import TradingAlgorithm as ContextType
+
+class Aura(TradingAlgorithm):
+    def initialize(self, context: "TradingAlgorithm") -> None:
+        # Now context has full type hints
+        all_sids = context.asset_finder.equities_sids  # ✅ Works!
+```
+
+**Status update:**
+- ✅ Context type alias works for **function-based strategies**
+- ⚠️ Class-based strategies should use `self` instead of `context` for proper typing
+- 📝 Need to document this pattern difference in user docs
 
 ---
 

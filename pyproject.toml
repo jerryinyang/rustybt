@@ -90,6 +90,8 @@ dependencies = [
     'jinja2 >=3.0.0',
     # IB dependency
     'eventkit',
+    "lxml>=6.0.2",
+    "html5lib>=1.1",
 ]
 
 [project.urls]

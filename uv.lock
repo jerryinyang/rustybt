@@ -1626,6 +1626,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/13/3e/62192b0bb527d9353d222b4b6df14400b3c4f36a92a2b138f11a5eafe000/hpbandster-0.7.4.tar.gz", hash = "sha256:49ffc32688155b509e62f3617b52ae15a96c9bff2c996a23df83f279106c5921", size = 51310 }
 
 [[package]]
+name = "html5lib"
+version = "1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "six" },
+    { name = "webencodings" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ac/b6/b55c3f49042f1df3dcd422b7f224f939892ee94f22abcf503a9b7339eaf2/html5lib-1.1.tar.gz", hash = "sha256:b2e5b40261e20f354d198eae92afc10d750afb487ed5e50f9c4eaf07c184146f", size = 272215 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6c/dd/a834df6482147d48e225a49515aabc28974ad5a4ca3215c18a882565b028/html5lib-1.1-py2.py3-none-any.whl", hash = "sha256:0d78f8fde1c230e99fe37986a60526d7049ed4bf8a9fadbad5f00e22e58e041d", size = 112173 },
+]
+
+[[package]]
 name = "httpcore"
 version = "1.0.9"
 source = { registry = "https://pypi.org/simple" }
@@ -4727,7 +4740,7 @@ wheels = [
 
 [[package]]
 name = "rustybt"
-version = "0.2.2.dev17"
+version = "0.3.4.dev11"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
@@ -4742,7 +4755,7 @@ dependencies = [
     { name = "eth-account" },
     { name = "eventkit" },
     { name = "exchange-calendars" },
-    { name = "h5py" },
+    { name = "html5lib" },
     { name = "hyperliquid-python-sdk" },
     { name = "ib-insync" },
     { name = "intervaltree" },
@@ -4751,6 +4764,7 @@ dependencies = [
     { name = "iso4217" },
     { name = "jinja2" },
     { name = "lru-dict" },
+    { name = "lxml" },
     { name = "multipledispatch" },
     { name = "nest-asyncio" },
     { name = "networkx" },
@@ -4776,10 +4790,8 @@ dependencies = [
     { name = "sqlalchemy" },
     { name = "statsmodels" },
     { name = "structlog" },
-    { name = "tables" },
     { name = "toolz" },
     { name = "tqdm" },
-    { name = "twine" },
     { name = "websockets" },
     { name = "yfinance" },
 ]
@@ -4787,6 +4799,7 @@ dependencies = [
 [package.optional-dependencies]
 all = [
     { name = "deap" },
+    { name = "h5py" },
     { name = "hpbandster" },
     { name = "matplotlib" },
     { name = "memory-profiler" },
@@ -4795,6 +4808,7 @@ all = [
     { name = "scikit-learn" },
     { name = "scikit-optimize" },
     { name = "snakeviz" },
+    { name = "tables" },
     { name = "tqdm" },
 ]
 benchmarks = [
@@ -4815,6 +4829,7 @@ dev = [
     { name = "pre-commit" },
     { name = "ruff" },
     { name = "sqlalchemy-stubs" },
+    { name = "twine" },
     { name = "types-networkx" },
     { name = "types-python-dateutil" },
     { name = "types-pytz" },
@@ -4837,6 +4852,7 @@ docs = [
 ]
 full = [
     { name = "deap" },
+    { name = "h5py" },
     { name = "hpbandster" },
     { name = "matplotlib" },
     { name = "memory-profiler" },
@@ -4845,7 +4861,12 @@ full = [
     { name = "scikit-learn" },
     { name = "scikit-optimize" },
     { name = "snakeviz" },
+    { name = "tables" },
     { name = "tqdm" },
+]
+legacy = [
+    { name = "h5py" },
+    { name = "tables" },
 ]
 optimization = [
     { name = "deap" },
@@ -4901,8 +4922,9 @@ requires-dist = [
     { name = "exchange-calendars", specifier = ">=4.2.4" },
     { name = "flake8", marker = "extra == 'test'", specifier = ">=3.9.1" },
     { name = "freezegun", marker = "extra == 'test'", specifier = ">=1.2.0" },
-    { name = "h5py", specifier = ">=2.7.1" },
+    { name = "h5py", marker = "extra == 'legacy'", specifier = ">=2.7.1" },
     { name = "hpbandster", marker = "extra == 'optimization'", specifier = ">=0.7.4" },
+    { name = "html5lib", specifier = ">=1.1" },
     { name = "hyperliquid-python-sdk", specifier = ">=0.1.0" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.0" },
     { name = "hypothesis", marker = "extra == 'test'", specifier = ">=6.0" },
@@ -4916,6 +4938,7 @@ requires-dist = [
     { name = "jupyter", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "jupyterlab", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "lru-dict", specifier = ">=1.1.4" },
+    { name = "lxml", specifier = ">=6.0.2" },
     { name = "m2r2", marker = "extra == 'docs'" },
     { name = "matplotlib", marker = "extra == 'benchmarks'", specifier = ">=3.5.0" },
     { name = "matplotlib", marker = "extra == 'optimization'", specifier = ">=3.5.0" },
@@ -4965,6 +4988,8 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11.12" },
     { name = "rustybt", extras = ["benchmarks"], marker = "extra == 'all'" },
     { name = "rustybt", extras = ["benchmarks"], marker = "extra == 'full'" },
+    { name = "rustybt", extras = ["legacy"], marker = "extra == 'all'" },
+    { name = "rustybt", extras = ["legacy"], marker = "extra == 'full'" },
     { name = "rustybt", extras = ["optimization"], marker = "extra == 'all'" },
     { name = "rustybt", extras = ["optimization"], marker = "extra == 'full'" },
     { name = "scikit-learn", marker = "extra == 'optimization'", specifier = ">=1.3.0" },
@@ -4980,13 +5005,13 @@ requires-dist = [
     { name = "sqlalchemy-stubs", marker = "extra == 'dev'", specifier = ">=0.4" },
     { name = "statsmodels", specifier = ">=0.6.1" },
     { name = "structlog" },
-    { name = "tables", specifier = ">=3.4.3" },
+    { name = "tables", marker = "extra == 'legacy'", specifier = ">=3.4.3" },
     { name = "testfixtures", marker = "extra == 'test'", specifier = ">=4.1.2" },
     { name = "toolz", specifier = ">=0.8.2" },
     { name = "tox", marker = "extra == 'test'" },
     { name = "tqdm", specifier = ">=4.65" },
     { name = "tqdm", marker = "extra == 'optimization'", specifier = ">=4.0.0" },
-    { name = "twine", specifier = ">=6.2.0" },
+    { name = "twine", marker = "extra == 'dev'", specifier = ">=6.0.0" },
     { name = "types-networkx", marker = "extra == 'dev'", specifier = ">=3.0" },
     { name = "types-python-dateutil", marker = "extra == 'dev'", specifier = ">=2.8.19" },
     { name = "types-pytz", marker = "extra == 'dev'", specifier = ">=2024.1.0" },

@@ -96,6 +96,9 @@ This has the same bug - will fail if `_analyze` is a bound method.
 
 **Issue 3: before_trading_start() may have similar issue** - `rustybt/algorithm.py:521` (to verify)
 
+**Issue 4: DispatchBarReader missing base Asset class handler** - `rustybt/data/dispatch_bar_reader.py:91`
+After fixing Issues 1-3, discovered a secondary issue: the DispatchBarReader only registers handlers for `Equity`, `Future`, and `ContinuousFuture` types, but NOT for the base `Asset` class. Forex bundle creates base `Asset` objects, causing `KeyError: <class 'rustybt.assets._assets.Asset'>` when trying to access data.
+
 ---
 
 ## Root Cause Analysis
@@ -164,6 +167,12 @@ This has the same bug - will fail if `_analyze` is a bound method.
 - Applied same bound method detection logic
 - Ensures consistency across all three callback methods
 
+**4. Modified `rustybt/data/data_portal.py`** - Lines 200-207
+- Registered base `Asset` class handler in dispatch reader
+- Added `Asset` type mapping to equity_minute_reader (line 203)
+- Added `Asset` type mapping to equity_session_reader (line 207)
+- Enables dispatch reader to handle generic Asset objects (forex, crypto)
+
 **Key Insight**: `inspect.signature()` on bound methods doesn't count the bound `self` parameter, so a method defined as `def handle_data(context, data):` (missing self) shows param_count=1 after binding, not 2.
 
 ---
@@ -184,31 +193,35 @@ This has the same bug - will fail if `_analyze` is a bound method.
 - [N/A] Type checking passes: (will check in full CI)
 - [N/A] Black formatting: (will check in full CI)
 - [x] No zero-mock violations: No mocks used
-- [x] Manual testing with user's aura.py strategy - TypeError FIXED!
+- [x] Manual testing with user's aura.py strategy - TypeError FIXED! KeyError FIXED!
 - [x] Manual testing with functional API pattern - Still works
+- [x] Both bound methods and functions work correctly now
+- [x] Base Asset class (forex) can now access data through dispatch reader
 - [x] Pre-flight checklist completed above
 
 ---
 
 ## Files Modified
 
-- [x] `rustybt/algorithm.py` - Fixed bound method handling in 3 methods
+- [x] `rustybt/algorithm.py` - Fixed bound method handling in 3 methods (handle_data, analyze, before_trading_start)
+- [x] `rustybt/data/data_portal.py` - Registered base Asset class in dispatch readers
 - [x] `tests/test_algorithm_method_binding.py` - New test file (146 lines)
 
 ---
 
 ## Statistics
 
-- Issues found: 3 (handle_data, analyze, before_trading_start)
-- Issues fixed: 3
+- Issues found: 4 (handle_data, analyze, before_trading_start, dispatch reader)
+- Issues fixed: 4
 - Tests added: 7 test cases, all passing
-- Lines changed: ~60 lines added in algorithm.py, 146 lines in new test file
+- Lines changed: ~60 lines in algorithm.py, ~4 lines in data_portal.py, 146 lines in new test file
+- Net impact: +210 lines
 
 ---
 
 ## Commit Hash
 
-`[commit hash]`
+`bab5804`
 
 ---
 

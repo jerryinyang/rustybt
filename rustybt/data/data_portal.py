@@ -199,8 +199,12 @@ class DataPortal:
 
         if aligned_equity_minute_reader is not None:
             aligned_minute_readers[Equity] = aligned_equity_minute_reader
+            # Also register base Asset class to handle generic assets (e.g., forex)
+            aligned_minute_readers[Asset] = aligned_equity_minute_reader
         if aligned_equity_session_reader is not None:
             aligned_session_readers[Equity] = aligned_equity_session_reader
+            # Also register base Asset class to handle generic assets (e.g., forex)
+            aligned_session_readers[Asset] = aligned_equity_session_reader
 
         if aligned_future_minute_reader is not None:
             aligned_minute_readers[Future] = aligned_future_minute_reader

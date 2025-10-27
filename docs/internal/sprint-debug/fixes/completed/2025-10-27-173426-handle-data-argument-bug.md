@@ -221,7 +221,8 @@ After fixing Issues 1-3, discovered a secondary issue: the DispatchBarReader onl
 
 ## Commit Hash
 
-`bab5804`
+`bab5804` - Initial fix for bound method handling (Issues 1-3)
+`551d4e4` - Fix for base Asset class dispatch (Issue 4)
 
 ---
 
@@ -233,9 +234,12 @@ After fixing Issues 1-3, discovered a secondary issue: the DispatchBarReader onl
 
 ## Notes
 
-- User's code also has issue (missing `self` in method signature), but framework should handle gracefully
-- Need to verify if `before_trading_start` has same pattern
-- Should add documentation about supported patterns
-- Consider if we want to support this hybrid pattern or deprecate it
+- **Fixed 4 issues total**: 3 for bound method handling + 1 for dispatch reader
+- User's code also has issue (missing `self` in method signature), but framework now handles gracefully
+- Framework now supports both functional and class-based API patterns seamlessly
+- Base Asset class (used by forex/crypto bundles) now works with dispatch reader
+- **Data availability issue is separate**: User's aura.py uses 2020 dates, but forex bundle only has 2023-2025 data
+  - This is expected behavior - not a code bug
+  - Solution: User should update start/end dates to match bundle's available range
 
 ---

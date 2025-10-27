@@ -826,3 +826,45 @@ def symbols(*args, **kwargs):
     --------
     :func:`zipline.api.set_symbol_lookup_date`
     """
+
+# Event scheduling classes and API re-exports
+# These imports are placed after function signatures to keep the stub file organized
+# ruff: noqa: E402
+from rustybt.finance import cancel_policy as cancel_policy
+from rustybt.finance import commission as commission
+from rustybt.finance import execution as execution
+from rustybt.finance import slippage as slippage
+
+# Re-exports from other modules (for full API completeness)
+from rustybt.finance.asset_restrictions import (
+    RESTRICTION_STATES as RESTRICTION_STATES,
+)
+from rustybt.finance.asset_restrictions import (
+    HistoricalRestrictions as HistoricalRestrictions,
+)
+from rustybt.finance.asset_restrictions import (
+    Restriction as Restriction,
+)
+from rustybt.finance.asset_restrictions import (
+    StaticRestrictions as StaticRestrictions,
+)
+from rustybt.finance.cancel_policy import (
+    EODCancel as EODCancel,
+)
+from rustybt.finance.cancel_policy import (
+    NeverCancel as NeverCancel,
+)
+from rustybt.finance.slippage import (
+    FixedBasisPointsSlippage as FixedBasisPointsSlippage,
+)
+from rustybt.finance.slippage import (
+    FixedSlippage as FixedSlippage,
+)
+from rustybt.finance.slippage import (
+    VolumeShareSlippage as VolumeShareSlippage,
+)
+from rustybt.utils import events as events
+from rustybt.utils import math_utils as math_utils
+from rustybt.utils.events import calendars as calendars
+from rustybt.utils.events import date_rules as date_rules
+from rustybt.utils.events import time_rules as time_rules

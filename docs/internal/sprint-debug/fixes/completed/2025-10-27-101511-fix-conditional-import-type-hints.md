@@ -96,6 +96,10 @@ def __getattr__(name):
 
 The `data.fx` module uses the same lazy loading pattern for optional HDF5 dependencies (`HDF5FXRateReader`, `HDF5FXRateWriter`). These symbols are in `__all__` but lazily loaded to avoid crashes when h5py is not installed. Same type hint visibility issues.
 
+**Issue 3: Incomplete Type Stub File** - `rustybt/api.pyi`
+
+The `api.pyi` stub file only contains function signatures but is missing type declarations for classes and modules re-exported from other parts of the framework (`date_rules`, `time_rules`, `calendars`, `EODCancel`, slippage models, etc.). This causes these symbols to appear as `Any` type in IDEs even though they have proper types at runtime.
+
 ---
 
 ## Root Cause Analysis
@@ -181,12 +185,39 @@ if TYPE_CHECKING:
     from .hdf5 import HDF5FXRateReader, HDF5FXRateWriter
 ```
 
+**3. Modified `rustybt/api.pyi`** - Lines 830-869
+- Added imports for event scheduling classes (`date_rules`, `time_rules`, `calendars`)
+- Added re-exports for all API classes and constants (EODCancel, slippage models, restrictions, etc.)
+- Added module re-exports (cancel_policy, commission, execution, slippage, events, math_utils)
+- Added ruff noqa comment to suppress E402 warnings (normal for stub files)
+
+Changes:
+```python
+# Event scheduling classes and API re-exports
+# These imports are placed after function signatures to keep the stub file organized
+# ruff: noqa: E402
+from rustybt.finance import cancel_policy as cancel_policy
+from rustybt.finance import commission as commission
+# ... more module imports ...
+
+from rustybt.utils.events import calendars as calendars
+from rustybt.utils.events import date_rules as date_rules
+from rustybt.utils.events import time_rules as time_rules
+
+from rustybt.finance.asset_restrictions import (
+    RESTRICTION_STATES as RESTRICTION_STATES,
+    HistoricalRestrictions as HistoricalRestrictions,
+    # ... more class imports ...
+)
+```
+
 **Benefits of this approach:**
 - ✅ Type hints for static analyzers and IDEs
 - ✅ Docstring visibility in IDEs
 - ✅ Autocomplete functionality
 - ✅ Preserves lazy loading performance benefits at runtime
 - ✅ Maintains optional dependency handling (h5py)
+- ✅ Complete type coverage for entire public API
 
 ---
 
@@ -214,25 +245,27 @@ if TYPE_CHECKING:
 
 - `rustybt/__init__.py` - Added TYPE_CHECKING imports for TradingAlgorithm, Blotter, run_algorithm
 - `rustybt/data/fx/__init__.py` - Added TYPE_CHECKING imports for HDF5FXRateReader, HDF5FXRateWriter
+- `rustybt/api.pyi` - Added complete type declarations for all API re-exports (date_rules, time_rules, calendars, and all other API classes)
 - `tests/smoke/test_imports.py` - Added 4 type hint verification tests
 
 ---
 
 ## Statistics
 
-- Issues found: 2 (across 2 modules)
-- Issues fixed: 2
+- Issues found: 3 (across 3 modules)
+- Issues fixed: 3
 - Tests added: 4 new test functions
-- Lines changed: +154/-0 (net: +154 lines)
+- Lines changed: +194/-23 (net: +171 lines)
   - `rustybt/__init__.py`: +10 lines
   - `rustybt/data/fx/__init__.py`: +9 lines
-  - `tests/smoke/test_imports.py`: +135 lines
+  - `rustybt/api.pyi`: +40 lines
+  - `tests/smoke/test_imports.py`: +135 lines (reformat: -23)
 
 ---
 
 ## Commit Hash
 
-`5d317a8`
+`bd75dfb`
 
 ---
 

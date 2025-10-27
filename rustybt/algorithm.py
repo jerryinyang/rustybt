@@ -14,6 +14,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+import inspect
 import logging
 import warnings
 from collections import namedtuple
@@ -516,20 +517,86 @@ class TradingAlgorithm:
         self._in_before_trading_start = True
 
         with handle_non_market_minutes(data) if self.data_frequency == "minute" else ExitStack():
-            self._before_trading_start(self, data)
+            # Support both functional API and class-based API with bound methods
+            try:
+                sig = inspect.signature(self._before_trading_start)
+                param_count = len(sig.parameters)
+
+                if inspect.ismethod(self._before_trading_start):
+                    # Note: inspect.signature() on bound methods doesn't count the bound parameter
+                    if param_count == 1:
+                        # Method missing 'self': def before_trading_start(context, data)
+                        # After binding, only 1 param remains (data)
+                        self._before_trading_start(data)
+                    else:
+                        # Correct method: def before_trading_start(self, context, data)
+                        # After binding, 2 params remain (context, data)
+                        self._before_trading_start(self, data)
+                else:
+                    # Function: def before_trading_start(context, data)
+                    self._before_trading_start(self, data)
+            except (ValueError, TypeError):
+                # Fallback
+                self._before_trading_start(self, data)
 
         self._in_before_trading_start = False
 
     def handle_data(self, data):
         if self._handle_data:
-            self._handle_data(self, data)
+            # Support both functional API and class-based API with bound methods
+            # Check parameter count to handle methods missing 'self' parameter gracefully
+            try:
+                sig = inspect.signature(self._handle_data)
+                param_count = len(sig.parameters)
+                is_bound = inspect.ismethod(self._handle_data)
+
+                if is_bound:
+                    # Bound method: Python automatically passes bound instance as first arg
+                    # Note: inspect.signature() on bound methods doesn't count the bound parameter
+                    if param_count == 1:
+                        # Method defined as: def handle_data(context, data) - MISSING self
+                        # After binding, signature shows only 1 param (data), because context is bound
+                        # Call with (data) only - bound instance becomes first arg automatically
+                        self._handle_data(data)
+                    else:
+                        # Method defined correctly as: def handle_data(self, context, data)
+                        # After binding, signature shows 2 params (context, data)
+                        # Bound instance goes to self, we pass (context, data)
+                        self._handle_data(self, data)
+                else:
+                    # Function: def handle_data(context, data)
+                    # Pass (context, data) explicitly
+                    self._handle_data(self, data)
+            except (ValueError, TypeError):
+                # Fallback: try standard functional API call
+                self._handle_data(self, data)
 
     def analyze(self, perf):
         if self._analyze is None:
             return
 
         with ZiplineAPI(self):
-            self._analyze(self, perf)
+            # Support both functional API and class-based API with bound methods
+            try:
+                sig = inspect.signature(self._analyze)
+                param_count = len(sig.parameters)
+
+                if inspect.ismethod(self._analyze):
+                    # Note: inspect.signature() on bound methods doesn't count the bound parameter
+                    if param_count == 1:
+                        # Method missing 'self': def analyze(context, perf)
+                        # After binding, only 1 param remains (perf)
+                        self._analyze(perf)
+                    else:
+                        # Correct method: def analyze(self, context, perf)
+                        # After binding, 2 params remain (context, perf)
+                        self._analyze(self, perf)
+                else:
+                    # Function: def analyze(context, perf)
+                    self._analyze(self, perf)
+            except (ValueError, TypeError):
+                # Fallback
+                self._analyze(self, perf)
 
     def __repr__(self):
         """N.B. this does not yet represent a string that can be used

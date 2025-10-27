@@ -14,6 +14,7 @@
 # limitations under the License.
 import os
 import importlib
+from typing import TYPE_CHECKING
 
 import numpy as np
 from packaging.version import Version
@@ -75,6 +76,15 @@ if os.name == "nt":
 
     _()
     del _
+
+# TYPE_CHECKING imports for static type checkers and IDEs
+# These imports are only evaluated by type checkers (mypy, pyright, etc.)
+# and IDEs for autocomplete/hints. They are NOT imported at runtime,
+# preserving the lazy-loading performance benefits of __getattr__.
+if TYPE_CHECKING:
+    from rustybt.algorithm import TradingAlgorithm
+    from rustybt.finance.blotter import Blotter
+    from rustybt.utils.run_algo import run_algorithm
 
 __all__ = [
     "Blotter",

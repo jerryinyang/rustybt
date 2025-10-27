@@ -463,9 +463,17 @@ Also added `from __future__ import annotations` to `algorithm.py` for better for
 
 ---
 
-## Commit Hash
+## Commit Hashes
 
-`6cd3abe`
+Initial fixes:
+- `c0b8c48` - Add TYPE_CHECKING imports for IDE type hints
+- `cae823b` - Add TYPE_CHECKING imports across framework
+- `ab412f3` - Complete api.pyi stub with all API re-exports
+- `c79bdac` - Add Context type alias for user strategy functions
+- `e4e4a4a` - Document class-based vs function-based strategy type hints
+
+Class-based strategy fix:
+- `31b64d3` - Add algorithm.pyi stub for class-based strategy type hints ✅ **RESOLVES IDE HINTS ISSUE**
 
 ---
 

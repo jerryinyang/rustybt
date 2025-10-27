@@ -169,6 +169,98 @@ RustyBT will display:
 - Performance metrics
 - Final portfolio statistics
 
+## Working with Multiple Assets
+
+The examples above show trading a single hardcoded asset (`AAPL`). In practice, you often want to work with multiple assets or all assets in a bundle.
+
+### Retrieve All Assets Programmatically
+
+Instead of hardcoding symbols, retrieve all available assets from your bundle:
+
+```python
+from rustybt.api import order_target_percent, record
+from rustybt.utils.run_algo import run_algorithm
+import pandas as pd
+
+def initialize(context):
+    """Initialize with all assets in bundle."""
+    # Get all asset identifiers
+    all_sids = context.asset_finder.sids
+
+    # Retrieve all asset objects
+    all_assets = context.asset_finder.retrieve_all(all_sids)
+
+    # Store for use in handle_data
+    context.assets = all_assets
+
+    print(f"Found {len(all_assets)} assets:")
+    for asset in all_assets[:5]:  # Show first 5
+        print(f"  - {asset.symbol}")
+
+def handle_data(context, data):
+    """Equal-weight portfolio across all assets."""
+    # Calculate equal weight for each asset
+    weight = 1.0 / len(context.assets)
+
+    # Rebalance to equal weights
+    for asset in context.assets:
+        order_target_percent(asset, weight)
+
+if __name__ == "__main__":
+    result = run_algorithm(
+        initialize=initialize,
+        handle_data=handle_data,
+        bundle='yfinance-profiling',
+        start=pd.Timestamp('2024-06-01'),
+        end=pd.Timestamp('2025-09-30'),
+        capital_base=10000,
+    )
+```
+
+### Select Specific Assets by Symbol
+
+Look up specific assets instead of hardcoding:
+
+```python
+def initialize(context):
+    """Select a custom watchlist."""
+    # Define your watchlist
+    watchlist_symbols = ['AAPL', 'GOOGL', 'MSFT', 'AMZN']
+
+    # Look up assets
+    context.watchlist = context.asset_finder.lookup_symbols(watchlist_symbols)
+
+    print(f"Tracking {len(context.watchlist)} assets")
+
+def handle_data(context, data):
+    """Trade your custom watchlist."""
+    for asset in context.watchlist:
+        price = data.current(asset, 'price')
+        # Your trading logic here
+```
+
+### Filter Assets Dynamically
+
+Build custom filters to select assets:
+
+```python
+def initialize(context):
+    """Select assets matching criteria."""
+    # Get all assets
+    all_assets = context.asset_finder.retrieve_all(context.asset_finder.sids)
+
+    # Filter assets (example: select first 10)
+    # In production, you might filter by market cap, volume, sector, etc.
+    context.universe = all_assets[:10]
+
+    print(f"Selected {len(context.universe)} assets for trading")
+```
+
+!!! tip "Performance Tip"
+    Always look up assets once in `initialize()` and store them in `context`. Avoid looking up assets repeatedly in `handle_data()` - this is slow!
+
+For complete API documentation, see [Asset Finder API](../api/data-management/asset-finder.md).
+
 ## Troubleshooting
 
 ### Common Issues

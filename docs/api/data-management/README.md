@@ -43,6 +43,7 @@ RustyBT's data management system provides a flexible, high-performance framework
   - [Migration](catalog/migration-guide.md) - Migrating from HDF5/bcolz to Parquet
 
 ### Data Access
+- **[Asset Finder](asset-finder.md)** - Query and retrieve assets from bundles
 - **[Data Readers](readers/README.md)** - Reading and accessing stored data
   - [Data Portal](readers/data-portal.md) - Unified data access interface
   - [Polars Data Portal](readers/polars-data-portal.md) - Modern Decimal-precision portal

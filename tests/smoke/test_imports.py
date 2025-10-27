@@ -221,3 +221,45 @@ def test_type_checking_block_exists():
     assert found_trading_algorithm, "TradingAlgorithm not in TYPE_CHECKING block"
     assert found_blotter, "Blotter not in TYPE_CHECKING block"
     assert found_run_algorithm, "run_algorithm not in TYPE_CHECKING block"
+
+
+def test_fx_module_type_checking():
+    """Verify TYPE_CHECKING pattern in data.fx module for optional HDF5 dependencies."""
+    from pathlib import Path
+
+    import rustybt.data.fx
+
+    # Read data/fx/__init__.py source
+    init_file = Path(rustybt.data.fx.__file__)
+    source = init_file.read_text()
+
+    # Verify TYPE_CHECKING import exists
+    assert "from typing import TYPE_CHECKING" in source
+
+    # Verify TYPE_CHECKING block exists
+    assert "if TYPE_CHECKING:" in source
+
+    # Verify HDF5 imports are in TYPE_CHECKING block
+    lines = source.split("\n")
+    in_type_checking = False
+    found_hdf5_reader = False
+    found_hdf5_writer = False
+
+    for line in lines:
+        if "if TYPE_CHECKING:" in line:
+            in_type_checking = True
+        elif in_type_checking:
+            if line.startswith("if ") or (line and not line.startswith((" ", "\t")) and line != ""):
+                # Exited the TYPE_CHECKING block
+                break
+            if "HDF5FXRateReader" in line:
+                found_hdf5_reader = True
+            if "HDF5FXRateWriter" in line:
+                found_hdf5_writer = True
+
+    assert found_hdf5_reader, "HDF5FXRateReader not in TYPE_CHECKING block"
+    assert found_hdf5_writer, "HDF5FXRateWriter not in TYPE_CHECKING block"
+
+    # Verify symbols are in __all__
+    assert "HDF5FXRateReader" in rustybt.data.fx.__all__
+    assert "HDF5FXRateWriter" in rustybt.data.fx.__all__

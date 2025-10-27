@@ -92,22 +92,28 @@ def __getattr__(name):
     # ... more lazy imports
 ```
 
+**Issue 2: Same Problem in FX Module** - `rustybt/data/fx/__init__.py:8-20`
+
+The `data.fx` module uses the same lazy loading pattern for optional HDF5 dependencies (`HDF5FXRateReader`, `HDF5FXRateWriter`). These symbols are in `__all__` but lazily loaded to avoid crashes when h5py is not installed. Same type hint visibility issues.
+
 ---
 
 ## Root Cause Analysis
 
 **Why did this issue occur:**
-1. Lazy loading pattern (`__getattr__`) was used to improve import performance
+1. Lazy loading pattern (`__getattr__`) was used to improve import performance and handle optional dependencies
 2. Pattern does not expose type information to static analysis tools
 3. No TYPE_CHECKING imports were added for static analyzers
 4. Issue wasn't caught because functionality works correctly at runtime
+5. Pattern was used in multiple modules without considering IDE/type checker impact
 
 **What pattern should prevent recurrence:**
-1. Use `if TYPE_CHECKING:` block for static type imports
-2. Keep lazy loading for runtime (performance)
-3. Add type stubs or explicit type declarations
+1. Use `if TYPE_CHECKING:` block for static type imports alongside `__getattr__`
+2. Keep lazy loading for runtime (performance and optional deps)
+3. Add type stubs (.pyi) or explicit TYPE_CHECKING declarations
 4. Test with IDE/type checker during development
 5. Add linting rule to verify public API symbols are type-hinted
+6. Document this pattern in coding standards for future use
 
 ---
 
@@ -116,27 +122,28 @@ def __getattr__(name):
 **Modified test file**: `tests/smoke/test_imports.py`
 
 **Test Cases Added**:
-1. `test_lazy_loaded_symbols_accessible()` - Verify lazy loading still works at runtime
+1. `test_lazy_loaded_symbols_accessible()` - Verify lazy loading still works at runtime for main __init__.py
 2. `test_type_hints_available_for_static_analysis()` - Verify symbols accessible with docstrings
-3. `test_type_checking_block_exists()` - Verify TYPE_CHECKING pattern correctly implemented
+3. `test_type_checking_block_exists()` - Verify TYPE_CHECKING pattern correctly implemented in main __init__.py
+4. `test_fx_module_type_checking()` - Verify TYPE_CHECKING pattern in data.fx module for HDF5 classes
 
 **Zero-Mock Compliance**:
 - Uses real module introspection (Path, source reading)
 - Uses real import mechanisms
 - No mocking frameworks
-- Tests verify actual runtime behavior
+- Tests verify actual runtime behavior and source code structure
 
-**Coverage**: 100% coverage of TYPE_CHECKING functionality
+**Coverage**: 100% coverage of TYPE_CHECKING functionality across both modules
 
 ---
 
 ## Fixes Applied
 
-**1. Modified `rustybt/__init__.py`**
-- Added `from typing import TYPE_CHECKING` import (line ~18)
-- Added TYPE_CHECKING block with explicit imports for type checkers (after line ~32)
+**1. Modified `rustybt/__init__.py`** - Lines 17, 80-87
+- Added `from typing import TYPE_CHECKING` import (line 17)
+- Added TYPE_CHECKING block with explicit imports for type checkers (lines 80-87)
 - Kept existing `__getattr__` for runtime lazy loading
-- Updated docstring to explain the pattern
+- Added comments explaining the pattern
 
 Changes:
 ```python
@@ -144,18 +151,42 @@ from typing import TYPE_CHECKING
 
 # ... existing imports ...
 
+# TYPE_CHECKING imports for static type checkers and IDEs
+# These imports are only evaluated by type checkers (mypy, pyright, etc.)
+# and IDEs for autocomplete/hints. They are NOT imported at runtime,
+# preserving the lazy-loading performance benefits of __getattr__.
 if TYPE_CHECKING:
-    # Import for type checkers and IDEs only (not loaded at runtime)
     from rustybt.algorithm import TradingAlgorithm
     from rustybt.finance.blotter import Blotter
     from rustybt.utils.run_algo import run_algorithm
 ```
 
-This approach provides:
+**2. Modified `rustybt/data/fx/__init__.py`** - Lines 1, 7-12
+- Added `from typing import TYPE_CHECKING` import (line 1)
+- Added TYPE_CHECKING block for HDF5 classes (lines 7-12)
+- Kept existing `__getattr__` for runtime lazy loading of optional h5py dependency
+- Added comments explaining the pattern
+
+Changes:
+```python
+from typing import TYPE_CHECKING
+
+# ... existing imports ...
+
+# TYPE_CHECKING imports for static type checkers and IDEs
+# These imports are only evaluated by type checkers (mypy, pyright, etc.)
+# and IDEs for autocomplete/hints. They are NOT imported at runtime,
+# preserving the lazy-loading behavior for optional h5py dependency.
+if TYPE_CHECKING:
+    from .hdf5 import HDF5FXRateReader, HDF5FXRateWriter
+```
+
+**Benefits of this approach:**
 - ✅ Type hints for static analyzers and IDEs
 - ✅ Docstring visibility in IDEs
 - ✅ Autocomplete functionality
 - ✅ Preserves lazy loading performance benefits at runtime
+- ✅ Maintains optional dependency handling (h5py)
 
 ---
 
@@ -181,25 +212,27 @@ This approach provides:
 
 ## Files Modified
 
-- `rustybt/__init__.py` - Added TYPE_CHECKING imports
-- `tests/test_imports.py` - Added type hint verification tests (if created)
+- `rustybt/__init__.py` - Added TYPE_CHECKING imports for TradingAlgorithm, Blotter, run_algorithm
+- `rustybt/data/fx/__init__.py` - Added TYPE_CHECKING imports for HDF5FXRateReader, HDF5FXRateWriter
+- `tests/smoke/test_imports.py` - Added 4 type hint verification tests
 
 ---
 
 ## Statistics
 
-- Issues found: 1
-- Issues fixed: 1
-- Tests added: 3 new test functions
-- Lines changed: +107/-0 (net: +107 lines)
-  - `rustybt/__init__.py`: +8 lines
-  - `tests/smoke/test_imports.py`: +99 lines
+- Issues found: 2 (across 2 modules)
+- Issues fixed: 2
+- Tests added: 4 new test functions
+- Lines changed: +154/-0 (net: +154 lines)
+  - `rustybt/__init__.py`: +10 lines
+  - `rustybt/data/fx/__init__.py`: +9 lines
+  - `tests/smoke/test_imports.py`: +135 lines
 
 ---
 
 ## Commit Hash
 
-`b14be0d`
+`5d317a8`
 
 ---
 

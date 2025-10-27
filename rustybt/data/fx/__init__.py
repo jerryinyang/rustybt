@@ -1,6 +1,15 @@
+from typing import TYPE_CHECKING
+
 from .base import DEFAULT_FX_RATE, FXRateReader
 from .exploding import ExplodingFXRateReader
 from .in_memory import InMemoryFXRateReader
+
+# TYPE_CHECKING imports for static type checkers and IDEs
+# These imports are only evaluated by type checkers (mypy, pyright, etc.)
+# and IDEs for autocomplete/hints. They are NOT imported at runtime,
+# preserving the lazy-loading behavior for optional h5py dependency.
+if TYPE_CHECKING:
+    from .hdf5 import HDF5FXRateReader, HDF5FXRateWriter
 
 
 # Legacy HDF5 support - optional dependency (h5py)

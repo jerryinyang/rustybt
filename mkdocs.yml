@@ -190,6 +190,7 @@ nav:
   - API Reference:
       - Data Management:
           - Overview: api/data-management/README.md
+          - Asset Finder: api/data-management/asset-finder.md
           - Adapters:
               - Overview: api/data-management/adapters/README.md
               - Selection Guide: api/data-management/adapters/adapter-selection-guide.md

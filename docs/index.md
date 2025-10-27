@@ -163,9 +163,14 @@ Learn by example with 13 Jupyter notebooks and 20+ Python examples:
 
 [Browse all examples →](examples/README.md)
 
-### 📖 [API Reference](api/datasource-api.md)
+### 📖 [API Reference](api/data-management/README.md)
 Complete API documentation:
 
+- [Data Management](api/data-management/README.md) - Complete data infrastructure
+  - [Asset Finder](api/data-management/asset-finder.md) - Query and retrieve assets from bundles
+  - [Data Adapters](api/data-management/adapters/README.md) - Fetch data from external sources
+  - [Bundle System](api/data-management/catalog/bundle-system.md) - Data storage and management
+  - [Data Portal](api/data-management/readers/data-portal.md) - Access price and volume data
 - [Datasource API](api/datasource-api.md) - Data ingestion and management
 - [Optimization API](api/optimization-api.md) - Strategy optimization tools
 - [Analytics API](api/analytics-api.md) - Performance analysis and reporting

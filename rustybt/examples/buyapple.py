@@ -14,11 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rustybt.api import order, record, symbol
+from rustybt.api import Context, order, record, symbol
 from rustybt.finance import commission, slippage
 
 
-def initialize(context):
+def initialize(context: Context) -> None:
     context.asset = symbol("AAPL")
 
     # Explicitly set the commission/slippage to the "old" value until we can
@@ -29,7 +29,7 @@ def initialize(context):
     context.set_slippage(slippage.VolumeShareSlippage())
 
 
-def handle_data(context, data):
+def handle_data(context: Context, data) -> None:
     order(context.asset, 10)
     record(AAPL=data.current(context.asset, "price"))
 

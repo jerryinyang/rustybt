@@ -1,3 +1,10 @@
+# Type alias for the context parameter in user-defined strategy functions
+# The context is actually the TradingAlgorithm instance itself
+from rustybt.algorithm import TradingAlgorithm
+
+# Type alias for common usage patterns
+Context = TradingAlgorithm
+
 def attach_pipeline(pipeline, name, chunks=None, eager=True):
     """Register a pipeline to be computed at the start of each day.
 

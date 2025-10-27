@@ -100,6 +100,10 @@ The `data.fx` module uses the same lazy loading pattern for optional HDF5 depend
 
 The `api.pyi` stub file only contains function signatures but is missing type declarations for classes and modules re-exported from other parts of the framework (`date_rules`, `time_rules`, `calendars`, `EODCancel`, slippage models, etc.). This causes these symbols to appear as `Any` type in IDEs even though they have proper types at runtime.
 
+**Issue 4: No Type Hints for Context Parameter** - User strategy functions
+
+User-defined strategy functions like `initialize(context)` and `handle_data(context, data)` have no type hints for the `context` parameter. The `context` is actually the `TradingAlgorithm` instance, so users lose autocomplete for all framework methods and attributes like `asset_finder`, `portfolio`, `account`, etc.
+
 ---
 
 ## Root Cause Analysis
@@ -130,6 +134,7 @@ The `api.pyi` stub file only contains function signatures but is missing type de
 2. `test_type_hints_available_for_static_analysis()` - Verify symbols accessible with docstrings
 3. `test_type_checking_block_exists()` - Verify TYPE_CHECKING pattern correctly implemented in main __init__.py
 4. `test_fx_module_type_checking()` - Verify TYPE_CHECKING pattern in data.fx module for HDF5 classes
+5. `test_context_type_alias_available()` - Verify Context type alias is available and maps to TradingAlgorithm
 
 **Zero-Mock Compliance**:
 - Uses real module introspection (Path, source reading)
@@ -185,7 +190,37 @@ if TYPE_CHECKING:
     from .hdf5 import HDF5FXRateReader, HDF5FXRateWriter
 ```
 
-**3. Modified `rustybt/api.pyi`** - Lines 830-869
+**3. Modified `rustybt/api.py`** - Lines 19, 26-27, 45-46, 75-80
+- Added TYPE_CHECKING import for TradingAlgorithm as Context
+- Added Context to __all__ for public API
+- Added Context handling in __getattr__ for lazy loading
+- Preserves lazy loading while providing type alias for user functions
+
+Changes:
+```python
+from typing import TYPE_CHECKING
+
+# Type alias for the context parameter in user-defined strategy functions
+# For type checkers: see api.pyi for the Context type alias
+if TYPE_CHECKING:
+    from .algorithm import TradingAlgorithm as Context
+
+__all__ = [
+    "Context",  # Added
+    # ... existing exports ...
+]
+
+def __getattr__(name):
+    """Lazy load API methods from algorithm module when accessed."""
+    # Special handling for Context type alias
+    if name == "Context":
+        from .algorithm import TradingAlgorithm
+        return TradingAlgorithm
+    # ... rest of __getattr__ ...
+```
+
+**4. Modified `rustybt/api.pyi`** - Lines 1-6, 830-869
+- Added Context type alias at top of file (TradingAlgorithm for user strategy functions)
 - Added imports for event scheduling classes (`date_rules`, `time_rules`, `calendars`)
 - Added re-exports for all API classes and constants (EODCancel, slippage models, restrictions, etc.)
 - Added module re-exports (cancel_policy, commission, execution, slippage, events, math_utils)
@@ -193,6 +228,10 @@ if TYPE_CHECKING:
 
 Changes:
 ```python
+# Type alias for the context parameter in user-defined strategy functions
+from rustybt.algorithm import TradingAlgorithm
+Context = TradingAlgorithm
+
 # Event scheduling classes and API re-exports
 # These imports are placed after function signatures to keep the stub file organized
 # ruff: noqa: E402
@@ -209,6 +248,24 @@ from rustybt.finance.asset_restrictions import (
     HistoricalRestrictions as HistoricalRestrictions,
     # ... more class imports ...
 )
+```
+
+**5. Modified `rustybt/examples/buyapple.py`** - Example with type hints
+- Updated imports to include Context type alias
+- Added type hints to initialize() and handle_data() functions
+- Demonstrates proper usage of Context type for user strategy functions
+
+Changes:
+```python
+from rustybt.api import Context, order, record, symbol
+
+def initialize(context: Context) -> None:
+    context.asset = symbol("AAPL")
+    # ... rest of function ...
+
+def handle_data(context: Context, data) -> None:
+    order(context.asset, 10)
+    # ... rest of function ...
 ```
 
 **Benefits of this approach:**
@@ -245,27 +302,31 @@ from rustybt.finance.asset_restrictions import (
 
 - `rustybt/__init__.py` - Added TYPE_CHECKING imports for TradingAlgorithm, Blotter, run_algorithm
 - `rustybt/data/fx/__init__.py` - Added TYPE_CHECKING imports for HDF5FXRateReader, HDF5FXRateWriter
-- `rustybt/api.pyi` - Added complete type declarations for all API re-exports (date_rules, time_rules, calendars, and all other API classes)
-- `tests/smoke/test_imports.py` - Added 4 type hint verification tests
+- `rustybt/api.py` - Added Context type alias (TradingAlgorithm) with TYPE_CHECKING and lazy loading
+- `rustybt/api.pyi` - Added Context type alias and complete type declarations for all API re-exports
+- `rustybt/examples/buyapple.py` - Added type hints to demonstrate Context usage pattern
+- `tests/smoke/test_imports.py` - Added 5 type hint verification tests
 
 ---
 
 ## Statistics
 
-- Issues found: 3 (across 3 modules)
-- Issues fixed: 3
-- Tests added: 4 new test functions
-- Lines changed: +194/-23 (net: +171 lines)
+- Issues found: 4 (across 4 modules)
+- Issues fixed: 4
+- Tests added: 5 new test functions
+- Lines changed: +230/-23 (net: +207 lines)
   - `rustybt/__init__.py`: +10 lines
   - `rustybt/data/fx/__init__.py`: +9 lines
-  - `rustybt/api.pyi`: +40 lines
-  - `tests/smoke/test_imports.py`: +135 lines (reformat: -23)
+  - `rustybt/api.py`: +18 lines (Context type alias)
+  - `rustybt/api.pyi`: +46 lines (Context + all API re-exports)
+  - `rustybt/examples/buyapple.py`: +4 lines (type hints demo)
+  - `tests/smoke/test_imports.py`: +143 lines (reformat: -23)
 
 ---
 
 ## Commit Hash
 
-`bd75dfb`
+`6cd3abe`
 
 ---
 

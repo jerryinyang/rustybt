@@ -16,7 +16,15 @@
 # Note that part of the API is implemented in TradingAlgorithm as
 # methods (e.g. order). These are added to this namespace via the
 # decorator ``api_method`` inside of algorithm.py.
+from typing import TYPE_CHECKING
+
 from .finance import cancel_policy, commission, execution, slippage
+
+# Type alias for the context parameter in user-defined strategy functions
+# The context is actually the TradingAlgorithm instance itself
+# For type checkers: see api.pyi for the Context type alias
+if TYPE_CHECKING:
+    from .algorithm import TradingAlgorithm as Context
 from .finance.asset_restrictions import (
     RESTRICTION_STATES,
     HistoricalRestrictions,
@@ -34,6 +42,7 @@ from .utils.events import calendars, date_rules, time_rules
 
 __all__ = [
     "RESTRICTION_STATES",
+    "Context",
     "EODCancel",
     "FixedBasisPointsSlippage",
     "FixedSlippage",
@@ -63,6 +72,12 @@ def __dir__():
 
 def __getattr__(name):
     """Lazy load API methods from algorithm module when accessed."""
+    # Special handling for Context type alias
+    if name == "Context":
+        from .algorithm import TradingAlgorithm
+
+        return TradingAlgorithm
+
     # Ensure algorithm module is loaded to trigger @api_method registration
     _ensure_algorithm_loaded()
 

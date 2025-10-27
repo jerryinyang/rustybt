@@ -263,3 +263,23 @@ def test_fx_module_type_checking():
     # Verify symbols are in __all__
     assert "HDF5FXRateReader" in rustybt.data.fx.__all__
     assert "HDF5FXRateWriter" in rustybt.data.fx.__all__
+
+
+def test_context_type_alias_available():
+    """Verify Context type alias is available from rustybt.api."""
+    import rustybt.api
+    from rustybt.algorithm import TradingAlgorithm
+
+    # Verify Context is available via lazy loading
+    Context = rustybt.api.Context
+    assert Context is not None
+    assert Context is TradingAlgorithm
+
+    # Verify Context is in __all__
+    assert "Context" in rustybt.api.__all__
+
+    # Verify Context has key TradingAlgorithm attributes (for type hints)
+    assert hasattr(Context, "portfolio")
+    assert hasattr(Context, "account")
+    assert hasattr(Context, "initialize")
+    assert hasattr(Context, "handle_data")

@@ -98,3 +98,70 @@ All priority fixes have been completed across multiple sprint-debug sessions. Do
 **Resolved**: 2025-10-17
 **Fixed By**: James (Dev Agent) - Multiple sprint-debug sessions
 **Verified By**: Documentation build passes (`mkdocs build --strict`)
+
+---
+
+## Testing Infrastructure
+
+### h5py Segfault on macOS Python 3.12
+
+**Status**: 🔴 ACTIVE - Known Issue
+
+**Issue**: Python crashes with segmentation fault when running some bundle tests:
+
+```bash
+pytest tests/data/bundles/
+# Fatal Python error: Segmentation fault
+```
+
+**Root Cause**:
+- h5py library compatibility issue on Apple Silicon macOS with Python 3.12
+- Occurs when `rustybt/testing/fixtures.py` imports h5py at module level
+- Known upstream issue with h5py on macOS
+
+**Affected Tests**:
+- `tests/data/bundles/test_csvdir.py`
+- `tests/data/bundles/test_csvdir_decimal.py`
+- `tests/data/bundles/test_quandl.py`
+- `tests/data/bundles/test_quandl_security.py`
+- `tests/data/bundles/test_adapter_bundles.py`
+- `tests/data/bundles/test_core.py`
+
+**NOT Affected** (safe to run):
+- ✅ `tests/data/bundles/test_bundle_metadata.py`
+- ✅ `tests/data/bundles/test_calendar_detection.py`
+- ✅ `tests/data/bundles/test_sid_mapping.py`
+- ✅ All other test suites
+
+**Workaround**:
+```bash
+# Run specific test files that don't use h5py
+pytest tests/data/bundles/test_bundle_metadata.py \
+      tests/data/bundles/test_calendar_detection.py \
+      tests/data/bundles/test_sid_mapping.py -v
+
+# OR exclude problematic files
+pytest tests/data/bundles/ \
+      --ignore=tests/data/bundles/test_csvdir.py \
+      --ignore=tests/data/bundles/test_csvdir_decimal.py \
+      --ignore=tests/data/bundles/test_quandl.py \
+      --ignore=tests/data/bundles/test_quandl_security.py \
+      --ignore=tests/data/bundles/test_adapter_bundles.py \
+      --ignore=tests/data/bundles/test_core.py
+```
+
+**Potential Solutions**:
+1. Upgrade h5py to latest version: `pip install --upgrade h5py`
+2. Make h5py import lazy in `rustybt/testing/fixtures.py`
+3. Skip h5py-dependent tests on macOS Python 3.12
+4. Investigate upstream h5py issue tracker
+
+**Impact**:
+- Low - Does not affect framework functionality
+- Only affects running specific older test files
+- New tests (Fix 2 & Fix 3) all pass successfully
+
+**Investigation Report**: `docs/internal/sprint-debug/fixes/completed/QA-SEGFAULT-INVESTIGATION.md`
+
+**Discovered**: 2025-10-28 (during QA review of Fix 2 & Fix 3)
+**Platform**: macOS (Apple Silicon), Python 3.12.10

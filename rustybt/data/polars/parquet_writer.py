@@ -531,6 +531,9 @@ class ParquetWriter:
                 validation_passed=gap_validation_passed,
             )
 
+        # Determine calendar based on asset type
+        calendar_name = self._get_calendar_name(detected_asset_type)
+
         update_payload: dict[str, Any] = {
             "source_type": source_metadata.get("source_type", "unknown"),
             "fetch_timestamp": current_time,
@@ -545,6 +548,7 @@ class ParquetWriter:
             "validation_timestamp": current_time,
             "file_checksum": file_checksum,
             "file_size_bytes": file_size,
+            "calendar": calendar_name,
         }
 
         for field in ("source_url", "api_version", "data_version", "timezone"):
@@ -562,6 +566,9 @@ class ParquetWriter:
         symbol_entries = self._resolve_symbol_entries(df, source_metadata)
         exchange_default = source_metadata.get("exchange")
 
+        # Get symbol_map from source_metadata (contains symbol -> SID mapping)
+        symbol_map = source_metadata.get("symbol_map", {})
+
         added_symbols = 0
         for entry in symbol_entries:
             symbol = entry.get("symbol")
@@ -571,11 +578,15 @@ class ParquetWriter:
             asset_type = entry.get("asset_type") or self._infer_asset_type(symbol)
             exchange = entry.get("exchange") or exchange_default
 
+            # Get SID from symbol_map if available
+            sid = symbol_map.get(symbol)
+
             BundleMetadata.add_symbol(
                 bundle_name=bundle_name,
                 symbol=symbol,
                 asset_type=asset_type,
                 exchange=exchange,
+                sid=sid,  # Pass explicit SID to ensure consistency
             )
             added_symbols += 1
 
@@ -1105,6 +1116,37 @@ class ParquetWriter:
         # === DEFAULT ===
         # If no patterns matched, default to equity
         return "equity"
+
+    def _get_calendar_name(self, asset_type: str | None) -> str:
+        """Get appropriate trading calendar name for asset type.
+
+        Maps asset types to their corresponding exchange_calendars calendar names.
+
+        Args:
+            asset_type: Asset type ('forex', 'crypto', 'equity', 'future', 'unknown', or None)
+
+        Returns:
+            Calendar name for use with exchange_calendars.get_calendar():
+            - 'forex' → '24/5' (24 hours, 5 days/week)
+            - 'crypto' → '24/7' (continuous trading)
+            - 'equity', 'future', 'unknown', None → 'XNYS' (default)
+
+        Example:
+            >>> writer = ParquetWriter("/path/to/bundle")
+            >>> writer._get_calendar_name("forex")
+            '24/5'
+            >>> writer._get_calendar_name("crypto")
+            '24/7'
+            >>> writer._get_calendar_name("equity")
+            'XNYS'
+        """
+        if asset_type == "forex":
+            return "24/5"
+        elif asset_type == "crypto":
+            return "24/7"
+        else:
+            # Default for equity, future, unknown, or None
+            return "XNYS"
 
 
 def get_compression_stats(

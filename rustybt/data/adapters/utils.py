@@ -85,9 +85,27 @@ def normalize_symbols(symbols: Iterable[str]) -> list[str]:
 
 
 def build_symbol_sid_map(symbols: Iterable[str]) -> dict[str, int]:
-    """Build deterministic SID mapping for symbols."""
+    """Build deterministic SID mapping for symbols.
+
+    Gets the next available SID from the global asset database to avoid
+    conflicts with existing symbols across all bundles.
+
+    Args:
+        symbols: Iterable of symbol strings
+
+    Returns:
+        Dictionary mapping symbols to SIDs
+    """
+    from rustybt.data.bundles.metadata import BundleMetadata
+
     mapping: dict[str, int] = {}
-    next_sid = 1
+
+    # Get next available SID from database (global across all bundles)
+    try:
+        next_sid = BundleMetadata.get_next_symbol_id()
+    except Exception:
+        # Fallback to 1 if database access fails
+        next_sid = 1
 
     for symbol in symbols:
         normalized_symbol = symbol.upper().strip()

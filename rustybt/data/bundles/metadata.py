@@ -76,6 +76,7 @@ class BundleMetadata:
         "file_checksum",
         "file_size_bytes",
         "checksum",
+        "calendar",
     }
 
     _INT_FIELDS = {
@@ -105,6 +106,11 @@ class BundleMetadata:
 
             # Create tables if they don't exist
             schema_metadata.create_all(cls._engine)
+
+            # Run migrations to add any missing columns (backward compatibility)
+            from rustybt.data.bundles.migrations import migrate_bundle_metadata_schema
+
+            migrate_bundle_metadata_schema(cls._db_path)
 
         return cls._engine
 
@@ -296,6 +302,30 @@ class BundleMetadata:
             return result
 
     @classmethod
+    def get_calendar(cls, bundle_name: str) -> str | None:
+        """Get trading calendar name for a bundle.
+
+        Args:
+            bundle_name: Name of the bundle
+
+        Returns:
+            Calendar name (e.g., "24/5", "XNYS") or None if not set
+
+        Raises:
+            ValueError: If bundle does not exist
+
+        Example:
+            >>> calendar = BundleMetadata.get_calendar("forex-1d")
+            >>> print(calendar)
+            '24/5'
+        """
+        metadata = cls.get(bundle_name)
+        if metadata is None:
+            raise ValueError(f"Bundle '{bundle_name}' not found in metadata")
+
+        return metadata.get("calendar")
+
+    @classmethod
     def list_bundles(
         cls,
         source_type: str | None = None,
@@ -406,6 +436,7 @@ class BundleMetadata:
         symbol: str,
         asset_type: str | None = None,
         exchange: str | None = None,
+        sid: int | None = None,
     ) -> int:
         """Add symbol to bundle.
 
@@ -414,12 +445,18 @@ class BundleMetadata:
             symbol: Symbol string
             asset_type: Asset type ('equity', 'crypto', etc.)
             exchange: Exchange name
+            sid: Optional explicit SID. If None, uses auto-increment.
+                 Use this to ensure parquet SID matches database SID.
 
         Returns:
             Symbol ID
 
         Example:
+            >>> # Auto-increment SID (backward compatible)
             >>> BundleMetadata.add_symbol("yfinance-daily", "AAPL", "equity", "NASDAQ")
+
+            >>> # Explicit SID (for parquet consistency)
+            >>> BundleMetadata.add_symbol("forex-1d", "EURUSD=X", "forex", "FX", sid=1)
         """
         engine = cls._get_engine()
 
@@ -448,12 +485,18 @@ class BundleMetadata:
                 symbol_id = existing.id
             else:
                 # Insert new symbol
-                insert_stmt = bundle_symbols.insert().values(
-                    bundle_name=bundle_name,
-                    symbol=symbol,
-                    asset_type=asset_type,
-                    exchange=exchange,
-                )
+                insert_values = {
+                    "bundle_name": bundle_name,
+                    "symbol": symbol,
+                    "asset_type": asset_type,
+                    "exchange": exchange,
+                }
+
+                # If explicit SID provided, use it
+                if sid is not None:
+                    insert_values["id"] = sid
+
+                insert_stmt = bundle_symbols.insert().values(**insert_values)
                 result = session.execute(insert_stmt)
                 symbol_id = result.inserted_primary_key[0]
 
@@ -469,6 +512,34 @@ class BundleMetadata:
             )
 
             return symbol_id
+
+    @classmethod
+    def get_next_symbol_id(cls) -> int:
+        """Get next available symbol ID from database.
+
+        Returns the next auto-increment ID that would be assigned by the database.
+        This is used to ensure SIDs in parquet files match database SIDs.
+
+        Returns:
+            Next available symbol ID
+
+        Example:
+            >>> next_id = BundleMetadata.get_next_symbol_id()
+            >>> print(f"Next SID: {next_id}")
+        """
+        engine = cls._get_engine()
+
+        with Session(engine) as session:
+            # Get max ID from bundle_symbols table
+            stmt = select(sa.func.max(bundle_symbols.c.id))
+            result = session.execute(stmt).scalar()
+
+            # If no symbols exist, start from 1
+            if result is None:
+                return 1
+
+            # Return next ID (max + 1)
+            return result + 1
 
     @classmethod
     def get_symbols(cls, bundle_name: str) -> list[dict[str, Any]]:

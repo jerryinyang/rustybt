@@ -249,6 +249,11 @@ bundle_metadata = sa.Table(
     sa.Column("file_size_bytes", sa.Integer),
     sa.Column("checksum", sa.Text),  # Legacy checksum (deprecated)
     sa.Column(
+        "calendar",
+        sa.Text,
+        nullable=True,
+    ),  # Trading calendar name (e.g., "24/5" for forex, "XNYS" for equities)
+    sa.Column(
         "created_at",
         sa.Integer,
         nullable=False,

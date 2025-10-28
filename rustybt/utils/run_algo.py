@@ -96,7 +96,59 @@ def _run(
     )
 
     if trading_calendar is None:
-        trading_calendar = get_calendar("XNYS")
+        # Try to get calendar from bundle metadata
+        try:
+            from rustybt.data.bundles.metadata import BundleMetadata
+
+            bundle_calendar = BundleMetadata.get_calendar(bundle)
+            if bundle_calendar:
+                trading_calendar = get_calendar(bundle_calendar)
+                log.info(f"Using bundle calendar: {bundle_calendar} for bundle '{bundle}'")
+            else:
+                # Fallback to XNYS for legacy bundles without calendar
+                trading_calendar = get_calendar("XNYS")
+                log.info(f"Bundle '{bundle}' has no calendar metadata, defaulting to XNYS")
+        except (ValueError, Exception) as e:
+            # Bundle not found or calendar retrieval failed - fallback to XNYS
+            log.warning(
+                f"Could not retrieve calendar for bundle '{bundle}': {e}. Defaulting to XNYS"
+            )
+            trading_calendar = get_calendar("XNYS")
+
+    # Validate backtest dates against bundle's actual data range and calendar
+    try:
+        from rustybt.data.bundles.metadata import BundleMetadata
+        from rustybt.utils.calendar_validation import validate_backtest_dates
+
+        bundle_metadata = BundleMetadata.get(bundle)
+        if bundle_metadata:
+            bundle_start_ts = bundle_metadata.get("start_date")
+            bundle_end_ts = bundle_metadata.get("end_date")
+
+            if bundle_start_ts and bundle_end_ts:
+                bundle_start = pd.Timestamp(bundle_start_ts, unit="s")
+                bundle_end = pd.Timestamp(bundle_end_ts, unit="s")
+                calendar_name = bundle_metadata.get("calendar") or "XNYS"
+
+                # Validate dates, this will raise clear errors if invalid
+                start, end = validate_backtest_dates(
+                    start=start,
+                    end=end,
+                    bundle_start=bundle_start,
+                    bundle_end=bundle_end,
+                    bundle_name=bundle,
+                    calendar_name=calendar_name,
+                )
+                log.info(
+                    f"Backtest dates validated: {start.date()} to {end.date()} "
+                    f"(bundle range: {bundle_start.date()} to {bundle_end.date()})"
+                )
+    except ValueError as e:
+        # Re-raise validation errors with context
+        raise _RunAlgoError(str(e))
+    except Exception as e:
+        # Log but don't fail - bundle might not have metadata
+        log.warning(f"Could not validate backtest dates against bundle metadata: {e}")
 
     # date parameter validation
     if trading_calendar.sessions_distance(start, end) < 1:

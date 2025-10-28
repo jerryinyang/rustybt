@@ -312,6 +312,8 @@ Fix is now production-ready with comprehensive test coverage. The original CRITI
 
 **Approval**: ✅ Ready to merge to main
 
-**Additional Note**: Tests were added as part of Option A strategy - merging Fix 3 (forex calendar) which includes Fix 2's code changes, then adding SID tests to complete both fixes together.
+**Additional Notes**:
+1. Tests were added as part of Option A strategy - merging Fix 3 (forex calendar) which includes Fix 2's code changes, then adding SID tests to complete both fixes together.
+2. **h5py Segfault**: During QA, discovered pre-existing segfault when running full `pytest tests/data/bundles/`. Investigation confirmed this is NOT related to Fix 2/3 (exists on main branch). Our tests don't use affected code paths and all pass successfully. See `QA-SEGFAULT-INVESTIGATION.md` for full details. Not a blocker.
 
 ---

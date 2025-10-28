@@ -502,4 +502,11 @@ As part of Option A merge strategy, SID mapping tests were added to this branch:
 - Files modified: 12
 - Files created: 3 (migrations.py, calendar_validation.py, test_sid_mapping.py)
 
+**Known Issue (Pre-Existing, Not a Blocker)**:
+- h5py segfault when running full `pytest tests/data/bundles/` suite
+- Investigation confirmed: exists on main branch, NOT caused by Fix 2/3
+- Our 36 new tests all pass successfully (45/45 total with existing tests)
+- See `QA-SEGFAULT-INVESTIGATION.md` for complete details
+- Recommendation: Create separate issue to fix h5py compatibility
+
 ---

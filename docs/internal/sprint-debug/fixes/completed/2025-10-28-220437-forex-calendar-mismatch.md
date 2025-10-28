@@ -389,3 +389,117 @@ User attempted to backtest a forex strategy using the `forex-1d` bundle with a s
 3. New bundles automatically get correct calendar from asset type detection
 
 ---
+
+## QA Review
+
+**Reviewer**: Claude Code (AI Agent)
+**Review Date**: 2025-10-28
+**Status**: ✅ APPROVED
+
+**Pre-Flight Verification**:
+- [x] Pre-flight checklist completed
+- [x] All items checked and justified
+- [x] Understanding, standards review, testing strategy all documented
+
+**Fix Quality Review**:
+- [x] Issue correctly identified - Forex bundles using NYSE calendar causes NotSessionError on NYSE holidays
+- [x] Root cause analysis accurate - No calendar detection, hardcoded XNYS default
+- [x] Fix addresses root cause - Added calendar detection by asset type + database storage
+- [x] All occurrences updated - Schema, metadata, writer, run_algo all modified
+- [x] No unintended side effects - Backward compatible via migration + NULL fallback
+
+**Code Quality**:
+- [x] Follows project standards (CR-002, CR-004)
+- [x] Type hints complete - `calendar: str | None` throughout
+- [x] No mock violations - Tests use real exchange_calendars, real database operations
+- [x] Error handling appropriate - Try/except with fallbacks, ValueError for invalid bundles
+- [x] Logging appropriate - Warnings for calendar retrieval failures
+
+**Testing Verification**:
+- [x] All new tests pass: 19/19 tests in test_calendar_detection.py
+- [x] Existing tests pass: 9/9 tests in test_bundle_metadata.py (backward compat verified)
+- [x] Linting clean: `ruff check` passes on all modified files
+- [x] Formatting clean: `black --check` passes on all modified files
+- [x] No mock violations: Tests explicitly document CR-002 compliance
+- [x] Coverage adequate: 19 comprehensive tests covering:
+  - Calendar detection (forex→24/5, crypto→24/7, equity→XNYS)
+  - Calendar storage in database
+  - Calendar retrieval from metadata
+  - Backward compatibility (NULL calendar→XNYS fallback)
+  - Edge cases (invalid calendars, mixed asset types)
+  - Real-world scenario (forex Jan 2, 2023 NYSE holiday)
+
+**Completeness**:
+- [x] Fix document complete and thorough
+- [x] Commit messages descriptive (Phase 1 + Phase 2)
+- [x] Metadata filled in (commit hashes, branch, statistics)
+- [x] Migration strategy documented
+
+**Code Review Highlights**:
+
+1. **Schema Migration** (rustybt/data/bundles/migrations.py):
+   - ✅ Idempotent migration - safe to run multiple times
+   - ✅ Automatic execution when BundleMetadata accessed
+   - ✅ Proper error handling
+
+2. **Calendar Detection** (rustybt/data/polars/parquet_writer.py):
+   - ✅ Clean mapping: forex→24/5, crypto→24/7, equity→XNYS
+   - ✅ Integrated into existing _auto_populate_metadata flow
+   - ✅ Well-commented code
+
+3. **Calendar Validation** (rustybt/utils/calendar_validation.py):
+   - ✅ Phase 2 enhancement - automatic date adjustment
+   - ✅ Clear warnings for date adjustments
+   - ✅ Prevents cryptic runtime errors
+
+4. **Backward Compatibility**:
+   - ✅ NULL calendar fallback to XNYS in run_algo
+   - ✅ Existing bundles work without re-ingestion
+   - ✅ All existing tests still pass
+
+**Test Quality Assessment**:
+- ✅ Tests are comprehensive and well-organized (5 test classes)
+- ✅ Zero-Mock compliance explicitly documented
+- ✅ Tests use real implementations (exchange_calendars, SQLite, Polars)
+- ✅ Edge cases covered (invalid calendars, NULL handling, mixed types)
+- ✅ Real-world scenario tested (forex Jan 2, 2023 NYSE holiday)
+
+**Summary**:
+This is an exemplary fix that addresses a real user pain point (forex strategies failing on NYSE holidays) with:
+- Thorough root cause analysis
+- Clean, well-typed implementation
+- Comprehensive automated tests (19 tests, all passing)
+- Backward compatibility via automatic migration
+- Phase 2 enhancement for better UX (automatic date adjustment)
+- Complete documentation
+
+The fix is production-ready and demonstrates best practices:
+- CR-002 compliance (zero mocks)
+- CR-004 compliance (full type hints)
+- TDD approach (tests planned before implementation)
+- Defensive programming (fallbacks, error handling)
+
+**Approval**: ✅ Ready to merge to main
+
+**Recommendation**: This fix should be merged immediately. It:
+1. Solves a critical user-facing issue (forex strategies cannot run)
+2. Has comprehensive test coverage preventing regressions
+3. Is fully backward compatible
+4. Includes automatic migration for existing databases
+5. Demonstrates engineering excellence
+
+**Additional Work (Option A - Bundle Integration)**:
+As part of Option A merge strategy, SID mapping tests were added to this branch:
+- Created `tests/data/bundles/test_sid_mapping.py` (471 lines, 17 tests)
+- All tests pass (17/17)
+- Verifies Fix 2 (Bundle SID Mapping Mismatch) functionality
+- Zero-Mock compliance verified
+- Both Fix 2 and Fix 3 are now ready to merge together
+
+**Final Statistics for Combined Fixes**:
+- Total tests added: 36 (19 calendar + 17 SID mapping)
+- Total lines added: ~1900 (code + tests + migrations + validation + docs)
+- Files modified: 12
+- Files created: 3 (migrations.py, calendar_validation.py, test_sid_mapping.py)
+
+---

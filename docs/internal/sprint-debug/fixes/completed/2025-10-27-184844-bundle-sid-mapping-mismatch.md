@@ -223,3 +223,95 @@ Backtest should access data from parquet files using asset SIDs.
 - Backward compatible fix - existing bundles unaffected, new ingestions will be correct
 
 ---
+
+## QA Review
+
+**Reviewer**: Claude Code (AI Agent)
+**Review Date**: 2025-10-28
+**Status**: ✅ APPROVED (Tests added - 2025-10-28)
+
+**Pre-Flight Verification**:
+- [x] Pre-flight checklist completed
+- [x] All items checked and justified
+
+**Fix Quality Review**:
+- [x] Issue correctly identified - SID mismatch between parquet files (1-25) and database (1290-1314)
+- [x] Root cause analysis accurate - two separate SID assignment mechanisms
+- [x] Fix addresses root cause - unified SID assignment via explicit parameter
+- [x] All occurrences updated - 4 files modified correctly
+- [x] No unintended side effects - backward compatible (sid=None uses auto-increment)
+
+**Code Quality**:
+- [x] Follows project standards (CR-002, CR-004)
+- [x] Type hints complete - `sid: int | None = None` properly typed
+- [x] No mock violations - Tests use real database operations only
+- [x] Error handling appropriate - try/except in build_symbol_sid_map()
+- [x] Logging appropriate - no new logging needed
+
+**Testing Verification**:
+- [x] All tests pass: 17/17 tests in `test_sid_mapping.py`
+- [x] Linting clean: `ruff check` passes on all files
+- [x] Formatting clean: `black --check` passes on all files
+- [x] No mock violations: Tests explicitly follow CR-002 (Zero-Mock)
+- [x] Coverage comprehensive: 17 tests across 5 test classes
+  - Explicit SID parameter (4 tests)
+  - Auto-increment backward compatibility (2 tests)
+  - get_next_symbol_id() method (4 tests)
+  - build_symbol_sid_map() integration (4 tests)
+  - SID consistency integration tests (3 tests including bug scenario)
+
+**Test Coverage Details**:
+
+**Created**: `tests/data/bundles/test_sid_mapping.py` (471 lines, 17 tests)
+
+1. **TestExplicitSIDParameter** (4 tests):
+   - test_add_symbol_with_explicit_sid - Verify explicit SID=1000 is used
+   - test_add_symbol_with_explicit_sid_multiple - Multiple explicit SIDs (1, 2, 3)
+   - test_add_symbol_explicit_sid_updates_auto_increment - Explicit SID updates counter
+   - test_add_symbol_duplicate_explicit_sid_returns_existing - Idempotency
+
+2. **TestAutoIncrementBackwardCompatibility** (2 tests):
+   - test_add_symbol_without_sid_uses_auto_increment - Auto-increment from 1
+   - test_add_symbol_auto_increment_continues_across_bundles - Global counter
+
+3. **TestGetNextSymbolId** (4 tests):
+   - test_get_next_symbol_id_empty_database - Returns 1 for empty DB
+   - test_get_next_symbol_id_with_existing_symbols - Returns max + 1
+   - test_get_next_symbol_id_with_explicit_sid - Accounts for explicit SIDs
+   - test_get_next_symbol_id_with_mixed_sids - Mixed auto/explicit SIDs
+
+4. **TestBuildSymbolSidMap** (4 tests):
+   - test_build_symbol_sid_map_empty_database - Starts from 1
+   - test_build_symbol_sid_map_with_existing_symbols - Continues from max
+   - test_build_symbol_sid_map_normalizes_symbols - Uppercase normalization
+   - test_build_symbol_sid_map_deterministic - Produces same results
+
+5. **TestSIDConsistencyIntegration** (3 tests):
+   - test_parquet_database_sid_consistency - End-to-end SID matching
+   - test_multiple_bundle_ingestion_sid_isolation - Non-overlapping SIDs
+   - test_sid_mismatch_scenario_does_not_occur - Reproduces and verifies fix for original bug
+
+**Zero-Mock Compliance**:
+- All tests use real BundleMetadata operations
+- All tests use real database (temporary SQLite)
+- No mocking frameworks used
+- Tests verify actual behavior, not mocked behavior
+
+**Completeness**:
+- [x] Fix document complete
+- [x] Commit message descriptive
+- [x] Metadata filled in (commit hash, branch, statistics)
+- [x] Comprehensive tests added
+
+**Summary**:
+Fix is now production-ready with comprehensive test coverage. The original CRITICAL issue (SID mismatch causing silent data corruption) is:
+- ✅ Fixed with clean, well-typed implementation
+- ✅ Backward compatible (sid=None uses auto-increment)
+- ✅ Thoroughly tested (17 tests, all passing)
+- ✅ Protected against regressions
+
+**Approval**: ✅ Ready to merge to main
+
+**Additional Note**: Tests were added as part of Option A strategy - merging Fix 3 (forex calendar) which includes Fix 2's code changes, then adding SID tests to complete both fixes together.
+
+---

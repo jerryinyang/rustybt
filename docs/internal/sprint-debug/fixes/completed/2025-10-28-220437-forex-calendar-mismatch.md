@@ -328,9 +328,13 @@ User attempted to backtest a forex strategy using the `forex-1d` bundle with a s
 
 ---
 
-## Commit Hash
+## Commit Hashes
 
-`0f133f21ae9b3c103febfea43ea466a3518b3a67`
+**Phase 1: Calendar Detection & Storage**
+`f7bb40a` - fix(bundles): Fix calendar mismatch for forex bundles
+
+**Phase 2: Robust Date Handling**
+`11f9aaf` - feat(bundles): Add robust calendar-aware date handling
 
 ---
 

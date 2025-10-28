@@ -96,7 +96,24 @@ def _run(
     )
 
     if trading_calendar is None:
-        trading_calendar = get_calendar("XNYS")
+        # Try to get calendar from bundle metadata
+        try:
+            from rustybt.data.bundles.metadata import BundleMetadata
+
+            bundle_calendar = BundleMetadata.get_calendar(bundle)
+            if bundle_calendar:
+                trading_calendar = get_calendar(bundle_calendar)
+                log.info(f"Using bundle calendar: {bundle_calendar} for bundle '{bundle}'")
+            else:
+                # Fallback to XNYS for legacy bundles without calendar
+                trading_calendar = get_calendar("XNYS")
+                log.info(f"Bundle '{bundle}' has no calendar metadata, defaulting to XNYS")
+        except (ValueError, Exception) as e:
+            # Bundle not found or calendar retrieval failed - fallback to XNYS
+            log.warning(
+                f"Could not retrieve calendar for bundle '{bundle}': {e}. Defaulting to XNYS"
+            )
+            trading_calendar = get_calendar("XNYS")
 
     # date parameter validation
     if trading_calendar.sessions_distance(start, end) < 1:

@@ -574,8 +574,8 @@ def _make_bundle_core():
             bundle_path_str = pth.data_path(["bundles", name], environ=environ)
             bundle_path = Path(bundle_path_str)
 
-            # Get calendar from metadata (default to NYSE)
-            calendar_name = metadata.get("calendar", "NYSE")
+            # Get calendar from metadata (default to XNYS for backward compatibility)
+            calendar_name = metadata.get("calendar") or "XNYS"
 
             # Get date range from metadata
             start_date = metadata.get("start_date")

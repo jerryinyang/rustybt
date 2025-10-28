@@ -76,6 +76,7 @@ class BundleMetadata:
         "file_checksum",
         "file_size_bytes",
         "checksum",
+        "calendar",
     }
 
     _INT_FIELDS = {
@@ -105,6 +106,11 @@ class BundleMetadata:
 
             # Create tables if they don't exist
             schema_metadata.create_all(cls._engine)
+
+            # Run migrations to add any missing columns (backward compatibility)
+            from rustybt.data.bundles.migrations import migrate_bundle_metadata_schema
+
+            migrate_bundle_metadata_schema(cls._db_path)
 
         return cls._engine
 
@@ -294,6 +300,30 @@ class BundleMetadata:
                     pass
 
             return result
+
+    @classmethod
+    def get_calendar(cls, bundle_name: str) -> str | None:
+        """Get trading calendar name for a bundle.
+
+        Args:
+            bundle_name: Name of the bundle
+
+        Returns:
+            Calendar name (e.g., "24/5", "XNYS") or None if not set
+
+        Raises:
+            ValueError: If bundle does not exist
+
+        Example:
+            >>> calendar = BundleMetadata.get_calendar("forex-1d")
+            >>> print(calendar)
+            '24/5'
+        """
+        metadata = cls.get(bundle_name)
+        if metadata is None:
+            raise ValueError(f"Bundle '{bundle_name}' not found in metadata")
+
+        return metadata.get("calendar")
 
     @classmethod
     def list_bundles(

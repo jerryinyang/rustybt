@@ -283,25 +283,48 @@ User attempted to backtest a forex strategy using the `forex-1d` bundle with a s
 
 ## Files Modified
 
+**Phase 1: Calendar Detection & Storage**
 - `rustybt/assets/asset_db_schema.py` - Added calendar column to bundle_metadata table
 - `rustybt/data/bundles/metadata.py` - Added calendar to _FIELD_NAMES, added get_calendar() method, auto-run migrations
 - `rustybt/data/bundles/migrations.py` - NEW: Automatic schema migration utility for backward compatibility
 - `rustybt/data/bundles/core.py` - Fixed calendar fallback (None/"NYSE" → "XNYS")
 - `rustybt/data/polars/parquet_writer.py` - Added _get_calendar_name() method, updated _auto_populate_metadata()
-- `rustybt/utils/run_algo.py` - Smart calendar selection from bundle metadata with XNYS fallback
 - `tests/data/bundles/test_calendar_detection.py` - Comprehensive test suite (19 tests)
+
+**Phase 2: Robust Date Handling (Enhancement)**
+- `rustybt/utils/calendar_validation.py` - NEW: Calendar-aware date validation utilities
+  - `get_calendar_for_asset_type()` - Maps asset types to calendars
+  - `validate_and_adjust_date_range()` - Auto-adjusts dates to calendar boundaries with warnings
+  - `validate_backtest_dates()` - Validates backtest dates against bundle data range
+- `rustybt/data/adapters/yfinance_adapter.py` - Integrated calendar validation into ingestion
+  - Auto-detects asset type and calendar
+  - Adjusts requested dates to calendar range
+  - Clear logging of adjustments
+- `rustybt/utils/run_algo.py` - Added backtest date validation against bundle metadata
+  - Validates dates are within bundle's actual range
+  - Validates dates are within calendar's valid range
+  - Clear error messages if invalid
+
+**Documentation**
 - `docs/internal/sprint-debug/fixes/completed/2025-10-28-220437-forex-calendar-mismatch.md` - This document
 
 ---
 
 ## Statistics
 
+**Phase 1: Calendar Detection & Storage**
 - Issues found: 4 (calendar hardcoded, no storage, no detection, no migration)
 - Issues fixed: 4/4 (100%)
 - Tests added: 19 (all passing)
 - Existing tests: 9 (all still passing)
-- Lines added: ~220 (code + tests + migrations + docs)
 - Files modified: 8
+
+**Phase 2: Robust Date Handling**
+- Enhancement: Automatic date adjustment to calendar boundaries
+- Files added: 1 (calendar_validation.py - 200 lines)
+- Files modified: 2 (yfinance_adapter.py, run_algo.py)
+- Total lines added: ~420 (code + tests + migrations + validation + docs)
+- Files modified: 11 total
 
 ---
 
@@ -323,9 +346,23 @@ User attempted to backtest a forex strategy using the `forex-1d` bundle with a s
 - Test case available at `temp/strategies/aura.py`
 - Forex markets trade 24/5 (Sunday evening through Friday evening)
 - Backward compatibility ensured via automatic schema migration
-- **IMPORTANT**: Existing bundles need to be re-ingested to get correct calendar
-  - Run: `rustybt ingest-unified --adapter yfinance --bundle forex-1d --symbols GBPCAD=X --start 2023-01-02 --end 2023-01-31`
-  - New bundles will automatically get the correct calendar based on asset type
+
+**Phase 1: Calendar Fix (COMPLETE)**
+- ✅ Calendar detection and storage working
+- ✅ Migration applied automatically
+- ✅ Existing bundles need re-ingestion to get correct calendar
+
+**Phase 2: Robust Date Handling (COMPLETE)**
+- ✅ Framework auto-adjusts dates to calendar boundaries
+- ✅ Clear warnings during ingestion (not cryptic runtime errors)
+- ✅ Backtest validation ensures dates within bundle range
+- ✅ Users don't need to know calendar date ranges
+
+**Discovered Issue (Separate from Calendar Fix)**
+- After calendar fix, discovered `KeyError: <class 'rustybt.assets._assets.Asset'>` in dispatch_bar_reader.py
+- This is a separate pre-existing issue with forex asset type readers
+- Issue: DispatchBarReader doesn't have a reader configured for generic Asset class
+- Recommendation: Create separate issue for forex asset reader support
 
 ## Migration
 

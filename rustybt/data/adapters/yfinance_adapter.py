@@ -534,11 +534,15 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
     ) -> None:
         """Ingest YFinance data into bundle (Parquet + metadata).
 
+        Automatically adjusts requested dates to calendar boundaries if needed.
+        For example, if you request forex data from 2000-01-01 but the 24/5
+        calendar starts 2005-10-28, the start date will be adjusted and logged.
+
         Args:
             bundle_name: Name of bundle to create/update
             symbols: List of symbols to ingest
-            start: Start timestamp for data range
-            end: End timestamp for data range
+            start: Start timestamp for data range (will be adjusted to calendar if needed)
+            end: End timestamp for data range (will be adjusted to calendar if needed)
             frequency: Time resolution (e.g., "1d", "1h", "1m")
             asset_type: Optional asset type override ('forex', 'crypto', 'equity', 'future').
                        If None, will be inferred from symbol patterns.
@@ -548,29 +552,63 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
             NetworkError: If data fetch fails
             ValidationError: If data validation fails
             IOError: If bundle write fails
+            ValueError: If date range is invalid or empty after calendar adjustment
 
         Example:
             >>> source = DataSourceRegistry.get_source("yfinance")
             >>> source.ingest_to_bundle(
             ...     bundle_name="forex-data",
             ...     symbols=["EURUSD=X", "GBPJPY=X"],
-            ...     start=pd.Timestamp("2023-01-01"),
+            ...     start=pd.Timestamp("2000-01-01"),  # Will be adjusted to 2005-10-28
             ...     end=pd.Timestamp("2023-12-31"),
             ...     frequency="1d",
             ...     asset_type="forex"  # Explicit override
             ... )
         """
+        from rustybt.utils.calendar_validation import (
+            get_calendar_for_asset_type,
+            validate_and_adjust_date_range,
+        )
+
+        normalized_symbols = normalize_symbols(symbols)
+
+        # Infer asset type if not provided
+        if asset_type is None and normalized_symbols:
+            # Infer from symbol pattern directly to avoid import collision
+            symbol = normalized_symbols[0].upper().strip()
+            if symbol.endswith("=X") or (len(symbol) == 6 and symbol.isalpha()):
+                asset_type = "forex"
+            elif "/" in symbol or symbol.startswith(("BTC", "ETH", "USDT")):
+                asset_type = "crypto"
+            else:
+                asset_type = "equity"
+
+        # Get calendar for this asset type
+        calendar_name = get_calendar_for_asset_type(asset_type)
+
+        # Validate and adjust dates to calendar range
+        adjusted_start, adjusted_end, was_adjusted = validate_and_adjust_date_range(
+            start, end, calendar_name, context=f"ingestion:{bundle_name}"
+        )
+
         logger.info(
             "yfinance_ingest_start",
             bundle=bundle_name,
             symbols=symbols[:5] if len(symbols) > 5 else symbols,
             symbol_count=len(symbols),
-            start=start,
-            end=end,
+            requested_start=start,
+            requested_end=end,
+            actual_start=adjusted_start,
+            actual_end=adjusted_end,
+            dates_adjusted=was_adjusted,
             frequency=frequency,
+            asset_type=asset_type,
+            calendar=calendar_name,
         )
 
-        normalized_symbols = normalize_symbols(symbols)
+        # Use adjusted dates for fetching
+        start = adjusted_start
+        end = adjusted_end
 
         df = run_async(self.fetch(normalized_symbols, start, end, frequency))
         if df.is_empty():

@@ -562,6 +562,9 @@ class ParquetWriter:
         symbol_entries = self._resolve_symbol_entries(df, source_metadata)
         exchange_default = source_metadata.get("exchange")
 
+        # Get symbol_map from source_metadata (contains symbol -> SID mapping)
+        symbol_map = source_metadata.get("symbol_map", {})
+
         added_symbols = 0
         for entry in symbol_entries:
             symbol = entry.get("symbol")
@@ -571,11 +574,15 @@ class ParquetWriter:
             asset_type = entry.get("asset_type") or self._infer_asset_type(symbol)
             exchange = entry.get("exchange") or exchange_default
 
+            # Get SID from symbol_map if available
+            sid = symbol_map.get(symbol)
+
             BundleMetadata.add_symbol(
                 bundle_name=bundle_name,
                 symbol=symbol,
                 asset_type=asset_type,
                 exchange=exchange,
+                sid=sid,  # Pass explicit SID to ensure consistency
             )
             added_symbols += 1
 

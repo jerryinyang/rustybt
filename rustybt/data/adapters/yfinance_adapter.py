@@ -596,6 +596,7 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
             "source_url": metadata.source_url,
             "api_version": metadata.api_version,
             "symbols": list(symbol_map.keys()),
+            "symbol_map": symbol_map,  # Include SID mapping for metadata consistency
             "timezone": "UTC",
         }
 

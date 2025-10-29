@@ -1042,8 +1042,8 @@ class BcolzMinuteBarReader(MinuteBarReader):
 
         Parameters
         ----------
-        sid : int
-            Asset identifier.
+        sid : int or Asset
+            Asset identifier or Asset object
         dt : datetime-like
             The datetime at which the trade occurred.
         field : string
@@ -1064,6 +1064,9 @@ class BcolzMinuteBarReader(MinuteBarReader):
             Returns the integer value of the volume.
             (A volume of 0 signifies no trades for the given dt.)
         """
+        # Extract SID if Asset object is passed
+        asset_sid = sid.sid if hasattr(sid, "sid") else sid
+
         if self._last_get_value_dt_value == dt.value:
             minute_pos = self._last_get_value_dt_position
         else:
@@ -1076,7 +1079,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
             self._last_get_value_dt_position = minute_pos
 
         try:
-            value = self._open_minute_file(field, sid)[minute_pos]
+            value = self._open_minute_file(field, asset_sid)[minute_pos]
         except IndexError:
             value = 0
         if value == 0:
@@ -1086,7 +1089,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
                 return np.nan
 
         if field != "volume":
-            value *= self._ohlc_ratio_inverse_for_sid(sid)
+            value *= self._ohlc_ratio_inverse_for_sid(asset_sid)
         return value
 
     def get_last_traded_dt(self, asset, dt):
@@ -1096,14 +1099,17 @@ class BcolzMinuteBarReader(MinuteBarReader):
         return self._pos_to_minute(minute_pos)
 
     def _find_last_traded_position(self, asset, dt):
-        volumes = self._open_minute_file("volume", asset)
+        # Extract SID for dictionary lookups
+        asset_sid = asset.sid if hasattr(asset, "sid") else asset
+
+        volumes = self._open_minute_file("volume", asset_sid)
         start_date_minute = asset.start_date.value / NANOS_IN_MINUTE
         dt_minute = dt.value / NANOS_IN_MINUTE
 
         try:
             # if we know of a dt before which this asset has no volume,
             # don't look before that dt
-            earliest_dt_to_search = self._known_zero_volume_dict[asset.sid]
+            earliest_dt_to_search = self._known_zero_volume_dict[asset_sid]
         except KeyError:
             earliest_dt_to_search = start_date_minute
 
@@ -1173,8 +1179,8 @@ class BcolzMinuteBarReader(MinuteBarReader):
            Beginning of the window range.
         end_dt: Timestamp
            End of the window range.
-        sids : list of int
-           The asset identifiers in the window.
+        sids : list of int or Asset
+           The asset identifiers or Asset objects in the window.
 
         Returns:
         -------
@@ -1183,6 +1189,9 @@ class BcolzMinuteBarReader(MinuteBarReader):
             (minutes in range, sids) with a dtype of float64, containing the
             values for the respective field over start and end dt range.
         """
+        # Extract SIDs if Asset objects are passed
+        asset_sids = [asset.sid if hasattr(asset, "sid") else asset for asset in sids]
+
         start_idx = self._find_position_of_minute(start_dt)
         end_idx = self._find_position_of_minute(end_dt)
 
@@ -1196,7 +1205,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
                 length = excl_stop - excl_start + 1
                 num_minutes -= length
 
-        shape = num_minutes, len(sids)
+        shape = num_minutes, len(asset_sids)
 
         for field in fields:
             if field != "volume":
@@ -1204,7 +1213,7 @@ class BcolzMinuteBarReader(MinuteBarReader):
             else:
                 out = np.zeros(shape, dtype=np.uint32)
 
-            for i, sid in enumerate(sids):
+            for i, sid in enumerate(asset_sids):
                 carray = self._open_minute_file(field, sid)
                 values = carray[start_idx : end_idx + 1]
                 if indices_to_exclude is not None:

@@ -335,12 +335,16 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
                 # Align with requested date range and assets
                 for date_idx in range(num_dates):
                     target_date = self.sessions[start_idx + date_idx]
-                    target_date_date = target_date.date()
+                    # Convert to pandas Timestamp for comparison with pivoted.index
+                    target_ts = pd.Timestamp(target_date)
 
-                    if target_date_date in pivoted.index:
-                        for asset_idx, asset_id in enumerate(assets):
-                            if asset_id in pivoted.columns:
-                                value = pivoted.loc[target_date_date, asset_id]
+                    if target_ts in pivoted.index:
+                        for asset_idx, asset in enumerate(assets):
+                            # Extract SID - assets can be Asset objects or integers
+                            asset_sid = asset.sid if hasattr(asset, "sid") else asset
+
+                            if asset_sid in pivoted.columns:
+                                value = pivoted.loc[target_ts, asset_sid]
                                 if pd.notna(value):
                                     # Convert Decimal to float64
                                     arrays[col_idx][date_idx, asset_idx] = float(value)
@@ -372,8 +376,8 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
 
         Parameters
         ----------
-        sid : int
-            Asset ID
+        sid : int or Asset
+            Asset ID or Asset object
         dt : pd.Timestamp
             Date for which to retrieve value
         field : str
@@ -393,6 +397,9 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
         NoDataAfterDate
             If date is after asset's last available date
         """
+        # Extract SID if Asset object is passed
+        asset_sid = sid.sid if hasattr(sid, "sid") else sid
+
         # Normalize timestamp
         dt = pd.Timestamp(dt).normalize()
 
@@ -403,25 +410,25 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
         # Load single value
         try:
             df = self._reader.load_spot_value(
-                sids=[sid],
+                sids=[asset_sid],
                 target_date=dt.date(),
                 field=field,
             )
 
             if len(df) == 0:
                 # Check if this is before/after asset range
-                first_date = self._reader.get_first_available_date(sid)
-                last_date = self._reader.get_last_available_date(sid)
+                first_date = self._reader.get_first_available_date(asset_sid)
+                last_date = self._reader.get_last_available_date(asset_sid)
 
                 if first_date is None or last_date is None:
-                    raise NoDataOnDate(f"No data for asset {sid}")
+                    raise NoDataOnDate(f"No data for asset {asset_sid}")
 
                 if dt.date() < first_date:
-                    raise NoDataBeforeDate(f"No data for asset {sid} before {first_date}")
+                    raise NoDataBeforeDate(f"No data for asset {asset_sid} before {first_date}")
                 if dt.date() > last_date:
-                    raise NoDataAfterDate(f"No data for asset {sid} after {last_date}")
+                    raise NoDataAfterDate(f"No data for asset {asset_sid} after {last_date}")
 
-                raise NoDataOnDate(f"No data for asset {sid} on {dt}")
+                raise NoDataOnDate(f"No data for asset {asset_sid} on {dt}")
 
             # Extract value
             value = df[field][0]
@@ -437,12 +444,12 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
         except Exception as e:
             logger.error(
                 "get_value_failed",
-                sid=sid,
+                sid=asset_sid,
                 dt=str(dt),
                 field=field,
                 error=str(e),
             )
-            raise NoDataOnDate(f"Failed to get value for {sid} on {dt}: {e}") from e
+            raise NoDataOnDate(f"Failed to get value for {asset_sid} on {dt}: {e}") from e
 
     def get_last_traded_dt(self, asset, dt):
         """Get last date on or before dt when asset traded.

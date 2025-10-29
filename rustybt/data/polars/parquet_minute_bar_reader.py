@@ -222,9 +222,12 @@ class ParquetMinuteBarReader(BarReader):
                 # Align with requested minute range and assets
                 for minute_idx, target_minute in enumerate(all_minutes):
                     if target_minute in pivoted.index:
-                        for asset_idx, asset_id in enumerate(assets):
-                            if asset_id in pivoted.columns:
-                                value = pivoted.loc[target_minute, asset_id]
+                        for asset_idx, asset in enumerate(assets):
+                            # Extract SID - assets can be Asset objects or integers
+                            asset_sid = asset.sid if hasattr(asset, "sid") else asset
+
+                            if asset_sid in pivoted.columns:
+                                value = pivoted.loc[target_minute, asset_sid]
                                 if pd.notna(value):
                                     # Convert Decimal to float64
                                     arrays[col_idx][minute_idx, asset_idx] = float(value)
@@ -256,8 +259,8 @@ class ParquetMinuteBarReader(BarReader):
 
         Parameters
         ----------
-        sid : int
-            Asset ID
+        sid : int or Asset
+            Asset ID or Asset object
         dt : pd.Timestamp
             Datetime for which to retrieve value
         field : str
@@ -277,6 +280,9 @@ class ParquetMinuteBarReader(BarReader):
         NoDataAfterDate
             If datetime is after asset's last available datetime
         """
+        # Extract SID if Asset object is passed
+        asset_sid = sid.sid if hasattr(sid, "sid") else sid
+
         # Normalize timestamp
         dt = pd.Timestamp(dt)
 
@@ -289,28 +295,28 @@ class ParquetMinuteBarReader(BarReader):
             dt_python = dt.to_pydatetime()
 
             df = self._reader.load_spot_value(
-                sids=[sid],
+                sids=[asset_sid],
                 target_dt=dt_python,
                 field=field,
             )
 
             if len(df) == 0:
                 # Check if this is before/after asset range
-                first_dt = self._reader.get_first_available_dt(sid)
-                last_dt = self._reader.get_last_available_dt(sid)
+                first_dt = self._reader.get_first_available_dt(asset_sid)
+                last_dt = self._reader.get_last_available_dt(asset_sid)
 
                 if first_dt is None or last_dt is None:
-                    raise NoDataOnDate(f"No data for asset {sid}")
+                    raise NoDataOnDate(f"No data for asset {asset_sid}")
 
                 first_dt_pd = pd.Timestamp(first_dt)
                 last_dt_pd = pd.Timestamp(last_dt)
 
                 if dt < first_dt_pd:
-                    raise NoDataBeforeDate(f"No data for asset {sid} before {first_dt}")
+                    raise NoDataBeforeDate(f"No data for asset {asset_sid} before {first_dt}")
                 if dt > last_dt_pd:
-                    raise NoDataAfterDate(f"No data for asset {sid} after {last_dt}")
+                    raise NoDataAfterDate(f"No data for asset {asset_sid} after {last_dt}")
 
-                raise NoDataOnDate(f"No data for asset {sid} at {dt}")
+                raise NoDataOnDate(f"No data for asset {asset_sid} at {dt}")
 
             # Extract value
             value = df[field][0]
@@ -326,12 +332,12 @@ class ParquetMinuteBarReader(BarReader):
         except Exception as e:
             logger.error(
                 "get_value_failed",
-                sid=sid,
+                sid=asset_sid,
                 dt=str(dt),
                 field=field,
                 error=str(e),
             )
-            raise NoDataOnDate(f"Failed to get value for {sid} at {dt}: {e}") from e
+            raise NoDataOnDate(f"Failed to get value for {asset_sid} at {dt}: {e}") from e
 
     def get_last_traded_dt(self, asset, dt):
         """Get last datetime on or before dt when asset traded.

@@ -479,6 +479,38 @@ class BcolzDailyBarReader(CurrencyAwareSessionBarReader):
     def last_available_dt(self):
         return self.sessions[-1]
 
+    def _normalize_assets_to_sids(self, assets):
+        """Convert Asset objects to integer SIDs.
+
+        Parameters
+        ----------
+        assets : iterable
+            Can be Asset objects, integer SIDs, or a mix
+
+        Returns
+        -------
+        pandas.Int64Index or equivalent
+            Integer SIDs
+        """
+        # If it's already a pandas Index with integers, return as-is
+        if hasattr(assets, "dtype") and np.issubdtype(assets.dtype, np.integer):
+            return assets
+
+        # Convert Asset objects to SIDs
+        if hasattr(assets, "__iter__"):
+            sids = []
+            for asset in assets:
+                if hasattr(asset, "sid"):
+                    sids.append(asset.sid)
+                else:
+                    sids.append(asset)
+            return pd.Index(sids, dtype="int64")
+
+        # Single asset
+        if hasattr(assets, "sid"):
+            return pd.Index([assets.sid], dtype="int64")
+        return pd.Index([assets], dtype="int64")
+
     def _compute_slices(self, start_idx, end_idx, assets):
         """Compute the raw row indices to load for each asset on a query for the
         given dates after applying a shift.
@@ -521,18 +553,22 @@ class BcolzDailyBarReader(CurrencyAwareSessionBarReader):
         )
 
     def load_raw_arrays(self, columns, start_date, end_date, assets):
+        # Extract SIDs if Asset objects are passed
+        # Bcolz readers expect integer SIDs
+        asset_sids = self._normalize_assets_to_sids(assets)
+
         start_idx = self._load_raw_arrays_date_to_index(start_date)
         end_idx = self._load_raw_arrays_date_to_index(end_date)
 
         first_rows, last_rows, offsets = self._compute_slices(
             start_idx,
             end_idx,
-            assets,
+            asset_sids,
         )
-        read_all = len(assets) > self._read_all_threshold
+        read_all = len(asset_sids) > self._read_all_threshold
         return _read_bcolz_data(
             self._table,
-            (end_idx - start_idx + 1, len(assets)),
+            (end_idx - start_idx + 1, len(asset_sids)),
             list(columns),
             first_rows,
             last_rows,
@@ -569,13 +605,16 @@ class BcolzDailyBarReader(CurrencyAwareSessionBarReader):
         return col
 
     def get_last_traded_dt(self, asset, day):
+        # Extract SID if Asset object is passed
+        sid = asset.sid if hasattr(asset, "sid") else asset
+
         volumes = self._spot_col("volume")
 
         search_day = day
 
         while True:
             try:
-                ix = self.sid_day_index(asset, search_day)
+                ix = self.sid_day_index(sid, search_day)
             except NoDataBeforeDate:
                 return pd.NaT
             except NoDataAfterDate:
@@ -627,8 +666,8 @@ class BcolzDailyBarReader(CurrencyAwareSessionBarReader):
 
         Parameters
         ----------
-        sid : int
-            The asset identifier.
+        sid : int or Asset
+            The asset identifier or Asset object
         day : datetime64-like
             Midnight of the day for which data is requested.
         colname : string
@@ -643,7 +682,10 @@ class BcolzDailyBarReader(CurrencyAwareSessionBarReader):
             Returns -1 if the day is within the date range, but the price is
             0.
         """
-        ix = self.sid_day_index(sid, dt)
+        # Extract SID if Asset object is passed
+        asset_sid = sid.sid if hasattr(sid, "sid") else sid
+
+        ix = self.sid_day_index(asset_sid, dt)
         price = self._spot_col(field)[ix]
         if field != "volume":
             if price == 0:

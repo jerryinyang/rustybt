@@ -135,12 +135,13 @@ class PolarsParquetDailyReader:
             raise FileNotFoundError(f"Daily bars directory not found: {self.daily_bars_path}")
 
         # Check cache
-        if self._use_cache(start_date, end_date, fields):
+        if self._use_cache(start_date, end_date, fields, sids):
             logger.debug(
                 "using_cached_data",
                 start_date=str(start_date),
                 end_date=str(end_date),
                 fields=fields,
+                sids=sids,
             )
             df = self._filter_cached_data(sids, start_date, end_date, fields)
             return df
@@ -272,16 +273,19 @@ class PolarsParquetDailyReader:
 
         return df.select(["sid", field])
 
-    def _use_cache(self, start_date: date, end_date: date, fields: list[str]) -> bool:
-        """Check if cache can be used for date range and fields.
+    def _use_cache(
+        self, start_date: date, end_date: date, fields: list[str], sids: list[int] | None = None
+    ) -> bool:
+        """Check if cache can be used for date range, fields, and sids.
 
         Args:
             start_date: Query start date
             end_date: Query end date
             fields: Fields needed for query
+            sids: Optional list of asset IDs to check
 
         Returns:
-            True if cache contains requested date range AND all requested fields
+            True if cache contains requested date range AND all requested fields AND all requested sids
         """
         if not self.enable_cache or self._cache is None:
             return False
@@ -297,7 +301,13 @@ class PolarsParquetDailyReader:
         cached_columns = set(self._cache.columns)
         fields_ok = all(field in cached_columns for field in fields)
 
-        return date_range_ok and fields_ok
+        # Check if all requested sids are in cache
+        sids_ok = True
+        if sids is not None and len(sids) > 0:
+            cached_sids = set(self._cache["sid"].unique().to_list())
+            sids_ok = all(sid in cached_sids for sid in sids)
+
+        return date_range_ok and fields_ok and sids_ok
 
     def _filter_cached_data(
         self,

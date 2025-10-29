@@ -1143,7 +1143,7 @@ def bundle_repair_calendar(bundle_name: str, asset_type: str | None, dry_run: bo
 
     # Apply the fix
     try:
-        BundleMetadata.update(bundle_name, {"calendar": target_calendar})
+        BundleMetadata.update(bundle_name, calendar=target_calendar)
         console.print(f"[green]✓ Calendar updated to {target_calendar}[/green]")
         console.print("\nBundle is now ready to use with the correct trading calendar.")
     except Exception as e:

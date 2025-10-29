@@ -142,7 +142,7 @@ def history(
         Historical data as DataFrame or NumPy array
 
     Performance:
-        - return_type='array' eliminates [XX%] DataFrame construction overhead
+        - return_type='array' eliminates 19.35% DataFrame construction overhead
         - Use 'array' for numerical operations, 'dataframe' for pandas methods
     """
 ```

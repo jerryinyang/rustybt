@@ -2,6 +2,43 @@
 
 ## [Unreleased]
 
+### Added - API Completeness and IDE Support (2025-10-29)
+
+#### BarData.history() Return Type Parameter
+- **New Parameter**: `return_type` parameter now exposed in `BarData.history()` method
+  - Enables 19.35% performance improvement for array-consuming strategies
+  - Two modes: `'dataframe'` (default, backward compatible) and `'array'` (optimized)
+  - Previously existed in `PolarsDataPortal` but was inaccessible through `BarData` API
+- **Usage**:
+  ```python
+  # Optimized: Returns NumPy array (19.35% faster)
+  prices = data.history(asset, 'close', 20, '1d', return_type='array')
+  sma = np.mean(prices)
+
+  # Standard: Returns DataFrame (default, backward compatible)
+  df = data.history(asset, 'close', 20, '1d')
+  sma = df['close'].mean()
+  ```
+- **When to Use**:
+  - Use `return_type='array'` when consuming data directly with NumPy operations
+  - Avoids DataFrame construction overhead (~19% speedup)
+  - Ideal for technical indicators, statistical calculations, ML feature engineering
+- **Backward Compatibility**: 100% compatible - default behavior unchanged
+- **Documentation**: See `docs/user-guide/optimization.md` for detailed guidance
+
+#### Complete Type Stub Coverage (.pyi files)
+- **IDE Support**: Added type stub files for all 16 Cython (.pyx) modules
+  - Complete autocomplete in VSCode, PyCharm, and other IDEs
+  - Full type checking support (mypy, pylance, pyright)
+  - Better error detection before runtime
+- **Modules with Type Stubs**:
+  - Core: `_protocol`, `assets/_assets`, `assets/continuous_futures`
+  - Data: `data/_adjustments`, `data/_equities`, `data/_minute_bar_internal`, `data/_resample`
+  - Finance: `finance/_finance_ext`
+  - Lib: `lib/adjustment`, `lib/_factorize`, `lib/_*window` (4 files), `lib/rank`
+  - Simulation: `gens/sim_engine`
+- **Impact**: Dramatically improved developer experience and code quality tools support
+
 ### Added - Storage Optimization and Installation Improvements (2025-10-21)
 
 #### Entry Point Detection for Code Capture

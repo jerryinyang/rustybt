@@ -383,6 +383,139 @@ print(f"Max Drawdown: {max_dd:.2%}")
 
 ---
 
+## Multi-Strategy Portfolios
+
+### Overview
+
+**Multi-Strategy Portfolios** allow you to run **multiple independent trading strategies simultaneously**, each with isolated capital and positions.
+
+!!! note "Multi-Asset vs Multi-Strategy"
+    **Multi-Asset Portfolio** (ONE strategy, MULTIPLE assets):
+    ```python
+    def handle_data(context, data):
+        # Single strategy trading multiple assets
+        for asset in context.assets:
+            order(asset, 100)
+    ```
+
+    **Multi-Strategy Portfolio** (MULTIPLE strategies, each with independent capital):
+    ```python
+    # Strategy 1: Momentum (40% capital)
+    # Strategy 2: Mean Reversion (35% capital)
+    # Strategy 3: Trend Following (25% capital)
+    # Each strategy operates independently with isolated positions
+    ```
+
+### Using PortfolioAllocator with run_algorithm()
+
+Use the `PortfolioAllocator` class inside your `initialize` and `handle_data` functions:
+
+```python
+from decimal import Decimal
+from rustybt.portfolio.allocator import PortfolioAllocator
+from rustybt.utils.run_algo import run_algorithm
+import pandas as pd
+
+# Define individual strategies
+class MomentumStrategy:
+    def __init__(self):
+        self.assets = [symbol(s) for s in ['AAPL', 'MSFT', 'GOOGL']]
+
+    def handle_data(self, context, data, ledger):
+        # Uses THIS strategy's capital only
+        for asset in self.assets:
+            # ... momentum logic ...
+            order_target_percent(asset, 0.33, ledger=ledger)
+
+class MeanReversionStrategy:
+    def __init__(self):
+        self.assets = [symbol(s) for s in ['TLT', 'GLD', 'VNQ']]
+
+    def handle_data(self, context, data, ledger):
+        # Uses THIS strategy's capital only
+        for asset in self.assets:
+            # ... mean reversion logic ...
+            order_target_percent(asset, 0.33, ledger=ledger)
+
+# Coordinator functions
+def initialize(context):
+    # Create portfolio allocator
+    context.portfolio_allocator = PortfolioAllocator(
+        total_capital=Decimal("1000000"),  # $1M
+        name="Multi-Strategy Portfolio"
+    )
+
+    # Add strategies with capital allocations
+    context.momentum = MomentumStrategy()
+    context.portfolio_allocator.add_strategy(
+        strategy_id="momentum",
+        strategy=context.momentum,
+        allocation_pct=Decimal("0.60")  # 60% = $600K
+    )
+
+    context.mean_rev = MeanReversionStrategy()
+    context.portfolio_allocator.add_strategy(
+        strategy_id="mean_reversion",
+        strategy=context.mean_rev,
+        allocation_pct=Decimal("0.40")  # 40% = $400K
+    )
+
+def handle_data(context, data):
+    # Execute all strategies synchronously
+    context.portfolio_allocator.execute_bar(
+        timestamp=context.datetime,
+        data=data
+    )
+
+# Run the multi-strategy portfolio
+result = run_algorithm(
+    initialize=initialize,
+    handle_data=handle_data,
+    bundle='yfinance-profiling',
+    start=pd.Timestamp('2020-01-01', tz='UTC'),
+    end=pd.Timestamp('2023-12-31', tz='UTC'),
+    capital_base=1000000
+)
+```
+
+### Key Features
+
+✅ **Strategy Isolation**: Each strategy has its own `DecimalLedger` with isolated cash and positions
+✅ **Capital Allocation**: Allocate percentage of total capital to each strategy
+✅ **Synchronized Execution**: All strategies execute on the same bar (timestamp)
+✅ **Performance Tracking**: Per-strategy and portfolio-level metrics
+✅ **Dynamic Rebalancing**: Adjust allocations based on performance (optional)
+
+### When to Use Multi-Strategy
+
+**Use multi-strategy portfolios when:**
+- Running multiple uncorrelated strategies for diversification
+- Managing different risk profiles (conservative, moderate, aggressive)
+- Testing strategy combinations (momentum + mean reversion + trend)
+- Building hedge fund-style portfolios with isolated strategies
+
+**Don't use multi-strategy when:**
+- You only need to trade multiple assets with one strategy (use simple `for` loop)
+- Strategies are highly correlated (no diversification benefit)
+- You need strategies to share positions (violates isolation principle)
+
+### Complete Guide
+
+For comprehensive documentation including:
+- Allocation algorithms (Fixed, Dynamic, Risk Parity, Kelly, Drawdown-Based)
+- Performance tracking and analysis
+- Order aggregation to reduce commissions
+- Rebalancing strategies
+- Complete working examples
+
+**See**: [Multi-Strategy Portfolio Guide](multi-strategy-portfolio-guide.md)
+
+**Example Notebook**: [09_multi_strategy_portfolio.ipynb](../examples/notebooks/09_multi_strategy_portfolio.ipynb)
+
+**API Reference**: [Portfolio Allocation & Multi-Strategy Management](../api/portfolio-management/allocation-multistrategy.md)
+
+---
+
 ## Choosing the Right Method
 
 ### Decision Matrix

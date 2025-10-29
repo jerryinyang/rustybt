@@ -1,10 +1,20 @@
 # Pipeline API Guide
 
-**Last Updated**: 2024-10-11
+**Last Updated**: 2025-10-29
 
 ## Overview
 
 The Pipeline API is RustyBT's framework for factor-based trading strategies and quantitative research. It provides a declarative way to define computations over large universes of assets, compute factors, and screen/rank securities.
+
+!!! warning "Common Misconception: Pipeline ≠ Multi-Strategy Execution"
+    **Pipeline is for DATA PROCESSING, NOT for running multiple strategies.**
+
+    - **Pipeline**: Screens and ranks assets WITHIN one strategy (data pipeline)
+    - **Multi-Strategy**: Runs MULTIPLE independent strategies with isolated capital (execution)
+
+    **If you want to run multiple strategies simultaneously**, use `PortfolioAllocator` instead:
+    - See [Multi-Strategy Portfolio Guide](multi-strategy-portfolio-guide.md)
+    - See [Notebook 09: Multi-Strategy Portfolio](../examples/notebooks/09_multi_strategy_portfolio.ipynb)
 
 ---
 

@@ -1,6 +1,6 @@
 # Data Ingestion Guide
 
-**Last Updated**: 2024-10-11
+**Last Updated**: 2025-10-29
 
 ## Quick Start
 
@@ -92,7 +92,8 @@ source.ingest_to_bundle(
     symbols=["BTC/USDT", "ETH/USDT", "SOL/USDT"],
     start=pd.Timestamp("2024-01-01"),
     end=pd.Timestamp("2024-12-31"),
-    frequency="1h"
+    frequency="1h",
+    asset_type="crypto"  # Assigns 24/7 calendar for crypto
 )
 ```
 
@@ -104,7 +105,8 @@ rustybt ingest-unified ccxt \
     --start 2024-01-01 \
     --end 2024-12-31 \
     --frequency 1h \
-    --bundle crypto-hourly
+    --bundle crypto-hourly \
+    --asset-type crypto
 ```
 
 **Supported exchanges**: Run `rustybt ingest-unified ccxt --list-exchanges`
@@ -179,7 +181,8 @@ source.ingest_to_bundle(
     symbols=["EUR/USD", "GBP/USD", "USD/JPY"],
     start=pd.Timestamp("2023-01-01"),
     end=pd.Timestamp("2023-12-31"),
-    frequency="1d"
+    frequency="1d",
+    asset_type="forex"  # Assigns 24/5 calendar for forex
 )
 ```
 
@@ -235,6 +238,7 @@ rustybt ingest-unified <source> [options]
 | `--end` | End date (ISO 8601) | `--end 2023-12-31` |
 | `--frequency` | Data frequency | `--frequency 1d` |
 | `--bundle` | Bundle name | `--bundle my-data` |
+| `--asset-type` | Asset type for calendar selection | `--asset-type forex` |
 | `--api-key` | API key (if required) | `--api-key YOUR_KEY` |
 
 ### Frequency Options
@@ -245,6 +249,201 @@ rustybt ingest-unified <source> [options]
 | `1h` | Hourly bars | Intraday strategies |
 | `5m` | 5-minute bars | High-frequency strategies |
 | `1m` | 1-minute bars | Ultra high-frequency |
+
+---
+
+## Asset Types and Trading Calendars
+
+The `asset_type` parameter determines which trading calendar is assigned to your bundle. This is critical for ensuring your backtest runs on the correct trading days.
+
+### Calendar Assignment
+
+| Asset Type | Calendar | Trading Hours | Holidays |
+|------------|----------|---------------|----------|
+| `forex` | 24/5 | Sunday 5PM ET - Friday 5PM ET | None |
+| `crypto` | 24/7 | Continuous | None |
+| `equity` | XNYS | Mon-Fri 9:30AM-4PM ET | NYSE holidays |
+| `future` | XNYS | Mon-Fri 9:30AM-4PM ET | NYSE holidays |
+
+### When to Use Each Type
+
+**Forex (`asset_type="forex"`)**:
+- For currency pairs (e.g., `EURUSD=X`, `GBPUSD=X`)
+- Trades Sunday evening through Friday evening
+- Automatically skips weekends and Saturday
+
+```python
+source.ingest_to_bundle(
+    bundle_name="forex-daily",
+    symbols=["EURUSD=X", "GBPUSD=X"],
+    start=pd.Timestamp("2023-01-01"),
+    end=pd.Timestamp("2023-12-31"),
+    frequency="1d",
+    asset_type="forex"  # 24/5 calendar
+)
+```
+
+**Crypto (`asset_type="crypto"`)**:
+- For cryptocurrencies (e.g., `BTC/USDT`, `ETH/USDT`)
+- Trades 24/7 with no holidays
+- Includes weekends and all days
+
+```python
+source.ingest_to_bundle(
+    bundle_name="crypto-daily",
+    symbols=["BTC/USDT", "ETH/USDT"],
+    start=pd.Timestamp("2024-01-01"),
+    end=pd.Timestamp("2024-12-31"),
+    frequency="1d",
+    asset_type="crypto"  # 24/7 calendar
+)
+```
+
+**Equity (`asset_type="equity"`)**:
+- For stocks and ETFs (e.g., `AAPL`, `MSFT`)
+- Follows NYSE business hours
+- Automatically skips NYSE holidays
+
+```python
+source.ingest_to_bundle(
+    bundle_name="us-stocks",
+    symbols=["AAPL", "MSFT"],
+    start=pd.Timestamp("2023-01-01"),
+    end=pd.Timestamp("2023-12-31"),
+    frequency="1d",
+    asset_type="equity"  # XNYS calendar (default)
+)
+```
+
+### Automatic Type Inference
+
+If you don't specify `asset_type`, the framework attempts to infer it from symbol patterns:
+
+- Symbols ending in `=X` → forex
+- Symbols containing `/` → crypto
+- Other symbols → equity (default)
+
+**However**, we recommend **always explicitly specifying `asset_type`** to avoid inference errors.
+
+---
+
+## Automatic Date Adjustment
+
+The framework automatically adjusts requested dates to match the bundle's trading calendar boundaries.
+
+### Why Date Adjustment Happens
+
+Each calendar has a start date based on available historical data:
+
+| Calendar | Start Date | Reason |
+|----------|-----------|---------|
+| 24/5 (forex) | 2005-10-28 | Data availability |
+| 24/7 (crypto) | 2010-07-17 | Bitcoin inception |
+| XNYS (equity) | 1990-01-02 | NYSE data coverage |
+
+### Example: Forex Date Adjustment
+
+```python
+source.ingest_to_bundle(
+    bundle_name="forex-data",
+    symbols=["EURUSD=X"],
+    start=pd.Timestamp("2000-01-01"),  # Before 24/5 calendar start
+    end=pd.Timestamp("2023-12-31"),
+    frequency="1d",
+    asset_type="forex"
+)
+# WARNING: Adjusted start date from 2000-01-01 to 2005-10-28 (24/5 calendar start)
+```
+
+### What Gets Adjusted
+
+- **Start date before calendar start** → Adjusted to calendar start date
+- **End date after calendar end** → Adjusted to calendar end date
+- **Dates on non-trading days** → Adjusted to nearest valid trading day
+
+### How to Avoid Adjustment Warnings
+
+Check calendar boundaries before ingesting:
+
+```python
+from rustybt.data.bundles.calendar import TradingCalendarRegistry
+
+# Get calendar
+calendar = TradingCalendarRegistry.get_calendar("24/5")
+
+# Check boundaries
+print(f"Calendar start: {calendar.first_session}")
+print(f"Calendar end: {calendar.last_session}")
+
+# Use valid dates for ingestion
+source.ingest_to_bundle(
+    bundle_name="forex-data",
+    symbols=["EURUSD=X"],
+    start=calendar.first_session,  # No adjustment needed
+    end=pd.Timestamp("2023-12-31"),
+    frequency="1d",
+    asset_type="forex"
+)
+```
+
+---
+
+## Migrating Existing Bundles
+
+If you have existing forex or crypto bundles created before the calendar feature, they default to the XNYS calendar. This may cause errors on weekends or NYSE holidays.
+
+### How to Migrate
+
+Re-ingest your bundles with the correct `asset_type` parameter:
+
+**Example: Migrate Forex Bundle**:
+
+```python
+from rustybt.data.sources import DataSourceRegistry
+import pandas as pd
+
+source = DataSourceRegistry.get_source("yfinance")
+
+# Re-ingest with correct calendar
+source.ingest_to_bundle(
+    bundle_name="forex-1d",  # Overwrites existing bundle
+    symbols=["EURUSD=X", "GBPUSD=X", "USDJPY=X"],
+    start=pd.Timestamp("2005-10-28"),  # 24/5 calendar start
+    end=pd.Timestamp("2023-12-31"),
+    frequency="1d",
+    asset_type="forex"  # ← Critical: assigns 24/5 calendar
+)
+```
+
+**Example: Migrate Crypto Bundle**:
+
+```python
+source = DataSourceRegistry.get_source("ccxt", exchange_id="binance")
+
+# Re-ingest with correct calendar
+source.ingest_to_bundle(
+    bundle_name="crypto-1h",  # Overwrites existing bundle
+    symbols=["BTC/USDT", "ETH/USDT"],
+    start=pd.Timestamp("2020-01-01"),
+    end=pd.Timestamp("2024-12-31"),
+    frequency="1h",
+    asset_type="crypto"  # ← Critical: assigns 24/7 calendar
+)
+```
+
+### Checking Bundle Calendar
+
+To check which calendar a bundle is using:
+
+```python
+from rustybt.data.bundles.metadata import BundleMetadata
+
+metadata = BundleMetadata.load("my-bundle")
+print(f"Bundle calendar: {metadata.calendar_name}")
+# Output: "24/5" for forex, "24/7" for crypto, "XNYS" for equity
+```
+
+If `calendar_name` is `None` or `"XNYS"` for a forex/crypto bundle, you should re-ingest with the correct `asset_type`.
 
 ---
 
@@ -263,12 +462,14 @@ configs = [
         "source": "yfinance",
         "bundle": "us-equities",
         "symbols": ["AAPL", "MSFT", "GOOGL"],
+        "asset_type": "equity",
     },
     {
         "source": "ccxt",
         "bundle": "crypto",
         "symbols": ["BTC/USDT", "ETH/USDT"],
         "exchange": "binance",
+        "asset_type": "crypto",
     },
 ]
 
@@ -279,7 +480,8 @@ for config in configs:
         symbols=config["symbols"],
         start=pd.Timestamp("2023-01-01"),
         end=pd.Timestamp("2023-12-31"),
-        frequency="1d"
+        frequency="1d",
+        asset_type=config["asset_type"]  # Specify asset type for calendar selection
     )
 ```
 

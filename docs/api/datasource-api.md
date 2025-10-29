@@ -52,6 +52,7 @@ class DataSource(ABC):
         start: pd.Timestamp,
         end: pd.Timestamp,
         frequency: str,
+        asset_type: str | None = None,
         **kwargs
     ) -> Path:
         """Ingest data and create bundle.
@@ -62,6 +63,13 @@ class DataSource(ABC):
             start: Start date
             end: End date
             frequency: Data frequency
+            asset_type: Optional asset type ('forex', 'crypto', 'equity', 'future').
+                       If None, will be inferred from symbol patterns.
+                       Used to determine appropriate trading calendar:
+                       - 'forex': 24/5 calendar (Sunday evening - Friday evening)
+                       - 'crypto': 24/7 calendar (continuous, no holidays)
+                       - 'equity': XNYS calendar (NYSE business hours)
+                       - 'future': XNYS calendar (NYSE business hours)
             **kwargs: Adapter-specific options
 
         Returns:
@@ -123,7 +131,8 @@ async def main():
         symbols=["AAPL", "MSFT", "GOOGL"],
         start=pd.Timestamp("2023-01-01"),
         end=pd.Timestamp("2023-12-31"),
-        frequency="1d"
+        frequency="1d",
+        asset_type="equity"  # Optional: specify asset type for calendar selection
     )
 
 asyncio.run(main())

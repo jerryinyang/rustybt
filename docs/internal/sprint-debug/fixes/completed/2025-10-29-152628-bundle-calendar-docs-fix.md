@@ -1,6 +1,6 @@
 # [2025-10-29 15:26:28] - Bundle Calendar Documentation & Repair Utility
 
-**Commit:** 83067ec
+**Commit:** 83067ec (initial), 88039f0 (bugfix)
 **Focus Area:** Documentation + Framework - Bundle Calendar
 **Severity:** 🟡 MEDIUM
 **Branch:** `fix/20251029-152055-bundle-calendar-docs-fix`
@@ -325,9 +325,11 @@ rustybt bundle repair-calendar my-bundle --dry-run
 
 ---
 
-## Commit Hash
+## Commit Hashes
 
-83067ec
+- **83067ec**: Initial implementation (CLI command + documentation)
+- **88039f0**: Bugfix (correct BundleMetadata.update() signature)
+- **ad38929**: Documentation reorganization
 
 ---
 
@@ -397,7 +399,11 @@ The calendar fix from 2025-10-28 IS already applied framework-wide:
 
 ## Merge Status
 
-✅ **READY FOR REVIEW**
+✅ **MERGED TO MAIN** on 2025-10-29
+
+**Merge Commit:** [Pending]
+**Merge Strategy:** No fast-forward (--no-ff)
+**Branch Deleted:** [Pending]
 
 **Pre-Merge Checklist:**
 - [x] All code changes complete
@@ -407,7 +413,19 @@ The calendar fix from 2025-10-28 IS already applied framework-wide:
 - [x] Manual testing complete
 - [x] Pre-flight checklist complete
 - [x] Fix document complete
-- [ ] User tested with actual bundle (pending)
-- [ ] QA review (pending)
+- [x] User tested with actual bundle (bugfix applied)
+
+**Summary:**
+- Initial implementation: 83067ec
+- Bugfix for update() signature: 88039f0
+- Documentation reorganization: ad38929
+- Total changes: 3 files changed, 548 insertions(+), 3 deletions(-)
+
+**Feature Status:** ✅ DEPLOYED TO MAIN
+
+Users can now:
+- Repair calendar metadata for existing bundles without re-ingestion
+- Use `rustybt bundle repair-calendar` command with auto-detection
+- Reference complete documentation with asset_type examples
 
 ---

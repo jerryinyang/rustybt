@@ -6,7 +6,9 @@
 
 ---
 
-## User-Reported Issue
+## User-Reported Issues
+
+### Issue 1: Missing API Parameter Exposure
 
 **User Error:**
 ```
@@ -23,6 +25,32 @@ All features and parameters available in Python implementation files should be a
 The `return_type` parameter (which enables 19.35% performance optimization for array returns) is not accessible to users calling `data.history()` in their strategies.
 
 **Result:** Framework is incomplete - users cannot access performance optimizations that exist in the underlying implementation.
+
+### Issue 2: Missing Type Hints and Docstring Exposure
+
+**User Error:**
+```
+The whole pyx compiling exposure also affects/hides the docstring hinting for all the framework components, affecting user experience and usability of the framework.
+```
+
+**User Scenario:**
+When users try to use IDE autocomplete or `help()` function on compiled .pyx modules, they get:
+- ❌ Outdated parameter signatures (missing new parameters like `return_type`)
+- ❌ Incomplete type hints
+- ❌ Poor IDE autocomplete experience
+- ❌ Type checkers can't validate code properly
+
+**Expected Behavior:**
+IDE autocomplete, type checkers, and `help()` should show complete, up-to-date signatures and type hints for all .pyx modules.
+
+**Actual Behavior:**
+Compiled .so/.pyd files don't expose full type information. Example:
+```python
+>>> help(BarData.history)
+history(self, assets, fields, bar_count, frequency)  # Missing return_type!
+```
+
+**Result:** Poor developer experience - users can't discover APIs, parameters are hidden, IDE support is degraded.
 
 ---
 
@@ -173,6 +201,8 @@ def history(
 
 ## Fixes Applied
 
+### Fix 1: Expose return_type Parameter in BarData.history()
+
 **1. Modified `rustybt/_protocol.pyx`** (lines 532-688)
 
 **Changes:**
@@ -225,6 +255,64 @@ def history(self, assets, fields, bar_count, frequency, return_type='dataframe')
 
 ---
 
+### Fix 2: Create Type Stub Files for IDE Support
+
+**Problem:** Compiled .pyx files don't expose complete type information to IDEs and type checkers.
+
+**Solution:** Create `.pyi` stub files that provide full type hints and signatures.
+
+**2. Created `rustybt/_protocol.pyi`** (NEW - 385 lines)
+
+**Features:**
+- ✅ Full type hints for all `BarData` methods
+- ✅ `@overload` decorators for different parameter combinations
+- ✅ Complete docstrings with parameter descriptions
+- ✅ **Exposes new `return_type` parameter** with `Literal["dataframe", "array"]` type
+- ✅ Proper return type hints: `Union[pd.Series, pd.DataFrame, np.ndarray]`
+- ✅ `InnerPosition` class type hints
+
+**Benefits:**
+- ✅ IDEs now show correct autocomplete with `return_type` parameter
+- ✅ Type checkers (mypy, pylance) validate array/dataframe return types
+- ✅ `help()` will show updated signatures after recompilation
+- ✅ Documentation tools (Sphinx) can generate accurate API docs
+
+**3. Created `rustybt/assets/_assets.pyi`** (NEW - 126 lines)
+
+**Features:**
+- ✅ Full type hints for `Asset`, `Equity`, `Future` classes
+- ✅ All attributes properly typed
+- ✅ All methods with complete signatures
+- ✅ Rich comparison operators (__eq__, __lt__, etc.)
+- ✅ Properties (exchange, exchange_full, country_code)
+
+**Benefits:**
+- ✅ IDEs provide autocomplete for asset attributes
+- ✅ Type checkers validate asset usage
+- ✅ Better developer experience when working with assets
+
+---
+
+### Remaining Work: Additional Stub Files
+
+**Status:** 14 more .pyx files need stub files for complete IDE support.
+
+**Priority files** (should be created next):
+1. `rustybt/assets/continuous_futures.pyi` - ContinuousFuture class
+2. `rustybt/data/_adjustments.pyi` - Adjustments loading
+3. `rustybt/finance/_finance_ext.pyi` - Finance calculations
+4. `rustybt/lib/adjustment.pyi` - Adjustment classes
+
+**Lower priority** (internal/specialized):
+- data/_equities.pyi, data/_minute_bar_internal.pyi
+- lib/_factorize.pyi, lib/_*window.pyi (4 files)
+- lib/rank.pyi, gens/sim_engine.pyi
+- data/_resample.pyi
+
+**Recommendation:** Create remaining stub files in follow-up task to maintain IDE support quality across entire framework.
+
+---
+
 ## Documentation Updated
 
 - [ ] `docs/api/data.md` - Document `return_type` parameter in `data.history()` API
@@ -248,25 +336,50 @@ def history(self, assets, fields, bar_count, frequency, return_type='dataframe')
 
 ## Files Modified
 
+**Core Implementation:**
 - `rustybt/_protocol.pyx` - Added `return_type` parameter to BarData.history()
-- `tests/test_protocol.py` - Added tests for new parameter
-- `docs/api/data.md` - Documented new parameter (pending)
-- `CHANGELOG.md` - Added entry (pending)
+
+**Type Stub Files (NEW):**
+- `rustybt/_protocol.pyi` - Full type hints for BarData (385 lines)
+- `rustybt/assets/_assets.pyi` - Full type hints for Asset classes (126 lines)
+
+**Documentation (Pending):**
+- `tests/test_protocol.py` - Add tests for new parameter (pending)
+- `docs/api/data.md` - Document new parameter (pending)
+- `CHANGELOG.md` - Add entry (pending)
 
 ---
 
 ## Statistics
 
-- Issues found: 1 (after auditing 16 .pyx files)
-- Issues fixed: 1
-- Files modified: 1 (rustybt/_protocol.pyx)
-- Lines changed: +58/-11 (net: +47 lines)
+**Issues Found:**
+- Issue 1: Missing API parameter exposure - 1 critical issue (after auditing 16 .pyx files)
+- Issue 2: Missing type stub files - 16 .pyx files without .pyi stubs (only 2 existed)
+
+**Issues Fixed:**
+- ✅ Issue 1: Fixed - `return_type` parameter exposed in BarData.history()
+- ✅ Issue 2: Partially fixed - Created 2 critical stub files (14 remaining)
+
+**Files Modified:**
+- 1 .pyx file modified: `rustybt/_protocol.pyx`
+- 2 .pyi files created: `_protocol.pyi`, `assets/_assets.pyi`
+
+**Lines Changed:**
+- Protocol fix: +58/-11 (net: +47 lines in _protocol.pyx)
   - Updated method signature (line 538)
   - Updated decorator (line 532)
   - Updated docstring (+28 lines, lines 558-606)
   - Added conversion logic (+13 lines at two return points)
+- Stub files: +511 lines (385 + 126)
+
+**Impact:**
 - Performance improvement enabled: 19.35% for array-consuming strategies
+- IDE support: Dramatically improved for BarData and Asset classes
+- Type checking: Now functional for critical user-facing APIs
 - Backward compatibility: 100% (default parameter)
+
+**Remaining Work:**
+- 14 more .pyi stub files needed for complete IDE support
 
 ---
 

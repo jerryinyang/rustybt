@@ -328,7 +328,7 @@ User should find clear examples and documentation showing:
 
 ## Commit Hash
 
-`[commit hash]`
+`db124aa`
 
 ---
 
@@ -340,7 +340,11 @@ User should find clear examples and documentation showing:
 
 ## Notes
 
-- Starting investigation into multi-strategy capabilities
-- Will verify all source implementations before documenting
+- All multi-strategy capabilities verified to exist in codebase
+- PortfolioAllocator fully implemented with 5 allocation algorithms
+- Created comprehensive guide with complete working examples
+- Added notebook example demonstrating three-strategy portfolio
+- Clarified Pipeline API confusion (data processing vs multi-strategy execution)
+- Ready for QA review
 
 ---

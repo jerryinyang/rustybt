@@ -9,6 +9,8 @@ from typing import Any
 import pandas as pd
 
 from rustybt._protocol import BarData
+from rustybt.assets.assets import AssetFinder
+from rustybt.finance.blotter.simulation_blotter import SimulationBlotter
 from rustybt.protocol import Account, Portfolio
 
 class TradingAlgorithm:
@@ -25,9 +27,9 @@ class TradingAlgorithm:
     def analyze(self, context: TradingAlgorithm, perf: pd.DataFrame) -> None: ...
 
     # Core attributes that users access via context
-    asset_finder: Any  # AssetFinder type stub doesn't exist yet
+    asset_finder: AssetFinder
     portfolio: Portfolio
     account: Account
-    blotter: Any  # SimulationBlotter type stub doesn't exist yet
+    blotter: SimulationBlotter
 
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...

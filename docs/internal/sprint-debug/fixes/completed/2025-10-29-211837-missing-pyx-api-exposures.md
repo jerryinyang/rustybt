@@ -272,7 +272,7 @@ def history(self, assets, fields, bar_count, frequency, return_type='dataframe')
 
 ## Commit Hash
 
-`[Pending - will update after implementation]`
+`594be22`
 
 ---
 

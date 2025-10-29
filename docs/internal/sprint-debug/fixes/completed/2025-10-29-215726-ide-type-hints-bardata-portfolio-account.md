@@ -1,6 +1,6 @@
 # [2025-10-29 21:57:26] - Add Missing IDE Type Hints for BarData, Portfolio, Account
 
-**Commit:** [Pending]
+**Commit:** 640c310
 **Focus Area:** Framework - Type System Infrastructure
 **Severity:** 🟡 MEDIUM
 
@@ -196,13 +196,15 @@ User is writing a trading strategy in `temp/strategies/aura.py` and expects IDE 
 
 ## Commit Hash
 
-`[Pending]`
+`640c310`
 
 ---
 
 ## Branch
 
 `fix/20251029-215726-ide-type-hints-bardata-portfolio-account`
+
+**Status**: ✅ Pushed to remote, awaiting QA review
 
 ---
 

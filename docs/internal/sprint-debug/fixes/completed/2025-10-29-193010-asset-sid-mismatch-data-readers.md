@@ -1,6 +1,6 @@
 # [2025-10-29 19:30:10] - Fix Asset/SID Mismatch in Data Readers
 
-**Commit:** [Pending]
+**Commit:** bf65ef0
 **Focus Area:** Framework - Data Reading Layer (Parquet & Bcolz)
 **Severity:** 🔴 CRITICAL
 

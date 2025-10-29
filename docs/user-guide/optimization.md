@@ -572,8 +572,8 @@ pytest tests/strategies/test_my_strategy.py
 
 - [Performance Characteristics](../performance/characteristics.md) - Detailed metrics and flame graphs
 - [Rust Migration Notes](../migration/rust-removal.md) - Rust removal context
-- [API Documentation](../../rustybt/optimization/README.md) - Full API reference
-- [Benchmarking Methodology](../internal/benchmarks/methodology.md) - How metrics were measured
+- [Optimization API Documentation](../api/optimization/README.md) - Full API reference
+- [Optimization Caching](../guides/optimization-caching-performance-tuning.md) - Performance tuning
 
 ---
 

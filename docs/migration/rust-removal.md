@@ -441,10 +441,10 @@ jobs:
 
 ## Further Reading
 
-- [Story X4.2 Completion Summary](../internal/stories/completed/X4.2.establish-pure-python-baseline.story.md)
 - [Performance Characteristics](../performance/characteristics.md) - Epic X4 optimization results
 - [Optimization User Guide](../user-guide/optimization.md) - How to use new features
-- [Epic X4 PRD](../internal/prd/epic-X4-performance-benchmarking-optimization.md) - Full epic context
+- [Optimization API Overview](../api/optimization/README.md) - Optimization framework
+- Story X4.2 Completion Summary - See internal documentation (excluded from public docs)
 
 ---
 

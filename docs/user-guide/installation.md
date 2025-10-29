@@ -382,10 +382,10 @@ pip uninstall <dependency1> <dependency2> ... -y
 
 After installation:
 
-1. **Run a simple backtest**: [Quickstart Tutorial](../quickstart.md)
+1. **Run a simple backtest**: [Quickstart Tutorial](../getting-started/quickstart.md)
 2. **Understand code capture**: [Code Capture Guide](code-capture.md)
-3. **Optimize strategies**: [Optimization Guide](../optimization/README.md)
-4. **Go live**: [Live Trading Setup](../live-trading/setup.md)
+3. **Optimize strategies**: [Optimization API Overview](../api/optimization/README.md)
+4. **Go live**: [Live Trading Overview](../api/live-trading/README.md)
 
 ## Getting Help
 

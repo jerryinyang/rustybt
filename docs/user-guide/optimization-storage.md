@@ -270,5 +270,6 @@ files:
 ## Related Documentation
 
 - [Code Capture Guide](code-capture.md) - Detailed code capture documentation
-- [Optimization Framework](../guides/optimization.md) - Parameter optimization strategies
+- [Optimization API Overview](../api/optimization/README.md) - Parameter optimization strategies
 - [Installation Guide](installation.md) - Installing RustyBT
+- [Optimization Caching](../guides/optimization-caching-performance-tuning.md) - Performance optimization

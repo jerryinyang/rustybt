@@ -363,7 +363,7 @@ The output organization system activates automatically when you upgrade to v0.2.
 
 ### Related APIs
 - [DataCatalog API](../data-management/catalog/README.md) - Data provenance
-- [TradingAlgorithm API](../../api-reference.md) - Core execution engine
+- [Execution Methods Guide](../../guides/execution-methods.md) - Strategy execution patterns
 
 ## Support
 

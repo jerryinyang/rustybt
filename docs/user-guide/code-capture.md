@@ -265,4 +265,5 @@ else:
 
 - [Optimization Storage Guide](optimization-storage.md) - Storage optimization during parameter sweeps
 - [Installation Guide](installation.md) - Installing RustyBT with full features
-- [Backtest Configuration](backtest-configuration.md) - Configuring backtest runs
+- [Configuration Guide](../getting-started/configuration.md) - Configuring backtest runs
+- [Backtest Output Organization](../guides/backtest-output-organization.md) - Understanding output structure

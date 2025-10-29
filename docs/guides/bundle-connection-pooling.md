@@ -443,12 +443,12 @@ config.max_bundle_pool_size = 100
 ## API Reference
 
 See full API documentation:
-- [BundleConnectionPool API](../api/optimization/bundle_pool.md)
-- [Cache Invalidation API](../api/optimization/cache_invalidation.md)
-- [OptimizationConfig API](../api/optimization/config.md)
+- [Optimization API Overview](../api/optimization/README.md)
+- [Caching System Guide](caching-system.md)
+- [Data Management Performance](../api/data-management/performance/optimization.md)
 
 ## See Also
 
 - [Optimization Caching & Performance Tuning](optimization-caching-performance-tuning.md)
-- [DataPortal History Cache](dataportal-history-cache.md)
-- [Performance Benchmarking](../internal/benchmarks/)
+- [Caching Guide](caching-guide.md)
+- [Data Management Caching](../api/data-management/performance/caching.md)

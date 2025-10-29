@@ -197,6 +197,6 @@ A: Simply delete or rename `strategy.yaml`.
 
 ## See Also
 
-- [Backtest Output Organization](../../guides/backtest-output.md)
-- [Import Analysis](../../guides/import-analysis.md)
-- [Configuration Reference](../../reference/configuration.md)
+- [Backtest Output Organization](../../guides/backtest-output-organization.md)
+- [Configuration Guide](../../getting-started/configuration.md)
+- [Strategy Code Capture](../../guides/strategy-code-capture.md)

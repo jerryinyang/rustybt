@@ -125,7 +125,9 @@ nav:
       - Development:
           - Type Hinting: guides/type-hinting.md
           - Exception Handling: guides/exception-handling.md
+          - Execution Methods: guides/execution-methods.md
           - Pipeline API: guides/pipeline-api-guide.md
+          - Multi-Strategy Portfolio: guides/multi-strategy-portfolio-guide.md
       - Production:
           - Deployment Guide: guides/deployment-guide.md
           - Production Checklist: guides/production-checklist.md
@@ -147,9 +149,10 @@ nav:
               - 06. Walk-Forward Testing: examples/notebooks/06_walk_forward.ipynb
               - 07. Risk Analytics: examples/notebooks/07_risk_analytics.ipynb
               - 08. Portfolio Construction: examples/notebooks/08_portfolio_construction.ipynb
-              - 09. Live Paper Trading: examples/notebooks/09_live_paper_trading.ipynb
+              - 09. Multi-Strategy Portfolio: examples/notebooks/09_multi_strategy_portfolio.ipynb
+              - 10. Live Paper Trading: examples/notebooks/09_live_paper_trading.ipynb
           - Complete Workflows:
-              - 10. Full Workflow (⭐ Recommended): examples/notebooks/10_full_workflow.ipynb
+              - 11. Full Workflow (⭐ Recommended): examples/notebooks/10_full_workflow.ipynb
       - Python Tutorials:
           - Data Ingestion:
               - CCXT Data Ingestion: examples/ingest_ccxt.py

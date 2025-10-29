@@ -132,7 +132,7 @@ async def main():
         start=pd.Timestamp("2023-01-01"),
         end=pd.Timestamp("2023-12-31"),
         frequency="1d",
-        asset_type="equity"  # Optional: specify asset type for calendar selection
+        asset_type="equity"  # Assigns XNYS calendar for US equities
     )
 
 asyncio.run(main())
@@ -167,6 +167,16 @@ async def main():
         frequency="1m"
     )
 
+    # Ingest to bundle
+    source.ingest_to_bundle(
+        bundle_name="alpaca-stocks",
+        symbols=["AAPL", "MSFT"],
+        start=pd.Timestamp("2024-01-01"),
+        end=pd.Timestamp("2024-12-31"),
+        frequency="1d",
+        asset_type="equity"  # Assigns XNYS calendar for US equities
+    )
+
 asyncio.run(main())
 ```
 
@@ -198,6 +208,16 @@ async def main():
         frequency="1h"
     )
 
+    # Ingest to bundle
+    source.ingest_to_bundle(
+        bundle_name="crypto-hourly",
+        symbols=["BTC/USDT", "ETH/USDT"],
+        start=pd.Timestamp("2024-01-01"),
+        end=pd.Timestamp("2024-12-31"),
+        frequency="1h",
+        asset_type="crypto"  # Assigns 24/7 calendar for cryptocurrencies
+    )
+
 asyncio.run(main())
 ```
 
@@ -222,6 +242,16 @@ async def main():
         start=pd.Timestamp("2024-01-01"),
         end=pd.Timestamp("2024-01-31"),
         frequency="1m"
+    )
+
+    # Ingest to bundle
+    source.ingest_to_bundle(
+        bundle_name="polygon-stocks",
+        symbols=["AAPL", "TSLA"],
+        start=pd.Timestamp("2024-01-01"),
+        end=pd.Timestamp("2024-01-31"),
+        frequency="1m",
+        asset_type="equity"  # Assigns XNYS calendar for US equities
     )
 
 asyncio.run(main())
@@ -252,6 +282,16 @@ async def main():
         start=pd.Timestamp("2023-01-01"),
         end=pd.Timestamp("2023-12-31"),
         frequency="1d"
+    )
+
+    # Ingest to bundle
+    source.ingest_to_bundle(
+        bundle_name="custom-data",
+        symbols=["AAPL", "MSFT"],
+        start=pd.Timestamp("2023-01-01"),
+        end=pd.Timestamp("2023-12-31"),
+        frequency="1d",
+        asset_type="equity"  # Specify asset type for appropriate calendar
     )
 
 asyncio.run(main())

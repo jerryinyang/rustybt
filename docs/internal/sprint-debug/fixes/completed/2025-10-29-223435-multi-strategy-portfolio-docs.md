@@ -345,6 +345,16 @@ User should find clear examples and documentation showing:
 - Created comprehensive guide with complete working examples
 - Added notebook example demonstrating three-strategy portfolio
 - Clarified Pipeline API confusion (data processing vs multi-strategy execution)
-- Ready for QA review
+- Documentation build successful with `mkdocs build --strict`
+- QA approved, merged to main
+
+---
+
+## Merge Status
+
+✅ **Merged to main** on 2025-10-29
+- Commits: db124aa, 050bc65
+- Branch deleted: fix/20251029-223435-multi-strategy-portfolio-docs (local + remote)
+- Main updated: fa425a2 → 050bc65
 
 ---

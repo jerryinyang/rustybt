@@ -401,9 +401,9 @@ The calendar fix from 2025-10-28 IS already applied framework-wide:
 
 ✅ **MERGED TO MAIN** on 2025-10-29
 
-**Merge Commit:** [Pending]
+**Merge Commit:** 788510d
 **Merge Strategy:** No fast-forward (--no-ff)
-**Branch Deleted:** [Pending]
+**Branch Deleted:** ✅ fix/20251029-152055-bundle-calendar-docs-fix (local)
 
 **Pre-Merge Checklist:**
 - [x] All code changes complete

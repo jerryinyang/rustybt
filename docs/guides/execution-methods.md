@@ -593,14 +593,15 @@ if __name__ == "__main__":
     print(f"Return: {result['returns'].iloc[-1]:.2%}")
 ```
 
-### Example 2: Multi-Asset Portfolio (Class-Based, Python API)
+### Example 2: Multi-Asset Portfolio (Class-Based, CLI)
+
+!!! important "Class-Based Strategies Require CLI"
+    Strategies inheriting from `TradingAlgorithm` **must** be run using the CLI (`rustybt run -f`). The Python API `run_algorithm()` does not support class-based strategies.
 
 ```python
 # portfolio_strategy.py
 from rustybt.algorithm import TradingAlgorithm
 from rustybt.api import order_target_percent, symbol
-from rustybt.utils.run_algo import run_algorithm
-import pandas as pd
 
 class EqualWeightPortfolio(TradingAlgorithm):
     def initialize(self):
@@ -618,16 +619,16 @@ class EqualWeightPortfolio(TradingAlgorithm):
         weight = 1.0 / len(self.assets)
         for asset in self.assets:
             order_target_percent(asset, weight)
+```
 
-if __name__ == "__main__":
-    result = run_algorithm(
-        algorithm_class=EqualWeightPortfolio,
-        bundle='yfinance-profiling',
-        start=pd.Timestamp('2020-01-01'),
-        end=pd.Timestamp('2023-12-31'),
-        capital_base=100000
-    )
-    print(f"Sharpe: {result['sharpe']:.2f}")
+**Save to file and run with CLI:**
+
+```bash
+rustybt run -f portfolio_strategy.py \
+    -b yfinance-profiling \
+    --start 2020-01-01 \
+    --end 2023-12-31 \
+    --capital-base 100000
 ```
 
 ---

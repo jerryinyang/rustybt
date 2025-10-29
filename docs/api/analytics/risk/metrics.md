@@ -96,15 +96,30 @@ print(f"CVaR (95%): {cvar_95:.2%}")
 
 ```python
 from rustybt.analytics import RiskAnalytics
+from rustybt.api import order_target_percent, symbol
 from rustybt.utils.run_algo import run_algorithm
 import pandas as pd
 
+# Define simple strategy
+def initialize(context):
+    context.asset = symbol('AAPL')
+
+def handle_data(context, data):
+    # Simple momentum strategy
+    prices = data.history(context.asset, 'price', 20, '1d')
+    if prices[-1] > prices.mean():
+        order_target_percent(context.asset, 1.0)
+    else:
+        order_target_percent(context.asset, 0)
+
 # Run backtest
 result = run_algorithm(
-    algorithm_class=MyStrategy,
+    initialize=initialize,
+    handle_data=handle_data,
     start=pd.Timestamp('2020-01-01'),
     end=pd.Timestamp('2023-12-31'),
-    capital_base=100000
+    capital_base=100000,
+    bundle='yfinance-profiling'
 )
 
 # Create risk analytics

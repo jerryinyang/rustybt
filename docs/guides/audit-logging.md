@@ -432,15 +432,36 @@ rustybt run -f custom_strategy.py -b yfinance-profiling --start 2020-01-01 --end
 
 Logs will be written to the configured directory (default: `~/.rustybt/logs/`).
 
-#### Python API Method
+#### Python API Method (Function-Based Strategies Only)
+
+!!! note "Class-Based vs Function-Based"
+    The `CustomStrategy` example above is class-based and must use the CLI. For Python API (`run_algorithm()`), use function-based strategies:
 
 ```python
+from rustybt.api import order, symbol
 from rustybt.utils.run_algo import run_algorithm
 import pandas as pd
+import structlog
+
+def initialize(context):
+    """Initialize with audit logging."""
+    context.asset = symbol('AAPL')
+    context.logger = structlog.get_logger()
+    context.logger.info("strategy_initialized", asset=context.asset.symbol)
+
+def handle_data(context, data):
+    """Handle data with audit logging."""
+    price = data.current(context.asset, 'price')
+    context.logger.info("price_check", asset=context.asset.symbol, price=str(price))
+
+    if price > 150:
+        context.logger.info("order_placed", asset=context.asset.symbol, qty=100)
+        order(context.asset, 100)
 
 if __name__ == "__main__":
     result = run_algorithm(
-        algorithm_class=CustomStrategy,
+        initialize=initialize,
+        handle_data=handle_data,
         bundle='yfinance-profiling',
         start=pd.Timestamp('2020-01-01'),
         end=pd.Timestamp('2023-12-31'),

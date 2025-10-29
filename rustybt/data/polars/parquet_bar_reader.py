@@ -75,6 +75,30 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
         self._start_session = pd.Timestamp(start_session).normalize()
         self._end_session = pd.Timestamp(end_session).normalize()
 
+        # Ensure sessions are within calendar's valid range
+        calendar_first = self._trading_calendar.first_session
+        calendar_last = self._trading_calendar.last_session
+
+        if self._start_session < calendar_first:
+            logger.warning(
+                "parquet_bar_reader_start_adjusted",
+                requested_start=str(self._start_session),
+                calendar_first=str(calendar_first),
+                message=f"Bundle start session {self._start_session.date()} is before "
+                f"calendar's first session {calendar_first.date()}. Adjusting to calendar's first session.",
+            )
+            self._start_session = calendar_first
+
+        if self._end_session > calendar_last:
+            logger.warning(
+                "parquet_bar_reader_end_adjusted",
+                requested_end=str(self._end_session),
+                calendar_last=str(calendar_last),
+                message=f"Bundle end session {self._end_session.date()} is after "
+                f"calendar's last session {calendar_last.date()}. Adjusting to calendar's last session.",
+            )
+            self._end_session = calendar_last
+
         # Initialize Polars reader
         self._reader = PolarsParquetDailyReader(
             str(self.bundle_path),
@@ -85,6 +109,11 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
         # Cache for loaded data
         self._cache: dict[tuple, np.ndarray] = {}
 
+        # Verify actual data range matches requested range
+        # This catches metadata mismatches where bundle claims wider date range
+        # than actual Parquet files contain
+        self._verify_and_adjust_data_range()
+
         logger.info(
             "parquet_bar_reader_initialized",
             bundle_path=str(self.bundle_path),
@@ -92,6 +121,101 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
             start_session=str(self._start_session),
             end_session=str(self._end_session),
         )
+
+    def _verify_and_adjust_data_range(self) -> None:
+        """Verify actual data range and adjust sessions if needed.
+
+        Scans actual Parquet data to find the true date range with data.
+        Adjusts start_session and end_session if actual data is more limited
+        than what the bundle metadata claims.
+
+        This handles cases where bundle metadata is outdated or incorrect.
+        """
+        try:
+            # Scan Parquet files to get list of available SIDs
+            daily_bars_path = self.bundle_path / "daily_bars"
+            if not daily_bars_path.exists():
+                logger.warning(
+                    "daily_bars_not_found",
+                    message="Cannot verify data range - daily_bars directory not found",
+                )
+                return
+
+            # Get a sample of parquet files to check (may be in year=XXXX subdirectories)
+            parquet_files = list(daily_bars_path.glob("**/*.parquet"))
+            if not parquet_files:
+                logger.warning(
+                    "no_parquet_files",
+                    message="Cannot verify data range - no Parquet files found",
+                )
+                return
+
+            # Read one file to get sample SIDs
+            import polars as pl
+
+            df = pl.read_parquet(str(parquet_files[0]))
+            sample_sids = df["sid"].unique().to_list()[:10]  # Check first 10 assets only
+
+            if not sample_sids:
+                logger.warning(
+                    "no_assets_found",
+                    message="Cannot verify data range - no assets found in Parquet files",
+                )
+                return
+
+            # Sample a few assets to find actual data range
+            actual_first = None
+            actual_last = None
+
+            for sid in sample_sids:
+                first = self._reader.get_first_available_date(sid)
+                last = self._reader.get_last_available_date(sid)
+
+                if first is not None:
+                    first_ts = pd.Timestamp(first)
+                    if actual_first is None or first_ts < actual_first:
+                        actual_first = first_ts
+
+                if last is not None:
+                    last_ts = pd.Timestamp(last)
+                    if actual_last is None or last_ts > actual_last:
+                        actual_last = last_ts
+
+            if actual_first is None or actual_last is None:
+                logger.warning(
+                    "no_actual_data_found",
+                    message="Cannot verify data range - no actual data found in Parquet files",
+                )
+                return
+
+            # Adjust start_session if actual data starts later
+            if actual_first > self._start_session:
+                logger.warning(
+                    "data_range_adjusted_to_actual",
+                    metadata_start=str(self._start_session),
+                    actual_start=str(actual_first),
+                    message=f"Bundle metadata claims data starts at {self._start_session.date()}, "
+                    f"but actual data starts at {actual_first.date()}. Adjusting to actual data range.",
+                )
+                self._start_session = actual_first
+
+            # Adjust end_session if actual data ends earlier
+            if actual_last < self._end_session:
+                logger.warning(
+                    "data_range_adjusted_to_actual",
+                    metadata_end=str(self._end_session),
+                    actual_end=str(actual_last),
+                    message=f"Bundle metadata claims data ends at {self._end_session.date()}, "
+                    f"but actual data ends at {actual_last.date()}. Adjusting to actual data range.",
+                )
+                self._end_session = actual_last
+
+        except Exception as e:
+            logger.warning(
+                "data_range_verification_failed",
+                error=str(e),
+                message=f"Could not verify actual data range: {e}",
+            )
 
     @property
     def data_frequency(self):

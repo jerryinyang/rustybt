@@ -227,6 +227,17 @@ def _run(
         # Use daily bar reader's first trading day for daily-only bundles
         first_trading_day = bundle_data.equity_daily_bar_reader.first_trading_day
 
+    # Ensure first_trading_day is a valid session in the calendar
+    # Bundle data might start before the calendar's first valid session
+    calendar_first_session = trading_calendar.first_session
+    if first_trading_day < calendar_first_session:
+        log.warning(
+            f"Bundle first trading day {first_trading_day.date()} is before "
+            f"calendar's first session {calendar_first_session.date()}. "
+            f"Adjusting to calendar's first session."
+        )
+        first_trading_day = calendar_first_session
+
     data = DataPortal(
         bundle_data.asset_finder,
         trading_calendar=trading_calendar,

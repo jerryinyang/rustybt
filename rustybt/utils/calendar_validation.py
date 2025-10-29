@@ -142,10 +142,11 @@ def validate_backtest_dates(
     bundle_name: str,
     calendar_name: str,
 ) -> tuple[pd.Timestamp, pd.Timestamp]:
-    """Validate backtest dates against bundle's actual data range.
+    """Validate and adjust backtest dates to valid trading sessions.
 
     Ensures backtest dates are within both the bundle's data range and the
-    calendar's valid range.
+    calendar's valid range. Automatically adjusts dates to the nearest valid
+    trading sessions if the requested dates fall on non-trading days.
 
     Args:
         start: Requested backtest start date
@@ -156,19 +157,20 @@ def validate_backtest_dates(
         calendar_name: Trading calendar name
 
     Returns:
-        Tuple of (validated_start, validated_end)
+        Tuple of (adjusted_start, adjusted_end) where both are valid trading sessions
 
     Raises:
-        ValueError: If dates are outside bundle range or calendar range
+        ValueError: If dates are outside bundle range or calendar range, or no valid sessions exist
 
     Example:
-        >>> start = pd.Timestamp("2020-01-01")
+        >>> start = pd.Timestamp("2020-01-01")  # New Year's Day (holiday)
         >>> end = pd.Timestamp("2024-01-01")
         >>> bundle_start = pd.Timestamp("2010-01-01")
         >>> bundle_end = pd.Timestamp("2023-12-31")
         >>> validated_start, validated_end = validate_backtest_dates(
         ...     start, end, bundle_start, bundle_end, "forex-1d", "24/5"
         ... )
+        >>> # Returns next/previous valid trading sessions
     """
     # Check against bundle's data range
     if start < bundle_start:
@@ -202,4 +204,65 @@ def validate_backtest_dates(
             f"last session {last_session.date()}. Use a date <= {last_session.date()}"
         )
 
-    return start, end
+    # Get all valid trading sessions in the requested range
+    sessions = calendar.sessions_in_range(first_session, last_session)
+
+    # Adjust start date to nearest valid session on or after requested start
+    adjusted_start = start
+    if start not in sessions:
+        # Find the next valid session
+        future_sessions = sessions[sessions >= start]
+        if len(future_sessions) == 0:
+            raise ValueError(
+                f"No valid trading sessions found on or after {start.date()} "
+                f"for calendar '{calendar_name}'"
+            )
+        adjusted_start = future_sessions[0]
+        logger.warning(
+            "backtest_start_adjusted",
+            requested_start=str(start),
+            adjusted_start=str(adjusted_start),
+            calendar=calendar_name,
+            message=f"Requested start date {start.date()} is not a valid trading session. "
+            f"Adjusted to next valid session: {adjusted_start.date()}",
+        )
+
+    # Adjust end date to nearest valid session on or before requested end
+    adjusted_end = end
+    if end not in sessions:
+        # Find the previous valid session
+        past_sessions = sessions[sessions <= end]
+        if len(past_sessions) == 0:
+            raise ValueError(
+                f"No valid trading sessions found on or before {end.date()} "
+                f"for calendar '{calendar_name}'"
+            )
+        adjusted_end = past_sessions[-1]
+        logger.warning(
+            "backtest_end_adjusted",
+            requested_end=str(end),
+            adjusted_end=str(adjusted_end),
+            calendar=calendar_name,
+            message=f"Requested end date {end.date()} is not a valid trading session. "
+            f"Adjusted to previous valid session: {adjusted_end.date()}",
+        )
+
+    # Verify we have at least one trading day in the adjusted range
+    if adjusted_start > adjusted_end:
+        raise ValueError(
+            f"No valid trading sessions between {start.date()} and {end.date()} "
+            f"for calendar '{calendar_name}'"
+        )
+
+    # Log summary if any adjustments were made
+    if adjusted_start != start or adjusted_end != end:
+        logger.info(
+            "backtest_dates_adjusted",
+            original_start=str(start),
+            original_end=str(end),
+            adjusted_start=str(adjusted_start),
+            adjusted_end=str(adjusted_end),
+            calendar=calendar_name,
+        )
+
+    return adjusted_start, adjusted_end

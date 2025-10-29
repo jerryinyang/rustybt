@@ -542,6 +542,36 @@ class BundleMetadata:
             return result + 1
 
     @classmethod
+    def get_symbol_sid(cls, symbol: str) -> int | None:
+        """Get SID for a symbol if it already exists in the database.
+
+        Searches across all bundles to find if the symbol has already been assigned
+        a SID. This enables SID reuse when re-ingesting bundles.
+
+        Args:
+            symbol: Symbol to look up (will be normalized to uppercase)
+
+        Returns:
+            SID (id) if symbol exists, None if not found
+
+        Example:
+            >>> sid = BundleMetadata.get_symbol_sid("AAPL")
+            >>> if sid:
+            ...     print(f"AAPL already has SID: {sid}")
+            ... else:
+            ...     print("AAPL is a new symbol")
+        """
+        engine = cls._get_engine()
+        normalized_symbol = symbol.upper().strip()
+
+        with Session(engine) as session:
+            # Search for symbol across all bundles
+            stmt = select(bundle_symbols.c.id).where(bundle_symbols.c.symbol == normalized_symbol)
+            result = session.execute(stmt).scalar()
+
+            return result if result is not None else None
+
+    @classmethod
     def get_symbols(cls, bundle_name: str) -> list[dict[str, Any]]:
         """Get all symbols for bundle.
 

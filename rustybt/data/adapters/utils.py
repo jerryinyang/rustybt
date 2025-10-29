@@ -85,22 +85,46 @@ def normalize_symbols(symbols: Iterable[str]) -> list[str]:
 
 
 def build_symbol_sid_map(symbols: Iterable[str]) -> dict[str, int]:
-    """Build deterministic SID mapping for symbols.
+    """Build deterministic SID mapping for symbols, reusing existing SIDs.
 
-    Gets the next available SID from the global asset database to avoid
-    conflicts with existing symbols across all bundles.
+    First checks if symbols already exist in the global asset database and reuses
+    their existing SIDs. Only assigns new SIDs to symbols that don't exist yet.
+    This ensures SID consistency across bundle re-ingestions.
 
     Args:
         symbols: Iterable of symbol strings
 
     Returns:
         Dictionary mapping symbols to SIDs
+
+    Example:
+        >>> # First ingestion
+        >>> map1 = build_symbol_sid_map(["AAPL", "MSFT"])
+        >>> # {'AAPL': 1, 'MSFT': 2}
+        >>>
+        >>> # Re-ingestion - SIDs are reused
+        >>> map2 = build_symbol_sid_map(["AAPL", "GOOGL"])
+        >>> # {'AAPL': 1, 'GOOGL': 3}  <- AAPL keeps SID 1
     """
     from rustybt.data.bundles.metadata import BundleMetadata
 
     mapping: dict[str, int] = {}
 
-    # Get next available SID from database (global across all bundles)
+    # Phase 1: Check for existing SIDs in database
+    for symbol in symbols:
+        normalized_symbol = symbol.upper().strip()
+        if normalized_symbol in mapping:
+            continue  # Already processed (duplicate in input)
+
+        try:
+            existing_sid = BundleMetadata.get_symbol_sid(normalized_symbol)
+            if existing_sid is not None:
+                mapping[normalized_symbol] = existing_sid
+        except Exception:  # nosec B110 - Intentional: fail gracefully and assign new SID in phase 2
+            # Database access failed, will assign new SID in phase 2
+            pass
+
+    # Phase 2: Assign new SIDs to symbols not found in database
     try:
         next_sid = BundleMetadata.get_next_symbol_id()
     except Exception:
@@ -110,6 +134,7 @@ def build_symbol_sid_map(symbols: Iterable[str]) -> dict[str, int]:
     for symbol in symbols:
         normalized_symbol = symbol.upper().strip()
         if normalized_symbol not in mapping:
+            # Symbol not in database, assign new SID
             mapping[normalized_symbol] = next_sid
             next_sid += 1
 

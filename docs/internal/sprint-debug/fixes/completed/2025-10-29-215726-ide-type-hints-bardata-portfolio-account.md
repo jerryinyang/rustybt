@@ -224,15 +224,25 @@ User is writing a trading strategy in `temp/strategies/aura.py` and expects IDE 
 
 `fix/20251029-215726-ide-type-hints-bardata-portfolio-account`
 
-**Status**: ✅ COMPLETE - All context attributes now have proper type hints (no more Any placeholders!)
+**Status**: ✅ MERGED TO MAIN - Branch deleted
+
+---
+
+## Merge Status
+
+✅ **Merged to main on 2025-10-29**
+- Branch: `fix/20251029-215726-ide-type-hints-bardata-portfolio-account` (deleted)
+- Commits merged: `640c310`, `4fab8f8`, `4eb250b`, `6514739`
+- Files changed: +500/-6 lines (5 files modified/created)
 
 ---
 
 ## Notes
 
 - Good news: BarData type stubs already excellent in _protocol.pyi (lines 16-189), just needed to reference them
-- Future enhancement: Create .pyi stubs for AssetFinder and SimulationBlotter for complete coverage
+- ✅ COMPLETED: Created .pyi stubs for AssetFinder and SimulationBlotter - 100% coverage achieved!
 - This fix improves DX (developer experience) significantly for all strategy authors
 - No breaking changes - purely additive type information
+- All context attributes now have proper type hints (no more Any placeholders!)
 
 ---

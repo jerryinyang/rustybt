@@ -1059,6 +1059,98 @@ def bundle_migrate(dry_run: bool, no_backup: bool, rollback: int | None, validat
         module.validate_migration()
 
 
+@bundle.command(name="repair-calendar")
+@click.argument("bundle_name", type=str)
+@click.option(
+    "--asset-type",
+    type=click.Choice(["forex", "crypto", "equity", "future"], case_sensitive=False),
+    help="Asset type for calendar selection (will auto-detect if not specified)",
+)
+@click.option("--dry-run", is_flag=True, help="Preview changes without saving")
+def bundle_repair_calendar(bundle_name: str, asset_type: str | None, dry_run: bool):
+    """Repair bundle calendar metadata for existing bundles.
+
+    This command updates the trading calendar for bundles that were ingested
+    before the calendar feature was added. It's particularly useful for forex
+    and crypto bundles that default to XNYS calendar.
+
+    Examples:
+        rustybt bundle repair-calendar forex-1d --asset-type forex
+        rustybt bundle repair-calendar binance-spot-1d --asset-type crypto
+        rustybt bundle repair-calendar my-bundle --dry-run
+    """
+    console = Console()
+
+    # Check if bundle exists
+    metadata = BundleMetadata.get(bundle_name)
+    if metadata is None:
+        console.print(f"[red]Bundle '{bundle_name}' not found.[/red]")
+        raise click.exceptions.Exit(1)
+
+    # Get current calendar
+    current_calendar = metadata.get("calendar")
+    current_calendar_display = current_calendar or "None (defaults to XNYS)"
+
+    console.print(f"\n[bold]Bundle:[/bold] {bundle_name}")
+    console.print(f"[bold]Current calendar:[/bold] {current_calendar_display}\n")
+
+    # Infer asset type if not provided
+    if asset_type is None:
+        symbols = BundleMetadata.get_symbols(bundle_name)
+        if not symbols:
+            console.print("[red]No symbols found in bundle. Cannot infer asset type.[/red]")
+            console.print("Please specify --asset-type explicitly.")
+            raise click.exceptions.Exit(1)
+
+        # Import the helper function
+        from rustybt.data.polars.parquet_writer import ParquetWriter
+
+        # Get first symbol for inference
+        first_symbol = symbols[0]["symbol"]
+        inferred_type = ParquetWriter._infer_asset_type([first_symbol])
+
+        console.print(f"[yellow]Inferring asset type from symbols...[/yellow]")
+        console.print(f"Sample symbol: {first_symbol}")
+        console.print(f"Inferred type: {inferred_type}\n")
+
+        asset_type = inferred_type
+
+    # Determine target calendar
+    calendar_map = {
+        "forex": "24/5",
+        "crypto": "24/7",
+        "equity": "XNYS",
+        "future": "XNYS",
+    }
+
+    target_calendar = calendar_map.get(asset_type.lower(), "XNYS")
+
+    # Check if already correct
+    if current_calendar == target_calendar:
+        console.print(f"[green]✓ Calendar is already correct ({target_calendar})[/green]")
+        console.print("No changes needed.")
+        return
+
+    # Display proposed change
+    console.print("[bold]Proposed change:[/bold]")
+    console.print(f"  Asset type: {asset_type}")
+    console.print(f"  Current calendar: {current_calendar_display}")
+    console.print(f"  New calendar: {target_calendar}\n")
+
+    if dry_run:
+        console.print("[yellow]Dry run - no changes saved[/yellow]")
+        return
+
+    # Apply the fix
+    try:
+        BundleMetadata.update(bundle_name, calendar=target_calendar)
+        console.print(f"[green]✓ Calendar updated to {target_calendar}[/green]")
+        console.print("\nBundle is now ready to use with the correct trading calendar.")
+    except Exception as e:
+        console.print(f"[red]Error updating calendar: {e}[/red]")
+        raise click.exceptions.Exit(1)
+
+
 # ============================================================================
 # Cache Management Commands (Story 8.3: Smart Caching Layer)
 # ============================================================================

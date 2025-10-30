@@ -339,12 +339,13 @@ class ParquetWriter:
                 partitions_written += 1
                 last_output_file = output_file
 
-                logger.debug(
-                    "parquet_partition_written",
-                    partition=str(partition_path.relative_to(base_path)),
-                    rows=len(partition_data),
-                    compression=compression,
-                )
+                # Verbose logging disabled to reduce noise during ingestion
+                # logger.debug(
+                #     "parquet_partition_written",
+                #     partition=str(partition_path.relative_to(base_path)),
+                #     rows=len(partition_data),
+                #     compression=compression,
+                # )
 
             except Exception as e:
                 # Clean up temp file on error

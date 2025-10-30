@@ -263,12 +263,27 @@ def _run(
         )
 
     def choose_loader(column):
-        if column in USEquityPricing.columns:
-            return pipeline_loader
+        # Check if this column is an EquityPricing column (regardless of domain specialization)
+        # by unspecializing and comparing with base EquityPricing columns
+        from rustybt.pipeline.data import EquityPricing
+
         try:
-            return custom_loader.get(column)
-        except KeyError:
-            raise ValueError("No PipelineLoader registered for column %s." % column)
+            unspecialized_column = column.unspecialize()
+            if unspecialized_column in EquityPricing.columns:
+                return pipeline_loader
+        except AttributeError:
+            # Column doesn't have unspecialize method, not a BoundColumn
+            pass
+
+        # Try custom loader if provided
+        if custom_loader is not None:
+            try:
+                return custom_loader.get(column)
+            except KeyError:
+                raise ValueError("No PipelineLoader registered for column %s." % column)
+
+        # No loader found
+        raise ValueError("No PipelineLoader registered for column %s." % column)
 
     if isinstance(metrics_set, str):
         try:

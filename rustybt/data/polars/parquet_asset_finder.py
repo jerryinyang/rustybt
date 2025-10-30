@@ -235,3 +235,55 @@ class ParquetAssetFinder:
     def lookup_future_symbol(self, symbol):
         """Futures not supported in Parquet bundles."""
         raise NotImplementedError("Futures not supported in Parquet bundles")
+
+    def lifetimes(self, dates, include_start_date=False, country_codes=None):
+        """Compute a DataFrame representing asset lifetimes for the specified dates.
+
+        Parameters
+        ----------
+        dates : pd.DatetimeIndex
+            The dates for which to compute lifetimes.
+        include_start_date : bool, optional
+            Whether to count the asset as alive on its start_date.
+        country_codes : iterable[str], optional
+            Filter assets by country code (not implemented for Parquet bundles).
+
+        Returns
+        -------
+        lifetimes : pd.DataFrame
+            A DataFrame with dates as index and sids as columns.
+            Contains boolean values indicating whether each asset was alive on each date.
+        """
+        import numpy as np
+
+        # Get all assets (country_codes filtering not implemented yet)
+        all_sids = sorted(self._assets.keys())
+
+        # Create output DataFrame
+        lifetimes_data = np.zeros((len(dates), len(all_sids)), dtype=bool)
+
+        # For each asset, determine which dates it was alive
+        for col_idx, sid in enumerate(all_sids):
+            asset = self._assets[sid]
+            start = asset.start_date
+            end = asset.end_date
+
+            # Convert to comparable format
+            if not isinstance(start, pd.Timestamp):
+                start = pd.Timestamp(start)
+            if not isinstance(end, pd.Timestamp):
+                end = pd.Timestamp(end)
+
+            # Determine lifetime for this asset
+            for row_idx, date in enumerate(dates):
+                if include_start_date:
+                    is_alive = (start <= date) and (date <= end)
+                else:
+                    is_alive = (start < date) and (date <= end)
+                lifetimes_data[row_idx, col_idx] = is_alive
+
+        return pd.DataFrame(
+            lifetimes_data,
+            index=dates,
+            columns=pd.Index(all_sids, dtype="int64"),
+        )

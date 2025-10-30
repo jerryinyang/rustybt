@@ -340,7 +340,16 @@ def test_strategy_via_cli():
 
 ## Commit Hash
 
-`e6a6833`
+`e6a6833`, `b9e7b43`
+
+---
+
+## Merge Status
+
+✅ **Merged to main on 2025-10-30**
+- Branch deleted: `fix/20251030-011641-testing-docs-strategy-class`
+- Local branch cleaned up
+- All changes now in main branch
 
 ---
 

@@ -195,7 +195,16 @@ def run_algorithm(
 
 ## Commit Hash
 
-`a0f157a`
+`a0f157a`, `edc5ec9`
+
+---
+
+## Merge Status
+
+✅ **Merged to main on 2025-10-30**
+- Branch deleted: `fix/20251030-013733-ide-type-hints-stub-fixes`
+- Local branch cleaned up
+- All changes now in main branch
 
 ---
 

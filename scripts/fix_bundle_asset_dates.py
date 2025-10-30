@@ -76,32 +76,47 @@ def scan_parquet_data(bundle_path: Path) -> dict:
     return asset_data
 
 
-def get_symbol_mappings(bundle_path: Path) -> dict:
-    """Get sid-to-symbol mappings from existing metadata.
+def get_symbol_mappings(bundle_name: str) -> dict:
+    """Get sid-to-symbol mappings from global assets database.
 
     Args:
-        bundle_path: Path to bundle directory
+        bundle_name: Name of the bundle
 
     Returns:
         Dictionary mapping sid to symbol name
     """
-    metadata_db = bundle_path / "metadata.db"
-    conn = sqlite3.connect(str(metadata_db))
+    # Try to load from global assets database first
+    zipline_root = Path.home() / ".zipline"
+    assets_db = zipline_root / "assets-10.db"
+
+    if not assets_db.exists():
+        logger.warning(
+            "assets_db_not_found",
+            path=str(assets_db),
+            message="Cannot find global assets database",
+        )
+        return {}
+
+    conn = sqlite3.connect(str(assets_db))
     cursor = conn.cursor()
 
-    # Check if symbols table has data
-    cursor.execute("SELECT symbol_id, symbol FROM symbols")
+    # Query bundle_symbols table
+    cursor.execute(
+        "SELECT id, symbol FROM bundle_symbols WHERE bundle_name = ?",
+        (bundle_name,),
+    )
     rows = cursor.fetchall()
     conn.close()
 
     mappings = {row[0]: row[1] for row in rows}
 
     if mappings:
-        logger.info("loaded_symbol_mappings", count=len(mappings))
+        logger.info("loaded_symbol_mappings", count=len(mappings), source="global assets DB")
     else:
         logger.warning(
             "no_symbol_mappings",
-            message="metadata.db symbols table is empty - will use SID as symbol",
+            bundle_name=bundle_name,
+            message="No symbols found in global assets DB - will use generic names",
         )
 
     return mappings
@@ -245,7 +260,7 @@ def main():
     print("\n" + "=" * 60)
     print("Step 2: Loading symbol mappings...")
     print("=" * 60)
-    symbol_mappings = get_symbol_mappings(bundle_path)
+    symbol_mappings = get_symbol_mappings(bundle_name)
 
     if not symbol_mappings:
         print(

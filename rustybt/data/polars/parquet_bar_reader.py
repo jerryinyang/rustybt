@@ -272,30 +272,89 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
         NoDataOnDate
             If start_date or end_date is outside calendar range
         """
-        # Validate dates are in calendar
-        try:
-            start_idx = self.sessions.get_loc(start_date)
-            end_idx = self.sessions.get_loc(end_date)
-        except KeyError as exc:
-            raise NoDataOnDate(
-                f"Date not in calendar: {start_date if start_date not in self.sessions else end_date}"
-            ) from exc
+        # Gracefully adjust dates to available sessions instead of raising errors
+        adjusted_start = start_date
+        adjusted_end = end_date
+
+        # Check if start_date is in sessions, if not find nearest valid session
+        if start_date not in self.sessions:
+            # Find the next valid session on or after start_date
+            future_sessions = self.sessions[self.sessions >= start_date]
+            if len(future_sessions) == 0:
+                # No future sessions, use last available session
+                logger.warning(
+                    "start_date_after_all_sessions",
+                    requested_start=str(start_date),
+                    last_session=str(self.sessions[-1]),
+                    message=f"Requested start {start_date.date()} is after all available sessions. "
+                    f"Using last session: {self.sessions[-1].date()}",
+                )
+                adjusted_start = self.sessions[-1]
+            else:
+                logger.warning(
+                    "start_date_adjusted_to_session",
+                    requested_start=str(start_date),
+                    adjusted_start=str(future_sessions[0]),
+                    message=f"Requested start {start_date.date()} not in calendar. "
+                    f"Adjusted to next available session: {future_sessions[0].date()}",
+                )
+                adjusted_start = future_sessions[0]
+
+        # Check if end_date is in sessions, if not find nearest valid session
+        if end_date not in self.sessions:
+            # Find the previous valid session on or before end_date
+            past_sessions = self.sessions[self.sessions <= end_date]
+            if len(past_sessions) == 0:
+                # No past sessions, use first available session
+                logger.warning(
+                    "end_date_before_all_sessions",
+                    requested_end=str(end_date),
+                    first_session=str(self.sessions[0]),
+                    message=f"Requested end {end_date.date()} is before all available sessions. "
+                    f"Using first session: {self.sessions[0].date()}",
+                )
+                adjusted_end = self.sessions[0]
+            else:
+                logger.warning(
+                    "end_date_adjusted_to_session",
+                    requested_end=str(end_date),
+                    adjusted_end=str(past_sessions[-1]),
+                    message=f"Requested end {end_date.date()} not in calendar. "
+                    f"Adjusted to previous available session: {past_sessions[-1].date()}",
+                )
+                adjusted_end = past_sessions[-1]
+
+        # Validate adjusted range
+        if adjusted_start > adjusted_end:
+            logger.error(
+                "invalid_date_range_after_adjustment",
+                adjusted_start=str(adjusted_start),
+                adjusted_end=str(adjusted_end),
+            )
+            # Return empty arrays
+            num_dates = 1
+            num_assets = len(assets)
+            return [np.full((num_dates, num_assets), np.nan, dtype=np.float64) for _ in columns]
+
+        # Get indices for adjusted dates
+        start_idx = self.sessions.get_loc(adjusted_start)
+        end_idx = self.sessions.get_loc(adjusted_end)
 
         num_dates = end_idx - start_idx + 1
         num_assets = len(assets)
 
-        # Check cache
-        cache_key = (tuple(columns), start_date, end_date, tuple(assets))
+        # Check cache (use adjusted dates for cache key)
+        cache_key = (tuple(columns), adjusted_start, adjusted_end, tuple(assets))
         if cache_key in self._cache:
             logger.debug("cache_hit", cache_key=cache_key)
             return self._cache[cache_key]
 
-        # Load data from Parquet
+        # Load data from Parquet using adjusted dates
         try:
             df = self._reader.load_daily_bars(
                 sids=list(assets),
-                start_date=start_date.date(),
-                end_date=end_date.date(),
+                start_date=adjusted_start.date(),
+                end_date=adjusted_end.date(),
                 fields=list(columns),
             )
         except Exception as e:

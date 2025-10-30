@@ -340,7 +340,7 @@ def test_strategy_via_cli():
 
 ## Commit Hash
 
-[Pending]
+`e6a6833`
 
 ---
 

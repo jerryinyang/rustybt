@@ -32,16 +32,29 @@ logger = structlog.get_logger()
 
 
 class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
-    """Alpha Vantage API adapter.
+    """Alpha Vantage API adapter for stocks, forex, and cryptocurrencies.
 
     Supports:
-    - Stocks: Global equities
-    - Forex: Currency pairs
-    - Crypto: Digital currencies
+    - Stocks: Global equities with adjusted/unadjusted prices
+    - Forex: Currency pairs (200+ pairs)
+    - Crypto: Digital currencies (limited support, verify availability)
+
+    Timeframes:
+    - Intraday: 1m, 5m, 15m, 30m, 1h (up to 30 days trailing)
+    - Daily: 1d (20+ years historical)
+    - Weekly: 1w (20+ years historical)
+    - Monthly: 1M (20+ years historical)
+
+    Advanced features:
+    - Adjusted data: Split/dividend-adjusted prices (stocks only, daily/weekly/monthly)
+    - Extended hours: Pre/post-market data (stocks intraday, 4am-8pm ET vs 9:30am-4pm ET)
+    - Historical intraday: Month-specific queries for intraday data beyond 30 days
 
     Rate limits (configurable by tier):
     - Free: 5 requests/minute, 500 requests/day
-    - Premium: 75 requests/minute, 1200 requests/day
+    - Premium: 75 requests/minute, 1200 requests/day (extended_hours requires premium)
+
+    API Documentation: https://www.alphavantage.co/documentation/
 
     Implements both BaseAPIProviderAdapter and DataSource interfaces for backwards
     compatibility and unified data source access.
@@ -64,6 +77,13 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
         "15m": "15min",
         "30m": "30min",
         "1h": "60min",
+    }
+
+    # Additional timeframe mappings for daily/weekly/monthly
+    TIMEFRAME_MAPPING = {
+        "1d": "daily",
+        "1w": "weekly",
+        "1M": "monthly",
     }
 
     def __init__(
@@ -122,23 +142,57 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
         """
         return {"apikey": self.api_key}
 
-    def _get_function_name(self, timeframe: str) -> str:
+    def _get_function_name(self, timeframe: str, adjusted: bool = False) -> str:
         """Get Alpha Vantage function name based on asset type and timeframe.
 
         Args:
-            timeframe: Timeframe (e.g., "1d", "1h", "1m")
+            timeframe: Timeframe (e.g., "1d", "1h", "1m", "1w", "1M")
+            adjusted: If True, use adjusted data (stocks only, daily/weekly/monthly)
 
         Returns:
             Alpha Vantage function name
+
+        Raises:
+            ValueError: If timeframe is not supported or asset type is unknown
         """
         is_intraday = timeframe in self.INTRADAY_INTERVALS
 
         if self.asset_type == "stocks":
-            return "TIME_SERIES_INTRADAY" if is_intraday else "TIME_SERIES_DAILY"
+            if is_intraday:
+                return "TIME_SERIES_INTRADAY"
+            elif timeframe == "1d":
+                return "TIME_SERIES_DAILY_ADJUSTED" if adjusted else "TIME_SERIES_DAILY"
+            elif timeframe == "1w":
+                return "TIME_SERIES_WEEKLY_ADJUSTED" if adjusted else "TIME_SERIES_WEEKLY"
+            elif timeframe == "1M":
+                return "TIME_SERIES_MONTHLY_ADJUSTED" if adjusted else "TIME_SERIES_MONTHLY"
+            else:
+                raise ValueError(f"Unsupported timeframe for stocks: {timeframe}")
+
         elif self.asset_type == "forex":
-            return "FX_INTRADAY" if is_intraday else "FX_DAILY"
+            if is_intraday:
+                return "FX_INTRADAY"
+            elif timeframe == "1d":
+                return "FX_DAILY"
+            elif timeframe == "1w":
+                return "FX_WEEKLY"
+            elif timeframe == "1M":
+                return "FX_MONTHLY"
+            else:
+                raise ValueError(f"Unsupported timeframe for forex: {timeframe}")
+
         elif self.asset_type == "crypto":
-            return "CRYPTO_INTRADAY" if is_intraday else "DIGITAL_CURRENCY_DAILY"
+            if is_intraday:
+                return "CRYPTO_INTRADAY"
+            elif timeframe == "1d":
+                return "DIGITAL_CURRENCY_DAILY"
+            elif timeframe in ("1w", "1M"):
+                return (
+                    "DIGITAL_CURRENCY_WEEKLY" if timeframe == "1w" else "DIGITAL_CURRENCY_MONTHLY"
+                )
+            else:
+                raise ValueError(f"Unsupported timeframe for crypto: {timeframe}")
+
         else:
             raise ValueError(f"Unknown asset type: {self.asset_type}")
 
@@ -148,6 +202,10 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
         start_date: pd.Timestamp,
         end_date: pd.Timestamp,
         timeframe: str,
+        adjusted: bool = False,
+        extended_hours: bool = False,
+        month: str | None = None,
+        datatype: str = "json",
     ) -> pl.DataFrame:
         """Fetch OHLCV data from Alpha Vantage API.
 
@@ -155,19 +213,49 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
             symbol: Symbol to fetch (e.g., "AAPL", "EUR/USD", "BTC")
             start_date: Start date
             end_date: End date
-            timeframe: Timeframe (e.g., "1d", "1h", "1m")
+            timeframe: Timeframe (e.g., "1d", "1h", "1m", "1w", "1M")
+            adjusted: If True, fetch split/dividend-adjusted data (stocks only, daily/weekly/monthly)
+            extended_hours: If True, include extended hours data (stocks intraday only, 4am-8pm ET)
+            month: YYYY-MM format for historical intraday queries (e.g., "2024-01")
+            datatype: Response format ("json" or "csv")
 
         Returns:
             Polars DataFrame with OHLCV data
 
         Raises:
-            ValueError: If timeframe is invalid
+            ValueError: If timeframe is invalid or parameters are incompatible
             SymbolNotFoundError: If symbol not found
             QuotaExceededError: If rate limit exceeded
             DataParsingError: If response parsing fails
+
+        Note:
+            - adjusted parameter only applies to stocks daily/weekly/monthly data
+            - extended_hours only applies to stocks intraday data
+            - month parameter only applies to intraday queries for historical data
+            - CSV datatype not yet fully supported (returns JSON)
         """
+        # Validate parameter combinations
+        if adjusted and timeframe in self.INTRADAY_INTERVALS:
+            logger.warning(
+                "adjusted_ignored_for_intraday",
+                symbol=symbol,
+                timeframe=timeframe,
+                message="adjusted parameter ignored for intraday data",
+            )
+            adjusted = False
+
+        if extended_hours and timeframe not in self.INTRADAY_INTERVALS:
+            raise ValueError(
+                f"extended_hours only valid for intraday timeframes, got '{timeframe}'"
+            )
+
+        if month and timeframe not in self.INTRADAY_INTERVALS:
+            raise ValueError(
+                f"month parameter only valid for intraday timeframes, got '{timeframe}'"
+            )
+
         # Get function name
-        function = self._get_function_name(timeframe)
+        function = self._get_function_name(timeframe, adjusted=adjusted)
 
         # Build query parameters
         params = {"function": function}
@@ -191,8 +279,29 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
         if timeframe in self.INTRADAY_INTERVALS:
             params["interval"] = self.INTRADAY_INTERVALS[timeframe]
 
+            # Add extended_hours for stocks intraday (4am-8pm ET vs 9:30am-4pm ET)
+            if extended_hours and self.asset_type == "stocks":
+                params["extended_hours"] = "true"
+
+            # Add month parameter for historical intraday queries
+            if month:
+                params["month"] = month
+
+        # Add datatype parameter
+        if datatype in ("json", "csv"):
+            params["datatype"] = datatype
+        else:
+            logger.warning(
+                "invalid_datatype",
+                datatype=datatype,
+                message=f"Invalid datatype '{datatype}', using 'json'",
+            )
+            params["datatype"] = "json"
+
         # Request full output (up to 20 years for daily, full day for intraday)
-        params["outputsize"] = "full"
+        # If month is specified for intraday, outputsize is ignored by API
+        if not month:
+            params["outputsize"] = "full"
 
         # Make request
         data = await self._make_request("GET", "", params=params)
@@ -213,7 +322,59 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
                 raise QuotaExceededError(f"Alpha Vantage rate limit exceeded: {note}")
 
         # Parse time series data
-        return self._parse_time_series_response(data, symbol, start_date, end_date, timeframe)
+        return self._parse_time_series_response(
+            data, symbol, start_date, end_date, timeframe, adjusted
+        )
+
+    def _get_response_keys(
+        self, values: dict, adjusted: bool = False
+    ) -> tuple[str, str, str, str, str]:
+        """Get OHLCV key names from response values.
+
+        Args:
+            values: Dictionary of OHLCV values from API response
+            adjusted: If True, expect adjusted close key
+
+        Returns:
+            Tuple of (open_key, high_key, low_key, close_key, volume_key)
+
+        Raises:
+            DataParsingError: If response format cannot be determined
+        """
+        # Standard stocks/forex format: "1. open", "2. high", etc.
+        if "1. open" in values:
+            if adjusted and "5. adjusted close" in values:
+                # Adjusted data includes extra fields
+                return ("1. open", "2. high", "3. low", "5. adjusted close", "6. volume")
+            else:
+                return ("1. open", "2. high", "3. low", "4. close", "5. volume")
+
+        # Crypto USD format: "1a. open (USD)", "2a. high (USD)", etc.
+        elif "1a. open (USD)" in values:
+            return (
+                "1a. open (USD)",
+                "2a. high (USD)",
+                "3a. low (USD)",
+                "4a. close (USD)",
+                "5. volume",
+            )
+
+        # Alternative crypto format: "1b. open (USD)", etc.
+        elif "1b. open (USD)" in values:
+            return (
+                "1b. open (USD)",
+                "2b. high (USD)",
+                "3b. low (USD)",
+                "4b. close (USD)",
+                "5. volume",
+            )
+
+        # Unknown format
+        else:
+            available_keys = list(values.keys())
+            raise DataParsingError(
+                f"Unknown Alpha Vantage response format. Available keys: {available_keys}"
+            )
 
     def _parse_time_series_response(
         self,
@@ -222,6 +383,7 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
         start_date: pd.Timestamp,
         end_date: pd.Timestamp,
         timeframe: str,
+        adjusted: bool = False,
     ) -> pl.DataFrame:
         """Parse Alpha Vantage time series response.
 
@@ -230,7 +392,8 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
             symbol: Original symbol
             start_date: Filter start date
             end_date: Filter end date
-            timeframe: Timeframe
+            timeframe: Timeframe (used for logging only)
+            adjusted: If True, parse adjusted close values
 
         Returns:
             Polars DataFrame with standardized schema
@@ -252,8 +415,19 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
 
         time_series = data[time_series_key]
 
+        logger.debug(
+            "parsing_time_series",
+            symbol=symbol,
+            timeframe=timeframe,
+            data_points=len(time_series),
+            adjusted=adjusted,
+        )
+
         # Parse time series data
         rows = []
+        keys_detected = False
+        open_key = high_key = low_key = close_key = volume_key = None
+
         for timestamp_str, values in time_series.items():
             timestamp = pd.Timestamp(timestamp_str, tz="UTC")
 
@@ -261,42 +435,12 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
             if timestamp < start_date or timestamp > end_date:
                 continue
 
-            # Alpha Vantage uses different key formats
-            # Stocks/Forex intraday: "1. open", "2. high", etc.
-            # Stocks/Forex daily: "1. open", "2. high", etc.
-            # Crypto: "1a. open (USD)", "2a. high (USD)", etc.
-
-            # Try to detect key format
-            if "1. open" in values:
-                open_key, high_key, low_key, close_key, volume_key = (
-                    "1. open",
-                    "2. high",
-                    "3. low",
-                    "4. close",
-                    "5. volume",
+            # Detect response key format (only once for efficiency)
+            if not keys_detected:
+                open_key, high_key, low_key, close_key, volume_key = self._get_response_keys(
+                    values, adjusted=adjusted
                 )
-            elif "1a. open (USD)" in values:
-                open_key, high_key, low_key, close_key, volume_key = (
-                    "1a. open (USD)",
-                    "2a. high (USD)",
-                    "3a. low (USD)",
-                    "4a. close (USD)",
-                    "5. volume",
-                )
-            elif "1b. open (USD)" in values:
-                open_key, high_key, low_key, close_key, volume_key = (
-                    "1b. open (USD)",
-                    "2b. high (USD)",
-                    "3b. low (USD)",
-                    "4b. close (USD)",
-                    "5. volume",
-                )
-            else:
-                # Try to infer from available keys
-                available_keys = list(values.keys())
-                raise DataParsingError(
-                    f"Unknown Alpha Vantage response format. Available keys: {available_keys}"
-                )
+                keys_detected = True
 
             row = {
                 "timestamp": timestamp,
@@ -469,7 +613,8 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
             rate_limit=self.TIER_LIMITS[self.tier]["requests_per_minute"],
             auth_required=True,
             data_delay=0,  # Data is delayed but no specific delay documented
-            supported_frequencies=list(self.INTRADAY_INTERVALS.keys()) + ["1d"],
+            supported_frequencies=list(self.INTRADAY_INTERVALS.keys())
+            + list(self.TIMEFRAME_MAPPING.keys()),
             additional_info={
                 "tier": self.tier,
                 "asset_type": self.asset_type,

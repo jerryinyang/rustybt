@@ -69,6 +69,11 @@ def test_get_function_name_stocks() -> None:
 
         assert adapter._get_function_name("1m") == "TIME_SERIES_INTRADAY"
         assert adapter._get_function_name("1d") == "TIME_SERIES_DAILY"
+        assert adapter._get_function_name("1d", adjusted=True) == "TIME_SERIES_DAILY_ADJUSTED"
+        assert adapter._get_function_name("1w") == "TIME_SERIES_WEEKLY"
+        assert adapter._get_function_name("1w", adjusted=True) == "TIME_SERIES_WEEKLY_ADJUSTED"
+        assert adapter._get_function_name("1M") == "TIME_SERIES_MONTHLY"
+        assert adapter._get_function_name("1M", adjusted=True) == "TIME_SERIES_MONTHLY_ADJUSTED"
 
 
 def test_get_function_name_forex() -> None:
@@ -78,6 +83,8 @@ def test_get_function_name_forex() -> None:
 
         assert adapter._get_function_name("5m") == "FX_INTRADAY"
         assert adapter._get_function_name("1d") == "FX_DAILY"
+        assert adapter._get_function_name("1w") == "FX_WEEKLY"
+        assert adapter._get_function_name("1M") == "FX_MONTHLY"
 
 
 def test_get_function_name_crypto() -> None:
@@ -87,6 +94,8 @@ def test_get_function_name_crypto() -> None:
 
         assert adapter._get_function_name("15m") == "CRYPTO_INTRADAY"
         assert adapter._get_function_name("1d") == "DIGITAL_CURRENCY_DAILY"
+        assert adapter._get_function_name("1w") == "DIGITAL_CURRENCY_WEEKLY"
+        assert adapter._get_function_name("1M") == "DIGITAL_CURRENCY_MONTHLY"
 
 
 def test_intraday_intervals_mapping() -> None:
@@ -143,6 +152,7 @@ async def test_parse_time_series_response() -> None:
             pd.Timestamp("2024-01-01", tz="UTC"),
             pd.Timestamp("2024-01-02", tz="UTC"),
             "1d",
+            adjusted=False,
         )
 
         # Verify DataFrame structure
@@ -171,6 +181,7 @@ async def test_parse_time_series_response_no_data() -> None:
                 pd.Timestamp("2024-01-01"),
                 pd.Timestamp("2024-01-31"),
                 "1d",
+                adjusted=False,
             )
 
 
@@ -194,3 +205,145 @@ async def test_validation_passes() -> None:
         )
 
         assert adapter.validate(df) is True
+
+
+def test_get_response_keys_standard() -> None:
+    """Response key detection works for standard format."""
+    with patch.dict("os.environ", {"ALPHAVANTAGE_API_KEY": "test_key"}):
+        adapter = AlphaVantageAdapter(tier="free", asset_type="stocks")
+
+        values = {
+            "1. open": "100.0",
+            "2. high": "105.0",
+            "3. low": "99.0",
+            "4. close": "102.0",
+            "5. volume": "1000000",
+        }
+
+        keys = adapter._get_response_keys(values, adjusted=False)
+        assert keys == ("1. open", "2. high", "3. low", "4. close", "5. volume")
+
+
+def test_get_response_keys_adjusted() -> None:
+    """Response key detection works for adjusted format."""
+    with patch.dict("os.environ", {"ALPHAVANTAGE_API_KEY": "test_key"}):
+        adapter = AlphaVantageAdapter(tier="free", asset_type="stocks")
+
+        values = {
+            "1. open": "100.0",
+            "2. high": "105.0",
+            "3. low": "99.0",
+            "4. close": "102.0",
+            "5. adjusted close": "101.5",
+            "6. volume": "1000000",
+        }
+
+        keys = adapter._get_response_keys(values, adjusted=True)
+        assert keys == ("1. open", "2. high", "3. low", "5. adjusted close", "6. volume")
+
+
+def test_get_response_keys_crypto_usd() -> None:
+    """Response key detection works for crypto USD format."""
+    with patch.dict("os.environ", {"ALPHAVANTAGE_API_KEY": "test_key"}):
+        adapter = AlphaVantageAdapter(tier="free", asset_type="crypto")
+
+        values = {
+            "1a. open (USD)": "50000.0",
+            "2a. high (USD)": "51000.0",
+            "3a. low (USD)": "49500.0",
+            "4a. close (USD)": "50500.0",
+            "5. volume": "100",
+        }
+
+        keys = adapter._get_response_keys(values, adjusted=False)
+        assert keys == (
+            "1a. open (USD)",
+            "2a. high (USD)",
+            "3a. low (USD)",
+            "4a. close (USD)",
+            "5. volume",
+        )
+
+
+def test_get_response_keys_unknown_format() -> None:
+    """Response key detection raises error for unknown format."""
+    with patch.dict("os.environ", {"ALPHAVANTAGE_API_KEY": "test_key"}):
+        adapter = AlphaVantageAdapter(tier="free", asset_type="stocks")
+
+        values = {"unknown_key": "value"}
+
+        with pytest.raises(DataParsingError, match="Unknown Alpha Vantage response format"):
+            adapter._get_response_keys(values, adjusted=False)
+
+
+@pytest.mark.asyncio
+async def test_parse_adjusted_data() -> None:
+    """Adjusted data parsing uses adjusted close."""
+    with patch.dict("os.environ", {"ALPHAVANTAGE_API_KEY": "test_key"}):
+        adapter = AlphaVantageAdapter(tier="free", asset_type="stocks")
+
+        # Mock adjusted time series response
+        mock_response = {
+            "Time Series (Daily)": {
+                "2024-01-02": {
+                    "1. open": "133.60",
+                    "2. high": "133.75",
+                    "3. low": "133.55",
+                    "4. close": "133.72",
+                    "5. adjusted close": "130.00",  # Adjusted for splits/dividends
+                    "6. volume": "120000",
+                },
+            }
+        }
+
+        df = adapter._parse_time_series_response(
+            mock_response,
+            "AAPL",
+            pd.Timestamp("2024-01-02", tz="UTC"),
+            pd.Timestamp("2024-01-02", tz="UTC"),
+            "1d",
+            adjusted=True,
+        )
+
+        # Verify adjusted close is used
+        assert len(df) == 1
+        assert df["close"][0] == Decimal("130.00")
+
+
+@pytest.mark.asyncio
+async def test_extended_hours_validation() -> None:
+    """extended_hours parameter only valid for intraday."""
+    with patch.dict("os.environ", {"ALPHAVANTAGE_API_KEY": "test_key"}):
+        adapter = AlphaVantageAdapter(tier="free", asset_type="stocks")
+
+        with pytest.raises(ValueError, match="extended_hours only valid for intraday"):
+            await adapter.fetch_ohlcv(
+                "AAPL",
+                pd.Timestamp("2024-01-01"),
+                pd.Timestamp("2024-01-31"),
+                "1d",
+                extended_hours=True,
+            )
+
+
+@pytest.mark.asyncio
+async def test_month_parameter_validation() -> None:
+    """month parameter only valid for intraday."""
+    with patch.dict("os.environ", {"ALPHAVANTAGE_API_KEY": "test_key"}):
+        adapter = AlphaVantageAdapter(tier="free", asset_type="stocks")
+
+        with pytest.raises(ValueError, match="month parameter only valid for intraday"):
+            await adapter.fetch_ohlcv(
+                "AAPL",
+                pd.Timestamp("2024-01-01"),
+                pd.Timestamp("2024-01-31"),
+                "1d",
+                month="2024-01",
+            )
+
+
+def test_timeframe_mapping() -> None:
+    """Timeframe mapping contains expected values."""
+    assert AlphaVantageAdapter.TIMEFRAME_MAPPING["1d"] == "daily"
+    assert AlphaVantageAdapter.TIMEFRAME_MAPPING["1w"] == "weekly"
+    assert AlphaVantageAdapter.TIMEFRAME_MAPPING["1M"] == "monthly"

@@ -431,8 +431,11 @@ class PolarsDataPortal:
         frequency: str,
         field: str,
         data_frequency: str,
-    ) -> pl.DataFrame:
-        """Get historical window as Polars DataFrame with Decimal columns.
+    ) -> pd.DataFrame:
+        """Get historical window as pandas DataFrame in wide format (backward compatible).
+
+        CRITICAL: Returns DataFrame in WIDE format (dates as index, assets as columns)
+        to maintain backward compatibility with _protocol.pyx expectations.
 
         Args:
             assets: List of assets to query
@@ -443,10 +446,10 @@ class PolarsDataPortal:
             data_frequency: Source data frequency ('daily' or 'minute')
 
         Returns:
-            Polars DataFrame with columns:
-                - date/timestamp: pl.Date or pl.Datetime
-                - sid: pl.Int64
-                - {field}: pl.Decimal(18, 8)
+            pandas DataFrame in WIDE format:
+                - index: dates (pd.DatetimeIndex)
+                - columns: assets (Asset objects)
+                - values: field data (float64, converted from Decimal)
 
         Raises:
             ValueError: If parameters invalid or data not available
@@ -477,7 +480,11 @@ class PolarsDataPortal:
         frequency: str,
         field: str,
         data_frequency: str,
-    ) -> pl.DataFrame:
+    ) -> pd.DataFrame:
+        """Async version of get_history_window().
+
+        Returns same WIDE format as synchronous version for backward compatibility.
+        """
         self._validate_field(field)
         self._ensure_supported_frequency(data_frequency)
         self._check_lookahead(end_dt)
@@ -634,7 +641,12 @@ class PolarsDataPortal:
         frequency: str,
         field: str,
         data_frequency: str,
-    ) -> pl.DataFrame:
+    ) -> pd.DataFrame:
+        """Get historical window with legacy DataPortal-compatible format.
+
+        CRITICAL: Returns pandas DataFrame in WIDE format (dates as index, assets as columns)
+        to maintain backward compatibility with _protocol.pyx expectations.
+        """
         reader = self._resolve_reader(data_frequency)
         sids = [asset.sid for asset in assets]
 
@@ -682,7 +694,23 @@ class PolarsDataPortal:
             mode="legacy",
         )
 
-        return df
+        # Convert to pandas and pivot to WIDE format (backward compatibility)
+        # Expected format: index=dates, columns=assets
+        # This matches legacy DataPortal behavior required by _protocol.pyx
+        df_pandas = df.to_pandas()
+
+        # Pivot: rows=dates, columns=sids, values=field
+        df_wide = df_pandas.pivot(index=time_col, columns="sid", values=field)
+
+        # Convert Decimal to float64 to match legacy DataPortal behavior
+        # CRITICAL: Use astype(float) which uses Python float() on Decimal objects
+        # This preserves precision better than going through string conversion
+        df_wide = df_wide.astype(np.float64)
+
+        # Replace sid columns with Asset objects to match legacy behavior
+        df_wide.columns = assets
+
+        return df_wide
 
     def _build_history_tail_frame(
         self,

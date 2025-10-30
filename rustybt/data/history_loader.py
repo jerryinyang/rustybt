@@ -34,7 +34,11 @@ from rustybt.utils.numpy_utils import float64_dtype
 from rustybt.utils.pandas_utils import find_in_sorted_index
 
 # Default number of decimal places used for rounding asset prices.
-DEFAULT_ASSET_PRICE_DECIMALS = 3
+# CRITICAL: Increased from 3 to 8 to match bundle Decimal(18,8) precision.
+# This prevents precision loss where similar values (e.g., 1.13738465 vs 1.13734591)
+# are rounded to the same value (1.137), causing incorrect data in multi-field arrays.
+# See: docs/internal/sprint-debug/fixes/completed/2025-10-30-020859-forex-bundle-open-close-identical.md
+DEFAULT_ASSET_PRICE_DECIMALS = 8
 
 
 class HistoryCompatibleUSEquityAdjustmentReader:

@@ -15,6 +15,7 @@ import structlog
 from rustybt.data.bundles import bundles as bundles_registry
 from rustybt.data.bundles import register as register_bundle
 from rustybt.data.bundles.metadata import BundleMetadata
+from rustybt.data.polars.local_bundle_metadata import LocalBundleMetadata
 from rustybt.data.polars.metadata_catalog import (
     ParquetMetadataCatalog,
     calculate_file_checksum,
@@ -76,6 +77,9 @@ class ParquetWriter:
             self.metadata_catalog = ParquetMetadataCatalog(str(metadata_db_path))
         else:
             self.metadata_catalog = None
+
+        # Initialize local bundle metadata (always enabled)
+        self.local_metadata = LocalBundleMetadata(self.bundle_path)
 
         logger.info(
             "parquet_writer_initialized",
@@ -247,65 +251,116 @@ class ParquetWriter:
     ) -> Path:
         """Write DataFrame to partitioned Parquet using atomic write pattern.
 
-        Uses temp file + rename for atomic writes to prevent partial writes.
+        Properly partitions data by grouping on partition columns and writing
+        each group to its corresponding partition file with merge support.
 
         Args:
-            df: DataFrame to write
+            df: DataFrame to write (must include partition columns)
             base_path: Base directory for partitioned data
             partition_cols: Columns to partition by
             compression: Compression algorithm
 
         Returns:
-            Path to written Parquet directory
+            Path to base directory (data is written to multiple partition subdirs)
 
         Example:
             >>> path = writer._write_partitioned_parquet(
             ...     df, Path("data/daily_bars"), ["year", "month"], "zstd"
             ... )
         """
-        # Convert to Arrow Table for partitioned write
-        arrow_table = df.to_arrow()
+        # Group data by partition columns
+        partitions = df.group_by(partition_cols, maintain_order=True)
 
-        # Determine partition path
-        # For simplicity, write to single file per partition
-        # In production, use pyarrow.dataset.write_dataset for better partitioning
-        first_row = df.row(0, named=True)
-        partition_values = [first_row[col] for col in partition_cols]
-        partition_path = base_path / "/".join(
-            f"{col}={val}" for col, val in zip(partition_cols, partition_values, strict=False)
+        partitions_written = 0
+        last_output_file = None
+
+        for partition_key, partition_df in partitions:
+            # Extract partition values from the key tuple
+            if len(partition_cols) == 1:
+                partition_values = [partition_key]
+            else:
+                partition_values = list(partition_key)
+
+            # Build partition path
+            partition_path = base_path / "/".join(
+                f"{col}={val}" for col, val in zip(partition_cols, partition_values, strict=False)
+            )
+            partition_path.mkdir(parents=True, exist_ok=True)
+
+            output_file = partition_path / "data.parquet"
+            temp_file = partition_path / f".data.parquet.tmp.{int(datetime.now().timestamp())}"
+
+            try:
+                # Remove partition columns from data before writing
+                data_cols = [col for col in partition_df.columns if col not in partition_cols]
+                partition_data = partition_df.select(data_cols)
+
+                # Merge with existing data if file exists
+                if output_file.exists():
+                    existing_df = pl.read_parquet(output_file)
+
+                    # Concatenate and deduplicate
+                    merged_df = pl.concat([existing_df, partition_data])
+
+                    # Remove duplicates based on time column + sid
+                    if "date" in merged_df.columns:
+                        merged_df = merged_df.unique(
+                            subset=["date", "sid"], keep="last", maintain_order=False
+                        )
+                        merged_df = merged_df.sort(["date", "sid"])
+                    elif "timestamp" in merged_df.columns:
+                        merged_df = merged_df.unique(
+                            subset=["timestamp", "sid"], keep="last", maintain_order=False
+                        )
+                        merged_df = merged_df.sort(["timestamp", "sid"])
+
+                    logger.debug(
+                        "parquet_partition_merged",
+                        partition=str(partition_path.relative_to(base_path)),
+                        existing_rows=len(existing_df),
+                        new_rows=len(partition_data),
+                        merged_rows=len(merged_df),
+                    )
+
+                    partition_data = merged_df
+
+                # Write to temp file
+                arrow_table = partition_data.to_arrow()
+                pq.write_table(
+                    arrow_table,
+                    temp_file,
+                    compression=compression,
+                    use_dictionary=True,
+                    write_statistics=True,
+                )
+
+                # Atomic rename
+                temp_file.rename(output_file)
+                partitions_written += 1
+                last_output_file = output_file
+
+                logger.debug(
+                    "parquet_partition_written",
+                    partition=str(partition_path.relative_to(base_path)),
+                    rows=len(partition_data),
+                    compression=compression,
+                )
+
+            except Exception as e:
+                # Clean up temp file on error
+                if temp_file.exists():
+                    temp_file.unlink()
+                raise RuntimeError(f"Failed to write partition {partition_path}: {e}") from e
+
+        logger.info(
+            "parquet_partitioned_write_complete",
+            base_path=str(base_path),
+            partitions_written=partitions_written,
+            total_rows=len(df),
         )
-        partition_path.mkdir(parents=True, exist_ok=True)
 
-        # Atomic write: temp file + rename
-        output_file = partition_path / "data.parquet"
-        temp_file = partition_path / f".data.parquet.tmp.{int(datetime.now().timestamp())}"
-
-        try:
-            # Write to temp file
-            pq.write_table(
-                arrow_table,
-                temp_file,
-                compression=compression,
-                use_dictionary=True,  # Dictionary encoding for string columns
-                write_statistics=True,  # Enable Parquet statistics for pruning
-            )
-
-            # Atomic rename
-            temp_file.rename(output_file)
-
-            logger.debug(
-                "parquet_written_atomically",
-                output_file=str(output_file),
-                compression=compression,
-            )
-
-            return output_file
-
-        except Exception as e:
-            # Clean up temp file on error
-            if temp_file.exists():
-                temp_file.unlink()
-            raise RuntimeError(f"Failed to write Parquet file to {output_file}: {e}") from e
+        # Return last written file for backward compatibility
+        return last_output_file if last_output_file else base_path
 
     def _update_metadata_catalog(
         self,
@@ -413,6 +468,12 @@ class ParquetWriter:
         asset_type: str | None = None,
     ) -> None:
         """Populate unified metadata after successful write with smart gap detection.
+
+        This method now populates BOTH:
+        1. Local bundle metadata.db (for ParquetAssetFinder)
+        2. Global bundle metadata (for bundle discovery)
+
+        And tracks min/max date range across ALL writes instead of overwriting.
 
         Args:
             df: DataFrame that was written
@@ -534,12 +595,31 @@ class ParquetWriter:
         # Determine calendar based on asset type
         calendar_name = self._get_calendar_name(detected_asset_type)
 
+        # === FIX: Track min/max date range across all writes ===
+        # Get existing bundle metadata to preserve min start_date and max end_date
+        existing_metadata = BundleMetadata.get(bundle_name)
+
+        if existing_metadata:
+            existing_start = existing_metadata.get("start_date")
+            existing_end = existing_metadata.get("end_date")
+
+            # Update to min/max of existing and new data
+            if existing_start is not None and start_timestamp is not None:
+                start_timestamp = min(existing_start, start_timestamp)
+            elif existing_start is not None:
+                start_timestamp = existing_start
+
+            if existing_end is not None and end_timestamp is not None:
+                end_timestamp = max(existing_end, end_timestamp)
+            elif existing_end is not None:
+                end_timestamp = existing_end
+
         update_payload: dict[str, Any] = {
             "source_type": source_metadata.get("source_type", "unknown"),
             "fetch_timestamp": current_time,
-            "row_count": row_count,
-            "start_date": start_timestamp,
-            "end_date": end_timestamp,
+            "row_count": row_count,  # Note: This is still per-write, not cumulative
+            "start_date": start_timestamp,  # Now tracks min across all writes
+            "end_date": end_timestamp,  # Now tracks max across all writes
             "missing_days_count": missing_days_count,
             "missing_days_list": missing_days_list,
             "outlier_count": 0,
@@ -575,19 +655,74 @@ class ParquetWriter:
             if not symbol:
                 continue
 
-            asset_type = entry.get("asset_type") or self._infer_asset_type(symbol)
+            asset_type_final = entry.get("asset_type") or self._infer_asset_type(symbol)
             exchange = entry.get("exchange") or exchange_default
 
             # Get SID from symbol_map if available
             sid = symbol_map.get(symbol)
 
+            # Add to GLOBAL metadata
             BundleMetadata.add_symbol(
                 bundle_name=bundle_name,
                 symbol=symbol,
-                asset_type=asset_type,
+                asset_type=asset_type_final,
                 exchange=exchange,
                 sid=sid,  # Pass explicit SID to ensure consistency
             )
+
+            # === FIX: Add to LOCAL bundle metadata.db ===
+            if sid is not None:
+                self.local_metadata.add_symbol(
+                    sid=sid,
+                    symbol=symbol,
+                    asset_type=asset_type_final,
+                    exchange=exchange,
+                )
+
+                # === FIX: Track per-symbol date range in local metadata ===
+                # Calculate date range for this specific symbol from the data
+                if "date" in df.columns and "sid" in df.columns:
+                    symbol_df = df.filter(pl.col("sid") == sid)
+                    if len(symbol_df) > 0:
+                        symbol_dates = symbol_df["date"].unique().sort()
+                        if len(symbol_dates) > 0:
+                            symbol_start = symbol_dates.min()
+                            symbol_end = symbol_dates.max()
+                            symbol_row_count = len(symbol_df)
+
+                            # Convert to date objects if needed
+                            if isinstance(symbol_start, datetime):
+                                symbol_start = symbol_start.date()
+                            if isinstance(symbol_end, datetime):
+                                symbol_end = symbol_end.date()
+
+                            # Get existing date range for this symbol (if re-ingesting)
+                            existing_ranges = self.local_metadata.get_date_ranges()
+                            if sid in existing_ranges:
+                                existing_start = existing_ranges[sid]["start_date"]
+                                existing_end = existing_ranges[sid]["end_date"]
+
+                                # Track min/max across re-ingestions
+                                if isinstance(existing_start, str):
+                                    from datetime import datetime as dt
+
+                                    existing_start = dt.fromisoformat(existing_start).date()
+                                if isinstance(existing_end, str):
+                                    from datetime import datetime as dt
+
+                                    existing_end = dt.fromisoformat(existing_end).date()
+
+                                symbol_start = min(symbol_start, existing_start)
+                                symbol_end = max(symbol_end, existing_end)
+                                symbol_row_count += existing_ranges[sid].get("row_count", 0)
+
+                            self.local_metadata.update_date_range(
+                                sid=sid,
+                                start_date=symbol_start,
+                                end_date=symbol_end,
+                                row_count=symbol_row_count,
+                            )
+
             added_symbols += 1
 
         logger.debug(
@@ -599,6 +734,7 @@ class ParquetWriter:
             violations=violations,
             missing_days=missing_days_count,
             symbols_added=added_symbols,
+            local_metadata_updated=True,
         )
 
     def _resolve_symbol_entries(

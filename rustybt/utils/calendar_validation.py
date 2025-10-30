@@ -148,6 +148,11 @@ def validate_backtest_dates(
     calendar's valid range. Automatically adjusts dates to the nearest valid
     trading sessions if the requested dates fall on non-trading days.
 
+    **Changed**: Now gracefully adjusts dates that fall outside the bundle's data range
+    instead of raising an error. This allows backtests to start before the bundle's
+    first available date (will auto-adjust to first available date) or end after the
+    bundle's last available date (will auto-adjust to last available date).
+
     Args:
         start: Requested backtest start date
         end: Requested backtest end date
@@ -160,7 +165,7 @@ def validate_backtest_dates(
         Tuple of (adjusted_start, adjusted_end) where both are valid trading sessions
 
     Raises:
-        ValueError: If dates are outside bundle range or calendar range, or no valid sessions exist
+        ValueError: If adjusted date range is invalid or calendar range errors occur
 
     Example:
         >>> start = pd.Timestamp("2020-01-01")  # New Year's Day (holiday)
@@ -172,78 +177,105 @@ def validate_backtest_dates(
         ... )
         >>> # Returns next/previous valid trading sessions
     """
-    # Check against bundle's data range
+    # Gracefully adjust dates to bundle's data range (instead of raising errors)
+    adjusted_start = start
+    adjusted_end = end
+
     if start < bundle_start:
-        raise ValueError(
-            f"Backtest start date {start.date()} is before bundle's data start "
-            f"{bundle_start.date()}. Bundle '{bundle_name}' only has data from "
-            f"{bundle_start.date()} to {bundle_end.date()}"
+        logger.warning(
+            "backtest_start_before_bundle",
+            requested_start=str(start.date()),
+            bundle_start=str(bundle_start.date()),
+            bundle_name=bundle_name,
+            message=f"Backtest start date {start.date()} is before bundle's first available data. "
+            f"Auto-adjusting to bundle start: {bundle_start.date()}",
         )
+        adjusted_start = bundle_start
 
     if end > bundle_end:
+        logger.warning(
+            "backtest_end_after_bundle",
+            requested_end=str(end.date()),
+            bundle_end=str(bundle_end.date()),
+            bundle_name=bundle_name,
+            message=f"Backtest end date {end.date()} is after bundle's last available data. "
+            f"Auto-adjusting to bundle end: {bundle_end.date()}",
+        )
+        adjusted_end = bundle_end
+
+    # Validate that we still have a valid range after adjustment
+    if adjusted_start > adjusted_end:
         raise ValueError(
-            f"Backtest end date {end.date()} is after bundle's data end "
-            f"{bundle_end.date()}. Bundle '{bundle_name}' only has data from "
-            f"{bundle_start.date()} to {bundle_end.date()}"
+            f"Invalid date range after adjustment: start {adjusted_start.date()} > end {adjusted_end.date()}. "
+            f"Bundle '{bundle_name}' has data from {bundle_start.date()} to {bundle_end.date()}"
         )
 
-    # Validate against calendar range (this will raise if invalid)
+    # Validate against calendar range and gracefully adjust if needed
     calendar = get_calendar(calendar_name)
     first_session = calendar.first_session
     last_session = calendar.last_session
 
-    if start < first_session:
-        raise ValueError(
-            f"Backtest start date {start.date()} is before calendar '{calendar_name}' "
-            f"first session {first_session.date()}. Use a date >= {first_session.date()}"
+    # Gracefully adjust to calendar boundaries (instead of raising errors)
+    if adjusted_start < first_session:
+        logger.warning(
+            "backtest_start_before_calendar",
+            requested_start=str(adjusted_start.date()),
+            calendar_first=str(first_session.date()),
+            calendar_name=calendar_name,
+            message=f"Adjusted backtest start {adjusted_start.date()} is before calendar's first session. "
+            f"Auto-adjusting to calendar start: {first_session.date()}",
         )
+        adjusted_start = first_session
 
-    if end > last_session:
-        raise ValueError(
-            f"Backtest end date {end.date()} is after calendar '{calendar_name}' "
-            f"last session {last_session.date()}. Use a date <= {last_session.date()}"
+    if adjusted_end > last_session:
+        logger.warning(
+            "backtest_end_after_calendar",
+            requested_end=str(adjusted_end.date()),
+            calendar_last=str(last_session.date()),
+            calendar_name=calendar_name,
+            message=f"Adjusted backtest end {adjusted_end.date()} is after calendar's last session. "
+            f"Auto-adjusting to calendar end: {last_session.date()}",
         )
+        adjusted_end = last_session
 
-    # Get all valid trading sessions in the requested range
+    # Get all valid trading sessions in the calendar's range
     sessions = calendar.sessions_in_range(first_session, last_session)
 
-    # Adjust start date to nearest valid session on or after requested start
-    adjusted_start = start
-    if start not in sessions:
+    # Adjust start date to nearest valid session on or after adjusted_start
+    if adjusted_start not in sessions:
         # Find the next valid session
-        future_sessions = sessions[sessions >= start]
+        future_sessions = sessions[sessions >= adjusted_start]
         if len(future_sessions) == 0:
             raise ValueError(
-                f"No valid trading sessions found on or after {start.date()} "
+                f"No valid trading sessions found on or after {adjusted_start.date()} "
                 f"for calendar '{calendar_name}'"
             )
         adjusted_start = future_sessions[0]
         logger.warning(
-            "backtest_start_adjusted",
-            requested_start=str(start),
-            adjusted_start=str(adjusted_start),
+            "backtest_start_adjusted_to_session",
+            requested_start=str(start.date()),
+            adjusted_start=str(adjusted_start.date()),
             calendar=calendar_name,
-            message=f"Requested start date {start.date()} is not a valid trading session. "
+            message=f"Start date {adjusted_start.date()} is not a valid trading session. "
             f"Adjusted to next valid session: {adjusted_start.date()}",
         )
 
-    # Adjust end date to nearest valid session on or before requested end
-    adjusted_end = end
-    if end not in sessions:
+    # Adjust end date to nearest valid session on or before adjusted_end
+    if adjusted_end not in sessions:
         # Find the previous valid session
-        past_sessions = sessions[sessions <= end]
+        past_sessions = sessions[sessions <= adjusted_end]
         if len(past_sessions) == 0:
             raise ValueError(
-                f"No valid trading sessions found on or before {end.date()} "
+                f"No valid trading sessions found on or before {adjusted_end.date()} "
                 f"for calendar '{calendar_name}'"
             )
         adjusted_end = past_sessions[-1]
         logger.warning(
-            "backtest_end_adjusted",
-            requested_end=str(end),
-            adjusted_end=str(adjusted_end),
+            "backtest_end_adjusted_to_session",
+            requested_end=str(end.date()),
+            adjusted_end=str(adjusted_end.date()),
             calendar=calendar_name,
-            message=f"Requested end date {end.date()} is not a valid trading session. "
+            message=f"End date {adjusted_end.date()} is not a valid trading session. "
             f"Adjusted to previous valid session: {adjusted_end.date()}",
         )
 

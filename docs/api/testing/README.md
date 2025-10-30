@@ -18,51 +18,61 @@ RustyBT provides extensive testing utilities to help develop, validate, and main
 
 ### Basic Strategy Test
 
+!!! important "Function-Based vs Class-Based Strategies"
+    The Python API `run_algorithm()` **only supports function-based strategies**. For class-based strategies inheriting from `TradingAlgorithm`, use the CLI (`rustybt run -f`) or test via subprocess.
+
 ```python
 import pytest
 from decimal import Decimal
-from rustybt.algorithm import TradingAlgorithm
+from rustybt.api import symbol, order_target_percent
 from rustybt.utils.run_algo import run_algorithm
 from rustybt.testing import ZiplineTestCase
-from rustybt.testing import create_data_portal, tmp_asset_finder
 import pandas as pd
 
-class MyStrategy(TradingAlgorithm):
-    def initialize(self):
-        self.asset = self.symbol('AAPL')
+# Define strategy as functions
+def initialize(context):
+    """Initialize strategy."""
+    context.asset = symbol('AAPL')
 
-    def handle_data(self, context, data):
-        self.order_target_percent(self.asset, 0.95)
+def handle_data(context, data):
+    """Execute strategy logic."""
+    order_target_percent(context.asset, 0.95)
 
 class TestMyStrategy(ZiplineTestCase):
     def test_strategy_execution(self):
         """Test strategy executes without errors."""
         results = run_algorithm(
-            strategy_class=MyStrategy,
-            start='2020-01-01',
-            end='2020-12-31',
+            initialize=initialize,          # Function
+            handle_data=handle_data,        # Function
+            start=pd.Timestamp('2020-01-01'),
+            end=pd.Timestamp('2020-12-31'),
             capital_base=100000,
+            bundle='quantopian-quandl',
             data_frequency='daily'
         )
 
         # Verify results
-        assert results['portfolio_value'].iloc[-1] > Decimal("0")
+        assert results is not None
+        assert 'portfolio_value' in results
+        assert results['portfolio_value'].iloc[-1] > 0
         assert len(results['transactions']) > 0
 
     def test_strategy_performance(self):
         """Test strategy achieves positive returns."""
         results = run_algorithm(
-            strategy_class=MyStrategy,
-            start='2020-01-01',
-            end='2020-12-31',
-            capital_base=100000
+            initialize=initialize,
+            handle_data=handle_data,
+            start=pd.Timestamp('2020-01-01'),
+            end=pd.Timestamp('2020-12-31'),
+            capital_base=100000,
+            bundle='quantopian-quandl'
         )
 
         final_value = results['portfolio_value'].iloc[-1]
         initial_value = results['portfolio_value'].iloc[0]
         total_return = (final_value - initial_value) / initial_value
 
-        assert total_return > Decimal("0"), "Strategy should have positive returns"
+        assert total_return > 0, "Strategy should have positive returns"
 ```
 
 ---
@@ -167,34 +177,62 @@ data_portal = create_data_portal(
 ### Pattern 1: Basic Execution Test
 
 ```python
+from rustybt.api import symbol, order
+import pandas as pd
+
+def initialize(context):
+    context.asset = symbol('AAPL')
+
+def handle_data(context, data):
+    if data.can_trade(context.asset):
+        order(context.asset, 10)
+
 def test_strategy_executes(self):
     """Verify strategy runs to completion without errors."""
     results = run_algorithm(
-        strategy_class=MyStrategy,
-        start='2020-01-01',
-        end='2020-12-31',
-        capital_base=100000
+        initialize=initialize,
+        handle_data=handle_data,
+        start=pd.Timestamp('2020-01-01'),
+        end=pd.Timestamp('2020-12-31'),
+        capital_base=100000,
+        bundle='quantopian-quandl'
     )
 
     # Basic assertions
     assert results is not None
     assert 'portfolio_value' in results
     assert len(results) > 0
-    assert results['portfolio_value'].iloc[-1] > Decimal("0")
+    assert results['portfolio_value'].iloc[-1] > 0
 ```
 
 ### Pattern 2: Performance Test
 
 ```python
 from rustybt.analytics.risk import RiskAnalytics
+from rustybt.api import symbol, order_target_percent
+from decimal import Decimal
+import pandas as pd
+
+def initialize(context):
+    context.asset = symbol('SPY')
+
+def handle_data(context, data):
+    # Simple trend following
+    prices = data.history(context.asset, 'price', 50, '1d')
+    if prices[-1] > prices.mean():
+        order_target_percent(context.asset, 1.0)
+    else:
+        order_target_percent(context.asset, 0)
 
 def test_strategy_performance(self):
     """Verify strategy achieves positive risk-adjusted returns."""
     results = run_algorithm(
-        strategy_class=MyStrategy,
-        start='2020-01-01',
-        end='2023-12-31',
-        capital_base=100000
+        initialize=initialize,
+        handle_data=handle_data,
+        start=pd.Timestamp('2020-01-01'),
+        end=pd.Timestamp('2023-12-31'),
+        capital_base=100000,
+        bundle='quantopian-quandl'
     )
 
     # Calculate risk metrics
@@ -210,30 +248,50 @@ def test_strategy_performance(self):
 
 ```python
 import pytest
+from rustybt.api import symbol, order_target_percent
+from decimal import Decimal
+import pandas as pd
 
 @pytest.mark.parametrize("lookback_period", [10, 20, 50, 100])
 @pytest.mark.parametrize("rebalance_frequency", ['daily', 'weekly', 'monthly'])
 def test_parameter_combinations(self, lookback_period, rebalance_frequency):
     """Test strategy across parameter space."""
-    class ParametricStrategy(TradingAlgorithm):
-        def initialize(self):
-            self.lookback_period = lookback_period
-            self.rebalance_frequency = rebalance_frequency
-            self.asset = self.symbol('AAPL')
 
-        def handle_data(self, context, data):
-            # Strategy logic using parameters
-            ...
+    # Use closures to capture parameters
+    def initialize(context):
+        context.lookback_period = lookback_period
+        context.rebalance_frequency = rebalance_frequency
+        context.asset = symbol('AAPL')
+        context.day_count = 0
+
+    def handle_data(context, data):
+        context.day_count += 1
+
+        # Skip if not enough data
+        if context.day_count < context.lookback_period:
+            return
+
+        # Calculate signal
+        prices = data.history(context.asset, 'price', context.lookback_period, '1d')
+        signal = prices[-1] / prices.mean() - 1
+
+        # Trade based on signal
+        if signal > 0.02:
+            order_target_percent(context.asset, 0.95)
+        elif signal < -0.02:
+            order_target_percent(context.asset, 0)
 
     results = run_algorithm(
-        strategy_class=ParametricStrategy,
-        start='2020-01-01',
-        end='2023-12-31',
-        capital_base=100000
+        initialize=initialize,
+        handle_data=handle_data,
+        start=pd.Timestamp('2020-01-01'),
+        end=pd.Timestamp('2023-12-31'),
+        capital_base=100000,
+        bundle='quantopian-quandl'
     )
 
     # Verify strategy works for all parameter combinations
-    assert results['portfolio_value'].iloc[-1] > Decimal("0")
+    assert results['portfolio_value'].iloc[-1] > 0
 ```
 
 ---

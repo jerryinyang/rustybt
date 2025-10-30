@@ -1866,7 +1866,7 @@ class TradingAlgorithm:
         Parameters
         ----------
         us_equities : EquitySlippageModel
-            The slippage model to use for trading US equities.
+            The slippage model to use for trading US equities and generic assets (e.g., crypto).
         us_futures : FutureSlippageModel
             The slippage model to use for trading US futures.
 
@@ -1889,6 +1889,8 @@ class TradingAlgorithm:
                     given_model=us_equities,
                     supported_asset_types=us_equities.allowed_asset_types,
                 )
+            # Apply to both Asset (generic) and Equity types
+            self.blotter.slippage_models[Asset] = us_equities
             self.blotter.slippage_models[Equity] = us_equities
 
         if us_futures is not None:
@@ -1907,7 +1909,7 @@ class TradingAlgorithm:
         Parameters
         ----------
         us_equities : EquityCommissionModel
-            The commission model to use for trading US equities.
+            The commission model to use for trading US equities and generic assets (e.g., crypto).
         us_futures : FutureCommissionModel
             The commission model to use for trading US futures.
 
@@ -1932,6 +1934,8 @@ class TradingAlgorithm:
                     given_model=us_equities,
                     supported_asset_types=us_equities.allowed_asset_types,
                 )
+            # Apply to both Asset (generic) and Equity types
+            self.blotter.commission_models[Asset] = us_equities
             self.blotter.commission_models[Equity] = us_equities
 
         if us_futures is not None:

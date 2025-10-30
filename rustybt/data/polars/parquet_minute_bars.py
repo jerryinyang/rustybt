@@ -330,11 +330,12 @@ class PolarsParquetMinuteReader:
         self._cache = df
         self._cache_date_range = (start_dt, end_dt)
 
-        logger.debug(
-            "cache_updated",
-            row_count=len(df),
-            date_range=f"{start_dt} to {end_dt}",
-        )
+        # Removed verbose cache_updated debug log to reduce output noise
+        # logger.debug(
+        #     "cache_updated",
+        #     row_count=len(df),
+        #     date_range=f"{start_dt} to {end_dt}",
+        # )
 
     def clear_cache(self) -> None:
         """Clear in-memory cache.

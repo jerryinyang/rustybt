@@ -173,7 +173,7 @@ class PolarsParquetDailyReader:
         if self.enable_cache:
             self._update_cache(df, start_date, end_date)
 
-        logger.info(
+        logger.debug(
             "daily_bars_loaded",
             row_count=len(df),
             asset_count=df["sid"].n_unique(),
@@ -349,11 +349,12 @@ class PolarsParquetDailyReader:
         self._cache = df
         self._cache_date_range = (start_date, end_date)
 
-        logger.debug(
-            "cache_updated",
-            row_count=len(df),
-            date_range=f"{start_date} to {end_date}",
-        )
+        # Removed verbose cache_updated debug log to reduce output noise
+        # logger.debug(
+        #     "cache_updated",
+        #     row_count=len(df),
+        #     date_range=f"{start_date} to {end_date}",
+        # )
 
     def clear_cache(self) -> None:
         """Clear in-memory cache.

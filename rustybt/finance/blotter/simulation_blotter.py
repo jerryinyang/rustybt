@@ -66,15 +66,21 @@ class SimulationBlotter(Blotter):
 
         self.max_shares = int(1e11)
 
+        # Default slippage and commission for generic assets (crypto, etc.)
+        default_asset_slippage = equity_slippage or FixedBasisPointsSlippage()
+        default_asset_commission = equity_commission or PerShare()
+
         self.slippage_models = {
-            Equity: equity_slippage or FixedBasisPointsSlippage(),
+            Asset: default_asset_slippage,  # For generic assets like crypto
+            Equity: default_asset_slippage,
             Future: future_slippage
             or VolatilityVolumeShare(
                 volume_limit=DEFAULT_FUTURE_VOLUME_SLIPPAGE_BAR_LIMIT,
             ),
         }
         self.commission_models = {
-            Equity: equity_commission or PerShare(),
+            Asset: default_asset_commission,  # For generic assets like crypto
+            Equity: default_asset_commission,
             Future: future_commission
             or PerContract(
                 cost=DEFAULT_PER_CONTRACT_COST,

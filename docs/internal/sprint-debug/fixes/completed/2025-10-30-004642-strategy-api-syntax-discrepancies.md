@@ -277,6 +277,15 @@ NO `algorithm_class` parameter exists!
 
 ---
 
+## Merge Status
+
+✅ **Merged to main on 2025-10-30**
+- Branch deleted: `fix/20251030-004629-strategy-api-syntax-investigation`
+- Local and remote branches cleaned up
+- All changes now in main branch
+
+---
+
 ## Notes
 
 - **CRITICAL FIX:** Prevents user-blocking TypeErrors from fabricated API parameter

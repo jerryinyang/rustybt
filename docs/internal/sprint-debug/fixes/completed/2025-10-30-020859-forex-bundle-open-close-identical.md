@@ -235,11 +235,45 @@ Row 1: open=1.13738465, close=1.13734591 (diff=0.00003874) ✅
 
 ---
 
+## Post-Merge Discovery: YFinance Data Source Corruption
+
+**Discovery Date**: 2025-10-30 (after merge to main)
+
+**Issue**: After merging the precision fix, user reported the error PERSISTS for April 2022 data, despite the code fix working correctly for January 2022 data.
+
+**Investigation**:
+1. ✅ Verified code fix works correctly (precision preserved)
+2. ❌ Found open==close corruption IN THE RAW PARQUET FILES
+3. ❌ Discovered hundreds of corrupted dates throughout the bundle since 2006
+4. 🔍 Created `temp/test_yfinance_corruption.py` to verify data source
+
+**YFinance Verification Results** (April 1 - May 9, 2022):
+```
+Total rows:      27
+Good rows:       0 (open != close)
+Corrupted rows:  27 (open == close)
+Corruption rate: 100.0%
+```
+
+**Conclusion**: 🔴 **YFinance source data itself is corrupted**
+- Issue #1 (code precision loss): ✅ FIXED
+- Issue #2 (YFinance data corruption): ❌ CONFIRMED - requires data source change or validation
+
+**Recommended Actions**:
+1. Add data validation during ingestion to detect and skip open==close rows
+2. Consider alternative data sources (Alpha Vantage, OANDA, FRED, Polygon)
+3. Report issue to yfinance maintainers
+
+**Next Steps**: Implementing ingestion validation to filter corrupted data
+
+---
+
 ## Notes
 
 - CRITICAL PRIORITY - blocks all forex backtesting
 - Need to verify if other bundles have same issue
 - May need to re-ingest all forex data
 - Should add automated data integrity checks to bundle creation
+- **UPDATE**: YFinance data source has systematic corruption issues - validation being added
 
 ---

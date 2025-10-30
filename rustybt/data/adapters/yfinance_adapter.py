@@ -326,6 +326,8 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
         - low <= open (always)
         - low <= close (always)
         - All prices > 0 (non-negative)
+        - open != close (data corruption detection - yfinance has systematic
+          issues returning identical open/close values for forex data)
 
         Args:
             df: DataFrame with potentially invalid rows
@@ -349,6 +351,7 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
             & (pl.col("high") > 0)
             & (pl.col("low") > 0)
             & (pl.col("close") > 0)
+            & (pl.col("open") != pl.col("close"))  # Filter open==close corruption
         )
 
         # Filter to keep only valid rows
@@ -360,12 +363,17 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
             df_invalid = df.filter(~validity_mask)
             affected_symbols = df_invalid.select("symbol").unique().to_series().to_list()
 
+            # Check how many are due to open==close specifically
+            open_close_corruption = df.filter(pl.col("open") == pl.col("close"))
+            corruption_count = len(open_close_corruption)
+
             logger.warning(
                 "yfinance_filtered_invalid_rows",
                 dropped_count=dropped_count,
                 remaining_count=len(df_valid),
                 affected_symbols=affected_symbols,
-                reason="invalid_ohlcv_relationships",
+                open_close_corruption_count=corruption_count,
+                reason="invalid_ohlcv_relationships_or_corruption",
             )
 
         return df_valid

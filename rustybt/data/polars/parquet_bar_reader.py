@@ -14,6 +14,7 @@ import structlog
 
 from rustybt.data.bar_reader import NoDataAfterDate, NoDataBeforeDate, NoDataOnDate
 from rustybt.data.polars.parquet_daily_bars import PolarsParquetDailyReader
+from rustybt.data.polars.validation import DataError
 from rustybt.data.session_bars import CurrencyAwareSessionBarReader
 from rustybt.utils.calendar_utils import get_calendar
 
@@ -509,7 +510,19 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
 
         except (NoDataOnDate, NoDataBeforeDate, NoDataAfterDate):
             raise
+        except DataError as e:
+            # Missing data is common (asset not trading, weekend, holiday, sparse data)
+            # Log at debug level to reduce noise
+            logger.debug(
+                "get_value_missing_data",
+                sid=asset_sid,
+                dt=str(dt),
+                field=field,
+                error=str(e),
+            )
+            raise NoDataOnDate(f"No data for asset {asset_sid} on {dt}: {e}") from e
         except Exception as e:
+            # Unexpected errors should still be logged at error level
             logger.error(
                 "get_value_failed",
                 sid=asset_sid,

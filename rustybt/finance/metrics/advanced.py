@@ -72,6 +72,13 @@ def calmar_ratio(returns: np.ndarray, periods: int = 252) -> float:
     if years == 0:
         return np.nan
 
+    # Handle edge case: catastrophic loss (total_return <= -1)
+    # When total_return < -1, (1 + total_return) is negative, and raising
+    # a negative number to a fractional power produces complex numbers.
+    # Return NaN for these cases as the portfolio is worthless.
+    if total_return <= -1:
+        return np.nan
+
     annualized_return = (1 + total_return) ** (1 / years) - 1
 
     # Calculate maximum drawdown

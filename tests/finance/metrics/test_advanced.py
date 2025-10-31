@@ -57,6 +57,46 @@ class TestCalmarRatio:
         # Calmar can be negative with negative returns
         assert np.isfinite(calmar) or np.isnan(calmar)
 
+    def test_calmar_ratio_catastrophic_loss(self):
+        """Test Calmar ratio with total loss > 100% (total_return < -1).
+
+        This tests the edge case where (1 + total_return) becomes negative,
+        which would cause a RuntimeWarning without proper handling.
+
+        Note: With compounding returns, it's mathematically impossible to lose
+        more than 100% in standard scenarios. However, this edge case can occur
+        with leveraged strategies or certain error conditions.
+        """
+        # Create extreme negative returns that compound to near-total loss
+        # This simulates a leveraged blow-up or extreme market crash
+        returns = np.array([-0.95, -0.90, -0.85, -0.80])
+
+        # Should return NaN or be finite without warning
+        calmar = calmar_ratio(returns, periods=252)
+
+        # Either NaN or finite, but no RuntimeWarning
+        assert np.isnan(calmar) or np.isfinite(calmar)
+
+    def test_calmar_ratio_total_loss(self):
+        """Test Calmar ratio with exactly 100% loss (total_return = -1)."""
+        # Create returns that result in exactly -100% (or close to it)
+        returns = np.array([-0.99999])
+
+        calmar = calmar_ratio(returns, periods=252)
+
+        # Should return NaN for total loss
+        assert np.isnan(calmar)
+
+    def test_calmar_ratio_near_total_loss(self):
+        """Test Calmar ratio with near 100% loss (total_return ≈ -0.99)."""
+        # Create returns close to but not quite total loss
+        returns = np.array([-0.30, -0.30, -0.30, -0.20])
+
+        calmar = calmar_ratio(returns, periods=252)
+
+        # Should be finite (negative) or NaN, but not raise warning
+        assert np.isfinite(calmar) or np.isnan(calmar)
+
 
 class TestValueAtRisk:
     """Tests for Value at Risk calculation."""

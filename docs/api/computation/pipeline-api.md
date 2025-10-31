@@ -1043,77 +1043,91 @@ crypto_only = FilterByAssetType(asset_type='crypto')
 
 #### Solution: Exclude Fiat Pairs (Real-World Example)
 
-Here's a complete solution for excluding cryptocurrency pairs that involve fiat currencies:
+For filtering based on asset names or other metadata not available in Pipeline's compute context, filter **after** the pipeline output:
 
 ```python
-from rustybt.pipeline import CustomFilter
-import numpy as np
+from rustybt import TradingAlgorithm
+from rustybt.pipeline import Pipeline
+from rustybt.pipeline.factors import AverageDollarVolume
+from rustybt.pipeline.domain import EquityCalendarDomain
 
-class ExcludeFiatPairs(CustomFilter):
-    """Exclude cryptocurrency pairs that involve fiat currencies.
+# Create crypto domain
+CRYPTO = EquityCalendarDomain(country_code="US", calendar_name="24/7")
 
-    This filter checks asset names for common fiat currency codes and
-    excludes any pairs containing them.
-    """
+# Known fiat currency codes
+FIAT_CURRENCIES = {
+    'USD', 'USDT', 'USDC', 'BUSD', 'DAI',  # USD stablecoins
+    'EUR', 'GBP', 'AUD', 'CAD', 'CHF',
+    'HKD', 'JPY', 'NZD', 'SGD',
+    'UAH', 'TRY', 'RUB', 'ZAR', 'NGN',
+    'BRL', 'ARS', 'MXN', 'CLP',
+    'CZK', 'DKK', 'NOK', 'SEK', 'PLN',
+    'HUF', 'RON', 'PHP', 'IDR', 'THB',
+    'VND', 'SAR', 'AED', 'INR', 'CNY',
+    'KRW', 'KZT',
+}
 
-    # Known fiat currency codes
-    FIAT_CURRENCIES = {
-        'USD', 'USDT', 'USDC', 'BUSD', 'DAI',  # USD stablecoins
-        'EUR', 'GBP', 'AUD', 'CAD', 'CHF',
-        'HKD', 'JPY', 'NZD', 'SGD',
-        'UAH', 'TRY', 'RUB', 'ZAR', 'NGN',
-        'BRL', 'ARS', 'MXN', 'CLP',
-        'CZK', 'DKK', 'NOK', 'SEK', 'PLN',
-        'HUF', 'RON', 'PHP', 'IDR', 'THB',
-        'VND', 'SAR', 'AED', 'INR', 'CNY',
-        'KRW', 'KZT',
-    }
+def is_fiat_pair(symbol: str) -> bool:
+    """Return True if symbol involves any fiat currency."""
+    parts = symbol.replace(':', '/').split('/')
+    return any(p.upper().strip() in FIAT_CURRENCIES for p in parts)
 
-    inputs = ()
-    window_length = 1
 
-    def compute(self, today, assets, out):
-        """Mark non-fiat pairs as True, fiat pairs as False."""
-        for i, asset in enumerate(assets):
-            asset_name = asset.asset_name
-
-            # Parse symbol (handle both : and / separators)
-            parts = asset_name.replace(':', '/').split('/')
-
-            # Check if any part is a fiat currency
-            is_fiat = any(
-                part.upper().strip() in self.FIAT_CURRENCIES
-                for part in parts
-            )
-
-            out[i] = not is_fiat  # True if NOT fiat, False if fiat
-
-# Usage in pipeline:
 def make_pipeline():
-    """Define universe: top pairs by volume, excluding fiat pairs."""
-    from rustybt.pipeline.factors import AverageDollarVolume
-    from rustybt.pipeline import Pipeline
-    from rustybt.pipeline.domain import EquityCalendarDomain
-
-    # Create crypto domain
-    CRYPTO = EquityCalendarDomain(country_code="US", calendar_name="24/7")
-
-    # Start with volume-based selection
+    """Define universe: top 50 by volume."""
     avg_volume = AverageDollarVolume(window_length=5)
-
-    # Create fiat exclusion filter
-    exclude_fiat = ExcludeFiatPairs()
-
-    # Combine: top 50 by volume AND not fiat pairs
-    top_50_volume = avg_volume.top(50)
-    final_screen = top_50_volume & exclude_fiat
+    top_50 = avg_volume.top(50)
 
     return Pipeline(
         columns={'avg_volume': avg_volume},
-        screen=final_screen,
+        screen=top_50,
         domain=CRYPTO,
     )
+
+
+def initialize(context):
+    """Initialize strategy."""
+    pipe = make_pipeline()
+    context.attach_pipeline(pipe, 'universe')
+
+
+def before_trading_start(context, data):
+    """Filter universe to exclude fiat pairs - runs once per day."""
+
+    # Get raw pipeline output (top 50 by volume)
+    pipeline_output = context.pipeline_output('universe')
+
+    # Filter out fiat pairs
+    non_fiat_assets = [
+        asset for asset in pipeline_output.index
+        if not is_fiat_pair(asset.asset_name)
+    ]
+
+    # Store filtered universe
+    context.universe = non_fiat_assets
+
+    print(f"Universe: {len(non_fiat_assets)} non-fiat pairs from {len(pipeline_output)} total")
+
+
+def handle_data(context, data):
+    """Trade using pre-filtered universe."""
+
+    # Use the filtered universe from before_trading_start
+    for asset in context.universe:  # Already excludes fiat pairs!
+        if data.can_trade(asset):
+            # Your trading logic here
+            pass
 ```
+
+**Why This Approach:**
+
+1. **Pipeline Limitation**: CustomFilter's `compute()` method receives SIDs (integers), not Asset objects, so you can't access `asset.asset_name` there.
+
+2. **Efficient**: Filtering in `before_trading_start()` runs once per day, not on every bar.
+
+3. **Clear Separation**: Pipeline handles data-driven filtering (volume, returns, etc.), Python handles metadata filtering (names, types, etc.).
+
+4. **Maintains Benefits**: Still get Pipeline's caching, vectorization, and declarative universe selection.
 
 ### Advanced Combining Patterns
 

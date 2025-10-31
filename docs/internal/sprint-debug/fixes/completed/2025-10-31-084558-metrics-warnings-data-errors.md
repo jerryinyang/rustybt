@@ -216,3 +216,12 @@ The `get_value` method logs missing data as ERROR level, which is too severe. Mi
 - Issues are non-blocking but create noise in output
 
 ---
+
+## Merge Status
+
+✅ **Merged to main** on 2025-10-31
+- Merged commits: `a13a80e`, `6b4ac5c`
+- Branch deleted: `fix/20251031-084436-metrics-warnings-data-errors`
+- User confirmed fixes work correctly
+
+---

@@ -831,428 +831,50 @@ class VolatilityFilter(CustomFilter):
         out[:] = (volatility >= self.min_vol) & (volatility <= self.max_vol)
 ```
 
-## Combining Factors and Filters
+## Advanced Techniques
 
-One of Pipeline's most powerful features is the ability to combine factors and filters to create sophisticated selection criteria.
+For advanced Pipeline usage including combining factors/filters and creating custom factors/filters, see:
 
-### Combining Factors
+**[Advanced Pipeline Techniques Guide](../../guides/advanced-pipeline-techniques.md)**
 
-#### Arithmetic Operations
+This comprehensive guide covers:
+- Combining factors (arithmetic, ranking, normalization)
+- Combining filters (logical operations, masking)
+- Creating custom factors
+- Creating custom filters (including asset metadata filtering)
+- Advanced patterns (multi-stage filtering, conditional logic)
+- Best practices
+
+### Quick Examples
+
+#### Combine Factors
 
 ```python
-from rustybt.pipeline.factors import Returns, AnnualizedVolatility
-
-# Simple arithmetic
+# Arithmetic operations
 returns_1m = Returns(window_length=21)
 returns_3m = Returns(window_length=63)
-
-# Addition
-combined_momentum = returns_1m + returns_3m
-
-# Weighted average
 momentum_score = (0.3 * returns_1m) + (0.7 * returns_3m)
 
-# Division (e.g., risk-adjusted returns)
+# Risk-adjusted returns
 volatility = AnnualizedVolatility(window_length=252)
-risk_adjusted = returns_1m / volatility
-
-# Multiple operations
-composite = (returns_1m + returns_3m) / 2
+sharpe_ratio = returns_1m / volatility
 ```
 
-#### Ranking and Normalization
+#### Combine Filters
 
 ```python
-# Rank factors before combining (common for multi-factor models)
-returns_1m_rank = returns_1m.rank()
-returns_3m_rank = returns_3m.rank()
-vol_rank = volatility.rank()
-
-# Equal-weight composite (lower volatility rank is better)
-quality_momentum = (returns_1m_rank + returns_3m_rank - vol_rank) / 3
-
-# Z-score normalization
-returns_1m_z = returns_1m.zscore()
-returns_3m_z = returns_3m.zscore()
-normalized_composite = (returns_1m_z + returns_3m_z) / 2
-```
-
-#### Factor Outputs (Multi-Output Factors)
-
-```python
-from rustybt.pipeline.factors import BollingerBands, IchimokuKinkoHyo
-
-# Access individual outputs
-bb = BollingerBands(window_length=20, k=2.0)
-upper = bb.upper
-middle = bb.middle
-lower = bb.lower
-
-# Combine outputs
-bb_width = (upper - lower) / middle  # Bollinger Band width as percentage
-
-# Ichimoku components
-ichimoku = IchimokuKinkoHyo(window_length=52)
-cloud_thickness = ichimoku.senkou_span_a - ichimoku.senkou_span_b
-
-# Use in filters
-price = USEquityPricing.close.latest
-above_cloud = price > ichimoku.senkou_span_a
-below_cloud = price < ichimoku.senkou_span_b
-```
-
-### Combining Filters
-
-#### Logical Operations
-
-```python
-from rustybt.pipeline.factors import Returns, AverageDollarVolume
-from rustybt.pipeline.data import USEquityPricing
-
-# Individual filters
+# Logical operations
 liquid = AverageDollarVolume(window_length=20).top(500)
 price_filter = USEquityPricing.close.latest > 5
-momentum_filter = Returns(window_length=21) > 0.05
+momentum = Returns(window_length=21) > 0.05
 
-# AND (&) - Must meet ALL conditions
-conservative_universe = liquid & price_filter & momentum_filter
-
-# OR (|) - Must meet ANY condition
-returns_1m = Returns(window_length=21)
-returns_3m = Returns(window_length=63)
+# AND, OR, NOT
+universe = liquid & price_filter & momentum
 high_momentum = (returns_1m > 0.10) | (returns_3m > 0.20)
-
-# NOT (~) - Exclude matching assets
 not_penny_stocks = ~(USEquityPricing.close.latest < 5)
-
-# Complex combinations with parentheses
-advanced_filter = (
-    liquid &
-    not_penny_stocks &
-    (high_momentum | (volatility < 0.20))
-)
 ```
 
-#### Top/Bottom with Filters
-
-```python
-# Top N after applying filter
-liquid_filter = AverageDollarVolume(window_length=20).top(1000)
-returns = Returns(window_length=21)
-
-# Top 50 momentum stocks from liquid universe only
-top_momentum = returns.top(50, mask=liquid_filter)
-
-# Bottom 50 volatility from high momentum stocks
-high_momentum_filter = returns.top(200)
-low_vol = volatility.bottom(50, mask=high_momentum_filter)
-```
-
-### Creating Custom Filters from Functions
-
-For complex filtering logic (like excluding assets based on custom criteria), create a CustomFilter:
-
-#### Example: Exclude Assets by Name Pattern
-
-```python
-from rustybt.pipeline import CustomFilter
-from rustybt.pipeline.data import USEquityPricing
-import numpy as np
-
-class ExcludeByNamePattern(CustomFilter):
-    """Exclude assets whose names match certain patterns.
-
-    Parameters
-    ----------
-    patterns : list of str
-        Patterns to exclude (e.g., ['USDT', 'EUR', 'GBP'])
-    inputs : list
-        Dataset columns needed (default: none)
-    window_length : int
-        Window length (default: 1, we only need current data)
-    """
-
-    params = ('patterns',)
-    inputs = ()
-    window_length = 1
-
-    def compute(self, today, assets, out, patterns):
-        """Mark assets for inclusion (True) or exclusion (False).
-
-        Parameters
-        ----------
-        today : pd.Timestamp
-            Current date
-        assets : pd.Index[Asset]
-            Universe of assets
-        out : np.ndarray[bool]
-            Output array to fill (True = include, False = exclude)
-        patterns : list of str
-            Patterns to check against
-        """
-        # Start with all assets included
-        out[:] = True
-
-        # Exclude assets matching any pattern
-        for asset in assets:
-            asset_name = asset.asset_name
-            for pattern in patterns:
-                if pattern.upper() in asset_name.upper():
-                    # Find index and mark as excluded
-                    idx = assets.get_loc(asset)
-                    out[idx] = False
-                    break
-
-# Usage
-exclude_fiat = ExcludeByNamePattern(patterns=['USDT', 'USDC', 'EUR', 'GBP'])
-
-# Combine with other filters
-liquid = AverageDollarVolume(window_length=20).top(500)
-tradeable_universe = liquid & exclude_fiat
-```
-
-#### Example: Filter Based on Asset Properties
-
-```python
-class FilterByAssetType(CustomFilter):
-    """Include only specific asset types.
-
-    Parameters
-    ----------
-    asset_type : str
-        Asset type to include (e.g., 'crypto', 'equity', 'forex')
-    """
-
-    params = ('asset_type',)
-    inputs = ()
-    window_length = 1
-
-    def compute(self, today, assets, out, asset_type):
-        """Filter assets by type."""
-        out[:] = False  # Start with all excluded
-
-        for i, asset in enumerate(assets):
-            # Check asset type (implementation depends on your Asset class)
-            if hasattr(asset, 'asset_type'):
-                if asset.asset_type == asset_type:
-                    out[i] = True
-
-# Usage
-crypto_only = FilterByAssetType(asset_type='crypto')
-```
-
-#### Solution: Exclude Fiat Pairs (Real-World Example)
-
-**Problem:** You want to select top 10 assets by some factor, but exclude fiat currency pairs. If you filter AFTER Pipeline returns 10 assets, you might end up with fewer than 10.
-
-**Solution Options:**
-
-##### Option A: CustomFilter with Asset Finder (Recommended)
-
-Use CustomFilter to filter IN Pipeline, guaranteeing exact count:
-
-```python
-from rustybt.pipeline import CustomFilter, Pipeline
-from rustybt.pipeline.factors import AverageDollarVolume
-from rustybt.pipeline.domain import EquityCalendarDomain
-from rustybt.data.bundles.core import load_bundle_from_cache
-
-CRYPTO = EquityCalendarDomain(country_code="US", calendar_name="24/7")
-
-class ExcludeFiatPairs(CustomFilter):
-    """Exclude fiat pairs - requires asset finder to map SIDs to names."""
-
-    FIAT_CURRENCIES = {
-        'USD', 'USDT', 'USDC', 'BUSD', 'DAI',
-        'EUR', 'GBP', 'AUD', 'CAD', 'CHF',
-        'HKD', 'JPY', 'NZD', 'SGD',
-        'UAH', 'TRY', 'RUB', 'ZAR', 'NGN',
-        'BRL', 'ARS', 'MXN', 'CLP',
-        'CZK', 'DKK', 'NOK', 'SEK', 'PLN',
-        'HUF', 'RON', 'PHP', 'IDR', 'THB',
-        'VND', 'SAR', 'AED', 'INR', 'CNY',
-        'KRW', 'KZT',
-    }
-
-    inputs = ()
-    window_length = 1
-
-    def __init__(self, asset_finder):
-        self.asset_finder = asset_finder
-        super().__init__()
-
-    def compute(self, today, assets, out):
-        """assets is array of SIDs, use asset_finder to get names."""
-        for i, sid in enumerate(assets):
-            asset = self.asset_finder.retrieve_asset(sid)
-            parts = asset.asset_name.replace(':', '/').split('/')
-            is_fiat = any(p.upper().strip() in self.FIAT_CURRENCIES for p in parts)
-            out[i] = not is_fiat
-
-
-def make_pipeline():
-    """Top 10 by volume, excluding fiat pairs."""
-    # Get asset finder from bundle
-    bundle_data = load_bundle_from_cache('binance-spot-1d')
-    asset_finder = bundle_data.asset_finder
-
-    # Factors and filters
-    avg_volume = AverageDollarVolume(window_length=5)
-    exclude_fiat = ExcludeFiatPairs(asset_finder=asset_finder)
-
-    # Filter non-fiat first, THEN take top 10
-    non_fiat_top_10 = avg_volume.top(10, mask=exclude_fiat)
-
-    return Pipeline(
-        columns={'avg_volume': avg_volume},
-        screen=non_fiat_top_10,  # Guarantees 10 non-fiat assets
-        domain=CRYPTO,
-    )
-```
-
-**Pros:** Filtering in Pipeline (efficient), guarantees exact count
-**Cons:** Requires asset finder access
-
-##### Option B: Oversample and Filter (Simpler)
-
-Get MORE assets from Pipeline, filter down to desired count:
-
-```python
-def make_pipeline():
-    """Get top 30, will filter to 10 non-fiat."""
-    avg_volume = AverageDollarVolume(window_length=5)
-    return Pipeline(
-        columns={'avg_volume': avg_volume},
-        screen=avg_volume.top(30),  # Get 3x what you need
-        domain=CRYPTO,
-    )
-
-def before_trading_start(context, data):
-    """Filter to top 10 non-fiat pairs."""
-    pipeline_output = context.pipeline_output('universe')
-
-    # Filter and take top 10
-    non_fiat = pipeline_output[
-        ~pipeline_output.index.map(lambda a: is_fiat_pair(a.asset_name))
-    ]
-    top_10 = non_fiat.nlargest(10, 'avg_volume')
-    context.universe = list(top_10.index)
-```
-
-**Pros:** Simpler, no asset finder needed
-**Cons:** Need to estimate oversample amount, less efficient
-
-**Recommendation:** Use Option A for production, Option B for prototyping.
-
-### Advanced Combining Patterns
-
-#### Multi-Stage Filtering
-
-```python
-# Stage 1: Broad universe
-liquid = AverageDollarVolume(window_length=20).top(1000)
-price_filter = USEquityPricing.close.latest > 5
-stage1 = liquid & price_filter
-
-# Stage 2: Momentum screen
-returns = Returns(window_length=21)
-momentum_filter = returns.top(200, mask=stage1)
-
-# Stage 3: Quality screen
-volatility = AnnualizedVolatility(window_length=252)
-quality_filter = volatility.bottom(100, mask=momentum_filter)
-
-# Final universe
-final_universe = quality_filter
-```
-
-#### Factor-Driven Filters
-
-```python
-# Create filters from factor values
-returns_1m = Returns(window_length=21)
-returns_3m = Returns(window_length=63)
-volatility = AnnualizedVolatility(window_length=252)
-
-# Multiple conditions
-positive_momentum = returns_1m > 0
-sustained_momentum = returns_3m > 0.10
-low_risk = volatility < 0.30
-
-# Combine into final filter
-quality_growth = positive_momentum & sustained_momentum & low_risk
-
-# Top N from filtered universe
-top_quality = returns_1m.top(50, mask=quality_growth)
-```
-
-#### Conditional Logic
-
-```python
-from rustybt.pipeline.factors import RSI, Returns
-
-# RSI-based conditions
-rsi = RSI(window_length=14)
-oversold = rsi < 30
-overbought = rsi > 70
-
-# Different logic for different conditions
-returns = Returns(window_length=21)
-
-# Mean reversion for extreme RSI
-mean_reversion_universe = oversold | overbought
-
-# Momentum for neutral RSI
-neutral_rsi = ~(oversold | overbought)
-momentum_universe = neutral_rsi & (returns > 0.05)
-
-# Combined strategy
-either_strategy = mean_reversion_universe | momentum_universe
-```
-
-### Best Practices for Combining
-
-1. **Use Parentheses**: Make complex combinations clear
-   ```python
-   # Clear
-   universe = (liquid & price_filter) & (momentum | quality)
-
-   # Unclear
-   universe = liquid & price_filter & momentum | quality
-   ```
-
-2. **Name Intermediate Steps**: Improve readability
-   ```python
-   # Good
-   liquid = AverageDollarVolume(window_length=20).top(1000)
-   price_ok = USEquityPricing.close.latest > 5
-   base_universe = liquid & price_ok
-
-   # Less clear
-   universe = AverageDollarVolume(window_length=20).top(1000) & (USEquityPricing.close.latest > 5)
-   ```
-
-3. **Apply Broad Filters First**: More efficient
-   ```python
-   # Efficient: broad filter first
-   liquid = dollar_volume.top(1000)  # Quick
-   expensive_calc = custom_factor.top(50, mask=liquid)  # Only on 1000 assets
-
-   # Inefficient: expensive calc on all assets
-   expensive = custom_factor.top(50)  # Slow on all assets
-   liquid_and_expensive = expensive & liquid
-   ```
-
-4. **Test Filters Separately**: Debug incrementally
-   ```python
-   # Test each filter
-   pipe1 = Pipeline(columns={}, screen=filter1)
-   output1 = engine.run_pipeline(pipe1, start, end)
-   print(f"Filter1: {len(output1)} assets")
-
-   # Then combine
-   pipe2 = Pipeline(columns={}, screen=filter1 & filter2)
-   ```
+**For complete examples and advanced patterns, see [Advanced Pipeline Techniques](../../guides/advanced-pipeline-techniques.md).**
 
 ## Pipeline Construction
 

@@ -821,14 +821,20 @@ class VolatilityFilter(CustomFilter):
 
     inputs = [Returns(window_length=2)]
     window_length = 252
+    params = ('min_vol', 'max_vol')
 
-    def __init__(self, min_vol, max_vol):
-        self.min_vol = min_vol
-        self.max_vol = max_vol
+    def compute(self, today, assets, out, returns, min_vol, max_vol):
+        """Filter by volatility range.
 
-    def compute(self, today, assets, out, returns):
+        Parameters are passed via params tuple and received as arguments
+        in compute(), not via __init__. CustomFilter doesn't support
+        custom __init__ parameters.
+        """
         volatility = np.std(returns, axis=0) * np.sqrt(252)
-        out[:] = (volatility >= self.min_vol) & (volatility <= self.max_vol)
+        out[:] = (volatility >= min_vol) & (volatility <= max_vol)
+
+# Usage
+moderate_vol = VolatilityFilter(min_vol=0.15, max_vol=0.35)
 ```
 
 ## Advanced Techniques

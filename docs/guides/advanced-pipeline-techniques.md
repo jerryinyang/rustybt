@@ -309,69 +309,77 @@ moderate_vol = VolatilityFilter(min_vol=0.15, max_vol=0.35)
 
 ### Custom Filter with Asset Finder (Advanced)
 
-For filtering based on asset metadata (names, types, etc.), use asset finder:
+For filtering based on asset metadata (names, types, etc.), use a factory pattern with closures:
 
 ```python
 from rustybt.pipeline import CustomFilter
-from rustybt.data.bundles.core import load_bundle_from_cache
+from rustybt.data.bundles.core import load
 
-class ExcludeFiatPairs(CustomFilter):
-    """Exclude cryptocurrency pairs involving fiat currencies.
+FIAT_CURRENCIES = {
+    'USD', 'USDT', 'USDC', 'BUSD', 'DAI',
+    'EUR', 'GBP', 'AUD', 'CAD', 'CHF',
+    'HKD', 'JPY', 'NZD', 'SGD',
+    'UAH', 'TRY', 'RUB', 'ZAR', 'NGN',
+    'BRL', 'ARS', 'MXN', 'CLP',
+    'CZK', 'DKK', 'NOK', 'SEK', 'PLN',
+    'HUF', 'RON', 'PHP', 'IDR', 'THB',
+    'VND', 'SAR', 'AED', 'INR', 'CNY',
+    'KRW', 'KZT',
+}
 
-    This demonstrates accessing asset metadata in CustomFilter by using
-    the asset finder to map SIDs to Asset objects.
+def make_fiat_filter(asset_finder):
+    """Factory function to create a CustomFilter with access to asset_finder.
+
+    This uses a closure to give the filter access to the asset finder
+    without passing it through the constructor (CustomFilter doesn't support
+    custom constructor parameters).
+
+    Parameters
+    ----------
+    asset_finder : AssetFinder
+        Asset finder instance from bundle
+
+    Returns
+    -------
+    ExcludeFiatPairs
+        Filter instance that excludes fiat pairs
     """
+    class ExcludeFiatPairs(CustomFilter):
+        """Exclude cryptocurrency pairs involving fiat currencies.
 
-    FIAT_CURRENCIES = {
-        'USD', 'USDT', 'USDC', 'BUSD', 'DAI',
-        'EUR', 'GBP', 'AUD', 'CAD', 'CHF',
-        'HKD', 'JPY', 'NZD', 'SGD',
-        'UAH', 'TRY', 'RUB', 'ZAR', 'NGN',
-        'BRL', 'ARS', 'MXN', 'CLP',
-        'CZK', 'DKK', 'NOK', 'SEK', 'PLN',
-        'HUF', 'RON', 'PHP', 'IDR', 'THB',
-        'VND', 'SAR', 'AED', 'INR', 'CNY',
-        'KRW', 'KZT',
-    }
-
-    inputs = ()
-    window_length = 1
-
-    def __init__(self, asset_finder):
-        """Initialize with asset finder for SID->Asset lookup.
-
-        Parameters
-        ----------
-        asset_finder : AssetFinder
-            Asset finder instance for looking up assets by SID
+        This demonstrates accessing asset metadata in CustomFilter by using
+        the asset finder (from closure) to map SIDs to Asset objects.
         """
-        self.asset_finder = asset_finder
-        super().__init__()
 
-    def compute(self, today, assets, out):
-        """Filter based on asset names.
+        inputs = ()
+        window_length = 1
 
-        Parameters
-        ----------
-        today : pd.Timestamp
-        assets : np.ndarray of int
-            Array of SIDs (security identifiers)
-        out : np.ndarray[bool]
-            Output array to fill
-        """
-        for i, sid in enumerate(assets):
-            # Look up asset by SID
-            asset = self.asset_finder.retrieve_asset(sid)
-            asset_name = asset.asset_name
+        def compute(self, today, assets, out):
+            """Filter based on asset names.
 
-            # Parse and check for fiat
-            parts = asset_name.replace(':', '/').split('/')
-            is_fiat = any(
-                part.upper().strip() in self.FIAT_CURRENCIES
-                for part in parts
-            )
+            Parameters
+            ----------
+            today : pd.Timestamp
+            assets : np.ndarray of int
+                Array of SIDs (security identifiers)
+            out : np.ndarray[bool]
+                Output array to fill
+            """
+            for i, sid in enumerate(assets):
+                # Look up asset by SID using asset_finder from closure
+                asset = asset_finder.retrieve_asset(sid)
+                asset_name = asset.asset_name
 
-            out[i] = not is_fiat  # True = include, False = exclude
+                # Parse and check for fiat
+                parts = asset_name.replace(':', '/').split('/')
+                is_fiat = any(
+                    part.upper().strip() in FIAT_CURRENCIES
+                    for part in parts
+                )
+
+                out[i] = not is_fiat  # True = include, False = exclude
+
+    return ExcludeFiatPairs()
 
 
 def make_pipeline():
@@ -381,13 +389,13 @@ def make_pipeline():
     from rustybt.pipeline.domain import EquityCalendarDomain
 
     # Get asset finder from bundle
-    bundle_data = load_bundle_from_cache('binance-spot-1d')
+    bundle_data = load('binance-spot-1d')
     asset_finder = bundle_data.asset_finder
 
     # Create domain and filters
     CRYPTO = EquityCalendarDomain(country_code="US", calendar_name="24/7")
     avg_volume = AverageDollarVolume(window_length=5)
-    exclude_fiat = ExcludeFiatPairs(asset_finder=asset_finder)
+    exclude_fiat = make_fiat_filter(asset_finder)  # Use factory function
 
     # Combine: filter non-fiat FIRST, then take top 10
     # This guarantees exactly 10 non-fiat assets

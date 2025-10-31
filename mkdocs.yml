@@ -127,6 +127,7 @@ nav:
           - Exception Handling: guides/exception-handling.md
           - Execution Methods: guides/execution-methods.md
           - Pipeline API: guides/pipeline-api-guide.md
+          - Advanced Pipeline Techniques: guides/advanced-pipeline-techniques.md
           - Multi-Strategy Portfolio: guides/multi-strategy-portfolio-guide.md
       - Production:
           - Deployment Guide: guides/deployment-guide.md

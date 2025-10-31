@@ -371,8 +371,10 @@ All new patterns demonstrate:
 
 ## Merge Status
 
-❌ **NOT YET MERGED** - Awaiting QA review per EXTERNAL-USER-ISSUE-WORKFLOW.md
+✅ **MERGED TO MAIN** on 2025-10-31
 
-(To be completed after QA approval and merge)
+- Merged commit: `f00df84`
+- Branch deleted: `fix/20251031-093129-pipeline-documentation-gaps` (both local and remote)
+- Status: Complete and deployed to main branch
 
 ---

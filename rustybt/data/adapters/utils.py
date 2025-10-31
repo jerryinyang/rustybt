@@ -84,40 +84,48 @@ def normalize_symbols(symbols: Iterable[str]) -> list[str]:
     return normalized
 
 
-def build_symbol_sid_map(symbols: Iterable[str]) -> dict[str, int]:
-    """Build deterministic SID mapping for symbols, reusing existing SIDs.
+def build_symbol_sid_map(symbols: Iterable[str], bundle_name: str | None = None) -> dict[str, int]:
+    """Build deterministic SID mapping for symbols, reusing existing SIDs within bundle.
 
-    First checks if symbols already exist in the global asset database and reuses
+    First checks if symbols already exist in the specified bundle and reuses
     their existing SIDs. Only assigns new SIDs to symbols that don't exist yet.
-    This ensures SID consistency across bundle re-ingestions.
+    This ensures SID consistency across bundle re-ingestions while keeping
+    SIDs independent between different bundles.
 
     Args:
         symbols: Iterable of symbol strings
+        bundle_name: Bundle name to scope SID lookup. If provided, only reuses
+                    SIDs from this specific bundle. If None, uses global lookup
+                    (legacy behavior, may cause ID conflicts across bundles).
 
     Returns:
         Dictionary mapping symbols to SIDs
 
     Example:
-        >>> # First ingestion
-        >>> map1 = build_symbol_sid_map(["AAPL", "MSFT"])
+        >>> # First ingestion of bundle-A
+        >>> map1 = build_symbol_sid_map(["AAPL", "MSFT"], bundle_name="bundle-A")
         >>> # {'AAPL': 1, 'MSFT': 2}
         >>>
-        >>> # Re-ingestion - SIDs are reused
-        >>> map2 = build_symbol_sid_map(["AAPL", "GOOGL"])
+        >>> # Re-ingestion of bundle-A - SIDs are reused within same bundle
+        >>> map2 = build_symbol_sid_map(["AAPL", "GOOGL"], bundle_name="bundle-A")
         >>> # {'AAPL': 1, 'GOOGL': 3}  <- AAPL keeps SID 1
+        >>>
+        >>> # First ingestion of bundle-B - gets independent SIDs
+        >>> map3 = build_symbol_sid_map(["AAPL", "TSLA"], bundle_name="bundle-B")
+        >>> # {'AAPL': 4, 'TSLA': 5}  <- Different SID for AAPL in bundle-B
     """
     from rustybt.data.bundles.metadata import BundleMetadata
 
     mapping: dict[str, int] = {}
 
-    # Phase 1: Check for existing SIDs in database
+    # Phase 1: Check for existing SIDs in database (within specified bundle if provided)
     for symbol in symbols:
         normalized_symbol = symbol.upper().strip()
         if normalized_symbol in mapping:
             continue  # Already processed (duplicate in input)
 
         try:
-            existing_sid = BundleMetadata.get_symbol_sid(normalized_symbol)
+            existing_sid = BundleMetadata.get_symbol_sid(normalized_symbol, bundle_name=bundle_name)
             if existing_sid is not None:
                 mapping[normalized_symbol] = existing_sid
         except Exception:  # nosec B110 - Intentional: fail gracefully and assign new SID in phase 2

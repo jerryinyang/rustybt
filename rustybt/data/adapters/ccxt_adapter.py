@@ -805,7 +805,7 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
                     continue
 
                 # Prepare data for writing
-                symbol_map = build_symbol_sid_map([symbol])
+                symbol_map = build_symbol_sid_map([symbol], bundle_name=bundle_name)
                 df_prepared, frame_type = prepare_ohlcv_frame(df, symbol_map, frequency)
 
                 # Prepare source metadata
@@ -816,6 +816,7 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
                     "symbols": [symbol],
                     "exchange": self.exchange_id,
                     "timezone": timezone,
+                    "symbol_map": symbol_map,  # Pass SID mapping to ensure parquet-DB consistency
                 }
 
                 # Write to bundle

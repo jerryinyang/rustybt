@@ -563,3 +563,52 @@ class Clip(CustomFactor):
 
     def compute(self, today, assets, out, values, min_bound, max_bound):
         clip(values[-1], min_bound, max_bound, out=out)
+
+
+class RollingSharpeRatio(CustomFactor):
+    """
+    Computes rolling Sharpe ratio: mean(returns) / std(returns)
+
+    **Default Inputs:** [Returns(window_length=2)]
+    **Default Window Length:** 252 (≈ 1 year)
+    """
+
+    inputs = [EquityPricing.close]
+    window_length = 252
+
+    def compute(self, today, assets, out, close):
+        # daily returns
+        returns = (close[1:] - close[:-1]) / close[:-1]
+        mean_ret = nanmean(returns, axis=0)
+        vol = nanstd(returns, axis=0)
+        out[:] = mean_ret / vol
+
+
+class LeastCorrelatedPairs(CustomFactor):
+    """
+    Computes each asset's average pairwise correlation (over a rolling window)
+    with all other assets, then inverts it to rank *least correlated* assets.
+
+    **Default Inputs:** [EquityPricing.close]
+    **Default Window Length:** 252
+
+    Notes
+    -----
+    - Lower values mean the asset is less correlated to the universe.
+    - Works on returns, not raw prices.
+    """
+
+    inputs = [EquityPricing.close]
+    window_length = 252
+    window_safe = True
+
+    def compute(self, today, assets, out, close):
+        # Compute daily returns
+        returns = (close[1:] - close[:-1]) / close[:-1]
+        # Compute correlation matrix (assets x assets)
+        corr_matrix = np.corrcoef(returns, rowvar=False)
+        # Ignore NaN and self-correlation
+        np.fill_diagonal(corr_matrix, np.nan)
+        avg_corr = nanmean(corr_matrix, axis=0)
+        # Invert correlation: lower correlation => higher score
+        out[:] = -avg_corr

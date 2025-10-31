@@ -565,7 +565,7 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
 
         combined_df = pl.concat(all_data)
 
-        symbol_map = build_symbol_sid_map(normalized_symbols)
+        symbol_map = build_symbol_sid_map(normalized_symbols, bundle_name=bundle_name)
         df_prepared, frame_type = prepare_ohlcv_frame(combined_df, symbol_map, frequency)
 
         bundle_dir = Path(data_path(["bundles", bundle_name]))
@@ -579,6 +579,7 @@ class AlphaVantageAdapter(BaseAPIProviderAdapter, DataSource):
             "source_url": metadata.source_url,
             "api_version": metadata.api_version,
             "symbols": list(symbol_map.keys()),
+            "symbol_map": symbol_map,  # Pass SID mapping to ensure parquet-DB consistency
             "timezone": kwargs.get("timezone", "UTC"),
         }
 

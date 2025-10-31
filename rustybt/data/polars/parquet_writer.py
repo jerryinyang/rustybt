@@ -460,6 +460,57 @@ class ParquetWriter:
 
         return paths
 
+    def _calculate_total_row_count(self, bundle_name: str) -> int:
+        """Calculate total row count across all parquet files in bundle.
+
+        Scans both daily_bars and minute_bars directories to get the cumulative
+        total of all rows across all assets in the bundle.
+
+        Args:
+            bundle_name: Name of the bundle
+
+        Returns:
+            Total row count across all parquet files
+
+        Example:
+            >>> writer = ParquetWriter("data/bundles/test-bundle")
+            >>> total_rows = writer._calculate_total_row_count("test-bundle")
+            >>> print(f"Total rows: {total_rows}")
+        """
+        total_rows = 0
+
+        # Check daily bars
+        daily_dir = self.daily_bars_path
+        if daily_dir.exists():
+            parquet_files = list(daily_dir.glob("**/data.parquet"))
+            if parquet_files:
+                try:
+                    scan = pl.scan_parquet([str(p) for p in parquet_files])
+                    total_rows += scan.select(pl.len()).collect().item()
+                except Exception as e:
+                    logger.warning(
+                        "failed_to_count_daily_rows",
+                        bundle_name=bundle_name,
+                        error=str(e),
+                    )
+
+        # Check minute bars
+        minute_dir = self.minute_bars_path
+        if minute_dir.exists():
+            parquet_files = list(minute_dir.glob("**/data.parquet"))
+            if parquet_files:
+                try:
+                    scan = pl.scan_parquet([str(p) for p in parquet_files])
+                    total_rows += scan.select(pl.len()).collect().item()
+                except Exception as e:
+                    logger.warning(
+                        "failed_to_count_minute_rows",
+                        bundle_name=bundle_name,
+                        error=str(e),
+                    )
+
+        return total_rows
+
     def _auto_populate_metadata(
         self,
         df: pl.DataFrame,
@@ -485,7 +536,8 @@ class ParquetWriter:
         """
         current_time = int(time.time())
 
-        row_count = len(df)
+        # Calculate total row count across ALL parquet files in bundle
+        row_count = self._calculate_total_row_count(bundle_name)
         file_size = output_path.stat().st_size
         file_checksum = hashlib.sha256(output_path.read_bytes()).hexdigest()
 
@@ -618,7 +670,7 @@ class ParquetWriter:
         update_payload: dict[str, Any] = {
             "source_type": source_metadata.get("source_type", "unknown"),
             "fetch_timestamp": current_time,
-            "row_count": row_count,  # Note: This is still per-write, not cumulative
+            "row_count": row_count,  # Total cumulative rows across all assets in bundle
             "start_date": start_timestamp,  # Now tracks min across all writes
             "end_date": end_timestamp,  # Now tracks max across all writes
             "missing_days_count": missing_days_count,

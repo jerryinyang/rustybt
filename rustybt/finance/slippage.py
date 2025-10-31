@@ -169,7 +169,8 @@ class SlippageModel(metaclass=FinancialModelMeta):
         self._volume_for_bar = 0
         volume = data.current(asset, "volume")
 
-        if volume == 0:
+        # Handle missing or invalid volume data
+        if volume is None or np.isnan(volume) or volume <= 0:
             return
 
         # can use the close price, since we verified there's volume in this
@@ -295,6 +296,11 @@ class VolumeShareSlippage(SlippageModel):
 
     def process_order(self, data, order):
         volume = data.current(order.asset, "volume")
+
+        # Handle missing or invalid volume data (NaN, None, or zero)
+        if volume is None or np.isnan(volume) or volume <= 0:
+            # No volume means illiquid/no trading - cannot fill order
+            raise LiquidityExceeded()
 
         max_volume = self.volume_limit * volume
 
@@ -434,7 +440,8 @@ class MarketImpactBase(SlippageModel):
         price = np.mean([minute_data["high"], minute_data["low"]])
 
         volume = minute_data["volume"]
-        if not volume:
+        # Handle missing or invalid volume data
+        if volume is None or np.isnan(volume) or volume <= 0:
             return None, None
 
         txn_volume = int(min(self.get_txn_volume(data, order), abs(order.open_amount)))
@@ -663,6 +670,11 @@ class FixedBasisPointsSlippage(SlippageModel):
 
     def process_order(self, data, order):
         volume = data.current(order.asset, "volume")
+
+        # Handle missing or invalid volume data
+        if volume is None or np.isnan(volume) or volume <= 0:
+            raise LiquidityExceeded()
+
         max_volume = int(self.volume_limit * volume)
 
         price = data.current(order.asset, "close")

@@ -697,7 +697,7 @@ class CSVAdapter(BaseDataAdapter, DataSource):
         else:
             symbol_list = normalize_symbols(df["symbol"].unique().to_list())
 
-        symbol_map = build_symbol_sid_map(symbol_list)
+        symbol_map = build_symbol_sid_map(symbol_list, bundle_name=bundle_name)
 
         effective_frequency = frequency or "1d"
         if effective_frequency in {"N/A", "na", "none"}:
@@ -717,6 +717,7 @@ class CSVAdapter(BaseDataAdapter, DataSource):
             "source_url": metadata.source_url,
             "api_version": metadata.api_version,
             "symbols": list(symbol_map.keys()),
+            "symbol_map": symbol_map,  # Pass SID mapping to ensure parquet-DB consistency
             "file_size_bytes": additional_info.get("file_size_bytes"),
             "timezone": additional_info.get("timezone") or self.config.timezone or "UTC",
         }

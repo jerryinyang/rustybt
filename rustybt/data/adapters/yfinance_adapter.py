@@ -628,7 +628,7 @@ class YFinanceAdapter(BaseDataAdapter, DataSource):
             )
             return
 
-        symbol_map = build_symbol_sid_map(normalized_symbols)
+        symbol_map = build_symbol_sid_map(normalized_symbols, bundle_name=bundle_name)
         df_prepared, frame_type = prepare_ohlcv_frame(df, symbol_map, frequency)
 
         bundle_dir = Path(data_path(["bundles", bundle_name]))

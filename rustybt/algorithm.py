@@ -2664,14 +2664,19 @@ class TradingAlgorithm:
         PipelineEngine.run_pipeline
         """
         sessions = self.trading_calendar.sessions
+        sim_end_session = self.sim_params.end_session
+
+        # If start_session is after simulation end, clamp it to the end session
+        # This can happen when handle_data is called after the last trading session
+        # (e.g., during cleanup or post-session processing)
+        if start_session > sim_end_session:
+            start_session = sim_end_session
 
         # Load data starting from the previous trading day...
         start_date_loc = sessions.get_loc(start_session)
 
         # ...continuing until either the day before the simulation end, or
         # until chunksize days of data have been loaded.
-        sim_end_session = self.sim_params.end_session
-
         end_loc = min(start_date_loc + chunksize, sessions.get_loc(sim_end_session))
 
         end_session = sessions[end_loc]

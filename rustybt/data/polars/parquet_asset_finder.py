@@ -111,17 +111,26 @@ class ParquetAssetFinder:
             # Load date ranges if available
             date_ranges = {}
             if "date_ranges" in tables:
-                dr_query = sa.text(
-                    "SELECT symbol_id, start_date, end_date, row_count FROM date_ranges"
-                )
-                dr_rows = session.execute(dr_query).fetchall()
+                try:
+                    dr_query = sa.text(
+                        "SELECT symbol_id, start_date, end_date, row_count FROM date_ranges"
+                    )
+                    dr_rows = session.execute(dr_query).fetchall()
 
-                for row in dr_rows:
-                    date_ranges[row[0]] = {
-                        "start_date": row[1],
-                        "end_date": row[2],
-                        "row_count": row[3],
-                    }
+                    for row in dr_rows:
+                        date_ranges[row[0]] = {
+                            "start_date": row[1],
+                            "end_date": row[2],
+                            "row_count": row[3],
+                        }
+                except Exception as e:
+                    # Handle schema mismatch or empty table (date_ranges is optional/deprecated)
+                    logger.debug(
+                        "date_ranges_load_skipped",
+                        reason=str(e),
+                        info="date_ranges table is optional and may have old schema",
+                    )
+                    date_ranges = {}
 
             logger.info(
                 "local_metadata_loaded",
@@ -164,20 +173,31 @@ class ParquetAssetFinder:
                 )
                 return {}
 
-            # Query date ranges
-            query = sa.text("SELECT symbol_id, start_date, end_date, row_count FROM date_ranges")
-            result = session.execute(query)
+            # Query date ranges (with schema compatibility handling)
+            try:
+                query = sa.text(
+                    "SELECT symbol_id, start_date, end_date, row_count FROM date_ranges"
+                )
+                result = session.execute(query)
 
-            date_ranges = {}
-            for row in result:
-                date_ranges[row[0]] = {
-                    "start_date": row[1],
-                    "end_date": row[2],
-                    "row_count": row[3],
-                }
+                date_ranges = {}
+                for row in result:
+                    date_ranges[row[0]] = {
+                        "start_date": row[1],
+                        "end_date": row[2],
+                        "row_count": row[3],
+                    }
 
-            logger.info("date_ranges_loaded", count=len(date_ranges))
-            return date_ranges
+                logger.info("date_ranges_loaded", count=len(date_ranges))
+                return date_ranges
+            except Exception as e:
+                # Handle schema mismatch (old metadata.db may have different schema)
+                logger.warning(
+                    "date_ranges_load_failed",
+                    reason=str(e),
+                    message="date_ranges table has incompatible schema, skipping",
+                )
+                return {}
 
     def _load_symbols(self):
         """Load symbols from bundle metadata."""

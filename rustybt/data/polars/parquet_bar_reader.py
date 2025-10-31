@@ -492,6 +492,15 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
             # Extract value
             value = df[field][0]
 
+            # Handle None/null values in the data
+            if value is None or (hasattr(value, "__float__") and np.isnan(float(value))):
+                if field == "volume":
+                    # For missing volume, return 0 (illiquid/no trading)
+                    return 0
+                else:
+                    # For missing price data, return NaN
+                    return np.nan
+
             # Convert Decimal to native Python type
             if field == "volume":
                 return int(value)

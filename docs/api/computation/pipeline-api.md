@@ -1043,91 +1043,106 @@ crypto_only = FilterByAssetType(asset_type='crypto')
 
 #### Solution: Exclude Fiat Pairs (Real-World Example)
 
-For filtering based on asset names or other metadata not available in Pipeline's compute context, filter **after** the pipeline output:
+**Problem:** You want to select top 10 assets by some factor, but exclude fiat currency pairs. If you filter AFTER Pipeline returns 10 assets, you might end up with fewer than 10.
+
+**Solution Options:**
+
+##### Option A: CustomFilter with Asset Finder (Recommended)
+
+Use CustomFilter to filter IN Pipeline, guaranteeing exact count:
 
 ```python
-from rustybt import TradingAlgorithm
-from rustybt.pipeline import Pipeline
+from rustybt.pipeline import CustomFilter, Pipeline
 from rustybt.pipeline.factors import AverageDollarVolume
 from rustybt.pipeline.domain import EquityCalendarDomain
+from rustybt.data.bundles.core import load_bundle_from_cache
 
-# Create crypto domain
 CRYPTO = EquityCalendarDomain(country_code="US", calendar_name="24/7")
 
-# Known fiat currency codes
-FIAT_CURRENCIES = {
-    'USD', 'USDT', 'USDC', 'BUSD', 'DAI',  # USD stablecoins
-    'EUR', 'GBP', 'AUD', 'CAD', 'CHF',
-    'HKD', 'JPY', 'NZD', 'SGD',
-    'UAH', 'TRY', 'RUB', 'ZAR', 'NGN',
-    'BRL', 'ARS', 'MXN', 'CLP',
-    'CZK', 'DKK', 'NOK', 'SEK', 'PLN',
-    'HUF', 'RON', 'PHP', 'IDR', 'THB',
-    'VND', 'SAR', 'AED', 'INR', 'CNY',
-    'KRW', 'KZT',
-}
+class ExcludeFiatPairs(CustomFilter):
+    """Exclude fiat pairs - requires asset finder to map SIDs to names."""
 
-def is_fiat_pair(symbol: str) -> bool:
-    """Return True if symbol involves any fiat currency."""
-    parts = symbol.replace(':', '/').split('/')
-    return any(p.upper().strip() in FIAT_CURRENCIES for p in parts)
+    FIAT_CURRENCIES = {
+        'USD', 'USDT', 'USDC', 'BUSD', 'DAI',
+        'EUR', 'GBP', 'AUD', 'CAD', 'CHF',
+        'HKD', 'JPY', 'NZD', 'SGD',
+        'UAH', 'TRY', 'RUB', 'ZAR', 'NGN',
+        'BRL', 'ARS', 'MXN', 'CLP',
+        'CZK', 'DKK', 'NOK', 'SEK', 'PLN',
+        'HUF', 'RON', 'PHP', 'IDR', 'THB',
+        'VND', 'SAR', 'AED', 'INR', 'CNY',
+        'KRW', 'KZT',
+    }
+
+    inputs = ()
+    window_length = 1
+
+    def __init__(self, asset_finder):
+        self.asset_finder = asset_finder
+        super().__init__()
+
+    def compute(self, today, assets, out):
+        """assets is array of SIDs, use asset_finder to get names."""
+        for i, sid in enumerate(assets):
+            asset = self.asset_finder.retrieve_asset(sid)
+            parts = asset.asset_name.replace(':', '/').split('/')
+            is_fiat = any(p.upper().strip() in self.FIAT_CURRENCIES for p in parts)
+            out[i] = not is_fiat
 
 
 def make_pipeline():
-    """Define universe: top 50 by volume."""
+    """Top 10 by volume, excluding fiat pairs."""
+    # Get asset finder from bundle
+    bundle_data = load_bundle_from_cache('binance-spot-1d')
+    asset_finder = bundle_data.asset_finder
+
+    # Factors and filters
     avg_volume = AverageDollarVolume(window_length=5)
-    top_50 = avg_volume.top(50)
+    exclude_fiat = ExcludeFiatPairs(asset_finder=asset_finder)
+
+    # Filter non-fiat first, THEN take top 10
+    non_fiat_top_10 = avg_volume.top(10, mask=exclude_fiat)
 
     return Pipeline(
         columns={'avg_volume': avg_volume},
-        screen=top_50,
+        screen=non_fiat_top_10,  # Guarantees 10 non-fiat assets
+        domain=CRYPTO,
+    )
+```
+
+**Pros:** Filtering in Pipeline (efficient), guarantees exact count
+**Cons:** Requires asset finder access
+
+##### Option B: Oversample and Filter (Simpler)
+
+Get MORE assets from Pipeline, filter down to desired count:
+
+```python
+def make_pipeline():
+    """Get top 30, will filter to 10 non-fiat."""
+    avg_volume = AverageDollarVolume(window_length=5)
+    return Pipeline(
+        columns={'avg_volume': avg_volume},
+        screen=avg_volume.top(30),  # Get 3x what you need
         domain=CRYPTO,
     )
 
-
-def initialize(context):
-    """Initialize strategy."""
-    pipe = make_pipeline()
-    context.attach_pipeline(pipe, 'universe')
-
-
 def before_trading_start(context, data):
-    """Filter universe to exclude fiat pairs - runs once per day."""
-
-    # Get raw pipeline output (top 50 by volume)
+    """Filter to top 10 non-fiat pairs."""
     pipeline_output = context.pipeline_output('universe')
 
-    # Filter out fiat pairs
-    non_fiat_assets = [
-        asset for asset in pipeline_output.index
-        if not is_fiat_pair(asset.asset_name)
+    # Filter and take top 10
+    non_fiat = pipeline_output[
+        ~pipeline_output.index.map(lambda a: is_fiat_pair(a.asset_name))
     ]
-
-    # Store filtered universe
-    context.universe = non_fiat_assets
-
-    print(f"Universe: {len(non_fiat_assets)} non-fiat pairs from {len(pipeline_output)} total")
-
-
-def handle_data(context, data):
-    """Trade using pre-filtered universe."""
-
-    # Use the filtered universe from before_trading_start
-    for asset in context.universe:  # Already excludes fiat pairs!
-        if data.can_trade(asset):
-            # Your trading logic here
-            pass
+    top_10 = non_fiat.nlargest(10, 'avg_volume')
+    context.universe = list(top_10.index)
 ```
 
-**Why This Approach:**
+**Pros:** Simpler, no asset finder needed
+**Cons:** Need to estimate oversample amount, less efficient
 
-1. **Pipeline Limitation**: CustomFilter's `compute()` method receives SIDs (integers), not Asset objects, so you can't access `asset.asset_name` there.
-
-2. **Efficient**: Filtering in `before_trading_start()` runs once per day, not on every bar.
-
-3. **Clear Separation**: Pipeline handles data-driven filtering (volume, returns, etc.), Python handles metadata filtering (names, types, etc.).
-
-4. **Maintains Benefits**: Still get Pipeline's caching, vectorization, and declarative universe selection.
+**Recommendation:** Use Option A for production, Option B for prototyping.
 
 ### Advanced Combining Patterns
 

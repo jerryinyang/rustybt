@@ -132,18 +132,392 @@ from rustybt.pipeline.factors import VWAP
 vwap_20 = VWAP(window_length=20)
 ```
 
-### Statistical Factors
-
-#### Z-Score
+#### Aroon
 ```python
-# Note: Advanced statistical factors like Zscore are planned for future releases
-# For now, use custom factors with zscore calculations
+from rustybt.pipeline.factors import Aroon
+
+# 25-period Aroon indicator
+aroon = Aroon(window_length=25)
+
+# Access both up and down components
+aroon_up = aroon.up
+aroon_down = aroon.down
+
+# Identify strong uptrends (Aroon Up > 70, Aroon Down < 30)
+strong_uptrend = (aroon.up > 70) & (aroon.down < 30)
 ```
 
-#### Linear Regression
+The Aroon indicator helps identify trend changes and strength. Values range from 0-100.
+
+#### Fast Stochastic Oscillator
 ```python
-# Note: LinearRegression factor is planned for future releases
-# For now, use custom factors for regression analysis
+from rustybt.pipeline.factors import FastStochasticOscillator
+
+# 14-period Fast Stochastic (%K)
+fast_stoch = FastStochasticOscillator(window_length=14)
+
+# Identify oversold/overbought conditions
+oversold = fast_stoch < 20
+overbought = fast_stoch > 80
+```
+
+Fast Stochastic measures momentum. Values below 20 suggest oversold, above 80 suggest overbought.
+
+#### Ichimoku Kinko Hyo (Ichimoku Cloud)
+```python
+from rustybt.pipeline.factors import IchimokuKinkoHyo
+
+# Ichimoku with custom parameters
+ichimoku = IchimokuKinkoHyo(
+    window_length=52,  # Senkou Span B window
+    tenkan_sen_length=9,
+    kijun_sen_length=26,
+    chikou_span_length=26
+)
+
+# Access components
+tenkan_sen = ichimoku.tenkan_sen  # Conversion line
+kijun_sen = ichimoku.kijun_sen  # Base line
+senkou_span_a = ichimoku.senkou_span_a  # Leading Span A
+senkou_span_b = ichimoku.senkou_span_b  # Leading Span B
+chikou_span = ichimoku.chikou_span  # Lagging Span
+
+# Bullish signal: price above cloud
+price = USEquityPricing.close.latest
+above_cloud = price > senkou_span_a
+```
+
+Ichimoku is a comprehensive trend-following indicator with multiple components.
+
+#### MACD Signal
+```python
+from rustybt.pipeline.factors import MACDSignal, MovingAverageConvergenceDivergenceSignal
+
+# Standard MACD parameters (12, 26, 9)
+macd_signal = MACDSignal()
+
+# Or use full name
+macd = MovingAverageConvergenceDivergenceSignal()
+
+# MACD crossover (bullish when MACD crosses above signal)
+macd_value = macd  # MACD line
+# Note: MACD outputs the signal line; MACD line calculation requires custom factor
+```
+
+#### Rate of Change Percentage
+```python
+from rustybt.pipeline.factors import RateOfChangePercentage
+
+# 10-day rate of change
+roc = RateOfChangePercentage(
+    inputs=[USEquityPricing.close],
+    window_length=10
+)
+
+# Momentum filter
+strong_momentum = roc > 5  # > 5% change
+```
+
+ROC measures percentage price change over N periods.
+
+#### True Range
+```python
+from rustybt.pipeline.factors import TrueRange
+
+# True Range (2-day default)
+tr = TrueRange()
+
+# Average True Range (ATR) - use with moving average
+from rustybt.pipeline.factors import SimpleMovingAverage
+atr = SimpleMovingAverage(inputs=[tr], window_length=14)
+
+# Volatility filter
+high_volatility = atr > atr.mean(window_length=252)
+```
+
+True Range measures daily price range including gaps.
+
+### Advanced Technical Factors
+
+#### Exponential Weighted Moving Average (EWMA)
+```python
+from rustybt.pipeline.factors import EWMA, ExponentialWeightedMovingAverage
+
+# 20-day EWMA with default decay
+ewma_20 = EWMA(inputs=[USEquityPricing.close], window_length=20)
+
+# Or use full name
+ewma = ExponentialWeightedMovingAverage(
+    inputs=[USEquityPricing.close],
+    window_length=20
+)
+
+# Crossover strategy
+ewma_short = EWMA(inputs=[USEquityPricing.close], window_length=12)
+ewma_long = EWMA(inputs=[USEquityPricing.close], window_length=26)
+bullish_cross = ewma_short > ewma_long
+```
+
+#### Exponential Weighted Moving Standard Deviation
+```python
+from rustybt.pipeline.factors import EWMSTD, ExponentialWeightedMovingStdDev
+
+# 20-day EWMSTD
+ewmstd = EWMSTD(inputs=[USEquityPricing.close], window_length=20)
+
+# Volatility breakout
+vol_breakout = USEquityPricing.close.latest > (
+    EWMA(inputs=[USEquityPricing.close], window_length=20) + 2 * ewmstd
+)
+```
+
+#### Linear Weighted Moving Average
+```python
+from rustybt.pipeline.factors import LinearWeightedMovingAverage
+
+# 20-day LWMA (more weight on recent prices)
+lwma = LinearWeightedMovingAverage(
+    inputs=[USEquityPricing.close],
+    window_length=20
+)
+
+# Trend filter
+price = USEquityPricing.close.latest
+uptrend = price > lwma
+```
+
+LWMA weights recent prices more heavily using linear weighting.
+
+#### Max Drawdown
+```python
+from rustybt.pipeline.factors import MaxDrawdown
+
+# 252-day (1 year) max drawdown
+max_dd = MaxDrawdown(inputs=[USEquityPricing.close], window_length=252)
+
+# Select low drawdown stocks
+low_drawdown = max_dd.bottom(100)  # Bottom 100 by drawdown
+```
+
+MaxDrawdown measures maximum peak-to-trough decline over the window.
+
+#### Daily Returns
+```python
+from rustybt.pipeline.factors import DailyReturns
+
+# Daily returns (window_length=2 fixed)
+daily_returns = DailyReturns()
+
+# Multi-day returns use Returns factor
+from rustybt.pipeline.factors import Returns
+monthly_returns = Returns(window_length=21)
+```
+
+DailyReturns is a convenience factor equivalent to `Returns(window_length=2)`.
+
+#### Percent Change
+```python
+from rustybt.pipeline.factors import PercentChange
+
+# 10-day percent change on volume
+volume_change = PercentChange(
+    inputs=[USEquityPricing.volume],
+    window_length=10
+)
+
+# Volume surge detection
+volume_surge = volume_change > 50  # 50% increase
+```
+
+PercentChange works on any input, not just price.
+
+#### Average Dollar Volume
+```python
+from rustybt.pipeline.factors import AverageDollarVolume
+
+# 20-day average dollar volume
+avg_dollar_vol = AverageDollarVolume(window_length=20)
+
+# Liquidity filter (top 500 by dollar volume)
+liquid_universe = avg_dollar_vol.top(500)
+```
+
+#### Weighted Average Value
+```python
+from rustybt.pipeline.factors import WeightedAverageValue
+
+# Custom weighted average
+weighted_avg = WeightedAverageValue(
+    inputs=[USEquityPricing.close, USEquityPricing.volume],
+    window_length=20
+)
+# This is what VWAP uses internally
+```
+
+WeightedAverageValue is the base for VWAP and similar calculations.
+
+### Statistical Factors
+
+#### Annualized Volatility
+```python
+from rustybt.pipeline.factors import AnnualizedVolatility
+
+# 252-day (1 year) annualized volatility
+annual_vol = AnnualizedVolatility(window_length=252)
+
+# Low volatility filter
+low_vol = annual_vol.bottom(100)
+```
+
+#### Rolling Sharpe Ratio
+```python
+from rustybt.pipeline.factors import RollingSharpeRatio
+
+# 252-day rolling Sharpe ratio
+sharpe = RollingSharpeRatio(window_length=252)
+
+# Select high risk-adjusted return stocks
+high_sharpe = sharpe.top(50)
+```
+
+RollingSharpeRatio measures risk-adjusted returns over the window.
+
+#### Simple Beta
+```python
+from rustybt.pipeline.factors import SimpleBeta, Returns
+
+# Calculate beta vs market (e.g., SPY)
+returns = Returns(window_length=2)
+beta = SimpleBeta(
+    target=returns,
+    regression_length=252
+)
+
+# Low beta filter
+low_beta = beta < 0.7
+```
+
+SimpleBeta calculates asset beta relative to a target (typically market returns).
+
+#### Rolling Pearson Correlation
+```python
+from rustybt.pipeline.factors import RollingPearson, RollingPearsonOfReturns
+
+# Correlation between two factors
+factor_a = Returns(window_length=21)
+factor_b = Returns(window_length=63)
+
+correlation = RollingPearson(
+    base_factor=factor_a,
+    target=factor_b,
+    correlation_length=252
+)
+
+# Or use convenience method for returns correlation
+returns_corr = RollingPearsonOfReturns(
+    target=market_returns,
+    returns_length=2,
+    correlation_length=252
+)
+
+# Pairs trading: find negatively correlated assets
+negatively_correlated = correlation < -0.5
+```
+
+#### Rolling Spearman Correlation
+```python
+from rustybt.pipeline.factors import RollingSpearman, RollingSpearmanOfReturns
+
+# Rank correlation (non-parametric)
+spearman_corr = RollingSpearman(
+    base_factor=factor_a,
+    target=factor_b,
+    correlation_length=252
+)
+
+# Returns-specific version
+returns_spearman = RollingSpearmanOfReturns(
+    target=market_returns,
+    returns_length=2,
+    correlation_length=252
+)
+```
+
+Spearman correlation is based on ranks, robust to outliers.
+
+#### Rolling Linear Regression of Returns
+```python
+from rustybt.pipeline.factors import RollingLinearRegressionOfReturns
+
+# Calculate alpha and beta via regression
+regression = RollingLinearRegressionOfReturns(
+    target=market_returns,
+    returns_length=2,
+    regression_length=252
+)
+
+# Access regression outputs
+alpha = regression.alpha  # Intercept (excess return)
+beta = regression.beta  # Slope (market sensitivity)
+
+# Alpha-seeking strategy
+high_alpha = alpha.top(50)
+```
+
+Performs rolling linear regression, provides alpha and beta outputs.
+
+### Event-Based Factors
+
+#### Business Days Since Previous Event
+```python
+from rustybt.pipeline.factors import BusinessDaysSincePreviousEvent
+from rustybt.pipeline.data import EarningsCalendar
+
+# Days since last earnings announcement
+days_since_earnings = BusinessDaysSincePreviousEvent(
+    inputs=[EarningsCalendar.announcement_date]
+)
+
+# Recently announced (within 5 days)
+recent_earnings = days_since_earnings <= 5
+```
+
+#### Business Days Until Next Event
+```python
+from rustybt.pipeline.factors import BusinessDaysUntilNextEvent
+
+# Days until next earnings
+days_until_earnings = BusinessDaysUntilNextEvent(
+    inputs=[EarningsCalendar.announcement_date]
+)
+
+# Upcoming earnings (within 10 days)
+upcoming_earnings = days_until_earnings <= 10
+```
+
+### Advanced Factors
+
+#### Least Correlated Pairs
+```python
+from rustybt.pipeline.factors import LeastCorrelatedPairs
+
+# Find least correlated pairs for pair trading
+least_corr = LeastCorrelatedPairs(window_length=252)
+
+# Use in pair selection strategy
+pairs_universe = least_corr.top(20)
+```
+
+#### Peer Count
+```python
+from rustybt.pipeline.factors import PeerCount
+from rustybt.pipeline.classifiers import Sector
+
+# Count peers in same sector
+peer_count = PeerCount(inputs=[Sector()])
+
+# Avoid illiquid sectors
+sufficient_peers = peer_count >= 10
 ```
 
 ### Decimal-Aware Factors
@@ -246,6 +620,196 @@ top_decile = returns_1d.percentile_between(90, 100)
 volatility = Returns(window_length=2).stddev(window_length=252)
 middle_half = volatility.percentile_between(25, 75)
 ```
+
+### Advanced Filters
+
+#### Smoothing Filters
+
+Smoothing filters check if a condition holds over multiple periods.
+
+##### All
+```python
+from rustybt.pipeline.filters import All
+
+# Price above SMA for all of the last 5 days
+price_above_sma = USEquityPricing.close.latest > sma_20
+sustained_uptrend = All(inputs=[price_above_sma], window_length=5)
+
+# Use case: confirm trend persistence
+confirmed_breakout = price_above_resistance & sustained_uptrend
+```
+
+`All` returns True only if the input filter is True for ALL periods in the window.
+
+##### Any
+```python
+from rustybt.pipeline.filters import Any
+
+# Price touched upper Bollinger Band in last 10 days
+touched_upper_band = USEquityPricing.close.latest >= bb.upper
+recent_overbought = Any(inputs=[touched_upper_band], window_length=10)
+
+# Avoid recently overbought stocks
+avoid_overbought = ~recent_overbought
+```
+
+`Any` returns True if the input filter is True for ANY period in the window.
+
+##### AtLeastN
+```python
+from rustybt.pipeline.filters import AtLeastN
+
+# Volume above average for at least 3 of last 5 days
+high_volume = USEquityPricing.volume.latest > volume_avg
+volume_interest = AtLeastN(inputs=[high_volume], window_length=5, N=3)
+
+# Require sustained volume, not just one spike
+confirmed_breakout = price_breakout & volume_interest
+```
+
+`AtLeastN` returns True if the input filter is True for at least N periods.
+
+#### Data Quality Filters
+
+##### AllPresent
+```python
+from rustybt.pipeline.filters import AllPresent
+
+# Ensure all data columns are present (no missing data)
+all_data_present = AllPresent()
+
+# Use as base filter to avoid NaN issues
+pipeline = Pipeline(
+    columns={'momentum': momentum_factor},
+    screen=all_data_present & momentum_factor.top(50)
+)
+```
+
+`AllPresent` filters out assets with missing data in any column.
+
+##### NotNullFilter / NullFilter
+```python
+from rustybt.pipeline.filters import NotNullFilter, NullFilter
+
+# Filter out assets with null values in specific column
+has_earnings_data = NotNullFilter(inputs=[EarningsCalendar.eps])
+
+# Or select only assets with null values
+missing_earnings = NullFilter(inputs=[EarningsCalendar.eps])
+```
+
+#### Selection Filters
+
+##### SingleAsset
+```python
+from rustybt.pipeline.filters import SingleAsset
+from rustybt.pipeline import Pipeline
+
+# Create filter for single asset
+aapl = asset_finder.lookup_symbol('AAPL', as_of_date=None)
+aapl_only = SingleAsset(asset=aapl)
+
+# Pipeline that computes only for AAPL
+aapl_pipeline = Pipeline(
+    columns={'close': USEquityPricing.close.latest},
+    screen=aapl_only
+)
+```
+
+`SingleAsset` selects exactly one asset by Asset object.
+
+##### StaticAssets / StaticSids
+```python
+from rustybt.pipeline.filters import StaticAssets, StaticSids
+
+# Filter to specific list of assets
+assets = [asset_finder.lookup_symbol(s, as_of_date=None)
+          for s in ['AAPL', 'MSFT', 'GOOGL']]
+tech_only = StaticAssets(assets=assets)
+
+# Or by SIDs
+sids = [1, 2, 3]
+specific_sids = StaticSids(sids=sids)
+
+# Pipeline for specific universe
+custom_universe_pipeline = Pipeline(
+    columns={'momentum': momentum_factor},
+    screen=tech_only
+)
+```
+
+`StaticAssets` and `StaticSids` filter to a specific predefined set.
+
+#### Advanced Filters
+
+##### PercentileFilter
+```python
+from rustybt.pipeline.filters import PercentileFilter
+
+# Top 10% by returns
+returns = Returns(window_length=21)
+top_decile = PercentileFilter(
+    inputs=[returns],
+    min_percentile=90,
+    max_percentile=100
+)
+
+# Middle 50% by volatility
+volatility = AnnualizedVolatility(window_length=252)
+middle_vol = PercentileFilter(
+    inputs=[volatility],
+    min_percentile=25,
+    max_percentile=75
+)
+```
+
+`PercentileFilter` selects assets within specified percentile range.
+
+##### MaximumFilter
+```python
+from rustybt.pipeline.filters import MaximumFilter
+
+# Select maximum value across multiple filters/factors
+filter_a = momentum.top(100)
+filter_b = volatility.bottom(100)
+
+# Assets in EITHER filter
+either_filter = MaximumFilter(inputs=[filter_a, filter_b])
+```
+
+`MaximumFilter` applies logical OR across input filters.
+
+##### ArrayPredicate
+```python
+from rustybt.pipeline.filters import ArrayPredicate
+import numpy as np
+
+# Custom array-based predicate
+def custom_predicate(array):
+    # array shape: (num_assets,)
+    return array > np.median(array)
+
+custom_filter = ArrayPredicate(
+    inputs=[momentum_factor],
+    predicate=custom_predicate
+)
+```
+
+`ArrayPredicate` applies a custom function to create filters.
+
+##### NumExprFilter
+```python
+from rustybt.pipeline.filters import NumExprFilter
+
+# Complex filter using NumExpr for performance
+# Combine multiple factors efficiently
+momentum_filter = NumExprFilter(
+    inputs=[returns_1m, returns_3m, volatility],
+    expr="(returns_1m > 0.05) & (returns_3m > 0.10) & (volatility < 0.30)"
+)
+```
+
+`NumExprFilter` evaluates complex expressions efficiently using NumExpr.
 
 ### Custom Filters
 
@@ -421,6 +985,14 @@ normalized_returns = returns.zscore()
 ### Pattern 1: Mean Reversion Strategy
 
 ```python
+from rustybt.pipeline import Pipeline
+from rustybt.pipeline.factors import Returns, AverageDollarVolume
+from rustybt.pipeline.data import USEquityPricing
+
+# Define liquid universe
+dollar_volume = AverageDollarVolume(window_length=20)
+liquid_universe = dollar_volume.top(1000)
+
 # Calculate z-score of returns
 returns = Returns(window_length=2)
 returns_zscore = returns.zscore(window_length=252)
@@ -434,6 +1006,7 @@ pipeline = Pipeline(
     columns={
         'returns_zscore': returns_zscore,
         'signal': -returns_zscore,  # Negative for mean reversion
+        'close': USEquityPricing.close.latest,
     },
     screen=liquid_universe & (oversold | overbought)
 )
@@ -495,30 +1068,151 @@ pipeline = Pipeline(
 ### Pattern 4: Statistical Arbitrage
 
 ```python
-# Calculate beta to market
-spy_returns = Returns(window_length=2, inputs=[spy_close])
-stock_returns = Returns(window_length=2)
+from rustybt.pipeline.factors import (
+    Returns,
+    SimpleBeta,
+    AverageDollarVolume,
+    RollingLinearRegressionOfReturns
+)
 
-# Regression to calculate beta
-# Note: Advanced regression factors are planned for future releases
-beta = RollingLinearRegression(
-    dependent=stock_returns,
-    independent=spy_returns,
-    window_length=252
-).beta
+# Define universe
+liquid_universe = AverageDollarVolume(window_length=20).top(500)
 
-# Alpha (excess returns)
-alpha = stock_returns - (beta * spy_returns)
+# Calculate returns
+returns = Returns(window_length=2)
 
-# Select high alpha stocks
+# Calculate beta via regression (requires market returns as target)
+regression = RollingLinearRegressionOfReturns(
+    target=returns,  # This would be market returns in practice
+    returns_length=2,
+    regression_length=252
+)
+
+# Access alpha and beta from regression
+alpha = regression.alpha  # Excess return (intercept)
+beta = regression.beta  # Market sensitivity (slope)
+
+# Alpha-seeking strategy: high alpha, reasonable beta
 high_alpha = alpha.zscore(window_length=20) > 1.5
+reasonable_beta = (beta > 0.5) & (beta < 1.5)
 
 pipeline = Pipeline(
     columns={
         'alpha': alpha,
         'beta': beta,
+        'returns': returns,
     },
-    screen=high_alpha
+    screen=liquid_universe & high_alpha & reasonable_beta
+)
+```
+
+### Pattern 5: Multi-Factor Quality + Momentum
+
+```python
+from rustybt.pipeline.factors import (
+    Returns,
+    AnnualizedVolatility,
+    MaxDrawdown,
+    RollingSharpeRatio,
+    AverageDollarVolume,
+    SimpleMovingAverage
+)
+from rustybt.pipeline.filters import All
+
+# Universe selection
+liquid = AverageDollarVolume(window_length=20).top(1000)
+price_filter = USEquityPricing.close.latest > 5
+
+# Momentum factors
+returns_1m = Returns(window_length=21)
+returns_3m = Returns(window_length=63)
+returns_6m = Returns(window_length=126)
+
+# Composite momentum (equal weight)
+momentum_score = (
+    returns_1m.rank() +
+    returns_3m.rank() +
+    returns_6m.rank()
+) / 3
+
+# Quality factors
+volatility = AnnualizedVolatility(window_length=252)
+max_dd = MaxDrawdown(inputs=[USEquityPricing.close], window_length=252)
+sharpe = RollingSharpeRatio(window_length=252)
+
+# Quality composite (lower volatility/drawdown = better quality)
+quality_score = (
+    volatility.rank() +  # Note: will invert later
+    max_dd.rank() +
+    (-sharpe.rank())  # Higher Sharpe is better
+) / 3
+
+# Invert quality score so lower is better
+quality_score = -quality_score
+
+# Trend confirmation
+sma_50 = SimpleMovingAverage(inputs=[USEquityPricing.close], window_length=50)
+sma_200 = SimpleMovingAverage(inputs=[USEquityPricing.close], window_length=200)
+price = USEquityPricing.close.latest
+
+# Sustained uptrend
+uptrend_filter = sma_50 > sma_200
+sustained_uptrend = All(inputs=[uptrend_filter], window_length=5)
+
+# Combined strategy: top momentum + quality stocks in uptrends
+top_momentum = momentum_score.top(200)
+top_quality = quality_score.top(200)
+final_screen = liquid & price_filter & top_momentum & top_quality & sustained_uptrend
+
+pipeline = Pipeline(
+    columns={
+        'momentum': momentum_score,
+        'quality': quality_score,
+        'volatility': volatility,
+        'sharpe': sharpe,
+        'returns_1m': returns_1m,
+    },
+    screen=final_screen
+)
+```
+
+### Pattern 6: Pairs Trading with Correlation
+
+```python
+from rustybt.pipeline.factors import RollingPearson, Returns
+from rustybt.pipeline.filters import StaticAssets
+
+# Select pairs manually (in practice, would be more systematic)
+asset_a = asset_finder.lookup_symbol('AAPL', as_of_date=None)
+asset_b = asset_finder.lookup_symbol('MSFT', as_of_date=None)
+pair_universe = StaticAssets(assets=[asset_a, asset_b])
+
+# Calculate returns
+returns = Returns(window_length=2)
+
+# Rolling correlation between pairs
+# Note: This requires both assets in universe
+correlation = RollingPearson(
+    base_factor=returns,
+    target=returns,  # In practice, specify target asset returns
+    correlation_length=60
+)
+
+# Z-score of returns (for mean reversion)
+returns_zscore = returns.zscore(window_length=60)
+
+# Entry signals: high correlation + divergence
+high_correlation = correlation > 0.7
+diverged = returns_zscore.abs() > 1.5
+
+pipeline = Pipeline(
+    columns={
+        'returns': returns,
+        'returns_zscore': returns_zscore,
+        'correlation': correlation,
+        'close': USEquityPricing.close.latest,
+    },
+    screen=pair_universe & high_correlation & diverged
 )
 ```
 

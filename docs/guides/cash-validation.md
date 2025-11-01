@@ -546,8 +546,8 @@ Cash validation adds minimal overhead:
 ## See Also
 
 - [Order Management API](../api/order-management/README.md) - Order placement and execution
-- [Transaction Costs](../api/order-management/transaction-costs/README.md) - Commission and slippage
-- [Risk Management](./risk-management.md) - Position sizing and limits
+- [Transaction Costs - Slippage](../api/order-management/transaction-costs/slippage.md) - Slippage modeling
+- [Transaction Costs - Commissions](../api/order-management/transaction-costs/commissions.md) - Commission modeling
 - [Exception Handling](./exception-handling.md) - Error handling patterns
 
 ---

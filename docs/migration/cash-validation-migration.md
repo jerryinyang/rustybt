@@ -452,5 +452,5 @@ A: No - live trading already had cash validation. This only affects backtesting.
 
 - [Cash Validation Guide](../guides/cash-validation.md) - Complete documentation
 - [Order Management API](../api/order-management/README.md) - API reference
-- [Position Sizing Examples](../examples/position-sizing/) - Working examples
-- [Risk Management Guide](../guides/risk-management.md) - Best practices
+- [Order Types](../api/order-management/order-types.md) - Order types and examples
+- [Exception Handling](../guides/exception-handling.md) - Error handling patterns

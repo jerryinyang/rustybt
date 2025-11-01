@@ -108,6 +108,8 @@ nav:
       - Backtesting:
           - Backtest Output Organization: guides/backtest-output-organization.md
           - Strategy Code Capture: guides/strategy-code-capture.md
+      - Order Management:
+          - Cash Validation: guides/cash-validation.md
       - Data Management:
           - CSV Data Import: guides/csv-data-import.md
           - Data Ingestion: guides/data-ingestion.md
@@ -134,6 +136,8 @@ nav:
           - Production Checklist: guides/production-checklist.md
           - Audit Logging: guides/audit-logging.md
           - Troubleshooting: guides/troubleshooting.md
+  - Migration Guides:
+      - Cash Validation Migration: migration/cash-validation-migration.md
   - Examples & Tutorials:
       - Overview: examples/README.md
       - Notebooks:

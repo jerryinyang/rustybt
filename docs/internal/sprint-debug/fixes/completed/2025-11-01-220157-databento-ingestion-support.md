@@ -329,7 +329,15 @@ ts_event, rtype, publisher_id, instrument_id, open, high, low, close, volume, sy
 
 ## Branch
 
-`fix/20251101-220145-databento-ingestion-support`
+`fix/20251101-220145-databento-ingestion-support` (✅ Merged to main, deleted)
+
+---
+
+## Merge Status
+
+✅ **Merged to main on 2025-11-01**
+- Branch deleted: `fix/20251101-220145-databento-ingestion-support`
+- Main branch commit: `4770a67`
 
 ---
 

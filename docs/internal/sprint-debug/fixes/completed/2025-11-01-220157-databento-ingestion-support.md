@@ -323,6 +323,7 @@ ts_event, rtype, publisher_id, instrument_id, open, high, low, close, volume, sy
 - `4f0d285` - Add configurable extra columns preservation support
 - `1e082f7` - Add Databento guide to navigation sidebar
 - `cf41990` - Fix ingest_to_bundle signature and complete QA requirements
+- `3154d47` - Add comprehensive tests for get_available_columns() and improve coverage to 90%
 
 ---
 
@@ -461,6 +462,6 @@ This feature meets all quality gates and constitutional requirements. The concer
 - `tests/unit/data/adapters/test_databento_adapter.py` - Added 152 lines (+8 tests)
 - `docs/internal/sprint-debug/fixes/completed/2025-11-01-220157-databento-ingestion-support.md` - Updated statistics and verification
 
-**Commit**: [Pending - ready to commit]
+**Commit**: `3154d47` - QA fixes applied and merged into fix branch
 
 ---

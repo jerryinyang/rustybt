@@ -1,93 +1,29 @@
 # Known Issues
 
-## 🔴 CRITICAL: Backtest Engine - No Cash Validation
+## ✅ RESOLVED: Backtest Engine - Cash Validation (2025-11-01)
 
 ### SimulationBlotter Allows Orders Exceeding Available Cash
 
-**Status**: 🔴 CRITICAL - FIX IN PROGRESS (2025-11-01)
+**Status**: ✅ RESOLVED - Merged to main (2025-11-01)
 
-**Severity**: CRITICAL - Produces invalid backtest results
+**Severity**: CRITICAL (was) - Produced invalid backtest results
 
-**Issue**: The backtest engine (`SimulationBlotter`) does not validate cash availability when placing orders, allowing strategies to spend more capital than available. This creates impossible trades that would be rejected in live trading.
+**Issue**: The backtest engine (`SimulationBlotter`) did not validate cash availability when placing orders, allowing strategies to spend more capital than available. This created impossible trades that would be rejected in live trading.
 
-**Evidence**:
-```python
-# Live Trading (paper_broker.py:209-215) ✅ HAS VALIDATION
-if amount > Decimal("0"):
-    estimated_cost = await self._estimate_order_cost(order)
-    if estimated_cost > self.cash:
-        raise InsufficientFundsError(...)
-
-# Backtest (simulation_blotter.py:111-240) ❌ NO VALIDATION
-def order(self, asset, amount, style, order_id=None):
-    # ... creates order ...
-    # NO CASH CHECK!
-    self.open_orders[order.asset].append(order)
-    return order.id
-```
-
-**Real-World Impact**:
+**Real-World Impact** (Pre-Fix):
 
 Discovered in Aura Breakout strategy backtest (2023-01-05):
 - Starting cash: $72,815.94
 - 11 orders filled simultaneously
-- Capital used: $102,898.91 ❌ **EXCEEDS AVAILABLE CASH**
+- Capital used: $102,898.91 ❌ **EXCEEDED AVAILABLE CASH**
 - Ending cash: -$30,082.98 ❌ **NEGATIVE BALANCE**
 - Occurred on 16/701 days (2.3% of backtest)
 - Max leverage: 1.56x (156%) despite 50% exposure limit
 
-**Why This Happens**:
+**Resolution** (Framework-level - ✅ MERGED):
 
-1. Strategy creates multiple orders on day T (status: OPEN)
-2. Orders don't count toward exposure (only filled positions counted)
-3. All orders fill simultaneously on day T+1
-4. Total cost exceeds available cash
-5. Backtest allows negative balance (live broker would reject)
-
-**Consequences**:
-
-1. **Invalid backtest results**: Shows performance from impossible trades
-2. **Strategy failures in live trading**: Strategies tested in backtest fail when deployed
-3. **False confidence**: Users deploy strategies thinking they work, but they don't
-4. **Violates fundamental principle**: Backtests should simulate real trading constraints
-
-**Missing Features**:
-
-1. ❌ No cash validation before placing orders
-2. ❌ No reserved cash tracking for pending orders
-3. ❌ No margin/exposure accounting for unfilled orders
-4. ❌ No rejection of orders exceeding available capital
-5. ❌ Leverage checks only count filled positions, not pending orders
-
-**Workaround** (Manual validation in strategy code):
-
-```python
-def handle_data(context, data):
-    # Calculate reserved cash for pending orders
-    reserved_cash = 0.0
-    for asset, order_id in context.unfilled_orders.items():
-        order = get_order(order_id)
-        if order and order.status == ORDER_STATUS.OPEN:
-            price = data.current(order.sid, 'price')
-            reserved_cash += abs(order.amount) * price
-
-    available_cash = context.portfolio.cash - reserved_cash
-
-    # Calculate order cost
-    estimated_cost = amount * current_price
-
-    # Validate before placing order
-    if estimated_cost > available_cash:
-        # Skip this order - insufficient cash
-        return
-
-    # Safe to place order
-    order(asset, amount)
-```
-
-**Proper Fix** (Framework-level - ✅ IMPLEMENTED):
-
-Branch: `fix/20251101-151047-simulation-blotter-cash-validation`
+Merge commit: Main branch (2025-11-01)
+Branch: `fix/20251101-151047-simulation-blotter-cash-validation` (deleted)
 
 Implemented in `rustybt/finance/blotter/simulation_blotter.py`:
 
@@ -99,23 +35,32 @@ Implemented in `rustybt/finance/blotter/simulation_blotter.py`:
    - `"warn"`: Logs warning but allows order (backward compatible)
    - `"strict"`: Raises `InsufficientFundsError` (crash backtest for debugging)
 5. ✅ Matches behavior with live trading (`paper_broker.py`)
-6. ✅ Comprehensive tests (13 test cases, all passing)
+6. ✅ Comprehensive tests (15 test cases total, all passing)
+7. ✅ Complete user-facing documentation
 
-**Analysis Reports**:
-- User backtest report: `temp/strategies/BACKTEST_ISSUES_REPORT.md`
-- Investigation script: `temp/strategies/investigate_negative_cash.py`
-- Fixed strategy example: `temp/strategies/aura_fixed.py`
+**Documentation**:
+- User Guide: `docs/guides/cash-validation.md` (574 lines)
+- Migration Guide: `docs/migration/cash-validation-migration.md` (457 lines)
+- API Documentation: `docs/api/order-management/README.md` (updated)
+- CHANGELOG: Complete entry with breaking change notice
+- Fix Report: `docs/internal/sprint-debug/fixes/completed/2025-11-01-151051-critical-simulation-blotter-cash-validation.md`
 
-**Related Files**:
-- `rustybt/finance/blotter/simulation_blotter.py` (needs fix)
-- `rustybt/live/brokers/paper_broker.py` (has correct validation)
-- `rustybt/exceptions.py` (defines `InsufficientFundsError`)
+**Migration Impact**:
+- Most strategies work as-is
+- Only strategies relying on negative cash need adjustments
+- Three validation modes for flexible migration
+- See migration guide for step-by-step instructions
+
+**Files Changed** (15 files, +2766 lines):
+- Implementation: `rustybt/finance/blotter/simulation_blotter.py`, `rustybt/algorithm.py`
+- Tests: `tests/finance/blotter/test_cash_validation.py`, `tests/finance/blotter/test_cash_validation_unit.py`
+- Documentation: 4 new/updated docs files + navigation
 
 **Discovered**: 2025-11-01 (from user backtest analysis)
 **Reported By**: External user testing Aura Breakout strategy
 **Platform**: All platforms
-**Fix Status**: Documentation complete, implementation in progress
-**Target Resolution**: 2025-11-01
+**Resolved**: 2025-11-01 (merged to main)
+**Available In**: Next release (v0.x.x+)
 
 ---
 

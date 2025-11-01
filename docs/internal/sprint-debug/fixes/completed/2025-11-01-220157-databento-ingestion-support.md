@@ -298,6 +298,7 @@ ts_event, rtype, publisher_id, instrument_id, open, high, low, close, volume, sy
 - `rustybt/data/sources/registry.py` - Added DatabentoAdapter import (+1 line)
 - `pyproject.toml` - Added zstandard dependency (+1 line)
 - `docs/guides/data-ingestion.md` - Added Databento section (+38 lines)
+- `mkdocs.yml` - Added Databento guide to navigation sidebar (+1 line)
 
 ---
 
@@ -306,17 +307,19 @@ ts_event, rtype, publisher_id, instrument_id, open, high, low, close, volume, sy
 - Issues found: 0 (New feature)
 - Issues fixed: N/A (New feature)
 - Tests added: 17 test methods across 10 test classes
-- Lines changed: +1438 lines total
+- Lines changed: +1441 lines total
   - Code: +623 lines (adapter)
   - Tests: +324 lines
   - Docs: +489 lines
-  - Config: +2 lines
+  - Config: +3 lines
 
 ---
 
-## Commit Hash
+## Commit Hashes
 
-`[pending]`
+- `5f95afe` - Initial Databento adapter implementation
+- `4f0d285` - Add configurable extra columns preservation support
+- `1e082f7` - Add Databento guide to navigation sidebar
 
 ---
 

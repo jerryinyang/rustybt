@@ -96,10 +96,15 @@ class DatabentoConfig:
     Attributes:
         data_path: Path to Databento ZIP file or extracted folder
         timezone: Timezone for timestamps (default: UTC)
+        extra_columns: List of additional columns to preserve beyond standard OHLCV
+                      (e.g., ['rtype', 'publisher_id', 'instrument_id']).
+                      Use get_available_columns() to see what's available.
+                      Default: None (only keep standard OHLCV columns)
     """
 
     data_path: str
     timezone: str = "UTC"
+    extra_columns: list[str] | None = None
 
 
 # ============================================================================
@@ -372,6 +377,62 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
         except Exception as e:
             raise InvalidDataError(f"Failed to decompress zstd file: {e}") from e
 
+    def get_available_columns(self) -> dict[str, list[str]]:
+        """Get available columns in the Databento package.
+
+        Returns dictionary with:
+        - 'standard': Standard OHLCV columns (always present)
+        - 'extra': Additional columns available for preservation
+
+        Returns:
+            Dictionary with 'standard' and 'extra' column lists
+
+        Example:
+            >>> adapter = DatabentoAdapter(DatabentoConfig(
+            ...     data_path="/path/to/databento.zip"
+            ... ))
+            >>> columns = adapter.get_available_columns()
+            >>> print(f"Extra columns: {columns['extra']}")
+            Extra columns: ['rtype', 'publisher_id', 'instrument_id']
+        """
+        csv_path = self._get_ohlcv_csv_path()
+
+        # Read just first row to get column names
+        df_sample = pl.read_csv(
+            csv_path,
+            separator=",",
+            has_header=True,
+            n_rows=1,
+        )
+
+        all_columns = df_sample.columns
+        standard_ohlcv = ["timestamp", "symbol", "open", "high", "low", "close", "volume"]
+
+        # Map Databento column names to what they'll become after renaming
+        databento_to_standard = {
+            "ts_event": "timestamp",
+        }
+
+        # Determine which columns are extra
+        extra_columns = []
+        for col in all_columns:
+            # Map to standard name if applicable
+            mapped_col = databento_to_standard.get(col, col)
+            if mapped_col not in standard_ohlcv:
+                extra_columns.append(col)
+
+        logger.info(
+            "databento_columns_discovered",
+            total_columns=len(all_columns),
+            standard_columns=len(standard_ohlcv),
+            extra_columns=len(extra_columns),
+        )
+
+        return {
+            "standard": standard_ohlcv,
+            "extra": extra_columns,
+        }
+
     def _get_ohlcv_csv_path(self) -> Path:
         """Get path to decompressed OHLCV CSV file.
 
@@ -468,13 +529,36 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 end_utc = pd.Timestamp(end).tz_localize("UTC") if end.tz is None else end
                 df = df.filter(pl.col("timestamp") <= end_utc)
 
-            # Select only required columns
-            df = df.select(["timestamp", "symbol", "open", "high", "low", "close", "volume"])
+            # Select columns: always include standard OHLCV, optionally include extra
+            columns_to_select = ["timestamp", "symbol", "open", "high", "low", "close", "volume"]
 
+            # Add extra columns if specified in config
+            if self.config.extra_columns:
+                # Validate that requested extra columns exist
+                available_cols = set(df.columns)
+                for extra_col in self.config.extra_columns:
+                    if extra_col in available_cols and extra_col not in columns_to_select:
+                        columns_to_select.append(extra_col)
+                    elif extra_col not in available_cols:
+                        logger.warning(
+                            "databento_extra_column_not_found",
+                            column=extra_col,
+                            available=list(available_cols),
+                        )
+
+            df = df.select(columns_to_select)
+
+            extra_cols_preserved = [
+                col
+                for col in columns_to_select
+                if col not in ["timestamp", "symbol", "open", "high", "low", "close", "volume"]
+            ]
             logger.info(
                 "databento_ohlcv_parsed",
                 rows=len(df),
                 symbols=len(df["symbol"].unique()),
+                columns_preserved=len(columns_to_select),
+                extra_columns=extra_cols_preserved if extra_cols_preserved else None,
             )
 
             return df
@@ -542,6 +626,11 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
 
         Raises:
             InvalidDataError: If ingestion fails
+
+        Note:
+            If extra_columns are configured, they will be stored in a separate
+            metadata parquet file: {bundle}/metadata_columns.parquet
+            This ensures backward compatibility with existing bundles.
         """
         logger.info(
             "databento_ingest_to_bundle",
@@ -550,13 +639,21 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
             start=str(start),
             end=str(end),
             frequency=frequency,
+            extra_columns=self.config.extra_columns,
         )
 
-        # Fetch data
+        # Fetch data (includes extra columns if configured)
         df = run_async(self.fetch(symbols, start, end, frequency))
 
+        # Check if we have extra columns
+        standard_cols = ["timestamp", "symbol", "open", "high", "low", "close", "volume"]
+        has_extra_columns = any(col not in standard_cols for col in df.columns)
+
+        # Separate standard OHLCV from extra columns
+        df_ohlcv = df.select(standard_cols)
+
         # Prepare OHLCV frame for ingestion
-        df_prepared = prepare_ohlcv_frame(df)
+        df_prepared = prepare_ohlcv_frame(df_ohlcv)
 
         # Write to bundle using ParquetWriter
         bundle_dir = data_path(["bundles", bundle_name])
@@ -565,11 +662,30 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
         writer = ParquetWriter(bundle_dir)
         writer.write(df_prepared)
 
+        # Write extra columns to separate metadata file if present
+        if has_extra_columns:
+            extra_cols = [col for col in df.columns if col not in standard_cols]
+            df_metadata = df.select(["timestamp", "symbol"] + extra_cols)
+
+            metadata_path = Path(bundle_dir) / "metadata_columns.parquet"
+            df_metadata.write_parquet(
+                metadata_path,
+                compression="zstd",
+            )
+
+            logger.info(
+                "databento_extra_columns_written",
+                path=str(metadata_path),
+                columns=extra_cols,
+                rows=len(df_metadata),
+            )
+
         logger.info(
             "databento_ingested",
             bundle_name=bundle_name,
             rows=len(df),
             symbols=len(df["symbol"].unique()),
+            extra_columns_stored=has_extra_columns,
         )
 
     def get_metadata(self) -> DataSourceMetadata:

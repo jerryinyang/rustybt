@@ -18,10 +18,27 @@ Databento provides high-quality market data for futures, equities, options, and 
 
 ## Quick Start
 
+### Inspect Available Columns First
+
+Before ingesting, check what extra columns are available:
+
+```python
+from rustybt.data.adapters.databento_adapter import DatabentoAdapter, DatabentoConfig
+
+adapter = DatabentoAdapter(DatabentoConfig(
+    data_path="/path/to/databento-package.zip"
+))
+
+columns = adapter.get_available_columns()
+print(f"Standard columns: {columns['standard']}")
+print(f"Extra columns: {columns['extra']}")
+# Output: Extra columns: ['rtype', 'publisher_id', 'instrument_id']
+```
+
 ### Command Line
 
 ```bash
-# Ingest entire Databento package
+# Ingest entire Databento package (standard OHLCV only)
 rustybt ingest-unified databento \
   --data-path /path/to/databento-package.zip \
   --bundle futures-data \
@@ -194,6 +211,139 @@ rustybt ingest-unified databento \
   --end 2023-12-31 \
   --frequency 1h
 ```
+
+---
+
+## Preserving Extra Columns (Advanced)
+
+By default, rustybt only ingests standard OHLCV columns. Databento packages often include extra metadata columns like `rtype`, `publisher_id`, `instrument_id`, and for equities: `sector`, `industry`, `market_cap`, etc.
+
+### Step 1: Inspect Available Columns
+
+Always inspect first to see what's available:
+
+```python
+from rustybt.data.adapters.databento_adapter import DatabentoAdapter, DatabentoConfig
+
+adapter = DatabentoAdapter(DatabentoConfig(
+    data_path="/path/to/databento-package.zip"
+))
+
+columns = adapter.get_available_columns()
+print(f"Standard: {columns['standard']}")
+print(f"Extra: {columns['extra']}")
+```
+
+**Example Output (Futures Package):**
+```
+Standard: ['timestamp', 'symbol', 'open', 'high', 'low', 'close', 'volume']
+Extra: ['rtype', 'publisher_id', 'instrument_id']
+```
+
+### Step 2: Configure Extra Columns
+
+Specify which extra columns to preserve:
+
+```python
+from rustybt.data.adapters.databento_adapter import DatabentoAdapter, DatabentoConfig
+import pandas as pd
+
+# Configure adapter with extra columns
+config = DatabentoConfig(
+    data_path="/path/to/databento-package.zip",
+    extra_columns=["rtype", "publisher_id", "instrument_id"]  # Specify columns
+)
+adapter = DatabentoAdapter(config)
+
+# Ingest with extra columns
+adapter.ingest_to_bundle(
+    bundle_name="futures-with-metadata",
+    symbols=[],
+    start=pd.Timestamp("2020-11-01"),
+    end=pd.Timestamp("2020-11-30"),
+    frequency="1h"
+)
+```
+
+### Step 3: Access Extra Columns
+
+Extra columns are stored in a separate metadata file for backward compatibility:
+
+```python
+import polars as pl
+
+# Read standard OHLCV data
+bundle_path = "~/.rustybt/data/bundles/futures-with-metadata"
+df_ohlcv = pl.read_parquet(f"{bundle_path}/daily_bars/*.parquet")
+
+# Read extra columns metadata
+df_metadata = pl.read_parquet(f"{bundle_path}/metadata_columns.parquet")
+
+# Join on timestamp and symbol
+df_complete = df_ohlcv.join(
+    df_metadata,
+    on=["timestamp", "symbol"],
+    how="left"
+)
+
+print(df_complete.head())
+```
+
+### Storage Structure
+
+When extra columns are specified:
+
+```
+~/.rustybt/data/bundles/futures-with-metadata/
+├── daily_bars/
+│   └── data.parquet           # Standard OHLCV only
+├── metadata_columns.parquet   # Extra columns (NEW)
+└── metadata.db                # Bundle metadata
+```
+
+**Benefits:**
+- ✅ **Backward compatible**: Existing code works unchanged
+- ✅ **Optional**: Only created when extra columns specified
+- ✅ **Efficient**: Separate storage allows independent querying
+- ✅ **Flexible**: Easy to join when needed
+
+### Example: Filter by Record Type
+
+```python
+# Ingest with rtype column
+config = DatabentoConfig(
+    data_path="/path/to/databento.zip",
+    extra_columns=["rtype"]
+)
+adapter = DatabentoAdapter(config)
+
+# Fetch data
+df = await adapter.fetch(
+    symbols=[],
+    start=pd.Timestamp("2020-11-01"),
+    end=pd.Timestamp("2020-11-30"),
+    frequency="1h"
+)
+
+# Filter by record type
+df_ohlcv_only = df.filter(pl.col("rtype") == 34)  # OHLCV records
+print(f"OHLCV records: {len(df_ohlcv_only)}")
+```
+
+### Common Extra Columns
+
+**Futures (GLBX.MDP3 example):**
+- `rtype`: Record type (34 = OHLCV)
+- `publisher_id`: Data publisher identifier
+- `instrument_id`: Databento instrument ID
+
+**Equities (if available):**
+- `sector`: Industry sector
+- `industry`: Specific industry
+- `market_cap`: Market capitalization category
+- `exchange`: Listing exchange
+
+**Note**: Available columns vary by Databento dataset and schema. Always use `get_available_columns()` first.
 
 ---
 

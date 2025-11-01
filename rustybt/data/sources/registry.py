@@ -57,6 +57,7 @@ class DataSourceRegistry:
             from rustybt.data.adapters.alphavantage_adapter import AlphaVantageAdapter  # noqa: F401
             from rustybt.data.adapters.ccxt_adapter import CCXTAdapter  # noqa: F401
             from rustybt.data.adapters.csv_adapter import CSVAdapter  # noqa: F401
+            from rustybt.data.adapters.databento_adapter import DatabentoAdapter  # noqa: F401
             from rustybt.data.adapters.polygon_adapter import PolygonAdapter  # noqa: F401
             from rustybt.data.adapters.yfinance_adapter import YFinanceAdapter  # noqa: F401
         except ImportError as e:

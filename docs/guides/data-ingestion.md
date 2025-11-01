@@ -42,6 +42,7 @@ The unified data ingestion system supports multiple data sources through a consi
 | **polygon** | Equities/Options | ✅ | Plan-dependent | ✅ |
 | **alpaca** | Equities | ✅ | 200 req/min | ✅ |
 | **alphavantage** | Equities/Forex | ❌ | 5 req/min (free) | ✅ |
+| **databento** | Futures/Equities/Options | ❌ | N/A (local files) | ❌ |
 | **csv** | Any | ❌ | N/A | ❌ |
 
 ---
@@ -187,6 +188,47 @@ source.ingest_to_bundle(
 ```
 
 **Note**: Free tier limited to 5 requests/minute
+
+---
+
+### Databento (Futures/Equities/Options)
+
+**Best for**: High-quality historical futures, equities, and options data from Databento packages
+
+```python
+from rustybt.data.sources import DataSourceRegistry
+import pandas as pd
+
+source = DataSourceRegistry.get_source(
+    "databento",
+    data_path="/path/to/databento-package.zip"  # or extracted folder
+)
+source.ingest_to_bundle(
+    bundle_name="cme-futures",
+    symbols=[],  # Empty list = all symbols in package
+    start=pd.Timestamp("2020-11-01"),
+    end=pd.Timestamp("2020-11-30"),
+    frequency="1h"
+)
+```
+
+**CLI equivalent**:
+```bash
+rustybt ingest-unified databento \
+    --data-path /path/to/GLBX-20251101-N5U545U54V.zip \
+    --bundle cme-futures \
+    --start 2020-11-01 \
+    --end 2020-11-30 \
+    --frequency 1h
+```
+
+**Features**:
+- ✅ Automatic ZIP extraction and zstd decompression
+- ✅ Multi-asset packages (ingest hundreds of symbols at once)
+- ✅ Symbol and date range filtering
+- ✅ Supports 1m, 5m, 15m, 30m, 1h, 1d frequencies
+
+**See**: [Databento Import Guide](databento-data-import.md) for detailed examples
 
 ---
 

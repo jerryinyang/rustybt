@@ -245,6 +245,8 @@ class TradingAlgorithm:
         backtest_output_base_dir="backtests",
         code_capture_enabled=True,
         code_capture_log_level=None,
+        # Asset configuration
+        fractional_order_mode=None,
         **initialize_kwargs,
     ):
         # List of trading controls to be used to validate orders.
@@ -258,6 +260,16 @@ class TradingAlgorithm:
 
         self._platform = platform
         self.logger = None
+
+        # Fractional order configuration
+        from rustybt.finance.asset_config import FractionalOrderMode
+
+        if fractional_order_mode is None:
+            fractional_order_mode = FractionalOrderMode.AUTO
+        elif isinstance(fractional_order_mode, str):
+            # Allow string values like "auto", "always", "never"
+            fractional_order_mode = FractionalOrderMode(fractional_order_mode.lower())
+        self.fractional_order_mode = fractional_order_mode
 
         if data_portal is not None and (data_source is not None or bundle is not None):
             raise ValueError("Cannot supply data_portal together with data_source or bundle")
@@ -706,6 +718,10 @@ class TradingAlgorithm:
             self.sim_params = sim_params
 
         self.metrics_tracker = metrics_tracker = self._create_metrics_tracker()
+
+        # Set portfolio reference in blotter for cash validation
+        if hasattr(self.blotter, "set_portfolio_reference"):
+            self.blotter.set_portfolio_reference(metrics_tracker.portfolio, self.data_portal)
 
         # Set the dt initially to the period start by forcing it to change.
         self.on_dt_changed(self.sim_params.start_session)
@@ -1601,7 +1617,7 @@ class TradingAlgorithm:
         return self.blotter.order(asset, amount, style)
 
     def _calculate_order(self, asset, amount, limit_price=None, stop_price=None, style=None):
-        amount = self.round_order(amount)
+        amount = self.round_order(asset, amount)
 
         # Raises a ZiplineError if invalid parameters are detected.
         self.validate_order_params(asset, amount, limit_price, stop_price, style)
@@ -1611,16 +1627,64 @@ class TradingAlgorithm:
         style = self.__convert_order_params_for_blotter(asset, limit_price, stop_price, style)
         return amount, style
 
-    @staticmethod
-    def round_order(amount):
-        """Convert number of shares to an integer.
+    def round_order(self, asset, amount):
+        """Convert number of shares to an appropriate precision for the asset.
 
-        By default, truncates to the integer share count that's either within
-        .0001 of amount or closer to zero.
+        Behavior depends on the ``fractional_order_mode`` setting:
 
-        E.g. 3.9999 -> 4.0; 5.5 -> 5.0; -5.5 -> -5.0
+        - AUTO (default): Crypto exchanges preserve fractional amounts,
+          traditional exchanges round to integers
+        - ALWAYS: All assets preserve fractional amounts
+        - NEVER: All assets round to integer share counts
+
+        Parameters
+        ----------
+        asset : Asset
+            The asset being ordered.
+        amount : float
+            The amount to order.
+
+        Returns
+        -------
+        float or int
+            Fractional amount or integer share count depending on configuration.
+
+        Examples
+        --------
+        AUTO mode (default):
+            >>> # Crypto asset (e.g., BTC/USDT on Binance)
+            >>> algo.round_order(btc_asset, 0.334827)
+            0.334827
+            >>> # Equity asset (e.g., AAPL on NYSE)
+            >>> algo.round_order(aapl_asset, 5.5)
+            5
+
+        ALWAYS mode:
+            >>> # All assets preserve fractional amounts
+            >>> algo.round_order(aapl_asset, 5.5)
+            5.5
+
+        NEVER mode:
+            >>> # All assets round to integer
+            >>> algo.round_order(btc_asset, 0.334827)
+            0
+
+        Notes
+        -----
+        Near-integers (within 0.0001) are rounded to the nearest integer
+        regardless of mode. For example, 0.9999 becomes 1.0.
         """
-        return int(round_if_near_integer(amount))
+        from rustybt.finance.asset_config import should_use_fractional_orders
+
+        use_fractional = should_use_fractional_orders(asset, self.fractional_order_mode)
+
+        if use_fractional:
+            # Preserve fractional amounts but still round near-integers
+            # This handles cases like 0.9999999 BTC -> 1.0 BTC
+            return round_if_near_integer(amount)
+        else:
+            # Round to integer
+            return int(round_if_near_integer(amount))
 
     def validate_order_params(self, asset, amount, limit_price, stop_price, style):
         """

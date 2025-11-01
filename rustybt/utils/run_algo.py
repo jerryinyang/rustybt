@@ -84,6 +84,7 @@ def _run(
     blotter,
     custom_loader,
     benchmark_spec,
+    fractional_order_mode=None,
 ):
     """Run a backtest for the given algorithm.
 
@@ -314,6 +315,7 @@ def _run(
             blotter=blotter,
             benchmark_returns=benchmark_returns,
             benchmark_sid=benchmark_sid,
+            fractional_order_mode=fractional_order_mode,
             **(
                 {
                     "initialize": initialize,
@@ -442,6 +444,7 @@ def run_algorithm(
     environ=os.environ,
     custom_loader=None,
     blotter="default",
+    fractional_order_mode=None,
 ):
     """
     Run a trading algorithm.
@@ -503,6 +506,15 @@ def run_algorithm(
         ``zipline.extensions.register`` and call it with no parameters.
         Default is a :class:`zipline.finance.blotter.SimulationBlotter` that
         never cancels orders.
+    fractional_order_mode : FractionalOrderMode or str, optional
+        How to handle fractional order amounts. Can be:
+        - 'auto' (default): Automatically detect based on exchange. Crypto
+          exchanges (binance, coinbase, etc.) preserve fractional amounts.
+          Traditional exchanges round to integer share counts.
+        - 'always': Always preserve fractional amounts for all assets.
+        - 'never': Always round to integer share counts for all assets.
+        Can also pass :class:`rustybt.finance.asset_config.FractionalOrderMode`
+        enum values directly.
 
     Returns:
     -------
@@ -540,6 +552,7 @@ def run_algorithm(
         blotter=blotter,
         custom_loader=custom_loader,
         benchmark_spec=benchmark_spec,
+        fractional_order_mode=fractional_order_mode,
     )
 
 

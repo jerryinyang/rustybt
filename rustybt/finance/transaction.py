@@ -59,17 +59,78 @@ class Transaction:
         return py
 
 
-def create_transaction(order, dt, price, amount):
-    # floor the amount to protect against non-whole number orders
-    # TODO: Investigate whether we can add a robust check in blotter
-    # and/or tradesimulation, as well.
-    amount_magnitude = int(abs(amount))
+def create_transaction(order, dt, price, amount, fractional_order_mode=None):
+    """Create a transaction from an order execution.
 
-    if amount_magnitude < 1:
-        raise Exception("Transaction magnitude must be at least 1.")
+    Parameters
+    ----------
+    order : Order
+        The order being executed.
+    dt : pd.Timestamp
+        The datetime of the transaction.
+    price : float
+        The execution price.
+    amount : float
+        The amount executed.
+    fractional_order_mode : FractionalOrderMode, optional
+        How to handle fractional amounts. If None, defaults to AUTO mode
+        which auto-detects based on exchange.
 
-    transaction = Transaction(
-        asset=order.asset, amount=int(amount), dt=dt, price=price, order_id=order.id
-    )
+    Returns
+    -------
+    Transaction
+        The created transaction.
+
+    Raises
+    ------
+    Exception
+        If the transaction amount is too small (< 1 for equities, < 1e-8 for crypto).
+
+    Notes
+    -----
+    Behavior depends on the ``fractional_order_mode`` setting:
+
+    - AUTO (default): Crypto exchanges preserve fractional amounts,
+      traditional exchanges round to integers
+    - ALWAYS: All assets preserve fractional amounts
+    - NEVER: All assets round to integer amounts
+
+    For fractional assets, the minimum amount is 1e-8 (0.00000001).
+    For integer assets, the minimum amount is 1.
+    """
+    from rustybt.finance.asset_config import FractionalOrderMode, should_use_fractional_orders
+
+    # Default to AUTO mode if not specified
+    if fractional_order_mode is None:
+        fractional_order_mode = FractionalOrderMode.AUTO
+
+    use_fractional = should_use_fractional_orders(order.asset, fractional_order_mode)
+
+    if use_fractional:
+        # For fractional orders, preserve the amount
+        # Check that amount is not negligibly small (> 1e-8)
+        amount_magnitude = abs(amount)
+        if amount_magnitude < 1e-8:
+            raise Exception(
+                f"Transaction magnitude must be at least 1e-8 for fractional orders. "
+                f"Got {amount_magnitude} for {order.asset.symbol}"
+            )
+
+        transaction = Transaction(
+            asset=order.asset, amount=amount, dt=dt, price=price, order_id=order.id
+        )
+    else:
+        # For integer orders, round to integer
+        amount_magnitude = int(abs(amount))
+
+        if amount_magnitude < 1:
+            raise Exception(
+                f"Transaction magnitude must be at least 1 for integer orders. "
+                f"Got {amount} for {order.asset.symbol}"
+            )
+
+        transaction = Transaction(
+            asset=order.asset, amount=int(amount), dt=dt, price=price, order_id=order.id
+        )
 
     return transaction

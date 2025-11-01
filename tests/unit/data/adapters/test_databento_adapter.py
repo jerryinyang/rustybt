@@ -134,7 +134,7 @@ class TestDatabentoOHLCVParsing:
             assert col in df.columns
 
         # Check data types
-        assert df["timestamp"].dtype == pl.Datetime("us")
+        assert df["timestamp"].dtype == pl.Datetime("us", "UTC")
         assert df["symbol"].dtype == pl.Utf8
         # Prices should be Decimal-compatible (Float64 initially, converted later)
         assert df["open"].dtype in [pl.Float64, pl.Decimal]

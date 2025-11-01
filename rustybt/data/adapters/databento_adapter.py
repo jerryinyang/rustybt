@@ -36,6 +36,8 @@ from rustybt.data.adapters.base import (
     NetworkError,
 )
 from rustybt.data.adapters.utils import (
+    build_symbol_sid_map,
+    normalize_symbols,
     prepare_ohlcv_frame,
     run_async,
 )
@@ -652,15 +654,43 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
         # Separate standard OHLCV from extra columns
         df_ohlcv = df.select(standard_cols)
 
+        # Build symbol map for ingestion
+        if symbols:
+            symbol_list = normalize_symbols(symbols)
+        else:
+            symbol_list = normalize_symbols(df_ohlcv["symbol"].unique().to_list())
+
+        symbol_map = build_symbol_sid_map(symbol_list, bundle_name=bundle_name)
+
         # Prepare OHLCV frame for ingestion
-        df_prepared = prepare_ohlcv_frame(df_ohlcv)
+        df_prepared, frame_type = prepare_ohlcv_frame(df_ohlcv, symbol_map, frequency)
 
         # Write to bundle using ParquetWriter
         bundle_dir = data_path(["bundles", bundle_name])
         ensure_directory(bundle_dir)
 
         writer = ParquetWriter(bundle_dir)
-        writer.write(df_prepared)
+
+        # Prepare source metadata
+        metadata = self.get_metadata()
+        source_metadata = {
+            "source_type": metadata.source_type,
+            "source_url": metadata.source_url,
+            "api_version": metadata.api_version,
+            "symbols": list(symbol_map.keys()),
+            "symbol_map": symbol_map,
+            "timezone": self.config.timezone,
+        }
+
+        # Write based on frame type
+        if frame_type == "daily":
+            writer.write_daily_bars(
+                df_prepared,
+                bundle_name=bundle_name,
+                source_metadata=source_metadata,
+            )
+        else:
+            writer.write_minute_bars(df_prepared)
 
         # Write extra columns to separate metadata file if present
         if has_extra_columns:

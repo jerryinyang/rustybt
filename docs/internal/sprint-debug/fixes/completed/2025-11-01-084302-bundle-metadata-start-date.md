@@ -179,9 +179,20 @@ Rationale for no new test:
 
 ---
 
+## Merge Status
+
+✅ **Merged to main on 2025-11-01**
+
+- Merged commit: `8b781eb`
+- Merge type: Fast-forward
+- Branch deleted: `fix/20251101-084244-bundle-metadata-start-date`
+- User impact: Warning message eliminated for bundles with many assets
+
 ## Notes
 
-- Investigation starting to identify root cause
-- Will follow TDD approach: write tests first, then fix
+- Fix eliminates false warning when loading bundles like binance-spot-1d
+- Bundle metadata (2017-08-17 start date) was correct, verification logic was flawed
+- No breaking changes, fully backward compatible
+- Manual verification recommended: Load binance-spot-1d bundle and confirm no warning
 
 ---

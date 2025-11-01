@@ -113,6 +113,7 @@ nav:
       - Data Management:
           - CSV Data Import: guides/csv-data-import.md
           - Data Ingestion: guides/data-ingestion.md
+          - Databento Data Import: guides/databento-data-import.md
           - Data Validation: guides/data-validation.md
           - Creating Data Adapters: guides/creating-data-adapters.md
           - Migrating to Unified Data: guides/migrating-to-unified-data.md

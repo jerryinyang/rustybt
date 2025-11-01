@@ -110,10 +110,12 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
         # Cache for loaded data
         self._cache: dict[tuple, np.ndarray] = {}
 
-        # Verify actual data range matches requested range
-        # This catches metadata mismatches where bundle claims wider date range
-        # than actual Parquet files contain
-        self._verify_and_adjust_data_range()
+        # Note: We previously ran _verify_and_adjust_data_range() here, but it was
+        # removed because it performed insufficient sampling (only first 10 assets
+        # from first Parquet file), causing incorrect warnings when the oldest data
+        # was not in those sampled assets. Bundle metadata is set during ingestion
+        # and should be trusted. If validation is needed, it should happen during
+        # ingestion, not on every bundle load.
 
         logger.info(
             "parquet_bar_reader_initialized",

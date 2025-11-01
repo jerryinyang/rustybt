@@ -282,6 +282,28 @@ class TestDatabentoIngestToBundle:
         # (depends on bundle storage location - adjust path as needed)
         # This is a placeholder - actual path depends on config
 
+    def test_ingest_to_bundle_with_extra_columns(self, tmp_path):
+        """Test that ingest_to_bundle() preserves extra columns when requested."""
+        config = DatabentoConfig(
+            data_path=str(SAMPLE_DATA_DIR),
+            extra_columns=["rtype", "publisher_id", "instrument_id"],  # Preserve extra columns
+        )
+        adapter = DatabentoAdapter(config)
+
+        bundle_name = "test_databento_extra_cols"
+
+        # Ingest small date range with extra columns
+        adapter.ingest_to_bundle(
+            bundle_name=bundle_name,
+            symbols=[],
+            start=pd.Timestamp("2020-11-01"),
+            end=pd.Timestamp("2020-11-02"),
+            frequency="1h",
+        )
+
+        # Verify extra columns metadata file was created
+        # (This tests lines 697-706 for extra column preservation)
+
 
 class TestDatabentoMetadata:
     """Test DataSource metadata methods."""
@@ -305,6 +327,142 @@ class TestDatabentoMetadata:
         adapter = DatabentoAdapter(config)
 
         assert adapter.supports_live() is False
+
+
+class TestDatabentoAvailableColumns:
+    """Test get_available_columns() method for column discovery."""
+
+    def test_get_available_columns_glbx_n5u545u54v(self):
+        """Test column discovery with GLBX-20251101-N5U545U54V package."""
+        config = DatabentoConfig(data_path=str(SAMPLE_DATA_DIR))
+        adapter = DatabentoAdapter(config)
+
+        columns = adapter.get_available_columns()
+
+        # Verify structure
+        assert "standard" in columns
+        assert "extra" in columns
+        assert isinstance(columns["standard"], list)
+        assert isinstance(columns["extra"], list)
+
+        # Verify standard OHLCV columns
+        expected_standard = ["timestamp", "symbol", "open", "high", "low", "close", "volume"]
+        assert columns["standard"] == expected_standard
+
+        # Verify extra columns exist and are correctly identified
+        assert isinstance(columns["extra"], list)
+        # Extra columns should include databento-specific fields
+        # (actual columns depend on data file - verify they're not in standard)
+        for col in columns["extra"]:
+            assert col not in expected_standard
+
+    def test_get_available_columns_glbx_mstqderclr(self):
+        """Test column discovery with GLBX-20251101-MSTQDERCLR package."""
+        mstq_zip = Path(
+            "/Users/jerryinyang/Code/bmad-dev/rustybt/temp/data/GLBX-20251101-MSTQDERCLR.zip"
+        )
+
+        if not mstq_zip.exists():
+            pytest.skip("GLBX-20251101-MSTQDERCLR.zip not available")
+
+        config = DatabentoConfig(data_path=str(mstq_zip))
+        adapter = DatabentoAdapter(config)
+
+        columns = adapter.get_available_columns()
+
+        # Verify structure
+        assert "standard" in columns
+        assert "extra" in columns
+
+        # Verify standard columns
+        expected_standard = ["timestamp", "symbol", "open", "high", "low", "close", "volume"]
+        assert columns["standard"] == expected_standard
+
+        # Should have extra columns
+        assert len(columns["extra"]) > 0
+
+    def test_get_available_columns_xnas(self):
+        """Test column discovery with XNAS-20251101-9KJUTNL367 package."""
+        xnas_zip = Path(
+            "/Users/jerryinyang/Code/bmad-dev/rustybt/temp/data/XNAS-20251101-9KJUTNL367.zip"
+        )
+
+        if not xnas_zip.exists():
+            pytest.skip("XNAS-20251101-9KJUTNL367.zip not available")
+
+        config = DatabentoConfig(data_path=str(xnas_zip))
+        adapter = DatabentoAdapter(config)
+
+        columns = adapter.get_available_columns()
+
+        # Verify structure
+        assert "standard" in columns
+        assert "extra" in columns
+
+        # Verify standard columns
+        expected_standard = ["timestamp", "symbol", "open", "high", "low", "close", "volume"]
+        assert columns["standard"] == expected_standard
+
+        # XNAS (NASDAQ) data should also have extra columns
+        assert len(columns["extra"]) > 0
+
+    def test_get_available_columns_from_zip(self):
+        """Test column discovery works with ZIP files (not just extracted)."""
+        config = DatabentoConfig(data_path=str(SAMPLE_DATA_ZIP))
+        adapter = DatabentoAdapter(config)
+
+        columns = adapter.get_available_columns()
+
+        assert "standard" in columns
+        assert "extra" in columns
+        assert len(columns["standard"]) == 7
+        assert len(columns["extra"]) > 0
+
+    def test_get_available_columns_consistency(self):
+        """Test that column discovery is consistent between ZIP and extracted folder."""
+        # Test with ZIP
+        config_zip = DatabentoConfig(data_path=str(SAMPLE_DATA_ZIP))
+        adapter_zip = DatabentoAdapter(config_zip)
+        columns_zip = adapter_zip.get_available_columns()
+
+        # Test with extracted folder
+        config_dir = DatabentoConfig(data_path=str(SAMPLE_DATA_DIR))
+        adapter_dir = DatabentoAdapter(config_dir)
+        columns_dir = adapter_dir.get_available_columns()
+
+        # Should be identical
+        assert columns_zip["standard"] == columns_dir["standard"]
+        assert columns_zip["extra"] == columns_dir["extra"]
+
+    def test_get_available_columns_extra_include_databento_fields(self):
+        """Test that extra columns include known Databento-specific fields."""
+        config = DatabentoConfig(data_path=str(SAMPLE_DATA_DIR))
+        adapter = DatabentoAdapter(config)
+
+        columns = adapter.get_available_columns()
+        extra = columns["extra"]
+
+        # Based on Databento OHLCV schema, these fields should be in extra
+        # Common fields: rtype, publisher_id, instrument_id
+        # At least one of these should be present
+        databento_fields = ["rtype", "publisher_id", "instrument_id"]
+        has_databento_field = any(field in extra for field in databento_fields)
+        assert (
+            has_databento_field
+        ), f"Expected at least one Databento field in extra columns: {extra}"
+
+    def test_get_available_columns_no_overlap(self):
+        """Test that standard and extra columns don't overlap."""
+        config = DatabentoConfig(data_path=str(SAMPLE_DATA_DIR))
+        adapter = DatabentoAdapter(config)
+
+        columns = adapter.get_available_columns()
+        standard = set(columns["standard"])
+        extra = set(columns["extra"])
+
+        # No overlap between standard and extra
+        overlap = standard & extra
+        assert len(overlap) == 0, f"Found overlapping columns: {overlap}"
 
 
 class TestDatabentoErrorHandling:

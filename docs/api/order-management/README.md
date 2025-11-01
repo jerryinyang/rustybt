@@ -10,6 +10,9 @@ RustyBT provides a sophisticated order management system for backtesting and liv
 - **Execution**: Blotter-based order routing, matching, and fill simulation
 - **Transaction Costs**: Slippage and commission modeling with multiple strategies
 - **Order Lifecycle**: State management, validation, and execution tracking
+- **Cash Validation**: Automatic validation of available cash at order placement and execution (**New in v0.x.x+**)
+
+> 💡 **New**: Cash validation is now enabled by default to ensure backtests accurately simulate real trading conditions. See [Cash Validation Guide](../../guides/cash-validation.md) for details.
 
 ## System Architecture
 

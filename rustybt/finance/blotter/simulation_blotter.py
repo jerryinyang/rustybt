@@ -17,6 +17,7 @@ from collections import defaultdict
 from copy import copy
 
 from rustybt.assets import Asset, Equity, Future
+from rustybt.exceptions import InsufficientFundsError
 from rustybt.extensions import register
 from rustybt.finance.commission import (
     DEFAULT_PER_CONTRACT_COST,
@@ -52,6 +53,10 @@ class SimulationBlotter(Blotter):
         equity_commission=None,
         future_commission=None,
         cancel_policy=None,
+        portfolio=None,
+        data_portal=None,
+        enable_cash_validation=True,
+        cash_validation_mode="reject",
     ):
         super().__init__(cancel_policy=cancel_policy)
 
@@ -65,6 +70,22 @@ class SimulationBlotter(Blotter):
         self.new_orders = []
 
         self.max_shares = int(1e11)
+
+        # Cash validation support
+        self.portfolio = portfolio
+        self.data_portal = data_portal
+        self.enable_cash_validation = enable_cash_validation
+
+        # Cash validation mode: "reject", "warn", or "strict"
+        # - "reject": Reject order, log warning, return None (graceful)
+        # - "warn": Log warning but allow order (backward compatible)
+        # - "strict": Raise InsufficientFundsError (crash backtest)
+        if cash_validation_mode not in ("reject", "warn", "strict"):
+            raise ValueError(
+                f"cash_validation_mode must be 'reject', 'warn', or 'strict', "
+                f"got {cash_validation_mode!r}"
+            )
+        self.cash_validation_mode = cash_validation_mode
 
         # Default slippage and commission for generic assets (crypto, etc.)
         default_asset_slippage = equity_slippage or FixedBasisPointsSlippage()
@@ -106,6 +127,97 @@ class SimulationBlotter(Blotter):
             new_orders=self.new_orders,
             current_dt=self.current_dt,
         )
+
+    def set_portfolio_reference(self, portfolio, data_portal=None):
+        """Set references to portfolio and data_portal for cash validation.
+
+        This should be called after the algorithm is fully initialized.
+
+        Parameters
+        ----------
+        portfolio : Portfolio
+            The portfolio object to use for cash validation
+        data_portal : DataPortal, optional
+            The data portal for accessing current prices
+        """
+        self.portfolio = portfolio
+        if data_portal is not None:
+            self.data_portal = data_portal
+
+    def _calculate_reserved_cash(self):
+        """Calculate total cash reserved for pending unfilled buy orders.
+
+        Returns
+        -------
+        float
+            Total cash reserved for open buy orders
+        """
+        if not self.enable_cash_validation or self.data_portal is None:
+            return 0.0
+
+        reserved = 0.0
+        for order in self.orders.values():
+            if order.open and order.amount > 0:  # Only buy orders reserve cash
+                try:
+                    estimated_price = self._estimate_order_price(order)
+                    reserved += abs(order.amount) * estimated_price
+                except Exception as e:
+                    # If we can't estimate price, skip this order
+                    # Better to be permissive than to block valid orders
+                    log.warning(
+                        f"Could not estimate price for order {order.id}: {e}. "
+                        "Skipping cash reservation for this order."
+                    )
+                    continue
+
+        return reserved
+
+    def _estimate_order_price(self, order):
+        """Estimate order execution price for cash reservation.
+
+        Parameters
+        ----------
+        order : Order
+            The order to estimate price for
+
+        Returns
+        -------
+        float
+            Estimated execution price
+
+        Raises
+        ------
+        ValueError
+            If price cannot be estimated
+        """
+        # For limit orders, use limit price
+        if order.limit is not None:
+            return order.limit
+
+        # For stop orders, use stop price as conservative estimate
+        if order.stop is not None:
+            return order.stop
+
+        # For market orders, get current price from data portal
+        if self.data_portal is not None:
+            try:
+                # Get current price for the asset
+                price = self.data_portal.get_spot_value(
+                    order.asset,
+                    "close",
+                    self.current_dt,
+                    "daily",
+                )
+                return price
+            except Exception:
+                # If we can't get current price, raise error
+                raise ValueError(
+                    f"Cannot estimate market order price for {order.asset.symbol} "
+                    "at current time. Data not available."
+                )
+
+        # No price available
+        raise ValueError("Cannot estimate order price: no limit/stop price and no data portal")
 
     @expect_types(asset=Asset)
     def order(self, asset, amount, style, order_id=None):
@@ -153,6 +265,93 @@ class SimulationBlotter(Blotter):
             raise OverflowError("Can't order more than %d shares" % self.max_shares)
 
         is_buy = amount > 0
+
+        # Cash validation for buy orders
+        if (
+            is_buy
+            and self.enable_cash_validation
+            and self.portfolio is not None
+            and self.data_portal is not None
+        ):
+            # Estimate the cost of this order
+            try:
+                if hasattr(style, "get_limit_price"):
+                    estimated_price = style.get_limit_price(is_buy)
+                elif hasattr(style, "get_stop_price"):
+                    estimated_price = style.get_stop_price(is_buy)
+                else:
+                    # Market order - get current price
+                    estimated_price = self.data_portal.get_spot_value(
+                        asset,
+                        "close",
+                        self.current_dt,
+                        "daily",
+                    )
+
+                if estimated_price is None:
+                    # For market orders without price, get current price
+                    estimated_price = self.data_portal.get_spot_value(
+                        asset,
+                        "close",
+                        self.current_dt,
+                        "daily",
+                    )
+
+                estimated_cost = abs(amount) * estimated_price
+
+                # Calculate reserved cash from pending orders
+                reserved_cash = self._calculate_reserved_cash()
+
+                # Calculate available cash
+                available_cash = self.portfolio.cash - reserved_cash
+
+                # Check if we have sufficient cash
+                if estimated_cost > available_cash:
+                    error_msg = (
+                        f"Insufficient cash for order: need ${estimated_cost:,.2f}, "
+                        f"have ${available_cash:,.2f} available "
+                        f"(${self.portfolio.cash:,.2f} total - ${reserved_cash:,.2f} reserved)"
+                    )
+
+                    if self.cash_validation_mode == "strict":
+                        # Strict mode: Raise exception (crash backtest)
+                        raise InsufficientFundsError(
+                            error_msg,
+                            required=estimated_cost,
+                            available=available_cash,
+                            context={
+                                "asset": asset.symbol,
+                                "amount": amount,
+                                "estimated_price": estimated_price,
+                                "total_cash": self.portfolio.cash,
+                                "reserved_cash": reserved_cash,
+                            },
+                        )
+                    elif self.cash_validation_mode == "reject":
+                        # Reject mode: Log warning and reject order (graceful)
+                        warning_logger.warning(
+                            f"Order rejected - {error_msg}. "
+                            f"Asset: {asset.symbol}, Amount: {amount}"
+                        )
+                        return None  # Order rejected, backtest continues
+                    else:  # "warn" mode
+                        # Warn mode: Log warning but allow order (backward compatible)
+                        warning_logger.warning(
+                            f"Order placed with insufficient cash - {error_msg}. "
+                            f"Asset: {asset.symbol}, Amount: {amount}. "
+                            "Order will be placed but may fail on execution."
+                        )
+                        # Continue to place order
+            except InsufficientFundsError:
+                # Re-raise InsufficientFundsError
+                raise
+            except Exception as e:
+                # Log warning but allow order to proceed
+                # This ensures we don't break existing behavior if price estimation fails
+                log.warning(
+                    f"Could not validate cash for order {asset.symbol}: {e}. "
+                    "Proceeding with order placement."
+                )
 
         # Handle TrailingStopOrder
         if isinstance(style, TrailingStopOrder):
@@ -524,6 +723,51 @@ class SimulationBlotter(Blotter):
                 slippage = self.slippage_models[type(asset)]
 
                 for order, txn in slippage.simulate(bar_data, asset, asset_orders):
+                    # Execution-time cash validation for buy orders
+                    if (
+                        self.enable_cash_validation
+                        and self.portfolio is not None
+                        and txn.amount > 0  # Buy transaction
+                    ):
+                        # Calculate transaction cost including commission
+                        commission = self.commission_models[type(asset)]
+                        estimated_commission = commission.calculate(order, txn)
+                        transaction_cost = abs(txn.amount) * txn.price + estimated_commission
+
+                        # Check if we have sufficient cash at execution time
+                        if transaction_cost > self.portfolio.cash:
+                            if self.cash_validation_mode == "strict":
+                                # Strict mode: Raise exception
+                                raise InsufficientFundsError(
+                                    f"Insufficient cash to execute order {order.id}: "
+                                    f"need ${transaction_cost:,.2f}, have ${self.portfolio.cash:,.2f}",
+                                    required=transaction_cost,
+                                    available=self.portfolio.cash,
+                                    context={
+                                        "asset": order.asset.symbol,
+                                        "order_id": order.id,
+                                        "transaction_amount": txn.amount,
+                                        "transaction_price": txn.price,
+                                    },
+                                )
+                            elif self.cash_validation_mode == "reject":
+                                # Reject mode: Skip transaction, log warning
+                                warning_logger.warning(
+                                    f"Order {order.id} fill rejected at execution - "
+                                    f"insufficient cash: need ${transaction_cost:,.2f}, "
+                                    f"have ${self.portfolio.cash:,.2f}. "
+                                    f"Asset: {order.asset.symbol}, Amount: {txn.amount}. "
+                                    "Order remains open."
+                                )
+                                continue  # Skip this transaction
+                            # else: "warn" mode - log warning but allow execution
+                            else:
+                                warning_logger.warning(
+                                    f"Order {order.id} executed with insufficient cash: "
+                                    f"need ${transaction_cost:,.2f}, have ${self.portfolio.cash:,.2f}. "
+                                    f"Asset: {order.asset.symbol}, Amount: {txn.amount}"
+                                )
+
                     commission = self.commission_models[type(asset)]
                     additional_commission = commission.calculate(order, txn)
 

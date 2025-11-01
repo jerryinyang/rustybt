@@ -25,6 +25,7 @@ from .finance import cancel_policy, commission, execution, slippage
 # For type checkers: see api.pyi for the Context type alias
 if TYPE_CHECKING:
     from .algorithm import TradingAlgorithm as Context
+from .finance.asset_config import FractionalOrderMode
 from .finance.asset_restrictions import (
     RESTRICTION_STATES,
     HistoricalRestrictions,
@@ -46,6 +47,7 @@ __all__ = [
     "EODCancel",
     "FixedBasisPointsSlippage",
     "FixedSlippage",
+    "FractionalOrderMode",
     "HistoricalRestrictions",
     "NeverCancel",
     "Restriction",

@@ -320,6 +320,7 @@ ts_event, rtype, publisher_id, instrument_id, open, high, low, close, volume, sy
 - `5f95afe` - Initial Databento adapter implementation
 - `4f0d285` - Add configurable extra columns preservation support
 - `1e082f7` - Add Databento guide to navigation sidebar
+- `cf41990` - Fix ingest_to_bundle signature and complete QA requirements
 
 ---
 

@@ -1,6 +1,6 @@
 # [2025-11-02 00:59:37] - Minute Bars Missing Metadata Registration
 
-**Commit:** [Pending]
+**Commit:** e6364b3
 **Focus Area:** Framework - Data Management (🔴 CRITICAL)
 **Severity:** 🔴 CRITICAL
 
@@ -254,7 +254,7 @@ Applied same fix to all data adapters that call `write_minute_bars()`:
 
 ## Commit Hash
 
-`[pending]`
+`e6364b3`
 
 ---
 

@@ -827,7 +827,11 @@ class CCXTAdapter(BaseDataAdapter, DataSource):
                         source_metadata=source_metadata,
                     )
                 else:
-                    writer.write_minute_bars(df_prepared)
+                    writer.write_minute_bars(
+                        df_prepared,
+                        bundle_name=bundle_name,
+                        source_metadata=source_metadata,
+                    )
 
                 # Mark as completed
                 progress.mark_completed(symbol, rows_ingested=len(df_prepared))

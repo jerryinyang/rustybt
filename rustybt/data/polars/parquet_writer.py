@@ -177,15 +177,20 @@ class ParquetWriter:
     def write_minute_bars(
         self,
         df: pl.DataFrame,
+        bundle_name: str | None = None,
+        source_metadata: dict[str, Any] | None = None,
         compression: CompressionType = "zstd",
         dataset_id: int | None = None,
     ) -> Path:
         """Write minute bars to Parquet with year/month/day partitioning.
 
         Uses finer-grained partitioning for minute data due to larger volume.
+        Automatically populates BundleMetadata with provenance, quality, and symbols.
 
         Args:
             df: Polars DataFrame with minute-level OHLCV data
+            bundle_name: Name of bundle (required for metadata registration)
+            source_metadata: Source metadata dict with provenance info
             compression: Compression algorithm ('snappy', 'zstd', 'lz4', None)
             dataset_id: Optional dataset ID for metadata tracking
 
@@ -201,7 +206,12 @@ class ParquetWriter:
             ...     "sid": [1],
             ...     "close": [Decimal("100.50000000")],
             ... }, schema=MINUTE_BARS_SCHEMA)
-            >>> writer.write_minute_bars(df, compression="zstd")
+            >>> writer.write_minute_bars(
+            ...     df,
+            ...     bundle_name="my-bundle",
+            ...     source_metadata={"source_type": "ccxt"},
+            ...     compression="zstd"
+            ... )
         """
         df_cast = df.cast(MINUTE_BARS_SCHEMA, strict=False)
 
@@ -231,6 +241,16 @@ class ParquetWriter:
                 dataset_id=dataset_id,
                 parquet_path=output_path,
                 df=df_cast,
+            )
+
+        # === Auto-populate BundleMetadata (unified metadata system) ===
+        # Register bundle metadata if bundle_name and source_metadata provided
+        if bundle_name and source_metadata:
+            self._register_minute_bundle_metadata(
+                df=df_cast,
+                bundle_name=bundle_name,
+                source_metadata=source_metadata,
+                output_path=output_path,
             )
 
         logger.info(
@@ -1336,6 +1356,206 @@ class ParquetWriter:
         else:
             # Default for equity, future, unknown, or None
             return "XNYS"
+
+    def _register_minute_bundle_metadata(
+        self,
+        df: pl.DataFrame,
+        bundle_name: str,
+        source_metadata: dict[str, Any],
+        output_path: Path,
+    ) -> None:
+        """Register minute bundle metadata in unified BundleMetadata system.
+
+        Similar to write_daily_bars() metadata registration but for minute data.
+
+        Args:
+            df: Minute bars DataFrame (with timestamp column)
+            bundle_name: Name of the bundle
+            source_metadata: Source metadata dict with provenance info
+            output_path: Path to written Parquet files
+        """
+        import hashlib
+        import json
+        import time
+        from decimal import Decimal
+
+        current_time = int(time.time())
+
+        # === Calculate quality metrics ===
+        # Total row count across all assets
+        row_count = len(df)
+
+        # Extract timestamp range (for minute data, use "timestamp" column)
+        if "timestamp" in df.columns and len(df) > 0:
+            timestamps = df["timestamp"].unique().sort()
+            start_timestamp = int(timestamps.min().timestamp()) if len(timestamps) > 0 else None
+            end_timestamp = int(timestamps.max().timestamp()) if len(timestamps) > 0 else None
+        else:
+            start_timestamp = None
+            end_timestamp = None
+
+        # OHLCV violations check
+        violations = 0
+        if all(col in df.columns for col in ["high", "low", "open", "close"]):
+            invalid_rows = df.filter(
+                (pl.col("high") < pl.col("low"))
+                | (pl.col("high") < pl.col("open"))
+                | (pl.col("high") < pl.col("close"))
+                | (pl.col("low") > pl.col("open"))
+                | (pl.col("low") > pl.col("close"))
+            )
+            violations = len(invalid_rows)
+
+        validation_passed = violations == 0
+
+        # Calculate file checksum and size
+        if output_path.exists() and output_path.is_file():
+            file_size = output_path.stat().st_size
+            with open(output_path, "rb") as f:
+                file_checksum = hashlib.sha256(f.read()).hexdigest()
+        elif output_path.exists() and output_path.is_dir():
+            # For partitioned writes, calculate total size of all parquet files
+            file_size = sum(p.stat().st_size for p in output_path.rglob("*.parquet") if p.is_file())
+            # For checksum, use a representative file or skip
+            parquet_files = list(output_path.rglob("data.parquet"))
+            if parquet_files:
+                with open(parquet_files[0], "rb") as f:
+                    file_checksum = hashlib.sha256(f.read()).hexdigest()
+            else:
+                file_checksum = "multi-file-bundle"
+        else:
+            file_size = 0
+            file_checksum = "unknown"
+
+        # Infer calendar from asset type
+        symbols = source_metadata.get("symbols", [])
+        asset_type = None
+        if symbols:
+            asset_type = self._infer_asset_type(symbols[0])
+        calendar_name = self._get_calendar_name(asset_type)
+
+        # Missing days calculation not applicable to minute data
+        missing_days_count = 0
+        missing_days_list: list[str] = []
+
+        # === Track min/max date range across all writes ===
+        existing_metadata = BundleMetadata.get(bundle_name)
+
+        if existing_metadata:
+            existing_start = existing_metadata.get("start_date")
+            existing_end = existing_metadata.get("end_date")
+
+            # Update to min/max of existing and new data
+            if existing_start is not None and start_timestamp is not None:
+                start_timestamp = min(existing_start, start_timestamp)
+            elif existing_start is not None:
+                start_timestamp = existing_start
+
+            if existing_end is not None and end_timestamp is not None:
+                end_timestamp = max(existing_end, end_timestamp)
+            elif existing_end is not None:
+                end_timestamp = existing_end
+
+        update_payload: dict[str, Any] = {
+            "source_type": source_metadata.get("source_type", "unknown"),
+            "fetch_timestamp": current_time,
+            "row_count": row_count,
+            "start_date": start_timestamp,
+            "end_date": end_timestamp,
+            "missing_days_count": missing_days_count,
+            "missing_days_list": json.dumps(missing_days_list),
+            "outlier_count": 0,
+            "ohlcv_violations": violations,
+            "validation_passed": validation_passed,
+            "validation_timestamp": current_time,
+            "file_checksum": file_checksum,
+            "file_size_bytes": file_size,
+            "calendar": calendar_name,
+        }
+
+        for field in ("source_url", "api_version", "data_version", "timezone"):
+            value = source_metadata.get(field)
+            if value is not None:
+                update_payload[field] = value
+
+        BundleMetadata.update(bundle_name=bundle_name, **update_payload)
+
+        # Auto-register bundle if not already registered
+        if bundle_name not in bundles_registry:
+            self._register_parquet_bundle(bundle_name, source_metadata)
+
+        # Register symbols
+        symbol_entries = self._resolve_symbol_entries(df, source_metadata)
+        exchange_default = source_metadata.get("exchange")
+
+        # Get symbol_map from source_metadata
+        symbol_map = source_metadata.get("symbol_map", {})
+
+        for entry in symbol_entries:
+            symbol = entry.get("symbol")
+            if not symbol:
+                continue
+
+            asset_type_final = entry.get("asset_type") or self._infer_asset_type(symbol)
+            exchange = entry.get("exchange") or exchange_default
+
+            # Get SID from symbol_map if available
+            sid = symbol_map.get(symbol)
+
+            # Add to GLOBAL metadata
+            BundleMetadata.add_symbol(
+                bundle_name=bundle_name,
+                symbol=symbol,
+                asset_type=asset_type_final,
+                exchange=exchange,
+                sid=sid,
+            )
+
+            # Add to LOCAL bundle metadata
+            if sid is not None:
+                self.local_metadata.add_symbol(
+                    sid=sid,
+                    symbol=symbol,
+                    asset_type=asset_type_final,
+                    exchange=exchange,
+                )
+
+                # Track per-symbol date range in local metadata
+                if "timestamp" in df.columns and "sid" in df.columns:
+                    symbol_df = df.filter(pl.col("sid") == sid)
+                    if len(symbol_df) > 0:
+                        symbol_timestamps = symbol_df["timestamp"].unique().sort()
+                        if len(symbol_timestamps) > 0:
+                            symbol_start = symbol_timestamps.min()
+                            symbol_end = symbol_timestamps.max()
+                            symbol_row_count = len(symbol_df)
+
+                            # Convert timestamps to dates
+                            if hasattr(symbol_start, "date"):
+                                symbol_start_date = symbol_start.date()
+                            else:
+                                symbol_start_date = symbol_start
+
+                            if hasattr(symbol_end, "date"):
+                                symbol_end_date = symbol_end.date()
+                            else:
+                                symbol_end_date = symbol_end
+
+                            # Update local metadata with per-symbol range
+                            self.local_metadata.update_date_range(
+                                sid=sid,
+                                start_date=symbol_start_date,
+                                end_date=symbol_end_date,
+                                row_count=symbol_row_count,
+                            )
+
+        logger.info(
+            "minute_bundle_metadata_registered",
+            bundle_name=bundle_name,
+            row_count=row_count,
+            symbols=len(symbol_entries),
+            validation_passed=validation_passed,
+        )
 
 
 def get_compression_stats(

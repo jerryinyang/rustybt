@@ -1,6 +1,21 @@
 # Databento Data Import Guide
 
-**Last Updated**: 2025-11-01
+**Last Updated**: 2025-11-03
+
+## ⚠️ Breaking Changes (v2.0+)
+
+Starting with **version 2.0** (November 2025), the Databento adapter now uses **instrument IDs** to ensure data correctness:
+
+- **Symbol Format Changed**: Symbols now include instrument IDs (e.g., `AAPL_13` instead of `AAPL`)
+- **Why**: Prevents data collisions when symbols are reused (futures contracts, corporate actions, etc.)
+- **Multi-File Support**: NASDAQ (XNAS) and other multi-file packages now process **all files** (previously only processed 1 file, losing 99.9% of data)
+- **Symbology Parsing**: New feature for resolving symbol ambiguities and instrument lookups
+
+**Migration Required**: Existing bundles created before v2.0 must be regenerated. See [Migration Guide](#migration-from-v1x-to-v2x) below.
+
+**Legacy Mode**: To use old symbol format (not recommended), set `use_instrument_id=False` in config.
+
+---
 
 ## Overview
 
@@ -9,6 +24,9 @@ Databento provides high-quality market data for futures, equities, options, and 
 **Key Features**:
 - ✅ Automatic ZIP extraction
 - ✅ zstd decompression
+- ✅ **Multi-file package support** (e.g., NASDAQ with 1,888 daily files)
+- ✅ **Instrument ID tracking** (prevents data collisions)
+- ✅ **Symbology parsing** (symbol-to-instrument mapping)
 - ✅ Multi-asset packages (ingest hundreds of symbols at once)
 - ✅ Symbol filtering
 - ✅ Date range filtering
@@ -82,9 +100,15 @@ databento-package.zip
 ├── manifest.json          # File listing with hashes
 ├── metadata.json          # Query parameters and date range
 ├── condition.json         # Data availability by date
-├── symbology.csv          # Symbol-to-instrument_id mapping
-└── *.ohlcv-*.csv.zst     # Compressed OHLCV data
+├── symbology.csv          # Symbol-to-instrument_id mapping (v2.0+: automatically parsed)
+│   (or symbology.json)    # JSON variant (v2.0+: also supported)
+└── *.ohlcv-*.csv.zst     # Compressed OHLCV data (v2.0+: all files processed)
 ```
+
+**v2.0+ Enhancements**:
+- **symbology.csv/json**: Now automatically parsed for symbol lookups
+- **Multi-file support**: All `*.ohlcv-*.csv.zst` files are processed and concatenated
+- **instrument_id tracking**: Prevents data collisions across files
 
 ### Metadata Example
 
@@ -347,6 +371,261 @@ print(f"OHLCV records: {len(df_ohlcv_only)}")
 
 ---
 
+## Instrument ID Tracking (v2.0+)
+
+### Why Instrument IDs Matter
+
+Databento assigns unique `instrument_id` values to differentiate between:
+- **Futures contracts** with different expirations (e.g., ESH1, ESM1, ESZ1 all use symbol "ES")
+- **Corporate actions** (stocks that changed tickers due to mergers/splits)
+- **Symbol reuse** (when a symbol gets reassigned to a different instrument over time)
+
+**Without instrument_id**: Data from different instruments gets incorrectly merged, causing data corruption.
+
+### Default Behavior (v2.0+)
+
+By default, rustybt now creates composite symbols using `instrument_id`:
+
+```python
+from rustybt.data.adapters.databento_adapter import DatabentoAdapter, DatabentoConfig
+
+config = DatabentoConfig(
+    data_path="/path/to/databento-package.zip",
+    use_instrument_id=True  # DEFAULT in v2.0+
+)
+adapter = DatabentoAdapter(config)
+```
+
+**Symbol Format**: `{original_symbol}_{instrument_id}`
+- Example: `AAPL_13`, `ESH1_12345`, `NQZ0_67890`
+
+### Querying with Instrument IDs
+
+```python
+# Fetch specific instrument
+df = await adapter.fetch(
+    symbols=["AAPL_13"],  # Use composite symbol format
+    start=pd.Timestamp("2023-01-01"),
+    end=pd.Timestamp("2023-12-31"),
+    frequency="1d"
+)
+```
+
+### Preserving Original Symbols
+
+The original symbol and instrument_id are preserved as metadata:
+
+```python
+config = DatabentoConfig(
+    data_path="/path/to/package.zip",
+    extra_columns=["instrument_id", "original_symbol"]  # Preserve as metadata
+)
+adapter = DatabentoAdapter(config)
+
+adapter.ingest_to_bundle(
+    bundle_name="with-original-symbols",
+    symbols=[],
+    start=pd.Timestamp("2023-01-01"),
+    end=pd.Timestamp("2023-12-31"),
+    frequency="1h"
+)
+```
+
+**Access metadata**:
+```python
+import polars as pl
+
+# Read OHLCV data (uses composite symbols)
+df_ohlcv = pl.read_parquet("~/.rustybt/data/bundles/with-original-symbols/minute_bars/*.parquet")
+
+# Read metadata to see original symbols
+df_metadata = pl.read_parquet("~/.rustybt/data/bundles/with-original-symbols/metadata_columns.parquet")
+
+# Join to get original symbols
+df_complete = df_ohlcv.join(df_metadata, on=["timestamp", "symbol"], how="left")
+print(df_complete.select(["timestamp", "symbol", "original_symbol", "instrument_id", "close"]))
+
+# Output:
+# timestamp            symbol        original_symbol  instrument_id  close
+# 2023-01-01 00:00:00  ESH1_12345   ESH1            12345          4000.25
+```
+
+### Legacy Mode (Not Recommended)
+
+To use the old symbol format without instrument IDs:
+
+```python
+config = DatabentoConfig(
+    data_path="/path/to/package.zip",
+    use_instrument_id=False  # Legacy mode (NOT RECOMMENDED)
+)
+```
+
+**⚠️ Warning**: This may cause data collisions for futures and symbols that get reused.
+
+---
+
+## Symbology Parsing (v2.0+)
+
+Databento packages include a `symbology.csv` (or `symbology.json`) file that maps symbols to instrument IDs over time.
+
+### Automatic Parsing
+
+The adapter automatically parses symbology files:
+
+```python
+adapter = DatabentoAdapter(DatabentoConfig(
+    data_path="/path/to/package.zip"
+))
+
+# Symbology is automatically parsed during fetch/ingest
+```
+
+### Symbol Lookups
+
+```python
+# Find all instruments for a given symbol
+instruments = adapter.get_instruments_for_symbol("ES")
+print(f"Found {len(instruments)} instruments for 'ES'")
+# Example: [{'instrument_id': 12345, 'date_range': '2020-01-01 to 2020-03-31'}, ...]
+
+# Find symbol for a specific instrument
+symbol_info = adapter.get_symbol_for_instrument(12345)
+print(f"Instrument 12345: {symbol_info['symbol']}")
+```
+
+### Symbology Validation
+
+Validate that symbology covers all OHLCV data:
+
+```python
+# During ingestion, symbology is automatically validated
+# Warnings are logged if instruments are missing from symbology
+```
+
+**Performance**: Symbology files with 21M+ rows parse in ~3 seconds using Polars' optimized JSON/CSV readers.
+
+---
+
+## Multi-File Package Support (v2.0+)
+
+### Background
+
+Some Databento packages contain multiple OHLCV files instead of a single file:
+- **NASDAQ (XNAS)**: 1,888 daily files (one per trading day)
+- **Futures (GLBX)**: Often split by date ranges
+- **Historical data**: Large date ranges split into manageable chunks
+
+**v1.x Limitation**: Only the first file was processed, resulting in 99.9% data loss for multi-file packages.
+
+**v2.0+ Fix**: All OHLCV files are now discovered and concatenated automatically.
+
+### Automatic Multi-File Handling
+
+```python
+# Works the same for single-file and multi-file packages
+adapter = DatabentoAdapter(DatabentoConfig(
+    data_path="/path/to/XNAS-package.zip"  # 1,888 files
+))
+
+adapter.ingest_to_bundle(
+    bundle_name="xnas-data",
+    symbols=[],  # All symbols
+    start=pd.Timestamp("2018-05-01"),
+    end=pd.Timestamp("2023-10-18"),
+    frequency="1d"
+)
+
+# All 1,888 files are automatically processed and concatenated
+```
+
+### Package Metadata
+
+Multi-file packages include `split_duration` metadata:
+
+```python
+metadata = adapter._parse_metadata()
+print(f"Split duration: {metadata.split_duration}")  # e.g., "day"
+print(f"Split symbols: {metadata.split_symbols}")    # e.g., False
+```
+
+---
+
+## Migration from v1.x to v2.x
+
+### Breaking Changes Summary
+
+| Change | v1.x | v2.x |
+|--------|------|------|
+| Symbol format | `AAPL` | `AAPL_13` (with instrument_id) |
+| Multi-file packages | Only first file | All files processed |
+| Symbology | Not parsed | Automatically parsed |
+| instrument_id | Ignored | Used by default |
+
+### Migration Steps
+
+**Step 1: Delete Old Bundles**
+
+```bash
+# List existing bundles
+rustybt bundles --list
+
+# Remove old Databento bundles
+rm -rf ~/.rustybt/data/bundles/old-databento-bundle
+```
+
+**Step 2: Re-ingest with v2.x**
+
+```python
+from rustybt.data.adapters.databento_adapter import DatabentoAdapter, DatabentoConfig
+
+# v2.x automatically uses instrument IDs
+adapter = DatabentoAdapter(DatabentoConfig(
+    data_path="/path/to/databento-package.zip"
+))
+
+adapter.ingest_to_bundle(
+    bundle_name="new-databento-bundle",
+    symbols=[],
+    start=pd.Timestamp("2023-01-01"),
+    end=pd.Timestamp("2023-12-31"),
+    frequency="1h"
+)
+```
+
+**Step 3: Update Queries**
+
+```python
+# OLD (v1.x): Query by symbol alone
+df = bundle.get_pricing(symbols=["AAPL"], ...)  # ❌ Won't work in v2.x
+
+# NEW (v2.x): Query by composite symbol
+df = bundle.get_pricing(symbols=["AAPL_13"], ...)  # ✅ Works
+
+# OR: Use original_symbol metadata to find composite symbols
+metadata = pl.read_parquet("~/.rustybt/data/bundles/new-databento-bundle/metadata_columns.parquet")
+aapl_instruments = metadata.filter(pl.col("original_symbol") == "AAPL")["symbol"].unique().to_list()
+print(f"AAPL instruments: {aapl_instruments}")  # ['AAPL_13', 'AAPL_14', ...]
+```
+
+### Backward Compatibility Option
+
+If you must use the old format (not recommended):
+
+```python
+config = DatabentoConfig(
+    data_path="/path/to/package.zip",
+    use_instrument_id=False  # Forces v1.x behavior
+)
+```
+
+**⚠️ Risks**:
+- Data collisions for futures contracts
+- Incorrect merging of different instruments
+- Symbol reuse issues
+
+---
+
 ## Data Schema
 
 ### Input Format (Databento CSV)
@@ -363,12 +642,14 @@ After ingestion, data is converted to rustybt's standard OHLCV schema:
 | Column | Type | Description |
 |--------|------|-------------|
 | `timestamp` | datetime[μs, UTC] | Event timestamp in UTC |
-| `symbol` | str | Symbol identifier |
+| `symbol` | str | Composite symbol identifier (v2.0+: `SYMBOL_INSTRUMENTID`, e.g., `AAPL_13`) |
 | `open` | float64 | Opening price |
 | `high` | float64 | High price |
 | `low` | float64 | Low price |
 | `close` | float64 | Closing price |
 | `volume` | int64 | Trading volume |
+
+**v2.0+ Symbol Format**: Symbols include instrument_id to prevent data collisions (e.g., `ESH1_12345` instead of just `ESH1`).
 
 ---
 

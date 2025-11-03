@@ -135,20 +135,30 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
     - Symbol filtering
     - Date range filtering
     - Multiple frequencies (1m, 5m, 15m, 30m, 1h, 1d)
+    - Automatic cleanup of extracted ZIP files via context manager
 
     Implements both BaseDataAdapter and DataSource interfaces.
 
-    Example:
+    Example (recommended - with context manager for automatic cleanup):
         >>> config = DatabentoConfig(
-        ...     data_path="/path/to/databento.zip"
+        ...     data_path="/path/to/databento.zip",
+        ...     use_instrument_id=True
         ... )
+        >>> with DatabentoAdapter(config) as adapter:
+        ...     df = await adapter.fetch(
+        ...         symbols=[],  # All symbols
+        ...         start=pd.Timestamp('2023-01-01'),
+        ...         end=pd.Timestamp('2023-12-31'),
+        ...         frequency='1h'
+        ...     )
+        ...     # Temporary files automatically cleaned up on exit
+
+    Example (without context manager - requires manual cleanup):
         >>> adapter = DatabentoAdapter(config)
-        >>> df = await adapter.fetch(
-        ...     symbols=[],  # All symbols
-        ...     start=pd.Timestamp('2023-01-01'),
-        ...     end=pd.Timestamp('2023-12-31'),
-        ...     frequency='1h'
-        ... )
+        >>> try:
+        ...     df = await adapter.fetch(...)
+        ... finally:
+        ...     adapter.cleanup()  # Explicitly cleanup extracted files
     """
 
     def __init__(self, config: DatabentoConfig | None = None, **kwargs: Any) -> None:
@@ -186,8 +196,34 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
             timezone=config.timezone,
         )
 
+    def __enter__(self) -> "DatabentoAdapter":
+        """Enter context manager."""
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context manager and cleanup resources."""
+        self.cleanup()
+
+    def cleanup(self) -> None:
+        """Explicitly cleanup temporary directory if created.
+
+        This method can be called directly or automatically via context manager.
+        Also called by __del__ as fallback, but explicit cleanup is preferred.
+        """
+        if self._temp_dir is not None and self._temp_dir.exists():
+            try:
+                shutil.rmtree(self._temp_dir, ignore_errors=False)
+                logger.info("databento_temp_dir_cleaned_up", path=str(self._temp_dir))
+                self._temp_dir = None
+            except Exception as e:
+                logger.warning("databento_cleanup_failed", path=str(self._temp_dir), error=str(e))
+
     def __del__(self) -> None:
-        """Cleanup temporary directory if created."""
+        """Cleanup temporary directory if created (fallback for non-context-manager usage).
+
+        Note: __del__ is not guaranteed to be called. Prefer using context manager
+        or calling cleanup() explicitly.
+        """
         if self._temp_dir is not None and self._temp_dir.exists():
             shutil.rmtree(self._temp_dir, ignore_errors=True)
 

@@ -697,6 +697,7 @@ Per QA guide FAQ, approval with <100% coverage is acceptable when:
 - `cc41ab2` - Instrument ID tracking (prevents collisions)
 - `89f8297` - Symbology parsing (21M rows, symbol resolution)
 - `8c60ff9` - QA fixes (type safety, performance)
+- `45208a6` - User-facing documentation update (breaking changes, migration guide)
 - `0a531ca`, `f53190d`, `511d1c4` - Documentation updates
 
 ### Completeness

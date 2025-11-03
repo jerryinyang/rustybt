@@ -324,28 +324,41 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
         except Exception as e:
             raise InvalidDataError(f"Failed to parse manifest.json: {e}") from e
 
-    def _find_ohlcv_file(self) -> Path:
-        """Find OHLCV CSV file (compressed or uncompressed).
+    def _find_all_ohlcv_files(self) -> list[Path]:
+        """Find all OHLCV CSV files (compressed or uncompressed).
+
+        Handles both single-file and multi-file packages.
+        Multi-file packages (e.g., XNAS with daily splits) have thousands of files.
 
         Returns:
-            Path to OHLCV file
+            Sorted list of OHLCV file paths (chronological order)
 
         Raises:
-            FileNotFoundError: If no OHLCV file found
+            FileNotFoundError: If no OHLCV files found
         """
         working_dir = self._get_working_dir()
 
-        # Look for .csv.zst file first
-        zst_files = list(working_dir.glob("*.ohlcv-*.csv.zst"))
+        # Look for .csv.zst files first
+        zst_files = sorted(working_dir.glob("*.ohlcv-*.csv.zst"))
         if zst_files:
-            return zst_files[0]
+            logger.info(
+                "databento_ohlcv_files_discovered",
+                file_count=len(zst_files),
+                file_type="zst",
+            )
+            return zst_files
 
-        # Look for uncompressed .csv file
-        csv_files = list(working_dir.glob("*.ohlcv-*.csv"))
+        # Look for uncompressed .csv files
+        csv_files = sorted(working_dir.glob("*.ohlcv-*.csv"))
         if csv_files:
-            return csv_files[0]
+            logger.info(
+                "databento_ohlcv_files_discovered",
+                file_count=len(csv_files),
+                file_type="csv",
+            )
+            return csv_files
 
-        raise FileNotFoundError(f"No OHLCV file found in {working_dir}")
+        raise FileNotFoundError(f"No OHLCV files found in {working_dir}")
 
     def _decompress_zst(self, zst_file: Path, output_file: Path) -> Path:
         """Decompress zstd file.
@@ -397,7 +410,10 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
             >>> print(f"Extra columns: {columns['extra']}")
             Extra columns: ['rtype', 'publisher_id', 'instrument_id']
         """
-        csv_path = self._get_ohlcv_csv_path()
+        csv_paths = self._get_ohlcv_csv_paths()
+
+        # Use first file for column discovery (all files have same schema)
+        csv_path = csv_paths[0]
 
         # Read just first row to get column names
         df_sample = pl.read_csv(
@@ -435,32 +451,41 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
             "extra": extra_columns,
         }
 
-    def _get_ohlcv_csv_path(self) -> Path:
-        """Get path to decompressed OHLCV CSV file.
+    def _get_ohlcv_csv_paths(self) -> list[Path]:
+        """Get paths to all decompressed OHLCV CSV files.
 
-        Handles decompression if needed.
+        Handles decompression of multiple files if needed (multi-file packages).
 
         Returns:
-            Path to CSV file
+            List of CSV file paths
+
+        Raises:
+            InvalidDataError: If file format is unknown
         """
-        ohlcv_file = self._find_ohlcv_file()
+        ohlcv_files = self._find_all_ohlcv_files()
+        csv_paths = []
 
-        # If already CSV, return it
-        if ohlcv_file.suffix == ".csv":
-            return ohlcv_file
+        for ohlcv_file in ohlcv_files:
+            # If already CSV, use it
+            if ohlcv_file.suffix == ".csv":
+                csv_paths.append(ohlcv_file)
+                continue
 
-        # Decompress zst file (check if ends with .zst)
-        if ohlcv_file.suffix == ".zst" and ".csv" in ohlcv_file.suffixes:
-            working_dir = self._get_working_dir()
-            output_csv = working_dir / ohlcv_file.name.replace(".zst", "")
+            # Decompress zst file
+            if ohlcv_file.suffix == ".zst" and ".csv" in ohlcv_file.suffixes:
+                working_dir = self._get_working_dir()
+                output_csv = working_dir / ohlcv_file.name.replace(".zst", "")
 
-            # Check if already decompressed
-            if output_csv.exists():
-                return output_csv
+                # Check if already decompressed
+                if not output_csv.exists():
+                    self._decompress_zst(ohlcv_file, output_csv)
 
-            return self._decompress_zst(ohlcv_file, output_csv)
+                csv_paths.append(output_csv)
+                continue
 
-        raise InvalidDataError(f"Unknown OHLCV file format: {ohlcv_file}")
+            raise InvalidDataError(f"Unknown OHLCV file format: {ohlcv_file}")
+
+        return csv_paths
 
     def _parse_ohlcv_csv(
         self,
@@ -468,7 +493,10 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
         start: pd.Timestamp | None = None,
         end: pd.Timestamp | None = None,
     ) -> pl.DataFrame:
-        """Parse OHLCV CSV to Polars DataFrame.
+        """Parse all OHLCV CSV files to Polars DataFrame.
+
+        Handles both single-file and multi-file packages. Multi-file packages
+        (e.g., XNAS with 1,888 daily files) are concatenated into single DataFrame.
 
         Args:
             symbols_filter: Optional list of symbols to filter
@@ -479,27 +507,55 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
             Polars DataFrame with standardized OHLCV schema
 
         Raises:
-            InvalidDataError: If CSV parsing fails
+            InvalidDataError: If CSV parsing fails or no valid data found
         """
-        csv_path = self._get_ohlcv_csv_path()
+        csv_paths = self._get_ohlcv_csv_paths()
+
+        logger.info(
+            "databento_parsing_ohlcv_files",
+            file_count=len(csv_paths),
+        )
+
+        dfs = []
+        for csv_path in csv_paths:
+            try:
+                # Read CSV with Polars
+                df = pl.read_csv(
+                    csv_path,
+                    separator=",",
+                    has_header=True,
+                    try_parse_dates=False,  # Parse dates manually for control
+                )
+
+                # Skip empty files
+                if len(df) == 0:
+                    logger.warning("databento_empty_file", path=str(csv_path))
+                    continue
+
+                dfs.append(df)
+
+            except Exception as e:
+                logger.error(
+                    "databento_file_parse_error",
+                    path=str(csv_path),
+                    error=str(e),
+                )
+                # Continue processing other files
+                continue
+
+        if not dfs:
+            raise InvalidDataError("No valid OHLCV data found in package")
+
+        # Concatenate all DataFrames
+        df = pl.concat(dfs)
+
+        logger.info(
+            "databento_files_concatenated",
+            total_rows=len(df),
+            files_processed=len(dfs),
+        )
 
         try:
-            logger.info("databento_parsing_ohlcv_csv", csv_path=str(csv_path))
-
-            # Read CSV with Polars (disable auto date parsing to handle manually)
-            df = pl.read_csv(
-                csv_path,
-                separator=",",
-                has_header=True,
-                try_parse_dates=False,  # Parse dates manually for control
-            )
-
-            logger.info(
-                "databento_csv_read",
-                rows=len(df),
-                columns=len(df.columns),
-            )
-
             # Map Databento schema to rustybt schema
             df = df.rename(
                 {

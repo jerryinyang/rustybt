@@ -638,11 +638,15 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 else:
                     if self.config.symbol_format == "symbol_id":
                         # Format: SYMBOL_INSTRUMENTID (e.g., "AAPL_13", "ESM0_6640")
+                        # Exception: UD:EN symbols already contain instrument_id, don't append
                         df = df.with_columns(
                             [
-                                (
+                                pl.when(pl.col("symbol").str.starts_with("UD:EN:"))
+                                .then(pl.col("symbol"))  # UD:EN already contains ID
+                                .otherwise(
                                     pl.col("symbol") + "_" + pl.col("instrument_id").cast(pl.Utf8)
-                                ).alias("asset_id")
+                                )
+                                .alias("asset_id")
                             ]
                         )
 

@@ -1382,8 +1382,8 @@ class ParquetWriter:
         current_time = int(time.time())
 
         # === Calculate quality metrics ===
-        # Total row count across all assets
-        row_count = len(df)
+        # Total row count across all assets in bundle (cumulative across all writes)
+        row_count = self._calculate_total_row_count(bundle_name)
 
         # Extract timestamp range (for minute data, use "timestamp" column)
         if "timestamp" in df.columns and len(df) > 0:

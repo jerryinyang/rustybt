@@ -89,6 +89,8 @@ class DatabentoMetadata:
     compression: str
     stype_in: str
     stype_out: str
+    split_duration: str | None = None  # "day", "month", or None for single file
+    split_symbols: bool = False  # Whether symbols are split into separate files
 
 
 @dataclass
@@ -102,11 +104,20 @@ class DatabentoConfig:
                       (e.g., ['rtype', 'publisher_id', 'instrument_id']).
                       Use get_available_columns() to see what's available.
                       Default: None (only keep standard OHLCV columns)
+        use_instrument_id: If True, use instrument_id for unique asset identification.
+                          Creates composite symbols like "AAPL_13" to prevent collisions.
+                          If False, use symbol only (legacy mode, may cause collisions).
+                          Default: True (recommended)
+        symbol_format: Format for composite symbols when use_instrument_id=True.
+                      Options: "symbol_id" (e.g., "AAPL_13")
+                      Default: "symbol_id"
     """
 
     data_path: str
     timezone: str = "UTC"
     extra_columns: list[str] | None = None
+    use_instrument_id: bool = True
+    symbol_format: str = "symbol_id"
 
 
 # ============================================================================
@@ -251,6 +262,7 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 data = json.load(f)
 
             query = data["query"]
+            customizations = data.get("customizations", {})
 
             metadata = DatabentoMetadata(
                 version=data["version"],
@@ -264,6 +276,8 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 compression=query["compression"],
                 stype_in=query["stype_in"],
                 stype_out=query["stype_out"],
+                split_duration=customizations.get("split_duration"),
+                split_symbols=customizations.get("split_symbols", False),
             )
 
             logger.info(
@@ -273,6 +287,8 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 symbols_count=len(metadata.symbols),
                 start=metadata.start,
                 end=metadata.end,
+                split_duration=metadata.split_duration,
+                split_symbols=metadata.split_symbols,
             )
 
             return metadata
@@ -574,9 +590,55 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 ]
             )
 
-            # Filter by symbols if provided
+            # Create composite asset identifier using instrument_id (if enabled)
+            if self.config.use_instrument_id:
+                # Ensure instrument_id column exists
+                if "instrument_id" not in df.columns:
+                    logger.warning(
+                        "databento_missing_instrument_id",
+                        message="instrument_id column not found, falling back to symbol-only mode",
+                    )
+                else:
+                    if self.config.symbol_format == "symbol_id":
+                        # Format: SYMBOL_INSTRUMENTID (e.g., "AAPL_13", "ESM0_6640")
+                        df = df.with_columns(
+                            [
+                                (
+                                    pl.col("symbol") + "_" + pl.col("instrument_id").cast(pl.Utf8)
+                                ).alias("asset_id")
+                            ]
+                        )
+
+                        logger.info(
+                            "databento_using_instrument_id",
+                            format="symbol_id",
+                            sample_assets=df.select("asset_id")
+                            .unique()
+                            .head(5)
+                            .to_series()
+                            .to_list(),
+                        )
+                    else:
+                        # symbol_only format (same as legacy mode)
+                        df = df.with_columns([pl.col("symbol").alias("asset_id")])
+
+                        logger.warning(
+                            "databento_symbol_only_mode",
+                            message="Using symbol-only mode may cause data collisions for reused symbols",
+                        )
+
+                    # Replace 'symbol' with 'asset_id' for downstream processing
+                    # Keep original symbol for reference
+                    df = df.rename({"symbol": "original_symbol"})
+                    df = df.rename({"asset_id": "symbol"})
+
+            # Filter by symbols if provided (now filters on original_symbol if using instrument_id)
             if symbols_filter:
-                df = df.filter(pl.col("symbol").is_in(symbols_filter))
+                if "original_symbol" in df.columns:
+                    # Filter by original symbol when using instrument_id
+                    df = df.filter(pl.col("original_symbol").is_in(symbols_filter))
+                else:
+                    df = df.filter(pl.col("symbol").is_in(symbols_filter))
 
             # Filter by date range if provided
             if start is not None:
@@ -589,6 +651,13 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
 
             # Select columns: always include standard OHLCV, optionally include extra
             columns_to_select = ["timestamp", "symbol", "open", "high", "low", "close", "volume"]
+
+            # If using instrument_id, preserve original_symbol and instrument_id for reference
+            if self.config.use_instrument_id and "original_symbol" in df.columns:
+                if "instrument_id" not in columns_to_select:
+                    columns_to_select.append("instrument_id")
+                if "original_symbol" not in columns_to_select:
+                    columns_to_select.append("original_symbol")
 
             # Add extra columns if specified in config
             if self.config.extra_columns:
@@ -604,6 +673,8 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                             available=list(available_cols),
                         )
 
+            # Ensure columns exist before selecting
+            columns_to_select = [col for col in columns_to_select if col in df.columns]
             df = df.select(columns_to_select)
 
             extra_cols_preserved = [
@@ -615,14 +686,58 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 "databento_ohlcv_parsed",
                 rows=len(df),
                 symbols=len(df["symbol"].unique()),
+                unique_instruments=(
+                    len(df["instrument_id"].unique()) if "instrument_id" in df.columns else None
+                ),
                 columns_preserved=len(columns_to_select),
                 extra_columns=extra_cols_preserved if extra_cols_preserved else None,
+                using_instrument_id=self.config.use_instrument_id,
             )
 
             return df
 
         except Exception as e:
             raise InvalidDataError(f"Failed to parse OHLCV CSV: {e}") from e
+
+    def _validate_symbol_uniqueness(self, df: pl.DataFrame) -> None:
+        """Validate that symbols are unique across instrument_ids.
+
+        Logs warnings if same symbol appears with multiple instrument_ids
+        at the same timestamp (indicating potential data collisions).
+
+        Args:
+            df: DataFrame with 'symbol', 'instrument_id', 'timestamp' columns
+        """
+        if "instrument_id" not in df.columns or "original_symbol" not in df.columns:
+            return
+
+        # Check for symbol collisions (same original_symbol, different instrument_id, same date)
+        # Group by date (not exact timestamp) for daily collision check
+        df_with_date = df.with_columns([pl.col("timestamp").dt.date().alias("date")])
+
+        collisions = (
+            df_with_date.groupby(["date", "original_symbol"])
+            .agg(pl.col("instrument_id").n_unique().alias("instrument_count"))
+            .filter(pl.col("instrument_count") > 1)
+        )
+
+        if len(collisions) > 0:
+            logger.warning(
+                "databento_symbol_collisions_detected",
+                collision_count=len(collisions),
+                message="Same symbol used by multiple instruments at same timestamp",
+                recommendation="Use use_instrument_id=True in config (already enabled)",
+            )
+
+            # Log sample collisions
+            sample = collisions.head(5)
+            for row in sample.iter_rows(named=True):
+                logger.warning(
+                    "databento_collision_example",
+                    date=str(row["date"]),
+                    symbol=row["original_symbol"],
+                    instrument_count=row["instrument_count"],
+                )
 
     async def fetch(
         self,
@@ -766,12 +881,42 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 rows=len(df_metadata),
             )
 
+        # Write instrument mappings if using instrument_id
+        if (
+            self.config.use_instrument_id
+            and "instrument_id" in df.columns
+            and "original_symbol" in df.columns
+        ):
+            instrument_mappings = {}
+            mapping_df = df.select(
+                ["instrument_id", "original_symbol", "symbol"]  # composite identifier
+            ).unique()
+
+            for row in mapping_df.iter_rows(named=True):
+                instrument_mappings[str(row["instrument_id"])] = {
+                    "original_symbol": row["original_symbol"],
+                    "composite_symbol": row["symbol"],
+                    "sid": symbol_map.get(row["symbol"]),
+                }
+
+            mapping_path = Path(bundle_dir) / "databento_instrument_mappings.json"
+            with open(mapping_path, "w") as f:
+                json.dump(instrument_mappings, f, indent=2)
+
+            logger.info(
+                "databento_instrument_mappings_written",
+                path=str(mapping_path),
+                instruments=len(instrument_mappings),
+            )
+
         logger.info(
             "databento_ingested",
             bundle_name=bundle_name,
             rows=len(df),
             symbols=len(df["symbol"].unique()),
             extra_columns_stored=has_extra_columns,
+            instrument_mappings_stored=self.config.use_instrument_id
+            and "instrument_id" in df.columns,
         )
 
     def get_metadata(self) -> DataSourceMetadata:

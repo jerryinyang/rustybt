@@ -198,7 +198,8 @@ parquet files contained 17,117,002 rows (729x undercount).
 
 ## Merge Status
 
-[Pending QA approval]
+✅ Merged to main on 2025-11-03
+Branch deleted: fix/20251102-005707-bundle-list-not-showing-ingested-data
 
 ---
 

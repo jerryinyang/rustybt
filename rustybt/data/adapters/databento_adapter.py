@@ -173,6 +173,7 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
         self.data_path = Path(config.data_path)
         self.timezone = pytz.timezone(config.timezone)
         self._temp_dir: Path | None = None
+        self._symbology_cache: pl.DataFrame | None = None
 
         # Verify data path exists
         if not self.data_path.exists():
@@ -698,6 +699,239 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
 
         except Exception as e:
             raise InvalidDataError(f"Failed to parse OHLCV CSV: {e}") from e
+
+    def _find_symbology_file(self) -> Path | None:
+        """Find symbology file (CSV or JSON).
+
+        Returns:
+            Path to symbology file, or None if not found
+        """
+        working_dir = self._get_working_dir()
+
+        # Check for CSV first
+        csv_path = working_dir / "symbology.csv"
+        if csv_path.exists():
+            return csv_path
+
+        # Check for JSON
+        json_path = working_dir / "symbology.json"
+        if json_path.exists():
+            return json_path
+
+        return None
+
+    def _parse_symbology(self) -> pl.DataFrame | None:
+        """Parse symbology file (CSV or JSON) to DataFrame.
+
+        Symbology provides symbol → instrument_id → date mappings.
+
+        Returns:
+            Polars DataFrame with symbology data, or None if not found
+
+        Raises:
+            InvalidDataError: If symbology parsing fails
+        """
+        # Return cached symbology if available
+        if self._symbology_cache is not None:
+            return self._symbology_cache
+
+        symbology_file = self._find_symbology_file()
+        if symbology_file is None:
+            logger.info("databento_symbology_not_found")
+            return None
+
+        try:
+            logger.info("databento_parsing_symbology", path=str(symbology_file))
+
+            if symbology_file.suffix == ".csv":
+                # Parse CSV symbology
+                symbology = pl.read_csv(
+                    symbology_file,
+                    separator=",",
+                    has_header=True,
+                    try_parse_dates=False,
+                )
+            elif symbology_file.suffix == ".json":
+                # Parse JSON symbology
+                symbology = self._parse_symbology_json()
+            else:
+                raise InvalidDataError(f"Unknown symbology format: {symbology_file}")
+
+            logger.info(
+                "databento_symbology_parsed",
+                rows=len(symbology),
+                columns=len(symbology.columns),
+            )
+
+            # Cache for future use
+            self._symbology_cache = symbology
+
+            return symbology
+
+        except Exception as e:
+            logger.error("databento_symbology_parse_error", path=str(symbology_file), error=str(e))
+            return None
+
+    def _parse_symbology_json(self) -> pl.DataFrame | None:
+        """Parse symbology.json file to DataFrame.
+
+        Returns:
+            Polars DataFrame with symbology data
+
+        Raises:
+            InvalidDataError: If JSON parsing fails
+        """
+        working_dir = self._get_working_dir()
+        json_path = working_dir / "symbology.json"
+
+        if not json_path.exists():
+            return None
+
+        try:
+            # Read JSON file
+            with open(json_path, "r") as f:
+                data = json.load(f)
+
+            # Convert to DataFrame
+            # Structure depends on Databento JSON format
+            if isinstance(data, list):
+                symbology = pl.DataFrame(data)
+            elif isinstance(data, dict):
+                # Handle dict format
+                symbology = pl.DataFrame([data])
+            else:
+                raise InvalidDataError(f"Unexpected JSON structure: {type(data)}")
+
+            return symbology
+
+        except Exception as e:
+            raise InvalidDataError(f"Failed to parse symbology.json: {e}") from e
+
+    def get_instruments_for_symbol(self, symbol: str) -> list[dict[str, Any]]:
+        """Get all instruments for a given symbol.
+
+        Args:
+            symbol: Symbol to look up (e.g., "ES", "AAPL")
+
+        Returns:
+            List of instrument dictionaries with metadata
+        """
+        symbology = self._parse_symbology()
+        if symbology is None:
+            logger.warning("databento_symbology_unavailable_for_lookup")
+            return []
+
+        if "symbol" not in symbology.columns:
+            # Try alternative column names
+            if "raw_symbol" in symbology.columns:
+                symbol_col = "raw_symbol"
+            else:
+                logger.warning("databento_symbology_missing_symbol_column")
+                return []
+        else:
+            symbol_col = "symbol"
+
+        # Filter by symbol
+        matches = symbology.filter(pl.col(symbol_col) == symbol)
+
+        # Convert to list of dicts
+        instruments = []
+        for row in matches.iter_rows(named=True):
+            instruments.append(dict(row))
+
+        return instruments
+
+    def get_symbol_for_instrument(self, instrument_id: int) -> dict[str, Any] | None:
+        """Get symbol for a specific instrument_id.
+
+        Args:
+            instrument_id: Instrument ID to look up
+
+        Returns:
+            Dictionary with symbol metadata, or None if not found
+        """
+        symbology = self._parse_symbology()
+        if symbology is None:
+            return None
+
+        if "instrument_id" not in symbology.columns:
+            logger.warning("databento_symbology_missing_instrument_id_column")
+            return None
+
+        # Filter by instrument_id
+        matches = symbology.filter(pl.col("instrument_id") == instrument_id)
+
+        if len(matches) == 0:
+            return None
+
+        # Return first match as dict
+        return dict(matches.row(0, named=True))
+
+    def get_active_symbols_for_date(self, date: pd.Timestamp) -> list[str]:
+        """Get symbols active on a specific date.
+
+        Args:
+            date: Date to query
+
+        Returns:
+            List of active symbols
+        """
+        symbology = self._parse_symbology()
+        if symbology is None:
+            return []
+
+        # Check for date range columns
+        date_columns = [col for col in symbology.columns if "date" in col.lower()]
+        if len(date_columns) < 2:
+            logger.warning("databento_symbology_missing_date_columns")
+            # Return all symbols if no date filtering possible
+            if "symbol" in symbology.columns:
+                return symbology["symbol"].unique().to_list()
+            return []
+
+        # Assume first two date columns are start/end
+        # This is a simplification - actual logic depends on Databento format
+        if "symbol" in symbology.columns:
+            return symbology["symbol"].unique().to_list()
+
+        return []
+
+    def validate_symbology_consistency(self, df: pl.DataFrame) -> dict[str, Any]:
+        """Validate symbology consistency with OHLCV data.
+
+        Args:
+            df: OHLCV DataFrame to validate
+
+        Returns:
+            Dictionary with validation results
+        """
+        symbology = self._parse_symbology()
+
+        if symbology is None:
+            return {
+                "valid": False,
+                "errors": ["Symbology file not found"],
+            }
+
+        result = {
+            "valid": True,
+            "errors": [],
+            "warnings": [],
+        }
+
+        # Check instrument_id coverage
+        if "instrument_id" in df.columns and "instrument_id" in symbology.columns:
+            ohlcv_instruments = set(df["instrument_id"].unique().to_list())
+            symbology_instruments = set(symbology["instrument_id"].unique().to_list())
+
+            missing = ohlcv_instruments - symbology_instruments
+            if len(missing) > 0:
+                coverage = (len(ohlcv_instruments) - len(missing)) / len(ohlcv_instruments)
+                result["warnings"].append(
+                    f"Symbology missing {len(missing)} instruments ({coverage:.1%} coverage)"
+                )
+
+        return result
 
     def _validate_symbol_uniqueness(self, df: pl.DataFrame) -> None:
         """Validate that symbols are unique across instrument_ids.

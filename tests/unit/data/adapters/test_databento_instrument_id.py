@@ -145,7 +145,7 @@ class TestInstrumentUniqueness:
 
         # Group by original_symbol and check for multiple instrument_ids
         # Futures contracts reuse base symbols (e.g., "ES" for different expirations)
-        symbol_groups = df.groupby("original_symbol").agg(
+        symbol_groups = df.group_by("original_symbol").agg(
             [
                 pl.col("instrument_id").n_unique().alias("unique_instruments"),
                 pl.col("symbol").n_unique().alias("unique_composite_symbols"),

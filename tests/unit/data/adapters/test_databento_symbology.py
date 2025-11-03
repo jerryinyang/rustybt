@@ -249,7 +249,7 @@ class TestSymbolReuse:
         # Check for symbols that appear multiple times (different instruments/dates)
         # This is especially common in futures data
         if "symbol" in symbology.columns:
-            symbol_counts = symbology.groupby("symbol").count()
+            symbol_counts = symbology.group_by("symbol").count()
             multi_use_symbols = symbol_counts.filter(pl.col("count") > 1)
 
             # Futures packages should have symbols used by multiple instruments

@@ -754,6 +754,8 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
             elif symbology_file.suffix == ".json":
                 # Parse JSON symbology
                 symbology = self._parse_symbology_json()
+                if symbology is None:
+                    raise InvalidDataError(f"Failed to parse JSON symbology file: {symbology_file}")
             else:
                 raise InvalidDataError(f"Unknown symbology format: {symbology_file}")
 
@@ -788,19 +790,9 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
             return None
 
         try:
-            # Read JSON file
-            with open(json_path, "r") as f:
-                data = json.load(f)
-
-            # Convert to DataFrame
-            # Structure depends on Databento JSON format
-            if isinstance(data, list):
-                symbology = pl.DataFrame(data)
-            elif isinstance(data, dict):
-                # Handle dict format
-                symbology = pl.DataFrame([data])
-            else:
-                raise InvalidDataError(f"Unexpected JSON structure: {type(data)}")
+            # Use Polars' native JSON reader for efficient parsing
+            # This is much faster than json.load() for large files
+            symbology = pl.read_json(json_path)
 
             return symbology
 
@@ -913,11 +905,13 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 "errors": ["Symbology file not found"],
             }
 
-        result = {
+        result: dict[str, Any] = {
             "valid": True,
             "errors": [],
             "warnings": [],
         }
+        errors: list[str] = result["errors"]  # type: ignore[assignment]
+        warnings: list[str] = result["warnings"]  # type: ignore[assignment]
 
         # Check instrument_id coverage
         if "instrument_id" in df.columns and "instrument_id" in symbology.columns:
@@ -927,7 +921,7 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
             missing = ohlcv_instruments - symbology_instruments
             if len(missing) > 0:
                 coverage = (len(ohlcv_instruments) - len(missing)) / len(ohlcv_instruments)
-                result["warnings"].append(
+                warnings.append(
                     f"Symbology missing {len(missing)} instruments ({coverage:.1%} coverage)"
                 )
 
@@ -950,7 +944,7 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
         df_with_date = df.with_columns([pl.col("timestamp").dt.date().alias("date")])
 
         collisions = (
-            df_with_date.groupby(["date", "original_symbol"])
+            df_with_date.group_by(["date", "original_symbol"])
             .agg(pl.col("instrument_id").n_unique().alias("instrument_count"))
             .filter(pl.col("instrument_count") > 1)
         )

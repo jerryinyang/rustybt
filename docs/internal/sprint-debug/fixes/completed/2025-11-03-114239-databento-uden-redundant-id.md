@@ -1,6 +1,6 @@
 # [2025-11-03 11:42:39] - Databento UD:EN Redundant Instrument ID
 
-**Commit:** [Pending]
+**Commit:** `202a47f`
 **Focus Area:** Framework - Data Adapters (Databento)
 **Severity:** 🟡 MEDIUM
 
@@ -189,7 +189,7 @@ sample_assets=['ZLZ1-ZLZ3_11225', 'UD:EN: SG 0824818441', 'UD:EN: VT 0816870363'
 
 ## Commit Hash
 
-`[Pending - will be added after commit]`
+`202a47f`
 
 ---
 

@@ -496,9 +496,30 @@ class BundleMetadata:
                 if sid is not None:
                     insert_values["id"] = sid
 
-                insert_stmt = bundle_symbols.insert().values(**insert_values)
-                result = session.execute(insert_stmt)
-                symbol_id = result.inserted_primary_key[0]
+                try:
+                    insert_stmt = bundle_symbols.insert().values(**insert_values)
+                    result = session.execute(insert_stmt)
+                    symbol_id = result.inserted_primary_key[0]
+                except sa.exc.IntegrityError:
+                    # Race condition: another process inserted this symbol
+                    # Roll back and re-query to get the existing ID
+                    session.rollback()
+                    stmt_retry = select(bundle_symbols.c.id).where(
+                        sa.and_(
+                            bundle_symbols.c.bundle_name == bundle_name,
+                            bundle_symbols.c.symbol == symbol,
+                        )
+                    )
+                    symbol_id = session.execute(stmt_retry).scalar()
+                    if symbol_id is None:
+                        # Still not found - something went wrong, re-raise
+                        raise
+                    logger.debug(
+                        "symbol_race_condition_resolved",
+                        bundle_name=bundle_name,
+                        symbol=symbol,
+                        symbol_id=symbol_id,
+                    )
 
             session.commit()
 

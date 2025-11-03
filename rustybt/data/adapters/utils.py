@@ -133,18 +133,38 @@ def build_symbol_sid_map(symbols: Iterable[str], bundle_name: str | None = None)
             pass
 
     # Phase 2: Assign new SIDs to symbols not found in database
-    try:
-        next_sid = BundleMetadata.get_next_symbol_id()
-    except Exception:
-        # Fallback to 1 if database access fails
-        next_sid = 1
+    # For symbols that need new SIDs, let the database auto-assign them
+    # This avoids race conditions when multiple processes run concurrently
+    symbols_needing_sids = [
+        symbol.upper().strip() for symbol in symbols if symbol.upper().strip() not in mapping
+    ]
 
-    for symbol in symbols:
-        normalized_symbol = symbol.upper().strip()
-        if normalized_symbol not in mapping:
-            # Symbol not in database, assign new SID
-            mapping[normalized_symbol] = next_sid
-            next_sid += 1
+    if symbols_needing_sids:
+        # Register symbols in database and let it auto-assign SIDs
+        # This is done one at a time within a transaction to avoid conflicts
+        for symbol in symbols_needing_sids:
+            try:
+                # add_symbol with sid=None lets the database auto-increment
+                # We need a temporary bundle name if none provided
+                temp_bundle = bundle_name if bundle_name else "_temp_sid_assignment"
+
+                # This will either insert (new SID) or return existing SID
+                sid = BundleMetadata.add_symbol(
+                    bundle_name=temp_bundle,
+                    symbol=symbol,
+                    asset_type=None,  # Will be updated later when writing
+                    exchange=None,
+                    sid=None,  # Let database auto-assign
+                )
+                mapping[symbol] = sid
+            except Exception:  # nosec B110 - Fail gracefully
+                # If database write fails, try to get next ID manually
+                try:
+                    next_sid = BundleMetadata.get_next_symbol_id()
+                    mapping[symbol] = next_sid
+                except Exception:
+                    # Last resort: use sequential numbering from 1000000
+                    mapping[symbol] = 1000000 + len(mapping)
 
     return mapping
 

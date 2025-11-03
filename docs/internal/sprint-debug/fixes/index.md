@@ -5,6 +5,7 @@
 - [Sprint Debugging - Fixes Log](#table-of-contents)
   - [Active Session](./active-session.md)
     - [Current Batch (Completed)](./active-session.md#current-batch-completed)
+  - [[2025-11-03 03:12:18] - 🔴 CRITICAL: Databento Adapter Multi-File, Instrument ID, Symbology Fixes](./completed/2025-11-03-031218-databento-critical-fixes.md)
   - [[2025-11-03 02:23:39] - Bundle List Row Count Bug Fix](./completed/2025-11-03-022339-bundle-list-row-count-bug.md)
   - [[2025-11-02 00:59:37] - Minute Bars Missing Metadata Registration](./completed/2025-11-02-005937-minute-bars-missing-metadata-registration.md)
   - [[2025-10-17 18:30:00] - CRITICAL: Fix Quick Start Date Range Mismatch](./completed/2025-10-17-183000-critical-fix-quick-start-date-range-mismatch.md)

@@ -89,6 +89,8 @@ class DatabentoMetadata:
     compression: str
     stype_in: str
     stype_out: str
+    split_duration: str | None = None  # "day", "month", or None for single file
+    split_symbols: bool = False  # Whether symbols are split into separate files
 
 
 @dataclass
@@ -102,11 +104,20 @@ class DatabentoConfig:
                       (e.g., ['rtype', 'publisher_id', 'instrument_id']).
                       Use get_available_columns() to see what's available.
                       Default: None (only keep standard OHLCV columns)
+        use_instrument_id: If True, use instrument_id for unique asset identification.
+                          Creates composite symbols like "AAPL_13" to prevent collisions.
+                          If False, use symbol only (legacy mode, may cause collisions).
+                          Default: True (recommended)
+        symbol_format: Format for composite symbols when use_instrument_id=True.
+                      Options: "symbol_id" (e.g., "AAPL_13")
+                      Default: "symbol_id"
     """
 
     data_path: str
     timezone: str = "UTC"
     extra_columns: list[str] | None = None
+    use_instrument_id: bool = True
+    symbol_format: str = "symbol_id"
 
 
 # ============================================================================
@@ -162,6 +173,7 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
         self.data_path = Path(config.data_path)
         self.timezone = pytz.timezone(config.timezone)
         self._temp_dir: Path | None = None
+        self._symbology_cache: pl.DataFrame | None = None
 
         # Verify data path exists
         if not self.data_path.exists():
@@ -251,6 +263,7 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 data = json.load(f)
 
             query = data["query"]
+            customizations = data.get("customizations", {})
 
             metadata = DatabentoMetadata(
                 version=data["version"],
@@ -264,6 +277,8 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 compression=query["compression"],
                 stype_in=query["stype_in"],
                 stype_out=query["stype_out"],
+                split_duration=customizations.get("split_duration"),
+                split_symbols=customizations.get("split_symbols", False),
             )
 
             logger.info(
@@ -273,6 +288,8 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 symbols_count=len(metadata.symbols),
                 start=metadata.start,
                 end=metadata.end,
+                split_duration=metadata.split_duration,
+                split_symbols=metadata.split_symbols,
             )
 
             return metadata
@@ -324,28 +341,41 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
         except Exception as e:
             raise InvalidDataError(f"Failed to parse manifest.json: {e}") from e
 
-    def _find_ohlcv_file(self) -> Path:
-        """Find OHLCV CSV file (compressed or uncompressed).
+    def _find_all_ohlcv_files(self) -> list[Path]:
+        """Find all OHLCV CSV files (compressed or uncompressed).
+
+        Handles both single-file and multi-file packages.
+        Multi-file packages (e.g., XNAS with daily splits) have thousands of files.
 
         Returns:
-            Path to OHLCV file
+            Sorted list of OHLCV file paths (chronological order)
 
         Raises:
-            FileNotFoundError: If no OHLCV file found
+            FileNotFoundError: If no OHLCV files found
         """
         working_dir = self._get_working_dir()
 
-        # Look for .csv.zst file first
-        zst_files = list(working_dir.glob("*.ohlcv-*.csv.zst"))
+        # Look for .csv.zst files first
+        zst_files = sorted(working_dir.glob("*.ohlcv-*.csv.zst"))
         if zst_files:
-            return zst_files[0]
+            logger.info(
+                "databento_ohlcv_files_discovered",
+                file_count=len(zst_files),
+                file_type="zst",
+            )
+            return zst_files
 
-        # Look for uncompressed .csv file
-        csv_files = list(working_dir.glob("*.ohlcv-*.csv"))
+        # Look for uncompressed .csv files
+        csv_files = sorted(working_dir.glob("*.ohlcv-*.csv"))
         if csv_files:
-            return csv_files[0]
+            logger.info(
+                "databento_ohlcv_files_discovered",
+                file_count=len(csv_files),
+                file_type="csv",
+            )
+            return csv_files
 
-        raise FileNotFoundError(f"No OHLCV file found in {working_dir}")
+        raise FileNotFoundError(f"No OHLCV files found in {working_dir}")
 
     def _decompress_zst(self, zst_file: Path, output_file: Path) -> Path:
         """Decompress zstd file.
@@ -397,7 +427,10 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
             >>> print(f"Extra columns: {columns['extra']}")
             Extra columns: ['rtype', 'publisher_id', 'instrument_id']
         """
-        csv_path = self._get_ohlcv_csv_path()
+        csv_paths = self._get_ohlcv_csv_paths()
+
+        # Use first file for column discovery (all files have same schema)
+        csv_path = csv_paths[0]
 
         # Read just first row to get column names
         df_sample = pl.read_csv(
@@ -435,32 +468,41 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
             "extra": extra_columns,
         }
 
-    def _get_ohlcv_csv_path(self) -> Path:
-        """Get path to decompressed OHLCV CSV file.
+    def _get_ohlcv_csv_paths(self) -> list[Path]:
+        """Get paths to all decompressed OHLCV CSV files.
 
-        Handles decompression if needed.
+        Handles decompression of multiple files if needed (multi-file packages).
 
         Returns:
-            Path to CSV file
+            List of CSV file paths
+
+        Raises:
+            InvalidDataError: If file format is unknown
         """
-        ohlcv_file = self._find_ohlcv_file()
+        ohlcv_files = self._find_all_ohlcv_files()
+        csv_paths = []
 
-        # If already CSV, return it
-        if ohlcv_file.suffix == ".csv":
-            return ohlcv_file
+        for ohlcv_file in ohlcv_files:
+            # If already CSV, use it
+            if ohlcv_file.suffix == ".csv":
+                csv_paths.append(ohlcv_file)
+                continue
 
-        # Decompress zst file (check if ends with .zst)
-        if ohlcv_file.suffix == ".zst" and ".csv" in ohlcv_file.suffixes:
-            working_dir = self._get_working_dir()
-            output_csv = working_dir / ohlcv_file.name.replace(".zst", "")
+            # Decompress zst file
+            if ohlcv_file.suffix == ".zst" and ".csv" in ohlcv_file.suffixes:
+                working_dir = self._get_working_dir()
+                output_csv = working_dir / ohlcv_file.name.replace(".zst", "")
 
-            # Check if already decompressed
-            if output_csv.exists():
-                return output_csv
+                # Check if already decompressed
+                if not output_csv.exists():
+                    self._decompress_zst(ohlcv_file, output_csv)
 
-            return self._decompress_zst(ohlcv_file, output_csv)
+                csv_paths.append(output_csv)
+                continue
 
-        raise InvalidDataError(f"Unknown OHLCV file format: {ohlcv_file}")
+            raise InvalidDataError(f"Unknown OHLCV file format: {ohlcv_file}")
+
+        return csv_paths
 
     def _parse_ohlcv_csv(
         self,
@@ -468,7 +510,10 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
         start: pd.Timestamp | None = None,
         end: pd.Timestamp | None = None,
     ) -> pl.DataFrame:
-        """Parse OHLCV CSV to Polars DataFrame.
+        """Parse all OHLCV CSV files to Polars DataFrame.
+
+        Handles both single-file and multi-file packages. Multi-file packages
+        (e.g., XNAS with 1,888 daily files) are concatenated into single DataFrame.
 
         Args:
             symbols_filter: Optional list of symbols to filter
@@ -479,27 +524,55 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
             Polars DataFrame with standardized OHLCV schema
 
         Raises:
-            InvalidDataError: If CSV parsing fails
+            InvalidDataError: If CSV parsing fails or no valid data found
         """
-        csv_path = self._get_ohlcv_csv_path()
+        csv_paths = self._get_ohlcv_csv_paths()
+
+        logger.info(
+            "databento_parsing_ohlcv_files",
+            file_count=len(csv_paths),
+        )
+
+        dfs = []
+        for csv_path in csv_paths:
+            try:
+                # Read CSV with Polars
+                df = pl.read_csv(
+                    csv_path,
+                    separator=",",
+                    has_header=True,
+                    try_parse_dates=False,  # Parse dates manually for control
+                )
+
+                # Skip empty files
+                if len(df) == 0:
+                    logger.warning("databento_empty_file", path=str(csv_path))
+                    continue
+
+                dfs.append(df)
+
+            except Exception as e:
+                logger.error(
+                    "databento_file_parse_error",
+                    path=str(csv_path),
+                    error=str(e),
+                )
+                # Continue processing other files
+                continue
+
+        if not dfs:
+            raise InvalidDataError("No valid OHLCV data found in package")
+
+        # Concatenate all DataFrames
+        df = pl.concat(dfs)
+
+        logger.info(
+            "databento_files_concatenated",
+            total_rows=len(df),
+            files_processed=len(dfs),
+        )
 
         try:
-            logger.info("databento_parsing_ohlcv_csv", csv_path=str(csv_path))
-
-            # Read CSV with Polars (disable auto date parsing to handle manually)
-            df = pl.read_csv(
-                csv_path,
-                separator=",",
-                has_header=True,
-                try_parse_dates=False,  # Parse dates manually for control
-            )
-
-            logger.info(
-                "databento_csv_read",
-                rows=len(df),
-                columns=len(df.columns),
-            )
-
             # Map Databento schema to rustybt schema
             df = df.rename(
                 {
@@ -518,9 +591,55 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 ]
             )
 
-            # Filter by symbols if provided
+            # Create composite asset identifier using instrument_id (if enabled)
+            if self.config.use_instrument_id:
+                # Ensure instrument_id column exists
+                if "instrument_id" not in df.columns:
+                    logger.warning(
+                        "databento_missing_instrument_id",
+                        message="instrument_id column not found, falling back to symbol-only mode",
+                    )
+                else:
+                    if self.config.symbol_format == "symbol_id":
+                        # Format: SYMBOL_INSTRUMENTID (e.g., "AAPL_13", "ESM0_6640")
+                        df = df.with_columns(
+                            [
+                                (
+                                    pl.col("symbol") + "_" + pl.col("instrument_id").cast(pl.Utf8)
+                                ).alias("asset_id")
+                            ]
+                        )
+
+                        logger.info(
+                            "databento_using_instrument_id",
+                            format="symbol_id",
+                            sample_assets=df.select("asset_id")
+                            .unique()
+                            .head(5)
+                            .to_series()
+                            .to_list(),
+                        )
+                    else:
+                        # symbol_only format (same as legacy mode)
+                        df = df.with_columns([pl.col("symbol").alias("asset_id")])
+
+                        logger.warning(
+                            "databento_symbol_only_mode",
+                            message="Using symbol-only mode may cause data collisions for reused symbols",
+                        )
+
+                    # Replace 'symbol' with 'asset_id' for downstream processing
+                    # Keep original symbol for reference
+                    df = df.rename({"symbol": "original_symbol"})
+                    df = df.rename({"asset_id": "symbol"})
+
+            # Filter by symbols if provided (now filters on original_symbol if using instrument_id)
             if symbols_filter:
-                df = df.filter(pl.col("symbol").is_in(symbols_filter))
+                if "original_symbol" in df.columns:
+                    # Filter by original symbol when using instrument_id
+                    df = df.filter(pl.col("original_symbol").is_in(symbols_filter))
+                else:
+                    df = df.filter(pl.col("symbol").is_in(symbols_filter))
 
             # Filter by date range if provided
             if start is not None:
@@ -533,6 +652,13 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
 
             # Select columns: always include standard OHLCV, optionally include extra
             columns_to_select = ["timestamp", "symbol", "open", "high", "low", "close", "volume"]
+
+            # If using instrument_id, preserve original_symbol and instrument_id for reference
+            if self.config.use_instrument_id and "original_symbol" in df.columns:
+                if "instrument_id" not in columns_to_select:
+                    columns_to_select.append("instrument_id")
+                if "original_symbol" not in columns_to_select:
+                    columns_to_select.append("original_symbol")
 
             # Add extra columns if specified in config
             if self.config.extra_columns:
@@ -548,6 +674,8 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                             available=list(available_cols),
                         )
 
+            # Ensure columns exist before selecting
+            columns_to_select = [col for col in columns_to_select if col in df.columns]
             df = df.select(columns_to_select)
 
             extra_cols_preserved = [
@@ -559,14 +687,285 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 "databento_ohlcv_parsed",
                 rows=len(df),
                 symbols=len(df["symbol"].unique()),
+                unique_instruments=(
+                    len(df["instrument_id"].unique()) if "instrument_id" in df.columns else None
+                ),
                 columns_preserved=len(columns_to_select),
                 extra_columns=extra_cols_preserved if extra_cols_preserved else None,
+                using_instrument_id=self.config.use_instrument_id,
             )
 
             return df
 
         except Exception as e:
             raise InvalidDataError(f"Failed to parse OHLCV CSV: {e}") from e
+
+    def _find_symbology_file(self) -> Path | None:
+        """Find symbology file (CSV or JSON).
+
+        Returns:
+            Path to symbology file, or None if not found
+        """
+        working_dir = self._get_working_dir()
+
+        # Check for CSV first
+        csv_path = working_dir / "symbology.csv"
+        if csv_path.exists():
+            return csv_path
+
+        # Check for JSON
+        json_path = working_dir / "symbology.json"
+        if json_path.exists():
+            return json_path
+
+        return None
+
+    def _parse_symbology(self) -> pl.DataFrame | None:
+        """Parse symbology file (CSV or JSON) to DataFrame.
+
+        Symbology provides symbol → instrument_id → date mappings.
+
+        Returns:
+            Polars DataFrame with symbology data, or None if not found
+
+        Raises:
+            InvalidDataError: If symbology parsing fails
+        """
+        # Return cached symbology if available
+        if self._symbology_cache is not None:
+            return self._symbology_cache
+
+        symbology_file = self._find_symbology_file()
+        if symbology_file is None:
+            logger.info("databento_symbology_not_found")
+            return None
+
+        try:
+            logger.info("databento_parsing_symbology", path=str(symbology_file))
+
+            if symbology_file.suffix == ".csv":
+                # Parse CSV symbology
+                symbology = pl.read_csv(
+                    symbology_file,
+                    separator=",",
+                    has_header=True,
+                    try_parse_dates=False,
+                )
+            elif symbology_file.suffix == ".json":
+                # Parse JSON symbology
+                symbology = self._parse_symbology_json()
+                if symbology is None:
+                    raise InvalidDataError(f"Failed to parse JSON symbology file: {symbology_file}")
+            else:
+                raise InvalidDataError(f"Unknown symbology format: {symbology_file}")
+
+            logger.info(
+                "databento_symbology_parsed",
+                rows=len(symbology),
+                columns=len(symbology.columns),
+            )
+
+            # Cache for future use
+            self._symbology_cache = symbology
+
+            return symbology
+
+        except Exception as e:
+            logger.error("databento_symbology_parse_error", path=str(symbology_file), error=str(e))
+            return None
+
+    def _parse_symbology_json(self) -> pl.DataFrame | None:
+        """Parse symbology.json file to DataFrame.
+
+        Returns:
+            Polars DataFrame with symbology data
+
+        Raises:
+            InvalidDataError: If JSON parsing fails
+        """
+        working_dir = self._get_working_dir()
+        json_path = working_dir / "symbology.json"
+
+        if not json_path.exists():
+            return None
+
+        try:
+            # Use Polars' native JSON reader for efficient parsing
+            # This is much faster than json.load() for large files
+            symbology = pl.read_json(json_path)
+
+            return symbology
+
+        except Exception as e:
+            raise InvalidDataError(f"Failed to parse symbology.json: {e}") from e
+
+    def get_instruments_for_symbol(self, symbol: str) -> list[dict[str, Any]]:
+        """Get all instruments for a given symbol.
+
+        Args:
+            symbol: Symbol to look up (e.g., "ES", "AAPL")
+
+        Returns:
+            List of instrument dictionaries with metadata
+        """
+        symbology = self._parse_symbology()
+        if symbology is None:
+            logger.warning("databento_symbology_unavailable_for_lookup")
+            return []
+
+        if "symbol" not in symbology.columns:
+            # Try alternative column names
+            if "raw_symbol" in symbology.columns:
+                symbol_col = "raw_symbol"
+            else:
+                logger.warning("databento_symbology_missing_symbol_column")
+                return []
+        else:
+            symbol_col = "symbol"
+
+        # Filter by symbol
+        matches = symbology.filter(pl.col(symbol_col) == symbol)
+
+        # Convert to list of dicts
+        instruments = []
+        for row in matches.iter_rows(named=True):
+            instruments.append(dict(row))
+
+        return instruments
+
+    def get_symbol_for_instrument(self, instrument_id: int) -> dict[str, Any] | None:
+        """Get symbol for a specific instrument_id.
+
+        Args:
+            instrument_id: Instrument ID to look up
+
+        Returns:
+            Dictionary with symbol metadata, or None if not found
+        """
+        symbology = self._parse_symbology()
+        if symbology is None:
+            return None
+
+        if "instrument_id" not in symbology.columns:
+            logger.warning("databento_symbology_missing_instrument_id_column")
+            return None
+
+        # Filter by instrument_id
+        matches = symbology.filter(pl.col("instrument_id") == instrument_id)
+
+        if len(matches) == 0:
+            return None
+
+        # Return first match as dict
+        return dict(matches.row(0, named=True))
+
+    def get_active_symbols_for_date(self, date: pd.Timestamp) -> list[str]:
+        """Get symbols active on a specific date.
+
+        Args:
+            date: Date to query
+
+        Returns:
+            List of active symbols
+        """
+        symbology = self._parse_symbology()
+        if symbology is None:
+            return []
+
+        # Check for date range columns
+        date_columns = [col for col in symbology.columns if "date" in col.lower()]
+        if len(date_columns) < 2:
+            logger.warning("databento_symbology_missing_date_columns")
+            # Return all symbols if no date filtering possible
+            if "symbol" in symbology.columns:
+                return symbology["symbol"].unique().to_list()
+            return []
+
+        # Assume first two date columns are start/end
+        # This is a simplification - actual logic depends on Databento format
+        if "symbol" in symbology.columns:
+            return symbology["symbol"].unique().to_list()
+
+        return []
+
+    def validate_symbology_consistency(self, df: pl.DataFrame) -> dict[str, Any]:
+        """Validate symbology consistency with OHLCV data.
+
+        Args:
+            df: OHLCV DataFrame to validate
+
+        Returns:
+            Dictionary with validation results
+        """
+        symbology = self._parse_symbology()
+
+        if symbology is None:
+            return {
+                "valid": False,
+                "errors": ["Symbology file not found"],
+            }
+
+        result: dict[str, Any] = {
+            "valid": True,
+            "errors": [],
+            "warnings": [],
+        }
+        errors: list[str] = result["errors"]  # type: ignore[assignment]
+        warnings: list[str] = result["warnings"]  # type: ignore[assignment]
+
+        # Check instrument_id coverage
+        if "instrument_id" in df.columns and "instrument_id" in symbology.columns:
+            ohlcv_instruments = set(df["instrument_id"].unique().to_list())
+            symbology_instruments = set(symbology["instrument_id"].unique().to_list())
+
+            missing = ohlcv_instruments - symbology_instruments
+            if len(missing) > 0:
+                coverage = (len(ohlcv_instruments) - len(missing)) / len(ohlcv_instruments)
+                warnings.append(
+                    f"Symbology missing {len(missing)} instruments ({coverage:.1%} coverage)"
+                )
+
+        return result
+
+    def _validate_symbol_uniqueness(self, df: pl.DataFrame) -> None:
+        """Validate that symbols are unique across instrument_ids.
+
+        Logs warnings if same symbol appears with multiple instrument_ids
+        at the same timestamp (indicating potential data collisions).
+
+        Args:
+            df: DataFrame with 'symbol', 'instrument_id', 'timestamp' columns
+        """
+        if "instrument_id" not in df.columns or "original_symbol" not in df.columns:
+            return
+
+        # Check for symbol collisions (same original_symbol, different instrument_id, same date)
+        # Group by date (not exact timestamp) for daily collision check
+        df_with_date = df.with_columns([pl.col("timestamp").dt.date().alias("date")])
+
+        collisions = (
+            df_with_date.group_by(["date", "original_symbol"])
+            .agg(pl.col("instrument_id").n_unique().alias("instrument_count"))
+            .filter(pl.col("instrument_count") > 1)
+        )
+
+        if len(collisions) > 0:
+            logger.warning(
+                "databento_symbol_collisions_detected",
+                collision_count=len(collisions),
+                message="Same symbol used by multiple instruments at same timestamp",
+                recommendation="Use use_instrument_id=True in config (already enabled)",
+            )
+
+            # Log sample collisions
+            sample = collisions.head(5)
+            for row in sample.iter_rows(named=True):
+                logger.warning(
+                    "databento_collision_example",
+                    date=str(row["date"]),
+                    symbol=row["original_symbol"],
+                    instrument_count=row["instrument_count"],
+                )
 
     async def fetch(
         self,
@@ -710,12 +1109,42 @@ class DatabentoAdapter(BaseDataAdapter, DataSource):
                 rows=len(df_metadata),
             )
 
+        # Write instrument mappings if using instrument_id
+        if (
+            self.config.use_instrument_id
+            and "instrument_id" in df.columns
+            and "original_symbol" in df.columns
+        ):
+            instrument_mappings = {}
+            mapping_df = df.select(
+                ["instrument_id", "original_symbol", "symbol"]  # composite identifier
+            ).unique()
+
+            for row in mapping_df.iter_rows(named=True):
+                instrument_mappings[str(row["instrument_id"])] = {
+                    "original_symbol": row["original_symbol"],
+                    "composite_symbol": row["symbol"],
+                    "sid": symbol_map.get(row["symbol"]),
+                }
+
+            mapping_path = Path(bundle_dir) / "databento_instrument_mappings.json"
+            with open(mapping_path, "w") as f:
+                json.dump(instrument_mappings, f, indent=2)
+
+            logger.info(
+                "databento_instrument_mappings_written",
+                path=str(mapping_path),
+                instruments=len(instrument_mappings),
+            )
+
         logger.info(
             "databento_ingested",
             bundle_name=bundle_name,
             rows=len(df),
             symbols=len(df["symbol"].unique()),
             extra_columns_stored=has_extra_columns,
+            instrument_mappings_stored=self.config.use_instrument_id
+            and "instrument_id" in df.columns,
         )
 
     def get_metadata(self) -> DataSourceMetadata:

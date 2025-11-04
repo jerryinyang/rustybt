@@ -281,3 +281,58 @@ export PYTHONPATH=temp && rustybt run -f temp/strategies/mbmr/mbmr_v0_data_colle
 - User's strategy file has typo: "collecion" → "collection" (not part of this fix)
 
 ---
+
+## QA Review
+
+**Reviewer**: Quinn (QA Agent)
+**Review Date**: 2025-11-04
+**Status**: ✅ APPROVED
+
+**Pre-Flight Verification**:
+- [x] Pre-flight checklist completed
+- [x] All items checked and justified
+
+**Fix Quality Review**:
+- [x] Issue correctly identified - Silent failure when class-based strategies run via CLI
+- [x] Root cause analysis accurate - Framework only looked for top-level functions, not classes
+- [x] Fix addresses root cause - Added `_detect_strategy_class()` helper and class method binding
+- [x] All occurrences updated - All CLI execution paths now support class-based strategies
+- [x] No unintended side effects - Functional format regression tests pass
+
+**Code/Documentation Quality**:
+- [x] Follows project standards - Coding standards and CR-002/CR-004 compliance verified
+- [x] Type hints complete - Python 3.12+ syntax with `|` operator used throughout
+- [x] No mock violations - All tests use real TradingAlgorithm instantiation (CR-002 compliant)
+- [x] Examples executable - Documentation examples follow correct class-based patterns
+- [x] API signatures verified - All method signatures match implementation in rustybt/algorithm.py:491-590
+
+**Testing Verification**:
+- [x] All tests pass - pytest tests/test_algorithm_method_binding.py -v (13/13 passed)
+- [x] Linting clean - ruff check rustybt/algorithm.py (All checks passed!)
+- [x] Type checking passes - Python 3.12+ type hints verified
+- [x] Manual testing successful - User's MomentumStrategy executes correctly, 51 debug logs generated
+- [x] Coverage adequate: ~80% (6 new unit tests + manual integration test with user's strategy)
+
+**Completeness**:
+- [x] Fix document complete - All required sections present and filled
+- [x] Commit message descriptive - Follows conventional commit format with clear references
+- [x] Metadata filled in - Commit hash (42b8fe7), branch, statistics all complete
+
+**Summary**:
+Fix is complete, well-documented, and thoroughly tested. The implementation elegantly solves the user-reported silent failure issue by detecting TradingAlgorithm subclasses in the execution namespace and binding their methods to the algorithm instance. Key highlights:
+
+1. **Backward Compatibility**: Functional format regression testing confirms no breaking changes
+2. **Code Quality**: Full type hints, zero-mock compliance, clean architecture with helper function separation
+3. **Testing**: 6 new unit tests + comprehensive manual integration testing with user's actual strategy
+4. **Documentation**: 403-line API styles guide, updated quickstart, and working example added
+5. **Impact**: Resolves framework inconsistency - both CLI and `run_algorithm()` now have clear, documented API patterns
+
+**Notable Implementation Details**:
+- Uses `types.MethodType` for proper method binding
+- Lambda wrappers handle calling convention differences between class and functional APIs
+- Only binds methods defined in strategy class (not inherited) via `__dict__` check
+- Clear warning logged when neither format detected
+
+**Approval**: ✅ Ready to merge to main
+
+---

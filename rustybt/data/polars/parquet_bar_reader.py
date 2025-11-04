@@ -220,10 +220,11 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
                 message=f"Could not verify actual data range: {e}",
             )
 
-    @property
-    def data_frequency(self):
-        """Return 'daily' frequency identifier."""
-        return "daily"
+    # NOTE: data_frequency property is inherited from SessionBarReader parent class
+    # which correctly returns "session". This is required for DataPortal._ensure_reader_aligned()
+    # to properly register this reader in the dispatch system.
+    # DO NOT override to return "daily" as that breaks reader registration.
+    # See: docs/internal/sprint-debug/fixes/completed/2025-11-04-174047-dispatch-reader-empty-readers.md
 
     @property
     def trading_calendar(self):

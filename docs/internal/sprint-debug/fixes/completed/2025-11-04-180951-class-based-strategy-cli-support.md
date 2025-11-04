@@ -263,7 +263,7 @@ export PYTHONPATH=temp && rustybt run -f temp/strategies/mbmr/mbmr_v0_data_colle
 
 ## Commit Hash
 
-`[pending]`
+`42b8fe7`
 
 ---
 

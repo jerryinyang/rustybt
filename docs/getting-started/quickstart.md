@@ -261,6 +261,98 @@ def initialize(context):
 
 For complete API documentation, see [Asset Finder API](../api/data-management/asset-finder.md).
 
+## Class-Based API (Alternative Style)
+
+RustyBT also supports a **class-based API** for organizing complex strategies. This style is particularly useful when:
+- You have multiple helper methods
+- You're organizing code into reusable strategy classes
+- You prefer object-oriented programming patterns
+
+### Class-Based Example
+
+Create a file called `my_class_strategy.py`:
+
+```python
+from rustybt import TradingAlgorithm
+from rustybt.api import order_target, record, symbol
+
+class MovingAverageStrategy(TradingAlgorithm):
+    """
+    Class-based moving average crossover strategy.
+
+    IMPORTANT: Method signatures differ from functional API:
+    - initialize(self) instead of initialize(context)
+    - handle_data(self, context, data) instead of handle_data(context, data)
+    """
+
+    def initialize(self):
+        """Initialize strategy - NO context parameter, just self."""
+        self.asset = symbol('AAPL')
+        self.i = 0
+
+    def handle_data(self, context, data):
+        """Handle each bar - note the self parameter first."""
+        self.i += 1
+        if self.i < 300:
+            return
+
+        # Use helper method (class-based advantage!)
+        short_mavg, long_mavg = self.calculate_moving_averages(data)
+
+        # Trading logic
+        if short_mavg > long_mavg:
+            order_target(self.asset, 100)
+        elif short_mavg < long_mavg:
+            order_target(self.asset, 0)
+
+        # Record for analysis
+        record(AAPL=data.current(self.asset, 'price'),
+               short_mavg=short_mavg,
+               long_mavg=long_mavg)
+
+    def calculate_moving_averages(self, data):
+        """Helper method - natural with class-based API."""
+        short_mavg = data.history(
+            self.asset, 'price', bar_count=100, frequency="1d"
+        ).mean()
+
+        long_mavg = data.history(
+            self.asset, 'price', bar_count=300, frequency="1d"
+        ).mean()
+
+        return short_mavg, long_mavg
+```
+
+### Running Class-Based Strategies
+
+Class-based strategies run via CLI:
+
+```bash
+rustybt run -f my_class_strategy.py -b quandl --start 2020-01-01 --end 2023-12-31
+```
+
+**The framework automatically detects your `TradingAlgorithm` subclass!**
+
+!!! note "API Style Compatibility"
+    - **CLI (`rustybt run -f`)**: Supports BOTH functional and class-based
+    - **`run_algorithm()`**: Supports ONLY functional API
+    - **Notebooks**: Prefer functional API with `run_algorithm()`
+
+    See [API Styles Guide](../guides/api-styles.md) for complete comparison.
+
+### Key Differences from Functional API
+
+| Aspect | Functional API | Class-Based API |
+|--------|---------------|-----------------|
+| **Structure** | Top-level functions | `TradingAlgorithm` subclass |
+| **initialize** | `def initialize(context)` | `def initialize(self)` |
+| **handle_data** | `def handle_data(context, data)` | `def handle_data(self, context, data)` |
+| **State storage** | `context.my_var = value` | `self.my_var = value` |
+| **Helper methods** | Module-level functions | Class methods |
+| **Best for** | Notebooks, quick prototypes | Complex strategies, CLI execution |
+
+For complete details, see the [API Styles Guide](../guides/api-styles.md).
+
 ## Troubleshooting
 
 ### Common Issues

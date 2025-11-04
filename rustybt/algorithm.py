@@ -144,6 +144,50 @@ class NoBenchmark(ValueError):
         )
 
 
+def _detect_strategy_class(namespace: dict) -> type["TradingAlgorithm"] | None:
+    """Detect if namespace contains a TradingAlgorithm subclass.
+
+    When users write class-based strategies, the script execution creates a CLASS
+    in the namespace, not top-level functions. This helper detects such classes.
+
+    Parameters
+    ----------
+    namespace : dict
+        The namespace dictionary after executing user's strategy script.
+
+    Returns
+    -------
+    type[TradingAlgorithm] or None
+        The detected TradingAlgorithm subclass, or None if not found.
+
+    Notes
+    -----
+    If multiple TradingAlgorithm subclasses exist, returns the first one found.
+    The order is deterministic (dict iteration order is preserved in Python 3.7+).
+
+    Zero-Mock Compliance (CR-002):
+    - Uses real class introspection (inspect.isclass, issubclass)
+    - No mocking or simulation
+    - Returns actual class objects for instantiation
+    """
+    import inspect
+
+    for name, obj in namespace.items():
+        # Skip private/dunder names
+        if name.startswith("_"):
+            continue
+
+        # Check if it's a class and a TradingAlgorithm subclass (but not TradingAlgorithm itself)
+        if (
+            inspect.isclass(obj)
+            and issubclass(obj, TradingAlgorithm)
+            and obj is not TradingAlgorithm
+        ):
+            return obj
+
+    return None
+
+
 class TradingAlgorithm:
     """A class that represents a trading strategy and parameters to execute
     the strategy.
@@ -444,13 +488,99 @@ class TradingAlgorithm:
             # - Implement resource limits (CPU, memory, time)
             exec(code, self.namespace)  # nosec B102 - trusted user algorithm code
 
-            self._initialize = self.namespace.get("initialize", noop)
-            self._handle_data = self.namespace.get("handle_data", noop)
-            self._before_trading_start = self.namespace.get(
-                "before_trading_start",
-            )
-            # Optional analyze function, gets called after run
-            self._analyze = self.namespace.get("analyze")
+            # Check if script defined a TradingAlgorithm subclass (class-based strategy)
+            strategy_class = _detect_strategy_class(self.namespace)
+
+            if strategy_class is not None:
+                # Class-based strategy detected: bind class methods to this instance
+                # The class methods will receive this TradingAlgorithm instance as `self`
+                log.info(
+                    f"Detected class-based strategy: {strategy_class.__name__}. "
+                    "Binding methods to algorithm instance."
+                )
+
+                # Copy user-defined methods from strategy class to this instance
+                # This allows user's strategy methods (like make_pipeline) to be accessible
+                import types
+
+                # Lifecycle methods that will be handled explicitly (don't copy these)
+                lifecycle_methods = {"initialize", "handle_data", "before_trading_start", "analyze"}
+
+                for attr_name in dir(strategy_class):
+                    # Skip private/dunder methods, lifecycle methods, and non-methods
+                    if attr_name.startswith("_") or attr_name in lifecycle_methods:
+                        continue
+
+                    attr = getattr(strategy_class, attr_name)
+
+                    # Only copy methods defined in the strategy class itself (not inherited from TradingAlgorithm)
+                    if callable(attr):
+                        # Check if this method is defined in the strategy class (not inherited)
+                        if attr_name in strategy_class.__dict__:
+                            # Bind the unbound method to this instance
+                            setattr(self, attr_name, types.MethodType(attr, self))
+
+                # Bind lifecycle methods explicitly (these have special calling conventions)
+                # Only bind if defined in the strategy class itself, not inherited
+
+                # Bind initialize method
+                # Called as: self._initialize(self, *args, **kwargs)
+                if "initialize" in strategy_class.__dict__:
+                    init_method = getattr(strategy_class, "initialize")
+                    self._initialize = lambda algo_self, *args, **kwargs: init_method(
+                        algo_self, *args, **kwargs
+                    )
+                else:
+                    self._initialize = noop
+
+                # Bind handle_data method
+                # Called as: self._handle_data(context, data)
+                if "handle_data" in strategy_class.__dict__:
+                    handle_method = getattr(strategy_class, "handle_data")
+                    # Note: handle_data receives (self, context, data) from user's class,
+                    # but is called as _handle_data(context, data) from algorithm
+                    # We need to inject self as first arg
+                    self._handle_data = lambda context, data: handle_method(self, context, data)
+                else:
+                    self._handle_data = noop
+
+                # Bind before_trading_start method
+                # Called as: self._before_trading_start(context, data)
+                if "before_trading_start" in strategy_class.__dict__:
+                    before_method = getattr(strategy_class, "before_trading_start")
+                    self._before_trading_start = lambda context, data: before_method(
+                        self, context, data
+                    )
+                else:
+                    self._before_trading_start = None
+
+                # Bind analyze method
+                # Called as: self._analyze(context, perf)
+                if "analyze" in strategy_class.__dict__:
+                    analyze_method = getattr(strategy_class, "analyze")
+                    self._analyze = lambda context, perf: analyze_method(self, context, perf)
+                else:
+                    self._analyze = None
+
+            else:
+                # Functional format: look for top-level functions in namespace
+                self._initialize = self.namespace.get("initialize", noop)
+                self._handle_data = self.namespace.get("handle_data", noop)
+                self._before_trading_start = self.namespace.get(
+                    "before_trading_start",
+                )
+                # Optional analyze function, gets called after run
+                self._analyze = self.namespace.get("analyze")
+
+                # Warn if neither format was detected
+                if self._initialize is noop and self._handle_data is noop:
+                    log.warning(
+                        "No strategy format detected in script. "
+                        "Expected either:\n"
+                        "  1. Class-based: class MyStrategy(TradingAlgorithm): ...\n"
+                        "  2. Functional: def initialize(context): ... and def handle_data(context, data): ...\n"
+                        "Strategy may not execute correctly."
+                    )
 
         else:
             self._initialize = initialize or (lambda self: None)

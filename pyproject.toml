@@ -93,7 +93,8 @@ dependencies = [
     "lxml>=6.0.2",
     "html5lib>=1.1",
     "python-dotenv>=1.2.1",
-    "zstandard>=0.23.0",  # Databento data decompression
+    "zstandard>=0.23.0", # Databento data decompression
+    "numba>=0.62.1",
 ]
 
 [project.urls]

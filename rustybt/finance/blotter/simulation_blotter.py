@@ -490,6 +490,12 @@ class SimulationBlotter(Blotter):
         ----------
         entry_order_id : str
             ID of the entry order that filled
+
+        Notes
+        -----
+        Only creates orders for non-zero prices. If both prices are provided,
+        orders are linked as an OCO pair. If only one price is provided,
+        creates a single protective order.
         """
         if not hasattr(self, "_bracket_orders") or entry_order_id not in self._bracket_orders:
             return
@@ -497,41 +503,68 @@ class SimulationBlotter(Blotter):
         bracket_info = self._bracket_orders[entry_order_id]
         entry_order = self.orders[entry_order_id]
 
-        # Create stop-loss order
-        stop_loss_order = Order(
-            dt=self.current_dt,
-            asset=entry_order.asset,
-            amount=bracket_info["amount"],
-            stop=bracket_info["stop_loss_price"],
-            parent_order_id=entry_order_id,
-        )
+        created_orders = []
+        stop_loss_order = None
+        take_profit_order = None
 
-        # Create take-profit order
-        take_profit_order = Order(
-            dt=self.current_dt,
-            asset=entry_order.asset,
-            amount=bracket_info["amount"],
-            limit=bracket_info["take_profit_price"],
-            parent_order_id=entry_order_id,
-        )
+        # Create stop-loss order only if price is valid (> 0)
+        stop_loss_price = bracket_info["stop_loss_price"]
+        if stop_loss_price > 0:
+            stop_loss_order = Order(
+                dt=self.current_dt,
+                asset=entry_order.asset,
+                amount=bracket_info["amount"],
+                stop=stop_loss_price,
+                parent_order_id=entry_order_id,
+            )
+            created_orders.append(stop_loss_order)
 
-        # Link as OCO pair
-        stop_loss_order.linked_order_ids = [take_profit_order.id]
-        take_profit_order.linked_order_ids = [stop_loss_order.id]
+        # Create take-profit order only if price is valid (> 0)
+        take_profit_price = bracket_info["take_profit_price"]
+        if take_profit_price > 0:
+            take_profit_order = Order(
+                dt=self.current_dt,
+                asset=entry_order.asset,
+                amount=bracket_info["amount"],
+                limit=take_profit_price,
+                parent_order_id=entry_order_id,
+            )
+            created_orders.append(take_profit_order)
 
-        # Add child orders
-        self.open_orders[stop_loss_order.asset].append(stop_loss_order)
-        self.open_orders[take_profit_order.asset].append(take_profit_order)
-        self.orders[stop_loss_order.id] = stop_loss_order
-        self.orders[take_profit_order.id] = take_profit_order
-        self.new_orders.append(stop_loss_order)
-        self.new_orders.append(take_profit_order)
+        # If both orders created, link as OCO pair
+        if stop_loss_order and take_profit_order:
+            stop_loss_order.linked_order_ids = [take_profit_order.id]
+            take_profit_order.linked_order_ids = [stop_loss_order.id]
 
-        log.info(
-            f"Bracket order {entry_order_id} filled. "
-            f"Created stop-loss {stop_loss_order.id} and "
-            f"take-profit {take_profit_order.id}"
-        )
+        # Add all created orders to blotter
+        for order in created_orders:
+            self.open_orders[order.asset].append(order)
+            self.orders[order.id] = order
+            self.new_orders.append(order)
+
+        # Log what was created
+        if stop_loss_order and take_profit_order:
+            log.info(
+                f"Bracket order {entry_order_id} filled. "
+                f"Created stop-loss {stop_loss_order.id} and "
+                f"take-profit {take_profit_order.id} (OCO pair)"
+            )
+        elif stop_loss_order:
+            log.info(
+                f"Bracket order {entry_order_id} filled. "
+                f"Created stop-loss {stop_loss_order.id} only"
+            )
+        elif take_profit_order:
+            log.info(
+                f"Bracket order {entry_order_id} filled. "
+                f"Created take-profit {take_profit_order.id} only"
+            )
+        else:
+            log.warning(
+                f"Bracket order {entry_order_id} filled but no valid prices "
+                f"(stop_loss={stop_loss_price}, take_profit={take_profit_price}). "
+                "No protective orders created."
+            )
 
         # Remove from pending brackets
         del self._bracket_orders[entry_order_id]

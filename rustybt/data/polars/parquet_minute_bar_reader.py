@@ -360,6 +360,26 @@ class ParquetMinuteBarReader(BarReader):
         # Search backwards from dt for non-zero volume
         search_dt = pd.Timestamp(dt)
 
+        # OPTIMIZATION: Check asset's data range first to avoid unnecessary iteration
+        first_dt = self._reader.get_first_available_dt(sid)
+        last_dt = self._reader.get_last_available_dt(sid)
+
+        # If asset has no data at all, return early
+        if first_dt is None or last_dt is None:
+            return pd.NaT
+
+        # Convert to timestamps for comparison
+        first_ts = pd.Timestamp(first_dt)
+        last_ts = pd.Timestamp(last_dt)
+
+        # If dt is before asset started trading, no data available
+        if search_dt < first_ts:
+            return pd.NaT
+
+        # If dt is after asset's last datetime, cap search at last available
+        if search_dt > last_ts:
+            search_dt = last_ts
+
         # Get trading minutes for session
         session = search_dt.normalize()
         market_open = self._trading_calendar.session_open(session)

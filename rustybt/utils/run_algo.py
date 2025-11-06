@@ -96,8 +96,8 @@ def _run(
         bundle_timestamp,
     )
 
+    # If no calendar specified, try to load from bundle metadata
     if trading_calendar is None:
-        # Try to get calendar from bundle metadata
         try:
             from rustybt.data.bundles.metadata import BundleMetadata
 
@@ -115,6 +115,10 @@ def _run(
                 f"Could not retrieve calendar for bundle '{bundle}': {e}. Defaulting to XNYS"
             )
             trading_calendar = get_calendar("XNYS")
+    else:
+        # Calendar was explicitly specified via CLI
+        trading_calendar = get_calendar(trading_calendar)
+        log.info(f"Using explicitly specified calendar: {trading_calendar.name}")
 
     # Validate backtest dates against bundle's actual data range and calendar
     try:

@@ -277,8 +277,8 @@ def _load_migration_module():
 @click.option(
     "--trading-calendar",
     metavar="TRADING-CALENDAR",
-    default="XNYS",
-    help="The calendar you want to use e.g. XLON. XNYS is the default.",
+    default=None,
+    help="The calendar you want to use e.g. XLON, 24/7. If not specified, uses the bundle's calendar.",
 )
 @click.option(
     "--print-algo/--no-print-algo",
@@ -347,7 +347,8 @@ def run(
             "must specify exactly one of '-f' / '--algofile' or '-t' / '--algotext'",
         )
 
-    trading_calendar = get_calendar(trading_calendar)
+    # Calendar will be resolved in run_algo.py (either from CLI param, bundle metadata, or XNYS fallback)
+    # Don't call get_calendar() here to allow None to be passed through
 
     benchmark_spec = BenchmarkSpec.from_cli_params(
         no_benchmark=no_benchmark,

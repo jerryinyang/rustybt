@@ -167,6 +167,9 @@ benchmarks = [
     'memory_profiler>=0.61.0',
     'snakeviz>=2.2.0',
     'matplotlib>=3.5.0',
+    # Cross-validation and comparison frameworks
+    'backtrader>=1.9.78.123',  # For cross-framework validation
+    'tulipy>=0.4.0',  # Technical analysis indicators (Tulip wrapper)
 ]
 
 optimization = [

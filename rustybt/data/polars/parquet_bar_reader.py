@@ -556,11 +556,35 @@ class ParquetDailyBarReader(CurrencyAwareSessionBarReader):
         # Normalize timestamp
         dt = pd.Timestamp(dt).normalize()
 
-        # Search backwards from dt for non-zero volume
-        search_date = dt
+        # OPTIMIZATION: Check asset's data range first to avoid unnecessary iteration
+        first_date = self._reader.get_first_available_date(sid)
+        last_date = self._reader.get_last_available_date(sid)
+
+        # If asset has no data at all, return early
+        if first_date is None or last_date is None:
+            return pd.NaT
+
+        # Convert to timestamps for comparison
+        first_ts = pd.Timestamp(first_date).normalize()
+        last_ts = pd.Timestamp(last_date).normalize()
+
+        # If dt is before asset started trading, no data available
+        if dt < first_ts:
+            return pd.NaT
+
+        # If dt is after asset's last date, return last available date
+        # (assuming last date has valid data)
+        if dt >= last_ts:
+            search_start = last_ts
+        else:
+            search_start = dt
+
+        # Now search backwards from search_start for non-zero volume
+        # Limited to the range where the asset actually has data
+        search_date = search_start
         sessions_list = list(self.sessions)
 
-        while search_date >= self.first_trading_day:
+        while search_date >= first_ts:
             try:
                 volume = self.get_value(sid, search_date, "volume")
                 if volume > 0:

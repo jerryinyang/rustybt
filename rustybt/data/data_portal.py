@@ -711,6 +711,10 @@ class DataPortal:
         elif column == "price":
             found_dt = dt
             while True:
+                # Check boundary: don't go before first trading day
+                if self._first_trading_day is not None and found_dt < self._first_trading_day:
+                    return np.nan
+
                 try:
                     value = reader.get_value(asset, found_dt, "close")
                     if not isnull(value):
@@ -722,7 +726,12 @@ class DataPortal:
                                 asset, column, found_dt, dt, "minute", spot_value=value
                             )
                     else:
-                        found_dt -= self.trading_calendar.day
+                        # Check before subtracting to prevent pandas timestamp overflow
+                        try:
+                            found_dt -= self.trading_calendar.day
+                        except (OverflowError, pd.errors.OutOfBoundsDatetime):
+                            # Hit timestamp boundary
+                            return np.nan
                 except NoDataOnDate:
                     return np.nan
 

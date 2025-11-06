@@ -124,6 +124,12 @@ class AlgorithmSimulator:
                 closed_orders,
             ) = blotter.get_transactions(current_data)
 
+            # Process bracket order fills - create stop-loss and take-profit orders
+            # for any closed entry orders that are part of bracket orders
+            for closed_order in closed_orders:
+                if hasattr(blotter, "process_bracket_fill"):
+                    blotter.process_bracket_fill(closed_order.id)
+
             blotter.prune_orders(closed_orders)
 
             for transaction in new_transactions:

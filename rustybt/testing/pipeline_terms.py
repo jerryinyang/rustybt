@@ -1,3 +1,61 @@
+"""Custom pipeline terms for testing lookback windows.
+
+Provides specialized factor and classifier implementations that validate
+the correctness of lookback window data during pipeline computation.
+These are essential for testing that pipeline infrastructure correctly
+maintains historical data windows.
+
+Classes:
+    CheckWindowsMixin: Base mixin for window validation logic
+    CheckWindowsFactor: Factor that validates lookback windows
+    CheckWindowsClassifier: Classifier that validates lookback windows
+
+Examples:
+    Validate factor lookback windows::
+
+        import numpy as np
+        import pandas as pd
+        from rustybt.testing.pipeline_terms import CheckWindowsFactor
+
+        # Define expected window values for asset 1
+        expected = {
+            1: {
+                pd.Timestamp('2023-01-05'): np.array([100, 101, 102, 103, 104]),
+                pd.Timestamp('2023-01-06'): np.array([101, 102, 103, 104, 105]),
+            }
+        }
+
+        # Create factor that validates windows
+        factor = CheckWindowsFactor(
+            input_=pricing.close,
+            window_length=5,
+            expected_windows=expected
+        )
+
+        # Run pipeline - will raise if windows don't match expected
+        result = engine.run_pipeline(
+            Pipeline({'check': factor}),
+            start_date=pd.Timestamp('2023-01-05'),
+            end_date=pd.Timestamp('2023-01-06')
+        )
+
+    Validate classifier windows::
+
+        from rustybt.testing.pipeline_terms import CheckWindowsClassifier
+
+        expected_classifier = {
+            1: {
+                pd.Timestamp('2023-01-05'): np.array(['A', 'A', 'B', 'B', 'B']),
+            }
+        }
+
+        classifier = CheckWindowsClassifier(
+            input_=sector_classifier,
+            window_length=5,
+            expected_windows=expected_classifier
+        )
+"""
+
 import numpy as np
 
 from rustybt.pipeline.classifiers.classifier import CustomClassifier
@@ -8,6 +66,12 @@ from .predicates import assert_equal
 
 
 class CheckWindowsMixin:
+    """Mixin providing window validation logic for factors and classifiers.
+
+    Implements the compute method that checks lookback windows against
+    expected values for specified assets and dates. Used as a base for
+    both CheckWindowsFactor and CheckWindowsClassifier.
+    """
     params = ("expected_windows",)
 
     def compute(self, today, assets, out, input_, expected_windows):

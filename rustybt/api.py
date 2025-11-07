@@ -12,10 +12,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Trading algorithm API functions and classes.
 
-# Note that part of the API is implemented in TradingAlgorithm as
-# methods (e.g. order). These are added to this namespace via the
-# decorator ``api_method`` inside of algorithm.py.
+This module provides the public API for writing trading algorithms, including
+order placement, data access, scheduling, and risk management functions.
+
+Note:
+    Part of the API is implemented in TradingAlgorithm as methods (e.g. order,
+    schedule_function). These are added to this namespace via the @api_method
+    decorator inside of algorithm.py.
+
+Core Components:
+    - Order placement: order, order_target, order_target_percent, etc.
+    - Data access: symbol, sid, history, current
+    - Scheduling: schedule_function, date_rules, time_rules
+    - Risk management: set_max_leverage, set_max_position_size, etc.
+    - Cost models: commission, slippage, execution
+    - Asset restrictions: Restriction, StaticRestrictions, etc.
+"""
 from typing import TYPE_CHECKING
 
 from .finance import cancel_policy, commission, execution, slippage

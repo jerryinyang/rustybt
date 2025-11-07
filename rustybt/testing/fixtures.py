@@ -1,3 +1,105 @@
+"""Test fixture infrastructure for RustyBT test cases.
+
+Provides a sophisticated fixture system based on mixins and lazy evaluation
+for efficiently managing test resources like asset databases, data portals,
+trading calendars, and benchmark returns.
+
+Key Features:
+    - Automatic resource setup and teardown via ExitStack
+    - Mixin-based composition for flexible fixture combinations
+    - Lazy evaluation to skip unused fixtures
+    - Asset database management (equities, futures, asset finder)
+    - Data portal setup with minute/daily bars
+    - Trading calendar management
+    - Benchmark returns loading
+
+Core Classes:
+    ZiplineTestCase: Base test case with ExitStack resource management
+    WithAssetFinder: Fixture providing asset database and finder
+    WithDataPortal: Fixture providing data portal with OHLCV data
+    WithTradingCalendars: Fixture providing trading calendars
+    WithBenchmarkReturns: Fixture providing benchmark return data
+    WithMakeAlgo: Fixture for creating TradingAlgorithm instances
+    WithSimParams: Fixture providing SimulationParameters
+    WithResponses: Fixture for mocking HTTP responses
+
+Usage Patterns:
+    1. Inherit from mixins to compose needed fixtures
+    2. Override class attributes to customize fixture behavior
+    3. Access fixtures via self.attribute in tests
+    4. Resources automatically cleaned up after tests
+
+Examples:
+    Basic test with asset finder::
+
+        from rustybt.testing import ZiplineTestCase, WithAssetFinder
+
+        class MyTest(WithAssetFinder, ZiplineTestCase):
+            # Define test equities
+            ASSET_FINDER_EQUITY_SIDS = [1, 2, 3]
+            ASSET_FINDER_EQUITY_SYMBOLS = ['AAPL', 'MSFT', 'GOOGL']
+
+            def test_retrieve_assets(self):
+                # asset_finder available automatically
+                asset = self.asset_finder.retrieve_asset(1)
+                self.assertEqual(asset.symbol, 'AAPL')
+
+    Test with data portal::
+
+        from rustybt.testing import ZiplineTestCase, WithDataPortal
+
+        class MyDataTest(WithDataPortal, ZiplineTestCase):
+            START_DATE = pd.Timestamp('2023-01-01')
+            END_DATE = pd.Timestamp('2023-12-31')
+
+            def test_get_spot_value(self):
+                asset = self.asset_finder.retrieve_asset(1)
+                price = self.data_portal.get_spot_value(
+                    asset, 'close',
+                    self.START_DATE, 'daily'
+                )
+                self.assertIsInstance(price, float)
+
+    Test algorithm with benchmarks::
+
+        from rustybt.testing import (
+            ZiplineTestCase,
+            WithMakeAlgo,
+            WithBenchmarkReturns
+        )
+
+        class MyAlgoTest(
+            WithBenchmarkReturns,
+            WithMakeAlgo,
+            ZiplineTestCase
+        ):
+            def test_algorithm(self):
+                algo = self.make_algo()
+                results = algo.run()
+                self.assertIn('returns', results.columns)
+
+    Custom fixture configuration::
+
+        class CustomTest(WithDataPortal, ZiplineTestCase):
+            # Custom trading calendar
+            TRADING_CALENDAR_STRS = ('NYSE',)
+            TRADING_CALENDAR_PRIMARY_CAL = 'NYSE'
+
+            # Custom date range
+            START_DATE = pd.Timestamp('2020-01-01')
+            END_DATE = pd.Timestamp('2020-12-31')
+
+            # Custom data frequency
+            DATA_PORTAL_FIRST_TRADING_DAY = pd.Timestamp('2020-01-02')
+
+            def test_custom_setup(self):
+                # All fixtures configured per class attributes
+                self.assertEqual(
+                    self.trading_calendar.name,
+                    'NYSE'
+                )
+"""
+
 import gc
 import os
 import sqlite3

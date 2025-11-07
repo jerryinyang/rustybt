@@ -1,5 +1,73 @@
-"""
-factor.py
+"""Factor: Numerical pipeline computations.
+
+This module defines the Factor class and related utilities for creating
+numerical computations in the Pipeline API. Factors are the most commonly
+used pipeline term type, representing any computation that produces numerical
+or date-valued output.
+
+Key Classes:
+
+**Factor**: Base class for all numerical pipeline computations. Factors can
+be combined using arithmetic operators (+, -, *, /), compared using comparison
+operators (<, >, ==, etc.), and transformed using methods like rank(), zscore(),
+and demean().
+
+**CustomFactor**: Base class for user-defined factors. Subclass this and
+implement a compute() method to create custom numerical computations.
+
+**NumExprFactor**: Automatically created when combining factors with operators.
+Uses numexpr for efficient numerical expression evaluation.
+
+Common Operations:
+
+**Arithmetic**: Factors support all standard math operations
+**Comparisons**: Create filters via <, >, ==, !=, <=, >=
+**Ranking**: Convert to ranks via rank()
+**Normalization**: Standardize via zscore(), demean(), or winsorize()
+**Quantiles**: Create classifiers via quantiles(), quartiles(), etc.
+**Extremes**: Find top/bottom N via top(N) or bottom(N)
+
+Examples:
+    Basic factor arithmetic::
+
+        >>> from rustybt.pipeline.data import EquityPricing
+        >>> close = EquityPricing.close.latest
+        >>> high = EquityPricing.high.latest
+        >>> # Arithmetic creates new factors
+        >>> mid_price = (close + high) / 2
+        >>> spread_pct = (high - close) / close * 100
+
+    Create filters via comparisons::
+
+        >>> from rustybt.pipeline.factors import SimpleMovingAverage
+        >>> sma_20 = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=20)
+        >>> # Comparison creates a filter
+        >>> above_sma = close > sma_20
+        >>> # Can use as pipeline screen
+        >>> pipe = Pipeline(columns={'close': close}, screen=above_sma)
+
+    Normalize and rank factors::
+
+        >>> # Z-score normalization
+        >>> returns_zscore = returns.zscore()
+        >>> # Rank from 1 to N
+        >>> momentum_rank = momentum.rank()
+        >>> # Find top 10
+        >>> top_momentum = momentum.top(10)
+
+    Create custom factors::
+
+        >>> from rustybt.pipeline.factors import CustomFactor
+        >>> class Range(CustomFactor):
+        ...     inputs = [EquityPricing.high, EquityPricing.low]
+        ...     window_length = 1
+        ...     def compute(self, today, assets, out, highs, lows):
+        ...         out[:] = highs[-1] - lows[-1]
+
+See Also:
+    :class:`rustybt.pipeline.Filter`: Boolean computations.
+    :class:`rustybt.pipeline.Classifier`: Categorical computations.
+    :mod:`rustybt.pipeline.factors`: Pre-built factor implementations.
 """
 
 from math import ceil

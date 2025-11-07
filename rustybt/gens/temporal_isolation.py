@@ -13,8 +13,61 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Temporal isolation validation to prevent lookahead bias.
+"""Temporal isolation validation to prevent lookahead bias.
+
+Provides validation mechanisms to ensure backtesting strategies cannot
+access future data, which would result in unrealistically optimistic
+results. The TemporalValidator tracks current simulation time and raises
+errors if strategies attempt to peek into the future.
+
+Classes:
+    LookaheadError: Exception raised when future data is accessed
+    TemporalValidator: Validates all data access is temporally valid
+
+Examples:
+    Prevent lookahead bias in backtesting::
+
+        import pandas as pd
+        from rustybt.gens.temporal_isolation import TemporalValidator
+
+        validator = TemporalValidator(
+            current_time=pd.Timestamp('2023-01-01 10:00'),
+            debug_mode=True
+        )
+
+        # Valid access - past data
+        validator.validate_access(
+            requested_time=pd.Timestamp('2023-01-01 09:00'),
+            data_type='price',
+            asset='AAPL'
+        )  # OK
+
+        # Invalid access - future data
+        try:
+            validator.validate_access(
+                requested_time=pd.Timestamp('2023-01-01 11:00'),
+                data_type='price',
+                asset='AAPL'
+            )
+        except LookaheadError as e:
+            print(f"Caught lookahead bias: {e}")
+
+    Track data access for debugging::
+
+        validator = TemporalValidator(
+            current_time=pd.Timestamp('2023-01-01'),
+            debug_mode=True
+        )
+
+        # Access various data points
+        for hour in range(24):
+            dt = pd.Timestamp('2023-01-01') + pd.Timedelta(hours=hour)
+            validator.update_time(dt)
+            validator.validate_access(dt, 'price', 'AAPL')
+
+        # Review access log
+        log = validator.get_access_log()
+        print(f"Accessed {len(log)} data points")
 """
 
 import logging
@@ -32,34 +85,114 @@ class LookaheadError(Exception):
 
 
 class TemporalValidator:
-    """
-    Validates data access is temporally valid.
+    """Validates data access is temporally valid.
 
     Ensures strategies cannot access data from the future,
-    preventing lookahead bias in backtesting.
+    preventing lookahead bias in backtesting. Tracks current
+    simulation time and validates all data requests.
+
+    Attributes:
+        current_time: Current point in simulation time
+        debug_mode: Whether to log all data accesses
+        access_log: List of all data access records (debug mode only)
+
+    Examples:
+        Basic validation::
+
+            import pandas as pd
+            from rustybt.gens.temporal_isolation import TemporalValidator
+
+            validator = TemporalValidator(
+                current_time=pd.Timestamp('2023-01-01 10:00')
+            )
+
+            # This is OK - accessing historical data
+            validator.validate_access(
+                pd.Timestamp('2023-01-01 09:00'),
+                'price'
+            )
+
+            # This raises LookaheadError
+            try:
+                validator.validate_access(
+                    pd.Timestamp('2023-01-01 11:00'),
+                    'price'
+                )
+            except LookaheadError:
+                print("Caught lookahead attempt!")
+
+        Use in simulation loop::
+
+            validator = TemporalValidator(
+                current_time=start_time,
+                debug_mode=True
+            )
+
+            for timestamp in simulation_timestamps:
+                validator.update_time(timestamp)
+
+                # All data access validated
+                validator.validate_access(timestamp, 'price', 'AAPL')
+                # ... process data ...
     """
 
     def __init__(self, current_time: pd.Timestamp, debug_mode: bool = False):
-        """
-        Initialize temporal validator.
+        """Initialize temporal validator.
 
         Args:
-            current_time: Current simulation time
-            debug_mode: If True, log all data accesses for debugging
+            current_time: Current simulation time.
+            debug_mode: If True, log all data accesses for debugging.
+
+        Examples:
+            Create validator with debugging::
+
+                validator = TemporalValidator(
+                    current_time=pd.Timestamp('2023-01-01'),
+                    debug_mode=True
+                )
+
+                # Access some data
+                validator.validate_access(
+                    pd.Timestamp('2023-01-01'),
+                    'price',
+                    'AAPL'
+                )
+
+                # Check access log
+                assert len(validator.get_access_log()) == 1
         """
         self.current_time = current_time
         self.debug_mode = debug_mode
         self.access_log: list[dict] = []
 
     def update_time(self, new_time: pd.Timestamp):
-        """
-        Update current time.
+        """Update current time.
+
+        Advances simulation time forward. Time can only move forward,
+        never backward, to maintain causality.
 
         Args:
-            new_time: New simulation time
+            new_time: New simulation time (must be >= current_time).
 
         Raises:
-            ValueError: If new_time is before current_time (time travel)
+            ValueError: If new_time is before current_time (time travel).
+
+        Examples:
+            Advance time in simulation::
+
+                validator = TemporalValidator(
+                    current_time=pd.Timestamp('2023-01-01')
+                )
+
+                # OK - moving forward
+                validator.update_time(pd.Timestamp('2023-01-02'))
+                assert validator.current_time == pd.Timestamp('2023-01-02')
+
+                # Error - time travel
+                try:
+                    validator.update_time(pd.Timestamp('2023-01-01'))
+                except ValueError as e:
+                    print(f"Cannot go back: {e}")
         """
         if new_time < self.current_time:
             raise ValueError(

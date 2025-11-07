@@ -1,3 +1,94 @@
+"""Corporate action adjustments reader and writer for backtesting.
+
+This module provides infrastructure for storing and retrieving corporate action
+data (splits, dividends, mergers) from a SQLite database. These adjustments are
+applied retrospectively to historical pricing data to maintain comparability
+across corporate actions.
+
+Key Classes:
+    SQLiteAdjustmentReader:
+        Reads corporate action data from SQLite and provides it in formats
+        suitable for adjustment application during backtesting.
+
+    SQLiteAdjustmentWriter:
+        Writes corporate action data to SQLite in a structured format.
+
+Supported Corporate Actions:
+    Splits:
+        Stock splits that affect price and volume. A 2-for-1 split multiplies
+        shares by 2 and divides price by 2. Historical prices are adjusted by
+        the split ratio.
+
+    Dividends:
+        Cash dividends paid to shareholders. Historical prices are adjusted
+        downward by the dividend amount to maintain comparability.
+
+    Mergers:
+        Mergers and acquisitions that result in share exchanges. Historical
+        prices are adjusted by the merger ratio.
+
+    Dividend Payouts:
+        Detailed dividend information including ex-date, pay-date, and amount.
+        Used for tracking dividend payments during simulation.
+
+    Stock Dividends:
+        Dividends paid in shares rather than cash. Includes the payment asset
+        and ratio of shares received.
+
+Database Schema:
+    The adjustment database contains the following tables:
+
+    - splits: effective_date, ratio, sid
+    - dividends: effective_date, ratio, sid
+    - mergers: effective_date, ratio, sid
+    - dividend_payouts: sid, ex_date, declared_date, record_date, pay_date, amount
+    - stock_dividend_payouts: sid, ex_date, declared_date, record_date, pay_date,
+                               payment_sid, ratio
+
+Data Types:
+    Dividend: Named tuple (asset, amount, pay_date)
+    StockDividend: Named tuple (asset, payment_asset, ratio, pay_date)
+
+Usage Patterns:
+    Reading adjustments:
+        >>> from rustybt.data import SQLiteAdjustmentReader
+        >>> reader = SQLiteAdjustmentReader("adjustments.db")
+        >>> adjustments = reader.load_adjustments(
+        ...     dates=date_range,
+        ...     assets=asset_list,
+        ...     should_include_splits=True,
+        ...     should_include_dividends=True,
+        ...     should_include_mergers=True,
+        ...     adjustment_type="all"
+        ... )
+
+    Getting dividends for a date:
+        >>> dividends = reader.get_dividends_with_ex_date(
+        ...     assets=asset_list,
+        ...     date=ex_date,
+        ...     asset_finder=finder
+        ... )
+
+    Writing adjustments:
+        >>> from rustybt.data import SQLiteAdjustmentWriter
+        >>> writer = SQLiteAdjustmentWriter("adjustments.db")
+        >>> writer.write(
+        ...     splits=splits_df,
+        ...     dividends=dividends_df,
+        ...     dividend_payouts=payouts_df
+        ... )
+
+See Also:
+    rustybt.data.history_loader: Uses adjustments for historical data
+    rustybt.lib.adjustment: Low-level adjustment application
+    rustybt.assets: Asset definitions that adjustments apply to
+
+Performance Notes:
+    - Adjustment lookups are optimized with proper indexing
+    - Batch operations are more efficient than individual queries
+    - Dates are stored as Unix timestamps (int64) for fast comparison
+"""
+
 import logging
 import sqlite3
 from collections import namedtuple
@@ -70,6 +161,18 @@ SQLITE_STOCK_DIVIDEND_PAYOUT_COLUMN_DTYPES = {
 
 
 def specialize_any_integer(d):
+    """Convert any_integer placeholders to explicit int64 dtype.
+
+    Used to ensure consistent integer dtypes across platforms. The any_integer
+    type accepts various integer dtypes from users but can become int32 on some
+    Windows numpy builds. This function ensures outputs always use int64.
+
+    Args:
+        d: Dict mapping column names to dtypes.
+
+    Returns:
+        dict: New dict with any_integer replaced by int64_dtype.
+    """
     out = {}
     for k, v in d.items():
         if v is any_integer:
@@ -129,15 +232,32 @@ class SQLiteAdjustmentReader:
 
     @preprocess(conn=coerce_string_to_conn(require_exists=True))
     def __init__(self, conn):
+        """Initialize the adjustment reader.
+
+        Args:
+            conn: Database connection string or sqlite3.Connection object.
+                If a string, must point to an existing database file.
+        """
         self.conn = conn
 
     def __enter__(self):
+        """Enter context manager.
+
+        Returns:
+            SQLiteAdjustmentReader: Self for context manager usage.
+        """
         return self
 
     def __exit__(self, *exc_info):
+        """Exit context manager, closing the connection.
+
+        Args:
+            *exc_info: Exception information if an error occurred.
+        """
         self.close()
 
     def close(self):
+        """Close the database connection."""
         return self.conn.close()
 
     def load_adjustments(
@@ -185,6 +305,21 @@ class SQLiteAdjustmentReader:
         )
 
     def load_pricing_adjustments(self, columns, dates, assets):
+        """Load adjustments for pricing columns automatically determining type.
+
+        Convenience method that determines whether to load price, volume, or both
+        types of adjustments based on the requested columns. Includes all corporate
+        action types (splits, dividends, mergers).
+
+        Args:
+            columns: List of column names ('open', 'high', 'low', 'close', 'volume').
+            dates: DatetimeIndex of dates for which adjustments are needed.
+            assets: List or Index of assets (sids) to load adjustments for.
+
+        Returns:
+            list[dict]: List of adjustment dicts, one per column. Each dict maps
+                date indices to adjustment objects.
+        """
         if "volume" not in set(columns):
             adjustment_type = "price"
         elif len(set(columns)) == 1:
@@ -208,6 +343,23 @@ class SQLiteAdjustmentReader:
         ]
 
     def get_adjustments_for_sid(self, table_name, sid):
+        """Get all adjustments for a specific asset from a table.
+
+        Retrieves all corporate action adjustments (splits, dividends, or mergers)
+        for a single asset, sorted by effective date.
+
+        Args:
+            table_name: Name of adjustment table ('splits', 'dividends', 'mergers').
+            sid: Asset identifier to query.
+
+        Returns:
+            list[[Timestamp, float]]: List of [effective_date, ratio] pairs for
+                the asset, where effective_date is a pandas Timestamp and ratio
+                is the adjustment ratio.
+
+        Raises:
+            ValueError: If table_name is not a valid adjustment table.
+        """
         # Validate table name to prevent SQL injection
         if table_name not in SQLITE_ADJUSTMENT_TABLENAMES:
             raise ValueError(
@@ -229,6 +381,23 @@ class SQLiteAdjustmentReader:
         ]
 
     def get_dividends_with_ex_date(self, assets, date, asset_finder):
+        """Get all cash dividends with a specific ex-date.
+
+        Queries the dividend_payouts table for all dividends whose ex-date matches
+        the specified date. Used during simulation to determine which dividends
+        go ex on a given trading day.
+
+        Args:
+            assets: Iterable of asset sids to check for dividends.
+            date: Timestamp representing the ex-date to query.
+            asset_finder: AssetFinder for converting sids to Asset objects.
+
+        Returns:
+            list[Dividend]: List of Dividend namedtuples with fields:
+                - asset: Asset object receiving the dividend
+                - amount: Cash amount of the dividend
+                - pay_date: Timestamp when dividend will be paid
+        """
         seconds = date.value / int(1e9)
         c = self.conn.cursor()
 
@@ -252,6 +421,24 @@ class SQLiteAdjustmentReader:
         return divs
 
     def get_stock_dividends_with_ex_date(self, assets, date, asset_finder):
+        """Get all stock dividends with a specific ex-date.
+
+        Queries the stock_dividend_payouts table for all stock dividends whose
+        ex-date matches the specified date. Stock dividends pay shares instead
+        of cash.
+
+        Args:
+            assets: Iterable of asset sids to check for stock dividends.
+            date: Timestamp representing the ex-date to query.
+            asset_finder: AssetFinder for converting sids to Asset objects.
+
+        Returns:
+            list[StockDividend]: List of StockDividend namedtuples with fields:
+                - asset: Asset object receiving the dividend
+                - payment_asset: Asset object representing the shares paid out
+                - ratio: Number of payment_asset shares per asset share held
+                - pay_date: Timestamp when dividend shares will be distributed
+        """
         seconds = date.value / int(1e9)
         c = self.conn.cursor()
 

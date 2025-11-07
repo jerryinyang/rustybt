@@ -1,6 +1,85 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,var-annotated,override,name-match,index,attr-defined,has-type,type-arg"
-"""
-Tools for memoization of function results.
+"""Tools for memoization and lazy evaluation of function results.
+
+This module provides decorators and utilities for caching function results
+and lazy evaluation of class attributes:
+
+**Lazy Evaluation:**
+- lazyval: Decorator for lazy-evaluated instance attributes
+- classlazyval: Decorator for lazy-evaluated class attributes
+
+**Weak Reference Caching:**
+- weak_lru_cache: LRU cache with weak references to arguments
+- remember_last: Cache only the most recent call (weak_lru_cache(1))
+- _WeakArgs/_WeakArgsDict: Internal support for weak reference caching
+
+The weak reference caching is particularly useful for methods that take
+objects as arguments, as it allows cached results to be garbage collected
+when the arguments are no longer in use elsewhere.
+
+Examples:
+    Lazy evaluation of expensive instance attributes:
+
+    >>> from rustybt.utils.memoize import lazyval
+    >>> class DataProcessor:
+    ...     def __init__(self, data):
+    ...         self.data = data
+    ...         self.compute_count = 0
+    ...     @lazyval
+    ...     def expensive_result(self):
+    ...         self.compute_count += 1
+    ...         return sum(self.data)
+    >>> processor = DataProcessor([1, 2, 3])
+    >>> processor.compute_count
+    0
+    >>> processor.expensive_result
+    6
+    >>> processor.compute_count
+    1
+    >>> processor.expensive_result  # Cached, not recomputed
+    6
+    >>> processor.compute_count
+    1
+
+    Weak LRU cache for methods:
+
+    >>> from rustybt.utils.memoize import weak_lru_cache
+    >>> class Calculator:
+    ...     @weak_lru_cache(maxsize=2)
+    ...     def compute(self, x, y):
+    ...         print(f'Computing {x} + {y}')
+    ...         return x + y
+    >>> calc = Calculator()
+    >>> calc.compute(1, 2)
+    Computing 1 + 2
+    3
+    >>> calc.compute(1, 2)  # Cached
+    3
+
+    Class-level lazy evaluation:
+
+    >>> from rustybt.utils.memoize import classlazyval
+    >>> class Registry:
+    ...     compute_count = 0
+    ...     @classlazyval
+    ...     def default_config(cls):
+    ...         cls.compute_count += 1
+    ...         return {'setting': 'value'}
+    >>> Registry.compute_count
+    0
+    >>> Registry.default_config
+    {'setting': 'value'}
+    >>> Registry.compute_count
+    1
+    >>> Registry.default_config  # Cached
+    {'setting': 'value'}
+    >>> Registry.compute_count
+    1
+
+Note:
+    The weak reference caching allows cached entries to be automatically
+    removed when their argument objects are garbage collected, preventing
+    memory leaks in long-running processes.
 """
 
 from _thread import allocate_lock as Lock

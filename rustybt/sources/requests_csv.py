@@ -1,3 +1,26 @@
+"""CSV data sources with HTTP request support for fetching external data.
+
+This module provides infrastructure for fetching CSV data from URLs and
+converting it into trade events for backtesting. It supports:
+
+- Fetching CSV data via HTTP requests with authentication
+- Parsing CSV data with pandas
+- Symbol resolution via asset finder
+- Date/time parsing and timezone handling
+- Both daily and minute data frequencies
+
+The main classes are:
+- PandasCSV: Abstract base for CSV data sources
+- PandasRequestsCSV: Fetches CSV data from URLs via HTTP requests
+- FetcherEvent: Event type for fetched data
+
+Security features:
+- Request timeouts to prevent hanging
+- Document size limits to prevent DoS
+- Redirect detection and prevention
+- MD5 checksums for data integrity (not cryptographic)
+"""
+
 import datetime
 import hashlib
 import logging
@@ -19,6 +42,21 @@ logger = logging.getLogger("Requests Source Logger")
 
 
 def roll_dts_to_midnight(dts, trading_day):
+    """Roll datetimes to midnight for daily data alignment.
+
+    Converts timestamps to session dates by:
+    1. Converting to US/Eastern timezone
+    2. Subtracting 16 hours to get the trading date
+    3. Extracting just the date
+    4. Adding back the trading_day offset
+
+    Args:
+        dts: DatetimeIndex of timestamps to roll.
+        trading_day: Timedelta offset for trading day start (typically 0 for midnight).
+
+    Returns:
+        DatetimeIndex with times rolled to midnight of the trading date.
+    """
     if len(dts) == 0:
         return dts
 
@@ -32,6 +70,12 @@ def roll_dts_to_midnight(dts, trading_day):
 
 
 class FetcherEvent(Event):
+    """Event type for data fetched from external CSV sources.
+
+    Extends the base Event class to represent data loaded from CSV files.
+    Can contain any fields from the CSV data, plus standard event metadata.
+    """
+
     pass
 
 
@@ -109,6 +153,28 @@ SHARED_REQUESTS_KWARGS = {
 
 
 def mask_requests_args(url, validating=False, params_checker=None, **kwargs):
+    """Filter and prepare kwargs for requests library calls.
+
+    Extracts allowed request parameters from kwargs and configures timeouts
+    and other shared settings for HTTP requests.
+
+    Args:
+        url: The URL to fetch from.
+        validating: If True, use shorter 1s timeout for validation.
+            If False, use 30s timeout for actual data fetching. Default False.
+        params_checker: Optional function to extract/modify URL parameters.
+            Should return (url, params_dict). Optional.
+        **kwargs: Additional parameters, filtered to allowed requests kwargs.
+
+    Returns:
+        Named tuple with fields:
+        - requests_kwargs: Dict of filtered kwargs ready for requests.get()
+        - url: Possibly modified URL (if params_checker was provided)
+
+    Note:
+        Timeout applies only to connection establishment, not response download.
+        Some data sources (e.g., Quandl) may take >10s to return first byte.
+    """
     requests_kwargs = {key: val for (key, val) in kwargs.items() if key in ALLOWED_REQUESTS_KWARGS}
     if params_checker is not None:
         url, s_params = params_checker(url)
@@ -130,6 +196,37 @@ def mask_requests_args(url, validating=False, params_checker=None, **kwargs):
 
 
 class PandasCSV(ABC):
+    """Abstract base class for CSV data sources using pandas.
+
+    Provides common infrastructure for loading CSV data, parsing dates,
+    resolving symbols to assets, and generating trade events. Subclasses
+    must implement the fetch_data() method to provide the CSV data.
+
+    The class handles:
+    - Date parsing with timezone conversion
+    - Symbol-to-asset resolution via asset finder
+    - Pre/post-processing hooks for data transformation
+    - Filtering by date range
+    - Support for both daily and minute frequencies
+
+    Attributes:
+        start_date: Earliest date to include in output.
+        end_date: Latest date to include in output.
+        date_column: Name of the column containing dates.
+        date_format: Format string for parsing dates (deprecated, uses pandas default).
+        timezone: Timezone for date parsing.
+        mask: If True, filter out rows with unresolved symbols.
+        symbol_column: Name of the column containing security symbols.
+        data_frequency: 'daily' or 'minute'.
+        country_code: Country code for symbol resolution.
+        finder: AssetFinder for resolving symbols to assets.
+        df: Loaded and processed DataFrame of data.
+
+    Note:
+        Subclasses should implement fetch_data() to return raw CSV data as
+        a pandas DataFrame.
+    """
+
     def __init__(
         self,
         pre_func,

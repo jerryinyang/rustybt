@@ -46,6 +46,30 @@ class Position:
     __slots__ = "inner_position", "protocol_position"
 
     def __init__(self, asset, amount=0, cost_basis=0.0, last_sale_price=0.0, last_sale_date=None):
+        """Initialize a position.
+
+        Args:
+            asset (Asset): The asset being held in this position
+            amount (int, optional): Number of shares/units held. Positive for long
+                positions, negative for short positions. Defaults to 0
+            cost_basis (float, optional): Volume-weighted average price paid per
+                share/unit. Defaults to 0.0
+            last_sale_price (float, optional): Most recent market price for the asset.
+                Defaults to 0.0
+            last_sale_date (pd.Timestamp, optional): Date of the last sale price.
+                Defaults to None
+
+        Examples:
+            Creating a long position:
+
+            >>> position = Position(asset=aapl, amount=100, cost_basis=150.0)
+            >>> print(f"Holding {position.amount} shares at ${position.cost_basis} cost basis")
+
+            Creating a short position:
+
+            >>> short_position = Position(asset=tsla, amount=-50, cost_basis=800.0)
+            >>> print(f"Short {abs(short_position.amount)} shares")
+        """
         inner = zp.InnerPosition(
             asset=asset,
             amount=amount,
@@ -63,16 +87,54 @@ class Position:
         setattr(self.inner_position, attr, value)
 
     def earn_dividend(self, dividend):
-        """
-        Register the number of shares we held at this dividend's ex date so
-        that we can pay out the correct amount on the dividend's pay date.
+        """Calculate cash dividend owed based on shares held at ex-date.
+
+        Registers the dividend payment that will be owed on the pay date based
+        on the number of shares held at the ex-date. For short positions, the
+        amount will be negative (representing a payment owed).
+
+        Args:
+            dividend: Dividend event with amount per share
+
+        Returns:
+            dict: Dictionary with 'amount' key containing total cash owed
+
+        Examples:
+            >>> position = Position(asset=aapl, amount=100)
+            >>> dividend = Dividend(amount=0.25)  # $0.25 per share
+            >>> payment = position.earn_dividend(dividend)
+            >>> print(payment['amount'])  # 25.0 (100 shares * $0.25)
+
+        Note:
+            For short positions (negative amount), the returned amount is negative,
+            representing cash the position must pay to the lender.
         """
         return {"amount": self.amount * dividend.amount}
 
     def earn_stock_dividend(self, stock_dividend):
-        """
-        Register the number of shares we held at this dividend's ex date so
-        that we can pay out the correct amount on the dividend's pay date.
+        """Calculate stock dividend owed based on shares held at ex-date.
+
+        Registers the stock dividend payment (in shares of another asset) that
+        will be owed on the pay date. Fractional shares are floored to whole shares.
+
+        Args:
+            stock_dividend: Stock dividend event with payment_asset and ratio
+
+        Returns:
+            dict: Dictionary with keys:
+                - 'payment_asset': Asset to receive as dividend
+                - 'share_count': Number of whole shares to receive
+
+        Examples:
+            >>> position = Position(asset=googl, amount=100)
+            >>> # 1:10 stock dividend in GOOG
+            >>> stock_div = StockDividend(payment_asset=goog, ratio=0.1)
+            >>> payment = position.earn_stock_dividend(stock_div)
+            >>> print(payment['share_count'])  # 10 shares (100 * 0.1)
+
+        Note:
+            Fractional shares from the ratio calculation are dropped (floored).
+            For example, 100 shares with a 0.105 ratio yields 10 shares, not 10.5.
         """
         return {
             "payment_asset": stock_dividend.payment_asset,
@@ -80,11 +142,43 @@ class Position:
         }
 
     def handle_split(self, asset, ratio):
-        """
-        Update the position by the split ratio, and return the resulting
-        fractional share that will be converted into cash.
+        """Update position to reflect a stock split.
 
-        Returns the unused cash.
+        Adjusts the position's share count and cost basis to account for a stock
+        split. Fractional shares resulting from the split are converted to cash
+        at the post-split cost basis.
+
+        Args:
+            asset (Asset): The asset that split (must match position's asset)
+            ratio (float): Split ratio (e.g., 3.0 for a 3:1 split where 1 old
+                share becomes 1/3 new shares)
+
+        Returns:
+            float: Cash value of fractional shares rounded to nearest cent
+
+        Raises:
+            Exception: If asset doesn't match position's asset
+
+        Examples:
+            3:1 reverse split (3 old shares become 1 new share):
+
+            >>> position = Position(asset=aapl, amount=100, cost_basis=20.0)
+            >>> cash_returned = position.handle_split(aapl, ratio=3.0)
+            >>> print(f"New amount: {position.amount}")  # 33 shares
+            >>> print(f"New cost basis: {position.cost_basis}")  # $60.00
+            >>> print(f"Cash from fractional: ${cash_returned}")  # $20.00
+
+            2:1 forward split (1 old share becomes 2 new shares):
+
+            >>> position = Position(asset=tsla, amount=100, cost_basis=800.0)
+            >>> cash_returned = position.handle_split(tsla, ratio=0.5)
+            >>> print(f"New amount: {position.amount}")  # 200 shares
+            >>> print(f"New cost basis: {position.cost_basis}")  # $400.00
+
+        Note:
+            The new cost basis is rounded to the nearest cent. Fractional shares
+            are floored (e.g., 33.333 becomes 33) and the remainder is converted
+            to cash at the new cost basis.
         """
         if self.asset != asset:
             raise Exception("updating split with the wrong asset!")
@@ -120,6 +214,51 @@ class Position:
         return return_cash
 
     def update(self, txn):
+        """Update position based on a transaction.
+
+        Modifies the position's amount and cost basis to reflect a new transaction.
+        The cost basis calculation depends on whether the transaction increases,
+        decreases, or reverses the position.
+
+        Args:
+            txn (Transaction): Transaction to apply to the position. Must be for
+                the same asset as the position
+
+        Raises:
+            Exception: If transaction is for a different asset
+
+        Examples:
+            Adding to a long position (buy more):
+
+            >>> position = Position(asset=aapl, amount=100, cost_basis=150.0)
+            >>> txn = Transaction(asset=aapl, amount=50, price=160.0, dt=timestamp, order_id='abc')
+            >>> position.update(txn)
+            >>> # New cost basis: (100*150 + 50*160) / 150 = 153.33
+            >>> print(f"Amount: {position.amount}, Cost basis: {position.cost_basis:.2f}")
+
+            Reducing a position (sell some):
+
+            >>> position = Position(asset=aapl, amount=100, cost_basis=150.0)
+            >>> txn = Transaction(asset=aapl, amount=-30, price=160.0, dt=timestamp, order_id='abc')
+            >>> position.update(txn)
+            >>> # Cost basis stays 150.0 (reducing position doesn't change basis)
+            >>> print(f"Amount: {position.amount}, Cost basis: {position.cost_basis:.2f}")
+
+            Reversing a position (sell more than you own):
+
+            >>> position = Position(asset=aapl, amount=100, cost_basis=150.0)
+            >>> txn = Transaction(asset=aapl, amount=-150, price=160.0, dt=timestamp, order_id='abc')
+            >>> position.update(txn)
+            >>> # New cost basis is the reversal price: 160.0
+            >>> print(f"Amount: {position.amount}, Cost basis: {position.cost_basis:.2f}")
+
+        Note:
+            Cost basis calculation rules:
+            - Increasing position: weighted average of old and new
+            - Decreasing position: cost basis unchanged
+            - Reversing position: cost basis set to reversal transaction price
+            - Closing position: cost basis set to 0.0
+        """
         if self.asset != txn.asset:
             raise Exception("updating position with txn for a different asset")
 
@@ -152,14 +291,47 @@ class Position:
         self.amount = total_shares
 
     def adjust_commission_cost_basis(self, asset, cost):
-        """
-        A note about cost-basis in zipline: all positions are considered
-        to share a cost basis, even if they were executed in different
-        transactions with different commission costs, different prices, etc.
+        """Adjust cost basis to account for commission costs.
 
-        Due to limitations about how zipline handles positions, zipline will
-        currently spread an externally-delivered commission charge across
-        all shares in a position.
+        Modifies the position's cost basis to include commission charges. The
+        commission is spread across all shares in the position, increasing the
+        effective cost basis (for long positions) or decreasing it (for short
+        positions).
+
+        Args:
+            asset (Asset): The asset (must match position's asset)
+            cost (float): Total commission cost to add to the position. For
+                futures, this is divided by the price multiplier
+
+        Raises:
+            Exception: If asset doesn't match position's asset
+
+        Examples:
+            Adding commission to a long position:
+
+            >>> position = Position(asset=aapl, amount=100, cost_basis=150.0)
+            >>> position.adjust_commission_cost_basis(aapl, cost=10.0)
+            >>> # New cost basis: (100*150 + 10) / 100 = 150.10
+            >>> print(f"Cost basis: ${position.cost_basis:.2f}")
+
+            Adding commission to a short position:
+
+            >>> short_position = Position(asset=tsla, amount=-50, cost_basis=800.0)
+            >>> short_position.adjust_commission_cost_basis(tsla, cost=5.0)
+            >>> # New cost basis: (-50*800 + 5) / -50 = 799.90
+            >>> # Cost basis decreases because we break even at a lower price
+            >>> print(f"Cost basis: ${short_position.cost_basis:.2f}")
+
+        Note:
+            Cost basis represents the price at which the position breaks even.
+            For long positions, commissions increase the break-even price.
+            For short positions, commissions decrease the break-even price.
+
+            If the position has zero shares, the commission is ignored (no
+            cost basis to adjust).
+
+            For futures contracts, the cost is divided by the asset's price
+            multiplier before being added to the cost basis.
         """
         if asset != self.asset:
             raise Exception("Updating a commission for a different asset?")

@@ -1,4 +1,28 @@
-"""Type stubs for rustybt.gens.sim_engine - Compiled Cython module."""
+"""Cython-optimized simulation clock for minute-level backtesting.
+
+This module provides a high-performance clock generator that yields market
+minutes and session boundaries for driving the simulation loop. Uses Cython
+for minimal overhead in the critical simulation path.
+
+Cython optimizations:
+- Int64 nanosecond arithmetic for timestamps
+- Pre-computed minute ranges per session
+- Inline comparisons for event detection
+- Generator implemented as C iterator
+
+Example:
+    >>> clock = MinuteSimulationClock(
+    ...     sessions=trading_calendar.all_sessions,
+    ...     market_opens=trading_calendar.opens,
+    ...     market_closes=trading_calendar.closes,
+    ...     before_trading_start_minutes=[...]
+    ... )
+    >>> for dt, event in clock:
+    ...     if event == SESSION_START:
+    ...         # Handle session start
+    ...     elif event == BAR:
+    ...         # Process minute bar
+"""
 
 from typing import Iterator
 import pandas as pd

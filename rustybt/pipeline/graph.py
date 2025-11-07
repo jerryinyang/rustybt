@@ -1,5 +1,83 @@
-"""
-Dependency-Graph representation of Pipeline API terms.
+"""Dependency graph representation and execution planning for Pipeline terms.
+
+This module provides classes for representing and analyzing the dependency
+relationships between Pipeline terms. The dependency graph is used by the
+PipelineEngine to determine execution order and manage memory efficiently.
+
+Key Classes:
+
+**TermGraph**: A basic directed acyclic graph (DAG) of term dependencies.
+Provides topological sorting for execution order and visualization capabilities.
+Used for simple analysis and debugging.
+
+**ExecutionPlan**: An extended TermGraph that includes metadata about extra
+rows needed for windowed computations. This is what the engine actually uses
+to execute a pipeline, as it knows how many historical rows to load for each
+term to satisfy all its dependents' lookback windows.
+
+Concepts:
+
+**Dependencies**: Each term declares which other terms it needs as inputs and
+how many extra rows of each it requires (for lookback windows). The graph
+captures these relationships.
+
+**Topological Order**: Terms must be computed in an order that respects their
+dependencies - a term can only be computed after all its inputs are available.
+The graph provides this ordering.
+
+**Reference Counting**: The engine tracks how many dependents each term has.
+When a term's refcount hits zero, its data can be freed to conserve memory.
+
+**Extra Rows**: Windowed terms (e.g., moving averages) need historical data.
+The ExecutionPlan tracks how many extra rows to compute for each term to
+satisfy all downstream requirements.
+
+**Specialization**: LoadableTerms start generic and are specialized to a
+domain during execution planning. The plan replaces generic terms with their
+specialized versions.
+
+Examples:
+    Build a simple term graph::
+
+        >>> from rustybt.pipeline import Pipeline
+        >>> from rustybt.pipeline.data import EquityPricing
+        >>> from rustybt.pipeline.factors import SimpleMovingAverage
+        >>>
+        >>> sma = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=20)
+        >>> pipe = Pipeline(columns={'sma': sma})
+        >>> graph = pipe.to_simple_graph(AssetExists())
+        >>>
+        >>> # Graph contains: AssetExists -> EquityPricing.close -> SMA
+        >>> assert EquityPricing.close in graph
+        >>> assert sma in graph
+
+    Analyze dependencies::
+
+        >>> # Get execution order
+        >>> for term in graph.ordered():
+        ...     print(f"Compute: {term}")
+        >>>
+        >>> # Check what a term depends on
+        >>> print(f"SMA depends on: {sma.dependencies}")
+        >>> # {EquityPricing.close: 19, AssetExists(): 0}
+
+    Create an execution plan with extra rows::
+
+        >>> from rustybt.pipeline.domain import US_EQUITIES
+        >>> plan = pipe.to_execution_plan(
+        ...     domain=US_EQUITIES,
+        ...     default_screen=AssetExists(),
+        ...     start_date='2020-01-01',
+        ...     end_date='2020-12-31',
+        ... )
+        >>>
+        >>> # Plan knows how many extra rows each term needs
+        >>> print(plan.extra_rows[EquityPricing.close])  # 19 for window_length=20
+
+See Also:
+    :class:`rustybt.pipeline.engine.SimplePipelineEngine`: Uses ExecutionPlan.
+    :class:`rustybt.pipeline.Pipeline`: Creates graphs via to_execution_plan().
+    :class:`rustybt.pipeline.term.Term`: Nodes in the dependency graph.
 """
 
 import uuid
@@ -25,34 +103,65 @@ SCREEN_NAME = "screen_" + uuid.uuid4().hex
 
 
 class TermGraph:
-    """
-    An abstract representation of Pipeline Term dependencies.
+    """Directed acyclic graph (DAG) of Pipeline term dependencies.
 
-    This class does not keep any additional metadata about any term relations
-    other than dependency ordering.  As such it is only useful in contexts
-    where you care exclusively about order properties (for example, when
-    drawing visualizations of execution order).
+    TermGraph represents the dependency relationships between pipeline terms
+    without any execution-specific metadata. It's primarily useful for
+    visualizing dependencies and understanding term relationships. For actual
+    pipeline execution, use ExecutionPlan which extends this with metadata
+    about extra rows needed for windowed computations.
 
-    Parameters
-    ----------
-    terms : dict
-        A dict mapping names to final output terms.
+    The graph is built by recursively traversing each output term's dependencies,
+    adding edges from dependencies to dependents. The construction validates that
+    no cycles exist (which would represent an impossible computation).
+
+    Key Features:
+        - Topological ordering for execution
+        - Cycle detection during construction
+        - Reference counting for memory management
+        - Graph visualization (SVG/PNG/JPEG)
+
+    Args:
+        terms: Dictionary mapping output names to their corresponding terms.
+            These are the terms that will be returned as pipeline outputs.
 
     Attributes:
-    ----------
-    outputs
+        graph: NetworkX DiGraph containing the dependency structure.
+        outputs: Dictionary of named output terms (same as input).
 
-    Methods:
-    -------
-    ordered()
-        Return a topologically-sorted iterator over the terms in self.
-    execution_order(workspace, refcounts)
-        Return a topologically-sorted iterator over the terms in self, skipping
-        entries in ``workspace`` and entries with refcounts of zero.
+    Examples:
+        Create a graph from a pipeline::
+
+            >>> from rustybt.pipeline import Pipeline
+            >>> from rustybt.pipeline.data import EquityPricing
+            >>> from rustybt.pipeline.factors import SimpleMovingAverage
+            >>>
+            >>> sma = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=20)
+            >>> pipe = Pipeline(columns={'sma': sma})
+            >>> graph = pipe.to_simple_graph(AssetExists())
+
+        Get execution order::
+
+            >>> order = list(graph.ordered())
+            >>> # [AssetExists(), EquityPricing.close, SMA]
+
+        Visualize the graph::
+
+            >>> # In Jupyter notebook
+            >>> graph  # Displays PNG visualization
+            >>> # Or explicitly
+            >>> graph.svg  # SVG format
+            >>> graph.png  # PNG format
+
+        Check reference counts::
+
+            >>> refcounts = graph.initial_refcounts([])
+            >>> # Each term's refcount = number of dependents + (1 if output)
 
     See Also:
-    --------
-    ExecutionPlan
+        :class:`ExecutionPlan`: Extended graph with execution metadata.
+        :meth:`Pipeline.to_simple_graph`: Create a TermGraph from a pipeline.
+        :meth:`Pipeline.show_graph`: Visualize a pipeline's dependencies.
     """
 
     def __init__(self, terms):
@@ -234,33 +343,85 @@ class TermGraph:
 
 
 class ExecutionPlan(TermGraph):
-    """
-    Graph representation of Pipeline Term dependencies that includes metadata
-    about extra rows required to perform computations.
+    """Extended TermGraph with execution metadata for windowed computations.
 
-    Each node in the graph has an `extra_rows` attribute, indicating how many,
-    if any, extra rows we should compute for the node. Extra rows are most
-    often needed when a term is an input to a rolling window computation. For
-    example, if we compute a 30 day moving average of price from day X to day
-    Y, we need to load price data for the range from day (X - 29) to day Y.
+    ExecutionPlan builds on TermGraph by adding critical metadata about how
+    many extra historical rows each term needs. This is essential for windowed
+    computations (e.g., moving averages) that require lookback data.
 
-    Parameters
-    ----------
-    domain : zipline.pipeline.domain.Domain
-        The domain of execution for which we need to build a plan.
-    terms : dict
-        A dict mapping names to final output terms.
-    start_date : pd.Timestamp
-        The first date for which output is requested for ``terms``.
-    end_date : pd.Timestamp
-        The last date for which output is requested for ``terms``.
+    The plan determines extra rows by:
+    1. Starting from output terms with their required dates
+    2. For each term, computing how many extra rows it needs based on its
+       window_length and the requirements of its dependents
+    3. Propagating these requirements up the dependency graph
+    4. Specializing all LoadableTerms to the execution domain
+
+    Key Metadata:
+
+    **extra_rows**: For each term, how many historical rows beyond the requested
+    date range must be computed. For example, a 20-day SMA needs 19 extra rows
+    of input data.
+
+    **offset**: For each (parent, child) dependency pair, how many leading rows
+    to skip when passing parent's output to child. Accounts for the difference
+    in extra_rows requirements.
+
+    **domain**: The specialized domain (e.g., US_EQUITIES) that all LoadableTerms
+    have been specialized to.
+
+    Args:
+        domain: The execution domain (determines which assets and calendar to use).
+        terms: Dictionary mapping output names to output terms.
+        start_date: First date for which final output is requested.
+        end_date: Last date for which final output is requested.
+        min_extra_rows: Minimum extra rows to compute (default 0).
 
     Attributes:
-    ----------
-    domain
-    extra_rows
-    outputs
-    offset
+        domain: The execution domain.
+        extra_rows: Dict mapping each term to its extra_rows requirement.
+        offset: Dict mapping (child, parent) pairs to row offset values.
+        outputs: Dictionary of named output terms.
+
+    Examples:
+        Create an execution plan::
+
+            >>> from rustybt.pipeline import Pipeline
+            >>> from rustybt.pipeline.domain import US_EQUITIES
+            >>> from rustybt.pipeline.data import EquityPricing
+            >>> from rustybt.pipeline.factors import SimpleMovingAverage
+            >>>
+            >>> sma = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=20)
+            >>> pipe = Pipeline(columns={'sma': sma})
+            >>> plan = pipe.to_execution_plan(
+            ...     domain=US_EQUITIES,
+            ...     default_screen=AssetExists(),
+            ...     start_date='2020-01-01',
+            ...     end_date='2020-12-31',
+            ... )
+
+        Inspect extra rows requirements::
+
+            >>> # SMA needs 19 extra rows of close (window_length - 1)
+            >>> print(plan.extra_rows[sma])  # 0 (it's an output)
+            >>> print(plan.extra_rows[EquityPricing.close])  # 19
+
+        Check offsets for proper input slicing::
+
+            >>> # When passing close to sma, no offset needed
+            >>> specialized_close = EquityPricing.close.specialize(US_EQUITIES)
+            >>> offset = plan.offset[sma, specialized_close]
+            >>> print(offset)  # 0 (close has exactly the rows sma needs)
+
+        The plan specializes LoadableTerms::
+
+            >>> # All LoadableTerms are specialized to the domain
+            >>> for term in plan.loadable_terms:
+            ...     assert term.domain is US_EQUITIES
+
+    See Also:
+        :class:`TermGraph`: Base dependency graph without execution metadata.
+        :meth:`Pipeline.to_execution_plan`: Create plan from pipeline.
+        :meth:`SimplePipelineEngine._run_pipeline_impl`: Uses ExecutionPlan.
     """
 
     def __init__(self, domain, terms, start_date, end_date, min_extra_rows=0):

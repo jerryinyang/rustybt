@@ -12,6 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Performance metrics and tracking for trading algorithms.
+
+This module provides comprehensive performance metrics including returns,
+risk statistics, portfolio analytics, and attribution analysis. It includes
+both legacy empyrical-based metrics and modern Decimal-based precision metrics.
+"""
 import empyrical
 
 from rustybt.utils.deprecate import deprecated
@@ -146,6 +152,13 @@ register("none", set)
 
 @register("default")
 def default_metrics():
+    """Get the default set of performance metrics.
+
+    Returns:
+        A set of metric instances that track standard performance statistics
+        including returns, volatility, Sharpe ratio, drawdown, leverage, and
+        position analytics.
+    """
     return {
         Returns(),
         ReturnsStatistic(empyrical.annual_volatility, "algo_volatility"),
@@ -200,6 +213,16 @@ def default_metrics():
     'future release. Please use "default" metrics instead.'
 )
 def classic_metrics():
+    """Get the classic/legacy set of performance metrics (deprecated).
+
+    Returns:
+        A set of metric instances including default metrics plus legacy
+        risk packet format for backward compatibility.
+
+    .. deprecated::
+        Use "default" metrics instead. The classic risk packet format
+        will be removed in a future release.
+    """
     metrics = default_metrics()
     metrics.add(_ClassicRiskMetrics())
     return metrics

@@ -1,4 +1,19 @@
-"""Type stubs for rustybt.data._minute_bar_internal - Compiled Cython module."""
+"""Cython-optimized minute bar indexing and lookups.
+
+This module provides ultra-fast functions for converting between minute positions
+and minute values in market data. Uses integer arithmetic for maximum speed.
+
+Cython optimizations:
+- C division/modulo operations (cdivision=True)
+- Inline functions for position calculations
+- Binary search via searchsorted
+- No Python object creation in hot loops
+
+Example:
+    >>> # Convert position 450 to actual minute value
+    >>> market_opens = np.array([...])  # Market open times
+    >>> minute_val = minute_value(market_opens, pos=450, minutes_per_day=390)
+"""
 
 from typing import Any
 import pandas as pd

@@ -82,83 +82,123 @@ class PipelineEngine(ABC):
     def run_pipeline(self, pipeline, start_date, end_date, hooks=None):
         """Compute values for ``pipeline`` from ``start_date`` to ``end_date``.
 
-        Parameters
-        ----------
-        pipeline : zipline.pipeline.Pipeline
-            The pipeline to run.
-        start_date : pd.Timestamp
-            Start date of the computed matrix.
-        end_date : pd.Timestamp
-            End date of the computed matrix.
-        hooks : list[implements(PipelineHooks)], optional
-            Hooks for instrumenting Pipeline execution.
+        This is the main entry point for executing a Pipeline. The engine will
+        compute all terms in the pipeline's dependency graph and return results
+        for the requested date range.
+
+        Args:
+            pipeline: The pipeline to run. Must be an instance of
+                zipline.pipeline.Pipeline containing the columns (output terms)
+                to compute.
+            start_date: Start date of the computed matrix. Must be a valid
+                trading session in the pipeline's domain.
+            end_date: End date of the computed matrix. Must be a valid trading
+                session in the pipeline's domain that is >= start_date.
+            hooks: Optional list of hooks for instrumenting Pipeline execution.
+                Hooks can be used to monitor progress, log information, or
+                collect metrics during pipeline computation.
 
         Returns:
-        -------
-        result : pd.DataFrame
-            A frame of computed results.
+            pd.DataFrame: A frame of computed results with a MultiIndex of
+                (date, asset) pairs. The columns correspond to the entries in
+                ``pipeline.columns``. For each date between ``start_date`` and
+                ``end_date``, ``result`` will contain a row for each asset that
+                passed ``pipeline.screen``. A screen of ``None`` indicates that
+                a row should be returned for each asset that existed each day.
 
-            The ``result`` columns correspond to the entries of
-            `pipeline.columns`, which should be a dictionary mapping strings to
-            instances of :class:`zipline.pipeline.Term`.
+        Raises:
+            ValueError: If start_date or end_date are not valid trading sessions,
+                or if start_date > end_date.
 
-            For each date between ``start_date`` and ``end_date``, ``result``
-            will contain a row for each asset that passed `pipeline.screen`.
-            A screen of ``None`` indicates that a row should be returned for
-            each asset that existed each day.
+        Examples:
+            Run a simple pipeline computing close prices::
+
+                >>> from rustybt.pipeline import Pipeline
+                >>> from rustybt.pipeline.data import EquityPricing
+                >>> pipe = Pipeline(columns={'close': EquityPricing.close.latest})
+                >>> result = engine.run_pipeline(pipe, '2020-01-01', '2020-01-31')
+
+            Run a pipeline with a screen filter::
+
+                >>> from rustybt.pipeline.factors import SimpleMovingAverage
+                >>> sma_20 = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=20)
+                >>> pipe = Pipeline(
+                ...     columns={'sma': sma_20},
+                ...     screen=sma_20 > 50
+                ... )
+                >>> result = engine.run_pipeline(pipe, '2020-01-01', '2020-01-31')
         """
         raise NotImplementedError("run_pipeline")
 
     @abstractmethod
     def run_chunked_pipeline(self, pipeline, start_date, end_date, chunksize, hooks=None):
-        """Compute values for ``pipeline`` from ``start_date`` to ``end_date``, in
-        date chunks of size ``chunksize``.
+        """Compute values for ``pipeline`` in date chunks to reduce memory usage.
 
-        Chunked execution reduces memory consumption, and may reduce
-        computation time depending on the contents of your pipeline.
+        Chunked execution breaks the date range into smaller segments and
+        processes them independently, then concatenates the results. This
+        significantly reduces memory consumption for long date ranges and may
+        also reduce computation time by improving cache locality.
 
-        Parameters
-        ----------
-        pipeline : Pipeline
-            The pipeline to run.
-        start_date : pd.Timestamp
-            The start date to run the pipeline for.
-        end_date : pd.Timestamp
-            The end date to run the pipeline for.
-        chunksize : int
-            The number of days to execute at a time.
-        hooks : list[implements(PipelineHooks)], optional
-            Hooks for instrumenting Pipeline execution.
+        Args:
+            pipeline: The pipeline to run. Must be an instance of
+                zipline.pipeline.Pipeline.
+            start_date: The start date for pipeline computation. Must be a valid
+                trading session in the pipeline's domain.
+            end_date: The end date for pipeline computation. Must be a valid
+                trading session >= start_date.
+            chunksize: The number of trading days to execute at a time. Larger
+                chunks use more memory but may be faster; smaller chunks use less
+                memory but have more overhead.
+            hooks: Optional list of hooks for instrumenting Pipeline execution.
 
         Returns:
-        -------
-        result : pd.DataFrame
-            A frame of computed results.
+            pd.DataFrame: A frame of computed results with the same format as
+                :meth:`run_pipeline`. The chunking is transparent to the caller
+                - results are identical to calling ``run_pipeline`` directly.
 
-            The ``result`` columns correspond to the entries of
-            `pipeline.columns`, which should be a dictionary mapping strings to
-            instances of :class:`zipline.pipeline.Term`.
+        Raises:
+            ValueError: If start_date or end_date are not valid trading sessions,
+                or if start_date > end_date, or if chunksize <= 0.
 
-            For each date between ``start_date`` and ``end_date``, ``result``
-            will contain a row for each asset that passed `pipeline.screen`.
-            A screen of ``None`` indicates that a row should be returned for
-            each asset that existed each day.
+        Examples:
+            Run a pipeline in 30-day chunks to reduce memory usage::
+
+                >>> pipe = Pipeline(columns={'close': EquityPricing.close.latest})
+                >>> # Process one year in 30-day chunks
+                >>> result = engine.run_chunked_pipeline(
+                ...     pipe, '2020-01-01', '2020-12-31', chunksize=30
+                ... )
+
+            Optimal chunk size depends on your data and pipeline complexity::
+
+                >>> # Smaller chunks for memory-constrained environments
+                >>> result = engine.run_chunked_pipeline(pipe, start, end, chunksize=10)
+                >>> # Larger chunks for better performance when memory is available
+                >>> result = engine.run_chunked_pipeline(pipe, start, end, chunksize=100)
 
         See Also:
-        --------
-        :meth:`zipline.pipeline.engine.PipelineEngine.run_pipeline`
+            :meth:`run_pipeline`: Non-chunked pipeline execution.
         """
         raise NotImplementedError("run_chunked_pipeline")
 
 
 class NoEngineRegistered(Exception):
-    """Raised if a user tries to call pipeline_output in an algorithm that hasn't
-    set up a pipeline engine.
+    """Exception raised when attempting pipeline operations without an engine.
+
+    This exception is raised when a user tries to run a pipeline or call
+    pipeline-related methods in a context where no PipelineEngine has been
+    registered. This typically happens when attempting to use Pipeline features
+    without properly configuring the necessary data loaders and engine.
     """
 
 
 class ExplodingPipelineEngine(PipelineEngine):
-    """A PipelineEngine that doesn't do anything."""
+    """Placeholder PipelineEngine that raises NoEngineRegistered on all operations.
+
+    This engine is used as a default when no real engine has been configured.
+    Any attempt to run a pipeline will raise NoEngineRegistered with a helpful
+    error message.
+    """
 
     def run_pipeline(self, pipeline, start_date, end_date, hooks=None):
         raise NoEngineRegistered(
@@ -174,57 +214,121 @@ class ExplodingPipelineEngine(PipelineEngine):
 def default_populate_initial_workspace(
     initial_workspace, root_mask_term, execution_plan, dates, assets
 ):
-    """The default implementation for ``populate_initial_workspace``. This
-    function returns the ``initial_workspace`` argument without making any
-    modifications.
+    """Default implementation for populating the initial workspace.
 
-    Parameters
-    ----------
-    initial_workspace : dict[array-like]
-        The initial workspace before we have populated it with any cached
-        terms.
-    root_mask_term : Term
-        The root mask term, normally ``AssetExists()``. This is needed to
-        compute the dates for individual terms.
-    execution_plan : ExecutionPlan
-        The execution plan for the pipeline being run.
-    dates : pd.DatetimeIndex
-        All of the dates being requested in this pipeline run including
-        the extra dates for look back windows.
-    assets : pd.Int64Index
-        All of the assets that exist for the window being computed.
+    This function is called before pipeline execution begins to allow
+    pre-computing or caching commonly-used terms. The default implementation
+    returns the workspace unchanged, but custom implementations can be provided
+    to SimplePipelineEngine to populate the workspace with pre-computed values.
+
+    Args:
+        initial_workspace: The initial workspace containing the root mask and
+            dates. This is typically just {root_mask_term: mask_array,
+            InputDates(): dates_array}.
+        root_mask_term: The root mask term, normally ``AssetExists()``. This
+            represents which assets existed on which dates.
+        execution_plan: The execution plan for the pipeline being run, containing
+            information about term dependencies and required extra rows.
+        dates: All trading dates being requested in this pipeline run, including
+            extra dates needed for look-back windows.
+        assets: All assets that exist for the date range being computed.
 
     Returns:
-    -------
-    populated_initial_workspace : dict[term, array-like]
-        The workspace to begin computations with.
+        dict[Term, array-like]: The workspace to begin computations with. The
+            default implementation returns ``initial_workspace`` unchanged.
+
+    Examples:
+        Create a custom workspace populator that pre-computes a common term::
+
+            >>> def my_populate_workspace(workspace, root_mask, plan, dates, assets):
+            ...     # Pre-compute close prices to avoid reloading
+            ...     if some_common_term in plan.outputs.values():
+            ...         workspace[some_common_term] = load_data(...)
+            ...     return workspace
+            >>> engine = SimplePipelineEngine(
+            ...     get_loader=my_loader,
+            ...     asset_finder=finder,
+            ...     populate_initial_workspace=my_populate_workspace,
+            ... )
+
+        The default behavior (return workspace unchanged)::
+
+            >>> workspace = default_populate_initial_workspace(
+            ...     workspace, root_mask, plan, dates, assets
+            ... )
+            >>> # workspace is returned unchanged
     """
     return initial_workspace
 
 
 class SimplePipelineEngine(PipelineEngine):
-    """PipelineEngine class that computes each term independently.
+    """PipelineEngine that executes pipelines using a topological sort algorithm.
 
-    Parameters
-    ----------
-    get_loader : callable
-        A function that is given a loadable term and returns a PipelineLoader
-        to use to retrieve raw data for that term.
-    asset_finder : zipline.assets.AssetFinder
-        An AssetFinder instance.  We depend on the AssetFinder to determine
-        which assets are in the top-level universe at any point in time.
-    populate_initial_workspace : callable, optional
-        A function which will be used to populate the initial workspace when
-        computing a pipeline. See
-        :func:`zipline.pipeline.engine.default_populate_initial_workspace`
-        for more info.
-    default_hooks : list, optional
-        List of hooks that should be used to instrument all pipelines executed
-        by this engine.
+    This is the standard implementation of PipelineEngine. It computes pipeline
+    terms in dependency order, loading data from registered loaders and computing
+    derived terms using their defined computation methods. The engine manages
+    memory efficiently by maintaining reference counts and discarding intermediate
+    results as soon as they're no longer needed.
+
+    The execution algorithm:
+    1. Determine the pipeline's domain and build a dependency graph
+    2. Compute a "lifetimes matrix" indicating which assets existed when
+    3. Topologically sort terms to determine execution order
+    4. For each term in order:
+       - Load data (for LoadableTerms) or compute (for ComputableTerms)
+       - Store result in workspace
+       - Decrement reference counts and discard unneeded data
+    5. Extract outputs and format as a DataFrame
+
+    Args:
+        get_loader: A function that maps LoadableTerms to PipelineLoaders.
+            Called with a LoadableTerm and should return the PipelineLoader
+            responsible for loading that term's data.
+        asset_finder: An AssetFinder instance used to determine which assets
+            existed during the computation period. Required for building the
+            root asset existence mask.
+        default_domain: The default domain to use for pipelines that don't
+            specify one. Defaults to GENERIC.
+        populate_initial_workspace: Optional function for pre-populating the
+            workspace with cached or pre-computed terms. See
+            :func:`default_populate_initial_workspace` for signature details.
+        default_hooks: Optional list of hooks to use for instrumenting all
+            pipeline executions. Hooks can monitor progress, log information,
+            or collect metrics.
+
+    Examples:
+        Create a basic engine with a simple loader function::
+
+            >>> from rustybt.pipeline.loaders import EquityPricingLoader
+            >>> from rustybt.assets import AssetFinder
+            >>>
+            >>> def get_loader(term):
+            ...     if term.dataset == EquityPricing:
+            ...         return my_pricing_loader
+            ...     raise ValueError(f"No loader for {term}")
+            >>>
+            >>> engine = SimplePipelineEngine(
+            ...     get_loader=get_loader,
+            ...     asset_finder=my_asset_finder,
+            ... )
+            >>> result = engine.run_pipeline(my_pipeline, '2020-01-01', '2020-12-31')
+
+        Create an engine with custom workspace population::
+
+            >>> def populate_workspace(workspace, root_mask, plan, dates, assets):
+            ...     # Pre-compute commonly used term
+            ...     workspace[my_common_term] = precomputed_data
+            ...     return workspace
+            >>>
+            >>> engine = SimplePipelineEngine(
+            ...     get_loader=get_loader,
+            ...     asset_finder=my_asset_finder,
+            ...     populate_initial_workspace=populate_workspace,
+            ... )
 
     See Also:
-    --------
-    :func:`zipline.pipeline.engine.default_populate_initial_workspace`
+        :func:`default_populate_initial_workspace`: Default workspace populator.
+        :class:`PipelineEngine`: Abstract base class.
     """
 
     __slots__ = (
@@ -551,37 +655,63 @@ class SimplePipelineEngine(PipelineEngine):
         return out
 
     def compute_chunk(self, graph, dates, sids, workspace, refcounts, execution_order, hooks):
-        """Compute the Pipeline terms in the graph for the requested start and end
-        dates.
+        """Execute pipeline computation for a single chunk of dates.
 
-        This is where we do the actual work of running a pipeline.
+        This is the core computation loop where pipeline terms are actually
+        computed. Terms are processed in topological order, with LoadableTerms
+        loaded from data sources and ComputableTerms computed from their inputs.
+        Memory is managed by tracking reference counts - when a term's refcount
+        hits zero, its data is removed from the workspace.
 
-        Parameters
-        ----------
-        graph : zipline.pipeline.graph.ExecutionPlan
-            Dependency graph of the terms to be executed.
-        dates : pd.DatetimeIndex
-            Row labels for our root mask.
-        sids : pd.Int64Index
-            Column labels for our root mask.
-        workspace : dict
-            Map from term -> output.
-            Must contain at least entry for `self._root_mask_term` whose shape
-            is `(len(dates), len(assets))`, but may contain additional
-            pre-computed terms for testing or optimization purposes.
-        refcounts : dict[Term, int]
-            Dictionary mapping terms to number of dependent terms. When a
-            term's refcount hits 0, it can be safely discarded from
-            ``workspace``. See TermGraph.decref_dependencies for more info.
-        execution_order : list[Term]
-            Order in which to execute terms.
-        hooks : implements(PipelineHooks)
-            Hooks to instrument pipeline execution.
+        The computation process:
+        1. Group LoadableTerms by loader and extra_rows for batch loading
+        2. For each term in execution_order:
+           - Skip if already in workspace (pre-computed or batch-loaded)
+           - Load data if it's a LoadableTerm (often in batches)
+           - Compute if it's a ComputableTerm (call _compute with inputs)
+           - Store result in workspace
+           - Decrement refcounts of dependencies and discard when they hit 0
+        3. Extract output terms from workspace and return
+
+        Args:
+            graph: ExecutionPlan containing the dependency graph, extra row
+                requirements, and output specifications.
+            dates: Row labels (trading dates) for the computation, including
+                any extra rows needed for lookback windows.
+            sids: Column labels (asset IDs) for the computation.
+            workspace: Map from Term to computed array. Must contain at least
+                the root mask term. May contain additional pre-computed terms
+                for testing or optimization.
+            refcounts: Dictionary mapping each term to its reference count
+                (number of other terms that depend on it). When a term's refcount
+                hits 0, it's safe to remove from workspace.
+            execution_order: Topologically-sorted list of terms to compute.
+                Terms appear after all their dependencies.
+            hooks: Hooks for instrumenting execution (progress, logging, etc).
 
         Returns:
-        -------
-        results : dict
-            Dictionary mapping requested results to outputs.
+            dict: Dictionary mapping output names to computed arrays. Each array
+                has shape (len(dates) - extra_rows, len(sids)) where extra_rows
+                is the number of extra rows that were computed for lookback.
+
+        Examples:
+            This method is typically called by run_pipeline, but can be called
+            directly for testing::
+
+                >>> workspace = {root_mask: mask_array}
+                >>> refcounts = graph.initial_refcounts(workspace)
+                >>> order = graph.execution_order(workspace, refcounts)
+                >>> results = engine.compute_chunk(
+                ...     graph, dates, sids, workspace, refcounts, order, hooks
+                ... )
+
+            The workspace is modified in-place during computation::
+
+                >>> # Before computation
+                >>> assert len(workspace) == 1  # Just root mask
+                >>> results = engine.compute_chunk(...)
+                >>> # After computation, only outputs remain in workspace
+                >>> assert set(results.keys()) == set(pipeline.columns.keys())
         """
         self._validate_compute_chunk_params(graph, dates, sids, workspace)
 
@@ -692,35 +822,59 @@ class SimplePipelineEngine(PipelineEngine):
         return out
 
     def _to_narrow(self, terms, data, mask, dates, assets):
-        """
-        Convert raw computed pipeline results into a DataFrame for public APIs.
+        """Convert raw pipeline computation results to a narrow DataFrame format.
 
-        Parameters
-        ----------
-        terms : dict[str -> Term]
-            Dict mapping column names to terms.
-        data : dict[str -> ndarray[ndim=2]]
-            Dict mapping column names to computed results for those names.
-        mask : ndarray[bool, ndim=2]
-            Mask array of values to keep.
-        dates : ndarray[datetime64, ndim=1]
-            Row index for arrays `data` and `mask`
-        assets : ndarray[int64, ndim=2]
-            Column index for arrays `data` and `mask`
+        This method transforms the "wide" format used internally (2D arrays with
+        dates as rows and assets as columns) into the "narrow" format returned
+        to users (MultiIndexed DataFrame with (date, asset) pairs as rows).
+        Only rows where the mask is True are included in the output.
+
+        The conversion process:
+        1. Apply the mask to filter out unwanted (date, asset) pairs
+        2. For each output column, call its postprocess() method
+        3. Resolve asset IDs to Asset objects
+        4. Build a MultiIndex from the filtered dates and assets
+        5. Construct and return a DataFrame
+
+        Args:
+            terms: Dict mapping output column names to the Terms that produced them.
+                Used to call postprocess() on each column's data.
+            data: Dict mapping column names to 2D numpy arrays of computed values.
+                Each array has shape (len(dates), len(assets)).
+            mask: Boolean array indicating which (date, asset) pairs passed the
+                pipeline's screen filter. Shape is (len(dates), len(assets)).
+            dates: Array of datetime64 values representing trading dates. These
+                become the date level of the MultiIndex.
+            assets: Array of int64 asset IDs. These are resolved to Asset objects
+                and become the asset level of the MultiIndex.
 
         Returns:
-        -------
-        results : pd.DataFrame
-            The indices of `results` are as follows:
+            pd.DataFrame: A DataFrame with:
+                - MultiIndex of (date, asset) pairs where mask was True
+                - Columns corresponding to pipeline output names
+                - Values from the data arrays, post-processed by each term
 
-            index : two-tiered MultiIndex of (date, asset).
-                Contains an entry for each (date, asset) pair corresponding to
-                a `True` value in `mask`.
-            columns : Index of str
-                One column per entry in `data`.
+        Examples:
+            This method is called internally by run_pipeline::
 
-        If mask[date, asset] is True, then result.loc[(date, asset), colname]
-        will contain the value of data[colname][date, asset].
+                >>> # Wide format (internal)
+                >>> data = {'close': array([[1, 2], [3, 4]])}  # 2 dates x 2 assets
+                >>> mask = array([[True, False], [True, True]])
+                >>> dates = pd.DatetimeIndex(['2020-01-01', '2020-01-02'])
+                >>> assets = array([1, 2])
+                >>>
+                >>> result = engine._to_narrow(terms, data, mask, dates, assets)
+                >>> # Narrow format (public API)
+                >>> # MultiIndex with 3 rows: (2020-01-01, Asset(1)),
+                >>> #                          (2020-01-02, Asset(1)),
+                >>> #                          (2020-01-02, Asset(2))
+
+            The mask determines which rows appear in the output::
+
+                >>> # If mask is all False, return empty DataFrame
+                >>> mask = array([[False, False], [False, False]])
+                >>> result = engine._to_narrow(terms, data, mask, dates, assets)
+                >>> assert len(result) == 0
         """
         if not mask.any():
             # Manually handle the empty DataFrame case. This is a workaround

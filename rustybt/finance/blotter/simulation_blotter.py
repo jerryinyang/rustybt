@@ -1,3 +1,48 @@
+"""Simulation blotter for backtesting with realistic order execution.
+
+This module provides the SimulationBlotter, which is the default blotter
+implementation for backtesting in RustyBT. It simulates realistic order
+execution by:
+
+- Applying slippage models to orders based on market conditions
+- Calculating commissions using configurable commission models
+- Supporting advanced order types (bracket, OCO, trailing stop)
+- Validating cash availability before executing buys
+- Handling stock splits and corporate actions
+- Managing order lifecycle from placement through execution
+
+The SimulationBlotter supports multiple asset types (equities, futures,
+crypto) and can be configured with different slippage and commission
+models for each asset class.
+
+Classes:
+    - SimulationBlotter: Default blotter implementation for backtesting
+
+Examples:
+    Basic setup::
+
+        from rustybt.finance.blotter import SimulationBlotter
+        from rustybt.finance.slippage import VolumeShareSlippage
+        from rustybt.finance.commission import PerShare
+
+        blotter = SimulationBlotter(
+            equity_slippage=VolumeShareSlippage(),
+            equity_commission=PerShare(cost=0.005, min_trade_cost=1.0),
+            enable_cash_validation=True,
+            cash_validation_mode='reject'
+        )
+
+    Advanced configuration with cash validation::
+
+        blotter = SimulationBlotter(
+            equity_slippage=VolumeShareSlippage(volume_limit=0.025),
+            equity_commission=PerShare(0.005, 1.0),
+            enable_cash_validation=True,  # Prevent overdraft
+            cash_validation_mode='reject',  # Reject invalid orders
+            portfolio=portfolio,  # Required for cash validation
+            data_portal=data_portal  # Required for price lookups
+        )
+"""
 #
 # Copyright 2015 Quantopian, Inc.
 #
@@ -46,6 +91,68 @@ warning_logger = logging.getLogger("AlgoWarning")
 
 @register(Blotter, "default")
 class SimulationBlotter(Blotter):
+    """Default blotter implementation for backtesting simulations.
+
+    SimulationBlotter provides realistic order execution simulation by applying
+    slippage and commission models, validating cash availability, and managing
+    the complete order lifecycle. It supports multiple asset types with different
+    execution models for each.
+
+    Key Features:
+        - Configurable slippage and commission models per asset type
+        - Cash validation to prevent overdraft (optional)
+        - Advanced order types: Bracket, OCO, Trailing Stop
+        - Stock split handling
+        - Realistic partial fills based on market volume
+        - Support for equities, futures, and generic assets
+
+    Args:
+        equity_slippage: Slippage model for equity orders. Defaults to
+            FixedBasisPointsSlippage() if not specified.
+        future_slippage: Slippage model for futures orders. Defaults to
+            VolatilityVolumeShare() if not specified.
+        equity_commission: Commission model for equity orders. Defaults to
+            PerShare() if not specified.
+        future_commission: Commission model for futures orders. Defaults to
+            PerContract() if not specified.
+        cancel_policy: Policy for automatic order cancellation. Defaults to
+            NeverCancel() if not specified.
+        portfolio: Portfolio reference for cash validation (optional but
+            required if enable_cash_validation=True).
+        data_portal: DataPortal for price lookups (optional but required
+            if enable_cash_validation=True).
+        enable_cash_validation: If True, validate sufficient cash before
+            placing buy orders. Defaults to True.
+        cash_validation_mode: How to handle insufficient cash. Options:
+            - "reject": Reject order and log warning (graceful)
+            - "warn": Log warning but allow order (backward compatible)
+            - "strict": Raise InsufficientFundsError (halt backtest)
+            Defaults to "reject".
+
+    Attributes:
+        open_orders: Dictionary mapping assets to lists of open orders.
+        orders: Dictionary mapping order IDs to order objects.
+        new_orders: List of orders placed since last event.
+        max_shares: Maximum shares allowed per order (100 billion).
+        portfolio: Portfolio reference for cash validation.
+        data_portal: DataPortal for market data access.
+        enable_cash_validation: Whether cash validation is enabled.
+        cash_validation_mode: How insufficient cash is handled.
+        slippage_models: Dictionary mapping asset types to slippage models.
+        commission_models: Dictionary mapping asset types to commission models.
+
+    Examples:
+        >>> blotter = SimulationBlotter(
+        ...     equity_commission=PerShare(cost=0.005, min_trade_cost=1.0),
+        ...     enable_cash_validation=True,
+        ...     cash_validation_mode='reject'
+        ... )
+        >>> order_id = blotter.order(stock, 100, MarketOrder())
+
+    Raises:
+        ValueError: If cash_validation_mode is not one of: reject, warn, strict.
+    """
+
     def __init__(
         self,
         equity_slippage=None,
@@ -110,6 +217,11 @@ class SimulationBlotter(Blotter):
         }
 
     def __repr__(self):
+        """Return detailed string representation of the blotter state.
+
+        Returns:
+            str: Multi-line string showing blotter configuration and current state.
+        """
         return """
 {class_name}(
     slippage_models={slippage_models},
@@ -460,13 +572,23 @@ class SimulationBlotter(Blotter):
                 self.new_orders.append(cur_order)
 
     def cancel_linked_orders(self, filled_order_id):
-        """
-        Cancel all orders linked to a filled order (OCO behavior).
+        """Cancel all orders linked to a filled order (OCO behavior).
 
-        Parameters
-        ----------
-        filled_order_id : str
-            ID of the order that filled
+        This implements One-Cancels-Other (OCO) order logic. When one order
+        in a linked group fills, all other orders in that group are automatically
+        canceled to prevent unintended positions.
+
+        Args:
+            filled_order_id: The unique ID of the order that was filled.
+
+        Examples:
+            >>> # OCO order placed: buy at $100 limit OR buy at $95 stop
+            >>> # If the limit order fills, this automatically cancels the stop
+            >>> blotter.cancel_linked_orders(limit_order_id)
+
+        Note:
+            This is automatically called when OCO or bracket orders fill.
+            It's not typically called directly by user code.
         """
         if filled_order_id not in self.orders:
             return

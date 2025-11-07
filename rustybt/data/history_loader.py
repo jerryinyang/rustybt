@@ -12,6 +12,86 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""History data loading with adjustment support for backtesting.
+
+This module provides the infrastructure for loading historical pricing data during
+backtesting simulations, with support for corporate action adjustments (splits,
+dividends, mergers) and multiple asset types (equities, futures, continuous futures).
+
+Key Components:
+    HistoryLoader:
+        Abstract base class for loading historical data with adjustments applied.
+        Provides sliding window access to historical OHLCV data.
+
+    MinuteHistoryLoader:
+        Concrete implementation for minute-frequency data loading.
+
+    DailyHistoryLoader:
+        Concrete implementation for daily-frequency data loading.
+
+    SlidingWindow:
+        Wrapper around AdjustedArrayWindow supporting monotonically increasing
+        datetime requests for windowed data access.
+
+Adjustment Support:
+    The loader integrates with adjustment readers to apply corporate actions:
+
+    - HistoryCompatibleUSEquityAdjustmentReader: Applies splits, dividends, mergers
+      to equity pricing data. Adjustments are applied retrospectively so historical
+      prices remain comparable across corporate actions.
+
+    - ContinuousFutureAdjustmentReader: Calculates roll adjustments for continuous
+      futures contracts, either multiplicative or additive, to create smooth
+      price series across contract expirations.
+
+Data Loading Patterns:
+    Load historical data during simulation:
+        >>> from rustybt.data import MinuteHistoryLoader
+        >>> loader = MinuteHistoryLoader(
+        ...     trading_calendar=calendar,
+        ...     reader=minute_reader,
+        ...     equity_adjustment_reader=adj_reader,
+        ...     asset_finder=finder
+        ... )
+        >>>
+        >>> # Load 30-bar history window
+        >>> arrays = loader.history(
+        ...     assets=[asset1, asset2],
+        ...     dts=pd.date_range('2020-01-01', periods=30, freq='1min'),
+        ...     fields=['open', 'high', 'low', 'close', 'volume']
+        ... )
+
+    Continuous futures with roll adjustments:
+        >>> from rustybt.data import DailyHistoryLoader
+        >>> loader = DailyHistoryLoader(
+        ...     trading_calendar=calendar,
+        ...     reader=daily_reader,
+        ...     equity_adjustment_reader=None,
+        ...     asset_finder=finder,
+        ...     roll_finders=roll_finders  # For continuous futures
+        ... )
+
+Caching and Performance:
+    - LRU cache for per-asset sliding windows (default 1000 assets)
+    - Expiring cache for continuous future contract chains
+    - Prefetch support to load data beyond current window for efficiency
+    - Adjustment calculations are cached per window
+
+Precision Handling:
+    The module uses 8 decimal places for rounding asset prices (increased from 3)
+    to match bundle Decimal(18,8) precision and prevent data loss when similar
+    values are rounded to the same value.
+
+See Also:
+    rustybt.data.bar_reader: Base classes for data readers
+    rustybt.data.adjustments: Adjustment readers for corporate actions
+    rustybt.lib.adjustment: Low-level adjustment application
+
+Thread Safety:
+    HistoryLoader instances are not thread-safe. Each trading thread should have
+    its own loader instance.
+"""
+
 from abc import (
     ABC,
     abstractmethod,
@@ -42,17 +122,41 @@ DEFAULT_ASSET_PRICE_DECIMALS = 8
 
 
 class HistoryCompatibleUSEquityAdjustmentReader:
+    """Adapter for loading US equity adjustments in history-compatible format.
+
+    Wraps an SQLiteAdjustmentReader to provide adjustments in the format expected
+    by HistoryLoader. Applies splits, dividends, and mergers retrospectively to
+    historical pricing data.
+
+    Args:
+        adjustment_reader: SQLiteAdjustmentReader for loading corporate actions.
+    """
+
     def __init__(self, adjustment_reader):
+        """Initialize the equity adjustment reader.
+
+        Args:
+            adjustment_reader: SQLiteAdjustmentReader instance providing corporate
+                action data (splits, dividends, mergers).
+        """
         self._adjustments_reader = adjustment_reader
 
     def load_pricing_adjustments(self, columns, dts, assets):
-        """
+        """Load pricing adjustments for specified columns, dates, and assets.
+
+        For each column and asset, retrieves all applicable adjustments (splits,
+        dividends, mergers) that occurred within the date range, formatted for
+        application by AdjustedArrayWindow.
+
+        Args:
+            columns: List of column names ('open', 'high', 'low', 'close', 'volume').
+            dts: DatetimeIndex of dates for which adjustments are needed.
+            assets: List of Asset objects for which to load adjustments.
 
         Returns:
-        -------
-        adjustments : list[dict[int -> Adjustment]]
-            A list, where each element corresponds to the `columns`, of
-            mappings from index to adjustment objects to apply at that index.
+            list[dict[int -> Adjustment]]: A list where each element corresponds to
+                a column in `columns`. Each dict maps indices in the date range to
+                lists of Adjustment objects to apply at that index.
         """
         out = [None] * len(columns)
         for i, column in enumerate(columns):
@@ -136,8 +240,25 @@ class HistoryCompatibleUSEquityAdjustmentReader:
 
 
 class ContinuousFutureAdjustmentReader:
-    """Calculates adjustments for continuous futures, based on the
-    close and open of the contracts on the either side of each roll.
+    """Calculates roll adjustments for continuous futures contracts.
+
+    Creates smooth price series across contract expirations by applying
+    multiplicative or additive adjustments based on price differences between
+    the front and back contracts at roll time.
+
+    Adjustment Types:
+        'mul' (multiplicative): Adjusts historical prices by the ratio of
+            back/front contract prices. Preserves percentage returns.
+
+        'add' (additive): Adjusts historical prices by the difference between
+            back and front contract prices. Preserves absolute price levels.
+
+    Args:
+        trading_calendar: Calendar for converting between sessions and minutes.
+        asset_finder: AssetFinder for retrieving contract details.
+        bar_reader: Reader for accessing contract OHLCV data.
+        roll_finders: Dict mapping roll styles to RollFinder instances.
+        frequency: Data frequency ('daily' or 'minute').
     """
 
     def __init__(
@@ -148,6 +269,16 @@ class ContinuousFutureAdjustmentReader:
         roll_finders,
         frequency,
     ):
+        """Initialize the continuous futures adjustment reader.
+
+        Args:
+            trading_calendar: TradingCalendar instance for date operations.
+            asset_finder: AssetFinder for contract lookups.
+            bar_reader: BarReader providing contract pricing data.
+            roll_finders: Dict mapping roll style names to RollFinder instances
+                that determine when contracts roll.
+            frequency: 'daily' or 'minute' indicating data frequency.
+        """
         self._trading_calendar = trading_calendar
         self._asset_finder = asset_finder
         self._bar_reader = bar_reader
@@ -155,13 +286,20 @@ class ContinuousFutureAdjustmentReader:
         self._frequency = frequency
 
     def load_pricing_adjustments(self, columns, dts, assets):
-        """
+        """Load roll adjustments for continuous futures contracts.
+
+        For each continuous future, calculates adjustments at roll dates to
+        create smooth price series when switching from one contract to the next.
+
+        Args:
+            columns: List of column names to load adjustments for.
+            dts: DatetimeIndex of dates for which adjustments are needed.
+            assets: List of ContinuousFuture objects.
 
         Returns:
-        -------
-        adjustments : list[dict[int -> Adjustment]]
-            A list, where each element corresponds to the `columns`, of
-            mappings from index to adjustment objects to apply at that index.
+            list[dict[int -> Adjustment]]: A list where each element corresponds to
+                a column in `columns`. Each dict maps indices to lists of Adjustment
+                objects (Float64Multiply or Float64Add) to apply at roll points.
         """
         out = [None] * len(columns)
         for i, column in enumerate(columns):
@@ -172,6 +310,17 @@ class ContinuousFutureAdjustmentReader:
         return out
 
     def _make_adjustment(self, adjustment_type, front_close, back_close, end_loc):
+        """Create an adjustment object for a contract roll.
+
+        Args:
+            adjustment_type: 'mul' for multiplicative or 'add' for additive.
+            front_close: Close price of the expiring front contract.
+            back_close: Close price of the incoming back contract.
+            end_loc: Index position just before the roll date.
+
+        Returns:
+            Float64Multiply or Float64Add: Adjustment object to apply.
+        """
         adj_base = back_close - front_close
         if adjustment_type == "mul":
             adj_value = 1.0 + adj_base / front_close
@@ -182,6 +331,22 @@ class ContinuousFutureAdjustmentReader:
         return adj_class(0, end_loc, 0, 0, adj_value)
 
     def _get_adjustments_in_range(self, cf, dts, field):
+        """Calculate adjustments for a continuous future over a date range.
+
+        For each contract roll within the date range, calculates the appropriate
+        adjustment based on the price difference between the outgoing and incoming
+        contracts.
+
+        Args:
+            cf: ContinuousFuture contract to calculate adjustments for.
+            dts: DatetimeIndex of dates in the history window.
+            field: Price field name ('open', 'high', 'low', 'close', 'volume').
+
+        Returns:
+            dict[int -> list[Adjustment]]: Mapping from date indices to adjustment
+                objects to apply at those indices. Returns empty dict if no
+                adjustments needed (volume field, no adjustment style, etc.).
+        """
         if field == "volume" or field == "sid":
             return {}
         if cf.adjustment is None:
@@ -226,19 +391,38 @@ class ContinuousFutureAdjustmentReader:
 
 
 class SlidingWindow:
-    """Wrapper around an AdjustedArrayWindow which supports monotonically
-    increasing (by datetime) requests for a sized window of data.
+    """Wrapper around an AdjustedArrayWindow supporting sliding window access.
 
-    Parameters
-    ----------
-    window : AdjustedArrayWindow
-       Window of pricing data with prefetched values beyond the current
-       simulation dt.
-    cal_start : int
-       Index in the overall calendar at which the window starts.
+    Provides efficient access to historical data windows that advance
+    monotonically forward in time. Internally manages an AdjustedArrayWindow
+    and seeks to the appropriate position as the simulation progresses.
+
+    The window prefetches data beyond the current simulation datetime to
+    enable efficient seeking without repeated data loads.
+
+    Args:
+        window: AdjustedArrayWindow iterator providing adjusted pricing data.
+        size: Number of bars in the history window.
+        cal_start: Index in the calendar where this window starts.
+        offset: Offset adjustment for window positioning.
+
+    Attributes:
+        window: The underlying AdjustedArrayWindow.
+        cal_start: Starting calendar index for this window.
+        current: Currently cached window data array.
+        offset: Position offset for window calculations.
+        most_recent_ix: Index of the most recently returned data.
     """
 
     def __init__(self, window, size, cal_start, offset):
+        """Initialize a sliding window wrapper.
+
+        Args:
+            window: AdjustedArrayWindow iterator to wrap.
+            size: Length of the history window in bars.
+            cal_start: Starting index in the calendar.
+            offset: Offset for window positioning calculations.
+        """
         self.window = window
         self.cal_start = cal_start
         self.current = next(window)
@@ -246,11 +430,18 @@ class SlidingWindow:
         self.most_recent_ix = self.cal_start + size
 
     def get(self, end_ix):
-        """
+        """Get window data up to the specified end index.
+
+        If the requested index matches the most recent request, returns cached
+        data. Otherwise, seeks the underlying window to the target position.
+
+        Args:
+            end_ix: Calendar index of the last bar to include in the window.
+
         Returns:
-        -------
-        out : A np.ndarray of the equity pricing up to end_ix after adjustments
-              and rounding have been applied.
+            np.ndarray: Adjusted and rounded pricing data for the window ending
+                at end_ix. Shape is (window_size,) for single-asset windows or
+                (window_size, n_assets) for multi-asset windows.
         """
         if self.most_recent_ix == end_ix:
             return self.current

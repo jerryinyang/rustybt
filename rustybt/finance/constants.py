@@ -13,6 +13,75 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Financial modeling constants and market parameters.
+
+This module defines constants used throughout the finance module for:
+
+- Time period calculations and annualization factors
+- Futures contract exchange fees by symbol
+- Market impact parameters (eta) for slippage modeling
+
+The constants are calibrated based on historical market data and are used
+primarily in commission and slippage models to simulate realistic trading costs.
+
+Constants:
+    TRADING_DAYS_IN_YEAR (int): Standard number of trading days per year (250)
+    TRADING_HOURS_IN_DAY (float): Trading hours in a standard trading day (6.5)
+    MINUTES_IN_HOUR (int): Minutes per hour (60)
+
+    ANNUALIZER (dict): Annualization factors for different data frequencies
+        - 'daily': 250 trading days
+        - 'hourly': 250 * 6.5 = 1,625 trading hours
+        - 'minute': 250 * 6.5 * 60 = 97,500 trading minutes
+
+    FUTURE_EXCHANGE_FEES_BY_SYMBOL (dict): Per-contract exchange fees in USD
+        for various futures contracts, indexed by root symbol (e.g., 'ES' for
+        E-mini S&P 500). These are added to commission costs.
+
+    DEFAULT_ETA (float): Default market impact parameter (~0.049) used in
+        VolatilityVolumeShare slippage model when no symbol-specific eta exists
+
+    ROOT_SYMBOL_TO_ETA (dict): Symbol-specific market impact parameters (eta)
+        for futures contracts. Each value represents the calibrated market
+        impact coefficient for that contract type.
+
+Examples:
+    Annualizing daily returns to annual volatility:
+
+    >>> import numpy as np
+    >>> from rustybt.finance.constants import ANNUALIZER
+    >>> daily_returns = np.array([0.01, -0.005, 0.002, ...])
+    >>> daily_volatility = np.std(daily_returns)
+    >>> annual_volatility = daily_volatility * np.sqrt(ANNUALIZER['daily'])
+
+    Using futures exchange fees in commission models:
+
+    >>> from rustybt.finance.constants import FUTURE_EXCHANGE_FEES_BY_SYMBOL
+    >>> from rustybt.finance.commission import PerContract
+    >>> commission = PerContract(
+    ...     cost=0.85,
+    ...     exchange_fee=FUTURE_EXCHANGE_FEES_BY_SYMBOL
+    ... )
+
+    Using market impact parameters:
+
+    >>> from rustybt.finance.constants import ROOT_SYMBOL_TO_ETA
+    >>> from rustybt.finance.slippage import VolatilityVolumeShare
+    >>> slippage = VolatilityVolumeShare(
+    ...     volume_limit=0.05,
+    ...     eta=ROOT_SYMBOL_TO_ETA  # Use symbol-specific parameters
+    ... )
+
+Note:
+    The eta parameter represents the price change per unit of volatility
+    per unit of volume participation in the market impact model:
+
+        market_impact = eta * volatility * sqrt(volume_ratio)
+
+    Lower eta values indicate more liquid markets with less price impact.
+    The calibrated values are based on historical order book data.
+"""
+
 TRADING_DAYS_IN_YEAR = 250
 TRADING_HOURS_IN_DAY = 6.5
 MINUTES_IN_HOUR = 60

@@ -65,6 +65,11 @@ class DataError(RustyBTError):
 
 
 class DataNotFoundError(DataError):
+    """Raised when requested data cannot be found.
+
+    Captures details about the asset and time range that was requested
+    but not available in the data source.
+    """
     message = "Requested data was not found"
 
     def __init__(
@@ -82,6 +87,10 @@ class DataNotFoundError(DataError):
 
 
 class DataAdapterError(DataError):
+    """Raised when a data adapter encounters an error.
+
+    Captures details about which adapter failed and retry attempts.
+    """
     message = "Data adapter error"
 
     def __init__(
@@ -98,6 +107,10 @@ class DataAdapterError(DataError):
 
 
 class DataValidationError(DataAdapterError):
+    """Raised when data fails validation checks.
+
+    Captures information about which rows or values failed validation.
+    """
     message = "Data validation failed"
 
     def __init__(
@@ -121,6 +134,11 @@ class DataValidationError(DataAdapterError):
 
 
 class LookaheadError(DataError):
+    """Raised when code attempts to access future data (lookahead bias).
+
+    This prevents backtests from using data that wouldn't have been
+    available at the simulation time.
+    """
     message = "Attempted to access future data"
 
     def __init__(
@@ -141,10 +159,16 @@ class LookaheadError(DataError):
 
 
 class OrderError(RustyBTError):
+    """Base exception for order-related errors."""
     message = "Order processing failed"
 
 
 class OrderRejectedError(OrderError):
+    """Raised when a broker or risk control rejects an order.
+
+    Captures details about the rejected order including order ID, asset,
+    broker, and reason for rejection.
+    """
     message = "Order was rejected"
 
     def __init__(
@@ -169,6 +193,11 @@ class OrderRejectedError(OrderError):
 
 
 class OrderNotFoundError(OrderError):
+    """Raised when an order cannot be found by its ID.
+
+    This typically indicates an invalid order ID or an order that has
+    already been fully processed and removed from tracking.
+    """
     message = "Order not found"
 
     def __init__(
@@ -184,6 +213,10 @@ class OrderNotFoundError(OrderError):
 
 
 class InsufficientFundsError(OrderError):
+    """Raised when an order cannot be executed due to insufficient funds.
+
+    Captures the required amount versus available funds.
+    """
     message = "Insufficient funds for order"
 
     def __init__(
@@ -204,6 +237,10 @@ class InsufficientFundsError(OrderError):
 
 
 class InvalidOrderError(OrderError):
+    """Raised when order parameters are invalid.
+
+    Captures which parameter was invalid and what value was provided.
+    """
     message = "Invalid order parameters"
 
     def __init__(
@@ -224,10 +261,15 @@ class InvalidOrderError(OrderError):
 
 
 class BrokerError(RustyBTError):
+    """Base exception for broker-related errors."""
     message = "Broker operation failed"
 
 
 class BrokerConnectionError(BrokerError):
+    """Raised when unable to establish connection with broker.
+
+    This typically indicates network issues or broker service unavailability.
+    """
     message = "Failed to connect to broker"
 
     def __init__(
@@ -243,6 +285,10 @@ class BrokerConnectionError(BrokerError):
 
 
 class BrokerAuthenticationError(BrokerError):
+    """Raised when broker authentication fails.
+
+    This indicates invalid credentials or expired API tokens.
+    """
     message = "Broker authentication failed"
 
     def __init__(
@@ -258,6 +304,10 @@ class BrokerAuthenticationError(BrokerError):
 
 
 class BrokerRateLimitError(BrokerError):
+    """Raised when broker rate limits are exceeded.
+
+    Captures how long to wait before retrying (reset_after).
+    """
     message = "Broker rate limit exceeded"
 
     def __init__(
@@ -278,6 +328,10 @@ class BrokerRateLimitError(BrokerError):
 
 
 class BrokerResponseError(BrokerError):
+    """Raised when broker returns an invalid or unexpected response.
+
+    Captures the HTTP status code and broker identifier.
+    """
     message = "Broker returned invalid response"
 
     def __init__(
@@ -298,22 +352,39 @@ class BrokerResponseError(BrokerError):
 
 
 class StrategyError(RustyBTError):
+    """Base exception for strategy-related errors."""
     message = "Strategy execution failed"
 
 
 class StrategyInitializationError(StrategyError):
+    """Raised when strategy initialization fails.
+
+    This occurs during the setup phase before the strategy begins execution.
+    """
     message = "Strategy initialization failed"
 
 
 class StrategyExecutionError(StrategyError):
+    """Raised when strategy execution encounters an error.
+
+    This covers errors during the main strategy logic execution.
+    """
     message = "Strategy execution failed"
 
 
 class InvalidSignalError(StrategyError):
+    """Raised when a strategy produces an invalid trading signal.
+
+    This indicates the signal doesn't meet expected format or constraints.
+    """
     message = "Strategy produced an invalid signal"
 
 
 class ValidationError(RustyBTError):
+    """Base exception for validation errors.
+
+    Captures which field failed validation and what value was provided.
+    """
     message = "Validation failed"
 
     def __init__(
@@ -334,26 +405,40 @@ class ValidationError(RustyBTError):
 
 
 class ConfigValidationError(ValidationError):
+    """Raised when configuration parameters are invalid."""
     message = "Configuration validation failed"
 
 
 class AssetValidationError(ValidationError):
+    """Raised when asset information is invalid or incomplete."""
     message = "Asset validation failed"
 
 
 class ParameterValidationError(ValidationError):
+    """Raised when function or method parameters are invalid."""
     message = "Parameter validation failed"
 
 
 class CircuitBreakerError(RustyBTError):
+    """Base exception for circuit breaker activations."""
     message = "Circuit breaker triggered"
 
 
 class CircuitBreakerTrippedError(CircuitBreakerError):
+    """Raised when attempting operations while circuit breaker is open.
+
+    The circuit breaker is in OPEN state, preventing further operations
+    until it resets or moves to HALF_OPEN state.
+    """
     message = "Circuit breaker is in OPEN state"
 
 
 class AlignmentCircuitBreakerError(CircuitBreakerError):
+    """Raised when backtest and live trading results diverge significantly.
+
+    This safety mechanism detects when live trading behavior doesn't match
+    backtested expectations, potentially indicating implementation issues.
+    """
     message = "Backtest/live alignment circuit breaker triggered"
 
 

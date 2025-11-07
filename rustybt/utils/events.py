@@ -12,6 +12,77 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Event scheduling and management system for trading algorithms.
+
+This module provides a comprehensive event scheduling system that allows
+algorithms to execute functions at specific times or on specific dates.
+It's used by rustybt.api.schedule_function to implement scheduled callbacks.
+
+**Core Components:**
+- EventManager: Manages and dispatches events to callbacks
+- Event: Pairing of a rule and callback function
+- EventRule: Base class for all scheduling rules
+
+**Rule Types:**
+
+*Stateless Rules (composable with &):*
+- Always/Never: Always or never trigger
+- AfterOpen/BeforeClose: Trigger at market open/close offsets
+- NotHalfDay: Trigger only on full trading days
+- NthTradingDayOfWeek/Month: Trigger on specific trading days
+- NDaysBeforeLastTradingDayOfWeek/Month: Trigger before period end
+
+*Stateful Rules (maintain state):*
+- OncePerDay: Ensure a rule triggers at most once per day
+
+**Factory Functions:**
+- date_rules: Create date-based rules (every_day, month_start, month_end, etc.)
+- time_rules: Create time-based rules (market_open, market_close, every_minute)
+- make_eventrule: Combine date and time rules into a complete rule
+
+**Rule Composition:**
+Rules can be combined using the & operator for logical AND:
+
+    >>> from rustybt.utils.events import AfterOpen, NotHalfDay
+    >>> rule = AfterOpen(minutes=30) & NotHalfDay()
+
+Examples:
+    Create a rule that triggers 30 minutes after market open:
+
+    >>> from rustybt.utils.events import time_rules
+    >>> rule = time_rules.market_open(minutes=30)
+
+    Create a rule for the first trading day of each month:
+
+    >>> from rustybt.utils.events import date_rules
+    >>> rule = date_rules.month_start()
+
+    Combine date and time rules:
+
+    >>> from rustybt.utils.events import date_rules, time_rules, make_eventrule
+    >>> from rustybt.utils.calendar_utils import get_calendar
+    >>> date_rule = date_rules.week_start()
+    >>> time_rule = time_rules.market_open(hours=1)
+    >>> calendar = get_calendar('XNYS')
+    >>> complete_rule = make_eventrule(date_rule, time_rule, calendar)
+
+    Use EventManager to manage multiple events:
+
+    >>> from rustybt.utils.events import EventManager, Event, Always
+    >>> def my_callback(context, data):
+    ...     print("Event triggered!")
+    >>> manager = EventManager()
+    >>> event = Event(rule=Always(), callback=my_callback)
+    >>> manager.add_event(event)
+
+Note:
+    - Rules are associated with a trading calendar when scheduling
+    - Stateless rules can be composed, stateful rules cannot
+    - OncePerDay wrapper ensures at most one trigger per day
+    - All times should be timezone-aware (UTC recommended)
+"""
+
 import datetime
 import inspect
 import warnings

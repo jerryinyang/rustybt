@@ -11,6 +11,89 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Input validation utilities for function arguments and parameters.
+
+This module provides decorators and functions for validating and preprocessing
+function arguments. It's built on top of the preprocess decorator system and
+provides validators for common types and constraints.
+
+**Type Validators:**
+- expect_types: Validate argument types
+- expect_dtypes: Validate numpy dtypes
+- expect_kinds: Validate numpy dtype kinds
+- expect_element: Validate values are in a collection
+- expect_bounded/expect_strictly_bounded: Validate numeric ranges
+- expect_dimensions: Validate array dimensionality
+
+**Preprocessing:**
+- optionally: Make validators allow None values
+- coerce/coerce_types: Coerce arguments to specified types
+- ensure_dtype/ensure_timezone/ensure_timestamp: Convert to specific types
+- ensure_upper_case: Convert strings to uppercase
+
+**Utilities:**
+- verify_indices_all_unique: Check pandas object has unique indices
+- optional: Helper for expect_types to allow None
+- validate_keys: Validate dictionary keys
+
+All validators work with the @preprocess decorator to provide clear error
+messages with function names and argument names included.
+
+Examples:
+    Validate function argument types:
+
+    >>> from rustybt.utils.input_validation import expect_types
+    >>> @expect_types(x=int, y=str)
+    ... def process(x, y):
+    ...     return f"{y}: {x}"
+    >>> process(42, "count")
+    'count: 42'
+    >>> process(42.0, "count")  # doctest: +SKIP
+    Traceback (most recent call last):
+        ...
+    TypeError: process() expected a value of type int for argument 'x', but got float instead.
+
+    Validate numeric bounds:
+
+    >>> from rustybt.utils.input_validation import expect_bounded
+    >>> @expect_bounded(percentage=(0, 100))
+    ... def set_percentage(percentage):
+    ...     return percentage / 100
+    >>> set_percentage(50)
+    0.5
+    >>> set_percentage(150)  # doctest: +SKIP
+    Traceback (most recent call last):
+        ...
+    ValueError: set_percentage() expected a value inclusively between 0 and 100...
+
+    Allow None with optionally:
+
+    >>> from rustybt.utils.input_validation import expect_types, optionally
+    >>> from rustybt.utils.preprocess import preprocess
+    >>> @preprocess(x=optionally(lambda f, n, v: int(v) if isinstance(v, str) else v))
+    ... def maybe_convert(x):
+    ...     return x
+    >>> maybe_convert("42")
+    42
+    >>> maybe_convert(None)  # Returns None
+
+    Validate numpy array dtypes:
+
+    >>> from rustybt.utils.input_validation import expect_dtypes
+    >>> import numpy as np
+    >>> @expect_dtypes(arr=np.dtype('float64'))
+    ... def compute(arr):
+    ...     return arr.sum()
+    >>> compute(np.array([1.0, 2.0, 3.0]))
+    6.0
+
+Note:
+    These validators are designed to be used with the @preprocess decorator
+    from rustybt.utils.preprocess. They provide informative error messages
+    that include the function name and argument name.
+"""
+
 from datetime import tzinfo
 from functools import partial
 from operator import attrgetter

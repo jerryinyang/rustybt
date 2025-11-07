@@ -119,6 +119,22 @@ repos:
         pass_filenames: false
         description: "Ensures minimum 80% docstring coverage"
 
+      - id: validate-notebook-imports
+        name: Validate Notebook Imports
+        entry: python3 scripts/validate_notebook_imports.py
+        language: system
+        pass_filenames: false
+        files: ^docs/examples/notebooks/.*\.ipynb$
+        description: "Validates that all notebook imports can be resolved"
+
+      - id: check-notebook-apis
+        name: Check Notebook APIs
+        entry: python3 scripts/check_notebook_apis.py
+        language: system
+        pass_filenames: false
+        files: ^docs/examples/notebooks/.*\.ipynb$
+        description: "Checks for fabricated or incorrect APIs in notebooks"
+
 # Configuration for specific hooks
 default_language_version:
   python: python3.12

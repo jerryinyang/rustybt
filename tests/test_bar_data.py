@@ -1146,3 +1146,39 @@ class TestDailyBarData(WithCreateBarData, WithBarDataChecks, WithDataPortal, Zip
         for info in minutes_to_check:
             bar_data = self.create_bardata(simulation_dt_func=lambda: info[0], restrictions=rlm)
             assert bar_data.can_trade(self.ASSET1) == info[1]
+
+    def test_daily_mode_data_alignment(self):
+        """Test for bug fix: RUSTYBT-DATA-001
+
+        Verify that in daily mode, when current_dt = date X, both data.current()
+        and data.history() return data from date X, not date X-1.
+
+        This regression test ensures the off-by-one error doesn't return.
+        See: docs/internal/sprint-debug/fixes/completed/2025-11-07-105919-history-off-by-one-data-shift.md
+        """
+        # Test across 3 consecutive days
+        test_dates = self.equity_daily_bar_days[:3]
+
+        for current_date in test_dates:
+            bar_data = self.create_bardata(
+                simulation_dt_func=lambda d=current_date: d,
+            )
+
+            # Verify current_dt matches the session
+            assert (
+                bar_data.current_dt.normalize() == current_date.normalize()
+            ), f"current_dt should be {current_date}, got {bar_data.current_dt}"
+
+            # Verify data.current() returns data from the current session
+            current_close = bar_data.current(self.ASSET1, "close")
+            expected_close = self.daily_bar_data.loc[current_date, "close"]
+            assert (
+                abs(current_close - expected_close) < 0.01
+            ), f"On {current_date}, current() returned {current_close}, expected {expected_close}"
+
+            # Verify data.history() returns data from the current session
+            history = bar_data.history(self.ASSET1, ["close"], 1, "1d")
+            history_close = history["close"].iloc[-1]
+            assert (
+                abs(history_close - expected_close) < 0.01
+            ), f"On {current_date}, history() returned {history_close}, expected {expected_close}"

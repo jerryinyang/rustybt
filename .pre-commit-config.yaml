@@ -87,6 +87,14 @@ repos:
         description: "Scans documentation for personal paths, emails, API keys, and other sensitive info"
         files: ^docs/(examples|api|guides|getting-started|about|index\.md)
 
+      - id: check-cython-build
+        name: Check Cython Extensions Are Up-to-Date
+        entry: python3 scripts/check_cython_build.py
+        language: system
+        pass_filenames: false
+        description: "Ensures Cython .pyx files have been recompiled after changes (prevents stale .so bug)"
+        files: \.pyx$
+
 # Configuration for specific hooks
 default_language_version:
   python: python3.12

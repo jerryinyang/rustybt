@@ -103,7 +103,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install -e ".[dev]" --system
+          uv pip install -e ".[dev,optimization]" --system
 
       - name: Run black
         run: black --check rustybt/ tests/ --line-length 100
@@ -141,7 +141,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install -e ".[dev,test]" --system
+          uv pip install -e ".[dev,test,optimization]" --system
 
       - name: Run tests with coverage
         run: |
@@ -250,7 +250,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install -e ".[dev,test]" --system
+          uv pip install -e ".[dev,test,optimization]" --system
 
       - name: Setup profiling bundles
         run: |

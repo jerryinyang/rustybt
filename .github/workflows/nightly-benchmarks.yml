@@ -31,7 +31,7 @@ jobs:
         run: |
           uv venv
           source .venv/bin/activate
-          uv pip install -e ".[dev,test,benchmarks]"
+          uv pip install -e ".[dev,test,benchmarks,optimization]"
 
       - name: Build Rust extensions
         run: |

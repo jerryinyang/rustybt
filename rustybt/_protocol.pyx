@@ -172,17 +172,21 @@ cdef class BarData:
         - sometimes we're knowingly not in a market minute, like if we're in
             before_trading_start.  In that case, `self._adjust_minutes` is
             True, and we get the previous market minute.
-        - if we're in daily mode, get the session label for this minute.
+        - if we're in daily mode, we directly convert to session without minute adjustment.
         """
         dt = self.simulation_dt_func()
 
-        if self._adjust_minutes:
-            dt = self.data_portal.trading_calendar.previous_minute(dt)
-
         if self._daily_mode:
-            # if we're in daily mode, take the given dt (which is the last
-            # minute of the session) and get the session label for it.
-            dt = self.data_portal.trading_calendar.minute_to_session(dt)
+            # FIX: For daily mode with 24/7 calendar, don't call minute_to_session() at all!
+            # The simulation_dt is already a midnight timestamp representing the session.
+            # Calling minute_to_session(2020-01-02 00:00:00) incorrectly returns 2020-01-01
+            # because 24/7 calendar treats midnight as the END of previous session, not START of current.
+            # Solution: Just normalize to date, which gives us the correct session date directly.
+            # See: docs/internal/sprint-debug/fixes/completed/2025-11-07-105919-history-off-by-one-data-shift.md
+            dt = dt.normalize()
+        elif self._adjust_minutes:
+            # Only adjust minutes for minute-mode (not daily mode)
+            dt = self.data_portal.trading_calendar.previous_minute(dt)
 
         return dt
 
@@ -699,7 +703,14 @@ cdef class BarData:
 
     property current_dt:
         def __get__(self):
-            return self.simulation_dt_func()
+            # FIX: For daily mode, return current_session which correctly represents
+            # the session date of the bar being processed. The old code returned
+            # simulation_dt_func() which was +1 day ahead, causing off-by-one errors.
+            # See: docs/internal/sprint-debug/fixes/completed/2025-11-07-105919-history-off-by-one-data-shift.md
+            if self._daily_mode:
+                return self.current_session
+            else:
+                return self._get_current_minute()
 
     @property
     def fetcher_assets(self):

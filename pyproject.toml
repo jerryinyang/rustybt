@@ -643,10 +643,11 @@ skips = ["B101", "B601"]
 
 [tool.interrogate]
 # Docstring coverage enforcement
-ignore-init-method = true
+# Note: ignore-init-method is incompatible with --style google, so we omit it
 ignore-init-module = false
 ignore-magic = false
 ignore-semiprivate = false
+style = "google"
 ignore-private = false
 ignore-property-decorators = false
 ignore-module = false
@@ -657,7 +658,6 @@ fail-under = 80
 exclude = ["setup.py", "docs", "tests", "build", "dist"]
 ignore-regex = ["^test_", "^Test"]
 ext = []
-style = "google"
 verbose = 2
 quiet = false
 whitelist-regex = []

@@ -209,3 +209,4 @@ benchmark-results/
 .optimization_cache/
 .bundle_pool/
 .pregrouped_data/
+docs/api-reference/

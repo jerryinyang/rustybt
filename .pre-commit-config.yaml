@@ -113,8 +113,8 @@ repos:
 
       - id: check-docstring-coverage
         name: Check Docstring Coverage
-        entry: python3 -m interrogate
-        args: [rustybt/, --fail-under=80, --verbose=2]
+        entry: interrogate
+        args: [rustybt/, --fail-under=80, -vv]
         language: system
         pass_filenames: false
         description: "Ensures minimum 80% docstring coverage"

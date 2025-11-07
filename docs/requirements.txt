@@ -10,5 +10,8 @@ mkdocs-autorefs>=0.5.0
 # For rendering Jupyter notebooks in documentation
 mkdocs-jupyter>=0.24.0
 
+# pdoc for API documentation generation
+pdoc>=14.0.0
+
 # Minimal dependencies for documentation generation
-# (ReadTheDocs doesn't need to import rustybt code)
+# Note: pdoc can generate docs without importing if needed

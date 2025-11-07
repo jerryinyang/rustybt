@@ -197,6 +197,7 @@ nav:
               - Parallel Optimization: examples/optimization/parallel_optimization_example.py
               - Walk-Forward Analysis: examples/optimization/walk_forward_analysis.py
   - API Reference:
+      - Overview & Interactive Docs: api-reference.md
       - Data Management:
           - Overview: api/data-management/README.md
           - Asset Finder: api/data-management/asset-finder.md

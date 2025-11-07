@@ -119,13 +119,13 @@ repos:
       #   pass_filenames: false
       #   description: "Ensures minimum 80% docstring coverage"
 
-      # - id: validate-notebook-imports
-      #   name: Validate Notebook Imports
-      #   entry: python3 scripts/validate_notebook_imports.py
-      #   language: system
-      #   pass_filenames: false
-      #   files: ^docs/examples/notebooks/.*\.ipynb$
-      #   description: "Validates that all notebook imports can be resolved"
+      - id: validate-notebook-imports
+        name: Validate Notebook Imports
+        entry: python3 scripts/validate_notebook_imports.py
+        language: system
+        pass_filenames: false
+        files: ^docs/examples/notebooks/.*\.ipynb$
+        description: "Validates that all notebook imports can be resolved"
 
       # - id: check-notebook-apis
       #   name: Check Notebook APIs

@@ -13,11 +13,12 @@ from pathlib import Path
 from typing import List, Tuple
 
 
-def extract_imports_from_cell(source: str) -> List[Tuple[str, str]]:
+def extract_imports_from_cell(source: str) -> List[Tuple[str, str, bool]]:
     """Extract import statements from notebook cell source.
 
     Returns:
-        List of (module, name) tuples
+        List of (module, name, is_optional) tuples where is_optional indicates
+        if the import is inside a try-except block
     """
     imports = []
 
@@ -26,16 +27,28 @@ def extract_imports_from_cell(source: str) -> List[Tuple[str, str]]:
     except SyntaxError:
         return imports
 
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
+    def visit_node(node, in_try=False):
+        """Recursively visit nodes, tracking if we're in a try block."""
+        if isinstance(node, ast.Try):
+            # Process nodes inside try block
+            for child in node.body:
+                visit_node(child, in_try=True)
+            # Process except/else/finally normally
+            for child in node.handlers + node.orelse + node.finalbody:
+                visit_node(child, in_try=False)
+        elif isinstance(node, ast.Import):
             for alias in node.names:
-                imports.append((alias.name, alias.asname or alias.name))
-
+                imports.append((alias.name, alias.asname or alias.name, in_try))
         elif isinstance(node, ast.ImportFrom):
-            module = node.module or ''
+            module = node.module or ""
             for alias in node.names:
-                imports.append((f"{module}.{alias.name}", alias.asname or alias.name))
+                imports.append((f"{module}.{alias.name}", alias.asname or alias.name, in_try))
+        else:
+            # Recursively visit children
+            for child in ast.iter_child_nodes(node):
+                visit_node(child, in_try)
 
+    visit_node(tree, in_try=False)
     return imports
 
 
@@ -45,30 +58,31 @@ def validate_import(module_path: str) -> Tuple[bool, str]:
     Returns:
         (success, error_message)
     """
+    import importlib
+
     try:
-        # Try to import the module
-        parts = module_path.split('.')
-        module_name = parts[0]
+        # Try to import the full module path first
+        parts = module_path.split(".")
 
-        # Special handling for rustybt imports
-        if module_name == 'rustybt':
-            import rustybt
-            obj = rustybt
+        # Try importing progressively longer paths
+        obj = None
+        for i in range(len(parts), 0, -1):
+            test_path = ".".join(parts[:i])
+            try:
+                obj = importlib.import_module(test_path)
+                # If we successfully imported a shorter path, check remaining parts as attributes
+                for part in parts[i:]:
+                    if hasattr(obj, part):
+                        obj = getattr(obj, part)
+                    else:
+                        return False, f"Module {test_path}: attribute '{part}' not found"
+                return True, ""
+            except (ImportError, ModuleNotFoundError):
+                continue
 
-            for part in parts[1:]:
-                if hasattr(obj, part):
-                    obj = getattr(obj, part)
-                else:
-                    return False, f"Module {module_path}: attribute '{part}' not found"
+        # If none of the progressive imports worked
+        return False, f"Could not import {module_path}"
 
-            return True, ""
-
-        # For other imports, just try importing
-        __import__(module_name)
-        return True, ""
-
-    except ImportError as e:
-        return False, f"Import error: {str(e)}"
     except Exception as e:
         return False, f"Unexpected error: {str(e)}"
 
@@ -79,49 +93,50 @@ def validate_notebook(notebook_path: Path) -> Tuple[int, int, List[str]]:
     Returns:
         (total_imports, failed_imports, error_messages)
     """
-    with open(notebook_path, 'r', encoding='utf-8') as f:
+    with open(notebook_path, "r", encoding="utf-8") as f:
         notebook = json.load(f)
 
     errors = []
     total_imports = 0
     failed_imports = 0
 
-    for i, cell in enumerate(notebook.get('cells', [])):
-        if cell.get('cell_type') != 'code':
+    for i, cell in enumerate(notebook.get("cells", [])):
+        if cell.get("cell_type") != "code":
             continue
 
-        source = ''.join(cell.get('source', []))
+        source = "".join(cell.get("source", []))
         imports = extract_imports_from_cell(source)
 
-        for module_path, _ in imports:
+        for module_path, _, is_optional in imports:
             total_imports += 1
 
             # Skip commented imports
-            if module_path.startswith('#'):
+            if module_path.startswith("#"):
                 continue
 
             success, error_msg = validate_import(module_path)
 
+            # Skip optional imports (in try-except blocks) that fail
+            if not success and is_optional:
+                continue
+
             if not success:
                 failed_imports += 1
-                errors.append(
-                    f"  Cell {i}: {module_path}\n"
-                    f"    Error: {error_msg}"
-                )
+                errors.append(f"  Cell {i}: {module_path}\n    Error: {error_msg}")
 
     return total_imports, failed_imports, errors
 
 
 def main():
     """Validate all notebooks."""
-    notebooks_dir = Path('docs/examples/notebooks')
+    notebooks_dir = Path("docs/examples/notebooks")
 
     if not notebooks_dir.exists():
         print(f"❌ Notebooks directory not found: {notebooks_dir}")
         return 1
 
     # Find all notebooks
-    notebooks = list(notebooks_dir.rglob('*.ipynb'))
+    notebooks = list(notebooks_dir.rglob("*.ipynb"))
 
     if not notebooks:
         print(f"⚠️  No notebooks found in {notebooks_dir}")
@@ -166,5 +181,5 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

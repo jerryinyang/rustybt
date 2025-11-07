@@ -400,4 +400,4 @@ See also:
 
 ---
 
-**Questions?** See [FAQ](../faq.md) or [API Reference](../api/README.md)
+**Questions?** See [Getting Started](../getting-started/quickstart.md) or [API Reference](../api/data-management/README.md)

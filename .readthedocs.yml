@@ -29,12 +29,6 @@ build:
           fi
         fi
 
-    post_install:
-      # Generate pdoc API documentation before MkDocs build
-      - echo "Generating pdoc API documentation..."
-      - python docs/build_api_docs.py
-      - echo "pdoc documentation generation complete"
-
 # Python environment
 python:
   install:

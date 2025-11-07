@@ -510,7 +510,9 @@ For comprehensive documentation including:
 
 **See**: [Multi-Strategy Portfolio Guide](multi-strategy-portfolio-guide.md)
 
-**Example Notebook**: [09_multi_strategy_portfolio.ipynb](../examples/notebooks/09_multi_strategy_portfolio.ipynb)
+**Example Code**: [portfolio_allocator_tutorial.py](../examples/portfolio_allocator_tutorial.py)
+
+**Note**: [Why no notebook?](../examples/notebooks/09_multi_strategy_portfolio_note.md)
 
 **API Reference**: [Portfolio Allocation & Multi-Strategy Management](../api/portfolio-management/allocation-multistrategy.md)
 

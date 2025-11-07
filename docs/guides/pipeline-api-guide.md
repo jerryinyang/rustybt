@@ -14,7 +14,7 @@ The Pipeline API is RustyBT's framework for factor-based trading strategies and 
 
     **If you want to run multiple strategies simultaneously**, use `PortfolioAllocator` instead:
     - See [Multi-Strategy Portfolio Guide](multi-strategy-portfolio-guide.md)
-    - See [Notebook 09: Multi-Strategy Portfolio](../examples/notebooks/09_multi_strategy_portfolio.ipynb)
+    - See [portfolio_allocator_tutorial.py](../examples/portfolio_allocator_tutorial.py)
 
 ---
 

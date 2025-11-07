@@ -1,6 +1,6 @@
 # RustyBT Jupyter Notebooks
 
-This directory contains example Jupyter notebooks demonstrating RustyBT's capabilities for interactive backtesting, analysis, and optimization.
+This directory contains comprehensive tutorial notebooks demonstrating RustyBT's capabilities for interactive backtesting, analysis, and optimization.
 
 !!! tip "Viewing Notebooks"
     **On this documentation site**: All notebooks are rendered and viewable in the **Notebooks menu** (left sidebar)
@@ -9,7 +9,7 @@ This directory contains example Jupyter notebooks demonstrating RustyBT's capabi
 
 ## Available Notebooks
 
-All 13 notebooks + advanced tutorials are now available! 🎉
+All **17 core tutorials** + advanced examples now available! 🎉
 
 **⚠️ Note on Multi-Strategy Portfolios:** The `09_multi_strategy_portfolio.ipynb` has been replaced with a working Python example ([`portfolio_allocator_tutorial.py`](../portfolio_allocator_tutorial.py)). See [09_multi_strategy_portfolio_note.md](09_multi_strategy_portfolio_note.md) for the correct implementation pattern.
 
@@ -92,6 +92,20 @@ Advanced techniques for strategy evaluation and improvement:
 - Robust validation techniques
 - Out-of-sample testing
 - Performance degradation analysis
+
+**[15_monte_carlo_basics.ipynb](15_monte_carlo_basics.ipynb)** - Monte Carlo simulation 🆕
+
+- Data permutation for robustness testing
+- Noise infusion techniques
+- Confidence intervals
+- Distribution analysis
+
+**[16_sensitivity_analysis_basics.ipynb](16_sensitivity_analysis_basics.ipynb)** - Parameter stability analysis 🆕
+
+- 1D and 2D parameter sensitivity
+- Stability metrics calculation
+- Identifying stable regions
+- Overfitting detection
 
 **[07_risk_analytics.ipynb](07_risk_analytics.ipynb)** - Risk metrics and analysis
 

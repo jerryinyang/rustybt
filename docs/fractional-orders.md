@@ -305,6 +305,6 @@ should_use_fractional_orders(asset, mode)  # Returns: bool
 
 ## See Also
 
-- [Order API Documentation](api/order.md)
-- [Asset Configuration](api/asset_config.md)
-- [Crypto Trading Guide](guides/crypto-trading.md)
+- [Order Types Documentation](api/order-types.md)
+- [Order Management API](api/order-management/README.md)
+- [Data Ingestion Guide](guides/data-ingestion.md)

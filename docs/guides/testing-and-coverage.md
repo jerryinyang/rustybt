@@ -412,11 +412,6 @@ pytest tests/regression/ --regression-report=report.json
 
 ## Resources
 
-### Documentation
-- [Testing Standards](../internal/architecture/coding-standards.md#testing-standards)
-- [Zero-Mock Enforcement](../internal/architecture/zero-mock-enforcement.md)
-- [X4.8 Coverage Report](../internal/qa/X4.8-TEST-COVERAGE-ENHANCEMENT.md)
-
 ### Tools
 - [pytest Documentation](https://docs.pytest.org/)
 - [coverage.py Documentation](https://coverage.readthedocs.io/)

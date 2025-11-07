@@ -306,7 +306,7 @@ Found a limitation not listed here?
 
 Want to help implement these features?
 
-See [Contributing Guide](../contributing/index.md) for:
+See [Docstring Style Guide](../contributing/docstring-style-guide.md) for:
 - Development setup
 - Code standards
 - Pull request process
@@ -316,4 +316,3 @@ See [Contributing Guide](../contributing/index.md) for:
 
 **Last Updated:** 2025-11-07
 **Version:** 0.1.2
-

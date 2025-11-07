@@ -411,7 +411,6 @@ Expected output:
 
 ## Further Reading
 
-- [Epic X4: Performance Optimization PRD](../internal/prd/epic-X4-performance-benchmarking-optimization.md)
 - [Optimization API Overview](../api/optimization/README.md)
 - [Grid Search Algorithm](../api/optimization/algorithms/grid-search.md)
 - [Walk-Forward Example](../examples/optimization/walk_forward_analysis.py)

@@ -11,9 +11,26 @@ edit_uri: edit/main/docs/
 
 # Exclude internal documentation from build and search
 # Simplified after Epic 11 reorganization (2025-10-15)
+# Added comprehensive exclusions for internal docs (2025-11-07)
 exclude_docs: |
   internal/
   _archive/
+  **/*_CORRECTIONS_*.md
+  **/*CORRECTIONS*.md
+  **/*FIXES*.md
+  **/*SUMMARY*.md
+  **/*REPORT*.md
+  **/*VALIDATION*.md
+  **/*CHECKLIST*.md
+  **/*TODO*.md
+  **/*NOTES*.md
+  **/*CHANGES*.md
+  **/*UPDATES*.md
+  **/*INDEX*.md
+  **/test_*.py
+  **/*_test.py
+  **/*.backup
+  **/*.ipynb.backup
 
 theme:
   name: material
@@ -104,6 +121,8 @@ nav:
       - Quick Start: getting-started/quickstart.md
       - Configuration: getting-started/configuration.md
   - User Guides:
+      - Fractional Orders: fractional-orders.md
+      - Known Limitations: guides/known-limitations.md
       - Decimal Precision: guides/decimal-precision-configuration.md
       - Backtesting:
           - Backtest Output Organization: guides/backtest-output-organization.md
@@ -126,12 +145,17 @@ nav:
           - Live vs Backtest Data: guides/live-vs-backtest-data.md
           - WebSocket Streaming: guides/websocket-streaming-guide.md
       - Development:
+          - API Styles: guides/api-styles.md
           - Type Hinting: guides/type-hinting.md
           - Exception Handling: guides/exception-handling.md
           - Execution Methods: guides/execution-methods.md
           - Pipeline API: guides/pipeline-api-guide.md
           - Advanced Pipeline Techniques: guides/advanced-pipeline-techniques.md
           - Multi-Strategy Portfolio: guides/multi-strategy-portfolio-guide.md
+          - Testing & Coverage: guides/testing-and-coverage.md
+      - Performance:
+          - Optimization & Caching: guides/optimization-caching-performance-tuning.md
+          - Bundle Connection Pooling: guides/bundle-connection-pooling.md
       - Production:
           - Deployment Guide: guides/deployment-guide.md
           - Production Checklist: guides/production-checklist.md
@@ -155,10 +179,15 @@ nav:
               - 06. Walk-Forward Testing: examples/notebooks/06_walk_forward.ipynb
               - 07. Risk Analytics: examples/notebooks/07_risk_analytics.ipynb
               - 08. Portfolio Construction: examples/notebooks/08_portfolio_construction.ipynb
-              - 09. Multi-Strategy Portfolio: examples/notebooks/09_multi_strategy_portfolio.ipynb
-              - 10. Live Paper Trading: examples/notebooks/09_live_paper_trading.ipynb
+              - 09. Live Paper Trading: examples/notebooks/09_live_paper_trading.ipynb
           - Complete Workflows:
-              - 11. Full Workflow (⭐ Recommended): examples/notebooks/10_full_workflow.ipynb
+              - 10. Full Workflow (⭐ Recommended): examples/notebooks/10_full_workflow.ipynb
+              - Report Generation: examples/notebooks/report_generation.ipynb
+          - Advanced Techniques:
+              - 11. Pipeline Deep Dive: examples/notebooks/advanced/11_pipeline_deep_dive.ipynb
+              - 12. Advanced Order Management: examples/notebooks/advanced/12_advanced_order_management.ipynb
+              - 13. Portfolio Optimization Walk-Forward: examples/notebooks/advanced/13_portfolio_optimization_walk_forward.ipynb
+              - 14. Multi-Timeframe Strategies: examples/notebooks/advanced/14_multi_timeframe_strategies.ipynb
       - Python Tutorials:
           - Data Ingestion:
               - CCXT Data Ingestion: examples/ingest_ccxt.py
@@ -196,8 +225,10 @@ nav:
               - Bayesian Optimization (5 Params): examples/optimization/bayesian_optimization_5param.py
               - Parallel Optimization: examples/optimization/parallel_optimization_example.py
               - Walk-Forward Analysis: examples/optimization/walk_forward_analysis.py
+              - Genetic Algorithm (Non-Smooth): examples/optimization/genetic_algorithm_nonsmooth.ipynb
+              - Noise Infusion Robustness: examples/optimization/noise_infusion_robustness.ipynb
+              - Sensitivity Analysis: examples/optimization/sensitivity_analysis.ipynb
   - API Reference:
-      - Overview & Interactive Docs: api-reference.md
       - Data Management:
           - Overview: api/data-management/README.md
           - Asset Finder: api/data-management/asset-finder.md
@@ -320,6 +351,9 @@ nav:
           - Datasource API: api/datasource-api.md
           - Optimization API: api/optimization-api.md
           - Analytics API: api/analytics-api.md
+  - Contributing:
+      - Docstring Style Guide: contributing/docstring-style-guide.md
+      - Docstring Coverage Report: contributing/docstring-coverage-report.md
   - About:
       - License: about/license.md
       - Contributing: about/contributing.md

@@ -876,7 +876,7 @@ print("Available symbols:", metadata.symbols)
 
 - [Data Ingestion Guide](data-ingestion.md) - Overview of all data sources
 - [Data Validation Guide](data-validation.md) - Validate ingested data
-- [Bundle Management](../api/data/bundle-management.md) - Work with bundles
+- [Bundle System](../api/data-management/catalog/bundle-system.md) - Work with bundles
 
 ---
 

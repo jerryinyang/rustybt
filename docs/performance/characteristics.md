@@ -700,8 +700,6 @@ profiling-results/
 
 - [Optimization User Guide](../user-guide/optimization.md) - How to use features
 - [Rust Migration Guide](../migration/rust-removal.md) - Context for pure Python approach
-- [Benchmarking Methodology](../internal/benchmarks/methodology.md) - How metrics were measured
-- [Epic X4 PRD](../internal/prd/epic-X4-performance-benchmarking-optimization.md) - Original requirements
 
 ---
 

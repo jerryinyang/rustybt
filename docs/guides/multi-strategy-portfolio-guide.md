@@ -783,7 +783,7 @@ def handle_data(self, context, data, ledger):
 ## Next Steps
 
 1. **Try the Example**: Run `multi_strategy_example.py` from this guide
-2. **Explore Notebook**: See [Multi-Strategy Portfolio Notebook](../examples/notebooks/09_multi_strategy_portfolio.ipynb)
+2. **Working Code**: See [portfolio_allocator_tutorial.py](../examples/portfolio_allocator_tutorial.py)
 3. **Read API Reference**: [Portfolio Allocation & Multi-Strategy Management](../api/portfolio-management/allocation-multistrategy.md)
 4. **Advanced Topic**: [Order Aggregation](../api/portfolio-management/order-aggregation.md)
 

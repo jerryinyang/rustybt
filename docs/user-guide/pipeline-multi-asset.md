@@ -292,10 +292,10 @@ BINANCE = EquityCalendarDomain(
 
 ## Further Reading
 
-- [Pipeline API Overview](./pipeline-overview.md)
-- [Custom Factors](./custom-factors.md)
-- [Domain System](./domains.md)
-- [Calendar Management](./calendars.md)
+- [Pipeline API Guide](../guides/pipeline-api-guide.md)
+- [Advanced Pipeline Techniques](../guides/advanced-pipeline-techniques.md)
+- [Pipeline API Reference](../api/computation/pipeline-api.md)
+- [Data Management](../api/data-management/README.md)
 
 ---
 

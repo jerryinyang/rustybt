@@ -48,13 +48,11 @@ jobs:
 
       - name: Generate pdoc documentation
         run: |
-          # Generate HTML documentation
-          pdoc rustybt \
+          # Generate HTML documentation using modern pdoc
+          python -m pdoc rustybt \
             --output-dir docs/api \
-            --html \
-            --template-dir docs/pdoc-templates \
-            --config show_source_code=True \
-            --config syntax_highlighting=True
+            --docformat google \
+            --show-source
 
       - name: Generate docstring coverage report
         run: |

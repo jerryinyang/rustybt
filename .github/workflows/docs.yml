@@ -45,6 +45,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[docs]"
 
+      - name: Generate pdoc API documentation
+        run: |
+          python docs/build_api_docs.py
+
       - name: Build documentation
         run: |
           # Note: Not using --strict due to intentional links to source files outside docs/

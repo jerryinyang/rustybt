@@ -21,7 +21,7 @@ def main():
     output_dir.mkdir(exist_ok=True)
 
     # Generate pdoc documentation
-    # Using --no-show-source and --no-search to avoid import issues
+    # Modern pdoc (v10+) generates HTML by default, no --html flag needed
     cmd = [
         sys.executable,
         "-m",
@@ -31,9 +31,8 @@ def main():
         str(output_dir),
         "--docformat",
         "google",
-        "--html",
-        # Don't require imports for basic doc generation
-        "--no-show-source",
+        # Show source code for better documentation
+        "--show-source",
     ]
 
     print(f"Running: {' '.join(cmd)}")

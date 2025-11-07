@@ -9,7 +9,9 @@ This directory contains example Jupyter notebooks demonstrating RustyBT's capabi
 
 ## Available Notebooks
 
-All 12 notebooks are now available! 🎉
+All 13 notebooks + advanced tutorials are now available! 🎉
+
+**⚠️ Note on Multi-Strategy Portfolios:** The `09_multi_strategy_portfolio.ipynb` has been replaced with a working Python example ([`portfolio_allocator_tutorial.py`](../portfolio_allocator_tutorial.py)). See [09_multi_strategy_portfolio_note.md](09_multi_strategy_portfolio_note.md) for the correct implementation pattern.
 
 ### ⭐ Recommended Starting Point
 

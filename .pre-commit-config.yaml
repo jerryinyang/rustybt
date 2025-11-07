@@ -68,6 +68,22 @@ repos:
   #       args: [--baseline, .secrets.baseline]
   #       exclude: package.lock.json
 
+  # Docstring quality enforcement
+  - repo: https://github.com/econchick/interrogate
+    rev: 1.7.0
+    hooks:
+      - id: interrogate
+        args: [--config=pyproject.toml]
+        pass_filenames: false
+
+  # Docstring style enforcement (pydocstyle)
+  - repo: https://github.com/PyCQA/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        args: [--config=pyproject.toml]
+        exclude: ^(tests/|docs/|scripts/|setup.py)
+
   # Zero-mock enforcement (local scripts)
   - repo: local
     hooks:
@@ -94,6 +110,30 @@ repos:
         pass_filenames: false
         description: "Ensures Cython .pyx files have been recompiled after changes (prevents stale .so bug)"
         files: \.pyx$
+
+      - id: check-docstring-coverage
+        name: Check Docstring Coverage
+        entry: python3 -m interrogate
+        args: [rustybt/, --fail-under=80, --verbose=2]
+        language: system
+        pass_filenames: false
+        description: "Ensures minimum 80% docstring coverage"
+
+      - id: validate-notebook-imports
+        name: Validate Notebook Imports
+        entry: python3 scripts/validate_notebook_imports.py
+        language: system
+        pass_filenames: false
+        files: ^docs/examples/notebooks/.*\.ipynb$
+        description: "Validates that all notebook imports can be resolved"
+
+      - id: check-notebook-apis
+        name: Check Notebook APIs
+        entry: python3 scripts/check_notebook_apis.py
+        language: system
+        pass_filenames: false
+        files: ^docs/examples/notebooks/.*\.ipynb$
+        description: "Checks for fabricated or incorrect APIs in notebooks"
 
 # Configuration for specific hooks
 default_language_version:

@@ -247,13 +247,15 @@ cdef _get_current_minute(self):
 
 ## Commit Hash
 
-`[Pending]`
+- Fix commit: `09dab00`
+- Merge to main: `d3b4f36`
+- **Status**: ✅ MERGED TO MAIN
 
 ---
 
 ## Branch
 
-`fix/20251107-105919-history-off-by-one-data-shift`
+`fix/20251107-105919-history-off-by-one-data-shift` (deleted after merge)
 
 ---
 

@@ -12,6 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Performance metrics tracking for trading algorithms.
+
+This module provides the MetricsTracker class which serves as the algorithm's
+interface to registered risk and performance metrics during simulation.
+"""
 import logging
 
 from rustybt.finance.ledger import Ledger
@@ -21,27 +26,20 @@ log = logging.getLogger(__name__)
 
 
 class MetricsTracker:
-    """The algorithm's interface to the registered risk and performance
-    metrics.
+    """The algorithm's interface to the registered risk and performance metrics.
 
-    Parameters
-    ----------
-    trading_calendar : TrandingCalendar
-        The trading calendar used in the simulation.
-    first_session : pd.Timestamp
-        The label of the first trading session in the simulation.
-    last_session : pd.Timestamp
-        The label of the last trading session in the simulation.
-    capital_base : float
-        The starting capital for the simulation.
-    emission_rate : {'daily', 'minute'}
-        How frequently should a performance packet be generated?
-    data_frequency : {'daily', 'minute'}
-        The data frequency of the data portal.
-    asset_finder : AssetFinder
-        The asset finder used in the simulation.
-    metrics : list[Metric]
-        The metrics to track.
+    This class manages the collection and computation of performance metrics during
+    algorithm execution, coordinating between the ledger, metrics, and data sources.
+
+    Args:
+        trading_calendar: The trading calendar used in the simulation.
+        first_session: The label of the first trading session in the simulation.
+        last_session: The label of the last trading session in the simulation.
+        capital_base: The starting capital for the simulation.
+        emission_rate: How frequently should a performance packet be generated ('daily' or 'minute').
+        data_frequency: The data frequency of the data portal ('daily' or 'minute').
+        asset_finder: The asset finder used in the simulation.
+        metrics: The metrics to track.
     """
 
     _hooks = (
@@ -54,6 +52,15 @@ class MetricsTracker:
 
     @staticmethod
     def _execution_open_and_close(calendar, session):
+        """Get the execution open and close times for a session.
+
+        Args:
+            calendar: Trading calendar.
+            session: Session timestamp.
+
+        Returns:
+            Tuple of (execution_open, execution_close) timestamps.
+        """
         if session.tzinfo is not None:
             session = session.tz_localize(None)
 
@@ -141,6 +148,11 @@ class MetricsTracker:
             setattr(self, hook, hook_implementation)
 
     def handle_start_of_simulation(self, benchmark_source):
+        """Initialize metrics at the start of the simulation.
+
+        Args:
+            benchmark_source: Source for benchmark returns data.
+        """
         self._benchmark_source = benchmark_source
 
         self.start_of_simulation(
@@ -153,14 +165,17 @@ class MetricsTracker:
 
     @property
     def portfolio(self):
+        """The current portfolio state."""
         return self._ledger.portfolio
 
     @property
     def account(self):
+        """The current account state."""
         return self._ledger.account
 
     @property
     def positions(self):
+        """Current positions tracked by the ledger."""
         return self._ledger.position_tracker.positions
 
     def update_position(
@@ -171,6 +186,15 @@ class MetricsTracker:
         last_sale_date=None,
         cost_basis=None,
     ):
+        """Update the position for a given asset.
+
+        Args:
+            asset: The asset to update.
+            amount: New position amount.
+            last_sale_price: Most recent sale price.
+            last_sale_date: Date of last sale.
+            cost_basis: Cost basis for the position.
+        """
         self._ledger.position_tracker.update_position(
             asset,
             amount,
@@ -180,27 +204,71 @@ class MetricsTracker:
         )
 
     def override_account_fields(self, **kwargs):
+        """Override specific account fields with provided values.
+
+        Args:
+            **kwargs: Account fields to override.
+        """
         self._ledger.override_account_fields(**kwargs)
 
     def process_transaction(self, transaction):
+        """Process a transaction through the ledger.
+
+        Args:
+            transaction: The transaction to process.
+        """
         self._ledger.process_transaction(transaction)
 
     def handle_splits(self, splits):
+        """Process stock splits.
+
+        Args:
+            splits: Split events to process.
+        """
         self._ledger.process_splits(splits)
 
     def process_order(self, event):
+        """Process an order event.
+
+        Args:
+            event: The order event to process.
+        """
         self._ledger.process_order(event)
 
     def process_commission(self, commission):
+        """Process commission charges.
+
+        Args:
+            commission: The commission amount to process.
+        """
         self._ledger.process_commission(commission)
 
     def process_close_position(self, asset, dt, data_portal):
+        """Close out a position in an asset.
+
+        Args:
+            asset: The asset to close.
+            dt: The datetime of the close.
+            data_portal: Data portal for price information.
+        """
         self._ledger.close_position(asset, dt, data_portal)
 
     def capital_change(self, amount):
+        """Record a capital injection or withdrawal.
+
+        Args:
+            amount: The amount of capital change (positive for injection, negative for withdrawal).
+        """
         self._ledger.capital_change(amount)
 
     def sync_last_sale_prices(self, dt, data_portal, handle_non_market_minutes=False):
+        """Sync position prices with current market data.
+
+        Args:
+            dt: The current simulation datetime.
+            data_portal: Data portal for price lookups.
+            handle_non_market_minutes: Whether to handle non-market minutes.
+        """
         self._ledger.sync_last_sale_prices(
             dt,
             data_portal,

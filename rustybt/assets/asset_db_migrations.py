@@ -1,3 +1,61 @@
+"""Asset database schema migration utilities.
+
+This module provides infrastructure for upgrading and downgrading the asset database
+schema between different versions. It uses Alembic for migration operations and maintains
+a registry of downgrade functions for each schema version.
+
+Key Features:
+    - Automated schema versioning and validation
+    - Forward and backward migration support
+    - SQLite and PostgreSQL compatibility
+    - Foreign key constraint handling during migrations
+    - Safe DDL operations with validation
+
+Migration Workflow:
+    1. Schema changes are made in asset_db_schema.py
+    2. ASSET_DB_VERSION is incremented
+    3. A downgrade function is added here using the @downgrades decorator
+    4. The function implements the inverse operation to revert the schema change
+
+Version Control:
+    The module maintains a _downgrade_methods dictionary that maps version numbers
+    to downgrade functions. Each function knows how to downgrade from version N to
+    version N-1.
+
+Safety Features:
+    - Input validation for SQL identifiers
+    - Foreign key handling for batch operations
+    - Version checking to prevent invalid migrations
+    - Automatic cleanup of temporary tables
+
+Examples:
+    Downgrade a database to an earlier version:
+        >>> from rustybt.assets.asset_db_migrations import downgrade
+        >>> from sqlalchemy import create_engine
+        >>> engine = create_engine("sqlite:///assets.db")
+        >>> downgrade(engine, desired_version=8)  # Downgrade to v8
+
+    Check if migration is needed:
+        >>> # AssetFinder automatically checks version on initialization
+        >>> from rustybt.assets import AssetFinder
+        >>> finder = AssetFinder("sqlite:///assets.db")  # Raises if version mismatch
+
+Warning:
+    Migrations can be destructive operations, especially downgrades which may lose
+    data. Always backup your database before performing migrations.
+
+See Also:
+    rustybt.assets.asset_db_schema: Schema definitions and ASSET_DB_VERSION
+    rustybt.assets.asset_writer: Database writing and version management
+    rustybt.errors.AssetDBVersionError: Version mismatch errors
+
+Notes:
+    - Downgrade functions are registered with @downgrades(source_version)
+    - The decorator automatically handles version table updates
+    - Foreign keys are temporarily disabled during complex migrations
+    - SQL identifier validation prevents injection in migration code
+"""
+
 import sqlalchemy as sa
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
@@ -11,22 +69,50 @@ from rustybt.utils.sqlite_utils import coerce_string_to_eng
 
 
 def alter_columns(op, name, *columns, **kwargs):
-    """Alter columns from a table.
+    """Alter table columns during migrations.
 
-    Parameters
-    ----------
-    name : str
-        The name of the table.
-    *columns
-        The new columns to have.
-    selection_string : str, optional
-        The string to use in the selection. If not provided, it will select all
-        of the new columns from the old table.
+    Performs a table column alteration by creating a new table with the desired
+    schema, copying data from the old table, and replacing the old table. This
+    is necessary because SQLite doesn't support ALTER COLUMN directly.
+
+    The function validates all identifiers (table and column names) to prevent
+    SQL injection and ensures safe migrations.
+
+    Args:
+        op: Alembic Operations object for DDL operations.
+        name: Name of the table to alter. Must be a valid SQL identifier.
+        *columns: SQLAlchemy Column objects defining the new schema.
+        **kwargs: Optional keyword arguments:
+            selection_string: Custom SQL SELECT expression for copying data.
+                If not provided, selects all columns from the new schema.
+
+    Raises:
+        ValueError: If table or column names are not valid SQL identifiers.
 
     Notes:
-    -----
-    The columns are passed explicitly because this should only be used in a
-    downgrade where ``zipline.assets.asset_db_schema`` could change.
+        - Columns must be passed explicitly for safety in downgrades
+        - Temporary tables are used and automatically cleaned up
+        - Indexes are dropped and recreated as needed
+        - PostgreSQL uses CASCADE for table drops
+
+    Examples:
+        Alter table to change column types:
+            >>> alter_columns(
+            ...     op,
+            ...     "equities",
+            ...     sa.Column("sid", sa.BigInteger, primary_key=True),
+            ...     sa.Column("symbol", sa.Text),
+            ...     sa.Column("exchange", sa.Text)
+            ... )
+
+        Alter with custom selection (e.g., dropping a column):
+            >>> alter_columns(
+            ...     op,
+            ...     "equities",
+            ...     sa.Column("sid", sa.BigInteger, primary_key=True),
+            ...     sa.Column("symbol", sa.Text),
+            ...     selection_string="sid, symbol"  # Exclude other columns
+            ... )
     """
     # SECURITY: SQL f-strings in migration code
     # THREAT MODEL:
@@ -89,14 +175,40 @@ def alter_columns(op, name, *columns, **kwargs):
 
 @preprocess(engine=coerce_string_to_eng(require_exists=True))
 def downgrade(engine, desired_version):
-    """Downgrades the assets db at the given engine to the desired version.
+    """Downgrade the asset database to a specific schema version.
 
-    Parameters
-    ----------
-    engine : Engine
-        An SQLAlchemy engine to the assets database.
-    desired_version : int
-        The desired resulting version for the assets database.
+    Executes a series of downgrade operations to migrate the database from its
+    current version to the specified target version. Each downgrade step is
+    executed sequentially with foreign keys disabled for safe schema modifications.
+
+    Warning:
+        Downgrades may result in data loss. Always backup your database before
+        performing downgrades, especially when downgrading multiple versions.
+
+    Args:
+        engine: SQLAlchemy engine connection to the assets database, or a string
+            URI that can be parsed by SQLAlchemy. The database must exist.
+        desired_version: Target schema version to downgrade to. Must be less than
+            or equal to the current database version.
+
+    Raises:
+        AssetDBImpossibleDowngrade: If desired_version is greater than the current
+            database version (would require upgrade, not downgrade).
+
+    Examples:
+        Downgrade from v10 to v8:
+            >>> from sqlalchemy import create_engine
+            >>> engine = create_engine("sqlite:///assets.db")
+            >>> downgrade(engine, desired_version=8)
+
+        Downgrade using a connection string:
+            >>> downgrade("sqlite:///assets.db", desired_version=7)
+
+    Notes:
+        - If the database is already at the desired version, no operations are performed
+        - Foreign keys are disabled during the migration and re-enabled afterward
+        - The version_info table is updated after each successful downgrade step
+        - Migration operations are wrapped in a transaction
     """
     # Check the version of the db at the engine
     with engine.begin() as conn:
@@ -137,16 +249,28 @@ def downgrade(engine, desired_version):
 
 
 def _pragma_foreign_keys(connection, on):
-    """Sets the PRAGMA foreign_keys state of the SQLite database. Disabling
-    the pragma allows for batch modification of tables with foreign keys.
+    """Enable or disable foreign key constraint checking.
 
-    Parameters
-    ----------
-    connection : Connection
-        A SQLAlchemy connection to the db
-    on : bool
-        If true, PRAGMA foreign_keys will be set to ON. Otherwise, the PRAGMA
-        foreign_keys will be set to OFF.
+    Temporarily disables foreign key constraints to allow batch table modifications
+    that would otherwise violate referential integrity during intermediate migration
+    steps. Only affects SQLite databases.
+
+    Args:
+        connection: SQLAlchemy database connection.
+        on: If True, enables foreign key constraints (PRAGMA foreign_keys=ON).
+            If False, disables foreign key constraints (PRAGMA foreign_keys=OFF).
+
+    Notes:
+        - Only executes for SQLite databases; PostgreSQL is not affected
+        - Should always be re-enabled after migration operations complete
+        - Foreign key constraints are NOT enforced while disabled
+        - Use with caution as this can allow invalid data states temporarily
+
+    Examples:
+        Disable foreign keys before migration:
+            >>> _pragma_foreign_keys(conn, False)
+            >>> # Perform migration operations
+            >>> _pragma_foreign_keys(conn, True)  # Re-enable
     """
     if connection.engine.name == "sqlite":
         connection.execute(sa.text(f"PRAGMA foreign_keys={'ON' if on else 'OFF'}"))
@@ -163,18 +287,37 @@ _downgrade_methods = {}
 
 
 def downgrades(src):
-    """Decorator for marking that a method is a downgrade to a version to the
-    previous version.
+    """Decorator for registering schema downgrade functions.
 
-    Parameters
-    ----------
-    src : int
-        The version this downgrades from.
+    Marks a function as a downgrade operation from a specific source version to
+    the previous version (src - 1). The decorated function is automatically
+    registered in the _downgrade_methods dictionary and wrapped to handle
+    version table updates.
+
+    Args:
+        src: The source schema version this function downgrades FROM.
+            The function will downgrade from version `src` to version `src-1`.
 
     Returns:
-    -------
-    decorator : callable[(callable) -> callable]
-        The decorator to apply.
+        callable: A decorator function that wraps the downgrade implementation.
+
+    Examples:
+        Register a downgrade from v10 to v9:
+            >>> @downgrades(10)
+            ... def _downgrade_v10(op):
+            ...     '''Downgrade from v10 to v9 by removing new table.'''
+            ...     op.drop_table("new_table_added_in_v10")
+
+        The decorator handles:
+            - Clearing the current version from version_info table
+            - Executing the downgrade function
+            - Writing the new version (src-1) to version_info table
+
+    Notes:
+        - Downgrade functions receive an Alembic Operations object as `op`
+        - They also receive `conn` (connection) and `version_info_table`
+        - The function is registered at `_downgrade_methods[src-1]`
+        - Version table updates are automatic
     """
 
     def _(f):

@@ -1,3 +1,85 @@
+"""Core testing utilities for RustyBT backtesting framework.
+
+This module provides essential testing infrastructure including:
+
+**Mock Data Generation:**
+- create_minute_bar_data: Generate synthetic minute-level OHLCV data
+- create_daily_df_for_asset: Generate daily bar DataFrames
+- make_trade_data_for_asset_info: Create trade data from asset metadata
+- simulate_minutes_for_day: Generate intraday minute bars matching daily OHLCV
+
+**Test Data Portals:**
+- FakeDataPortal: Mock data portal returning fixed values
+- FetcherDataPortal: Data portal with fetcher support
+- create_data_portal: Build complete data portal from parameters
+- create_data_portal_from_trade_history: Build portal from trade history
+
+**Temporary Resources:**
+- tmp_asset_finder: Temporary in-memory asset database
+- tmp_assets_db: Temporary asset database context manager
+- tmp_bcolz_equity_minute_bar_reader: Temporary minute bar reader
+- tmp_dir: Temporary directory context manager
+- temp_pipeline_engine: Temporary pipeline engine with random data
+
+**Assertion Helpers:**
+- check_allclose: Verify arrays are close (numerical tolerance)
+- check_arrays: Verify arrays are exactly equal
+- assert_timestamp_equal: Compare pandas Timestamps
+- assert_single_position: Verify algorithm has single position
+
+**Array Utilities:**
+- make_alternating_boolean_array: Create alternating True/False pattern
+- make_cascading_boolean_array: Create cascading boolean pattern
+- permute_rows: Shuffle array rows deterministically
+
+**Pipeline Helpers:**
+- AssetID: Custom factor returning asset IDs
+- AssetIDPlusDay: Custom factor with day offset
+- OpenPrice: Custom factor returning open prices
+
+Examples:
+    Generate minute bar test data::
+
+        import pandas as pd
+        from rustybt.testing.core import create_minute_bar_data
+
+        minutes = pd.date_range('2023-01-01 09:30', periods=390, freq='1min')
+        sids = [1, 2, 3]
+
+        for sid, df in create_minute_bar_data(minutes, sids):
+            print(f"Asset {sid}: {len(df)} bars")
+            assert all(col in df.columns for col in ['open', 'high', 'low', 'close', 'volume'])
+
+    Create temporary asset finder::
+
+        from rustybt.testing.core import tmp_asset_finder, make_simple_equity_info
+        import pandas as pd
+
+        equities = make_simple_equity_info(
+            sids=[1, 2, 3],
+            start_date=pd.Timestamp('2023-01-01'),
+            end_date=pd.Timestamp('2023-12-31')
+        )
+
+        with tmp_asset_finder(equities=equities) as finder:
+            asset = finder.retrieve_asset(1)
+            print(f"Found: {asset.symbol}")
+
+    Use fake data portal for testing::
+
+        from rustybt.testing.core import FakeDataPortal
+        from rustybt.utils.calendar_utils import get_calendar
+
+        portal = FakeDataPortal(
+            asset_finder=my_finder,
+            trading_calendar=get_calendar('NYSE')
+        )
+
+        # Returns fixed value (1.0) for price fields
+        price = portal.get_spot_value(asset, 'close', dt, 'daily')
+        assert price == 1.0
+"""
+
 import gzip
 import json
 import operator

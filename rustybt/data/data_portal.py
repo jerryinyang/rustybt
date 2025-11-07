@@ -12,6 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Central data access interface for backtesting simulations.
+
+This module provides the DataPortal class, which serves as the primary interface
+for accessing all pricing, adjustment, and historical data during backtesting.
+It coordinates between multiple data sources (minute/daily, equity/futures) and
+handles data alignment, adjustments, and history calculations.
+"""
 import logging
 from functools import reduce
 from operator import mul
@@ -283,6 +290,17 @@ class DataPortal:
         )
 
     def _ensure_reader_aligned(self, reader):
+        """Ensure a reader is aligned with this portal's trading calendar.
+
+        If the reader's calendar differs, wraps it in a reindexing reader.
+
+        Args:
+            reader: The bar reader to align, or None.
+
+        Returns:
+            The original reader if already aligned, a reindexed reader if
+            calendars differ, or None if input was None.
+        """
         if reader is None:
             return
 
@@ -304,13 +322,27 @@ class DataPortal:
             )
 
     def _reindex_extra_source(self, df, source_date_index):
+        """Reindex extra source data to the simulation date range.
+
+        Args:
+            df: The DataFrame to reindex.
+            source_date_index: The target date index.
+
+        Returns:
+            pd.DataFrame: The reindexed DataFrame with forward-filled values.
+        """
         return df.reindex(index=source_date_index, method="ffill")
 
     def handle_extra_source(self, source_df, sim_params):
-        """Extra sources always have a sid column.
+        """Process extra data sources (e.g., fetcher data) for the simulation.
 
-        We expand the given data (by forward filling) to the full range of
-        the simulation dates, so that lookup is fast during simulation.
+        Extra sources always have a sid column. We expand the given data (by
+        forward filling) to the full range of the simulation dates, so that
+        lookup is fast during simulation.
+
+        Args:
+            source_df: DataFrame containing extra source data with a 'sid' column.
+            sim_params: Simulation parameters containing start/end sessions.
         """
         if source_df is None:
             return
@@ -377,28 +409,62 @@ class DataPortal:
         self._extra_source_df = extra_source_df
 
     def _get_pricing_reader(self, data_frequency):
+        """Get the appropriate pricing reader for the given frequency.
+
+        Args:
+            data_frequency: Either 'minute' or 'daily'.
+
+        Returns:
+            The bar reader for the specified frequency.
+        """
         return self._pricing_readers[data_frequency]
 
     def get_last_traded_dt(self, asset, dt, data_frequency):
-        """Given an asset and dt, returns the last traded dt from the viewpoint
-        of the given dt.
+        """Get the last traded timestamp for an asset from a given viewpoint.
 
         If there is a trade on the dt, the answer is dt provided.
+
+        Args:
+            asset: The asset to query.
+            dt: The timestamp from which to search backwards.
+            data_frequency: Either 'minute' or 'daily'.
+
+        Returns:
+            pd.Timestamp: The last traded timestamp, or pd.NaT if none found.
         """
         return self._get_pricing_reader(data_frequency).get_last_traded_dt(asset, dt)
 
     @staticmethod
     def _is_extra_source(asset, field, map):
-        """Internal method that determines if this asset/field combination
-        represents a fetcher value or a regular OHLCVP lookup.
-        """
-        # If we have an extra source with a column called "price", only look
-        # at it if it's on something like palladium and not AAPL (since our
-        # own price data always wins when dealing with assets).
+        """Determine if an asset/field combination is from an extra source.
 
+        Internal method that determines if this asset/field combination
+        represents a fetcher value or a regular OHLCVP lookup. If we have an
+        extra source with a column called "price", only look at it if it's on
+        something like palladium and not AAPL (since our own price data always
+        wins when dealing with assets).
+
+        Args:
+            asset: The asset being queried.
+            field: The field name being queried.
+            map: The augmented sources map.
+
+        Returns:
+            bool: True if this is an extra source field, False otherwise.
+        """
         return not (field in BASE_FIELDS and (isinstance(asset, (Asset, ContinuousFuture))))
 
     def _get_fetcher_value(self, asset, field, dt):
+        """Get a value from fetcher (extra source) data.
+
+        Args:
+            asset: The asset identifier.
+            field: The field name.
+            dt: The timestamp for the value.
+
+        Returns:
+            The value from the fetcher data, or np.nan if not found.
+        """
         # TODO: FIX TZ MESS
         day = dt.normalize().tz_localize(None)
 
@@ -408,6 +474,18 @@ class DataPortal:
             return np.nan
 
     def _get_single_asset_value(self, session_label, asset, field, dt, data_frequency):
+        """Get a single value for one asset at a specific time.
+
+        Args:
+            session_label: The session label for the timestamp.
+            asset: The asset to query.
+            field: The field name to retrieve.
+            dt: The timestamp for the value.
+            data_frequency: Either 'minute' or 'daily'.
+
+        Returns:
+            The value at the specified coordinates.
+        """
         if self._is_extra_source(asset, field, self._augmented_sources_map):
             return self._get_fetcher_value(asset, field, dt)
 
@@ -652,6 +730,17 @@ class DataPortal:
         return spot_value
 
     def _get_minute_spot_value(self, asset, column, dt, ffill=False):
+        """Get a spot value for an asset at minute frequency.
+
+        Args:
+            asset: The asset to query.
+            column: The column name (e.g., 'open', 'close').
+            dt: The minute timestamp.
+            ffill: Whether to forward-fill missing values.
+
+        Returns:
+            The value at the specified time, possibly forward-filled.
+        """
         reader = self._get_pricing_reader("minute")
 
         if not ffill:
@@ -694,6 +783,16 @@ class DataPortal:
         return self.get_adjusted_value(asset, column, query_dt, dt, "minute", spot_value=result)
 
     def _get_daily_spot_value(self, asset, column, dt):
+        """Get a spot value for an asset at daily frequency.
+
+        Args:
+            asset: The asset to query.
+            column: The column name (e.g., 'open', 'close', 'price').
+            dt: The session timestamp.
+
+        Returns:
+            The value at the specified session.
+        """
         reader = self._get_pricing_reader("daily")
         if column == "last_traded":
             last_traded_dt = reader.get_last_traded_dt(asset, dt)
@@ -737,6 +836,19 @@ class DataPortal:
 
     @remember_last
     def _get_days_for_window(self, end_date, bar_count):
+        """Get the session range for a history window.
+
+        Args:
+            end_date: The end session for the window.
+            bar_count: The number of sessions to include.
+
+        Returns:
+            pd.DatetimeIndex: The sessions in the window.
+
+        Raises:
+            HistoryWindowStartsBeforeData: If the window extends before
+                available data.
+        """
         tds = self.trading_calendar.sessions
         end_loc = tds.get_loc(end_date)
         start_loc = end_loc - bar_count + 1
@@ -749,8 +861,20 @@ class DataPortal:
         return tds[start_loc : end_loc + 1]
 
     def _get_history_daily_window(self, assets, end_dt, bar_count, field_to_use, data_frequency):
-        """Internal method that returns a dataframe containing history bars
-        of daily frequency for the given sids.
+        """Get a history window of daily bars.
+
+        Internal method that returns a dataframe containing history bars
+        of daily frequency for the given assets.
+
+        Args:
+            assets: List of assets to query.
+            end_dt: The end timestamp for the window.
+            bar_count: The number of daily bars to return.
+            field_to_use: The field name to retrieve.
+            data_frequency: The simulation data frequency ('minute' or 'daily').
+
+        Returns:
+            pd.DataFrame: History data with sessions as index and assets as columns.
         """
         session = self.trading_calendar.minute_to_session(end_dt)
         days_for_window = self._get_days_for_window(session, bar_count)
@@ -766,6 +890,18 @@ class DataPortal:
     def _get_history_daily_window_data(
         self, assets, days_for_window, end_dt, field_to_use, data_frequency
     ):
+        """Get the actual data arrays for a daily history window.
+
+        Args:
+            assets: List of assets to query.
+            days_for_window: The sessions to include in the window.
+            end_dt: The end timestamp.
+            field_to_use: The field name to retrieve.
+            data_frequency: The simulation data frequency ('minute' or 'daily').
+
+        Returns:
+            np.ndarray: Array of values with shape (num_days, num_assets).
+        """
         if data_frequency == "daily":
             # two cases where we use daily data for the whole range:
             # 1) the history window ends at midnight utc.
@@ -797,6 +933,14 @@ class DataPortal:
             return daily_data
 
     def _handle_minute_history_out_of_bounds(self, bar_count):
+        """Handle the case where a minute history window extends before data.
+
+        Args:
+            bar_count: The number of bars requested.
+
+        Raises:
+            HistoryWindowStartsBeforeData: Always raised with helpful info.
+        """
         cal = self.trading_calendar
 
         first_trading_minute_loc = (
@@ -816,8 +960,22 @@ class DataPortal:
         )
 
     def _get_history_minute_window(self, assets, end_dt, bar_count, field_to_use):
-        """Internal method that returns a dataframe containing history bars
-        of minute frequency for the given sids.
+        """Get a history window of minute bars.
+
+        Internal method that returns a dataframe containing history bars
+        of minute frequency for the given assets.
+
+        Args:
+            assets: List of assets to query.
+            end_dt: The end minute for the window.
+            bar_count: The number of minute bars to return.
+            field_to_use: The field name to retrieve.
+
+        Returns:
+            pd.DataFrame: History data with minutes as index and assets as columns.
+
+        Raises:
+            HistoryWindowStartsBeforeData: If the window extends before available data.
         """
         # get all the minutes for this window
         try:
@@ -949,60 +1107,42 @@ class DataPortal:
         return df
 
     def _get_minute_window_data(self, assets, field, minutes_for_window):
-        """Internal method that gets a window of adjusted minute data for an asset
-        and specified date range.  Used to support the history API method for
-        minute bars.
+        """Get a window of adjusted minute data for assets.
 
-        Missing bars are filled with NaN.
+        Internal method that gets a window of adjusted minute data for assets
+        and specified date range. Used to support the history API method for
+        minute bars. Missing bars are filled with NaN.
 
-        Parameters
-        ----------
-        assets : iterable[Asset]
-            The assets whose data is desired.
-
-        field: string
-            The specific field to return.  "open", "high", "close_price", etc.
-
-        minutes_for_window: pd.DateTimeIndex
-            The list of minutes representing the desired window.  Each minute
-            is a pd.Timestamp.
+        Args:
+            assets: Iterable of assets whose data is desired.
+            field: The specific field to return (e.g., "open", "high", "close").
+            minutes_for_window: The list of minutes representing the desired
+                window. Each minute is a pd.Timestamp.
 
         Returns:
-        -------
-        A numpy array with requested values.
+            np.ndarray: Array with requested values.
         """
         return self._minute_history_loader.history(assets, minutes_for_window, field, False)
 
     def _get_daily_window_data(self, assets, field, days_in_window, extra_slot=True):
-        """Internal method that gets a window of adjusted daily data for a sid
-        and specified date range.  Used to support the history API method for
+        """Get a window of adjusted daily data for assets.
+
+        Internal method that gets a window of adjusted daily data for assets
+        and specified date range. Used to support the history API method for
         daily bars.
 
-        Parameters
-        ----------
-        asset : Asset
-            The asset whose data is desired.
-
-        start_dt: pandas.Timestamp
-            The start of the desired window of data.
-
-        bar_count: int
-            The number of days of data to return.
-
-        field: string
-            The specific field to return.  "open", "high", "close_price", etc.
-
-        extra_slot: boolean
-            Whether to allocate an extra slot in the returned numpy array.
-            This extra slot will hold the data for the last partial day.  It's
-            much better to create it here than to create a copy of the array
-            later just to add a slot.
+        Args:
+            assets: Iterable of assets whose data is desired.
+            field: The specific field to return (e.g., "open", "high", "close").
+            days_in_window: The sessions to include in the window.
+            extra_slot: Whether to allocate an extra slot in the returned numpy
+                array. This extra slot will hold the data for the last partial day.
+                It's much better to create it here than to create a copy of the
+                array later just to add a slot.
 
         Returns:
-        -------
-        A numpy array with requested values.  Any missing slots filled with
-        nan.
-
+            np.ndarray: Array with requested values. Any missing slots filled
+                with nan.
         """
         bar_count = len(days_in_window)
         # create an np.array of size bar_count
@@ -1026,24 +1166,18 @@ class DataPortal:
         return return_array
 
     def _get_adjustment_list(self, asset, adjustments_dict, table_name):
-        """Internal method that returns a list of adjustments for the given sid.
+        """Get a list of adjustments for the given asset.
 
-        Parameters
-        ----------
-        asset : Asset
-            The asset for which to return adjustments.
+        Internal method that returns a list of adjustments for the given asset,
+        using a cache to avoid repeated database queries.
 
-        adjustments_dict: dict
-            A dictionary of sid -> list that is used as a cache.
-
-        table_name: string
-            The table that contains this data in the adjustments db.
+        Args:
+            asset: The asset for which to return adjustments.
+            adjustments_dict: A dictionary of sid -> list that is used as a cache.
+            table_name: The table that contains this data in the adjustments db.
 
         Returns:
-        -------
-        adjustments: list
-            A list of [multiplier, pd.Timestamp], earliest first
-
+            list: A list of [multiplier, pd.Timestamp] tuples, earliest first.
         """
         if self._adjustment_reader is None:
             return []
@@ -1145,17 +1279,27 @@ class DataPortal:
         return dividend_info
 
     def contains(self, asset, field):
+        """Check if this portal contains data for the given asset/field.
+
+        Args:
+            asset: The asset to check.
+            field: The field name to check.
+
+        Returns:
+            bool: True if data is available, False otherwise.
+        """
         return field in BASE_FIELDS or (
             field in self._augmented_sources_map and asset in self._augmented_sources_map[field]
         )
 
     def get_fetcher_assets(self, dt):
-        """Returns a list of assets for the current date, as defined by the
-        fetcher data.
+        """Get a list of assets available from fetcher data at a given time.
+
+        Args:
+            dt: The timestamp to query.
 
         Returns:
-        -------
-        list: a list of Asset objects.
+            list: A list of Asset objects available from fetcher data.
         """
         # return a list of assets for the current date, as defined by the
         # fetcher source
@@ -1176,15 +1320,19 @@ class DataPortal:
             return [assets] if isinstance(assets, Asset) else []
 
     def get_current_future_chain(self, continuous_future, dt):
-        """Retrieves the future chain for the contract at the given `dt` according
-        the `continuous_future` specification.
+        """Get the future chain for a continuous future at a given time.
+
+        Retrieves the future chain for the contract at the given dt according
+        to the continuous_future specification.
+
+        Args:
+            continuous_future: The ContinuousFuture to query.
+            dt: The timestamp to query.
 
         Returns:
-        -------
-        future_chain : list[Future]
-            A list of active futures, where the first index is the current
-            contract specified by the continuous future definition, the second
-            is the next upcoming contract and so on.
+            list[Future]: A list of active futures, where the first index is the
+                current contract specified by the continuous future definition,
+                the second is the next upcoming contract and so on.
         """
         rf = self._roll_finders[continuous_future.roll_style]
         session = self.trading_calendar.minute_to_session(dt)
@@ -1196,6 +1344,16 @@ class DataPortal:
         return self.asset_finder.retrieve_all(chain)
 
     def _get_current_contract(self, continuous_future, dt):
+        """Get the current underlying contract for a continuous future.
+
+        Args:
+            continuous_future: The ContinuousFuture to query.
+            dt: The timestamp to query.
+
+        Returns:
+            Future or None: The current active contract, or None if no contract
+                is active.
+        """
         rf = self._roll_finders[continuous_future.roll_style]
         contract_sid = rf.get_contract_center(
             continuous_future.root_symbol, dt, continuous_future.offset
@@ -1206,4 +1364,9 @@ class DataPortal:
 
     @property
     def adjustment_reader(self):
+        """The adjustment reader used by this portal.
+
+        Returns:
+            The adjustment reader instance, or None if not configured.
+        """
         return self._adjustment_reader

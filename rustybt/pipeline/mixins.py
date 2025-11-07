@@ -1,8 +1,59 @@
-"""
-Mixins classes for use with Filters and Factors.
+"""Mixin classes providing reusable behavior for Pipeline terms.
 
-The mixin classes inherit from Term to ensure they appear before
-Term in the MRO of any class using the mixin
+This module provides mixin classes that add specific behaviors or constraints
+to Pipeline terms (Factors, Filters, and Classifiers). Mixins enable code
+reuse and enforce specific contracts without deep inheritance hierarchies.
+
+Mixin Design:
+    All mixins inherit from Term to ensure they appear before Term in the
+    Method Resolution Order (MRO) of classes using the mixin. This ensures
+    mixin methods are called before base class methods, allowing proper
+    method chaining with super().
+
+Validation Mixins:
+    - **PositiveWindowLengthMixin**: Ensures window_length > 0
+    - **SingleInputMixin**: Ensures exactly one input term
+    - **StandardOutputs**: Prevents custom outputs
+    - **RestrictedDTypeMixin**: Enforces allowed dtypes
+
+Behavioral Mixins:
+    - **CustomTermMixin**: Implements _compute for user-defined compute()
+    - **LatestMixin**: Provides "latest" value semantics
+    - **DownsampledMixin**: Enables lower-frequency computations
+    - **AliasedMixin**: Adds naming to expressions
+    - **SliceMixin**: Enables asset-specific slicing
+    - **ConstantMixin**: Creates constant-value terms
+    - **IfElseMixin**: Implements conditional selection
+
+Example:
+    Creating a custom factor with validation:
+
+    >>> from rustybt.pipeline.mixins import PositiveWindowLengthMixin, CustomTermMixin
+    >>> from rustybt.pipeline.factors import Factor
+    >>>
+    >>> class MyCustomFactor(PositiveWindowLengthMixin, CustomTermMixin, Factor):
+    ...     '''Custom factor requiring positive window length'''
+    ...     inputs = [EquityPricing.close]
+    ...     window_length = 10
+    ...
+    ...     def compute(self, today, assets, out, close):
+    ...         # PositiveWindowLengthMixin ensures window_length > 0
+    ...         # CustomTermMixin handles calling this compute method
+    ...         out[:] = close.mean(axis=0)
+
+    Using RestrictedDTypeMixin:
+
+    >>> from rustybt.pipeline.mixins import RestrictedDTypeMixin
+    >>> from rustybt.pipeline.dtypes import FACTOR_DTYPES
+    >>>
+    >>> class RestrictedFactor(RestrictedDTypeMixin, Factor):
+    ...     ALLOWED_DTYPES = FACTOR_DTYPES
+    ...     # Will validate dtype is in FACTOR_DTYPES
+
+See Also:
+    Term: Base class for all pipeline terms
+    Factor, Filter, Classifier: Main term types using these mixins
+    CustomFactor, CustomFilter, CustomClassifier: User-defined terms
 """
 
 from abc import abstractmethod

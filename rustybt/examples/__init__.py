@@ -1,3 +1,33 @@
+"""Example trading algorithms demonstrating rustybt features.
+
+This module provides a collection of example trading algorithms that demonstrate
+various rustybt features and trading strategies. These examples are designed
+to be educational and serve as starting points for developing custom algorithms.
+
+Available Examples:
+    - buy_and_hold: Simple buy-and-hold strategy for multiple stocks
+    - buyapple: Basic example buying Apple stock repeatedly
+    - dual_moving_average: Moving average crossover strategy
+    - momentum_pipeline: Pipeline-based momentum strategy
+    - olmar: Online Moving Average Reversion strategy
+    - dual_ema_talib: EMA crossover using TA-Lib (requires talib)
+
+Usage:
+    Examples can be run individually or loaded programmatically for testing::
+
+        from rustybt.examples import load_example_modules, run_example
+
+        # Load all available examples
+        examples = load_example_modules()
+
+        # Run a specific example
+        results = run_example(examples, 'buyapple', environ={})
+
+Note:
+    Some examples may require specific data bundles or have dependencies
+    (like TA-Lib). Check individual example docstrings for requirements.
+"""
+
 import os
 from importlib import import_module
 

@@ -1,5 +1,54 @@
-"""
-Utilities for working with pandas objects.
+"""Utilities for working with pandas objects and DataFrames.
+
+This module provides a comprehensive set of utilities for pandas operations,
+particularly focused on time-based indexing and DataFrame manipulation:
+
+**Time Operations:**
+- mask_between_time: Filter DatetimeIndex by time of day
+- find_in_sorted_index: Efficient lookup in sorted DatetimeIndex
+- nearest_unequal_elements: Find neighboring elements around a value
+- timedelta_to_integral_seconds/minutes: Convert timedeltas to integers
+
+**DataFrame Operations:**
+- categorical_df_concat: Concatenate DataFrames with categorical columns
+- empty_dataframe: Create typed empty DataFrames
+- stack_future_compatible: Cross-version compatible DataFrame.stack()
+- check_indexes_all_same: Verify index equality across DataFrames
+
+**Index Operations:**
+- explode: Extract index, columns, and values from DataFrame
+- july_5th_holiday_observance: Custom holiday handling
+
+The module ensures compatibility across pandas versions and provides
+efficient implementations for common operations.
+
+Examples:
+    Mask times within a time range:
+
+    >>> import pandas as pd
+    >>> dts = pd.date_range('2020-01-01', periods=24, freq='H')
+    >>> mask = mask_between_time(dts, pd.Timestamp('09:00').time(),
+    ...                          pd.Timestamp('17:00').time())
+    >>> sum(mask)
+    9
+
+    Find a value in a sorted index efficiently:
+
+    >>> sessions = pd.date_range('2020-01-01', periods=10, freq='D')
+    >>> find_in_sorted_index(sessions, pd.Timestamp('2020-01-05'))
+    4
+
+    Create an empty typed DataFrame:
+
+    >>> df = empty_dataframe(
+    ...     ('price', 'float64'),
+    ...     ('volume', 'int64'),
+    ...     ('timestamp', 'datetime64[ns]')
+    ... )
+    >>> df.dtypes  # doctest: +SKIP
+    price              float64
+    volume               int64
+    timestamp    datetime64[ns]
 """
 
 import operator as op
@@ -66,29 +115,53 @@ _opmap = dict(
 
 
 def mask_between_time(dts, start, end, include_start=True, include_end=True):
-    """Return a mask of all of the datetimes in ``dts`` that are between
-    ``start`` and ``end``.
-    Parameters
-    ----------
-    dts : pd.DatetimeIndex
-        The index to mask.
-    start : time
-        Mask away times less than the start.
-    end : time
-        Mask away times greater than the end.
-    include_start : bool, optional
-        Inclusive on ``start``.
-    include_end : bool, optional
-        Inclusive on ``end``.
+    """Return a boolean mask for datetimes between start and end times.
+
+    This function filters a DatetimeIndex to find all timestamps whose
+    time component falls between start and end, regardless of date.
+    Useful for filtering trading data to specific hours of the day.
+
+    Args:
+        dts: The DatetimeIndex to mask.
+        start: Start time (datetime.time object). Times earlier than this
+            are masked out.
+        end: End time (datetime.time object). Times later than this are
+            masked out.
+        include_start: Whether to include timestamps exactly at start time.
+            Default is True.
+        include_end: Whether to include timestamps exactly at end time.
+            Default is True.
 
     Returns:
-    -------
-    mask : np.ndarray[bool]
-        A bool array masking ``dts``.
+        np.ndarray: Boolean array with same length as dts, where True indicates
+            the timestamp's time is within the specified range.
+
+    Examples:
+        Mask for market hours (9:30 AM to 4:00 PM):
+
+        >>> import pandas as pd
+        >>> from datetime import time
+        >>> dts = pd.date_range('2020-01-01', periods=24, freq='H')
+        >>> market_open = time(9, 30)
+        >>> market_close = time(16, 0)
+        >>> mask = mask_between_time(dts, market_open, market_close)
+        >>> sum(mask)
+        7
+
+        Exclusive endpoint masking:
+
+        >>> mask = mask_between_time(dts, time(9), time(17),
+        ...                          include_start=False, include_end=False)
+        >>> sum(mask)
+        7
 
     See Also:
-    --------
-    :meth:`pandas.DatetimeIndex.indexer_between_time`
+        pandas.DatetimeIndex.indexer_between_time: Similar pandas method
+
+    Note:
+        - This function only looks at the time component, ignoring dates
+        - Adapted from pandas.DatetimeIndex.indexer_between_time
+        - Works correctly when start > end (wraps around midnight)
     """
     # This function is adapted from
     # `pandas.Datetime.Index.indexer_between_time` which was originally

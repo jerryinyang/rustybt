@@ -1,4 +1,22 @@
-"""Type stubs for rustybt.finance._finance_ext - Compiled Cython module."""
+"""Cython-optimized finance calculations for portfolio tracking.
+
+This module provides high-performance implementations of position tracking,
+portfolio statistics calculation, and volatility computations. Critical for
+fast portfolio valuation during backtesting.
+
+Cython optimizations:
+- Inline C loops for position iteration
+- Direct struct access for InnerPosition data
+- Pre-allocated arrays for statistics
+- No Python dict/list overhead in calculations
+- Fast sqrt via C math library
+
+Example:
+    >>> stats = PositionStats.new()
+    >>> calculate_position_tracker_stats(positions, stats)
+    >>> print(f"Net value: {stats.net_value}")
+    >>> print(f"Longs: {stats.longs_count}, Shorts: {stats.shorts_count}")
+"""
 
 from typing import Any, Callable
 import numpy as np

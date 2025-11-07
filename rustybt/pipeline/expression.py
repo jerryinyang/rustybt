@@ -1,5 +1,49 @@
-"""
-NumericalExpression term.
+"""Numerical expressions using numexpr for efficient Pipeline computations.
+
+This module provides the NumericalExpression class, which enables efficient
+computation of mathematical and logical expressions in Pipeline using the
+numexpr library. Numerical expressions are created automatically when you
+combine Factors or Filters using operators like +, -, *, /, &, |, etc.
+
+Key Features:
+    - Automatic expression optimization via numexpr
+    - Support for mathematical operations (+, -, *, /, **, %)
+    - Support for comparison operations (<, <=, ==, !=, >=, >)
+    - Support for logical operations (&, |)
+    - Support for mathematical functions (sin, cos, log, exp, etc.)
+    - Efficient multi-input expression merging
+
+Expression Variables:
+    Variables in numexpr expressions follow the pattern 'x_0', 'x_1', ..., 'x_N'
+    where each x_i corresponds to the i-th input term.
+
+Supported Math Functions:
+    Trigonometric: sin, cos, tan, arcsin, arccos, arctan
+    Hyperbolic: sinh, cosh, tanh, arcsinh, arccosh, arctanh
+    Exponential/Log: exp, expm1, log, log10, log1p
+    Other: sqrt, abs
+
+Example:
+    >>> from rustybt.pipeline.factors import SimpleMovingAverage
+    >>> from rustybt.pipeline.data import EquityPricing
+    >>>
+    >>> # These operations create NumericalExpression instances
+    >>> close = EquityPricing.close.latest
+    >>> high = EquityPricing.high.latest
+    >>> low = EquityPricing.low.latest
+    >>>
+    >>> # Arithmetic expression (creates NumExprFactor)
+    >>> mid_price = (high + low) / 2
+    >>>
+    >>> # Comparison expression (creates NumExprFilter)
+    >>> close_above_mid = close > mid_price
+    >>>
+    >>> # Complex expression
+    >>> normalized = (close - mid_price) / (high - low)
+
+See Also:
+    NumExprFactor: Factor subclass for numerical expressions
+    NumExprFilter: Filter subclass for boolean expressions
 """
 
 import re

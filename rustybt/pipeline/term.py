@@ -1,5 +1,59 @@
-"""
-Base class for Filters, Factors and Classifiers
+"""Base classes for Pipeline computation graph terms.
+
+This module defines the core term types that make up a Pipeline's computation
+graph. Terms represent nodes in the dependency graph, each producing output
+data that can be consumed by other terms or returned as pipeline outputs.
+
+The main term types are:
+
+- **Term**: Abstract base class for all pipeline terms. Handles memoization,
+  domain specification, and dependency tracking.
+
+- **LoadableTerm**: Terms whose data comes from external loaders (e.g., price
+  data from a database). These are leaves in the dependency graph.
+
+- **ComputableTerm**: Terms that compute their output from other terms' outputs
+  (e.g., factors, filters, classifiers). These form the interior nodes of the
+  dependency graph.
+
+Key concepts:
+
+**Memoization**: Terms are memoized - constructing the same term twice with
+the same parameters returns the same object instance. This is critical for
+dependency resolution and ensures we only compute each unique term once.
+
+**Dependencies**: Each term declares its dependencies (other terms needed as
+inputs) and how many extra rows of each dependency are required (for lookback
+windows).
+
+**Domains**: Terms can be generic (work on any data domain) or specialized to
+a specific domain (e.g., US equities). LoadableTerms must be specialized before
+execution.
+
+**Window Safety**: Window-safe terms produce outputs whose meaning is independent
+of temporal context, making them safe to use as inputs to windowed computations.
+
+Examples:
+    Create a simple factor that's automatically memoized::
+
+        >>> from rustybt.pipeline.data import EquityPricing
+        >>> from rustybt.pipeline.factors import SimpleMovingAverage
+        >>> sma1 = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=20)
+        >>> sma2 = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=20)
+        >>> assert sma1 is sma2  # Same parameters = same object
+
+    Terms track their dependencies automatically::
+
+        >>> sma = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=20)
+        >>> # sma.dependencies shows it needs 19 extra rows of close price
+        >>> assert EquityPricing.close in sma.dependencies
+        >>> assert sma.dependencies[EquityPricing.close] == 19  # window_length - 1
+
+See Also:
+    - :class:`rustybt.pipeline.Factor`: ComputableTerm producing numerical output
+    - :class:`rustybt.pipeline.Filter`: ComputableTerm producing boolean output
+    - :class:`rustybt.pipeline.Classifier`: ComputableTerm producing categorical output
+    - :class:`rustybt.pipeline.data.BoundColumn`: LoadableTerm for dataset columns
 """
 
 from abc import ABC, abstractmethod
@@ -52,36 +106,66 @@ from .sentinels import NotSpecified
 
 
 class Term(ABC):
-    """
-    Base class for objects that can appear in the compute graph of a
-    :class:`zipline.pipeline.Pipeline`.
+    """Abstract base class for all nodes in a Pipeline computation graph.
+
+    Term is the foundation of the Pipeline API's expression system. Each term
+    represents a computation that produces data (factors, filters, classifiers)
+    or loads data from external sources (dataset columns). Terms are combined
+    to build complex expressions that define a pipeline's logic.
+
+    Core Attributes:
+        dtype: The numpy dtype of this term's output (e.g., float64, bool).
+        missing_value: The value used to represent missing/invalid data.
+        domain: The data domain this term operates on (e.g., US equities).
+        window_safe: Whether this term's output is safe for windowed operations.
+        ndim: The dimensionality of output (1 for date-only, 2 for date x asset).
+        params: Additional parameters that customize this term's behavior.
+
+    Memoization:
+        Terms are automatically memoized - constructing a term with the same
+        parameters twice returns the same object instance. This is essential
+        for dependency resolution and ensures each unique computation happens
+        exactly once.
+
+    Type System:
+        Most users interact with Term through its concrete subclasses:
+
+        - :class:`~rustybt.pipeline.data.BoundColumn`: Loadable dataset columns
+        - :class:`~rustybt.pipeline.Factor`: Numerical computations
+        - :class:`~rustybt.pipeline.Filter`: Boolean/filtering computations
+        - :class:`~rustybt.pipeline.Classifier`: Categorical computations
+
+    Examples:
+        Terms are memoized - same parameters = same object::
+
+            >>> from rustybt.pipeline.data import EquityPricing
+            >>> from rustybt.pipeline.factors import SimpleMovingAverage
+            >>> sma1 = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=5)
+            >>> sma2 = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=5)
+            >>> assert sma1 is sma2  # Same object returned
+
+        Different parameters create different term instances::
+
+            >>> sma3 = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=10)
+            >>> assert sma1 is not sma3  # Different window_length
+
+        Terms combine to form expressions::
+
+            >>> close = EquityPricing.close.latest
+            >>> high = EquityPricing.high.latest
+            >>> mid_price = (close + high) / 2  # Arithmetic creates new term
+            >>> is_cheap = mid_price < 50.0  # Comparison creates Filter
+
+    Warnings:
+        Memoization means term attributes should be treated as immutable after
+        construction. Modifying a term's attributes affects all references to
+        that term throughout your pipeline, which can cause unexpected behavior.
 
     Notes:
-    -----
-    Most Pipeline API users only interact with :class:`Term` via subclasses:
-
-    - :class:`~zipline.pipeline.data.BoundColumn`
-    - :class:`~zipline.pipeline.Factor`
-    - :class:`~zipline.pipeline.Filter`
-    - :class:`~zipline.pipeline.Classifier`
-
-    Instances of :class:`Term` are **memoized**. If you call a Term's
-    constructor with the same arguments twice, the same object will be returned
-    from both calls:
-
-    **Example:**
-
-    >>> from rustybt.pipeline.data import EquityPricing
-    >>> from rustybt.pipeline.factors import SimpleMovingAverage
-    >>> x = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=5)
-    >>> y = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=5)
-    >>> x is y
-    True
-
-    .. warning::
-
-       Memoization of terms means that it's generally unsafe to modify
-       attributes of a term after construction.
+        - Terms form a directed acyclic graph (DAG) of dependencies
+        - LoadableTerms are leaves (no dependencies)
+        - ComputableTerms are interior nodes (depend on other terms)
+        - The engine executes terms in topological order
     """
 
     # These are NotSpecified because a subclass is required to provide them.
@@ -392,21 +476,50 @@ class Term(ABC):
 
 
 class AssetExists(Term):
-    """
-    Pseudo-filter describing whether or not an asset existed on a given day.
-    This is the default mask for all terms that haven't been passed a mask
-    explicitly.
+    """Special term representing the existence mask for assets.
 
-    This is morally a Filter, in the sense that it produces a boolean value for
-    every asset on every date.  We don't subclass Filter, however, because
-    `AssetExists` is computed directly by the PipelineEngine.
+    AssetExists produces a boolean matrix indicating which assets existed
+    (were tradeable) on which dates. This is the fundamental building block
+    for pipeline computations - it defines the universe of valid (date, asset)
+    pairs.
 
-    This term is guaranteed to be available as an input for any term computed
-    by SimplePipelineEngine.run_pipeline().
+    This term serves as the default mask for all pipeline terms that don't
+    explicitly specify a mask. It ensures computations only happen for assets
+    that actually existed at the time.
+
+    Implementation Details:
+        - Computed directly by PipelineEngine, not through loaders
+        - Always available in the workspace for any term to use
+        - Based on asset lifetime data from the AssetFinder
+        - Not a Filter subclass (special-cased by the engine)
+
+    The lifetime data comes from each asset's start_date and end_date,
+    which indicate when the asset began and ceased trading.
+
+    Examples:
+        AssetExists is used implicitly as the default mask::
+
+            >>> from rustybt.pipeline.factors import SimpleMovingAverage
+            >>> from rustybt.pipeline.data import EquityPricing
+            >>> # This factor implicitly uses AssetExists() as its mask
+            >>> sma = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=20)
+            >>> assert sma.mask is AssetExists()
+
+        You can use a different mask to further restrict the universe::
+
+            >>> from rustybt.pipeline.filters import StaticAssets
+            >>> # Only compute for specific assets
+            >>> my_mask = StaticAssets([asset1, asset2])
+            >>> sma_masked = SimpleMovingAverage(
+            ...     inputs=[EquityPricing.close],
+            ...     window_length=20,
+            ...     mask=my_mask
+            ... )
 
     See Also:
-    --------
-    zipline.assets.AssetFinder.lifetimes
+        :class:`rustybt.assets.AssetFinder`: Provides asset lifetime data.
+        :meth:`rustybt.pipeline.engine.SimplePipelineEngine._compute_root_mask`:
+            Where AssetExists is actually computed.
     """
 
     dtype = bool_dtype
@@ -428,11 +541,49 @@ class AssetExists(Term):
 
 
 class InputDates(Term):
-    """
-    1-Dimensional term providing date labels for other term inputs.
+    """Special 1-dimensional term providing date labels for computations.
 
-    This term is guaranteed to be available as an input for any term computed
-    by SimplePipelineEngine.run_pipeline().
+    InputDates produces a column vector of datetime64 values representing
+    the trading dates for which a term is being computed. This is used by
+    terms that need to know the actual dates they're computing for (e.g.,
+    for date-based logic or for indexing into date-specific data).
+
+    Unlike most terms which are 2-dimensional (dates x assets), InputDates
+    is 1-dimensional (dates only). It's automatically available in the
+    workspace for any term that needs it.
+
+    Implementation Details:
+        - Computed directly by PipelineEngine before term execution
+        - Always available in the workspace
+        - Has shape (len(dates), 1) - column vector not scalar
+        - Window-safe (dates don't change meaning with context)
+
+    Examples:
+        InputDates is used internally by the engine::
+
+            >>> # In _populate_initial_workspace:
+            >>> workspace = {
+            ...     root_mask_term: mask_values,
+            ...     InputDates(): dates_column,  # Date labels
+            ... }
+
+        Custom terms can access dates through their inputs::
+
+            >>> class DateAwareFactor(CustomFactor):
+            ...     inputs = [EquityPricing.close]
+            ...     window_length = 1
+            ...
+            ...     def compute(self, today, assets, out, close):
+            ...         # today parameter gives you the date
+            ...         if today.month == 12:
+            ...             out[:] = close[-1] * 1.1  # Holiday bonus
+            ...         else:
+            ...             out[:] = close[-1]
+
+    See Also:
+        :class:`AssetExists`: The 2D asset existence mask.
+        :meth:`rustybt.pipeline.engine.SimplePipelineEngine._populate_initial_workspace`:
+            Where InputDates is added to the workspace.
     """
 
     ndim = 1
@@ -456,10 +607,56 @@ class InputDates(Term):
 
 
 class LoadableTerm(Term):
-    """
-    A Term that should be loaded from an external resource by a PipelineLoader.
+    """Base class for terms whose data comes from external sources.
 
-    This is the base class for :class:`zipline.pipeline.data.BoundColumn`.
+    LoadableTerms represent data that must be loaded from external data sources
+    (databases, files, APIs, etc.) rather than computed from other terms. They
+    are the leaves of the Pipeline computation graph - they have no inputs,
+    only outputs.
+
+    The PipelineEngine loads these terms by:
+    1. Finding the appropriate PipelineLoader via get_loader()
+    2. Specializing the term to the execution domain
+    3. Calling the loader's load_adjusted_array() method
+    4. Storing the result in the workspace
+
+    Key Characteristics:
+        - windowed = False: LoadableTerms provide raw data, not windowed views
+        - inputs = (): No other terms as inputs
+        - Must be specialized to a domain before execution
+        - Loaded in batches when possible for efficiency
+
+    The primary concrete subclass is BoundColumn, which represents columns
+    from DataSets (like EquityPricing.close).
+
+    Examples:
+        BoundColumn is the most common LoadableTerm::
+
+            >>> from rustybt.pipeline.data import EquityPricing
+            >>> close = EquityPricing.close  # This is a BoundColumn (LoadableTerm)
+            >>> assert isinstance(close, LoadableTerm)
+            >>> assert close.dataset == EquityPricing
+            >>> assert close.inputs == ()  # No inputs - data is loaded
+
+        LoadableTerms must be specialized to a domain::
+
+            >>> from rustybt.pipeline.domain import US_EQUITIES
+            >>> generic_term = EquityPricing.close  # Generic initially
+            >>> specialized = generic_term.specialize(US_EQUITIES)
+            >>> assert specialized.domain is US_EQUITIES
+
+        The engine batches loads from the same loader::
+
+            >>> # These would be loaded together in one batch:
+            >>> close = EquityPricing.close.latest
+            >>> high = EquityPricing.high.latest
+            >>> low = EquityPricing.low.latest
+            >>> # Engine calls loader.load_adjusted_array([close, high, low], ...)
+
+    See Also:
+        :class:`rustybt.pipeline.data.BoundColumn`: Main LoadableTerm subclass.
+        :class:`rustybt.pipeline.loaders.base.PipelineLoader`: Loader interface.
+        :class:`ComputableTerm`: Terms that compute from other terms.
     """
 
     windowed = False
@@ -471,11 +668,73 @@ class LoadableTerm(Term):
 
 
 class ComputableTerm(Term):
-    """
-    A Term that should be computed from a tuple of inputs.
+    """Base class for terms that compute their output from other terms.
 
-    This is the base class for :class:`zipline.pipeline.Factor`,
-    :class:`zipline.pipeline.Filter`, and :class:`zipline.pipeline.Classifier`.
+    ComputableTerms represent computations - they take inputs (other terms)
+    and produce output by applying a computation function. They form the
+    interior nodes of the Pipeline computation graph, with LoadableTerms as
+    leaves and ComputableTerms building up layers of derived computations.
+
+    The computation process:
+    1. Engine loads/computes all input terms first (dependency order)
+    2. Engine calls _compute() with the input data
+    3. Term produces output array matching expected shape and dtype
+    4. Engine stores result in workspace for downstream terms to use
+
+    Key Characteristics:
+        - inputs: Tuple of terms whose outputs are needed for computation
+        - window_length: How many rows of history are needed (0 for point-in-time)
+        - mask: Filter determining which (date, asset) pairs to compute
+        - windowed: Whether this term needs historical data (window_length > 0)
+
+    The three main subclasses are:
+        - **Factor**: Produces numerical output (float64, etc.)
+        - **Filter**: Produces boolean output (bool)
+        - **Classifier**: Produces categorical output (int64 labels)
+
+    Examples:
+        A simple moving average is a ComputableTerm::
+
+            >>> from rustybt.pipeline.factors import SimpleMovingAverage
+            >>> from rustybt.pipeline.data import EquityPricing
+            >>> sma = SimpleMovingAverage(
+            ...     inputs=[EquityPricing.close],
+            ...     window_length=20
+            ... )
+            >>> # sma.inputs = (EquityPricing.close,)
+            >>> # sma.windowed = True (window_length > 0)
+            >>> # sma.dependencies = {EquityPricing.close: 19, AssetExists(): 0}
+
+        ComputableTerms can have multiple inputs::
+
+            >>> from rustybt.pipeline.factors import Returns
+            >>> # Returns needs both open and close prices
+            >>> returns = Returns(window_length=1)
+            >>> assert len(returns.inputs) == 2  # open and close
+
+        Terms build expression trees automatically::
+
+            >>> close = EquityPricing.close.latest  # LoadableTerm
+            >>> high = EquityPricing.high.latest    # LoadableTerm
+            >>> spread = high - close               # ComputableTerm (subtraction)
+            >>> pct_spread = spread / close * 100   # ComputableTerm (division, multiplication)
+            >>> assert isinstance(pct_spread, ComputableTerm)
+            >>> # Engine will compute: close -> high -> spread -> pct_spread
+
+        Custom computations via CustomFactor::
+
+            >>> from rustybt.pipeline.factors import CustomFactor
+            >>> class Range(CustomFactor):
+            ...     inputs = [EquityPricing.high, EquityPricing.low]
+            ...     window_length = 1
+            ...     def compute(self, today, assets, out, highs, lows):
+            ...         out[:] = highs[-1] - lows[-1]
+
+    See Also:
+        :class:`rustybt.pipeline.Factor`: Numerical ComputableTerm.
+        :class:`rustybt.pipeline.Filter`: Boolean ComputableTerm.
+        :class:`rustybt.pipeline.Classifier`: Categorical ComputableTerm.
+        :class:`LoadableTerm`: Terms that load data vs compute it.
     """
 
     inputs = NotSpecified

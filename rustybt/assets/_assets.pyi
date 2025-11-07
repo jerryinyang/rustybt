@@ -1,6 +1,30 @@
-"""Type stubs for rustybt.assets._assets - Compiled Cython module.
+"""Cython-optimized Asset classes for rustybt.
 
-This stub file provides type hints and signatures for core Asset classes.
+This module provides high-performance implementations of Asset base classes
+including Asset, Equity, and Future. These classes are fundamental to the
+backtesting framework and are heavily optimized using Cython.
+
+Optimizations include:
+- Cython-compiled comparisons using PyNumber_Index for fast sid comparisons
+- Inline property accessors for exchange info
+- Efficient serialization via __reduce__ for pickling
+- Static typing throughout for C-level performance
+
+Example:
+    >>> asset = Equity(
+    ...     sid=1234,
+    ...     exchange_info=exchange_info,
+    ...     symbol='AAPL',
+    ...     asset_name='Apple Inc.',
+    ...     start_date=pd.Timestamp('2000-01-01', tz='UTC'),
+    ...     end_date=pd.Timestamp('2030-12-31', tz='UTC')
+    ... )
+    >>> asset.is_alive_for_session(pd.Timestamp('2024-01-01', tz='UTC'))
+    True
+
+Note:
+    This is a Cython extension module for maximum performance. Asset comparisons
+    and attribute access are critical hot paths in backtesting.
 """
 
 from typing import Any, Optional
@@ -79,10 +103,88 @@ class Asset:
     def __le__(self, other: Any) -> bool: ...
     def __gt__(self, other: Any) -> bool: ...
     def __ge__(self, other: Any) -> bool: ...
-    def is_alive_for_session(self, session_label: pd.Timestamp) -> bool: ...
-    def is_exchange_open(self, dt_minute: pd.Timestamp) -> bool: ...
-    def from_dict(self, dict_: dict[str, Any]) -> Asset: ...
-    def to_dict(self) -> dict[str, Any]: ...
+    def is_alive_for_session(self, session_label: pd.Timestamp) -> bool:
+        """Check if asset is alive (tradable) on a given session.
+
+        An asset is alive on a session if that session falls within the
+        asset's [start_date, end_date] range.
+
+        Args:
+            session_label: Session to check (midnight UTC timestamp).
+
+        Returns:
+            True if the asset was trading on that session, False otherwise.
+
+        Example:
+            >>> asset.start_date
+            Timestamp('2010-01-01 00:00:00+0000', tz='UTC')
+            >>> asset.end_date
+            Timestamp('2020-12-31 00:00:00+0000', tz='UTC')
+            >>> asset.is_alive_for_session(pd.Timestamp('2015-06-01', tz='UTC'))
+            True
+            >>> asset.is_alive_for_session(pd.Timestamp('2025-01-01', tz='UTC'))
+            False
+
+        Note:
+            Cython-optimized with int64 comparisons on timestamp values.
+        """
+        ...
+    def is_exchange_open(self, dt_minute: pd.Timestamp) -> bool:
+        """Check if the asset's exchange is open at a given minute.
+
+        Args:
+            dt_minute: Minute to check (UTC, tz-aware).
+
+        Returns:
+            True if the exchange is open at that minute, False otherwise.
+
+        Example:
+            >>> # Check if NYSE is open at 10:30 AM ET on a weekday
+            >>> dt = pd.Timestamp('2024-01-15 15:30', tz='UTC')  # 10:30 ET
+            >>> asset.is_exchange_open(dt)
+            True
+            >>> # Weekend
+            >>> dt = pd.Timestamp('2024-01-13 15:30', tz='UTC')  # Saturday
+            >>> asset.is_exchange_open(dt)
+            False
+        """
+        ...
+    def from_dict(self, dict_: dict[str, Any]) -> Asset:
+        """Construct an Asset from a dictionary.
+
+        Args:
+            dict_: Dictionary containing asset attributes.
+
+        Returns:
+            New Asset instance.
+
+        Example:
+            >>> asset_dict = {
+            ...     'sid': 1234,
+            ...     'symbol': 'AAPL',
+            ...     'exchange_info': exchange_info,
+            ...     'start_date': pd.Timestamp('2000-01-01', tz='UTC')
+            ... }
+            >>> asset = Asset.from_dict(asset_dict)
+        """
+        ...
+    def to_dict(self) -> dict[str, Any]:
+        """Convert asset to a dictionary.
+
+        Returns:
+            Dictionary containing all asset attributes.
+
+        Example:
+            >>> asset_dict = asset.to_dict()
+            >>> asset_dict['symbol']
+            'AAPL'
+            >>> asset_dict['sid']
+            1234
+
+        Note:
+            Useful for serialization and debugging.
+        """
+        ...
 
 class Equity(Asset):
     """Asset subclass representing equity securities.
@@ -106,13 +208,25 @@ class Equity(Asset):
 class Future(Asset):
     """Asset subclass representing futures contracts.
 
-    Futures have additional attributes like expiration, multiplier, etc.
+    Futures are derivative contracts with specific expiration dates and
+    contract specifications. They have additional attributes beyond base
+    Assets to handle futures-specific behavior.
+
+    Attributes:
+        notice_date: First date when delivery notice can be issued.
+        expiration_date: Last trading date for the contract.
+        contract_multiplier: Size of one contract (e.g., 100 for E-mini S&P).
+        root_symbol: Root symbol (e.g., 'ES' for E-mini S&P futures).
+
+    Note:
+        auto_close_date for futures is set to the earlier of notice_date
+        and expiration_date to ensure positions are closed before delivery.
     """
 
     notice_date: pd.Timestamp
     expiration_date: pd.Timestamp
     contract_multiplier: float
-    underlying: Optional[str]
+    root_symbol: str
 
     def __init__(
         self,

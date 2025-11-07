@@ -1,3 +1,49 @@
+"""Adjusted arrays with support for point-in-time adjustments.
+
+This module provides the AdjustedArray class, which represents time-series data
+that can have adjustments applied at specific points in time. This is essential
+for handling corporate actions (splits, dividends, mergers) in backtesting while
+maintaining point-in-time correctness.
+
+Key features:
+- Efficient storage of baseline data with sparse adjustments
+- Windowed iteration with automatic adjustment application
+- Support for multiple data types (float, int, bool, datetime, categorical)
+- Copy-on-write semantics for memory efficiency
+- Type-specific optimized window implementations
+
+The AdjustedArray ensures that when you access historical data, you see it as
+it would have appeared at that point in time, before future adjustments were known.
+
+Examples:
+    Create and traverse an adjusted array::
+
+        import numpy as np
+        from rustybt.lib.adjusted_array import AdjustedArray
+
+        # Create baseline data
+        data = np.array([100.0, 101.0, 102.0, 103.0, 104.0])
+
+        # Define adjustments (e.g., 2-for-1 split on day 3)
+        adjustments = {
+            3: [Float64Multiply(first_row=0, last_row=2, col=0, value=0.5)]
+        }
+
+        adjusted = AdjustedArray(data, adjustments, missing_value=np.nan)
+
+        # Traverse with a 2-day window
+        for window in adjusted.traverse(window_length=2):
+            print(window)  # Windows reflect adjustments applied at each point
+
+    Combine with other adjusted arrays::
+
+        array1 = AdjustedArray(data1, adjustments1, np.nan)
+        array2 = AdjustedArray(data2, adjustments2, np.nan)
+
+        # Merge adjustments
+        array1.update_adjustments(adjustments2, method='append')
+"""
+
 from functools import partial
 from textwrap import dedent
 
@@ -47,12 +93,31 @@ REPRESENTABLE_DTYPES = BOOL_DTYPES.union(
 
 
 def can_represent_dtype(dtype):
-    """Can we build an AdjustedArray for a baseline of `dtype``?"""
+    """Check if a dtype can be represented in an AdjustedArray.
+
+    Args:
+        dtype: NumPy dtype to check.
+
+    Returns:
+        True if the dtype can be used as baseline data for an AdjustedArray.
+        Supported types include float, int, bool, datetime, object, and strings.
+    """
     return dtype in REPRESENTABLE_DTYPES or dtype.kind in STRING_KINDS
 
 
 def is_categorical(dtype):
-    """Do we represent this dtype with LabelArrays rather than ndarrays?"""
+    """Check if a dtype should be represented as a LabelArray.
+
+    Categorical types (strings and objects) are stored more efficiently
+    as LabelArrays rather than plain ndarrays.
+
+    Args:
+        dtype: NumPy dtype to check.
+
+    Returns:
+        True if this dtype should use LabelArray representation instead
+        of regular ndarray.
+    """
     return dtype in OBJECT_DTYPES or dtype.kind in STRING_KINDS
 
 
@@ -332,6 +397,29 @@ class AdjustedArray:
 
 
 def ensure_adjusted_array(ndarray_or_adjusted_array, missing_value):
+    """Convert input to an AdjustedArray if needed.
+
+    If input is already an AdjustedArray, returns it unchanged. If input is
+    a plain ndarray, wraps it in an AdjustedArray with no adjustments.
+
+    Args:
+        ndarray_or_adjusted_array: Either an AdjustedArray or numpy ndarray.
+        missing_value: Value to use for missing data in the created array.
+
+    Returns:
+        An AdjustedArray, either the original input or a newly created one.
+
+    Raises:
+        TypeError: If input is neither an AdjustedArray nor an ndarray.
+
+    Examples:
+        Ensure we have an AdjustedArray::
+
+            import numpy as np
+            arr = np.array([1.0, 2.0, 3.0])
+            adjusted = ensure_adjusted_array(arr, np.nan)
+            # adjusted is now an AdjustedArray with no adjustments
+    """
     if isinstance(ndarray_or_adjusted_array, AdjustedArray):
         return ndarray_or_adjusted_array
     elif isinstance(ndarray_or_adjusted_array, np.ndarray):

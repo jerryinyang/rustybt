@@ -12,7 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Custom warning categories for rustybt deprecations and changes."""
 
 
 class ZiplineDeprecationWarning(DeprecationWarning):
+    """Warning for deprecated rustybt/zipline features.
+
+    This warning is used to indicate that a feature or API is deprecated
+    and will be removed in a future version. Users should update their
+    code to use the recommended alternatives.
+    """
     pass

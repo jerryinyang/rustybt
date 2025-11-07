@@ -13,6 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Benchmark data source for backtesting performance comparison.
+
+This module provides the BenchmarkSource class which manages benchmark asset
+returns for comparing algorithm performance. It handles both asset-based
+benchmarks (like SPY) and custom return series, supporting both daily and
+minute data frequencies.
+
+The benchmark source pre-calculates returns for the entire simulation period
+and provides efficient lookups for performance comparison during backtesting.
+"""
+
 import pandas as pd
 
 from rustybt.errors import (
@@ -23,6 +34,49 @@ from rustybt.errors import (
 
 
 class BenchmarkSource:
+    """Manages benchmark returns for backtesting performance comparison.
+
+    Provides pre-calculated benchmark returns for efficient lookup during
+    simulation. Supports both asset-based benchmarks (e.g., SPY) and custom
+    return series. Handles both daily and minute-frequency data.
+
+    The benchmark source validates the benchmark asset's availability during
+    the simulation period and pre-calculates returns adjusted for splits,
+    dividends, and mergers.
+
+    Attributes:
+        benchmark_asset: The asset to use as a benchmark, or None if using
+            custom returns.
+        sessions: Trading sessions for the simulation period.
+        emission_rate: Data frequency, either 'daily' or 'minute'.
+        data_portal: Portal for accessing historical price data.
+
+    Examples:
+        Create benchmark from SPY asset::
+
+            benchmark = BenchmarkSource(
+                benchmark_asset=spy_asset,
+                trading_calendar=calendar,
+                sessions=sessions,
+                data_portal=portal,
+                emission_rate='daily'
+            )
+
+            # Get return for a specific date
+            daily_return = benchmark.get_value(pd.Timestamp('2020-01-15'))
+
+        Create benchmark from custom returns::
+
+            custom_returns = pd.Series([0.01, -0.02, 0.015], index=sessions)
+            benchmark = BenchmarkSource(
+                benchmark_asset=None,
+                trading_calendar=calendar,
+                sessions=sessions,
+                data_portal=portal,
+                benchmark_returns=custom_returns
+            )
+    """
+
     def __init__(
         self,
         benchmark_asset,
@@ -32,6 +86,26 @@ class BenchmarkSource:
         emission_rate="daily",
         benchmark_returns=None,
     ):
+        """Initialize a benchmark source.
+
+        Args:
+            benchmark_asset: Asset to use as benchmark, or None if providing
+                custom returns.
+            trading_calendar: Trading calendar for the simulation.
+            sessions: DatetimeIndex of trading sessions.
+            data_portal: DataPortal for accessing price history.
+            emission_rate: Data frequency, 'daily' or 'minute'. Default 'daily'.
+            benchmark_returns: Custom return series to use instead of an asset.
+                Should be indexed by session dates. Optional.
+
+        Raises:
+            Exception: If neither benchmark_asset nor benchmark_returns is provided.
+            BenchmarkAssetNotAvailableTooEarly: If benchmark asset started trading
+                after the first simulation session.
+            BenchmarkAssetNotAvailableTooLate: If benchmark asset stopped trading
+                before the last simulation session.
+            InvalidBenchmarkAsset: If benchmark asset has stock dividends.
+        """
         self.benchmark_asset = benchmark_asset
         self.sessions = sessions
         self.emission_rate = emission_rate
@@ -67,72 +141,71 @@ class BenchmarkSource:
             raise Exception("Must provide either benchmark_asset or benchmark_returns.")
 
     def get_value(self, dt):
-        """Look up the returns for a given dt.
+        """Look up the returns for a given datetime.
 
-        Parameters
-        ----------
-        dt : datetime
-            The label to look up.
+        Args:
+            dt: The datetime label to look up. Should be a minute timestamp if
+                emission_rate is 'minute', or a session date if emission_rate
+                is 'daily'.
 
         Returns:
-        -------
-        returns : float
-            The returns at the given dt or session.
+            The benchmark return at the given datetime.
+
+        Warning:
+            This method expects minute inputs if emission_rate is 'minute'
+            and session labels when emission_rate is 'daily'.
 
         See Also:
-        --------
-        :class:`zipline.sources.benchmark_source.BenchmarkSource.daily_returns`
-
-        .. warning::
-
-           This method expects minute inputs if ``emission_rate == 'minute'``
-           and session labels when ``emission_rate == 'daily``.
+            daily_returns: Get returns for a range of sessions.
         """
         return self._precalculated_series.loc[dt]
 
     def get_range(self, start_dt, end_dt):
         """Look up the returns for a given period.
 
-        Parameters
-        ----------
-        start_dt : datetime
-            The inclusive start label.
-        end_dt : datetime
-            The inclusive end label.
+        Args:
+            start_dt: The inclusive start datetime label.
+            end_dt: The inclusive end datetime label.
 
         Returns:
-        -------
-        returns : pd.Series
-            The series of returns.
+            Series of benchmark returns for the specified period.
+
+        Warning:
+            This method expects minute inputs if emission_rate is 'minute'
+            and session labels when emission_rate is 'daily'.
 
         See Also:
-        --------
-        :class:`zipline.sources.benchmark_source.BenchmarkSource.daily_returns`
-
-        .. warning::
-
-           This method expects minute inputs if ``emission_rate == 'minute'``
-           and session labels when ``emission_rate == 'daily``.
+            daily_returns: Get daily returns for a range of sessions.
+            get_value: Get return for a single datetime.
         """
         return self._precalculated_series.loc[start_dt:end_dt]
 
     def daily_returns(self, start, end=None):
-        """Returns the daily returns for the given period.
+        """Get daily returns for the given period.
 
-        Parameters
-        ----------
-        start : datetime
-            The inclusive starting session label.
-        end : datetime, optional
-            The inclusive ending session label. If not provided, treat
-            ``start`` as a scalar key.
+        Args:
+            start: The inclusive starting session date.
+            end: The inclusive ending session date. If not provided, returns
+                the scalar value for the start date only. Optional.
 
         Returns:
-        -------
-        returns : pd.Series or float
-            The returns in the given period. The index will be the trading
-            calendar in the range [start, end]. If just ``start`` is provided,
-            return the scalar value on that day.
+            If end is provided, returns a Series of daily returns indexed by
+            trading sessions in the range [start, end]. If end is None, returns
+            a single float value for the start date.
+
+        Examples:
+            Get returns for a single day::
+
+                return_value = benchmark.daily_returns(
+                    pd.Timestamp('2020-01-15')
+                )
+
+            Get returns for a date range::
+
+                returns_series = benchmark.daily_returns(
+                    pd.Timestamp('2020-01-01'),
+                    pd.Timestamp('2020-01-31')
+                )
         """
         if end is None:
             return self._daily_returns[start]
@@ -140,6 +213,23 @@ class BenchmarkSource:
         return self._daily_returns[start:end]
 
     def _validate_benchmark(self, benchmark_asset):
+        """Validate that a benchmark asset is suitable for the simulation period.
+
+        Checks that the benchmark asset:
+        - Does not have stock dividends (which complicate return calculations)
+        - Started trading before or on the first simulation session
+        - Continued trading through the last simulation session
+
+        Args:
+            benchmark_asset: The asset to validate.
+
+        Raises:
+            InvalidBenchmarkAsset: If the asset has stock dividends.
+            BenchmarkAssetNotAvailableTooEarly: If asset started trading after
+                the first simulation session.
+            BenchmarkAssetNotAvailableTooLate: If asset stopped trading before
+                the last simulation session.
+        """
         # check if this security has a stock dividend.  if so, raise an
         # error suggesting that the user pick a different asset to use
         # as benchmark.
@@ -168,10 +258,32 @@ class BenchmarkSource:
 
     @staticmethod
     def _compute_daily_returns(g):
+        """Compute daily return from a group of prices.
+
+        Args:
+            g: Array-like of prices, with first element being the opening
+                price and last element being the closing price.
+
+        Returns:
+            The percent change from first to last price.
+        """
         return (g[-1] - g[0]) / g[0]
 
     @classmethod
     def downsample_minute_return_series(cls, trading_calendar, minutely_returns):
+        """Convert minute-frequency returns to daily session returns.
+
+        Takes a series of minute returns and downsamples it to daily returns
+        by computing the percent change at each session close.
+
+        Args:
+            trading_calendar: Trading calendar for session calculations.
+            minutely_returns: Series of minute-frequency returns.
+
+        Returns:
+            Series of daily returns indexed by session dates, excluding the
+            first session (which has no prior close for comparison).
+        """
         sessions = trading_calendar.minutes_to_sessions(
             minutely_returns.index,
         )
@@ -181,40 +293,36 @@ class BenchmarkSource:
         return daily_returns.iloc[1:]
 
     def _initialize_precalculated_series(self, asset, trading_calendar, trading_days, data_portal):
-        """
-        Internal method that pre-calculates the benchmark return series for
-        use in the simulation.
+        """Pre-calculate benchmark return series for the entire simulation period.
 
-        Parameters
-        ----------
-        asset:  Asset to use
+        Retrieves adjusted price history for the benchmark asset and computes
+        returns. Prices are fully adjusted for dividends, splits, and mergers.
+        For minute-frequency simulations, also computes minute-level returns.
 
-        trading_calendar: TradingCalendar
+        Special handling for edge cases:
+        - If asset started trading on simulation start date, uses open-to-close
+          return for the first day instead of prior close comparison.
+        - For minute frequency, retrieves minute-level prices and computes both
+          minute and daily returns.
 
-        trading_days: pd.DateTimeIndex
-
-        data_portal: DataPortal
-
-        Notes:
-        -----
-        If the benchmark asset started trading after the simulation start,
-        or finished trading before the simulation end, exceptions are raised.
-
-        If the benchmark asset started trading the same day as the simulation
-        start, the first available minute price on that day is used instead
-        of the previous close.
-
-        We use history to get an adjusted price history for each day's close,
-        as of the look-back date (the last day of the simulation).  Prices are
-        fully adjusted for dividends, splits, and mergers.
+        Args:
+            asset: The benchmark asset.
+            trading_calendar: Trading calendar for the simulation.
+            trading_days: DatetimeIndex of trading sessions.
+            data_portal: DataPortal for accessing price history.
 
         Returns:
-        -------
-        returns : pd.Series
-            indexed by trading day, whose values represent the %
-            change from close to close.
-        daily_returns : pd.Series
-            the partial daily returns for each minute
+            Tuple of (returns_series, daily_returns) where:
+            - returns_series: Series of returns at the emission frequency
+              (minute or daily) indexed by timestamps
+            - daily_returns: Series of daily session returns indexed by dates
+
+        Raises:
+            ValueError: If asset does not exist during the simulation period.
+
+        Note:
+            Validation that the asset covers the simulation period should be
+            done before calling this method (via _validate_benchmark).
         """
         if self.emission_rate == "minute":
             minutes = trading_calendar.sessions_minutes(self.sessions[0], self.sessions[-1])

@@ -1,4 +1,44 @@
-"""Unified bundle metadata management."""
+"""Unified bundle metadata management and catalog system.
+
+This module provides a centralized metadata management system for data bundles,
+consolidating functionality from legacy DataCatalog and ParquetMetadataCatalog
+into a single unified API.
+
+Features:
+    - Provenance tracking (data source, API version, fetch timestamps)
+    - Quality metrics (row counts, OHLCV violations, validation status)
+    - Symbol tracking with SID management
+    - Cache management with LRU eviction
+    - File metadata (checksums, sizes)
+
+All metadata is stored in SQLite with proper foreign key relationships and
+indexes for efficient querying.
+
+Example:
+    Track bundle ingestion metadata:
+
+    >>> from rustybt.data.bundles.metadata import BundleMetadata
+    >>>
+    >>> # Record bundle metadata during ingestion
+    >>> BundleMetadata.update(
+    ...     bundle_name="stocks-daily",
+    ...     source_type="yfinance",
+    ...     source_url="https://query1.finance.yahoo.com",
+    ...     row_count=25200,
+    ...     ohlcv_violations=0,
+    ...     validation_passed=True
+    ... )
+    >>>
+    >>> # Add symbols to bundle
+    >>> BundleMetadata.add_symbol("stocks-daily", "AAPL", "equity", "NASDAQ")
+    >>> BundleMetadata.add_symbol("stocks-daily", "MSFT", "equity", "NASDAQ")
+    >>>
+    >>> # Query metadata
+    >>> metadata = BundleMetadata.get("stocks-daily")
+    >>> print(f"Bundle has {metadata['row_count']} rows")
+    >>> symbols = BundleMetadata.get_symbols("stocks-daily")
+    >>> print(f"Bundle has {len(symbols)} symbols")
+"""
 
 import json
 import time

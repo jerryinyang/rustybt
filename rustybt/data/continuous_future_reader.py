@@ -1,3 +1,10 @@
+"""Bar readers for continuous futures contracts.
+
+This module provides bar readers that handle continuous futures, which are
+synthetic instruments that roll from one contract to the next based on a
+specified rolling strategy. These readers manage the complexity of stitching
+together data from multiple underlying futures contracts.
+"""
 import numpy as np
 import pandas as pd
 
@@ -5,30 +12,39 @@ from rustybt.data.session_bars import SessionBarReader
 
 
 class ContinuousFutureSessionBarReader(SessionBarReader):
+    """Bar reader for continuous futures at session (daily) frequency.
+
+    This reader provides session-level OHLCV data for continuous futures by
+    stitching together data from the appropriate underlying contracts based on
+    the continuous future's rolling strategy.
+
+    Args:
+        bar_reader: The underlying session bar reader for futures contracts.
+        roll_finders: Dict mapping roll style names to RollFinder instances
+            that determine when to roll from one contract to the next.
+    """
+
     def __init__(self, bar_reader, roll_finders):
         self._bar_reader = bar_reader
         self._roll_finders = roll_finders
 
     def load_raw_arrays(self, columns, start_date, end_date, assets):
-        """
+        """Load raw OHLCV arrays for continuous futures.
 
-        Parameters
-        ----------
-        fields : list of str
-            'sid'
-        start_dt: Timestamp
-           Beginning of the window range.
-        end_dt: Timestamp
-           End of the window range.
-        sids : list of int
-           The asset identifiers in the window.
+        This method determines which underlying contracts are active for each
+        continuous future during the requested time range, loads data for those
+        contracts, and assembles the results into continuous time series.
+
+        Args:
+            columns: List of column names to load (e.g., 'open', 'close', 'sid').
+            start_date: Beginning of the window range.
+            end_date: End of the window range.
+            assets: List of ContinuousFuture objects.
 
         Returns:
-        -------
-        list of np.ndarray
-            A list with an entry per field of ndarrays with shape
-            (minutes in range, sids) with a dtype of float64, containing the
-            values for the respective field over start and end dt range.
+            list of np.ndarray: A list with an entry per column of ndarrays with
+                shape (sessions in range, num assets), containing the values for
+                the respective column over the date range.
         """
         rolls_by_asset = {}
         for asset in assets:
@@ -94,79 +110,68 @@ class ContinuousFutureSessionBarReader(SessionBarReader):
 
     @property
     def last_available_dt(self):
-        """
+        """The last session for which the reader can provide data.
 
         Returns:
-        -------
-        dt : pd.Timestamp
-            The last session for which the reader can provide data.
+            pd.Timestamp: The last session for which the reader can provide data.
         """
         return self._bar_reader.last_available_dt
 
     @property
     def trading_calendar(self):
-        """Returns the rustybt.utils.calendar.trading_calendar used to read
-        the data.  Can be None (if the writer didn't specify it).
+        """The trading calendar used to read the data.
+
+        Returns:
+            rustybt.utils.calendar.TradingCalendar or None: The trading calendar
+                used to read the data. Can be None if the writer didn't specify it.
         """
         return self._bar_reader.trading_calendar
 
     @property
     def first_trading_day(self):
-        """
+        """The first trading day for which the reader can provide data.
 
         Returns:
-        -------
-        dt : pd.Timestamp
-            The first trading day (session) for which the reader can provide
-            data.
+            pd.Timestamp: The first trading day (session) for which the reader
+                can provide data.
         """
         return self._bar_reader.first_trading_day
 
     def get_value(self, continuous_future, dt, field):
         """Retrieve the value at the given coordinates.
 
-        Parameters
-        ----------
-        sid : int
-            The asset identifier.
-        dt : pd.Timestamp
-            The timestamp for the desired data point.
-        field : string
-            The OHLVC name for the desired data point.
+        Args:
+            continuous_future: The ContinuousFuture asset.
+            dt: The timestamp for the desired data point.
+            field: The OHLVC field name for the desired data point.
 
         Returns:
-        -------
-        value : float|int
-            The value at the given coordinates, ``float`` for OHLC, ``int``
-            for 'volume'.
+            float or int: The value at the given coordinates. Returns float for
+                OHLC fields, int for 'volume'.
 
         Raises:
-        ------
-        NoDataOnDate
-            If the given dt is not a valid market minute (in minute mode) or
-            session (in daily mode) according to this reader's tradingcalendar.
+            NoDataOnDate: If the given dt is not a valid session according to
+                this reader's trading calendar.
         """
         rf = self._roll_finders[continuous_future.roll_style]
         sid = rf.get_contract_center(continuous_future.root_symbol, dt, continuous_future.offset)
         return self._bar_reader.get_value(sid, dt, field)
 
     def get_last_traded_dt(self, asset, dt):
-        """Get the latest minute on or before ``dt`` in which ``asset`` traded.
+        """Get the latest session on or before dt in which the asset traded.
 
-        If there are no trades on or before ``dt``, returns ``pd.NaT``.
+        If there are no trades on or before dt, returns pd.NaT.
 
-        Parameters
-        ----------
-        asset : zipline.asset.Asset
-            The asset for which to get the last traded minute.
-        dt : pd.Timestamp
-            The minute at which to start searching for the last traded minute.
+        Args:
+            asset: The ContinuousFuture asset for which to get the last
+                traded session.
+            dt: The timestamp at which to start searching for the last
+                traded session.
 
         Returns:
-        -------
-        last_traded : pd.Timestamp
-            The dt of the last trade for the given asset, using the input
-            dt as a vantage point.
+            pd.Timestamp: The timestamp of the last trade for the given asset,
+                using the input dt as a vantage point. Returns pd.NaT if no
+                trades found.
         """
         rf = self._roll_finders[asset.roll_style]
         sid = rf.get_contract_center(asset.root_symbol, dt, asset.offset)
@@ -177,41 +182,50 @@ class ContinuousFutureSessionBarReader(SessionBarReader):
 
     @property
     def sessions(self):
-        """
+        """All session labels which the reader can provide.
 
         Returns:
-        -------
-        sessions : DatetimeIndex
-           All session labels (unioning the range for all assets) which the
-           reader can provide.
+            pd.DatetimeIndex: All session labels (unioning the range for all
+                assets) which the reader can provide.
         """
         return self._bar_reader.sessions
 
 
 class ContinuousFutureMinuteBarReader(SessionBarReader):
+    """Bar reader for continuous futures at minute frequency.
+
+    This reader provides minute-level OHLCV data for continuous futures by
+    stitching together data from the appropriate underlying contracts based on
+    the continuous future's rolling strategy.
+
+    Args:
+        bar_reader: The underlying minute bar reader for futures contracts.
+        roll_finders: Dict mapping roll style names to RollFinder instances
+            that determine when to roll from one contract to the next.
+    """
+
     def __init__(self, bar_reader, roll_finders):
         self._bar_reader = bar_reader
         self._roll_finders = roll_finders
 
     def load_raw_arrays(self, columns, start_date, end_date, assets):
-        """
-        Parameters
-        ----------
-        fields : list of str
-           'open', 'high', 'low', 'close', or 'volume'
-        start_dt: Timestamp
-           Beginning of the window range.
-        end_dt: Timestamp
-           End of the window range.
-        sids : list of int
-           The asset identifiers in the window.
+        """Load raw OHLCV arrays for continuous futures at minute frequency.
+
+        This method determines which underlying contracts are active for each
+        continuous future during the requested time range, loads minute-level
+        data for those contracts, and assembles the results into continuous
+        time series.
+
+        Args:
+            columns: List of column names to load (e.g., 'open', 'close', 'volume').
+            start_date: Beginning of the window range (minute timestamp).
+            end_date: End of the window range (minute timestamp).
+            assets: List of ContinuousFuture objects.
 
         Returns:
-        -------
-        list of np.ndarray
-            A list with an entry per field of ndarrays with shape
-            (minutes in range, sids) with a dtype of float64, containing the
-            values for the respective field over start and end dt range.
+            list of np.ndarray: A list with an entry per column of ndarrays with
+                shape (minutes in range, num assets), containing the values for
+                the respective column over the date range.
         """
         rolls_by_asset = {}
 
@@ -276,80 +290,68 @@ class ContinuousFutureMinuteBarReader(SessionBarReader):
 
     @property
     def last_available_dt(self):
-        """
+        """The last minute for which the reader can provide data.
+
         Returns:
-        -------
-        dt : pd.Timestamp
-            The last session for which the reader can provide data.
+            pd.Timestamp: The last minute for which the reader can provide data.
         """
         return self._bar_reader.last_available_dt
 
     @property
     def trading_calendar(self):
-        """
-        Returns the rustybt.utils.calendar.trading_calendar used to read
-        the data.  Can be None (if the writer didn't specify it).
+        """The trading calendar used to read the data.
+
+        Returns:
+            rustybt.utils.calendar.TradingCalendar or None: The trading calendar
+                used to read the data. Can be None if the writer didn't specify it.
         """
         return self._bar_reader.trading_calendar
 
     @property
     def first_trading_day(self):
-        """
+        """The first trading day for which the reader can provide data.
+
         Returns:
-        -------
-        dt : pd.Timestamp
-            The first trading day (session) for which the reader can provide
-            data.
+            pd.Timestamp: The first trading day (session) for which the reader
+                can provide data.
         """
         return self._bar_reader.first_trading_day
 
     def get_value(self, continuous_future, dt, field):
-        """
-        Retrieve the value at the given coordinates.
+        """Retrieve the value at the given coordinates.
 
-        Parameters
-        ----------
-        sid : int
-            The asset identifier.
-        dt : pd.Timestamp
-            The timestamp for the desired data point.
-        field : string
-            The OHLVC name for the desired data point.
+        Args:
+            continuous_future: The ContinuousFuture asset.
+            dt: The minute timestamp for the desired data point.
+            field: The OHLVC field name for the desired data point.
 
         Returns:
-        -------
-        value : float|int
-            The value at the given coordinates, ``float`` for OHLC, ``int``
-            for 'volume'.
+            float or int: The value at the given coordinates. Returns float for
+                OHLC fields, int for 'volume'.
 
         Raises:
-        ------
-        NoDataOnDate
-            If the given dt is not a valid market minute (in minute mode) or
-            session (in daily mode) according to this reader's tradingcalendar.
+            NoDataOnDate: If the given dt is not a valid market minute according
+                to this reader's trading calendar.
         """
         rf = self._roll_finders[continuous_future.roll_style]
         sid = rf.get_contract_center(continuous_future.root_symbol, dt, continuous_future.offset)
         return self._bar_reader.get_value(sid, dt, field)
 
     def get_last_traded_dt(self, asset, dt):
-        """
-        Get the latest minute on or before ``dt`` in which ``asset`` traded.
+        """Get the latest minute on or before dt in which the asset traded.
 
-        If there are no trades on or before ``dt``, returns ``pd.NaT``.
+        If there are no trades on or before dt, returns pd.NaT.
 
-        Parameters
-        ----------
-        asset : zipline.asset.Asset
-            The asset for which to get the last traded minute.
-        dt : pd.Timestamp
-            The minute at which to start searching for the last traded minute.
+        Args:
+            asset: The ContinuousFuture asset for which to get the last
+                traded minute.
+            dt: The minute timestamp at which to start searching for the last
+                traded minute.
 
         Returns:
-        -------
-        last_traded : pd.Timestamp
-            The dt of the last trade for the given asset, using the input
-            dt as a vantage point.
+            pd.Timestamp: The timestamp of the last trade for the given asset,
+                using the input dt as a vantage point. Returns pd.NaT if no
+                trades found.
         """
         rf = self._roll_finders[asset.roll_style]
         sid = rf.get_contract_center(asset.root_symbol, dt, asset.offset)
@@ -360,4 +362,9 @@ class ContinuousFutureMinuteBarReader(SessionBarReader):
 
     @property
     def sessions(self):
+        """All session labels which the reader can provide.
+
+        Returns:
+            pd.DatetimeIndex: All session labels which the reader can provide.
+        """
         return self._bar_reader.sessions

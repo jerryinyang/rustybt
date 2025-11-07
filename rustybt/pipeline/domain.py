@@ -1,18 +1,54 @@
-"""
-This module defines the interface and implementations of Pipeline domains.
+"""Pipeline domains defining calendars and asset universes for computations.
 
-A domain represents a set of labels for the arrays computed by a Pipeline.
-Currently, this means that a domain defines two things:
+A Pipeline domain represents the coordinate system for Pipeline computations,
+defining both the temporal dimension (trading calendar) and the asset universe
+(which assets to compute over). Domains ensure that all computations in a
+Pipeline are aligned to a consistent set of dates and assets.
 
-1. A calendar defining the dates to which the pipeline's inputs and outputs
-   should be aligned. The calendar is represented concretely by a pandas
-   DatetimeIndex.
+Key Concepts:
+    - **Calendar**: Defines trading sessions (dates) for pipeline execution
+    - **Country Code**: Identifies the asset universe (e.g., 'US', 'GB', 'JP')
+    - **Data Query Cutoff**: Determines when data is considered available
+    - **Domain Specialization**: LoadableTerms adapt to specific domains
 
-2. The set of assets that the pipeline should compute over. Right now, the only
-   supported way of representing this set is with a two-character country code
-   describing the country of assets over which the pipeline should compute. In
-   the future, we expect to expand this functionality to include more general
-   concepts.
+Domain Types:
+    - **EquityCalendarDomain**: Uses a named TradingCalendar for sessions
+    - **EquitySessionDomain**: Uses an explicit DatetimeIndex of sessions
+    - **GenericDomain**: Special singleton for domain-independent terms
+
+Domain Inference:
+    When creating a Pipeline, domains can be:
+    1. Explicitly specified: ``Pipeline(domain=US_EQUITIES)``
+    2. Inferred from terms: Domain is inferred from the terms' domains
+    3. Defaulted: Falls back to engine's default domain
+
+Example:
+    Using a built-in domain:
+
+    >>> from rustybt.pipeline import Pipeline
+    >>> from rustybt.pipeline.domain import US_EQUITIES
+    >>> from rustybt.pipeline.data import EquityPricing
+    >>>
+    >>> # Create a pipeline with explicit US equity domain
+    >>> pipe = Pipeline(domain=US_EQUITIES)
+    >>> pipe.add(EquityPricing.close.latest, 'close')
+
+    Creating a custom domain:
+
+    >>> from rustybt.pipeline.domain import EquityCalendarDomain
+    >>> import numpy as np
+    >>>
+    >>> # Custom domain with 2-hour data lag requirement
+    >>> custom_domain = EquityCalendarDomain(
+    ...     country_code='US',
+    ...     calendar_name='XNYS',
+    ...     data_query_offset=-np.timedelta64(120, 'm')  # 2 hours before open
+    ... )
+
+See Also:
+    infer_domain: Infer domain from a collection of terms
+    GENERIC: Special domain for generic terms
+    US_EQUITIES: Pre-built domain for US equities
 """
 
 import datetime

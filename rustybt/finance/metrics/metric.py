@@ -12,6 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Core metric classes for tracking algorithm performance.
+
+This module provides the base metric classes that track various aspects of
+algorithm performance including returns, risk statistics, positions, orders,
+and benchmarks. Each metric class implements hook methods that are called
+at different points during simulation execution.
+"""
 import datetime
 import operator as op
 from functools import partial
@@ -28,16 +35,19 @@ from rustybt.utils.exploding_object import NamedExplodingObject
 class SimpleLedgerField:
     """Emit the current value of a ledger field every bar or every session.
 
-    Parameters
-    ----------
-    ledger_field : str
-        The ledger field to read.
-    packet_field : str, optional
-        The name of the field to populate in the packet. If not provided,
-        ``ledger_field`` will be used.
+    Args:
+        ledger_field: The ledger field to read.
+        packet_field: The name of the field to populate in the packet. If not provided,
+            ``ledger_field`` will be used.
     """
 
     def __init__(self, ledger_field, packet_field=None):
+        """Initialize the SimpleLedgerField metric.
+
+        Args:
+            ledger_field: The ledger field to read.
+            packet_field: Optional packet field name override.
+        """
         self._get_ledger_field = op.attrgetter(ledger_field)
         if packet_field is None:
             self._packet_field = ledger_field.rsplit(".", 1)[-1]
@@ -45,30 +55,34 @@ class SimpleLedgerField:
             self._packet_field = packet_field
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
+        """Record the field value at end of bar."""
         packet["minute_perf"][self._packet_field] = self._get_ledger_field(
             ledger,
         )
 
     def end_of_session(self, packet, ledger, session, session_ix, data_portal):
+        """Record the field value at end of session."""
         packet["daily_perf"][self._packet_field] = self._get_ledger_field(
             ledger,
         )
 
 
 class DailyLedgerField:
-    """Like :class:`~zipline.finance.metrics.metric.SimpleLedgerField` but
-    also puts the current value in the ``cumulative_perf`` section.
+    """Like SimpleLedgerField but also puts the current value in cumulative_perf.
 
-    Parameters
-    ----------
-    ledger_field : str
-        The ledger field to read.
-    packet_field : str, optional
-        The name of the field to populate in the packet. If not provided,
-        ``ledger_field`` will be used.
+    Args:
+        ledger_field: The ledger field to read.
+        packet_field: The name of the field to populate in the packet. If not provided,
+            ``ledger_field`` will be used.
     """
 
     def __init__(self, ledger_field, packet_field=None):
+        """Initialize the DailyLedgerField metric.
+
+        Args:
+            ledger_field: The ledger field to read.
+            packet_field: Optional packet field name override.
+        """
         self._get_ledger_field = op.attrgetter(ledger_field)
         if packet_field is None:
             self._packet_field = ledger_field.rsplit(".", 1)[-1]
@@ -76,12 +90,14 @@ class DailyLedgerField:
             self._packet_field = packet_field
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
+        """Record the field value at end of bar in both minute and cumulative."""
         field = self._packet_field
         packet["cumulative_perf"][field] = packet["minute_perf"][field] = self._get_ledger_field(
             ledger
         )
 
     def end_of_session(self, packet, ledger, session, session_ix, data_portal):
+        """Record the field value at end of session in both daily and cumulative."""
         field = self._packet_field
         packet["cumulative_perf"][field] = packet["daily_perf"][field] = self._get_ledger_field(
             ledger
@@ -91,16 +107,19 @@ class DailyLedgerField:
 class StartOfPeriodLedgerField:
     """Keep track of the value of a ledger field at the start of the period.
 
-    Parameters
-    ----------
-    ledger_field : str
-        The ledger field to read.
-    packet_field : str, optional
-        The name of the field to populate in the packet. If not provided,
-        ``ledger_field`` will be used.
+    Args:
+        ledger_field: The ledger field to read.
+        packet_field: The name of the field to populate in the packet. If not provided,
+            ``ledger_field`` will be used.
     """
 
     def __init__(self, ledger_field, packet_field=None):
+        """Initialize the StartOfPeriodLedgerField metric.
+
+        Args:
+            ledger_field: The ledger field to read.
+            packet_field: Optional packet field name override.
+        """
         self._get_ledger_field = op.attrgetter(ledger_field)
         if packet_field is None:
             self._packet_field = ledger_field.rsplit(".", 1)[-1]
@@ -110,20 +129,25 @@ class StartOfPeriodLedgerField:
     def start_of_simulation(
         self, ledger, emission_rate, trading_calendar, sessions, benchmark_source
     ):
+        """Record the value at simulation start."""
         self._start_of_simulation = self._get_ledger_field(ledger)
 
     def start_of_session(self, ledger, session, data_portal):
+        """Record the value at session start."""
         self._previous_day = self._get_ledger_field(ledger)
 
     def _end_of_period(self, sub_field, packet, ledger):
+        """Helper to emit values at period end."""
         packet_field = self._packet_field
         packet["cumulative_perf"][packet_field] = self._start_of_simulation
         packet[sub_field][packet_field] = self._previous_day
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
+        """Emit start-of-period values at bar end."""
         self._end_of_period("minute_perf", packet, ledger)
 
     def end_of_session(self, packet, ledger, session, session_ix, data_portal):
+        """Emit start-of-period values at session end."""
         self._end_of_period("daily_perf", packet, ledger)
 
 
@@ -147,6 +171,7 @@ class BenchmarkReturnsAndVolatility:
     def start_of_simulation(
         self, ledger, emission_rate, trading_calendar, sessions, benchmark_source
     ):
+        """Initialize benchmark returns and volatility data."""
         daily_returns_series = benchmark_source.daily_returns(
             sessions[0],
             sessions[-1],
@@ -181,6 +206,7 @@ class BenchmarkReturnsAndVolatility:
             )
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
+        """Emit minute-level benchmark returns and volatility."""
         r = self._minute_cumulative_returns[dt]
         if np.isnan(r):
             r = None
@@ -192,6 +218,7 @@ class BenchmarkReturnsAndVolatility:
         packet["cumulative_risk_metrics"]["benchmark_volatility"] = v
 
     def end_of_session(self, packet, ledger, session, session_ix, data_portal):
+        """Emit daily benchmark returns and volatility."""
         r = self._daily_cumulative_returns[session_ix]
         if np.isnan(r):
             r = None
@@ -209,21 +236,26 @@ class PNL:
     def start_of_simulation(
         self, ledger, emission_rate, trading_calendar, sessions, benchmark_source
     ):
+        """Initialize PNL tracking."""
         # Initialize with same type as ledger uses (Decimal or float)
         self._previous_pnl = ledger.portfolio.pnl * 0
 
     def start_of_session(self, ledger, session, data_portal):
+        """Record PNL at session start."""
         self._previous_pnl = ledger.portfolio.pnl
 
     def _end_of_period(self, field, packet, ledger):
+        """Helper to compute and emit PNL."""
         pnl = ledger.portfolio.pnl
         packet[field]["pnl"] = pnl - self._previous_pnl
         packet["cumulative_perf"]["pnl"] = ledger.portfolio.pnl
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
+        """Emit bar-level PNL."""
         self._end_of_period("minute_perf", packet, ledger)
 
     def end_of_session(self, packet, ledger, session, session_ix, data_portal):
+        """Emit session-level PNL."""
         self._end_of_period("daily_perf", packet, ledger)
 
 
@@ -238,11 +270,13 @@ class CashFlow:
     def start_of_simulation(
         self, ledger, emission_rate, trading_calendar, sessions, benchmark_source
     ):
+        """Initialize cash flow tracking."""
         # Initialize with same type as ledger uses (Decimal or float)
         # Will be set to actual value at start of first session
         self._previous_cash_flow = None
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
+        """Emit bar-level cash flow."""
         cash_flow = ledger.portfolio.cash_flow
         if self._previous_cash_flow is None:
             self._previous_cash_flow = cash_flow * 0
@@ -250,6 +284,7 @@ class CashFlow:
         packet["cumulative_perf"]["capital_used"] = cash_flow
 
     def end_of_session(self, packet, ledger, session, session_ix, data_portal):
+        """Emit session-level cash flow."""
         cash_flow = ledger.portfolio.cash_flow
         if self._previous_cash_flow is None:
             self._previous_cash_flow = cash_flow * 0
@@ -262,9 +297,11 @@ class Orders:
     """Tracks daily orders."""
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
+        """Emit minute-level orders."""
         packet["minute_perf"]["orders"] = ledger.orders(dt)
 
     def end_of_session(self, packet, ledger, dt, session_ix, data_portal):
+        """Emit daily orders."""
         packet["daily_perf"]["orders"] = ledger.orders()
 
 
@@ -272,9 +309,11 @@ class Transactions:
     """Tracks daily transactions."""
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
+        """Emit minute-level transactions."""
         packet["minute_perf"]["transactions"] = ledger.transactions(dt)
 
     def end_of_session(self, packet, ledger, dt, session_ix, data_portal):
+        """Emit daily transactions."""
         packet["daily_perf"]["transactions"] = ledger.transactions()
 
 
@@ -282,26 +321,30 @@ class Positions:
     """Tracks daily positions."""
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
+        """Emit minute-level positions."""
         packet["minute_perf"]["positions"] = ledger.positions(dt)
 
     def end_of_session(self, packet, ledger, dt, session_ix, data_portal):
+        """Emit daily positions."""
         packet["daily_perf"]["positions"] = ledger.positions()
 
 
 class ReturnsStatistic:
-    """A metric that reports an end of simulation scalar or time series
-    computed from the algorithm returns.
+    """A metric that reports a scalar or time series computed from algorithm returns.
 
-    Parameters
-    ----------
-    function : callable
-        The function to call on the daily returns.
-    field_name : str, optional
-        The name of the field. If not provided, it will be
-        ``function.__name__``.
+    Args:
+        function: The function to call on the daily returns.
+        field_name: The name of the field. If not provided, it will be
+            ``function.__name__``.
     """
 
     def __init__(self, function, field_name=None):
+        """Initialize the ReturnsStatistic metric.
+
+        Args:
+            function: Callable that computes a statistic from returns array.
+            field_name: Optional name override for the metric field.
+        """
         if field_name is None:
             field_name = function.__name__
 
@@ -309,6 +352,7 @@ class ReturnsStatistic:
         self._field_name = field_name
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
+        """Compute and emit the returns statistic."""
         res = self._function(ledger.daily_returns_array[: session_ix + 1])
         if not np.isfinite(res):
             res = None
@@ -323,12 +367,14 @@ class AlphaBeta:
     def start_of_simulation(
         self, ledger, emission_rate, trading_calendar, sessions, benchmark_source
     ):
+        """Initialize benchmark returns for alpha/beta calculation."""
         self._daily_returns_array = benchmark_source.daily_returns(
             sessions[0],
             sessions[-1],
         ).values
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
+        """Compute and emit alpha and beta."""
         risk = packet["cumulative_risk_metrics"]
 
         alpha, beta = ep.alpha_beta_aligned(
@@ -350,10 +396,12 @@ class MaxLeverage:
     """Tracks the maximum account leverage."""
 
     def start_of_simulation(self, ledger, *args):
+        """Initialize max leverage tracking."""
         # Initialize with same type as ledger uses (Decimal or float)
         self._max_leverage = ledger.account.leverage * 0
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
+        """Update and emit max leverage."""
         self._max_leverage = max(self._max_leverage, ledger.account.leverage)
         packet["cumulative_risk_metrics"]["max_leverage"] = self._max_leverage
 
@@ -364,12 +412,15 @@ class NumTradingDays:
     """Report the number of trading days."""
 
     def start_of_simulation(self, *args):
+        """Initialize trading days counter."""
         self._num_trading_days = 0
 
     def start_of_session(self, *args):
+        """Increment trading days counter."""
         self._num_trading_days += 1
 
     def end_of_bar(self, packet, ledger, dt, session_ix, data_portal):
+        """Emit trading days count."""
         packet["cumulative_risk_metrics"]["trading_days"] = self._num_trading_days
 
     end_of_session = end_of_bar
@@ -385,13 +436,21 @@ class _ConstantCumulativeRiskMetric:
     """
 
     def __init__(self, field, value):
+        """Initialize the constant metric.
+
+        Args:
+            field: Metric field name.
+            value: Constant value to emit.
+        """
         self._field = field
         self._value = value
 
     def end_of_bar(self, packet, *args):
+        """Emit constant value at bar end."""
         packet["cumulative_risk_metrics"][self._field] = self._value
 
     def end_of_session(self, packet, *args):
+        """Emit constant value at session end."""
         packet["cumulative_risk_metrics"][self._field] = self._value
 
 
@@ -399,9 +458,11 @@ class PeriodLabel:
     """Backwards compat, please kill me."""
 
     def start_of_session(self, ledger, session, data_portal):
+        """Format period label from session."""
         self._label = session.strftime("%Y-%m")
 
     def end_of_bar(self, packet, *args):
+        """Emit period label."""
         packet["cumulative_risk_metrics"]["period_label"] = self._label
 
     end_of_session = end_of_bar
@@ -413,9 +474,11 @@ class _ClassicRiskMetrics:
     def start_of_simulation(
         self, ledger, emission_rate, trading_calendar, sessions, benchmark_source
     ):
+        """Initialize leverage tracking array."""
         self._leverages = np.full_like(sessions, np.nan, dtype="float64")
 
     def end_of_session(self, packet, ledger, dt, session_ix, data_portal):
+        """Record session leverage."""
         self._leverages[session_ix] = ledger.account.leverage
 
     @classmethod

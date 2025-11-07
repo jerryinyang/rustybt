@@ -14,12 +14,52 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Dual Moving Average Crossover algorithm.
+"""Dual Moving Average Crossover trading strategy.
 
-This algorithm buys apple once its short moving average crosses
-its long moving average (indicating upwards momentum) and sells
-its shares once the averages cross again (indicating downwards
-momentum).
+This example demonstrates a classic technical analysis strategy based on
+moving average crossovers. The algorithm:
+
+1. Computes two moving averages: a short-term (100-day) and long-term (300-day)
+2. Generates buy signals when the short MA crosses above the long MA
+3. Generates sell signals when the short MA crosses below the long MA
+
+Key Concepts Demonstrated:
+    - Using data.history() to access historical price data
+    - Computing technical indicators (moving averages)
+    - Implementing state-based trading logic
+    - Recording custom metrics for analysis
+    - Handling warmup periods (waiting for full windows)
+
+The Strategy:
+    - **Buy Signal**: Short MA > Long MA (upward momentum)
+      - Target position: 100 shares
+    - **Sell Signal**: Short MA < Long MA (downward momentum)
+      - Target position: 0 shares (exit)
+
+Usage:
+    Run this strategy from the command line::
+
+        rustybt run -f dual_moving_average.py --start 2008-1-1 --end 2013-1-1 \\
+            --bundle quantopian-quandl -o dma_results.pickle
+
+    Or programmatically::
+
+        from rustybt.examples.dual_moving_average import initialize, handle_data
+        from rustybt import run_algorithm
+        import pandas as pd
+
+        results = run_algorithm(
+            initialize=initialize,
+            handle_data=handle_data,
+            start=pd.Timestamp('2008'),
+            end=pd.Timestamp('2013'),
+            capital_base=100000,
+            bundle='quantopian-quandl'
+        )
+
+Note:
+    The algorithm skips the first 300 days to ensure the long moving average
+    has a full window of data before making trading decisions.
 """
 
 import os
@@ -29,6 +69,19 @@ from rustybt.finance import commission, slippage
 
 
 def initialize(context):
+    """Initialize the dual moving average strategy.
+
+    Sets up the algorithm to trade Apple stock using moving average
+    crossover signals.
+
+    Args:
+        context: Algorithm context that persists throughout simulation.
+            Modified to store:
+            - sym: The Apple stock security object
+            - i: Counter for tracking elapsed bars
+            - commission model: Per-share commission structure
+            - slippage model: Volume-based slippage model
+    """
     context.sym = symbol("AAPL")
     context.i = 0
 
@@ -41,6 +94,34 @@ def initialize(context):
 
 
 def handle_data(context, data):
+    """Execute moving average crossover strategy on each bar.
+
+    Called on every bar of market data. Computes short and long moving
+    averages and generates trading signals based on their relationship.
+
+    Strategy Logic:
+        1. Skip first 300 bars (warmup period for long MA)
+        2. Compute 100-day and 300-day moving averages
+        3. If short MA > long MA: Buy signal (target 100 shares)
+        4. If short MA < long MA: Sell signal (target 0 shares)
+
+    Args:
+        context: Algorithm context containing:
+            - sym: The security to trade
+            - i: Bar counter for warmup period
+        data: Bar data object providing current and historical prices.
+
+    Note:
+        Uses order_target() which adjusts position to reach target share count,
+        automatically calculating how many shares to buy or sell.
+
+    Example Signal Generation:
+        If we have no position and short MA crosses above long MA:
+        - order_target(sym, 100) will buy 100 shares
+
+        If we have 100 shares and short MA crosses below long MA:
+        - order_target(sym, 0) will sell all 100 shares
+    """
     # Skip first 300 days to get full windows
     context.i += 1
     if context.i < 300:

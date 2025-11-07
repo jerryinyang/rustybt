@@ -1,4 +1,11 @@
-"""Type stubs for rustybt.lib._uint8window - Compiled Cython module."""
+"""Cython-optimized sliding window for uint8/boolean data with adjustments.
+
+Specialized version of AdjustedArrayWindow for boolean data stored as uint8.
+Used for boolean factors and filters in Pipeline computations.
+
+See Also:
+    _float64window: Numeric version with detailed documentation
+"""
 
 import numpy as np
 from rustybt.lib.adjustment import Adjustment

@@ -12,6 +12,76 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Futures contract roll finding and continuous contract management.
+
+This module provides infrastructure for determining when to "roll" from one futures
+contract to the next in a continuous futures chain. Rolling is essential for creating
+continuous price series from a sequence of individual futures contracts that expire
+at different times.
+
+Roll Strategies:
+    Calendar Rolls:
+        Switch contracts based on fixed calendar dates (typically the auto_close_date).
+        Simple and predictable, but may not reflect actual market behavior.
+
+    Volume Rolls:
+        Switch contracts when trading volume shifts from the front contract to the back
+        contract. More accurately reflects market participant behavior, but requires
+        volume data and more complex logic.
+
+Key Classes:
+    RollFinder: Abstract base class defining the roll finding interface
+    CalendarRollFinder: Implements calendar-based rolling
+    VolumeRollFinder: Implements volume-based rolling
+
+Continuous Futures:
+    Roll finders are primarily used with ContinuousFuture assets to maintain a
+    consistent view of a futures contract chain over time. The roll finder determines
+    which individual contract should be considered "active" on any given date.
+
+Examples:
+    Calendar-based rolling:
+        >>> from rustybt.assets.roll_finder import CalendarRollFinder
+        >>> from rustybt.assets import AssetFinder
+        >>> from rustybt.utils.calendar_utils import get_calendar
+        >>> finder = AssetFinder("sqlite:///assets.db")
+        >>> calendar = get_calendar("NYSE")
+        >>> roll_finder = CalendarRollFinder(calendar, finder)
+        >>> # Get the active contract on a specific date
+        >>> import pandas as pd
+        >>> active = roll_finder.get_contract_center(
+        ...     root_symbol='CL',
+        ...     dt=pd.Timestamp('2020-06-15'),
+        ...     offset=0  # 0 for front month, 1 for next month, etc.
+        ... )
+
+    Volume-based rolling with a session reader:
+        >>> from rustybt.assets.roll_finder import VolumeRollFinder
+        >>> # Requires a session_reader with volume data
+        >>> vol_roll_finder = VolumeRollFinder(calendar, finder, session_reader)
+        >>> active = vol_roll_finder.get_contract_center('ES', pd.Timestamp('2020-06-15'), 0)
+
+    Get roll schedule for a date range:
+        >>> rolls = roll_finder.get_rolls(
+        ...     root_symbol='CL',
+        ...     start=pd.Timestamp('2020-01-01'),
+        ...     end=pd.Timestamp('2020-12-31'),
+        ...     offset=0
+        ... )
+        >>> # Returns list of (sid, roll_date) tuples
+
+See Also:
+    rustybt.assets.continuous_futures: ContinuousFuture asset type
+    rustybt.data: Data readers that use roll finders
+
+Notes:
+    - Volume-based rolling requires historical volume data
+    - Roll dates can vary by offset (front month vs. second month, etc.)
+    - The ROLL_DAYS_FOR_CURRENT_CONTRACT constant (90 days) is used by volume
+      roll finder to avoid flip-flopping between contracts
+"""
+
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
@@ -29,8 +99,15 @@ ROLL_DAYS_FOR_CURRENT_CONTRACT = 90
 
 
 class RollFinder(ABC):
-    """Abstract base class for calculating when futures contracts are the active
-    contract.
+    """Abstract base class for calculating when futures contracts roll.
+
+    A roll finder determines which contract in a futures chain is considered "active"
+    at any given time. Subclasses must implement the contract selection logic by
+    defining the `_active_contract` method.
+
+    Attributes:
+        asset_finder: AssetFinder instance for contract lookup.
+        trading_calendar: TradingCalendar for session calculations.
     """
 
     # Subclasses must set these attributes
@@ -55,47 +132,60 @@ class RollFinder(ABC):
         return oc.contract_at_offset(primary, offset, session.value)
 
     def get_contract_center(self, root_symbol, dt, offset):
-        """
+        """Get the active contract for a futures chain at a specific date.
 
-        Parameters
-        ----------
-        root_symbol : str
-            The root symbol for the contract chain.
-        dt : Timestamp
-            The datetime for which to retrieve the current contract.
-        offset : int
-            The offset from the primary contract.
-            0 is the primary, 1 is the secondary, etc.
+        Determines which individual futures contract should be considered "active"
+        for the given root symbol and date, accounting for the specified offset from
+        the primary (front) contract.
+
+        Args:
+            root_symbol: The futures root symbol (e.g., 'CL', 'ES', 'NG').
+            dt: The date/time for which to find the active contract.
+            offset: Contract offset from the front month. 0 = front month (nearest
+                expiration), 1 = second month, 2 = third month, etc.
 
         Returns:
-        -------
-        Future
-            The active future contract at the given dt.
+            Future: The active futures contract at the given date and offset.
+
+        Examples:
+            Get front month contract:
+                >>> active = roll_finder.get_contract_center('CL', pd.Timestamp('2020-06-15'), 0)
+
+            Get second month contract:
+                >>> next_month = roll_finder.get_contract_center('CL', pd.Timestamp('2020-06-15'), 1)
         """
         return self._get_active_contract_at_offset(root_symbol, dt, offset)
 
     def get_rolls(self, root_symbol, start, end, offset):
-        """Get the rolls, i.e. the session at which to hop from contract to
-        contract in the chain.
+        """Get the roll schedule for a futures chain over a date range.
 
-        Parameters
-        ----------
-        root_symbol : str
-            The root symbol for which to calculate rolls.
-        start : Timestamp
-            Start of the date range.
-        end : Timestamp
-            End of the date range.
-        offset : int
-            Offset from the primary.
+        Calculates when to "roll" from one contract to the next in a continuous
+        futures chain, returning a list of (sid, roll_date) tuples that define
+        which contract is active and when to switch to the next one.
+
+        Args:
+            root_symbol: The futures root symbol for which to calculate rolls.
+            start: Start date of the date range.
+            end: End date of the date range.
+            offset: Contract offset from the primary. 0 for front month, 1 for
+                second month, etc.
 
         Returns:
-        -------
-        rolls - list[tuple(sid, roll_date)]
-            A list of rolls, where first value is the first active `sid`,
-        and the `roll_date` on which to hop to the next contract.
-            The last pair in the chain has a value of `None` since the roll
-            is after the range.
+            list[tuple[int, pd.Timestamp or None]]: List of (sid, roll_date) tuples where:
+                - sid: The contract sid that is active
+                - roll_date: The date on which to roll to the next contract, or None
+                  for the last contract in the range (no subsequent roll needed)
+
+        Examples:
+            Get front month roll schedule for a year:
+                >>> rolls = roll_finder.get_rolls(
+                ...     root_symbol='CL',
+                ...     start=pd.Timestamp('2020-01-01'),
+                ...     end=pd.Timestamp('2020-12-31'),
+                ...     offset=0
+                ... )
+                >>> for sid, roll_date in rolls:
+                ...     print(f"Contract {sid} until {roll_date}")
         """
         oc = self.asset_finder.get_ordered_contracts(root_symbol)
         front = self._get_active_contract_at_offset(root_symbol, end, 0)
@@ -149,11 +239,40 @@ class RollFinder(ABC):
 
 
 class CalendarRollFinder(RollFinder):
-    """The CalendarRollFinder calculates contract rolls based purely on the
-    contract's auto close date.
+    """Roll finder using calendar-based contract switching.
+
+    Determines active contracts based solely on the contract's auto_close_date,
+    switching to the next contract when the current one reaches its auto close date.
+    This is the simplest roll strategy and doesn't require any price or volume data.
+
+    The calendar roll strategy is deterministic and easy to understand, but may not
+    reflect actual market behavior where participants often roll before the official
+    close date.
+
+    Args:
+        trading_calendar: TradingCalendar for date/session calculations.
+        asset_finder: AssetFinder for contract lookup and metadata.
+
+    Examples:
+        Create a calendar roll finder:
+            >>> from rustybt.assets.roll_finder import CalendarRollFinder
+            >>> from rustybt.assets import AssetFinder
+            >>> from rustybt.utils.calendar_utils import get_calendar
+            >>> finder = AssetFinder("sqlite:///assets.db")
+            >>> calendar = get_calendar("NYSE")
+            >>> roll_finder = CalendarRollFinder(calendar, finder)
+
+        Find active contract:
+            >>> active = roll_finder.get_contract_center('CL', pd.Timestamp('2020-06-15'), 0)
     """
 
     def __init__(self, trading_calendar, asset_finder):
+        """Initialize a CalendarRollFinder.
+
+        Args:
+            trading_calendar: Trading calendar for session calculations.
+            asset_finder: Asset finder for contract lookups.
+        """
         self.trading_calendar = trading_calendar
         self.asset_finder = asset_finder
 
@@ -165,13 +284,55 @@ class CalendarRollFinder(RollFinder):
 
 
 class VolumeRollFinder(RollFinder):
-    """The VolumeRollFinder calculates contract rolls based on when
-    volume activity transfers from one contract to another.
+    """Roll finder using volume-based contract switching.
+
+    Determines active contracts by tracking when trading volume shifts from the
+    front contract to the back contract. This better reflects actual market behavior
+    where traders migrate to the next contract before the official close date.
+
+    The volume roll strategy uses a grace period near the auto_close_date to detect
+    and lock in volume transitions, preventing flip-flopping between contracts when
+    volumes are close.
+
+    Attributes:
+        GRACE_DAYS: Number of days before auto_close_date to check for volume shifts.
+            Default is 7 days.
+
+    Args:
+        trading_calendar: TradingCalendar for date/session calculations.
+        asset_finder: AssetFinder for contract lookup and metadata.
+        session_reader: Data reader providing historical volume data.
+
+    Examples:
+        Create a volume roll finder:
+            >>> from rustybt.assets.roll_finder import VolumeRollFinder
+            >>> from rustybt.assets import AssetFinder
+            >>> from rustybt.utils.calendar_utils import get_calendar
+            >>> from rustybt.data import load_session_reader
+            >>> finder = AssetFinder("sqlite:///assets.db")
+            >>> calendar = get_calendar("NYSE")
+            >>> reader = load_session_reader()
+            >>> vol_roll_finder = VolumeRollFinder(calendar, finder, reader)
+
+        Find volume-based active contract:
+            >>> active = vol_roll_finder.get_contract_center('ES', pd.Timestamp('2020-06-15'), 0)
+
+    Notes:
+        - Requires historical volume data in the session_reader
+        - More computationally expensive than calendar rolling
+        - Better reflects actual market roll behavior
     """
 
     GRACE_DAYS = 7
 
     def __init__(self, trading_calendar, asset_finder, session_reader):
+        """Initialize a VolumeRollFinder.
+
+        Args:
+            trading_calendar: Trading calendar for session calculations.
+            asset_finder: Asset finder for contract lookups.
+            session_reader: Session data reader with volume data.
+        """
         self.trading_calendar = trading_calendar
         self.asset_finder = asset_finder
         self.session_reader = session_reader
@@ -252,22 +413,26 @@ class VolumeRollFinder(RollFinder):
         return front
 
     def get_contract_center(self, root_symbol, dt, offset):
-        """
+        """Get the volume-based active contract with anti-flip-flop protection.
 
-        Parameters
-        ----------
-        root_symbol : str
-            The root symbol for the contract chain.
-        dt : Timestamp
-            The datetime for which to retrieve the current contract.
-        offset : int
-            The offset from the primary contract.
-            0 is the primary, 1 is the secondary, etc.
+        Extends the base implementation by using roll schedule information over a
+        90-day window to prevent flip-flopping between contracts when volumes are
+        similar. This provides more stable contract selection compared to naive
+        volume comparison.
+
+        Args:
+            root_symbol: The futures root symbol (e.g., 'CL', 'ES', 'NG').
+            dt: The date/time for which to find the active contract.
+            offset: Contract offset from the front month. 0 = front month,
+                1 = second month, etc.
 
         Returns:
-        -------
-        Future
-            The active future contract at the given dt.
+            Future: The active futures contract based on volume patterns.
+
+        Notes:
+            Uses a ROLL_DAYS_FOR_CURRENT_CONTRACT (90 day) window to incorporate
+            roll schedule context, preventing daily flip-flopping between contracts
+            with similar volumes.
         """
         # When determining the center contract on a specific day using volume
         # rolls, simply picking the contract with the highest volume could

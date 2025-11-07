@@ -1,4 +1,56 @@
-"""Utilities for working with numpy arrays."""
+"""Utilities for working with numpy arrays and data types.
+
+This module provides a comprehensive set of utilities for numpy array manipulation,
+dtype handling, and data transformation. Key features include:
+
+**Data Types:**
+- Common dtype definitions (uint8, int64, float64, datetime64, etc.)
+- Dtype lookup by size (int_dtype_with_size_in_bytes, etc.)
+- Default missing values for each dtype
+- NaT handling for datetime dtypes
+
+**Array Manipulation:**
+- repeat_first_axis/repeat_last_axis: Memory-efficient array repetition
+- rolling_window: Create rolling windows over arrays
+- as_column: Convert 1D arrays to column vectors
+- changed_locations: Find indices where values change
+
+**Missing Data:**
+- is_missing: Generic missing value detection (NaN, NaT, None)
+- same: Check equality including NaN/NaT values
+- isnat: Check for NaT values
+
+**Utilities:**
+- busday_count_mask_NaT: Business day counting with NaT support
+- vectorized_is_element: Efficient element membership checking
+- WarningContext: Reusable context manager for warning control
+
+Examples:
+    Working with datetime NaT values:
+
+    >>> import numpy as np
+    >>> dt = np.datetime64('NaT')
+    >>> isnat(dt)
+    True
+    >>> NaT_for_dtype('datetime64[ns]')
+    numpy.datetime64('NaT')
+
+    Repeat arrays efficiently:
+
+    >>> import numpy as np
+    >>> a = np.array([1, 2, 3])
+    >>> repeat_first_axis(a, 2)
+    array([[1, 2, 3],
+           [1, 2, 3]])
+
+    Create rolling windows:
+
+    >>> a = np.arange(5)
+    >>> rolling_window(a.reshape(5, 1), 3)  # doctest: +SKIP
+    array([[[0], [1], [2]],
+           [[1], [2], [3]],
+           [[2], [3], [4]]])
+"""
 
 from collections import OrderedDict
 from datetime import datetime
@@ -46,17 +98,27 @@ NaTmap = {
 
 
 def NaT_for_dtype(dtype):
-    """Retrieve NaT with the same units as ``dtype``.
+    """Retrieve NaT (Not-a-Time) with the same units as the given dtype.
 
-    Parameters
-    ----------
-    dtype : dtype-coercable
-        The dtype to lookup the NaT value for.
+    Args:
+        dtype: A numpy datetime dtype or dtype-coercible value to lookup
+            the NaT value for. Must be a datetime64 dtype.
 
     Returns:
-    -------
-    NaT : dtype
-        The NaT value for the given dtype.
+        np.datetime64: The NaT value with the same time units as the input dtype.
+
+    Examples:
+        Get NaT for different time units:
+
+        >>> import numpy as np
+        >>> NaT_for_dtype('datetime64[ns]')
+        numpy.datetime64('NaT')
+        >>> NaT_for_dtype(np.dtype('datetime64[D]'))
+        numpy.datetime64('NaT')
+
+    Note:
+        Supported units include: ns (nanoseconds), us (microseconds),
+        ms (milliseconds), s (seconds), m (minutes), D (days).
     """
     return NaTmap[np.dtype(dtype)]
 
@@ -110,9 +172,45 @@ class NoDefaultMissingValue(Exception):
 
 
 def make_kind_check(python_types, numpy_kind):
-    """
-    Make a function that checks whether a scalar or array is of a given kind
-    (e.g. float, int, datetime, timedelta).
+    """Create a function that checks if a value is of a given dtype kind.
+
+    This factory function creates type-checking functions that work with both
+    Python scalars and numpy arrays/scalars, checking against numpy's dtype
+    kind system (e.g., 'f' for float, 'i' for int, 'M' for datetime).
+
+    Args:
+        python_types: Python type or tuple of types for scalar checking.
+        numpy_kind: Single-character string representing numpy dtype kind.
+
+    Returns:
+        function: A checking function that returns True if the value matches
+            the specified kind.
+
+    Examples:
+        Create and use a float checker:
+
+        >>> import numpy as np
+        >>> is_float_val = make_kind_check(float, 'f')
+        >>> is_float_val(1.5)
+        True
+        >>> is_float_val(np.array([1.0, 2.0]))
+        True
+        >>> is_float_val(1)
+        False
+
+        Create and use an integer checker:
+
+        >>> is_int_val = make_kind_check(int, 'i')
+        >>> is_int_val(42)
+        True
+        >>> is_int_val(np.array([1, 2, 3]))
+        True
+        >>> is_int_val(1.5)
+        False
+
+    Note:
+        Common dtype kinds: 'i' (int), 'f' (float), 'M' (datetime),
+        'm' (timedelta), 'O' (object), 'b' (bool), 'U' (unicode string).
     """
 
     def check(value):
@@ -130,10 +228,41 @@ is_object = make_kind_check(object, "O")
 
 
 def coerce_to_dtype(dtype, value):
-    """
-    Make a value with the specified numpy dtype.
+    """Coerce a value to a specific numpy dtype.
 
-    Only datetime64[ns] and datetime64[D] are supported for datetime dtypes.
+    This function converts a value to match the specified numpy dtype,
+    with special handling for datetime types.
+
+    Args:
+        dtype: Target numpy dtype. Must be a numpy dtype object.
+        value: The value to coerce. Type depends on target dtype.
+
+    Returns:
+        A value of the specified dtype.
+
+    Raises:
+        TypeError: If the dtype is an unsupported datetime64 variant.
+
+    Examples:
+        Coerce to integer type:
+
+        >>> import numpy as np
+        >>> coerce_to_dtype(np.dtype('int64'), 42.7)
+        42
+
+        Coerce to datetime64[ns]:
+
+        >>> coerce_to_dtype(np.dtype('datetime64[ns]'), '2020-01-01')
+        numpy.datetime64('2020-01-01T00:00:00.000000000')
+
+        Coerce to float:
+
+        >>> coerce_to_dtype(np.dtype('float32'), 10)
+        10.0
+
+    Note:
+        - For datetime types, only datetime64[ns] is currently supported.
+        - For other dtypes, uses the dtype's type constructor.
     """
     name = dtype.name
     if name.startswith("datetime64"):
@@ -321,8 +450,44 @@ def isnat(obj):
 
 
 def is_missing(data, missing_value):
-    """
-    Generic is_missing function that handles NaN and NaT.
+    """Check if data contains missing values (NaN, NaT, or None).
+
+    This generic function handles different types of missing values across
+    various numpy dtypes, including proper handling of NaN, NaT, and None.
+
+    Args:
+        data: The data to check. Can be a numpy array, scalar, or Python value.
+        missing_value: The value to check against (e.g., np.nan, NaT, None).
+
+    Returns:
+        bool or np.ndarray: Boolean or boolean array indicating where values
+            are missing. Shape matches input data if array.
+
+    Examples:
+        Check for NaN in float data:
+
+        >>> import numpy as np
+        >>> data = np.array([1.0, np.nan, 3.0])
+        >>> is_missing(data, np.nan)
+        array([False,  True, False])
+
+        Check for NaT in datetime data:
+
+        >>> dates = np.array(['2020-01-01', 'NaT'], dtype='datetime64[ns]')
+        >>> is_missing(dates, np.datetime64('NaT', 'ns'))
+        array([False,  True])
+
+        Check for None in object arrays:
+
+        >>> objs = np.array(['a', None, 'c'], dtype=object)
+        >>> is_missing(objs, None)
+        array([False,  True, False])
+
+    Note:
+        - For float types, uses np.isnan for NaN detection
+        - For datetime types, uses isnat for NaT detection
+        - For object types with None, uses special array comparison
+        - For other types, uses standard equality comparison
     """
     if is_float(data) and np.isnan(missing_value):
         return np.isnan(data)

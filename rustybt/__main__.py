@@ -127,6 +127,22 @@ DEFAULT_BUNDLE = "quandl"
 
 
 def _format_timestamp(ts: int | None) -> str:
+    """Format Unix timestamp as human-readable datetime string.
+
+    Args:
+        ts: Unix timestamp (seconds since epoch) or None.
+
+    Returns:
+        Formatted datetime string in 'YYYY-MM-DD HH:MM:SS TZ' format,
+        or '—' if timestamp is None, or the string representation if
+        conversion fails.
+
+    Examples:
+        >>> _format_timestamp(1609459200)
+        '2021-01-01 00:00:00 UTC'
+        >>> _format_timestamp(None)
+        '—'
+    """
     if ts is None:
         return "—"
     try:
@@ -136,6 +152,21 @@ def _format_timestamp(ts: int | None) -> str:
 
 
 def _format_date(ts: int | None) -> str:
+    """Format Unix timestamp as ISO date string.
+
+    Args:
+        ts: Unix timestamp (seconds since epoch) or None.
+
+    Returns:
+        ISO-formatted date string 'YYYY-MM-DD', or '—' if timestamp is None,
+        or the string representation if conversion fails.
+
+    Examples:
+        >>> _format_date(1609459200)
+        '2021-01-01'
+        >>> _format_date(None)
+        '—'
+    """
     if ts is None:
         return "—"
     try:
@@ -145,6 +176,26 @@ def _format_date(ts: int | None) -> str:
 
 
 def _format_size(size_bytes: int | None) -> str:
+    """Format byte size as human-readable string with units.
+
+    Converts byte sizes to the most appropriate unit (B, KB, MB, GB, TB)
+    using 1024-byte conversion factors.
+
+    Args:
+        size_bytes: Size in bytes, or None.
+
+    Returns:
+        Formatted size string with unit (e.g., '5.2 MB'), or '—' if
+        size_bytes is None or zero.
+
+    Examples:
+        >>> _format_size(1024)
+        '1.0 KB'
+        >>> _format_size(5242880)
+        '5.0 MB'
+        >>> _format_size(None)
+        '—'
+    """
     if not size_bytes:
         return "—"
     size = float(size_bytes)
@@ -160,6 +211,21 @@ _migration_module = None
 
 
 def _load_migration_module():
+    """Load and cache the bundle metadata migration script module.
+
+    Lazily loads the migrate_catalog_to_unified.py script from the scripts
+    directory. The module is cached after first load to avoid repeated imports.
+
+    Returns:
+        The migration script module containing migration functions.
+
+    Raises:
+        RuntimeError: If the migration script file cannot be found or loaded.
+
+    Note:
+        This function uses a global cache (_migration_module) to ensure
+        the module is only loaded once per process.
+    """
     global _migration_module
     if _migration_module is not None:
         return _migration_module

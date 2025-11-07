@@ -12,6 +12,125 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""TradingAlgorithm: Core backtesting engine and algorithm execution.
+
+This module implements the TradingAlgorithm class, the central component of
+RustyBT's backtesting framework. TradingAlgorithm provides the runtime
+environment for executing trading strategies, managing portfolio state,
+and simulating market conditions.
+
+Core Functionality:
+    Algorithm Lifecycle:
+        - initialize(): Setup strategy at start
+        - handle_data(): Process each bar of market data
+        - before_trading_start(): Pre-market preparation
+        - analyze(): Post-backtest analysis
+
+    Trading Operations:
+        - order(), order_value(), order_target(), order_percent()
+        - get_open_orders(), cancel_order()
+        - Portfolio and account tracking
+        - Commission and slippage simulation
+
+    Data Access:
+        - Market data through BarData interface
+        - Pipeline for cross-sectional analysis
+        - Custom CSV data fetching
+        - Historical data via history()
+
+    Risk Management:
+        - Trading controls (max position, max leverage, long-only)
+        - Account controls (leverage limits, margin requirements)
+        - Asset restrictions and do-not-trade lists
+
+    Scheduling:
+        - schedule_function(): Time-based execution
+        - Event rules with date_rules and time_rules
+        - Pre/post-market hooks
+
+Strategy Formats:
+    Functional (traditional):
+        >>> def initialize(context):
+        ...     context.asset = symbol('AAPL')
+        ...
+        >>> def handle_data(context, data):
+        ...     order(context.asset, 10)
+
+    Class-based (modern):
+        >>> class MyStrategy(TradingAlgorithm):
+        ...     def initialize(self, context):
+        ...         context.asset = symbol('AAPL')
+        ...
+        ...     def handle_data(self, context, data):
+        ...         self.order(context.asset, 10)
+
+Key Classes:
+    TradingAlgorithm: Main algorithm class with full trading API
+    NoBenchmark: Exception for missing benchmark configuration
+
+Helper Functions:
+    _detect_strategy_class: Auto-detect class-based strategies
+
+Integration Points:
+    - Data portals: PolarsDataPortal, LegacyDataPortal
+    - Blotter: Order execution and fill simulation
+    - MetricsTracker: Performance tracking
+    - Pipeline: Cross-sectional factor analysis
+    - Event system: Scheduled function execution
+
+Performance Features:
+    - Lazy data loading for large datasets
+    - Efficient OHLCV data access via Polars
+    - Caching for pipeline results
+    - Minute and daily data frequency support
+
+Examples:
+    Basic backtest:
+        >>> algo = TradingAlgorithm(
+        ...     initialize=initialize,
+        ...     handle_data=handle_data,
+        ...     sim_params=SimulationParameters(...),
+        ...     bundle='quandl'
+        ... )
+        >>> results = algo.run()
+
+    With pipeline:
+        >>> def make_pipeline():
+        ...     return Pipeline(...)
+        ...
+        >>> def initialize(context):
+        ...     attach_pipeline(make_pipeline(), 'my_pipeline')
+        ...
+        >>> def before_trading_start(context, data):
+        ...     context.output = pipeline_output('my_pipeline')
+
+    Class-based with custom methods:
+        >>> class MomentumStrategy(TradingAlgorithm):
+        ...     def initialize(self, context):
+        ...         self.lookback = 20
+        ...
+        ...     def calculate_momentum(self, asset, data):
+        ...         prices = data.history(asset, 'close', self.lookback, '1d')
+        ...         return (prices[-1] / prices[0]) - 1
+        ...
+        ...     def handle_data(self, context, data):
+        ...         for asset in context.assets:
+        ...             momentum = self.calculate_momentum(asset, data)
+        ...             if momentum > 0.05:
+        ...                 self.order_target_percent(asset, 0.1)
+
+Architecture:
+    The algorithm runs in phases:
+    1. Initialization: Setup strategy state, attach pipelines
+    2. Simulation loop: For each bar, execute scheduled events and handle_data
+    3. Portfolio updates: Track positions, cash, and performance
+    4. Analysis: Post-backtest analysis and visualization
+
+Note:
+    - All dates/times are assumed to be UTC unless otherwise specified
+    - Portfolio state is read-only; use order functions to modify positions
+    - Trading controls are enforced at order-time, not execution-time
+"""
 from __future__ import annotations
 
 import inspect
@@ -138,7 +257,27 @@ AttachedPipeline = namedtuple("AttachedPipeline", "pipe chunks eager")
 
 
 class NoBenchmark(ValueError):
+    """Raised when no benchmark is specified for performance comparison.
+
+    A benchmark is required for calculating portfolio returns relative to
+    a market baseline. Either a benchmark asset (benchmark_sid) or custom
+    benchmark returns (benchmark_returns) must be provided.
+
+    Examples:
+        >>> # This will raise NoBenchmark:
+        >>> algo = TradingAlgorithm(..., benchmark_sid=None, benchmark_returns=None)
+
+        Valid configurations:
+            >>> # Using a benchmark asset
+            >>> algo = TradingAlgorithm(..., benchmark_sid=symbol('SPY'))
+            >>>
+            >>> # Using custom benchmark returns
+            >>> custom_returns = pd.Series(...)
+            >>> algo = TradingAlgorithm(..., benchmark_returns=custom_returns)
+    """
+
     def __init__(self):
+        """Initialize NoBenchmark exception with standard message."""
         super(NoBenchmark, self).__init__(
             "Must specify either benchmark_sid or benchmark_returns.",
         )
@@ -888,7 +1027,66 @@ class TradingAlgorithm:
         return self._create_generator(self.sim_params)
 
     def run(self, data_portal=None):
-        """Run the algorithm."""
+        """Execute the full backtest simulation.
+
+        Runs the complete algorithm lifecycle from initialization through final
+        analysis. This is the main entry point for executing a backtest.
+
+        The run process follows these phases:
+        1. Initialize algorithm state (call initialize())
+        2. Set up backtest artifacts and logging
+        3. Execute simulation loop:
+           - Process each market bar
+           - Run scheduled functions
+           - Execute handle_data()
+           - Update portfolio state
+           - Track performance metrics
+        4. Generate performance statistics
+        5. Run post-backtest analysis (call analyze())
+        6. Save backtest metadata and results
+
+        Args:
+            data_portal (DataPortal, optional): Data portal for market data access.
+                If not provided, uses the portal passed to __init__. This parameter
+                exists for backwards compatibility.
+
+        Returns:
+            pd.DataFrame: Daily performance statistics including:
+                - Portfolio value, returns, positions
+                - Transactions and orders
+                - Custom recorded variables
+                - Benchmark comparison metrics
+
+        Raises:
+            RuntimeError: If no data portal is available.
+
+        Examples:
+            Basic execution:
+                >>> algo = TradingAlgorithm(
+                ...     initialize=initialize,
+                ...     handle_data=handle_data,
+                ...     sim_params=sim_params,
+                ...     bundle='quandl'
+                ... )
+                >>> results = algo.run()
+                >>> results['portfolio_value'].plot()
+
+            With custom data portal:
+                >>> custom_portal = PolarsDataPortal(...)
+                >>> results = algo.run(data_portal=custom_portal)
+
+            Accessing results:
+                >>> print(results.columns)
+                >>> final_value = results['portfolio_value'].iloc[-1]
+                >>> total_return = results['returns'].sum()
+
+        Note:
+            - The algorithm must have a data_portal set either in __init__ or run()
+            - If artifact_manager is enabled, creates output directory and saves
+              backtest metadata, code snapshots, and performance results
+            - After run() completes, data_portal and metrics_tracker are cleared
+              to free memory
+        """
         # HACK: I don't think we really want to support passing a data portal
         # this late in the long term, but this is needed for now for backwards
         # compat downstream.

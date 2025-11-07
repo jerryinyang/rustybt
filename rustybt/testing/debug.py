@@ -1,3 +1,28 @@
+"""Debugging utilities for test development.
+
+Provides tools for diagnosing and visualizing Method Resolution Order (MRO)
+failures that can occur when using complex test fixture inheritance patterns.
+
+Functions:
+    debug_mro_failure: Generate detailed MRO failure diagnostics
+    build_linearization_graph: Construct graph of class dependencies
+    verbosify_label: Convert graph labels to readable format
+
+Examples:
+    Debug MRO failure::
+
+        from rustybt.testing.debug import debug_mro_failure
+
+        try:
+            class BadClass(Base1, Base2, Base3):
+                pass
+        except TypeError as e:
+            if '(MRO)' in str(e):
+                msg = debug_mro_failure('BadClass', (Base1, Base2, Base3))
+                print(msg)
+                # Shows cycle and optionally renders GraphViz diagram
+"""
+
 import os
 import subprocess
 
@@ -5,6 +30,34 @@ import networkx as nx
 
 
 def debug_mro_failure(name, bases):
+    """Generate detailed diagnostics for Method Resolution Order failures.
+
+    When Python cannot compute a valid MRO for a class, this function
+    analyzes the inheritance graph to identify cycles and provides
+    detailed error messages. Optionally renders a GraphViz visualization.
+
+    Args:
+        name: Name of the class being created.
+        bases: Tuple of base classes.
+
+    Returns:
+        str: Detailed error message explaining the MRO failure, including:
+            - The cycle preventing linearization
+            - For each edge in the cycle, why that ordering is required
+            - Optional path to GraphViz rendering (if DRAW_MRO_FAILURES set)
+
+    Examples:
+        Diagnose inheritance conflict::
+
+            from rustybt.testing.debug import debug_mro_failure
+
+            error_msg = debug_mro_failure(
+                'ProblemClass',
+                (WithA, WithB, WithC)
+            )
+            print(error_msg)
+            # Output shows: "Cycle found when trying to compute MRO..."
+    """
     graph = build_linearization_graph(name, bases)
     cycles = sorted(nx.cycles.simple_cycles(graph), key=len)
     cycle = cycles[0]

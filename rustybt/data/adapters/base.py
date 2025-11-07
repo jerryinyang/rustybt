@@ -3,6 +3,56 @@
 This module provides the abstract base class and supporting infrastructure
 for implementing data source adapters with standardized error handling,
 validation, rate limiting, and retry logic.
+
+Key Components:
+    - BaseDataAdapter: Abstract base class for all adapters
+    - RateLimiter: Token bucket rate limiter for API requests
+    - with_retry: Decorator for automatic retry with exponential backoff
+    - Exception hierarchy: Standardized error types
+
+Creating Custom Adapters:
+    1. Subclass BaseDataAdapter
+    2. Implement _fetch_data_impl() for your data source
+    3. Optionally override _validate_data() for source-specific validation
+    4. Configure rate_limit and retry_config in __init__
+
+Example:
+    Create a custom adapter:
+
+    >>> from rustybt.data.adapters.base import BaseDataAdapter, RetryConfig
+    >>> import polars as pl
+    >>>
+    >>> class CustomAdapter(BaseDataAdapter):
+    ...     def __init__(self):
+    ...         super().__init__(
+    ...             rate_limit=5,  # 5 requests per second
+    ...             retry_config=RetryConfig(max_retries=3)
+    ...         )
+    ...
+    ...     async def _fetch_data_impl(self, symbol, start_date, end_date, **kwargs):
+    ...         # Your data fetching logic here
+    ...         data = await self._fetch_from_api(symbol, start_date, end_date)
+    ...         return pl.DataFrame(data)
+    >>>
+    >>> # Use the adapter
+    >>> adapter = CustomAdapter()
+    >>> df = await adapter.fetch_data("AAPL", start_date="2023-01-01", end_date="2023-12-31")
+
+    With validation:
+
+    >>> class ValidatedAdapter(BaseDataAdapter):
+    ...     async def _fetch_data_impl(self, symbol, start_date, end_date, **kwargs):
+    ...         data = await self._api_call(symbol, start_date, end_date)
+    ...         df = pl.DataFrame(data)
+    ...         # Validation happens automatically before return
+    ...         return df
+    ...
+    ...     def _validate_data(self, df, symbol, **kwargs):
+    ...         # Custom validation
+    ...         if df.is_empty():
+    ...             raise DataValidationError(f"No data for {symbol}")
+    ...         # Base validation (OHLCV checks) runs after this
+    ...         super()._validate_data(df, symbol, **kwargs)
 """
 
 import asyncio

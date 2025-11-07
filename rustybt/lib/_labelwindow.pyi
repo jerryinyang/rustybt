@@ -1,4 +1,11 @@
-"""Type stubs for rustybt.lib._labelwindow - Compiled Cython module."""
+"""Cython-optimized sliding window for object/categorical data with adjustments.
+
+Specialized version of AdjustedArrayWindow for object arrays (categorical/label data).
+Handles string/object types efficiently for categorical factor computations.
+
+See Also:
+    _float64window: Numeric version with detailed documentation
+"""
 
 from typing import Any
 import numpy as np

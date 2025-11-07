@@ -12,6 +12,47 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Trade simulation engine for executing algorithmic trading strategies.
+
+This module provides the core simulation infrastructure for running trading
+algorithms against historical data. The AlgorithmSimulator orchestrates:
+- Time progression through trading sessions
+- Bar data delivery to algorithms
+- Order execution and commission processing
+- Performance metrics tracking
+- Capital change management
+
+The simulator supports both daily and minute-frequency data, handles splits
+and adjustments, and manages order lifecycle including bracket orders.
+
+Classes:
+    AlgorithmSimulator: Main simulation coordinator
+
+Examples:
+    Basic simulation setup::
+
+        from rustybt.gens.tradesimulation import AlgorithmSimulator
+
+        simulator = AlgorithmSimulator(
+            algo=my_algorithm,
+            sim_params=simulation_parameters,
+            data_portal=data_portal,
+            clock=simulation_clock,
+            benchmark_source=benchmark_returns,
+            restrictions=no_restrictions
+        )
+
+        # Run simulation
+        for packet in simulator.transform():
+            if 'daily_perf' in packet:
+                # Process daily performance
+                daily_returns = packet['daily_perf']['returns']
+            elif 'minute_perf' in packet:
+                # Process minute performance
+                minute_returns = packet['minute_perf']['returns']
+"""
+
 import logging
 from copy import copy
 
@@ -31,6 +72,71 @@ log = logging.getLogger("Trade Simulation")
 
 
 class AlgorithmSimulator:
+    """Core simulation engine for executing trading algorithms.
+
+    Coordinates all aspects of algorithm execution including:
+    - Time progression via clock events
+    - Data delivery through BarData interface
+    - Order processing and transaction generation
+    - Commission and slippage application
+    - Metrics tracking and performance reporting
+    - Split/dividend adjustments
+    - Asset lifecycle management
+
+    The simulator processes clock events (SESSION_START, BAR, SESSION_END, etc.)
+    and calls appropriate algorithm methods (handle_data, before_trading_start).
+    It manages the order lifecycle from placement through fill and tracks all
+    transactions, commissions, and position changes.
+
+    Attributes:
+        EMISSION_TO_PERF_KEY_MAP: Maps emission rate to performance dict keys
+
+    Args:
+        algo: TradingAlgorithm instance to simulate
+        sim_params: SimulationParameters defining date range and frequency
+        data_portal: DataPortal for accessing historical data
+        clock: Iterator of (datetime, action) tuples driving simulation
+        benchmark_source: Source of benchmark returns for comparison
+        restrictions: Asset trading restrictions to enforce
+
+    Examples:
+        Run a basic simulation::
+
+            from rustybt.gens.tradesimulation import AlgorithmSimulator
+
+            simulator = AlgorithmSimulator(
+                algo=algorithm,
+                sim_params=params,
+                data_portal=portal,
+                clock=clock,
+                benchmark_source=benchmark,
+                restrictions=NoRestrictions()
+            )
+
+            results = []
+            for perf_packet in simulator.transform():
+                results.append(perf_packet)
+
+            # Extract daily performance
+            daily_results = [p for p in results if 'daily_perf' in p]
+
+        Process minute-by-minute::
+
+            simulator = AlgorithmSimulator(
+                algo=minute_algo,
+                sim_params=minute_params,  # data_frequency='minute'
+                data_portal=portal,
+                clock=minute_clock,
+                benchmark_source=benchmark,
+                restrictions=NoRestrictions()
+            )
+
+            for packet in simulator.transform():
+                if 'minute_perf' in packet:
+                    # Handle minute bar
+                    minute_data = packet['minute_perf']
+    """
+
     EMISSION_TO_PERF_KEY_MAP = {"minute": "minute_perf", "daily": "daily_perf"}
 
     def __init__(

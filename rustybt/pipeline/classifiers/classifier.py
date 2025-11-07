@@ -1,5 +1,64 @@
-"""
-classifier.py
+"""Pipeline classifiers for categorical computations and grouping operations.
+
+Classifiers are Pipeline terms that produce categorical (discrete) outputs,
+representing groupings or labels for assets. They're essential for grouped
+operations like computing separate means/z-scores for different sectors or
+creating quantile-based universes.
+
+Key Classes:
+    - **Classifier**: Base class for all categorical computations
+    - **CustomClassifier**: User-defined custom classifiers
+    - **Quantiles**: Classifier that bins Factor outputs into quantiles
+    - **Everything**: Trivial classifier grouping all assets together
+    - **Latest**: Classifier producing the most recent categorical value
+
+Common Use Cases:
+    1. Grouping assets for sector-neutral computations
+    2. Creating quantile bins from factor outputs
+    3. String pattern matching and filtering
+    4. Asset categorization for analytics
+
+Classifier Operations:
+    - Equality: ``classifier.eq(value)`` or ``classifier == value``
+    - String matching: ``startswith()``, ``endswith()``, ``matches()``
+    - Set membership: ``element_of(choices)``
+    - Relabeling: ``relabel(func)``
+    - Peer counting: ``peer_count()``
+
+Example:
+    Creating and using quantile groups:
+
+    >>> from rustybt.pipeline import Pipeline
+    >>> from rustybt.pipeline.factors import SimpleMovingAverage
+    >>> from rustybt.pipeline.data import EquityPricing
+    >>>
+    >>> # Create a momentum factor
+    >>> returns = EquityPricing.close.latest.pct_change(window_length=20)
+    >>>
+    >>> # Create quintile groups
+    >>> momentum_quintiles = returns.quintiles()
+    >>>
+    >>> # Compute sector-neutral z-scores
+    >>> close = EquityPricing.close.latest
+    >>> sector_neutral_close = close.zscore(groupby=momentum_quintiles)
+
+    String classifiers and pattern matching:
+
+    >>> from rustybt.pipeline.data import Fundamentals
+    >>>
+    >>> # Get sector classifier
+    >>> sector = Fundamentals.sector.latest
+    >>>
+    >>> # Filter for technology companies
+    >>> is_tech = sector.startswith('Technology')
+    >>>
+    >>> # Filter for specific sectors
+    >>> is_finance_or_tech = sector.element_of(['Finance', 'Technology'])
+
+See Also:
+    Factor: Numerical pipeline computations
+    Filter: Boolean pipeline computations
+    Quantiles: Bin factors into discrete quantile groups
 """
 
 import operator

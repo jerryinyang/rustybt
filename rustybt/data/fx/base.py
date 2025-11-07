@@ -1,3 +1,28 @@
+"""Foreign exchange (FX) rate reader interface.
+
+This module provides the abstract base class for reading foreign exchange rates
+in rustybt. FX rates are used to convert asset values between currencies during
+backtesting of multi-currency portfolios.
+
+The FXRateReader interface supports multiple named rate types (e.g., "mid", "bid",
+"ask") and provides efficient batch lookups for currency conversions across time.
+
+Example:
+    Implement a custom FX rate reader:
+
+    >>> class CustomFXReader(FXRateReader):
+    ...     def get_rates(self, rate, quote, bases, dts):
+    ...         # Load rates from your data source
+    ...         rates = load_fx_data(rate, quote, bases, dts)
+    ...         return rates
+    >>>
+    >>> # Use the reader
+    >>> reader = CustomFXReader()
+    >>> # Get single rate
+    >>> rate = reader.get_rate_scalar('mid', 'USD', 'EUR', pd.Timestamp('2023-01-01'))
+    >>> # Get batch rates
+    >>> rates = reader.get_rates('mid', 'USD', ['EUR', 'GBP'], date_range)
+"""
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -11,99 +36,98 @@ DEFAULT_FX_RATE = sentinel("DEFAULT_FX_RATE")
 
 
 class FXRateReader(ABC):
-    """
-    Interface for reading foreign exchange (fx) rates.
+    """Abstract base class for reading foreign exchange rates.
 
-    An FX rate reader contains one or more distinct "rates", each of which
-    corresponds to a collection of mappings from (quote, base, dt) ->
-    float. The value produced for a given (quote, base, dt) triple is the
-    exchange rate to use when converting from ``base`` to ``quote`` on ``dt``.
+    An FX rate reader provides access to one or more named "rates", each representing
+    a collection of exchange rate mappings from (quote, base, dt) -> float.
 
-    The specific set of rates contained in a particular reader is
-    user-defined. We infer no particular semantics from their names, other than
-    that they are distinct rates. Examples of possible rate names might be
-    things like "bid", "mid", and "ask", or "london_close", "tokyo_close",
-    "nyse_close".
+    Each rate represents a distinct data source or methodology (e.g., "mid", "bid",
+    "ask", "london_close", "nyse_close"). The reader converts amounts from base
+    currencies to a quote currency at specific dates.
 
-    Implementations of :class:`FXRateReader` must provide at least one method::
+    Implementations must provide the get_rates() method. The base class automatically
+    provides convenience methods for scalar and columnar lookups.
 
-        def get_rates(self, rate, quote, bases, dts):
+    Methods:
+        get_rates: Load 2D array of rates (abstract, must implement)
+        get_rate_scalar: Load single scalar rate (provided)
+        get_rates_columnar: Load 1D array of parallel rates (provided)
 
-    which takes a rate, a quote currency, an array of base currencies, and an
-    array of dts, and produces a (len(dts), len(base))-shape array containing a
-    conversion rates for all pairs in the cartesian product of bases and dts.
+    Example:
+        Implement a simple FX reader:
 
-    Given a definition of :meth:`get_rates`, this interface automatically
-    generates two additional methods::
+        >>> class SimpleFXReader(FXRateReader):
+        ...     def get_rates(self, rate, quote, bases, dts):
+        ...         # Return identity rates (1.0) for simplicity
+        ...         return np.ones((len(dts), len(bases)))
+        >>>
+        >>> reader = SimpleFXReader()
+        >>> # Convert 100 EUR to USD on a specific date
+        >>> rate = reader.get_rate_scalar('mid', 'USD', 'EUR', pd.Timestamp('2023-01-01'))
+        >>> amount_usd = 100 * rate
 
-        def get_rates_scalar(self, rate, quote, base, dt):
-
-    and::
-
-        def get_rates_columnar(self, rate, quote, bases, dts):
-
-    :meth:`get_rates_scalar` takes scalar-valued ``base`` and ``dt`` values,
-    and returns a scalar float value for the requested fx rate.
-
-    :meth:`get_rates_columnar` takes parallel arrays of ``bases`` and ``dts``
-    and returns a same-length array of fx rates by performing a lookup on the
-    (base, dt) pairs drawn from zipping together ``bases``, and ``dts``. In
-    other words, its behavior is equivalent to::
-
-        def get_rates_columnnar(self, rate, quote, bases, dts):
-            out = []
-            for base, dt in zip(bases, dts):
-                out.append(self.get_rate_scalar(rate, quote, base, dt))
-            return np.array(out)
+    Notes:
+        - All datetime values must be timezone-aware (UTC)
+        - Dates in get_rates() must be sorted in ascending order
+        - Base currency arrays may contain duplicates
     """
 
     @abstractmethod
     def get_rates(self, rate, quote, bases, dts):
-        """
-        Load a 2D array of fx rates.
+        """Load a 2D array of FX rates for multiple currencies and dates.
 
-        Parameters
-        ----------
-        rate : str
-            Name of the rate to load.
-        quote : str
-            Currency code of the currency to convert into.
-        bases : np.array[object]
-            Array of codes of the currencies to convert from. The same currency
-            may appear multiple times.
-        dts : pd.DatetimeIndex
-            Datetimes for which to load rates. Must be sorted in ascending
-            order and localized to UTC.
+        Returns exchange rates for the cartesian product of base currencies
+        and dates. Rows correspond to dates, columns to base currencies.
+
+        Args:
+            rate: Name of the rate to load (e.g., 'mid', 'bid', 'ask').
+            quote: Currency code to convert into (e.g., 'USD').
+            bases: Array of currency codes to convert from (e.g., ['EUR', 'GBP']).
+                May contain duplicate currencies.
+            dts: Datetimes for rate lookups. Must be sorted ascending and
+                localized to UTC.
 
         Returns:
-        -------
-        rates : np.array
-            Array of shape ``(len(dts), len(bases))`` containing foreign
-            exchange rates mapping currencies from ``bases`` to ``quote``.
+            np.ndarray: Array of shape (len(dts), len(bases)) containing exchange
+                rates. Element [i, j] is the rate to convert bases[j] to quote
+                on dts[i].
 
-            The row at index i corresponds to the dt in dts[i].
-            The column at index j corresponds to the base currency in bases[j].
+        Example:
+            >>> rates = reader.get_rates(
+            ...     'mid',
+            ...     'USD',
+            ...     np.array(['EUR', 'GBP', 'JPY'], dtype=object),
+            ...     pd.date_range('2023-01-01', periods=5, tz='UTC')
+            ... )
+            >>> print(rates.shape)
+            (5, 3)  # 5 dates × 3 currencies
+            >>> # Rate to convert EUR to USD on first date
+            >>> eur_to_usd = rates[0, 0]
         """
 
     def get_rate_scalar(self, rate, quote, base, dt):
-        """
-        Load a scalar FX rate value.
+        """Load a single scalar FX rate value.
 
-        Parameters
-        ----------
-        rate : str
-            Name of the rate to load.
-        quote : str
-            Currency code of the currency to convert into.
-        base : str
-            Currency code of the currency to convert from.
-        dt : np.datetime64 or pd.Timestamp
-            Datetime on which to load rate.
+        Convenience method for loading a single exchange rate. Delegates
+        to get_rates() and extracts the scalar result.
+
+        Args:
+            rate: Name of the rate to load (e.g., 'mid', 'bid', 'ask').
+            quote: Currency code to convert into (e.g., 'USD').
+            base: Currency code to convert from (e.g., 'EUR').
+            dt: Datetime for rate lookup (np.datetime64 or pd.Timestamp).
 
         Returns:
-        -------
-        rate : np.float64
-            Exchange rate from base -> quote on dt.
+            float: Exchange rate from base to quote on dt.
+
+        Example:
+            >>> # Get EUR to USD rate on a specific date
+            >>> rate = reader.get_rate_scalar('mid', 'USD', 'EUR',
+            ...                               pd.Timestamp('2023-06-15'))
+            >>> print(f"1 EUR = {rate:.4f} USD")
+            1 EUR = 1.0950 USD
+            >>> # Convert 100 EUR to USD
+            >>> amount_usd = 100 * rate
         """
         rates_2d = self.get_rates(
             rate,
@@ -114,21 +138,44 @@ class FXRateReader(ABC):
         return rates_2d[0, 0]
 
     def get_rates_columnar(self, rate, quote, bases, dts):
-        """
-        Load a 1D array of FX rates.
+        """Load a 1D array of FX rates from parallel currency and date arrays.
 
-        Parameters
-        ----------
-        rate : str
-            Name of the rate to load.
-        quote : str
-            Currency code of the currency to convert into.
-        bases : np.array[object]
-            Array of codes of the currencies to convert from. The same currency
-            may appear multiple times.
-        dts : np.DatetimeIndex
-            Datetimes for which to load rates. The same value may appear
-            multiple times. Datetimes do not need to be sorted.
+        Performs FX rate lookups for parallel arrays of currencies and dates,
+        returning one rate per (base, dt) pair. This is more efficient than
+        repeated scalar lookups when currencies and dates are not aligned.
+
+        Args:
+            rate: Name of the rate to load (e.g., 'mid', 'bid', 'ask').
+            quote: Currency code to convert into (e.g., 'USD').
+            bases: Array of currency codes, parallel to dts. May contain
+                duplicates and does not need to be sorted.
+            dts: Datetimes parallel to bases. May contain duplicates and
+                does not need to be sorted.
+
+        Returns:
+            np.ndarray: 1D array of shape (len(bases),) where element [i] is the
+                exchange rate from bases[i] to quote on dts[i].
+
+        Raises:
+            ValueError: If len(bases) != len(dts).
+
+        Example:
+            >>> # Convert different currencies on different dates
+            >>> currencies = np.array(['EUR', 'GBP', 'EUR', 'JPY'], dtype=object)
+            >>> dates = pd.DatetimeIndex(['2023-01-01', '2023-01-02',
+            ...                           '2023-01-03', '2023-01-02'], tz='UTC')
+            >>> rates = reader.get_rates_columnar('mid', 'USD', currencies, dates)
+            >>> print(rates.shape)
+            (4,)
+            >>> # Element [0] = EUR->USD on 2023-01-01
+            >>> # Element [1] = GBP->USD on 2023-01-02
+            >>> # Element [2] = EUR->USD on 2023-01-03
+            >>> # Element [3] = JPY->USD on 2023-01-02
+
+        Notes:
+            This method is equivalent to:
+                [get_rate_scalar(rate, quote, b, d) for b, d in zip(bases, dts)]
+            but much more efficient as it batches the underlying data access.
         """
         if len(bases) != len(dts):
             raise ValueError(f"len(bases) ({len(bases)}) != len(dts) ({len(dts)})")

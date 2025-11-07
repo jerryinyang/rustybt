@@ -13,8 +13,61 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Event system with priority handling and custom triggers.
+"""Event system with priority handling and custom triggers.
+
+Provides a flexible event system for managing simulation events with:
+- Priority-based event ordering (MARKET_OPEN, BAR_DATA, CUSTOM, MARKET_CLOSE)
+- Custom event triggers (price thresholds, time intervals)
+- Event queue management with deterministic ordering
+
+Classes:
+    EventPriority: Enum defining event priority levels
+    Event: Dataclass representing a simulation event
+    EventTrigger: Abstract base for custom triggers
+    PriceThresholdTrigger: Trigger when price crosses threshold
+    TimeIntervalTrigger: Trigger at regular intervals
+    EventQueue: Priority queue for managing events
+
+Examples:
+    Create and queue events with different priorities::
+
+        import pandas as pd
+        from rustybt.gens.events import Event, EventPriority, EventQueue
+
+        queue = EventQueue()
+
+        # Add events with different priorities
+        queue.push(Event(
+            dt=pd.Timestamp('2023-01-01 09:30'),
+            event_type='market_open',
+            priority=EventPriority.MARKET_OPEN
+        ))
+
+        queue.push(Event(
+            dt=pd.Timestamp('2023-01-01 09:31'),
+            event_type='bar_data',
+            priority=EventPriority.BAR_DATA,
+            data={'symbol': 'AAPL', 'price': 150.0}
+        ))
+
+        # Events are retrieved in priority order
+        event = queue.pop()
+        assert event.event_type == 'market_open'
+
+    Use price threshold trigger::
+
+        from decimal import Decimal
+        from rustybt.gens.events import PriceThresholdTrigger
+
+        class AlertTrigger(PriceThresholdTrigger):
+            def on_trigger(self, context, data):
+                print(f"Price crossed ${self.threshold}!")
+
+        trigger = AlertTrigger(
+            asset='AAPL',
+            threshold=Decimal('150.00'),
+            direction='above'
+        )
 """
 
 import heapq
@@ -43,10 +96,49 @@ class EventPriority(IntEnum):
 
 @dataclass(order=True)
 class Event:
-    """
-    Represents a simulation event with timestamp, type, and priority.
+    """Represents a simulation event with timestamp, type, and priority.
 
-    Events are ordered by: timestamp (asc), priority (desc), then sequence.
+    Events are ordered by: timestamp (ascending), priority (descending via
+    negation), then sequence number for deterministic tie-breaking.
+
+    Attributes:
+        dt: Event timestamp
+        event_type: String describing event type (e.g., 'bar_data', 'market_open')
+        priority: Priority level from EventPriority enum
+        data: Optional dictionary with event-specific data
+        priority_neg: Internal field for heap ordering (auto-set)
+        sequence: Internal sequence number for tie-breaking (auto-set)
+
+    Examples:
+        Create a market open event::
+
+            import pandas as pd
+            from rustybt.gens.events import Event, EventPriority
+
+            event = Event(
+                dt=pd.Timestamp('2023-01-01 09:30'),
+                event_type='market_open',
+                priority=EventPriority.MARKET_OPEN
+            )
+
+        Create a bar data event with payload::
+
+            event = Event(
+                dt=pd.Timestamp('2023-01-01 09:31'),
+                event_type='bar_data',
+                priority=EventPriority.BAR_DATA,
+                data={
+                    'symbol': 'AAPL',
+                    'open': 150.0,
+                    'high': 151.0,
+                    'low': 149.5,
+                    'close': 150.5,
+                    'volume': 1000000
+                }
+            )
+
+            # Access event data
+            price = event.data['close']
     """
 
     # Comparison fields (for heapq) - must come first for ordering
@@ -60,7 +152,11 @@ class Event:
     data: dict | None = None
 
     def __post_init__(self):
-        """Set negative priority for max-heap behavior with min-heap."""
+        """Set negative priority for max-heap behavior with min-heap.
+
+        Python's heapq is a min-heap, so we negate priority values to
+        achieve max-heap behavior (higher priority = processed first).
+        """
         # heapq is min-heap, so negate priority for max-heap
         object.__setattr__(self, "priority_neg", -self.priority)
 
@@ -233,54 +329,158 @@ class TimeIntervalTrigger(EventTrigger):
 
 
 class EventQueue:
-    """
-    Priority queue for managing events.
+    """Priority queue for managing simulation events.
 
-    Events are ordered by timestamp, then priority (higher first),
-    then insertion order for deterministic behavior.
+    Events are ordered by:
+    1. Timestamp (earliest first)
+    2. Priority (highest first - MARKET_OPEN > BAR_DATA > CUSTOM > MARKET_CLOSE)
+    3. Insertion order (for deterministic tie-breaking)
+
+    Uses a heap-based implementation for O(log n) push/pop operations.
+
+    Examples:
+        Basic event queue usage::
+
+            import pandas as pd
+            from rustybt.gens.events import Event, EventPriority, EventQueue
+
+            queue = EventQueue()
+
+            # Add events
+            queue.push(Event(
+                dt=pd.Timestamp('2023-01-01 09:31'),
+                event_type='bar_data',
+                priority=EventPriority.BAR_DATA
+            ))
+
+            queue.push(Event(
+                dt=pd.Timestamp('2023-01-01 09:30'),
+                event_type='market_open',
+                priority=EventPriority.MARKET_OPEN
+            ))
+
+            # Pop returns earliest event by timestamp
+            event = queue.pop()
+            assert event.event_type == 'market_open'
+
+        Priority ordering at same timestamp::
+
+            queue = EventQueue()
+
+            # Same timestamp, different priorities
+            dt = pd.Timestamp('2023-01-01 10:00')
+
+            queue.push(Event(dt=dt, event_type='custom',
+                           priority=EventPriority.CUSTOM))
+            queue.push(Event(dt=dt, event_type='market_open',
+                           priority=EventPriority.MARKET_OPEN))
+            queue.push(Event(dt=dt, event_type='bar_data',
+                           priority=EventPriority.BAR_DATA))
+
+            # Higher priority processed first
+            assert queue.pop().event_type == 'market_open'
+            assert queue.pop().event_type == 'bar_data'
+            assert queue.pop().event_type == 'custom'
     """
 
     def __init__(self):
-        """Initialize empty event queue."""
+        """Initialize empty event queue.
+
+        Creates internal heap and sequence counter for deterministic ordering.
+        """
         self._heap: list[Event] = []
         self._sequence = 0
 
     def push(self, event: Event):
-        """
-        Add event to queue.
+        """Add event to queue.
+
+        Assigns a sequence number and inserts into priority heap.
+        Sequence numbers ensure deterministic ordering when events
+        have identical timestamps and priorities.
 
         Args:
-            event: Event to add
+            event: Event to add to the queue.
+
+        Examples:
+            Add multiple events::
+
+                queue = EventQueue()
+
+                for i in range(100):
+                    queue.push(Event(
+                        dt=pd.Timestamp('2023-01-01') + pd.Timedelta(minutes=i),
+                        event_type='bar_data',
+                        priority=EventPriority.BAR_DATA
+                    ))
+
+                assert len(queue) == 100
         """
         event.sequence = self._sequence
         self._sequence += 1
         heapq.heappush(self._heap, event)
 
     def pop(self) -> Event:
-        """
-        Remove and return highest-priority event.
+        """Remove and return highest-priority event.
 
         Returns:
-            Next event to process
+            Next event to process (earliest timestamp, highest priority).
 
         Raises:
-            IndexError: If queue is empty
+            IndexError: If queue is empty.
+
+        Examples:
+            Process all events in order::
+
+                queue = EventQueue()
+                # ... add events ...
+
+                while queue:
+                    event = queue.pop()
+                    process_event(event)
         """
         return heapq.heappop(self._heap)
 
     def peek(self) -> Event | None:
-        """
-        View next event without removing it.
+        """View next event without removing it.
+
+        Useful for checking upcoming event without consuming it,
+        for example to determine if processing should continue.
 
         Returns:
-            Next event or None if queue is empty
+            Next event or None if queue is empty.
+
+        Examples:
+            Check next event time::
+
+                queue = EventQueue()
+                # ... add events ...
+
+                next_event = queue.peek()
+                if next_event and next_event.dt > cutoff_time:
+                    # Stop processing
+                    break
         """
         return self._heap[0] if self._heap else None
 
     def __len__(self) -> int:
-        """Return number of events in queue."""
+        """Return number of events in queue.
+
+        Returns:
+            Number of events currently in the queue.
+        """
         return len(self._heap)
 
     def __bool__(self) -> bool:
-        """Return True if queue has events."""
+        """Return True if queue has events.
+
+        Returns:
+            True if queue is non-empty, False otherwise.
+
+        Examples:
+            Use in while loop::
+
+                while queue:  # Evaluates __bool__
+                    event = queue.pop()
+                    process_event(event)
+        """
         return bool(self._heap)

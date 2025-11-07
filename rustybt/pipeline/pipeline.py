@@ -1,3 +1,64 @@
+"""Pipeline: The main interface for defining and executing quantitative computations.
+
+This module defines the Pipeline class, which is the primary user-facing interface
+for the Pipeline API. A Pipeline represents a collection of named computations
+(factors, filters, classifiers) that should be executed together over a date range.
+
+Key Concepts:
+
+**Columns**: Named output terms that will be computed and returned. Each column
+is a ComputableTerm (Factor, Filter, or Classifier) that produces a result for
+each (date, asset) pair in the computation.
+
+**Screen**: An optional Filter that restricts which assets appear in the output.
+Assets/dates where the screen produces False are excluded from results, reducing
+both computational cost and result size.
+
+**Domain**: The data domain (e.g., US equities) that the pipeline operates on.
+Determines which data sources are valid and which trading calendar to use.
+
+The Pipeline workflow:
+1. Define columns (terms to compute) and optionally a screen
+2. Attach pipeline to an engine with data loaders
+3. Run pipeline over a date range
+4. Receive results as a DataFrame
+
+Examples:
+    Create a simple pipeline::
+
+        >>> from rustybt.pipeline import Pipeline
+        >>> from rustybt.pipeline.data import EquityPricing
+        >>> from rustybt.pipeline.factors import SimpleMovingAverage
+        >>>
+        >>> # Define computations
+        >>> close = EquityPricing.close.latest
+        >>> sma_20 = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=20)
+        >>>
+        >>> # Build pipeline
+        >>> pipe = Pipeline(
+        ...     columns={
+        ...         'close': close,
+        ...         'sma_20': sma_20,
+        ...     }
+        ... )
+
+    Add a screen to filter results::
+
+        >>> # Only include assets where close > sma_20
+        >>> pipe.set_screen(close > sma_20)
+
+    Run the pipeline::
+
+        >>> result = engine.run_pipeline(pipe, '2020-01-01', '2020-12-31')
+        >>> # result is a DataFrame with MultiIndex (date, asset)
+        >>> # and columns ['close', 'sma_20']
+
+See Also:
+    :class:`rustybt.pipeline.engine.SimplePipelineEngine`: Executes pipelines.
+    :class:`rustybt.pipeline.Factor`: Numerical computations.
+    :class:`rustybt.pipeline.Filter`: Boolean/screening computations.
+"""
+
 from rustybt.errors import UnsupportedPipelineOutput
 from rustybt.utils.input_validation import (
     expect_element,
@@ -12,27 +73,90 @@ from .term import AssetExists, ComputableTerm, Term
 
 
 class Pipeline:
-    """
-    A Pipeline object represents a collection of named expressions to be
-    compiled and executed by a PipelineEngine.
+    """A collection of named computations to execute over a date range.
 
-    A Pipeline has two important attributes: 'columns', a dictionary of named
-    :class:`~zipline.pipeline.Term` instances, and 'screen', a
-    :class:`~zipline.pipeline.Filter` representing criteria for
-    including an asset in the results of a Pipeline.
+    Pipeline is the main user-facing class of the Pipeline API. It defines a set
+    of named computations (columns) that should be executed together, optionally
+    filtered by a screen. When run by a PipelineEngine, it produces a DataFrame
+    with one row per (date, asset) pair and one column per defined output.
 
-    To compute a pipeline in the context of a TradingAlgorithm, users must call
-    ``attach_pipeline`` in their ``initialize`` function to register that the
-    pipeline should be computed each trading day. The most recent outputs of an
-    attached pipeline can be retrieved by calling ``pipeline_output`` from
-    ``handle_data``, ``before_trading_start``, or a scheduled function.
+    Core Concepts:
 
-    Parameters
-    ----------
-    columns : dict, optional
-        Initial columns.
-    screen : zipline.pipeline.Filter, optional
-        Initial screen.
+    **Columns**: Dictionary mapping string names to ComputableTerms (Factors,
+    Filters, or Classifiers). Each column defines a computation that will be
+    performed for all assets on all dates.
+
+    **Screen**: Optional Filter that determines which assets appear in results.
+    Assets/dates where screen evaluates to False are excluded, reducing both
+    computation cost and output size. A screen of None means all assets are
+    included (subject to AssetExists).
+
+    **Domain**: The data domain (e.g., US_EQUITIES) that specifies which assets
+    and trading calendar to use. Can be inferred from column terms or specified
+    explicitly.
+
+    The Pipeline execution model:
+    1. Pipeline is compiled to an ExecutionPlan (dependency graph + metadata)
+    2. Engine computes terms in topological order
+    3. Results are masked by the screen
+    4. Output is formatted as a narrow DataFrame with MultiIndex
+
+    Args:
+        columns: Optional dict mapping column names to ComputableTerms. Can
+            also be populated later via add() method.
+        screen: Optional Filter to restrict output rows. Can be set later via
+            set_screen() method.
+        domain: Optional Domain specifying the asset universe and calendar.
+            Defaults to GENERIC (domain inferred from terms).
+
+    Raises:
+        TypeError: If columns contains non-ComputableTerm values or if screen
+            is not a Filter.
+
+    Examples:
+        Create a simple pipeline with columns::
+
+            >>> from rustybt.pipeline import Pipeline
+            >>> from rustybt.pipeline.data import EquityPricing
+            >>> from rustybt.pipeline.factors import SimpleMovingAverage
+            >>>
+            >>> close = EquityPricing.close.latest
+            >>> sma_20 = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=20)
+            >>>
+            >>> pipe = Pipeline(
+            ...     columns={
+            ...         'price': close,
+            ...         'ma_20': sma_20,
+            ...     }
+            ... )
+
+        Add a screen to filter results::
+
+            >>> # Only include assets trading above their 20-day moving average
+            >>> pipe = Pipeline(
+            ...     columns={'price': close, 'ma_20': sma_20},
+            ...     screen=close > sma_20,
+            ... )
+
+        Build pipeline incrementally::
+
+            >>> pipe = Pipeline()
+            >>> pipe.add(close, 'price')
+            >>> pipe.add(sma_20, 'ma_20')
+            >>> pipe.set_screen(close > sma_20)
+
+        Run the pipeline::
+
+            >>> result = engine.run_pipeline(pipe, '2020-01-01', '2020-12-31')
+            >>> # Result is DataFrame with:
+            >>> # - MultiIndex: (date, asset) pairs where screen was True
+            >>> # - Columns: ['price', 'ma_20']
+
+    See Also:
+        :class:`rustybt.pipeline.engine.SimplePipelineEngine`: Executes pipelines.
+        :meth:`add`: Add a column to the pipeline.
+        :meth:`set_screen`: Set or update the screen filter.
+        :meth:`show_graph`: Visualize the pipeline's dependency graph.
     """
 
     __slots__ = ("__weakref__", "_columns", "_domain", "_screen")

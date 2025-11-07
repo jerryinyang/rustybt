@@ -11,6 +11,72 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""OHLCV data resampling and aggregation utilities.
+
+This module provides tools for resampling pricing data between different time
+frequencies (minute to session, intraday to daily) with support for both legacy
+NumPy-based and modern Polars-based aggregation.
+
+Components:
+    Legacy Resampling (NumPy-based):
+        - minute_to_session(): Resample minute arrays to session arrays
+        - minute_frame_to_session_frame(): Resample minute DataFrames
+        - DailyHistoryAggregator: Sliding window aggregation for history calls
+        - MinuteResampleSessionBarReader: On-the-fly minute-to-session reader
+        - ReindexBarReader: Calendar reindexing for cross-calendar alignment
+
+    Modern Aggregation (Polars-based):
+        - aggregate_ohlcv(): Multi-resolution aggregation with validation
+        - aggregate_to_daily_bars(): Intraday to daily with session alignment
+        - Gap detection and outlier identification
+        - Temporal consistency validation
+
+Aggregation Rules:
+    OHLC fields follow standard conventions:
+        - open: First value in aggregation period
+        - high: Maximum value in aggregation period
+        - low: Minimum value in aggregation period
+        - close: Last value in aggregation period
+        - volume: Sum of values in aggregation period
+
+Data Access Patterns:
+    Resample minute bars to daily:
+        >>> from rustybt.data.resample import minute_frame_to_session_frame
+        >>> daily_bars = minute_frame_to_session_frame(minute_df, calendar)
+
+    Modern Polars aggregation:
+        >>> from rustybt.data.resample import aggregate_ohlcv
+        >>> hourly = aggregate_ohlcv(
+        ...     minute_df,
+        ...     source_resolution='1m',
+        ...     target_resolution='1h',
+        ...     validate=True,
+        ...     detect_outliers=True
+        ... )
+
+    Session-aligned daily bars:
+        >>> from rustybt.data.resample import aggregate_to_daily_bars
+        >>> daily = aggregate_to_daily_bars(
+        ...     intraday_df,
+        ...     timezone='America/New_York',
+        ...     market_open='09:30',
+        ...     market_close='16:00'
+        ... )
+
+    History aggregation during simulation:
+        >>> aggregator = DailyHistoryAggregator(
+        ...     market_opens, minute_reader, calendar
+        ... )
+        >>> opens = aggregator.opens(assets, current_dt)
+        >>> highs = aggregator.highs(assets, current_dt)
+
+See Also:
+    rustybt.data.bar_reader: Base classes for bar readers
+    rustybt.data.bcolz_minute_bars: Minute bar storage
+    rustybt.data.session_bars: Session bar readers
+"""
+
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 

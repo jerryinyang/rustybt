@@ -1,5 +1,48 @@
-"""
-Module for building a complete dataset from local directory with csv files.
+"""CSV directory bundle for ingesting local data files.
+
+This module provides functionality to ingest market data from a directory
+structure of CSV files into rustybt's bundle format. It supports both daily
+and minute-frequency data with automatic detection and processing.
+
+Directory Structure:
+    The expected directory structure is:
+        csvdir/
+            daily/
+                AAPL.csv
+                MSFT.csv
+                ...
+            minute/
+                AAPL.csv
+                MSFT.csv
+                ...
+
+CSV File Format:
+    Each CSV file should have the following columns:
+        - date (for daily) or timestamp (for minute): YYYY-MM-DD or YYYY-MM-DD HH:MM:SS
+        - open: Opening price
+        - high: High price
+        - low: Low price
+        - close: Closing price
+        - volume: Trading volume
+        - dividend (optional): Dividend amount
+        - split (optional): Split ratio
+
+Example:
+    Register and ingest a CSV directory bundle:
+
+    >>> from rustybt.data.bundles import register, csvdir_equities
+    >>> register('my-data', csvdir_equities(
+    ...     tframes=['daily', 'minute'],
+    ...     csvdir='/path/to/csv/files'
+    ... ))
+    >>> from rustybt.data.bundles import ingest
+    >>> ingest('my-data', show_progress=True)
+
+Notes:
+    - CSV files can be plain text or compressed (.csv.gz)
+    - Prices are validated for OHLCV relationships (high >= open, close, low)
+    - Dividends and splits are automatically detected from optional columns
+    - All assets use the NYSE calendar by default (mapped via CSVDIR exchange)
 """
 
 import logging
@@ -24,49 +67,74 @@ logger.handlers.append(handler)
 
 
 def csvdir_equities(tframes=None, csvdir=None):
-    """
-    Generate an ingest function for custom data bundle
-    This function can be used in ~/.zipline/extension.py
-    to register bundle with custom parameters, e.g. with
-    a custom trading calendar.
+    """Generate an ingest function for a CSV directory bundle.
 
-    Parameters
-    ----------
-    tframes: tuple, optional
-        The data time frames, supported timeframes: 'daily' and 'minute'
-    csvdir : string, optional, default: CSVDIR environment variable
-        The path to the directory of this structure:
-        <directory>/<timeframe1>/<symbol1>.csv
-        <directory>/<timeframe1>/<symbol2>.csv
-        <directory>/<timeframe1>/<symbol3>.csv
-        <directory>/<timeframe2>/<symbol1>.csv
-        <directory>/<timeframe2>/<symbol2>.csv
-        <directory>/<timeframe2>/<symbol3>.csv
+    Creates a customizable bundle ingestion function that can be registered
+    with specific time frames and directory paths. Useful for creating
+    reusable bundle configurations.
+
+    Args:
+        tframes: Time frames to ingest. Options: ['daily'], ['minute'], or
+            ['daily', 'minute']. If None, auto-detects available subdirectories.
+        csvdir: Path to the CSV directory. If None, uses CSVDIR environment variable.
+            Expected structure:
+                csvdir/
+                    daily/
+                        SYMBOL1.csv
+                        SYMBOL2.csv
+                    minute/
+                        SYMBOL1.csv
+                        SYMBOL2.csv
 
     Returns:
-    -------
-    ingest : callable
-        The bundle ingest function
+        callable: Ingest function suitable for bundle registration.
 
-    Examples:
-    --------
-    This code should be added to ~/.zipline/extension.py
-    .. code-block:: python
-       from rustybt.data.bundles import csvdir_equities, register
-       register('custom-csvdir-bundle',
-                csvdir_equities(["daily", "minute"],
-                '/full/path/to/the/csvdir/directory'))
+    Example:
+        Create and register a custom bundle:
+
+        >>> from rustybt.data.bundles import register, csvdir_equities
+        >>> # Create ingest function for daily data only
+        >>> register('my-daily-data',
+        ...          csvdir_equities(tframes=['daily'],
+        ...                         csvdir='/data/stocks'))
+        >>> # Register with both daily and minute data
+        >>> register('my-complete-data',
+        ...          csvdir_equities(tframes=['daily', 'minute'],
+        ...                         csvdir='/data/complete'))
+
+        Use environment variable for path:
+
+        >>> import os
+        >>> os.environ['CSVDIR'] = '/data/mydata'
+        >>> register('env-data', csvdir_equities())
     """
     return CSVDIRBundle(tframes, csvdir).ingest
 
 
 class CSVDIRBundle:
-    """
-    Wrapper class to call csvdir_bundle with provided
-    list of time frames and a path to the csvdir directory
+    """Wrapper class for CSV directory bundle ingestion.
+
+    Encapsulates the configuration for a CSV directory bundle, storing
+    time frames and directory path for use during ingestion.
+
+    Attributes:
+        tframes: List of time frames to process ('daily', 'minute', or both).
+        csvdir: Path to the CSV directory containing data files.
+
+    Example:
+        >>> bundle = CSVDIRBundle(tframes=['daily'], csvdir='/data/stocks')
+        >>> # Use bundle.ingest as the ingestion function
+        >>> register('my-bundle', bundle.ingest)
     """
 
     def __init__(self, tframes=None, csvdir=None):
+        """Initialize the CSV directory bundle.
+
+        Args:
+            tframes: Time frames to ingest (['daily'], ['minute'], or both).
+                If None, auto-detects from directory structure.
+            csvdir: Path to CSV directory. If None, uses CSVDIR environment variable.
+        """
         self.tframes = tframes
         self.csvdir = csvdir
 
@@ -84,6 +152,24 @@ class CSVDIRBundle:
         show_progress,
         output_dir,
     ):
+        """Ingest CSV data into bundle format.
+
+        This method is called by the bundle system during ingestion. It delegates
+        to csvdir_bundle with the configured time frames and directory.
+
+        Args:
+            environ: Environment variables mapping.
+            asset_db_writer: Writer for asset metadata.
+            minute_bar_writer: Writer for minute-frequency bars.
+            daily_bar_writer: Writer for daily-frequency bars.
+            adjustment_writer: Writer for splits and dividends.
+            calendar: Trading calendar for date alignment.
+            start_session: First trading session to ingest.
+            end_session: Last trading session to ingest.
+            cache: Temporary cache for intermediate data.
+            show_progress: Whether to display progress information.
+            output_dir: Directory for bundle output.
+        """
         csvdir_bundle(
             environ,
             asset_db_writer,
@@ -117,8 +203,48 @@ def csvdir_bundle(
     tframes=None,
     csvdir=None,
 ):
-    """
-    Build a zipline data bundle from the directory with csv files.
+    """Build a data bundle from a directory of CSV files.
+
+    Processes CSV files from a structured directory, extracting OHLCV data,
+    splits, and dividends. Automatically detects time frames and validates
+    data quality before writing to the bundle format.
+
+    Args:
+        environ: Environment variables mapping.
+        asset_db_writer: Writer for asset metadata database.
+        minute_bar_writer: Writer for minute-frequency pricing data.
+        daily_bar_writer: Writer for daily-frequency pricing data.
+        adjustment_writer: Writer for corporate actions (splits, dividends).
+        calendar: Trading calendar for session alignment.
+        start_session: First trading session (parameter passed but not used).
+        end_session: Last trading session (parameter passed but not used).
+        cache: Temporary cache for intermediate data (parameter passed but not used).
+        show_progress: Whether to display progress bars during ingestion.
+        output_dir: Output directory for bundle data.
+        tframes: Time frames to process (['daily'], ['minute'], or both).
+            If None, auto-detects available subdirectories.
+        csvdir: Path to CSV directory. If None, reads from CSVDIR environment variable.
+
+    Raises:
+        ValueError: If CSVDIR not set, directory doesn't exist, no valid subdirectories,
+            or no CSV files found in subdirectories.
+
+    Example:
+        Used automatically when ingesting the 'csvdir' bundle:
+
+        >>> import os
+        >>> os.environ['CSVDIR'] = '/data/stocks'
+        >>> from rustybt.data.bundles import ingest
+        >>> ingest('csvdir', show_progress=True)
+        Loading custom pricing data: 100%|████████| 500/500
+
+        With custom parameters via CSVDIRBundle:
+
+        >>> from rustybt.data.bundles import register, csvdir_equities
+        >>> register('my-stocks',
+        ...          csvdir_equities(tframes=['daily'],
+        ...                         csvdir='/data/stocks'))
+        >>> ingest('my-stocks', show_progress=True)
     """
     if not csvdir:
         csvdir = environ.get("CSVDIR")
@@ -231,22 +357,58 @@ def convert_csv_to_decimal_parquet(
 ) -> dict:
     """Convert CSV data to Parquet with Decimal precision.
 
+    Reads CSV market data, converts prices to Decimal type for exact precision,
+    validates OHLCV relationships, and writes to Parquet format with compression.
+    This ensures no floating-point rounding errors during data storage.
+
     Args:
-        csv_path: Path to input CSV file
-        parquet_path: Path to output Parquet file
-        asset_class: Asset class for precision config ("equity", "crypto", etc.)
-        frequency: Data frequency ("daily" or "minute")
-        config: Optional DecimalConfig instance (uses singleton if None)
+        csv_path: Path to input CSV file with OHLCV data.
+        parquet_path: Path to output Parquet file.
+        asset_class: Asset class for precision config ("equity", "crypto", etc.).
+            Determines decimal precision and scale settings.
+        frequency: Data frequency ("daily" or "minute"). Affects date column parsing.
+        config: Optional DecimalConfig instance. Uses singleton if None.
 
     Returns:
-        Dictionary with ingestion summary:
-            - rows_ingested: Number of rows successfully ingested
-            - precision_warnings: List of precision warning messages
-            - errors: List of error messages
+        dict: Ingestion summary with these keys:
+            - rows_ingested (int): Number of rows successfully ingested.
+            - precision_warnings (list[str]): Precision warning messages.
+            - errors (list[str]): Error messages encountered.
 
     Raises:
-        FileNotFoundError: If CSV file not found
-        ValueError: If OHLCV relationships invalid or data format incorrect
+        FileNotFoundError: If CSV file not found at csv_path.
+        ValueError: If OHLCV relationships are invalid (e.g., high < low),
+            negative prices detected, or scientific notation found.
+
+    Example:
+        Convert daily equity data:
+
+        >>> summary = convert_csv_to_decimal_parquet(
+        ...     csv_path='AAPL_daily.csv',
+        ...     parquet_path='AAPL_daily.parquet',
+        ...     asset_class='equity',
+        ...     frequency='daily'
+        ... )
+        >>> print(f"Ingested {summary['rows_ingested']} rows")
+        Ingested 252 rows
+
+        Convert minute crypto data with custom config:
+
+        >>> config = DecimalConfig.get_instance()
+        >>> summary = convert_csv_to_decimal_parquet(
+        ...     csv_path='BTC_minute.csv',
+        ...     parquet_path='BTC_minute.parquet',
+        ...     asset_class='crypto',
+        ...     frequency='minute',
+        ...     config=config
+        ... )
+
+        Handle validation errors:
+
+        >>> try:
+        ...     summary = convert_csv_to_decimal_parquet('invalid.csv', 'out.parquet')
+        ... except ValueError as e:
+        ...     print(f"Validation failed: {e}")
     """
     config = config or DecimalConfig.get_instance()
     precision = config.get_precision(asset_class)
@@ -367,6 +529,37 @@ def convert_csv_to_decimal_parquet(
 
 
 def _pricing_iter(csvdir, symbols, metadata, divs_splits, show_progress):
+    """Iterate through CSV files and yield pricing data for each symbol.
+
+    Reads CSV files for each symbol, extracts OHLCV data, and processes
+    optional split and dividend information. Updates metadata with date
+    ranges for each asset.
+
+    Args:
+        csvdir: Directory containing CSV files (one per symbol).
+        symbols: List of symbol names (without .csv extension).
+        metadata: DataFrame to populate with asset metadata (dates, symbols).
+        divs_splits: Dictionary to accumulate splits and dividends data:
+            {'divs': DataFrame, 'splits': DataFrame}.
+        show_progress: Whether to display progress bar.
+
+    Yields:
+        tuple: (sid, dataframe) where:
+            - sid (int): Sequential asset ID.
+            - dataframe (pd.DataFrame): OHLCV data with optional split/dividend columns.
+
+    Raises:
+        ValueError: If a symbol's CSV file is not found.
+
+    Example:
+        >>> metadata = pd.DataFrame(...)
+        >>> divs_splits = {'divs': pd.DataFrame(...), 'splits': pd.DataFrame(...)}
+        >>> for sid, data in _pricing_iter('/data/daily', ['AAPL', 'MSFT'],
+        ...                                 metadata, divs_splits, True):
+        ...     print(f"Processing {sid}: {len(data)} rows")
+        Processing 0: 252 rows
+        Processing 1: 252 rows
+    """
     with maybe_show_progress(symbols, show_progress, label="Loading custom pricing data: ") as it:
         # using scandir instead of listdir can be faster
         files = os.scandir(csvdir)

@@ -1,4 +1,29 @@
-"""Type stubs for rustybt.lib.adjustment - Compiled Cython module."""
+"""Cython-optimized adjustment classes for corporate actions.
+
+This module provides high-performance adjustment objects for applying corporate
+actions (splits, dividends, mergers) to historical price/volume data.
+
+Adjustment types:
+- Float64Multiply/Add: For ratio-based adjustments (splits, dividends)
+- Float64Overwrite: For data corrections
+- Datetime64/Int64/Boolean/ObjectOverwrite: Type-specific overwrites
+- Array-based overwrites for batch adjustments
+
+Cython optimizations:
+- Inline C loops for mutating 2D arrays
+- Fused types for code generation per dtype
+- Direct memoryview manipulation
+- No Python overhead in hot paths
+
+Example:
+    >>> # Create a 2-for-1 split adjustment
+    >>> adj = Float64Multiply(
+    ...     first_row=0, last_row=99,  # Apply to rows 0-99
+    ...     first_col=5, last_col=5,    # Column 5 (one asset)
+    ...     value=0.5                    # Divide by 2
+    ... )
+    >>> adj.mutate(price_data)  # Adjust historical prices in-place
+"""
 
 from typing import Any
 import numpy as np

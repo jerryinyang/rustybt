@@ -1,3 +1,40 @@
+"""Commission models for calculating trading costs.
+
+This module provides both legacy float-based commission models (for backward
+compatibility with Zipline) and modern Decimal-based models (for RustyBT)
+that ensure precise financial calculations.
+
+Legacy Models:
+    - CommissionModel: Abstract base for float-based commission models
+    - NoCommission: Zero commission (testing only)
+    - PerShare: Commission per share traded
+    - PerContract: Commission per futures contract
+    - PerTrade: Fixed commission per trade
+    - PerFutureTrade: Fixed commission per futures trade
+    - PerDollar: Commission as percentage of trade value
+
+Modern Decimal-Based Models:
+    - DecimalCommissionModel: Abstract base for Decimal-based models
+    - PerShareCommission: Commission per share with Decimal precision
+    - PercentageCommission: Percentage-based commission
+    - TieredCommission: Volume-based tiered pricing
+    - MakerTakerCommission: Maker/taker fee structure (crypto exchanges)
+
+Examples:
+    Using legacy per-share commission::
+
+        from rustybt.finance.commission import PerShare
+        commission_model = PerShare(cost=0.005, min_trade_cost=1.0)
+
+    Using modern Decimal-based percentage commission::
+
+        from decimal import Decimal
+        from rustybt.finance.commission import PercentageCommission
+        commission_model = PercentageCommission(
+            percentage=Decimal("0.001"),  # 0.1%
+            min_commission=Decimal("1.00")
+        )
+"""
 #
 # Copyright 2016 Quantopian, Inc.
 #
@@ -46,28 +83,22 @@ class CommissionModel(metaclass=FinancialModelMeta):
 
     @abstractmethod
     def calculate(self, order, transaction):
-        """
-        Calculate the amount of commission to charge on ``order`` as a result
-        of ``transaction``.
+        """Calculate the amount of commission to charge on an order.
 
-        Parameters
-        ----------
-        order : zipline.finance.order.Order
-            The order being processed.
+        This method computes the additional commission to charge as a result
+        of a transaction. A single order may generate multiple transactions
+        if there isn't enough volume in a given bar to fill the full amount.
 
-            The ``commission`` field of ``order`` is a float indicating the
-            amount of commission already charged on this order.
-
-        transaction : zipline.finance.transaction.Transaction
-            The transaction being processed. A single order may generate
-            multiple transactions if there isn't enough volume in a given bar
-            to fill the full amount requested in the order.
+        Args:
+            order: The order being processed. The commission field indicates
+                the amount of commission already charged on this order.
+            transaction: The transaction being processed.
 
         Returns:
-        -------
-        amount_charged : float
-            The additional commission, in dollars, that we should attribute to
-            this order.
+            float: The additional commission in dollars to attribute to this order.
+
+        Note:
+            This is an abstract method that must be implemented by subclasses.
         """
         raise NotImplementedError("calculate")
 
@@ -75,20 +106,50 @@ class CommissionModel(metaclass=FinancialModelMeta):
 class NoCommission(CommissionModel):
     """Model commissions as free.
 
-    Notes:
-    -----
-    This is primarily used for testing.
+    This commission model always returns zero commission cost. It is primarily
+    used for testing and backtesting scenarios where commission costs should
+    be excluded from analysis.
+
+    Examples:
+        >>> from rustybt.finance.commission import NoCommission
+        >>> commission_model = NoCommission()
+        >>> cost = commission_model.calculate(order, transaction)
+        >>> assert cost == 0.0
+
+    Note:
+        This is primarily used for testing and zero-commission scenarios.
     """
 
     @staticmethod
     def calculate(order, transaction):
+        """Calculate commission (always returns zero).
+
+        Args:
+            order: The order being processed (unused).
+            transaction: The transaction being processed (unused).
+
+        Returns:
+            float: Always returns 0.0.
+        """
         return 0.0
 
 
 # todo: update to Python3
 class EquityCommissionModel(CommissionModel, metaclass=AllowedAssetMarker):
-    """
-    Base class for commission models which only support equities.
+    """Base class for commission models that only support equities.
+
+    This is a specialized commission model base class that restricts
+    commission calculations to equity assets only. Attempting to use
+    this model with non-equity assets will result in an error.
+
+    Attributes:
+        allowed_asset_types: Tuple containing only the Equity class.
+
+    Examples:
+        >>> from rustybt.finance.commission import PerShare
+        >>> commission = PerShare(cost=0.005)
+        >>> isinstance(commission, EquityCommissionModel)
+        True
     """
 
     allowed_asset_types = (Equity,)
@@ -96,8 +157,20 @@ class EquityCommissionModel(CommissionModel, metaclass=AllowedAssetMarker):
 
 # todo: update to Python3
 class FutureCommissionModel(CommissionModel, metaclass=AllowedAssetMarker):
-    """
-    Base class for commission models which only support futures.
+    """Base class for commission models that only support futures.
+
+    This is a specialized commission model base class that restricts
+    commission calculations to futures contracts only. Attempting to use
+    this model with non-futures assets will result in an error.
+
+    Attributes:
+        allowed_asset_types: Tuple containing only the Future class.
+
+    Examples:
+        >>> from rustybt.finance.commission import PerContract
+        >>> commission = PerContract(cost=0.85, exchange_fee=1.50)
+        >>> isinstance(commission, FutureCommissionModel)
+        True
     """
 
     allowed_asset_types = (Future,)
@@ -106,16 +179,45 @@ class FutureCommissionModel(CommissionModel, metaclass=AllowedAssetMarker):
 def calculate_per_unit_commission(
     order, transaction, cost_per_unit, initial_commission, min_trade_cost
 ):
-    """
-    If there is a minimum commission:
-        If the order hasn't had a commission paid yet, pay the minimum
-        commission.
+    """Calculate commission for a per-unit commission model with minimum trade cost.
 
-        If the order has paid a commission, start paying additional
-        commission once the minimum commission has been reached.
+    This helper function implements the core logic for per-unit commission
+    calculation (used by both per-share and per-contract models). It handles
+    minimum commission requirements and one-time initial fees.
 
-    If there is no minimum commission:
-        Pay commission based on number of units in the transaction.
+    The logic works as follows:
+
+    - If no commission has been paid yet on the order:
+        - Pay the maximum of (minimum trade cost) or (per-unit cost + initial fee)
+    - If commission has already been paid on the order:
+        - Calculate total per-unit commission for all fills so far
+        - If below minimum threshold, don't charge additional commission yet
+        - If above minimum threshold, charge the incremental amount
+
+    Args:
+        order: The order being filled. Must have 'commission' and 'filled' attributes.
+        transaction: The transaction being processed. Must have 'amount' attribute.
+        cost_per_unit: Commission cost per unit (share or contract).
+        initial_commission: One-time fee charged on first fill (e.g., exchange fee).
+        min_trade_cost: Minimum commission to charge for the entire order.
+
+    Returns:
+        float: The additional commission to charge for this transaction.
+
+    Examples:
+        >>> # First fill of an order with minimum commission
+        >>> order.commission = 0  # No commission paid yet
+        >>> order.filled = 0
+        >>> transaction.amount = 100
+        >>> calculate_per_unit_commission(order, transaction, 0.005, 0, 1.0)
+        1.0  # Pays minimum of $1.00 instead of $0.50
+
+        >>> # Subsequent fill after minimum met
+        >>> order.commission = 1.0
+        >>> order.filled = 100
+        >>> transaction.amount = 100
+        >>> calculate_per_unit_commission(order, transaction, 0.005, 0, 1.0)
+        0.5  # Pays per-unit cost of $0.50
     """
     additional_commission = abs(transaction.amount * cost_per_unit)
 
@@ -140,22 +242,32 @@ def calculate_per_unit_commission(
 
 
 class PerShare(EquityCommissionModel):
-    """
-    Calculates a commission for a transaction based on a per share cost with
-    an optional minimum cost per trade.
+    """Per-share commission model for equity trading.
 
-    Parameters
-    ----------
-    cost : float, optional
-        The amount of commissions paid per share traded. Default is one tenth
-        of a cent per share.
-    min_trade_cost : float, optional
-        The minimum amount of commissions paid per trade. Default is no
-        minimum.
+    Calculates commission based on the number of shares traded, with an
+    optional minimum commission per trade. This is the default commission
+    model for equity trading in Zipline/RustyBT.
 
-    Notes:
-    -----
-    This is zipline's default commission model for equities.
+    Args:
+        cost: The commission cost per share traded. Defaults to $0.001
+            (one-tenth of a cent per share).
+        min_trade_cost: The minimum commission per trade. Defaults to $0
+            (no minimum). If specified, ensures that even small orders pay
+            at least this much commission.
+
+    Attributes:
+        cost_per_share: The commission rate per share.
+        min_trade_cost: The minimum commission threshold.
+
+    Examples:
+        >>> # Interactive Brokers-style: $0.005 per share, $1 minimum
+        >>> commission = PerShare(cost=0.005, min_trade_cost=1.0)
+        >>>
+        >>> # Traditional broker: $0.01 per share, $5 minimum
+        >>> commission = PerShare(cost=0.01, min_trade_cost=5.0)
+
+    Note:
+        This is Zipline's default commission model for equities.
     """
 
     def __init__(
@@ -163,16 +275,36 @@ class PerShare(EquityCommissionModel):
         cost=DEFAULT_PER_SHARE_COST,
         min_trade_cost=DEFAULT_MINIMUM_COST_PER_EQUITY_TRADE,
     ):
+        """Initialize per-share commission model.
+
+        Args:
+            cost: Commission per share (default: 0.001).
+            min_trade_cost: Minimum commission per trade (default: 0).
+        """
         self.cost_per_share = float(cost)
         self.min_trade_cost = min_trade_cost or 0
 
     def __repr__(self):
+        """Return string representation of the commission model.
+
+        Returns:
+            str: String representation showing cost_per_share and min_trade_cost.
+        """
         return (
             f"{self.__class__.__name__}(cost_per_share={self.cost_per_share}, "
             f"min_trade_cost={self.min_trade_cost})"
         )
 
     def calculate(self, order, transaction):
+        """Calculate commission for a share transaction.
+
+        Args:
+            order: The order being filled.
+            transaction: The transaction to calculate commission for.
+
+        Returns:
+            float: The commission amount for this transaction.
+        """
         return calculate_per_unit_commission(
             order=order,
             transaction=transaction,
@@ -183,25 +315,39 @@ class PerShare(EquityCommissionModel):
 
 
 class PerContract(FutureCommissionModel):
-    """
-    Calculates a commission for a transaction based on a per contract cost with
-    an optional minimum cost per trade.
+    """Per-contract commission model for futures trading.
 
-    Parameters
-    ----------
-    cost : float or dict
-        The amount of commissions paid per contract traded. If given a float,
-        the commission for all futures contracts is the same. If given a
-        dictionary, it must map root symbols to the commission cost for
-        contracts of that symbol.
-    exchange_fee : float or dict
-        A flat-rate fee charged by the exchange per trade. This value is a
-        constant, one-time charge no matter how many contracts are being
-        traded. If given a float, the fee for all contracts is the same. If
-        given a dictionary, it must map root symbols to the fee for contracts
-        of that symbol.
-    min_trade_cost : float, optional
-        The minimum amount of commissions paid per trade.
+    Calculates commission based on the number of futures contracts traded,
+    with support for contract-specific rates and exchange fees. Exchange
+    fees are one-time charges per trade, regardless of contract quantity.
+
+    Args:
+        cost: Commission per contract traded. Can be either:
+            - float: Same commission for all futures contracts
+            - dict: Maps root symbols to commission costs per contract
+        exchange_fee: Flat-rate exchange fee per trade. Can be either:
+            - float: Same fee for all contracts
+            - dict: Maps root symbols to exchange fees
+        min_trade_cost: Minimum commission per trade (default: 0).
+
+    Attributes:
+        _cost_per_contract: Commission rate mapping by root symbol.
+        _exchange_fee: Exchange fee mapping by root symbol.
+        min_trade_cost: Minimum commission threshold.
+
+    Examples:
+        >>> # Fixed commission for all contracts
+        >>> commission = PerContract(cost=0.85, exchange_fee=1.50)
+        >>>
+        >>> # Contract-specific commissions
+        >>> commission = PerContract(
+        ...     cost={'ES': 0.85, 'NQ': 1.00},
+        ...     exchange_fee={'ES': 1.28, 'NQ': 1.28}
+        ... )
+
+    Note:
+        If a root symbol is not found in the provided dictionaries,
+        default values are used from FUTURE_EXCHANGE_FEES_BY_SYMBOL.
     """
 
     def __init__(
@@ -236,6 +382,11 @@ class PerContract(FutureCommissionModel):
         self.min_trade_cost = min_trade_cost or 0
 
     def __repr__(self):
+        """Return string representation of the commission model.
+
+        Returns:
+            str: String representation showing costs and fees.
+        """
         if isinstance(self._cost_per_contract, SingleValueMapping):
             # Cost per contract is a constant, so extract it.
             cost_per_contract = self._cost_per_contract["dummy key"]
@@ -254,6 +405,19 @@ class PerContract(FutureCommissionModel):
         )
 
     def calculate(self, order, transaction):
+        """Calculate commission for a futures contract transaction.
+
+        Retrieves the contract-specific commission rate and exchange fee
+        based on the contract's root symbol, then applies the per-unit
+        commission calculation logic.
+
+        Args:
+            order: The futures order being filled.
+            transaction: The transaction to calculate commission for.
+
+        Returns:
+            float: The commission amount for this transaction.
+        """
         root_symbol = order.asset.root_symbol
         cost_per_contract = self._cost_per_contract[root_symbol]
         exchange_fee = self._exchange_fee[root_symbol]
@@ -268,34 +432,64 @@ class PerContract(FutureCommissionModel):
 
 
 class PerTrade(CommissionModel):
-    """
-    Calculates a commission for a transaction based on a per trade cost.
+    """Fixed commission per trade model.
 
-    For orders that require multiple fills, the full commission is charged to
-    the first fill.
+    Charges a flat commission amount per trade, regardless of the number
+    of shares or contracts traded. For orders that require multiple fills,
+    the full commission is charged on the first fill only.
 
-    Parameters
-    ----------
-    cost : float, optional
-        The flat amount of commissions paid per equity trade.
+    This model is common with traditional discount brokers that charge
+    a flat fee per trade (e.g., $5 per trade regardless of size).
+
+    Args:
+        cost: The flat commission amount per trade (default: 0).
+
+    Attributes:
+        cost: The fixed commission per trade.
+
+    Examples:
+        >>> # Traditional discount broker: $5 per trade
+        >>> commission = PerTrade(cost=5.0)
+        >>>
+        >>> # Zero commission broker
+        >>> commission = PerTrade(cost=0.0)
+
+    Note:
+        For orders that fill across multiple bars, commission is only
+        charged once on the first fill.
     """
 
     def __init__(self, cost=DEFAULT_MINIMUM_COST_PER_EQUITY_TRADE):
-        """
-        Cost parameter is the cost of a trade, regardless of share count.
-        $5.00 per trade is fairly typical of discount brokers.
+        """Initialize per-trade commission model.
+
+        Args:
+            cost: Fixed commission per trade. $5.00 per trade is fairly
+                typical of discount brokers.
         """
         # Cost needs to be floating point so that calculation using division
         # logic does not floor to an integer.
         self.cost = float(cost)
 
     def __repr__(self):
+        """Return string representation of the commission model.
+
+        Returns:
+            str: String representation showing cost_per_trade.
+        """
         return f"{self.__class__.__name__}(cost_per_trade={self.cost})"
 
     def calculate(self, order, transaction):
-        """
-        If the order hasn't had a commission paid yet, pay the fixed
-        commission.
+        """Calculate commission for a trade.
+
+        Charges the full commission on the first fill, then zero for
+        subsequent fills of the same order.
+
+        Args:
+            order: The order being filled.
+            transaction: The transaction to calculate commission for.
+
+        Returns:
+            float: The commission amount (cost on first fill, 0 thereafter).
         """
         if order.commission == 0:
             # if the order hasn't had a commission attributed to it yet,
@@ -308,19 +502,39 @@ class PerTrade(CommissionModel):
 
 
 class PerFutureTrade(PerContract):
-    """
-    Calculates a commission for a transaction based on a per trade cost.
+    """Fixed commission per futures trade model.
 
-    Parameters
-    ----------
-    cost : float or dict
-        The flat amount of commissions paid per trade, regardless of the number
-        of contracts being traded. If given a float, the commission for all
-        futures contracts is the same. If given a dictionary, it must map root
-        symbols to the commission cost for trading contracts of that symbol.
+    Charges a flat commission per futures trade, regardless of the number
+    of contracts traded. Internally, this is implemented as a per-contract
+    model with zero per-contract cost and the trade cost as an exchange fee,
+    since exchange fees are one-time charges.
+
+    Args:
+        cost: The flat commission per trade. Can be either:
+            - float: Same commission for all futures contracts
+            - dict: Maps root symbols to commission costs per trade
+
+    Attributes:
+        _cost_per_trade: The per-trade commission (alias for _exchange_fee).
+
+    Examples:
+        >>> # Fixed $2.50 per trade for all contracts
+        >>> commission = PerFutureTrade(cost=2.50)
+        >>>
+        >>> # Contract-specific per-trade costs
+        >>> commission = PerFutureTrade(cost={'ES': 2.50, 'NQ': 3.00})
+
+    Note:
+        The per-trade cost is represented as an exchange fee because both
+        are one-time charges incurred on the first fill.
     """
 
     def __init__(self, cost=DEFAULT_MINIMUM_COST_PER_FUTURE_TRADE):
+        """Initialize per-futures-trade commission model.
+
+        Args:
+            cost: Fixed commission per futures trade (default: 0).
+        """
         # The per-trade cost can be represented as the exchange fee in a
         # per-contract model because the exchange fee is just a one time cost
         # incurred on the first fill.
@@ -332,6 +546,11 @@ class PerFutureTrade(PerContract):
         self._cost_per_trade = self._exchange_fee
 
     def __repr__(self):
+        """Return string representation of the commission model.
+
+        Returns:
+            str: String representation showing cost_per_trade.
+        """
         if isinstance(self._cost_per_trade, SingleValueMapping):
             # Cost per trade is a constant, so extract it.
             cost_per_trade = self._cost_per_trade["dummy key"]
@@ -341,29 +560,59 @@ class PerFutureTrade(PerContract):
 
 
 class PerDollar(EquityCommissionModel):
-    """
-    Model commissions by applying a fixed cost per dollar transacted.
+    """Percentage-based commission model (per dollar transacted).
 
-    Parameters
-    ----------
-    cost : float, optional
-        The flat amount of commissions paid per dollar of equities
-        traded. Default is a commission of $0.0015 per dollar transacted.
+    Charges commission as a fixed percentage of the total dollar value
+    of the transaction. This model is common with some brokers and for
+    large institutional trades.
+
+    Args:
+        cost: Commission rate per dollar transacted (default: 0.0015,
+            which is 0.15% or 15 basis points).
+
+    Attributes:
+        cost_per_dollar: The commission rate as a decimal fraction.
+
+    Examples:
+        >>> # 0.15% commission (15 basis points)
+        >>> commission = PerDollar(cost=0.0015)
+        >>> # On a $100,000 trade: $100,000 * 0.0015 = $150 commission
+        >>>
+        >>> # 0.1% commission (10 basis points)
+        >>> commission = PerDollar(cost=0.001)
+
+    Note:
+        A cost of 0.0015 on a $1 million trade means $1,500 commission.
     """
 
     def __init__(self, cost=DEFAULT_PER_DOLLAR_COST):
-        """
-        Cost parameter is the cost of a trade per-dollar. 0.0015
-        on $1 million means $1,500 commission (=1M * 0.0015)
+        """Initialize per-dollar commission model.
+
+        Args:
+            cost: Commission per dollar. A value of 0.0015 means
+                0.15% commission on the transaction value.
         """
         self.cost_per_dollar = float(cost)
 
     def __repr__(self):
+        """Return string representation of the commission model.
+
+        Returns:
+            str: String representation showing cost_per_dollar.
+        """
         return f"{self.__class__.__name__}(cost_per_dollar={self.cost_per_dollar})"
 
     def calculate(self, order, transaction):
-        """
-        Pay commission based on dollar value of shares.
+        """Calculate commission based on dollar value of transaction.
+
+        Commission is calculated as: price * shares * cost_per_dollar
+
+        Args:
+            order: The order being filled (unused).
+            transaction: The transaction to calculate commission for.
+
+        Returns:
+            float: The commission amount based on transaction value.
         """
         cost_per_share = transaction.price * self.cost_per_dollar
         return abs(transaction.amount) * cost_per_share
@@ -386,20 +635,61 @@ logger = structlog.get_logger()
 
 # Exceptions
 class CommissionConfigurationError(Exception):
-    """Raised when commission model configuration is invalid."""
+    """Raised when commission model configuration is invalid.
+
+    This exception is raised during commission model initialization when
+    the provided configuration parameters are invalid or inconsistent.
+
+    Examples:
+        >>> from rustybt.finance.commission import TieredCommission
+        >>> try:
+        ...     commission = TieredCommission(tiers={})  # Empty tiers
+        ... except CommissionConfigurationError as e:
+        ...     print(f"Configuration error: {e}")
+    """
 
     pass
 
 
 class CommissionCalculationError(Exception):
-    """Raised when commission calculation fails."""
+    """Raised when commission calculation fails.
+
+    This exception is raised during runtime when a commission calculation
+    cannot be completed due to invalid data or calculation errors.
+
+    Examples:
+        >>> # This would be raised internally if price data is unavailable
+        >>> raise CommissionCalculationError("Cannot calculate commission: missing price data")
+    """
 
     pass
 
 
 @dataclass(frozen=True)
 class CommissionResult:
-    """Result of commission calculation."""
+    """Result of a commission calculation.
+
+    This immutable dataclass encapsulates all information about a calculated
+    commission, including the amount, model used, and any additional metadata
+    such as tier information or maker/taker status.
+
+    Attributes:
+        commission: The total commission amount as a Decimal.
+        model_name: The name of the commission model that generated this result.
+        tier_applied: The tier name if using a tiered commission model (optional).
+        maker_taker: "maker" or "taker" if using maker/taker pricing (optional).
+        metadata: Additional data about the calculation (e.g., rates, volumes).
+
+    Examples:
+        >>> from decimal import Decimal
+        >>> result = CommissionResult(
+        ...     commission=Decimal("5.25"),
+        ...     model_name="PerShareCommission",
+        ...     metadata={"cost_per_share": "0.005", "shares": "1050"}
+        ... )
+        >>> print(f"Commission: ${result.commission}")
+        Commission: $5.25
+    """
 
     commission: Decimal  # Total commission amount
     model_name: str  # Name of commission model used
@@ -411,15 +701,36 @@ class CommissionResult:
 class DecimalCommissionModel(ABC):
     """Abstract base class for Decimal-based commission models.
 
-    This is the RustyBT version using Decimal for precision.
-    For legacy float-based models, see CommissionModel above.
+    This is the RustyBT version that uses Python's Decimal type for precise
+    financial calculations, avoiding floating-point rounding errors that can
+    accumulate in trading simulations.
+
+    All modern RustyBT commission models should inherit from this class rather
+    than the legacy float-based CommissionModel. Decimal precision ensures
+    that commission calculations are accurate to the penny even after millions
+    of trades.
+
+    Attributes:
+        min_commission: Minimum commission amount per order (Decimal).
+
+    Examples:
+        >>> from decimal import Decimal
+        >>> from rustybt.finance.commission import PerShareCommission
+        >>> commission = PerShareCommission(
+        ...     cost_per_share=Decimal("0.005"),
+        ...     min_commission=Decimal("1.00")
+        ... )
+
+    Note:
+        For legacy float-based models, see CommissionModel above.
     """
 
     def __init__(self, min_commission: Decimal = Decimal("0")):
         """Initialize commission model.
 
         Args:
-            min_commission: Minimum commission amount per order
+            min_commission: Minimum commission amount per order (default: 0).
+                Ensures that even small orders pay at least this amount.
         """
         self.min_commission = min_commission
 
@@ -433,25 +744,52 @@ class DecimalCommissionModel(ABC):
     ) -> CommissionResult:
         """Calculate commission for an order fill.
 
+        This is the primary method that subclasses must implement. It computes
+        the commission for a specific fill (partial or complete) of an order.
+
         Args:
-            order: Order being filled
-            fill_price: Price at which order was filled
-            fill_quantity: Quantity filled
-            current_time: Current simulation time
+            order: The order being filled. Must have 'id' and 'asset' attributes.
+            fill_price: The price at which the order was filled (Decimal).
+            fill_quantity: The quantity filled in this transaction (Decimal).
+                Can be negative for sell orders.
+            current_time: The current simulation timestamp.
 
         Returns:
-            CommissionResult with commission details
+            CommissionResult: Object containing the commission amount and metadata.
+
+        Note:
+            Implementations should use absolute value of fill_quantity for
+            commission calculations, as commissions are always positive costs.
         """
         pass
 
     def apply_minimum(self, commission: Decimal) -> tuple[Decimal, bool]:
         """Apply minimum commission threshold.
 
+        Ensures that the commission is at least equal to the configured
+        minimum commission amount. This is useful for brokers that charge
+        a minimum fee per trade.
+
         Args:
-            commission: Calculated commission
+            commission: The calculated commission amount (Decimal).
 
         Returns:
-            Tuple of (final commission, minimum_applied_flag)
+            tuple[Decimal, bool]: A tuple containing:
+                - The final commission (max of calculated or minimum)
+                - A boolean flag indicating if minimum was applied (True if yes)
+
+        Examples:
+            >>> model = PerShareCommission(
+            ...     cost_per_share=Decimal("0.005"),
+            ...     min_commission=Decimal("1.00")
+            ... )
+            >>> # Small trade: $0.50 calculated, $1.00 minimum
+            >>> final, applied = model.apply_minimum(Decimal("0.50"))
+            >>> assert final == Decimal("1.00") and applied is True
+            >>>
+            >>> # Large trade: $5.00 calculated, no minimum needed
+            >>> final, applied = model.apply_minimum(Decimal("5.00"))
+            >>> assert final == Decimal("5.00") and applied is False
         """
         if commission < self.min_commission:
             logger.debug(
@@ -464,19 +802,58 @@ class DecimalCommissionModel(ABC):
 
 
 class PerShareCommission(DecimalCommissionModel):
-    """Per-share commission model.
+    """Decimal-based per-share commission model.
 
-    Formula: commission = shares × cost_per_share
+    Calculates commission as: commission = |shares| × cost_per_share
 
-    Common for US equity brokers (e.g., Interactive Brokers: $0.005/share).
+    This model is common for US equity brokers such as Interactive Brokers
+    (typically $0.005 per share with a $1 minimum). Uses Decimal arithmetic
+    for precise financial calculations.
+
+    Args:
+        cost_per_share: Commission cost per share as a Decimal (e.g., "0.005").
+        min_commission: Minimum commission per order (default: "1.00").
+
+    Attributes:
+        cost_per_share: The commission rate per share.
+
+    Examples:
+        >>> from decimal import Decimal
+        >>> # Interactive Brokers-style: $0.005/share, $1 minimum
+        >>> commission = PerShareCommission(
+        ...     cost_per_share=Decimal("0.005"),
+        ...     min_commission=Decimal("1.00")
+        ... )
+        >>>
+        >>> # Calculate commission for 100 shares at $50.00
+        >>> result = commission.calculate_commission(
+        ...     order=order,
+        ...     fill_price=Decimal("50.00"),
+        ...     fill_quantity=Decimal("100"),
+        ...     current_time=pd.Timestamp("2024-01-01")
+        ... )
+        >>> assert result.commission == Decimal("1.00")  # Minimum applied
+        >>>
+        >>> # Calculate commission for 500 shares at $50.00
+        >>> result = commission.calculate_commission(
+        ...     order=order,
+        ...     fill_price=Decimal("50.00"),
+        ...     fill_quantity=Decimal("500"),
+        ...     current_time=pd.Timestamp("2024-01-01")
+        ... )
+        >>> assert result.commission == Decimal("2.50")  # 500 * 0.005
+
+    Note:
+        This is the modern Decimal-based version. For the legacy float-based
+        version, see PerShare.
     """
 
     def __init__(self, cost_per_share: Decimal, min_commission: Decimal = Decimal("1.00")):
         """Initialize per-share commission model.
 
         Args:
-            cost_per_share: Commission per share (e.g., $0.005)
-            min_commission: Minimum commission per order
+            cost_per_share: Commission per share (e.g., Decimal("0.005")).
+            min_commission: Minimum commission per order (default: Decimal("1.00")).
         """
         super().__init__(min_commission)
         self.cost_per_share = cost_per_share
@@ -488,7 +865,37 @@ class PerShareCommission(DecimalCommissionModel):
         fill_quantity: Decimal,
         current_time: pd.Timestamp,
     ) -> CommissionResult:
-        """Calculate per-share commission."""
+        """Calculate per-share commission for an order fill.
+
+        Computes commission as the absolute quantity times the cost per share,
+        then applies the minimum commission threshold if configured.
+
+        Args:
+            order: The order being filled.
+            fill_price: Price at which order was filled (unused for per-share model).
+            fill_quantity: Quantity filled (positive for buys, negative for sells).
+            current_time: Current simulation timestamp (unused).
+
+        Returns:
+            CommissionResult: Contains commission amount and metadata including:
+                - commission: The calculated commission amount
+                - model_name: "PerShareCommission"
+                - metadata: Dict with cost_per_share, fill_quantity, and minimum_applied flag
+
+        Examples:
+            >>> commission = PerShareCommission(
+            ...     cost_per_share=Decimal("0.005"),
+            ...     min_commission=Decimal("1.00")
+            ... )
+            >>> result = commission.calculate_commission(
+            ...     order=order,
+            ...     fill_price=Decimal("50.00"),
+            ...     fill_quantity=Decimal("100"),
+            ...     current_time=pd.Timestamp("2024-01-01")
+            ... )
+            >>> print(result.commission)  # Decimal("1.00") - minimum applied
+            >>> print(result.metadata["minimum_applied"])  # True
+        """
         # Use absolute value for commission calculation
         abs_quantity = abs(fill_quantity)
 
@@ -519,11 +926,52 @@ class PerShareCommission(DecimalCommissionModel):
 
 
 class PercentageCommission(DecimalCommissionModel):
-    """Percentage commission model.
+    """Decimal-based percentage commission model.
 
-    Formula: commission = trade_value × percentage
+    Calculates commission as: commission = |trade_value| × percentage
 
-    Common for international brokers and small accounts.
+    Where trade_value = fill_price × fill_quantity
+
+    This model is common for international brokers, small accounts, and
+    cryptocurrency exchanges. Commission is calculated as a percentage of
+    the total transaction value.
+
+    Args:
+        percentage: Commission rate as a decimal fraction (e.g., Decimal("0.001")
+            for 0.1% or 10 basis points).
+        min_commission: Minimum commission per order (default: Decimal("0")).
+
+    Attributes:
+        percentage: The commission rate as a decimal fraction.
+
+    Examples:
+        >>> from decimal import Decimal
+        >>> # 0.1% commission (10 basis points), $5 minimum
+        >>> commission = PercentageCommission(
+        ...     percentage=Decimal("0.001"),
+        ...     min_commission=Decimal("5.00")
+        ... )
+        >>>
+        >>> # Trade: 100 shares at $50.00 = $5,000 value
+        >>> result = commission.calculate_commission(
+        ...     order=order,
+        ...     fill_price=Decimal("50.00"),
+        ...     fill_quantity=Decimal("100"),
+        ...     current_time=pd.Timestamp("2024-01-01")
+        ... )
+        >>> assert result.commission == Decimal("5.00")  # $5,000 * 0.001
+        >>>
+        >>> # Small trade: 10 shares at $10.00 = $100 value
+        >>> result = commission.calculate_commission(
+        ...     order=order,
+        ...     fill_price=Decimal("10.00"),
+        ...     fill_quantity=Decimal("10"),
+        ...     current_time=pd.Timestamp("2024-01-01")
+        ... )
+        >>> assert result.commission == Decimal("5.00")  # Minimum applied
+
+    Note:
+        A percentage of 0.001 equals 0.1% or 10 basis points (bps).
     """
 
     def __init__(
@@ -534,8 +982,8 @@ class PercentageCommission(DecimalCommissionModel):
         """Initialize percentage commission model.
 
         Args:
-            percentage: Commission as decimal fraction (e.g., 0.001 = 0.1%)
-            min_commission: Minimum commission per order
+            percentage: Commission rate as decimal fraction (e.g., Decimal("0.001") = 0.1%).
+            min_commission: Minimum commission per order (default: Decimal("0")).
         """
         super().__init__(min_commission)
         self.percentage = percentage
@@ -547,7 +995,39 @@ class PercentageCommission(DecimalCommissionModel):
         fill_quantity: Decimal,
         current_time: pd.Timestamp,
     ) -> CommissionResult:
-        """Calculate percentage commission."""
+        """Calculate percentage commission for an order fill.
+
+        Computes commission as trade value (price × quantity) times the
+        percentage rate, then applies the minimum commission threshold.
+
+        Args:
+            order: The order being filled.
+            fill_price: Price at which order was filled.
+            fill_quantity: Quantity filled (positive for buys, negative for sells).
+            current_time: Current simulation timestamp (unused).
+
+        Returns:
+            CommissionResult: Contains commission amount and metadata including:
+                - commission: The calculated commission amount
+                - model_name: "PercentageCommission"
+                - metadata: Dict with percentage, percentage_bps, trade_value,
+                    and minimum_applied flag
+
+        Examples:
+            >>> commission = PercentageCommission(
+            ...     percentage=Decimal("0.001"),
+            ...     min_commission=Decimal("5.00")
+            ... )
+            >>> result = commission.calculate_commission(
+            ...     order=order,
+            ...     fill_price=Decimal("50.00"),
+            ...     fill_quantity=Decimal("100"),
+            ...     current_time=pd.Timestamp("2024-01-01")
+            ... )
+            >>> print(result.commission)  # Decimal("5.00")
+            >>> print(result.metadata["trade_value"])  # "5000"
+            >>> print(result.metadata["percentage_bps"])  # "10" (10 basis points)
+        """
         # Use absolute value for commission calculation
         abs_quantity = abs(fill_quantity)
 
@@ -582,22 +1062,59 @@ class PercentageCommission(DecimalCommissionModel):
 
 
 class VolumeTracker:
-    """Tracks trading volume for tiered commissions."""
+    """Tracks cumulative trading volume for tiered commission calculations.
+
+    This class maintains a rolling history of trading volume organized by
+    month. It automatically resets volumes at month boundaries and provides
+    volume lookup for tiered commission models.
+
+    Attributes:
+        monthly_volumes: Dictionary mapping month keys (YYYY-MM) to Decimal volumes.
+        current_month: The currently active month (YYYY-MM format).
+        logger: Structured logger for volume tracking events.
+
+    Examples:
+        >>> tracker = VolumeTracker()
+        >>> volume = tracker.get_monthly_volume(pd.Timestamp("2024-01-15"))
+        >>> assert volume == Decimal("0")  # No trades yet
+        >>>
+        >>> tracker.add_volume(Decimal("10000"), pd.Timestamp("2024-01-15"))
+        >>> tracker.add_volume(Decimal("5000"), pd.Timestamp("2024-01-15"))
+        >>> volume = tracker.get_monthly_volume(pd.Timestamp("2024-01-15"))
+        >>> assert volume == Decimal("15000")
+        >>>
+        >>> # New month resets
+        >>> volume = tracker.get_monthly_volume(pd.Timestamp("2024-02-01"))
+        >>> assert volume == Decimal("0")
+
+    Note:
+        Volume is tracked cumulatively within each calendar month.
+        The tracker automatically detects month boundaries and resets.
+    """
 
     def __init__(self):
-        """Initialize volume tracker."""
+        """Initialize volume tracker with empty volume history."""
         self.monthly_volumes: dict[str, Decimal] = {}
         self.current_month: str | None = None
         self.logger = structlog.get_logger()
 
     def get_monthly_volume(self, current_time: pd.Timestamp) -> Decimal:
-        """Get accumulated volume for current month.
+        """Get accumulated volume for the current month.
+
+        Retrieves the cumulative trading volume for the month containing
+        current_time. Automatically detects and handles month transitions.
 
         Args:
-            current_time: Current simulation time
+            current_time: The current simulation timestamp.
 
         Returns:
-            Accumulated volume for current month
+            Decimal: The accumulated volume for the current month. Returns
+                Decimal("0") if no trades have occurred this month.
+
+        Examples:
+            >>> tracker = VolumeTracker()
+            >>> volume = tracker.get_monthly_volume(pd.Timestamp("2024-01-15"))
+            >>> assert volume == Decimal("0")
         """
         month_key = current_time.strftime("%Y-%m")
 
@@ -615,11 +1132,21 @@ class VolumeTracker:
         return self.monthly_volumes.get(month_key, Decimal("0"))
 
     def add_volume(self, trade_value: Decimal, current_time: pd.Timestamp):
-        """Add trade volume to current month.
+        """Add trade volume to the current month's cumulative total.
+
+        Increments the volume for the month containing current_time. If this
+        is a new month, automatically initializes the month before adding volume.
 
         Args:
-            trade_value: Value of trade to add
-            current_time: Current simulation time
+            trade_value: The dollar value of the trade to add (Decimal).
+            current_time: The current simulation timestamp.
+
+        Examples:
+            >>> tracker = VolumeTracker()
+            >>> tracker.add_volume(Decimal("10000"), pd.Timestamp("2024-01-15"))
+            >>> tracker.add_volume(Decimal("5000"), pd.Timestamp("2024-01-15"))
+            >>> volume = tracker.get_monthly_volume(pd.Timestamp("2024-01-15"))
+            >>> assert volume == Decimal("15000")
         """
         month_key = current_time.strftime("%Y-%m")
 

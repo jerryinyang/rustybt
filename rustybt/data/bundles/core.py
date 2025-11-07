@@ -1,3 +1,42 @@
+"""Core bundle management infrastructure for data ingestion and loading.
+
+This module provides the central data bundle system for rustybt, handling:
+- Bundle registration and discovery
+- Data ingestion from various sources
+- Bundle loading and reader creation
+- Bundle lifecycle management (cleaning old ingestions)
+- Support for both legacy Bcolz and modern Parquet bundles
+
+The bundle system enables modular data ingestion where each bundle represents
+a dataset from a specific source (e.g., Quandl, CSV files, market data APIs).
+
+Example:
+    Register and ingest a custom bundle:
+
+    >>> from rustybt.data.bundles import register, ingest
+    >>>
+    >>> @register('my-bundle')
+    ... def my_ingest(environ, asset_db_writer, minute_bar_writer,
+    ...              daily_bar_writer, adjustment_writer, calendar,
+    ...              start_session, end_session, cache, show_progress,
+    ...              output_dir):
+    ...     # Write your ingestion logic here
+    ...     pass
+    >>>
+    >>> # Ingest the bundle
+    >>> ingest('my-bundle', show_progress=True)
+
+    Load a bundle for backtesting:
+
+    >>> from rustybt.data.bundles import load
+    >>> bundle_data = load('quandl')
+    >>> print(bundle_data.asset_finder.retrieve_all(bundle_data.asset_finder.sids))
+
+Notes:
+    - Bundles are stored in the data directory configured via environment variables
+    - Each ingestion creates a timestamped directory to enable version management
+    - The load function automatically detects Parquet vs Bcolz bundle format
+"""
 import errno
 import logging
 import os
@@ -34,6 +73,22 @@ log = logging.getLogger(__name__)
 
 
 def asset_db_path(bundle_name, timestr, environ=None, db_version=None):
+    """Get the absolute path to a bundle's asset database.
+
+    Args:
+        bundle_name: Name of the bundle.
+        timestr: Timestamp string for the ingestion (ISO format with semicolons).
+        environ: Optional environment variable mapping. Defaults to os.environ.
+        db_version: Optional database version. Defaults to current ASSET_DB_VERSION.
+
+    Returns:
+        str: Absolute path to the asset database file.
+
+    Example:
+        >>> path = asset_db_path('quandl', '2023-01-01T00;00;00')
+        >>> print(path)
+        /path/to/data/quandl/2023-01-01T00;00;00/assets-7.sqlite
+    """
     return pth.data_path(
         asset_db_relative(bundle_name, timestr, db_version),
         environ=environ,
@@ -41,6 +96,21 @@ def asset_db_path(bundle_name, timestr, environ=None, db_version=None):
 
 
 def minute_equity_path(bundle_name, timestr, environ=None):
+    """Get the absolute path to a bundle's minute bar data.
+
+    Args:
+        bundle_name: Name of the bundle.
+        timestr: Timestamp string for the ingestion (ISO format with semicolons).
+        environ: Optional environment variable mapping. Defaults to os.environ.
+
+    Returns:
+        str: Absolute path to the minute equity data directory.
+
+    Example:
+        >>> path = minute_equity_path('quandl', '2023-01-01T00;00;00')
+        >>> print(path)
+        /path/to/data/quandl/2023-01-01T00;00;00/minute_equities.bcolz
+    """
     return pth.data_path(
         minute_equity_relative(bundle_name, timestr),
         environ=environ,
@@ -48,6 +118,21 @@ def minute_equity_path(bundle_name, timestr, environ=None):
 
 
 def daily_equity_path(bundle_name, timestr, environ=None):
+    """Get the absolute path to a bundle's daily bar data.
+
+    Args:
+        bundle_name: Name of the bundle.
+        timestr: Timestamp string for the ingestion (ISO format with semicolons).
+        environ: Optional environment variable mapping. Defaults to os.environ.
+
+    Returns:
+        str: Absolute path to the daily equity data directory.
+
+    Example:
+        >>> path = daily_equity_path('quandl', '2023-01-01T00;00;00')
+        >>> print(path)
+        /path/to/data/quandl/2023-01-01T00;00;00/daily_equities.bcolz
+    """
     return pth.data_path(
         daily_equity_relative(bundle_name, timestr),
         environ=environ,
@@ -55,6 +140,21 @@ def daily_equity_path(bundle_name, timestr, environ=None):
 
 
 def adjustment_db_path(bundle_name, timestr, environ=None):
+    """Get the absolute path to a bundle's adjustment database.
+
+    Args:
+        bundle_name: Name of the bundle.
+        timestr: Timestamp string for the ingestion (ISO format with semicolons).
+        environ: Optional environment variable mapping. Defaults to os.environ.
+
+    Returns:
+        str: Absolute path to the adjustment database file.
+
+    Example:
+        >>> path = adjustment_db_path('quandl', '2023-01-01T00;00;00')
+        >>> print(path)
+        /path/to/data/quandl/2023-01-01T00;00;00/adjustments.sqlite
+    """
     return pth.data_path(
         adjustment_db_relative(bundle_name, timestr),
         environ=environ,
@@ -62,6 +162,20 @@ def adjustment_db_path(bundle_name, timestr, environ=None):
 
 
 def cache_path(bundle_name, environ=None):
+    """Get the absolute path to a bundle's cache directory.
+
+    Args:
+        bundle_name: Name of the bundle.
+        environ: Optional environment variable mapping. Defaults to os.environ.
+
+    Returns:
+        str: Absolute path to the bundle cache directory.
+
+    Example:
+        >>> path = cache_path('quandl')
+        >>> print(path)
+        /path/to/data/quandl/.cache
+    """
     return pth.data_path(
         cache_relative(bundle_name),
         environ=environ,
@@ -69,40 +183,115 @@ def cache_path(bundle_name, environ=None):
 
 
 def adjustment_db_relative(bundle_name, timestr):
+    """Get the relative path components for a bundle's adjustment database.
+
+    Args:
+        bundle_name: Name of the bundle.
+        timestr: Timestamp string for the ingestion.
+
+    Returns:
+        tuple: Path components (bundle_name, timestr, filename).
+
+    Example:
+        >>> components = adjustment_db_relative('quandl', '2023-01-01T00;00;00')
+        >>> print(components)
+        ('quandl', '2023-01-01T00;00;00', 'adjustments.sqlite')
+    """
     return bundle_name, timestr, "adjustments.sqlite"
 
 
 def cache_relative(bundle_name):
+    """Get the relative path components for a bundle's cache directory.
+
+    Args:
+        bundle_name: Name of the bundle.
+
+    Returns:
+        tuple: Path components (bundle_name, cache_dirname).
+
+    Example:
+        >>> components = cache_relative('quandl')
+        >>> print(components)
+        ('quandl', '.cache')
+    """
     return bundle_name, ".cache"
 
 
 def daily_equity_relative(bundle_name, timestr):
+    """Get the relative path components for a bundle's daily equity data.
+
+    Args:
+        bundle_name: Name of the bundle.
+        timestr: Timestamp string for the ingestion.
+
+    Returns:
+        tuple: Path components (bundle_name, timestr, dirname).
+
+    Example:
+        >>> components = daily_equity_relative('quandl', '2023-01-01T00;00;00')
+        >>> print(components)
+        ('quandl', '2023-01-01T00;00;00', 'daily_equities.bcolz')
+    """
     return bundle_name, timestr, "daily_equities.bcolz"
 
 
 def minute_equity_relative(bundle_name, timestr):
+    """Get the relative path components for a bundle's minute equity data.
+
+    Args:
+        bundle_name: Name of the bundle.
+        timestr: Timestamp string for the ingestion.
+
+    Returns:
+        tuple: Path components (bundle_name, timestr, dirname).
+
+    Example:
+        >>> components = minute_equity_relative('quandl', '2023-01-01T00;00;00')
+        >>> print(components)
+        ('quandl', '2023-01-01T00;00;00', 'minute_equities.bcolz')
+    """
     return bundle_name, timestr, "minute_equities.bcolz"
 
 
 def asset_db_relative(bundle_name, timestr, db_version=None):
+    """Get the relative path components for a bundle's asset database.
+
+    Args:
+        bundle_name: Name of the bundle.
+        timestr: Timestamp string for the ingestion.
+        db_version: Optional database version. Defaults to current ASSET_DB_VERSION.
+
+    Returns:
+        tuple: Path components (bundle_name, timestr, filename).
+
+    Example:
+        >>> components = asset_db_relative('quandl', '2023-01-01T00;00;00')
+        >>> print(components)
+        ('quandl', '2023-01-01T00;00;00', 'assets-7.sqlite')
+    """
     db_version = ASSET_DB_VERSION if db_version is None else db_version
 
     return bundle_name, timestr, "assets-%d.sqlite" % db_version
 
 
 def to_bundle_ingest_dirname(ts):
-    """Convert a pandas Timestamp into the name of the directory for the
-    ingestion.
+    """Convert a pandas Timestamp into the name of the directory for the ingestion.
 
-    Parameters
-    ----------
-    ts : pandas.Timestamp
-        The time of the ingestions
+    Colons are replaced with semicolons to ensure filesystem compatibility across
+    all platforms (Windows doesn't allow colons in filenames).
+
+    Args:
+        ts: The timestamp of the ingestion.
 
     Returns:
-    -------
-    name : str
-        The name of the directory for this ingestion.
+        str: The name of the directory for this ingestion.
+
+    Example:
+        >>> import pandas as pd
+        >>> ts = pd.Timestamp('2023-01-15 10:30:45')
+        >>> dirname = to_bundle_ingest_dirname(ts)
+        >>> print(dirname)
+        2023-01-15T10;30;45
     """
     return ts.isoformat().replace(":", ";")
 
@@ -110,20 +299,45 @@ def to_bundle_ingest_dirname(ts):
 def from_bundle_ingest_dirname(cs):
     """Read a bundle ingestion directory name into a pandas Timestamp.
 
-    Parameters
-    ----------
-    cs : str
-        The name of the directory.
+    Reverses the transformation from to_bundle_ingest_dirname by converting
+    semicolons back to colons before parsing.
+
+    Args:
+        cs: The name of the ingestion directory.
 
     Returns:
-    -------
-    ts : pandas.Timestamp
-        The time when this ingestion happened.
+        pd.Timestamp: The time when this ingestion happened.
+
+    Example:
+        >>> dirname = '2023-01-15T10;30;45'
+        >>> ts = from_bundle_ingest_dirname(dirname)
+        >>> print(ts)
+        2023-01-15 10:30:45
     """
     return pd.Timestamp(cs.replace(";", ":"))
 
 
 def ingestions_for_bundle(bundle, environ=None):
+    """Get all ingestion timestamps for a bundle, sorted newest first.
+
+    Args:
+        bundle: Name of the bundle.
+        environ: Optional environment variable mapping. Defaults to os.environ.
+
+    Returns:
+        list[pd.Timestamp]: List of ingestion timestamps in descending order.
+
+    Raises:
+        OSError: If the bundle directory doesn't exist.
+
+    Example:
+        >>> timestamps = ingestions_for_bundle('quandl')
+        >>> for ts in timestamps[:3]:  # Show 3 most recent
+        ...     print(ts)
+        2023-12-01 10:30:00
+        2023-11-15 09:45:00
+        2023-11-01 08:00:00
+    """
     return sorted(
         (
             from_bundle_ingest_dirname(ing)
@@ -145,6 +359,26 @@ RegisteredBundle = namedtuple(
         "create_writers",
     ],
 )
+RegisteredBundle.__doc__ = """Bundle registration information.
+
+Attributes:
+    calendar_name: Name of the trading calendar (e.g., 'NYSE', 'XNYS').
+    start_session: First session for data ingestion (pd.Timestamp or None).
+    end_session: Last session for data ingestion (pd.Timestamp or None).
+    minutes_per_day: Number of minutes in a trading day (typically 390).
+    ingest: The ingestion function to call for this bundle.
+    create_writers: Whether to create database writers during ingestion.
+
+Example:
+    >>> bundle = RegisteredBundle(
+    ...     calendar_name='NYSE',
+    ...     start_session=pd.Timestamp('2020-01-01'),
+    ...     end_session=pd.Timestamp('2023-12-31'),
+    ...     minutes_per_day=390,
+    ...     ingest=my_ingest_function,
+    ...     create_writers=True
+    ... )
+"""
 
 _BundleData = namedtuple(
     "_BundleData",
@@ -153,10 +387,33 @@ _BundleData = namedtuple(
 
 
 class BundleData(_BundleData):
-    """Wrapper around bundle data that provides proper resource cleanup."""
+    """Bundle data readers with automatic resource management.
+
+    Wraps the core data readers for a bundle and provides context manager
+    support for proper cleanup of database connections and file handles.
+
+    Attributes:
+        asset_finder: AssetFinder for looking up asset metadata.
+        equity_minute_bar_reader: Reader for minute-frequency OHLCV data.
+        equity_daily_bar_reader: Reader for daily-frequency OHLCV data.
+        adjustment_reader: Reader for splits, dividends, and other adjustments.
+
+    Example:
+        >>> with load('quandl') as bundle:
+        ...     # Access asset data
+        ...     assets = bundle.asset_finder.retrieve_all(bundle.asset_finder.sids)
+        ...     # Access pricing data
+        ...     daily_data = bundle.equity_daily_bar_reader.load_raw_arrays(
+        ...         ['close'], start_date, end_date, [sid]
+        ...     )
+    """
 
     def close(self):
-        """Close all resources that need cleanup."""
+        """Close all resources that need cleanup.
+
+        Closes database connections and file handles for the asset finder
+        and adjustment reader if they support the close() method.
+        """
         # Close AssetFinder if it has a close method
         if hasattr(self.asset_finder, "close"):
             self.asset_finder.close()
@@ -177,10 +434,32 @@ BundleCore = namedtuple(
     "BundleCore",
     "bundles register unregister ingest load clean",
 )
+BundleCore.__doc__ = """Core bundle management functions.
+
+Attributes:
+    bundles: Mapping of bundle names to RegisteredBundle objects.
+    register: Function to register a new bundle.
+    unregister: Function to unregister a bundle.
+    ingest: Function to download and ingest bundle data.
+    load: Function to load an ingested bundle.
+    clean: Function to remove old bundle ingestions.
+"""
 
 
 class UnknownBundle(click.ClickException, LookupError):
-    """Raised if no bundle with the given name was registered."""
+    """Exception raised when a bundle name is not found in the registry.
+
+    Attributes:
+        name: The name of the bundle that was not found.
+        exit_code: CLI exit code (1).
+
+    Example:
+        >>> try:
+        ...     load('nonexistent-bundle')
+        ... except UnknownBundle as e:
+        ...     print(f"Bundle not found: {e.name}")
+        Bundle not found: nonexistent-bundle
+    """
 
     exit_code = 1
 
@@ -195,17 +474,22 @@ class UnknownBundle(click.ClickException, LookupError):
 
 
 class BadClean(click.ClickException, ValueError):
-    """Exception indicating that an invalid argument set was passed to
-    ``clean``.
+    """Exception raised when invalid arguments are passed to the clean function.
 
-    Parameters
-    ----------
-    before, after, keep_last : any
-        The bad arguments to ``clean``.
+    The clean function accepts either date-based filtering (before/after) or
+    count-based filtering (keep_last), but not both simultaneously.
 
-    See Also:
-    --------
-    clean
+    Args:
+        before: The 'before' argument that was passed.
+        after: The 'after' argument that was passed.
+        keep_last: The 'keep_last' argument that was passed.
+
+    Example:
+        >>> try:
+        ...     clean('quandl', before=pd.Timestamp('2023-01-01'), keep_last=5)
+        ... except BadClean:
+        ...     print("Cannot mix date and count-based cleaning")
+        Cannot mix date and count-based cleaning
     """
 
     def __init__(self, before, after, keep_last):
@@ -226,23 +510,30 @@ class BadClean(click.ClickException, ValueError):
 
 # TODO: simplify
 def _make_bundle_core():
-    """Create a family of data bundle functions that read from the same
-    bundle mapping.
+    """Create a family of data bundle functions that share a common registry.
+
+    Creates and returns a closure containing the bundle registry and all
+    bundle management functions. This enables a clean API where all functions
+    operate on the same underlying bundle mapping.
 
     Returns:
-    -------
-    bundles : mappingproxy
-        The mapping of bundles to bundle payloads.
-    register : callable
-        The function which registers new bundles in the ``bundles`` mapping.
-    unregister : callable
-        The function which deregisters bundles from the ``bundles`` mapping.
-    ingest : callable
-        The function which downloads and write data for a given data bundle.
-    load : callable
-        The function which loads the ingested bundles back into memory.
-    clean : callable
-        The function which cleans up data written with ``ingest``.
+        BundleCore: Named tuple containing:
+            - bundles (mappingproxy): Read-only mapping of bundle names to RegisteredBundle.
+            - register (callable): Register a new data bundle.
+            - unregister (callable): Remove a bundle from the registry.
+            - ingest (callable): Download and write bundle data.
+            - load (callable): Load an ingested bundle into memory.
+            - clean (callable): Remove old bundle ingestions.
+
+    Example:
+        >>> bundles, register, unregister, ingest, load, clean = _make_bundle_core()
+        >>> # Register a custom bundle
+        >>> @register('my-data')
+        ... def my_ingest_func(*args):
+        ...     pass
+        >>> # Use the bundle
+        >>> ingest('my-data', show_progress=True)
+        >>> bundle_data = load('my-data')
     """
     _bundles = {}  # the registered bundles
     # Expose _bundles through a proxy so that users cannot mutate this
@@ -262,67 +553,58 @@ def _make_bundle_core():
     ):
         """Register a data bundle ingest function.
 
-        Parameters
-        ----------
-        name : str
-            The name of the bundle.
-        f : callable
-            The ingest function. This function will be passed:
+        Registers a custom ingestion function that downloads and processes data
+        for backtesting. The function can be used as a decorator or called directly.
 
-              environ : mapping
-                  The environment this is being run with.
-              asset_db_writer : AssetDBWriter
-                  The asset db writer to write into.
-              minute_bar_writer : BcolzMinuteBarWriter
-                  The minute bar writer to write into.
-              daily_bar_writer : BcolzDailyBarWriter
-                  The daily bar writer to write into.
-              adjustment_writer : SQLiteAdjustmentWriter
-                  The adjustment db writer to write into.
-              calendar : trading_calendars.TradingCalendar
-                  The trading calendar to ingest for.
-              start_session : pd.Timestamp
-                  The first session of data to ingest.
-              end_session : pd.Timestamp
-                  The last session of data to ingest.
-              cache : DataFrameCache
-                  A mapping object to temporarily store dataframes.
-                  This should be used to cache intermediates in case the load
-                  fails. This will be automatically cleaned up after a
-                  successful load.
-              show_progress : bool
-                  Show the progress for the current load where possible.
-        calendar_name : str, optional
-            The name of a calendar used to align bundle data.
-            Default is 'NYSE'.
-        start_session : pd.Timestamp, optional
-            The first session for which we want data. If not provided,
-            or if the date lies outside the range supported by the
-            calendar, the first_session of the calendar is used.
-        end_session : pd.Timestamp, optional
-            The last session for which we want data. If not provided,
-            or if the date lies outside the range supported by the
-            calendar, the last_session of the calendar is used.
-        minutes_per_day : int, optional
-            The number of minutes in each normal trading day.
-        create_writers : bool, optional
-            Should the ingest machinery create the writers for the ingest
-            function. This can be disabled as an optimization for cases where
-            they are not needed, like the ``quantopian-quandl`` bundle.
+        Args:
+            name: Unique identifier for the bundle.
+            f: Ingest function with signature:
+                f(environ, asset_db_writer, minute_bar_writer, daily_bar_writer,
+                  adjustment_writer, calendar, start_session, end_session, cache,
+                  show_progress, output_dir)
+                where:
+                - environ (Mapping): Environment variables.
+                - asset_db_writer (AssetDBWriter): Writer for asset metadata.
+                - minute_bar_writer (BcolzMinuteBarWriter): Writer for minute bars.
+                - daily_bar_writer (BcolzDailyBarWriter): Writer for daily bars.
+                - adjustment_writer (SQLiteAdjustmentWriter): Writer for adjustments.
+                - calendar (TradingCalendar): Trading calendar for date alignment.
+                - start_session (pd.Timestamp): First date to ingest.
+                - end_session (pd.Timestamp): Last date to ingest.
+                - cache (DataFrameCache): Temporary storage for intermediate data.
+                - show_progress (bool): Whether to display progress information.
+                - output_dir (str): Directory path for bundle output.
+            calendar_name: Trading calendar name (e.g., 'NYSE', 'XNYS'). Default: 'NYSE'.
+            start_session: First session for data. Defaults to calendar's first session.
+            end_session: Last session for data. Defaults to calendar's last session.
+            minutes_per_day: Minutes in a normal trading day. Default: 390.
+            create_writers: Whether to create database writers automatically. Default: True.
+                Set to False for bundles that manage their own writers.
 
-        Notes:
-        -----
-        This function my be used as a decorator, for example:
+        Returns:
+            callable: The registered ingest function (for decorator usage).
 
-        .. code-block:: python
+        Warns:
+            UserWarning: If a bundle with the same name already exists.
 
-           @register('quandl')
-           def quandl_ingest_function(...):
-               ...
+        Example:
+            As a decorator:
 
-        See Also:
-        --------
-        zipline.data.bundles.bundles
+            >>> @register('my-csv-data', calendar_name='XNYS')
+            ... def ingest_csv(environ, asset_db_writer, minute_bar_writer,
+            ...                daily_bar_writer, adjustment_writer, calendar,
+            ...                start_session, end_session, cache, show_progress,
+            ...                output_dir):
+            ...     # Load CSV data
+            ...     df = pd.read_csv('data.csv')
+            ...     # Write to bundle
+            ...     daily_bar_writer.write(process_data(df))
+
+            Direct call:
+
+            >>> def my_ingest_func(*args):
+            ...     pass
+            >>> register('my-bundle', my_ingest_func, calendar_name='LSE')
         """
         if name in bundles:
             warnings.warn(
@@ -345,21 +627,24 @@ def _make_bundle_core():
         return f
 
     def unregister(name):
-        """Unregister a bundle.
+        """Unregister a bundle from the registry.
 
-        Parameters
-        ----------
-        name : str
-            The name of the bundle to unregister.
+        Removes a bundle registration, preventing further ingestion or loading
+        until it's registered again.
+
+        Args:
+            name: Name of the bundle to unregister.
 
         Raises:
-        ------
-        UnknownBundle
-            Raised when no bundle has been registered with the given name.
+            UnknownBundle: If no bundle with this name is registered.
 
-        See Also:
-        --------
-        zipline.data.bundles.bundles
+        Example:
+            >>> unregister('my-old-bundle')
+            >>> # The bundle is now removed from the registry
+            >>> try:
+            ...     ingest('my-old-bundle')
+            ... except UnknownBundle:
+            ...     print("Bundle no longer registered")
         """
         try:
             del _bundles[name]
@@ -373,21 +658,41 @@ def _make_bundle_core():
         assets_versions=(),
         show_progress=False,
     ):
-        """Ingest data for a given bundle.
+        """Ingest data for a registered bundle.
 
-        Parameters
-        ----------
-        name : str
-            The name of the bundle.
-        environ : mapping, optional
-            The environment variables. By default this is os.environ.
-        timestamp : datetime, optional
-            The timestamp to use for the load.
-            By default this is the current time.
-        assets_versions : Iterable[int], optional
-            Versions of the assets db to which to downgrade.
-        show_progress : bool, optional
-            Tell the ingest function to display the progress where possible.
+        Downloads and processes data according to the bundle's registered ingest
+        function, creating a timestamped directory with all required database files.
+
+        Args:
+            name: Name of the bundle to ingest.
+            environ: Environment variables mapping. Defaults to os.environ.
+            timestamp: Timestamp for this ingestion. Defaults to current UTC time.
+                Multiple ingestions create separate timestamped directories.
+            assets_versions: Asset database versions to create via downgrade.
+                Useful for compatibility with older code. Example: (5, 6) creates
+                assets-5.sqlite and assets-6.sqlite in addition to current version.
+            show_progress: Whether to display progress information during ingestion.
+
+        Raises:
+            UnknownBundle: If the bundle name is not registered.
+            ValueError: If assets_versions is specified but create_writers=False.
+
+        Example:
+            Basic ingestion:
+
+            >>> ingest('quandl', show_progress=True)
+            Ingesting quandl...
+            [Progress output...]
+
+            Ingestion with specific timestamp:
+
+            >>> import pandas as pd
+            >>> ts = pd.Timestamp('2023-01-01', tz='UTC')
+            >>> ingest('my-bundle', timestamp=ts)
+
+            Create backward-compatible asset databases:
+
+            >>> ingest('quandl', assets_versions=(5, 6), show_progress=True)
         """
         try:
             bundle = bundles[name]
@@ -490,17 +795,27 @@ def _make_bundle_core():
                     downgrade(wf.path, version)
 
     def most_recent_data(bundle_name, timestamp, environ=None):
-        """Get the path to the most recent data after ``date``for the
-        given bundle.
+        """Get the path to the most recent ingestion for a bundle.
 
-        Parameters
-        ----------
-        bundle_name : str
-            The name of the bundle to lookup.
-        timestamp : datetime
-            The timestamp to begin searching on or before.
-        environ : dict, optional
-            An environment dict to forward to zipline_root.
+        Finds the most recent ingestion directory that exists for the bundle,
+        regardless of the timestamp parameter (which is kept for API compatibility).
+
+        Args:
+            bundle_name: Name of the bundle to lookup.
+            timestamp: Timestamp parameter (currently unused, kept for compatibility).
+            environ: Environment variables mapping. Defaults to os.environ.
+
+        Returns:
+            str: Absolute path to the most recent ingestion directory.
+
+        Raises:
+            UnknownBundle: If the bundle name is not registered.
+            ValueError: If no data exists for the bundle (needs ingestion).
+
+        Example:
+            >>> path = most_recent_data('quandl', pd.Timestamp.now())
+            >>> print(path)
+            /path/to/data/quandl/2023-12-01T10;30;00
         """
         if bundle_name not in bundles:
             raise UnknownBundle(bundle_name)
@@ -532,25 +847,57 @@ def _make_bundle_core():
         environ: Optional[Mapping[str, str]] = None,
         timestamp: Optional[pd.Timestamp] = None,
     ) -> BundleData:
-        """Loads a previously ingested bundle.
+        """Load a previously ingested bundle for backtesting.
 
-        Supports both traditional Bcolz bundles and unified Parquet bundles.
-        Automatically detects bundle type and loads appropriate readers.
+        Automatically detects the bundle format (Parquet or legacy Bcolz) and
+        creates appropriate readers for accessing asset metadata, pricing data,
+        and corporate actions.
 
-        Parameters
-        ----------
-        name : str
-            The name of the bundle.
-        environ : mapping, optional
-            The environment variables. Defaults of os.environ.
-        timestamp : datetime, optional
-            The timestamp of the data to lookup.
-            Defaults to the current time.
+        Args:
+            name: Name of the bundle to load.
+            environ: Environment variables mapping. Defaults to os.environ.
+            timestamp: Timestamp of ingestion to load. Defaults to most recent.
+                Allows loading historical ingestions for reproducibility.
 
         Returns:
-        -------
-        bundle_data : BundleData
-            The raw data readers for this bundle.
+            BundleData: Bundle data container with these readers:
+                - asset_finder: Look up asset metadata by symbol or SID
+                - equity_daily_bar_reader: Access daily OHLCV data
+                - equity_minute_bar_reader: Access minute OHLCV data (if available)
+                - adjustment_reader: Access splits, dividends, and adjustments
+
+        Raises:
+            UnknownBundle: If the bundle name is not registered.
+            ValueError: If no data exists for the bundle (needs ingestion).
+
+        Example:
+            Load and use a bundle:
+
+            >>> # Load the most recent ingestion
+            >>> bundle = load('quandl')
+            >>>
+            >>> # Find assets
+            >>> asset = bundle.asset_finder.lookup_symbol('AAPL', pd.Timestamp('2023-01-01'))
+            >>>
+            >>> # Get daily pricing data
+            >>> closes = bundle.equity_daily_bar_reader.load_raw_arrays(
+            ...     ['close'],
+            ...     pd.Timestamp('2023-01-01'),
+            ...     pd.Timestamp('2023-12-31'),
+            ...     [asset.sid]
+            ... )
+
+            Use with context manager for automatic cleanup:
+
+            >>> with load('quandl') as bundle:
+            ...     # Work with bundle data
+            ...     assets = bundle.asset_finder.retrieve_all(bundle.asset_finder.sids)
+            ... # Resources automatically closed here
+
+            Load a specific historical ingestion:
+
+            >>> ts = pd.Timestamp('2023-01-01', tz='UTC')
+            >>> bundle = load('quandl', timestamp=ts)
         """
         if environ is None:
             environ = os.environ
@@ -661,37 +1008,49 @@ def _make_bundle_core():
         after=optionally(ensure_timestamp),
     )
     def clean(name, before=None, after=None, keep_last=None, environ=os.environ):
-        """Clean up data that was created with ``ingest`` or
-        ``$ python -m zipline ingest``
+        """Clean up old bundle ingestions to free disk space.
 
-        Parameters
-        ----------
-        name : str
-            The name of the bundle to remove data for.
-        before : datetime, optional
-            Remove data ingested before this date.
-            This argument is mutually exclusive with: keep_last
-        after : datetime, optional
-            Remove data ingested after this date.
-            This argument is mutually exclusive with: keep_last
-        keep_last : int, optional
-            Remove all but the last ``keep_last`` ingestions.
-            This argument is mutually exclusive with:
-              before
-              after
-        environ : mapping, optional
-            The environment variables. Defaults of os.environ.
+        Removes bundle ingestion directories based on date or count criteria.
+        Use this to manage disk space by removing outdated or redundant ingestions.
+
+        Args:
+            name: Name of the bundle to clean.
+            before: Remove ingestions created before this timestamp.
+                Mutually exclusive with keep_last.
+            after: Remove ingestions created after this timestamp.
+                Mutually exclusive with keep_last.
+            keep_last: Keep only the N most recent ingestions, remove the rest.
+                Mutually exclusive with before/after. Use 0 to remove all.
+            environ: Environment variables mapping. Defaults to os.environ.
 
         Returns:
-        -------
-        cleaned : set[str]
-            The names of the runs that were removed.
+            set[str]: Set of absolute paths to directories that were removed.
 
         Raises:
-        ------
-        BadClean
-            Raised when ``before`` and or ``after`` are passed with
-            ``keep_last``. This is a subclass of ``ValueError``.
+            BadClean: If invalid argument combination is passed (before/after with keep_last).
+            UnknownBundle: If the bundle name is not registered.
+
+        Example:
+            Remove old ingestions (keep only last 3):
+
+            >>> cleaned = clean('quandl', keep_last=3)
+            >>> print(f"Removed {len(cleaned)} ingestions")
+            Removed 5 ingestions
+
+            Remove ingestions before a date:
+
+            >>> cutoff = pd.Timestamp('2023-01-01', tz='UTC')
+            >>> cleaned = clean('quandl', before=cutoff)
+
+            Remove ingestions in a date range:
+
+            >>> start = pd.Timestamp('2023-01-01', tz='UTC')
+            >>> end = pd.Timestamp('2023-06-30', tz='UTC')
+            >>> cleaned = clean('quandl', after=start, before=end)
+
+            Remove all ingestions:
+
+            >>> clean('old-bundle', keep_last=0)
         """
         try:
             all_runs = sorted(

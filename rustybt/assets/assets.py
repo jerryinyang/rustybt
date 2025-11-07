@@ -12,6 +12,108 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Asset lookup and discovery for financial instruments.
+
+This module provides the AssetFinder class and related infrastructure for looking up
+and retrieving financial assets from the asset database. It's the primary interface
+for accessing asset metadata in backtesting and live trading systems.
+
+Key Classes:
+    AssetFinder:
+        Main class for asset lookup and retrieval. Provides methods for finding assets
+        by sid, symbol, or supplementary fields.
+
+    AssetConvertible:
+        ABC for types that can be converted to assets (int, str, Asset).
+
+    PricingDataAssociable:
+        ABC for types that can be associated with pricing data (Asset, Future,
+        ContinuousFuture).
+
+    ContinuousFuture:
+        Represents a rolling futures contract chain.
+
+Lookup Strategies:
+    By SID (Security Identifier):
+        Direct lookup by unique integer identifier. Fastest method.
+
+    By Symbol:
+        Lookup by ticker symbol with optional as_of_date for historical accuracy.
+        Supports fuzzy matching for different share class representations.
+
+    By Supplementary Field:
+        Lookup by custom fields like CUSIP, ISIN, or other identifiers.
+
+    Multi-Country Support:
+        Filter lookups by country code to disambiguate identical symbols across markets.
+
+Symbol Resolution:
+    The AssetFinder handles complex symbol resolution including:
+    - Historical symbol changes (companies changing tickers)
+    - Share class variations (e.g., "BRK.A" vs "BRK-A" vs "BRK_A")
+    - Multi-country disambiguation (same symbol, different exchanges)
+    - Fuzzy matching for flexible lookups
+
+Caching:
+    AssetFinder employs multi-level caching for performance:
+    - Asset cache: Maps sids to Asset objects
+    - Asset type cache: Maps sids to asset types
+    - Symbol ownership maps: Precomputed symbol-to-sid mappings
+
+Examples:
+    Initialize an asset finder:
+        >>> from rustybt.assets import AssetFinder
+        >>> finder = AssetFinder("sqlite:///assets.db")
+
+    Lookup by sid:
+        >>> asset = finder.retrieve_asset(1)
+        >>> print(asset.symbol)
+        AAPL
+
+    Lookup by symbol with date:
+        >>> import pandas as pd
+        >>> equity = finder.lookup_symbol(
+        ...     "AAPL",
+        ...     as_of_date=pd.Timestamp("2020-01-01")
+        ... )
+
+    Lookup multiple symbols:
+        >>> equities = finder.lookup_symbols(
+        ...     ["AAPL", "GOOG", "MSFT"],
+        ...     as_of_date=pd.Timestamp("2020-01-01")
+        ... )
+
+    Filter by country:
+        >>> # Get only US equities
+        >>> us_sids = finder.equities_sids_for_country_code("US")
+
+    Lookup futures:
+        >>> future = finder.lookup_future_symbol("CLZ20")
+
+    Create continuous futures:
+        >>> cf = finder.create_continuous_future(
+        ...     root_symbol="CL",
+        ...     offset=0,
+        ...     roll_style="volume",
+        ...     adjustment=None
+        ... )
+
+Performance Notes:
+    - First lookups populate caches; subsequent lookups are much faster
+    - Precomputed ownership maps accelerate symbol lookups
+    - Batch retrieve operations are more efficient than individual lookups
+    - Country code filtering reduces search space for symbol resolution
+
+See Also:
+    rustybt.assets.AssetDBWriter: For populating the asset database
+    rustybt.assets.continuous_futures: Continuous futures implementation
+    rustybt.data: Data readers that use AssetFinder
+
+Thread Safety:
+    AssetFinder is generally thread-safe for read operations but not for modifications.
+    Multiple threads can safely lookup assets concurrently.
+"""
+
 # import array
 # import binascii
 # import struct

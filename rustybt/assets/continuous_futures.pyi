@@ -1,4 +1,25 @@
-"""Type stubs for rustybt.assets.continuous_futures - Compiled Cython module."""
+"""Cython-optimized continuous futures chain management.
+
+This module provides high-performance implementations for managing continuous
+futures contracts, including chain construction, contract rolling, and delivery
+predicates for specific commodity types.
+
+Cython optimizations:
+- Fast linked-list traversal for contract chains
+- Inline C functions for contract lookups
+- Efficient binary search for contract selection
+
+Example:
+    >>> cf = ContinuousFuture(
+    ...     sid=10001,
+    ...     root_symbol='CL',
+    ...     offset=0,  # Front month
+    ...     roll_style='calendar',
+    ...     start_date=pd.Timestamp('2010-01-01', tz='UTC'),
+    ...     end_date=pd.Timestamp('2030-12-31', tz='UTC'),
+    ...     exchange_info=exchange_info
+    ... )
+"""
 
 from typing import Any, Callable, Optional
 import pandas as pd

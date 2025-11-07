@@ -1,3 +1,90 @@
+"""Type-aware recursive equality testing for complex nested structures.
+
+Provides a powerful assert_equal function that uses single-dispatch to
+test equality of arbitrarily nested data structures with appropriate
+comparison logic for each type. Particularly useful for testing complex
+algorithm outputs, pipeline results, and data structures.
+
+Key Features:
+    - Recursive comparison with path tracking for error messages
+    - Type-specific comparison strategies (arrays, DataFrames, dicts, etc.)
+    - Configurable tolerance for floating point comparisons
+    - Placeholder values (wildcard, instance_of) for flexible matching
+
+Functions:
+    assert_equal: Main equality testing function (type-dispatched)
+    filter_kwargs: Filter keyword arguments for function signatures
+    keywords: Extract argument names from functions
+    wildcard: Placeholder matching any value
+    instance_of: Placeholder matching specific types
+
+Examples:
+    Compare complex nested structures::
+
+        from rustybt.testing.predicates import assert_equal
+
+        result = {
+            'portfolio_value': 100000.0,
+            'positions': {1: 100, 2: 200},
+            'returns': np.array([0.01, 0.02, -0.01])
+        }
+
+        expected = {
+            'portfolio_value': 100000.0,
+            'positions': {1: 100, 2: 200},
+            'returns': np.array([0.01, 0.02, -0.01])
+        }
+
+        assert_equal(result, expected)
+
+    Use wildcard for dynamic values::
+
+        from rustybt.testing.predicates import assert_equal, wildcard
+
+        result = {
+            'timestamp': pd.Timestamp('2023-01-01 10:30:15.123456'),
+            'portfolio_value': 100000.0
+        }
+
+        expected = {
+            'timestamp': wildcard,  # Don't care about exact timestamp
+            'portfolio_value': 100000.0
+        }
+
+        assert_equal(result, expected)  # Passes
+
+    Compare DataFrames with tolerance::
+
+        result_df = pd.DataFrame({'a': [1.0, 2.0], 'b': [3.0, 4.0]})
+        expected_df = pd.DataFrame({'a': [1.0001, 2.0001], 'b': [3.0, 4.0]})
+
+        # This would fail with default tolerance
+        try:
+            assert_equal(result_df, expected_df)
+        except AssertionError:
+            pass
+
+        # Use check_less_precise for tolerance
+        from pandas.testing import assert_frame_equal
+        assert_frame_equal(result_df, expected_df, check_less_precise=3)
+
+    Type checking with instance_of::
+
+        from rustybt.testing.predicates import assert_equal, instance_of
+
+        result = {
+            'asset': Equity(1, symbol='AAPL', exchange='NASDAQ'),
+            'quantity': 100
+        }
+
+        expected = {
+            'asset': instance_of(Equity),  # Any Equity instance
+            'quantity': 100
+        }
+
+        assert_equal(result, expected)  # Passes
+"""
+
 # from contextlib import contextmanager
 import datetime
 from collections import OrderedDict

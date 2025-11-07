@@ -1,3 +1,36 @@
+"""Data bundle registration and management.
+
+This module serves as the main entry point for the rustybt bundle system. It:
+- Auto-registers built-in bundles (csvdir, quandl)
+- Provides the core bundle API (register, ingest, load, clean)
+- Handles lazy loading of optional adapter bundles
+- Suppresses harmless git warnings from dependencies during import
+
+The bundle system enables modular data ingestion from various sources
+(CSV files, APIs, market data providers) into a unified format for backtesting.
+
+Example:
+    Basic bundle usage:
+
+    >>> from rustybt.data.bundles import register, ingest, load
+    >>>
+    >>> # Ingest a built-in bundle
+    >>> ingest('csvdir', show_progress=True)
+    >>>
+    >>> # Load bundle data for backtesting
+    >>> bundle = load('csvdir')
+    >>> assets = bundle.asset_finder.retrieve_all(bundle.asset_finder.sids)
+    >>> bundle.close()
+
+    Register a custom bundle:
+
+    >>> @register('my-data')
+    ... def my_ingest(environ, asset_db_writer, *args):
+    ...     # Your ingestion logic
+    ...     pass
+    >>>
+    >>> ingest('my-data')
+"""
 # These imports are necessary to force module-scope register calls to happen.
 import os
 import sys
@@ -6,16 +39,21 @@ from contextlib import contextmanager
 
 @contextmanager
 def _suppress_git_stderr():
-    """
-    Suppress stderr output during imports to hide git warnings from dependencies.
+    """Suppress stderr during imports to hide git warnings from dependencies.
 
-    Some dependencies (bcolz, ccxt) try to detect their version from git during
-    import, which fails with "fatal: bad revision 'HEAD'" when executed in a
-    git repository without commits. This is a harmless warning that confuses users.
+    Some dependencies (bcolz, ccxt) attempt version detection via git during
+    import, which generates harmless but confusing "fatal: bad revision 'HEAD'"
+    warnings in repositories without commits.
 
     This context manager temporarily redirects stderr to /dev/null during imports,
-    preventing the git error from being displayed while still allowing the imports
-    to succeed.
+    hiding git errors while allowing imports to succeed normally.
+
+    Yields:
+        None: Context where stderr is redirected to /dev/null.
+
+    Example:
+        >>> with _suppress_git_stderr():
+        ...     import some_noisy_package  # Git warnings suppressed
     """
     stderr_fd = sys.stderr.fileno()
     # Save the original stderr file descriptor
@@ -44,7 +82,22 @@ with _suppress_git_stderr():
 # This is safe because adapter_bundles is deprecated and only registers
 # profiling bundles used in performance tests.
 def _register_adapter_bundles():
-    """Lazy registration of deprecated adapter bundles."""
+    """Lazy registration of deprecated adapter bundles.
+
+    Imports and registers adapter-based bundles (yfinance, ccxt, etc.) on demand
+    to avoid circular import issues. These bundles are deprecated in favor of
+    the ingest-unified command but remain available for backward compatibility.
+
+    Silently fails if adapter_bundles module is unavailable, making these bundles
+    optional. Git warnings from dependencies (ccxt) are suppressed during import.
+
+    Example:
+        >>> _register_adapter_bundles()
+        >>> # Now 'yfinance-profiling' and similar bundles are available
+        >>> from rustybt.data.bundles import bundles
+        >>> print('yfinance-profiling' in bundles)
+        True
+    """
     try:
         with _suppress_git_stderr():
             from . import adapter_bundles  # noqa: F401 - May trigger git warning from ccxt

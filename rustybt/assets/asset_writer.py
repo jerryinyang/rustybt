@@ -12,6 +12,78 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Asset database writing and metadata ingestion.
+
+This module provides the AssetDBWriter class for populating the asset database
+with equity and futures metadata. It handles data validation, symbol mapping,
+timestamp conversion, and database schema management.
+
+Key Components:
+    AssetDBWriter: Main class for writing asset metadata to the database
+    AssetData: Named tuple container for structured asset data
+    Helper Functions: Data validation, normalization, and transformation utilities
+
+Data Flow:
+    1. Input: DataFrames with asset metadata (equities, futures, exchanges, etc.)
+    2. Normalization: Dates converted, symbols processed, defaults applied
+    3. Validation: Symbol uniqueness, date ranges, foreign key integrity
+    4. Writing: Chunked inserts with proper indexing and constraints
+
+Symbol Handling:
+    The module supports complex symbol management including:
+    - Company symbols and share class symbols
+    - Delimited symbols (e.g., "BRK.A", "BRK-A", "BRK_A")
+    - Historical symbol changes over time
+    - Fuzzy symbol matching for lookups
+
+Writing Modes:
+    write():
+        High-level interface that processes symbols and creates mappings automatically.
+        Recommended for most use cases.
+
+    write_direct():
+        Low-level interface requiring pre-processed symbol mappings.
+        Use when you need precise control over symbol mapping tables.
+
+Examples:
+    Basic usage with automatic symbol processing:
+        >>> from rustybt.assets import AssetDBWriter
+        >>> import pandas as pd
+        >>> writer = AssetDBWriter("sqlite:///assets.db")
+        >>> equities = pd.DataFrame({
+        ...     'symbol': ['AAPL', 'GOOG', 'MSFT'],
+        ...     'exchange': ['NASDAQ', 'NASDAQ', 'NASDAQ'],
+        ...     'start_date': pd.Timestamp('2020-01-01'),
+        ...     'end_date': pd.Timestamp('2030-01-01'),
+        ...     'asset_name': ['Apple Inc.', 'Alphabet Inc.', 'Microsoft Corp.']
+        ... }, index=[1, 2, 3])
+        >>> writer.write(equities=equities)
+
+    Write with explicit exchanges:
+        >>> exchanges = pd.DataFrame({
+        ...     'exchange': ['NASDAQ', 'NYSE'],
+        ...     'canonical_name': ['NASDAQ', 'NYSE'],
+        ...     'country_code': ['US', 'US']
+        ... })
+        >>> writer.write(equities=equities, exchanges=exchanges)
+
+    Initialize database schema:
+        >>> writer.init_db()  # Creates all tables and sets up version info
+
+See Also:
+    rustybt.assets.AssetFinder: For querying the populated database
+    rustybt.assets.asset_db_schema: Database schema definitions
+    rustybt.assets.asset_db_migrations: Schema migration utilities
+
+Notes:
+    - All dates are stored as Unix epoch nanoseconds (BigInteger)
+    - Symbols are automatically upper-cased
+    - Missing columns receive default values based on schema definitions
+    - Foreign key integrity is maintained throughout writes
+    - SQLite's max bind parameter limit (999) is respected via chunking
+"""
+
 import re
 from collections import namedtuple
 

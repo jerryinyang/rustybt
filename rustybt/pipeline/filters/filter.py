@@ -1,5 +1,92 @@
-"""
-filter.py
+"""Filter: Boolean pipeline computations for screening and masking.
+
+This module defines the Filter class and related utilities for creating boolean
+computations in the Pipeline API. Filters are essential for controlling which
+assets and dates are included in pipeline computations and outputs.
+
+Key Classes:
+
+**Filter**: Base class for all boolean pipeline computations. Filters can be
+combined using logical operators (&, |, ~) and used as masks for other
+computations or as pipeline screens.
+
+**CustomFilter**: Base class for user-defined filters. Subclass this and
+implement a compute() method to create custom boolean computations.
+
+**NumExprFilter**: Automatically created when combining filters or comparing
+factors. Uses numexpr for efficient evaluation.
+
+Common Filter Types:
+
+**Comparison Filters**: Created by comparing factors (factor > value)
+**Composite Filters**: Created by combining filters with & (and) or | (or)
+**Inverted Filters**: Created with ~ (not) operator
+**Percentile Filters**: Filter by percentile ranges via percentile_between()
+**Static Filters**: Filter specific assets via StaticAssets or StaticSids
+**Existence Filters**: AssetExists() indicates which assets existed when
+
+Primary Uses:
+
+**Screens**: Set as Pipeline.screen to filter output rows
+**Masks**: Pass to factor methods (rank, zscore, etc.) to exclude assets
+**Conditional Logic**: Use in Factor.fillna() or Filter.if_else()
+
+Examples:
+    Create filters via factor comparisons::
+
+        >>> from rustybt.pipeline.data import EquityPricing
+        >>> from rustybt.pipeline.factors import SimpleMovingAverage
+        >>> close = EquityPricing.close.latest
+        >>> sma_20 = SimpleMovingAverage(inputs=[EquityPricing.close], window_length=20)
+        >>> # Simple comparison
+        >>> above_sma = close > sma_20
+        >>> below_20 = close < 20.0
+
+    Combine filters with logical operators::
+
+        >>> # Both conditions must be true
+        >>> momentum_value = above_sma & (close < 50)
+        >>> # Either condition can be true
+        >>> extremes = (close > 100) | (close < 10)
+        >>> # Invert a filter
+        >>> below_sma = ~above_sma
+
+    Use as pipeline screen::
+
+        >>> from rustybt.pipeline import Pipeline
+        >>> pipe = Pipeline(
+        ...     columns={'close': close, 'sma': sma_20},
+        ...     screen=above_sma,  # Only return assets above their SMA
+        ... )
+
+    Use as mask for factor operations::
+
+        >>> # Rank only among liquid stocks
+        >>> volume = EquityPricing.volume.latest
+        >>> liquid = volume > volume.percentile_between(80, 100)
+        >>> momentum_rank = momentum.rank(mask=liquid)
+
+    Create custom filters::
+
+        >>> from rustybt.pipeline.filters import CustomFilter
+        >>> class HighVolatility(CustomFilter):
+        ...     inputs = [EquityPricing.close]
+        ...     window_length = 20
+        ...     def compute(self, today, assets, out, close):
+        ...         volatility = close.std(axis=0) / close.mean(axis=0)
+        ...         out[:] = volatility > 0.02  # 2% daily volatility
+
+    Filter by percentile ranges::
+
+        >>> # Middle 50% by value
+        >>> mid_value = value_factor.percentile_between(25, 75)
+        >>> # Top 10%
+        >>> top_decile = value_factor.percentile_between(90, 100)
+
+See Also:
+    :class:`rustybt.pipeline.Factor`: Numerical computations.
+    :class:`rustybt.pipeline.Classifier`: Categorical computations.
+    :mod:`rustybt.pipeline.filters`: Pre-built filter implementations.
 """
 
 from itertools import chain

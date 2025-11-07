@@ -1,7 +1,52 @@
-"""Polars-based Data Portal with Decimal precision.
+"""Polars-based Data Portal with Decimal precision for backtesting.
 
-This module provides a simplified data portal interface using Polars DataFrames
-with Decimal types for financial-grade precision.
+This module provides the main data access layer for rustybt backtesting engine,
+using Polars DataFrames with Decimal types to ensure financial-grade precision
+without floating-point rounding errors.
+
+The DataPortal serves as the central interface between strategy code and market
+data, providing:
+    - Spot value lookups (current prices)
+    - Historical data windows for indicators
+    - Lookahead bias prevention
+    - Multi-frequency data support (daily and minute)
+    - Async data fetching with caching
+    - Data validation during execution
+
+Example:
+    Basic usage with Parquet data:
+
+    >>> from rustybt.data.polars import PolarsParquetDailyReader, PolarsDataPortal
+    >>> from rustybt.assets import Asset
+    >>> import pandas as pd
+    >>>
+    >>> # Create reader and portal
+    >>> reader = PolarsParquetDailyReader("/path/to/bundle")
+    >>> portal = PolarsDataPortal(daily_reader=reader)
+    >>>
+    >>> # Get current prices
+    >>> assets = [Asset(sid=1, symbol="AAPL")]
+    >>> prices = portal.get_spot_value(
+    ...     assets=assets,
+    ...     field="close",
+    ...     dt=pd.Timestamp("2023-01-01"),
+    ...     data_frequency="daily"
+    ... )
+    >>>
+    >>> # Get historical window
+    >>> history = portal.get_history_window(
+    ...     assets=assets,
+    ...     end_dt=pd.Timestamp("2023-01-31"),
+    ...     bar_count=20,
+    ...     field="close",
+    ...     data_frequency="daily"
+    ... )
+
+    Using with unified DataSource:
+
+    >>> from rustybt.data.sources.yfinance import YFinanceSource
+    >>> source = YFinanceSource()
+    >>> portal = PolarsDataPortal(data_source=source, use_cache=True)
 """
 
 import asyncio

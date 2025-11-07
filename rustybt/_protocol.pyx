@@ -703,14 +703,12 @@ cdef class BarData:
 
     property current_dt:
         def __get__(self):
-            # FIX: For daily mode, return current_session which correctly represents
-            # the session date of the bar being processed. The old code returned
-            # simulation_dt_func() which was +1 day ahead, causing off-by-one errors.
+            # FIX: Use _get_current_minute() for both daily and minute modes.
+            # This ensures current_dt matches the actual bar being processed.
+            # The previous fix incorrectly used current_session which calls
+            # minute_to_session(..., direction="next"), creating lookahead bias.
             # See: docs/internal/sprint-debug/fixes/completed/2025-11-07-105919-history-off-by-one-data-shift.md
-            if self._daily_mode:
-                return self.current_session
-            else:
-                return self._get_current_minute()
+            return self._get_current_minute()
 
     @property
     def fetcher_assets(self):

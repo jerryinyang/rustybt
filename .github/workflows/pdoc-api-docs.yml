@@ -1,0 +1,90 @@
+name: Generate API Documentation (pdoc)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'rustybt/**/*.py'
+      - 'rustybt/**/*.pyi'
+      - '.github/workflows/pdoc-api-docs.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'rustybt/**/*.py'
+      - 'rustybt/**/*.pyi'
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate-api-docs:
+    name: Generate API Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pdoc
+
+      - name: Generate pdoc documentation
+        run: |
+          # Generate HTML documentation
+          pdoc rustybt \
+            --output-dir docs/api \
+            --html \
+            --template-dir docs/pdoc-templates \
+            --config show_source_code=True \
+            --config syntax_highlighting=True
+
+      - name: Generate docstring coverage report
+        run: |
+          pip install interrogate
+          interrogate rustybt/ \
+            --generate-badge docs/contributing/interrogate_badge.svg \
+            --badge-format svg \
+            --verbose 2 \
+            --fail-under 80
+
+      - name: Upload API docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-docs
+          path: docs/api/
+          retention-days: 30
+
+      - name: Commit and push if changed (main branch only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          # Add generated files
+          git add docs/api/ docs/contributing/interrogate_badge.svg
+
+          # Check if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "docs: Update API documentation [skip ci]"
+            git push
+          fi

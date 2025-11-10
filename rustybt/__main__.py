@@ -363,6 +363,14 @@ def _load_migration_module():
     help="The blotter to use.",
     show_default=True,
 )
+@click.option(
+    "--fractional-order-mode",
+    type=click.Choice(["auto", "always", "never"], case_sensitive=False),
+    default="auto",
+    show_default=True,
+    help="How to handle fractional orders: 'auto' (crypto gets fractional, equities get integer), "
+    "'always' (all fractional), 'never' (all integer).",
+)
 @ipython_only(
     click.option(
         "--local-namespace/--no-local-namespace",
@@ -393,6 +401,7 @@ def run(
     metrics_set,
     local_namespace,
     blotter,
+    fractional_order_mode,
 ):
     """Run a backtest for the given algorithm."""
     # check that the start and end dates are passed correctly
@@ -446,6 +455,7 @@ def run(
         blotter=blotter,
         benchmark_spec=benchmark_spec,
         custom_loader=None,
+        fractional_order_mode=fractional_order_mode,
     )
 
 
@@ -605,7 +615,7 @@ def ingest_unified(
     api_secret,
     csv_dir,
 ):
-    """Unified data ingestion command using DataSource interface.
+    r"""Unified data ingestion command using DataSource interface.
 
     Examples:
         # List available sources

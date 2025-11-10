@@ -142,12 +142,23 @@ def should_use_fractional_orders(asset, mode):
     >>> should_use_fractional_orders(btc_asset, FractionalOrderMode.NEVER)
     False
     """
+    # Check explicit mode settings first (ALWAYS/NEVER take precedence)
     if mode == FractionalOrderMode.ALWAYS:
         return True
     elif mode == FractionalOrderMode.NEVER:
         return False
     elif mode == FractionalOrderMode.AUTO:
-        return is_crypto_exchange(asset)
+        # CRITICAL FIX: Enhanced crypto detection for AUTO mode
+        # First try exchange_info detection
+        if is_crypto_exchange(asset):
+            return True
+
+        # Fallback: Check asset name format for crypto pairs (BTC/USDT, ETH/USDT, etc.)
+        # The exchange_info attribute may not be properly set in some bundles
+        if hasattr(asset, "asset_name") and "/" in str(asset.asset_name):
+            return True
+
+        return False
     else:
         # Default to auto behavior
-        return is_crypto_exchange(asset)
+        return should_use_fractional_orders(asset, FractionalOrderMode.AUTO)

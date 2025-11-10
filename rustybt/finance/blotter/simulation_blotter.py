@@ -43,6 +43,7 @@ Examples:
             data_portal=data_portal  # Required for price lookups
         )
 """
+
 #
 # Copyright 2015 Quantopian, Inc.
 #
@@ -840,7 +841,7 @@ class SimulationBlotter(Blotter):
             for order in orders_to_modify:
                 order.handle_split(ratio)
 
-    def get_transactions(self, bar_data):
+    def get_transactions(self, bar_data, fractional_order_mode=None):
         """
         Creates a list of transactions based on the current open orders,
         slippage model, and commission model.
@@ -877,7 +878,10 @@ class SimulationBlotter(Blotter):
             for asset, asset_orders in self.open_orders.items():
                 slippage = self.slippage_models[type(asset)]
 
-                for order, txn in slippage.simulate(bar_data, asset, asset_orders):
+                # CRITICAL FIX: Pass fractional_order_mode to slippage simulation
+                for order, txn in slippage.simulate(
+                    bar_data, asset, asset_orders, fractional_order_mode
+                ):
                     # Execution-time cash validation for buy orders
                     if (
                         self.enable_cash_validation

@@ -165,8 +165,11 @@ class SlippageModel(metaclass=FinancialModelMeta):
         """
         raise NotImplementedError("process_order")
 
-    def simulate(self, data, asset, orders_for_asset):
+    def simulate(self, data, asset, orders_for_asset, fractional_order_mode=None):
         self._volume_for_bar = 0
+        # CRITICAL FIX: Store fractional_order_mode for use in transaction creation
+        self._fractional_order_mode = fractional_order_mode
+
         volume = data.current(asset, "volume")
 
         # Handle missing or invalid volume data
@@ -205,6 +208,7 @@ class SlippageModel(metaclass=FinancialModelMeta):
                         data.current_dt,
                         execution_price,
                         execution_volume,
+                        fractional_order_mode=self._fractional_order_mode,
                     )
 
             except LiquidityExceeded:
@@ -307,15 +311,18 @@ class VolumeShareSlippage(SlippageModel):
         # price impact accounts for the total volume of transactions
         # created against the current minute bar
         remaining_volume = max_volume - self.volume_for_bar
-        if remaining_volume < 1:
+        # CRITICAL FIX: Allow fractional volumes for crypto trading
+        if remaining_volume < 1e-8:
             # we can't fill any more transactions
             raise LiquidityExceeded()
 
         # the current order amount will be the min of the
         # volume available in the bar or the open amount.
-        cur_volume = int(min(remaining_volume, abs(order.open_amount)))
+        # CRITICAL FIX: Preserve fractional amounts for crypto trading
+        cur_volume = min(remaining_volume, abs(order.open_amount))
 
-        if cur_volume < 1:
+        # For fractional orders, allow values < 1
+        if cur_volume < 1e-8:
             return None, None
 
         # tally the current amount into our total amount ordered.

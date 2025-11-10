@@ -126,7 +126,7 @@ rustybt run -f strategy.py -b yfinance-profiling --start 2024-01-01 --end 2025-0
 
 ## Key Features
 
-### Decimal Precision (Epic 2)
+### Decimal Precision
 
 ```python
 from decimal import Decimal
@@ -136,7 +136,7 @@ from rustybt.finance.decimal import DecimalLedger
 ledger = DecimalLedger(starting_cash=Decimal("100000.00"))
 ```
 
-### Modern Data Architecture (Epic 3)
+### Modern Data Architecture
 
 ```python
 import polars as pl
@@ -150,7 +150,7 @@ crypto_adapter = CCXTAdapter(exchange_id='binance')
 data = pl.read_parquet("ohlcv_data.parquet")
 ```
 
-### Enhanced Transaction Costs (Epic 4)
+### Enhanced Transaction Costs
 
 ```python
 from rustybt.finance.slippage import VolumeShareSlippage
@@ -161,7 +161,7 @@ slippage = VolumeShareSlippage(volume_limit=0.025)
 commission = TieredCommission(tiers=[(0, 0.001), (100000, 0.0005)])
 ```
 
-### Multi-Strategy Portfolio Management (Epic 4)
+### Multi-Strategy Portfolio Management
 
 ```python
 from rustybt.portfolio import PortfolioAllocator
@@ -174,7 +174,7 @@ allocator = PortfolioAllocator(
 )
 ```
 
-### Strategy Optimization (Epic 5)
+### Strategy Optimization
 
 ```python
 from rustybt.optimization import GridSearchOptimizer, BayesianOptimizer
@@ -187,7 +187,7 @@ optimizer = BayesianOptimizer(
 results = optimizer.optimize(strategy)
 ```
 
-### Live Trading (Epic 6)
+### Live Trading
 
 ```python
 from rustybt.live import LiveTradingEngine

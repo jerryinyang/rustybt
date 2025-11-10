@@ -224,11 +224,14 @@ class AlgorithmSimulator:
 
             # handle any transactions and commissions coming out new orders
             # placed in the last bar
+            # CRITICAL FIX: Pass fractional_order_mode for proper order fill handling
             (
                 new_transactions,
                 new_commissions,
                 closed_orders,
-            ) = blotter.get_transactions(current_data)
+            ) = blotter.get_transactions(
+                current_data, fractional_order_mode=algo.fractional_order_mode
+            )
 
             # Process bracket order fills - create stop-loss and take-profit orders
             # for any closed entry orders that are part of bracket orders

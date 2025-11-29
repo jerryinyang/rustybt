@@ -10,10 +10,11 @@ repo_name: jerryinyang/rustybt
 edit_uri: edit/main/docs/
 
 # Exclude internal documentation from build and search
-# Simplified after Epic 11 reorganization (2025-10-15)
-# Added comprehensive exclusions for internal docs (2025-11-07)
+# Story 8.1: Documentation reorganization (2025-11-29)
+# Internal docs moved to docs/internal/ for protected access
 exclude_docs: |
   internal/
+  archive/
   _archive/
   **/*_CORRECTIONS_*.md
   **/*CORRECTIONS*.md
@@ -354,6 +355,14 @@ nav:
   - Contributing:
       - Docstring Style Guide: contributing/docstring-style-guide.md
       - Docstring Coverage Report: contributing/docstring-coverage-report.md
+  - Validation Framework:
+      - Overview: validation/README.md
+      - Getting Started: validation/getting-started.md
+      - Strategy Implementation Guide: validation/strategy-implementation-guide.md
+      - Investigation Workflow Guide: validation/investigation-guide.md
+      - Design Differences: validation/design-differences.md
+      - Bug Fixes: validation/bug-fixes.md
+      - Validation Summary: validation/validation-summary.md
   - About:
       - License: about/license.md
       - Contributing: about/contributing.md

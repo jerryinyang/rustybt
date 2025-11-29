@@ -114,6 +114,12 @@ requires = [
 build-backend = 'setuptools.build_meta'
 
 [project.optional-dependencies]
+validation = [
+    'backtrader>=1.9.78',  # Reference framework for comparison
+    'click>=8.0',          # CLI interface
+    'pyyaml>=6.0',         # Session and configuration storage
+]
+
 test = [
     'tox',
     'pytest>=7.2.0',
@@ -214,6 +220,8 @@ all = ['rustybt[optimization]', 'rustybt[benchmarks]', 'rustybt[legacy]']
 rustybt = 'rustybt.__main__:main'
 # Maintain backward compatibility with zipline command
 zipline = 'rustybt.__main__:main'
+# Validation framework CLI
+rustybt-validate = 'rustybt.validation.cli:main'
 
 [tool.setuptools]
 include-package-data = true
@@ -276,6 +284,11 @@ markers = [
     "property: property-based tests using hypothesis",
     "exchange_integration: marks tests requiring exchange integration",
     "websocket_integration: marks tests requiring WebSocket connectivity",
+    "layer_1_data: Layer 1 data handling validation tests",
+    "layer_2_signals: Layer 2 signal computation validation tests",
+    "layer_3_orders: Layer 3 order lifecycle validation tests",
+    "layer_4_broker: Layer 4 broker transaction validation tests",
+    "layer_5_portfolio: Layer 5 portfolio returns validation tests",
 ]
 addopts = [
     "--strict-markers",

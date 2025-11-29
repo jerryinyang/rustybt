@@ -210,3 +210,6 @@ benchmark-results/
 .bundle_pool/
 .pregrouped_data/
 docs/api-reference/
+
+# Validation Framework
+validation-sessions/

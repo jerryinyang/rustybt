@@ -175,6 +175,13 @@ Complete API documentation:
 - [Optimization API](api/optimization-api.md) - Strategy optimization tools
 - [Analytics API](api/analytics-api.md) - Performance analysis and reporting
 
+### 🔍 [Validation Framework](validation/README.md)
+Verify rustybt correctness through comparison with Backtrader:
+
+- [Getting Started](validation/getting-started.md) - Run your first validation session
+- [Design Differences](validation/design-differences.md) - Known intentional differences
+- [Bug Fixes](validation/bug-fixes.md) - Issues discovered and resolved
+
 ### ℹ️ [About](about/license.md)
 Project information:
 

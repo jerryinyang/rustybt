@@ -565,7 +565,17 @@ class DataPortal:
             except TypeError as exc:
                 raise TypeError(f"Unexpected 'assets' value of type {type(assets)}.") from exc
 
-        session_label = self.trading_calendar.minute_to_session(dt)
+        # FIX: Match the logic from _protocol.pyx _get_current_minute()
+        # For daily mode, dt is already a midnight timestamp representing the session.
+        # Don't call minute_to_session() as it incorrectly treats midnight as previous session.
+        # See: docs/internal/sprint-debug/fixes/completed/2025-11-07-105919-history-off-by-one-data-shift.md
+        if data_frequency == "daily":
+            # In daily mode, use timestamp directly (already correct session)
+            # Note: must convert to tz-naive to match sessions index format
+            session_label = dt.normalize().tz_localize(None)
+        else:
+            # In minute mode, convert minute to session
+            session_label = self.trading_calendar.minute_to_session(dt)
 
         if assets_is_scalar:
             return self._get_single_asset_value(
@@ -876,7 +886,19 @@ class DataPortal:
         Returns:
             pd.DataFrame: History data with sessions as index and assets as columns.
         """
-        session = self.trading_calendar.minute_to_session(end_dt)
+        # FIX: Match the logic from _protocol.pyx _get_current_minute()
+        # For daily mode, end_dt is already a midnight timestamp representing the session.
+        # Don't call minute_to_session() as it incorrectly treats midnight as previous session.
+        # See: docs/internal/sprint-debug/fixes/completed/2025-11-07-105919-history-off-by-one-data-shift.md
+
+        if data_frequency == "daily":
+            # In daily mode, use timestamp directly (already correct session)
+            # Note: must convert to tz-naive to match sessions index format
+            session = end_dt.normalize().tz_localize(None)
+        else:
+            # In minute mode, convert minute to session
+            session = self.trading_calendar.minute_to_session(end_dt)
+
         days_for_window = self._get_days_for_window(session, bar_count)
 
         if len(assets) == 0:

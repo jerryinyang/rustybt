@@ -131,6 +131,7 @@ Note:
     - Portfolio state is read-only; use order functions to modify positions
     - Trading controls are enforced at order-time, not execution-time
 """
+
 from __future__ import annotations
 
 import inspect
@@ -933,6 +934,14 @@ class TradingAlgorithm:
             # as the last minute of the session.
             if self.trading_calendar.name == "us_futures":
                 execution_closes = self.trading_calendar.execution_time_from_close(market_closes)
+                execution_opens = execution_closes
+            elif self.trading_calendar.name == "24/7":
+                # For 24/7 calendar, use session date at midnight instead of market_closes
+                # because market_closes is defined as midnight of the NEXT day,
+                # which would mislabel all bars by +1 day
+                execution_closes = pd.DatetimeIndex(
+                    [pd.Timestamp(s.date(), tz="UTC") for s in self.sim_params.sessions]
+                )
                 execution_opens = execution_closes
             else:
                 execution_closes = market_closes

@@ -1,0 +1,204 @@
+<story-context id="3-3-implement-session-query-commands" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3</storyId>
+    <title>Implement Session Query Commands</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-3-implement-session-query-commands.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>comprehensive session query commands</iWant>
+    <soThat>I can find and inspect sessions efficiently</soThat>
+    <tasks>
+      <task id="1">Implement find_sessions() with filters (AC: #1)
+        <subtask>Add find_sessions() method to SessionManager</subtask>
+        <subtask>Accept filter parameters: strategy, status, stage, since, has_findings</subtask>
+        <subtask>Apply filters using AND logic</subtask>
+        <subtask>Return list of matching sessions</subtask>
+      </task>
+      <task id="2">Update CLI session list command (AC: #1)
+        <subtask>Add Click options for each filter</subtask>
+        <subtask>Call find_sessions() with filter values</subtask>
+        <subtask>Display results in table or json format</subtask>
+      </task>
+      <task id="3">Implement session show command (AC: #2)
+        <subtask>Add session show command with session_id argument</subtask>
+        <subtask>Load session and display full details</subtask>
+        <subtask>Format progress timeline with checkmarks</subtask>
+        <subtask>Calculate findings summary</subtask>
+        <subtask>Show layers completed vs pending</subtask>
+      </task>
+      <task id="4">Implement session findings command (AC: #3)
+        <subtask>Add session findings command</subtask>
+        <subtask>Load session findings from findings.yaml</subtask>
+        <subtask>Display as table: ID | Layer | Classification | Description</subtask>
+        <subtask>Highlight unclassified findings with "-" marker</subtask>
+      </task>
+      <task id="5">Implement output format options (AC: #4)
+        <subtask>Add --format option to list, show, findings commands</subtask>
+        <subtask>Implement table formatter (simple alignment)</subtask>
+        <subtask>Implement JSON formatter</subtask>
+        <subtask>Set table as default</subtask>
+      </task>
+      <task id="6">Write unit tests for query logic (AC: #5)
+        <subtask>Test filter by strategy</subtask>
+        <subtask>Test filter by status</subtask>
+        <subtask>Test filter by stage</subtask>
+        <subtask>Test filter by date</subtask>
+        <subtask>Test filter by has_findings</subtask>
+        <subtask>Test combined filters (AND logic)</subtask>
+        <subtask>Test JSON output format</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Session list with filters implemented - --strategy name, --status status, --stage stage, --since date, --has-findings filters available</criterion>
+    <criterion id="2">Session show command with details - Displays full session metadata, progress timeline with timestamps, findings summary (count by classification), layers completed vs pending</criterion>
+    <criterion id="3">Session findings command - rustybt-validate session findings session_id lists all findings with ID, layer, classification, description. Shows unclassified findings prominently</criterion>
+    <criterion id="4">Output format options - --format table (default) for human-readable, --format json for programmatic use. Both formats supported by list, show, findings commands</criterion>
+    <criterion id="5">Unit tests verify query filtering logic</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR38-FR39 - Session Queries</section>
+        <snippet>FR38: System can list all past sessions with summary information. FR39: System can retrieve detailed information about any past session.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>CLI Interface (pg 435-452)</section>
+        <snippet>Session management commands under session subgroup. Consistent filter patterns across commands. Table format with simple alignment (no external deps).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-3-session-management-system.md</path>
+        <title>Epic 3: Session Management System</title>
+        <section>Story 3.3 Specification</section>
+        <snippet>find_sessions() accepts Optional parameters (None = no filter), multiple filters combined with AND logic. Session show displays progress timeline with checkmarks.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/3-1-implement-session-progress-tracking.md</path>
+        <title>Story 3.1 - Session Progress Tracking</title>
+        <section>SessionStage Enum</section>
+        <snippet>SessionStage enum provides stage values for filtering. Session model has stage field for stage-based queries.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/3-2-implement-session-resumability.md</path>
+        <title>Story 3.2 - Session Resumability</title>
+        <section>_load_findings Helper</section>
+        <snippet>_load_findings() helper can be reused for findings command to load findings from session.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>rustybt/validation/session.py</path>
+        <kind>manager</kind>
+        <symbol>SessionManager</symbol>
+        <lines>14-177</lines>
+        <reason>Core SessionManager class where find_sessions() method will be added.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/session.py</path>
+        <kind>method</kind>
+        <symbol>list_sessions</symbol>
+        <lines>74-92</lines>
+        <reason>Existing list_sessions with status filter. find_sessions() extends this with more filters.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/cli.py</path>
+        <kind>cli</kind>
+        <symbol>session_list</symbol>
+        <lines>55-71</lines>
+        <reason>Current session list command to extend with filter options.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/cli.py</path>
+        <kind>cli</kind>
+        <symbol>session_show</symbol>
+        <lines>73-94</lines>
+        <reason>Current session show command to extend with progress timeline and findings summary.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>data-model</kind>
+        <symbol>Session</symbol>
+        <lines>37-66</lines>
+        <reason>Session model with findings list. Used for findings command.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>data-model</kind>
+        <symbol>Finding</symbol>
+        <lines>69-101</lines>
+        <reason>Finding model with layer, classification, description fields for findings display.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="pyyaml" version=">=6.0">Session YAML persistence</package>
+        <package name="click" version=">=8.0">CLI framework with options</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>DEPENDS ON Story 3.1 - Uses SessionStage for stage-based filtering</constraint>
+    <constraint>No external dependencies for table formatting - use string formatting</constraint>
+    <constraint>JSON format uses stdlib json module</constraint>
+    <constraint>Multiple filters use AND logic (all must match)</constraint>
+    <constraint>Query reads from session directories - no separate index</constraint>
+    <constraint>Session metadata from session.yaml, findings from findings.yaml</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>SessionManager.find_sessions</name>
+      <kind>method</kind>
+      <signature>def find_sessions(self, strategy: Optional[str] = None, status: Optional[str] = None, stage: Optional[SessionStage] = None, since: Optional[datetime] = None, has_findings: bool = False) -> list[Session]</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+    <interface>
+      <name>CLI session list filters</name>
+      <kind>Click options</kind>
+      <signature>@click.option("--strategy"), @click.option("--status"), @click.option("--stage"), @click.option("--since"), @click.option("--has-findings", is_flag=True), @click.option("--format", type=click.Choice(["table", "json"]))</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+    <interface>
+      <name>CLI session findings</name>
+      <kind>Click command</kind>
+      <signature>@session.command("findings") @click.argument("session_id") @click.option("--format") def session_findings(session_id: str, format: str) -> None</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use pytest fixtures to create test sessions with various statuses, stages, and findings. Test both filter logic and CLI output formatting.</standards>
+    <locations>
+      <location>tests/validation/test_session_queries.py (NEW)</location>
+      <location>tests/validation/test_cli.py (extend existing)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">test_find_sessions_filter_by_strategy - Verify filtering by strategy name</idea>
+      <idea ac="1">test_find_sessions_filter_by_status - Verify filtering by IN_PROGRESS, COMPLETED, FAILED</idea>
+      <idea ac="1">test_find_sessions_filter_by_stage - Verify filtering by SessionStage enum value</idea>
+      <idea ac="1">test_find_sessions_filter_by_since - Verify filtering by creation date</idea>
+      <idea ac="1">test_find_sessions_filter_by_has_findings - Verify filtering sessions with findings</idea>
+      <idea ac="1">test_find_sessions_combined_filters - Verify AND logic for multiple filters</idea>
+      <idea ac="2">test_session_show_displays_progress_timeline - Verify checkmarks for completed stages</idea>
+      <idea ac="2">test_session_show_displays_findings_summary - Verify count by classification</idea>
+      <idea ac="3">test_session_findings_displays_table - Verify ID | Layer | Classification | Description format</idea>
+      <idea ac="3">test_session_findings_highlights_unclassified - Verify "-" marker for unclassified</idea>
+      <idea ac="4">test_output_format_json - Verify JSON output is valid JSON</idea>
+      <idea ac="4">test_output_format_table_default - Verify table is default format</idea>
+    </ideas>
+  </tests>
+</story-context>

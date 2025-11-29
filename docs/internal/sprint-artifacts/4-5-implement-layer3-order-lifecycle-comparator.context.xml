@@ -1,0 +1,203 @@
+<story-context id="4-5-implement-layer3-order-lifecycle-comparator" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>5</storyId>
+    <title>Implement Layer 3 Order Lifecycle Comparator</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/4-5-implement-layer3-order-lifecycle-comparator.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Layer 3 comparison for order lifecycle</iWant>
+    <soThat>order creation, execution, and state transition differences are detected</soThat>
+    <tasks>
+      <task id="1" status="pending">Implement Layer3OrdersComparator class
+        <subtask>Add class to comparators.py</subtask>
+        <subtask>Define compare() method signature</subtask>
+        <subtask>Filter logs by layer="orders"</subtask>
+      </task>
+      <task id="2" status="pending">Implement order creation comparison
+        <subtask>Create compare_order_creation() method</subtask>
+        <subtask>Filter for event="order_created"</subtask>
+        <subtask>Compare order counts</subtask>
+        <subtask>Compare order types (market, limit, stop)</subtask>
+        <subtask>Compare order quantities</subtask>
+        <subtask>Compare order timing (bar number)</subtask>
+      </task>
+      <task id="3" status="pending">Implement order execution comparison
+        <subtask>Create compare_order_execution() method</subtask>
+        <subtask>Filter for event="order_filled"</subtask>
+        <subtask>Compare fill prices with tolerance</subtask>
+        <subtask>Compare fill quantities</subtask>
+        <subtask>Compare fill timing</subtask>
+      </task>
+      <task id="4" status="pending">Implement order state transition comparison
+        <subtask>Create compare_order_states() method</subtask>
+        <subtask>Extract state sequences for each order</subtask>
+        <subtask>Verify CREATED->SUBMITTED->FILLED sequence</subtask>
+        <subtask>Handle CREATED->CANCELLED correctly</subtask>
+        <subtask>Handle partial fills</subtask>
+      </task>
+      <task id="5" status="pending">Create test file with marker
+        <subtask>Create tests/validation/test_layer_3_orders.py</subtask>
+        <subtask>Register @pytest.mark.layer_3_orders marker</subtask>
+        <subtask>Add test fixtures for order logs</subtask>
+      </task>
+      <task id="6" status="pending">Write comprehensive tests
+        <subtask>Test order creation comparison</subtask>
+        <subtask>Test order execution comparison</subtask>
+        <subtask>Test order state transitions</subtask>
+        <subtask>Test partial fill handling</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Layer3OrdersComparator class implemented in rustybt/validation/comparators.py</criterion>
+    <criterion id="AC2">Constructor accepts tolerances dict</criterion>
+    <criterion id="AC3">compare(rustybt_logs, backtrader_logs) returns list[Discrepancy]</criterion>
+    <criterion id="AC4">Order creation compared: count, type, quantity, timing</criterion>
+    <criterion id="AC5">Order execution compared: fill price with tolerance, fill quantity, fill timing</criterion>
+    <criterion id="AC6">Order state transitions compared: CREATED->SUBMITTED->FILLED sequence</criterion>
+    <criterion id="AC7">pytest test file exists with @pytest.mark.layer_3_orders marker</criterion>
+    <criterion id="AC8">Unit tests verify order creation, execution, and state transitions</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Validation Layers</title>
+        <section>Log-Based Validation Architecture (lines 149-216)</section>
+        <snippet>Layer 3 Order Lifecycle: order creation, execution, fills, state transitions. Events: order_created, order_submitted, order_filled, order_cancelled.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Order Lifecycle Validation</title>
+        <section>FR9-FR11 (Order Lifecycle)</section>
+        <snippet>System can compare order lifecycle logs to validate order creation timing. System can compare order execution correctness. System can compare order state transitions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Order Execution Fidelity</title>
+        <section>Domain-Specific Requirements - Order Execution Fidelity</section>
+        <snippet>Market orders: Immediate fill at current price. Limit orders: Fill when price crosses limit. Order lifecycle: Created->Submitted->Filled/Cancelled.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-4-5-layer-comparison-test-suite.md</path>
+        <title>Epic 4 - Story 4.5 Specification</title>
+        <section>Story 4.5: Implement Layer 3 Order Lifecycle Comparator</section>
+        <snippet>Order IDs may differ - match by timestamp + asset + quantity. Fill prices may differ due to slippage model (DESIGN). State transitions should match exactly.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/comparators.py</path>
+        <kind>module</kind>
+        <symbol>Layer1DataComparator, Layer2SignalsComparator, Layer3OrdersComparator</symbol>
+        <lines>all</lines>
+        <reason>Target module - add Layer3OrdersComparator following established pattern</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>module</kind>
+        <symbol>Discrepancy</symbol>
+        <lines>231-258</lines>
+        <reason>Discrepancy dataclass returned by comparator</reason>
+      </file>
+      <file>
+        <path>tests/validation/config/layer_3_tolerances.yaml</path>
+        <kind>config</kind>
+        <symbol>tolerance config</symbol>
+        <lines>all</lines>
+        <reason>Layer 3 tolerance configuration</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">DataFrame filtering and grouping operations</package>
+      </python>
+      <internal>
+        <module name="rustybt.validation.models">Discrepancy dataclass</module>
+        <module name="rustybt.validation.comparators">values_match helper, Layer1/Layer2 patterns</module>
+      </internal>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">Order IDs may differ between frameworks - match by timestamp + asset + quantity</constraint>
+    <constraint source="architecture">Fill prices may differ due to slippage model differences (DESIGN)</constraint>
+    <constraint source="architecture">State transitions should match exactly</constraint>
+    <constraint source="epic">Prerequisite: Story 4.4 (Layer 2 comparator pattern)</constraint>
+    <constraint source="coding-standards">Python 3.12+, type hints, Google docstrings</constraint>
+  </constraints>
+
+  <knownDesignDifferences>
+    <difference id="SLIPPAGE_MODEL">
+      <description>Fill prices may differ due to slippage model differences</description>
+      <rustybt>Uses configurable slippage model</rustybt>
+      <backtrader>Uses built-in slippage model</backtrader>
+      <rationale>Different slippage implementations are valid; document exact model used</rationale>
+    </difference>
+    <difference id="ORDER_ID_FORMAT">
+      <description>Order ID formats differ between frameworks</description>
+      <rustybt>UUID-based order IDs</rustybt>
+      <backtrader>Sequential integer order IDs</backtrader>
+      <rationale>Match orders by timestamp + asset + quantity instead of ID</rationale>
+    </difference>
+  </knownDesignDifferences>
+
+  <interfaces>
+    <interface>
+      <name>Layer3OrdersComparator</name>
+      <kind>class</kind>
+      <signature>class Layer3OrdersComparator</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare</name>
+      <kind>method</kind>
+      <signature>def compare(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_order_creation</name>
+      <kind>method</kind>
+      <signature>def compare_order_creation(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_order_execution</name>
+      <kind>method</kind>
+      <signature>def compare_order_execution(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_order_states</name>
+      <kind>method</kind>
+      <signature>def compare_order_states(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework, @pytest.mark.layer_3_orders marker. Tests in tests/validation/test_layer_3_orders.py.</standards>
+    <locations>
+      <location>tests/validation/test_layer_3_orders.py</location>
+    </locations>
+    <ideas>
+      <idea ac="AC4">test_order_count_match - verify no discrepancy for same order count</idea>
+      <idea ac="AC4">test_order_count_mismatch - verify discrepancy for different order counts</idea>
+      <idea ac="AC4">test_order_type_match - verify market/limit/stop type comparison</idea>
+      <idea ac="AC5">test_fill_price_within_tolerance - verify no discrepancy within tolerance</idea>
+      <idea ac="AC5">test_fill_price_exceeds_tolerance - verify discrepancy outside tolerance</idea>
+      <idea ac="AC5">test_fill_quantity_match - verify quantity comparison</idea>
+      <idea ac="AC6">test_state_sequence_correct - verify CREATED->SUBMITTED->FILLED</idea>
+      <idea ac="AC6">test_cancelled_order_handling - verify CREATED->CANCELLED sequence</idea>
+      <idea ac="AC6">test_partial_fill_handling - verify partial fill state tracking</idea>
+    </ideas>
+  </tests>
+</story-context>

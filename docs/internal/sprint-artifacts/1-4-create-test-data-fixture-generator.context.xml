@@ -1,0 +1,152 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>4</storyId>
+    <title>Create Test Data Fixture Generator</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-4-create-test-data-fixture-generator.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>a tool to generate standardized test data</iWant>
+    <soThat>validation strategies execute with identical, reproducible data across rustybt and Backtrader</soThat>
+    <tasks>
+- [ ] Task 1: Create fixture generator script (AC: #1, #3)
+  - [ ] Create `rustybt/validation/generate_fixture.py`
+  - [ ] Add CLI argument parsing (argparse or Click): --output, --assets, --start, --end, --seed
+  - [ ] Add `if __name__ == "__main__"` block for module execution
+  - [ ] Implement main() function that orchestrates generation
+
+- [ ] Task 2: Implement asset symbol generation (AC: #1)
+  - [ ] Define asset tiers: large-cap (20 symbols), mid-cap (20 symbols), small-cap (10 symbols)
+  - [ ] Map each symbol to market cap tier for volume generation
+
+- [ ] Task 3: Implement price generation with random walk (AC: #2)
+  - [ ] Set numpy random seed: `np.random.seed(seed)`
+  - [ ] Generate daily returns using normal distribution with drift and volatility
+  - [ ] Convert returns to prices using cumulative product
+  - [ ] Generate OHLC from daily price
+  - [ ] Use Decimal for all prices (avoid float precision issues)
+
+- [ ] Task 4: Implement volume generation by tier (AC: #2)
+  - [ ] Generate random volume integers based on market cap tier
+
+- [ ] Task 5: Build DataFrame and write Parquet (AC: #1, #4)
+  - [ ] Combine all asset data into Polars DataFrame
+  - [ ] Schema: pl.Datetime, pl.Utf8, pl.Decimal, pl.Int64
+  - [ ] Write to Parquet: `df.write_parquet(output_path)`
+  - [ ] Verify file size <100MB
+
+- [ ] Task 6: Add data validation and logging (AC: #2)
+  - [ ] Validate OHLC constraints: high >= max(open, close), low <= min(open, close)
+  - [ ] Log generation summary
+  - [ ] Handle errors
+
+- [ ] Task 7: Test framework compatibility (AC: #5)
+  - [ ] Create unit test: `tests/validation/test_fixture_generator.py`
+  - [ ] Verify generated file loads correctly
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Parquet file generated** - Script creates `tests/validation/fixtures/validation_data.parquet`
+   - 50 assets, 2 years data
+   - Schema: timestamp, asset, open, high, low, close, volume
+
+2. **Data quality enforced** - Generated data meets validation requirements
+   - Decimal precision for OHLC prices
+   - Deterministic generation with seed=42
+   - Realistic price movements and volume tiers
+   - OHLC constraints satisfied
+
+3. **CLI invocable** - Script runs as Python module with arguments
+   - `python -m rustybt.validation.generate_fixture ...`
+
+4. **File size reasonable** - Generated Parquet file is <100MB
+
+5. **Framework compatibility** - Fixture loads successfully in data loaders
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Data Flow</title>
+        <section>Data Flow</section>
+        <snippet>
+Data Generation:
+- Deterministic random walk (seed=42)
+- Parquet format for efficient storage and loading
+- Decimal precision for financial accuracy
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <item>
+        <path>rustybt/validation/generate_fixture.py</path>
+        <kind>file</kind>
+        <symbol>main</symbol>
+        <lines>new file</lines>
+        <reason>Fixture generator script.</reason>
+      </item>
+      <item>
+        <path>tests/validation/test_fixture_generator.py</path>
+        <kind>test</kind>
+        <symbol>test_fixture_generation</symbol>
+        <lines>new file</lines>
+        <reason>Unit tests for generator.</reason>
+      </item>
+    </code>
+    <dependencies>
+      <ecosystem name="python">
+        <package name="numpy" version=">=1.26.0" />
+        <package name="polars" version=">=1.0" />
+        <package name="argparse" version="stdlib" />
+        <package name="decimal" version="stdlib" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Quality</type>
+      <description>Determinism: Must use fixed seed (42) for reproducibility.</description>
+    </constraint>
+    <constraint>
+      <type>Performance</type>
+      <description>File Size: Output must be <100MB.</description>
+    </constraint>
+    <constraint>
+      <type>Accuracy</type>
+      <description>Precision: Must use Decimal for all price fields.</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Fixture Generator CLI</name>
+      <kind>Command Line</kind>
+      <signature>python -m rustybt.validation.generate_fixture [--output] [--assets] [--start] [--end] [--seed]</signature>
+      <path>rustybt/validation/generate_fixture.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Verify file generation and schema.
+      Verify data constraints (OHLC logic).
+      Verify deterministic output (same seed = same data).
+    </standards>
+    <locations>
+      <location>tests/validation/test_fixture_generator.py</location>
+    </locations>
+    <ideas>
+      <idea>Generate twice with same seed, assert files identical.</idea>
+      <idea>Generate with different seeds, assert files different.</idea>
+      <idea>Verify high >= low for all rows.</idea>
+    </ideas>
+  </tests>
+</story-context>

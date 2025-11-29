@@ -1,0 +1,209 @@
+<story-context id="3-5-implement-session-deletion-and-archival" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>5</storyId>
+    <title>Implement Session Deletion and Archival</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-5-implement-session-deletion-and-archival.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>to delete or archive old sessions</iWant>
+    <soThat>the validation directory stays manageable</soThat>
+    <tasks>
+      <task id="1">Implement session delete in SessionManager (AC: #1)
+        <subtask>Add delete() method that removes session directory</subtask>
+        <subtask>Use shutil.rmtree for directory removal</subtask>
+        <subtask>Return boolean success status</subtask>
+      </task>
+      <task id="2">Add CLI delete command (AC: #1)
+        <subtask>Add session delete command with confirmation</subtask>
+        <subtask>Implement y/N prompt using click.confirm</subtask>
+        <subtask>Add --force flag to skip confirmation</subtask>
+        <subtask>Call SessionManager.delete()</subtask>
+      </task>
+      <task id="3">Implement session archive in SessionManager (AC: #2)
+        <subtask>Add archive() method</subtask>
+        <subtask>Create archive/ subdirectory if not exists</subtask>
+        <subtask>Compress session directory to .tar.gz using tarfile</subtask>
+        <subtask>Move archive to validation-sessions/archive/</subtask>
+        <subtask>Remove original directory after successful archive</subtask>
+      </task>
+      <task id="4">Add CLI archive command (AC: #2, #3)
+        <subtask>Add session archive command for single session</subtask>
+        <subtask>Add --older-than option with duration parsing (e.g., "30d")</subtask>
+        <subtask>Implement bulk archival logic</subtask>
+        <subtask>Report count of archived sessions</subtask>
+      </task>
+      <task id="5">Implement cleanup command (AC: #4)
+        <subtask>Add session cleanup command</subtask>
+        <subtask>Find FAILED sessions with empty findings</subtask>
+        <subtask>Find SUPERSEDED sessions</subtask>
+        <subtask>Show candidates for cleanup</subtask>
+        <subtask>Require confirmation before deletion</subtask>
+        <subtask>Report count deleted</subtask>
+      </task>
+      <task id="6">Add --dry-run support (AC: #5)
+        <subtask>Add --dry-run flag to delete, archive, cleanup</subtask>
+        <subtask>When dry-run: show what would happen, don't execute</subtask>
+        <subtask>Clear messaging: "Would delete:", "Would archive:"</subtask>
+      </task>
+      <task id="7">Write unit tests (AC: #6)
+        <subtask>Test delete removes directory</subtask>
+        <subtask>Test archive creates .tar.gz in archive/</subtask>
+        <subtask>Test --older-than duration parsing</subtask>
+        <subtask>Test cleanup finds correct candidates</subtask>
+        <subtask>Test --dry-run doesn't modify files</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Session delete command implemented - rustybt-validate session delete session_id requires confirmation (y/N prompt), --force flag skips confirmation, removes session directory and all contents</criterion>
+    <criterion id="2">Session archive command implemented - rustybt-validate session archive session_id compresses session to .tar.gz, moves to validation-sessions/archive/ subdirectory, preserves session for future reference</criterion>
+    <criterion id="3">Bulk archive with age filter - rustybt-validate session archive --older-than 30d archives all sessions older than specified age, reports count of archived sessions</criterion>
+    <criterion id="4">Session cleanup command implemented - rustybt-validate session cleanup finds FAILED sessions with no findings, finds SUPERSEDED sessions, requires confirmation before deletion, reports count of deleted sessions</criterion>
+    <criterion id="5">Support --dry-run for preview - All destructive commands support --dry-run, shows what would be deleted/archived without doing it</criterion>
+    <criterion id="6">Unit tests verify file operations</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Session Storage (ADR-003)</section>
+        <snippet>Sessions stored in validation-sessions/{session_id}/. Archive location: validation-sessions/archive/. Cleanup targets: FAILED (no findings), SUPERSEDED.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-3-session-management-system.md</path>
+        <title>Epic 3: Session Management System</title>
+        <section>Story 3.5 Specification</section>
+        <snippet>Use shutil.rmtree for recursive directory deletion. Use tarfile module for compression. Support --dry-run for preview. Require confirmation for destructive operations.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/3-4-implement-duplicate-prevention.md</path>
+        <title>Story 3.4 - Duplicate Prevention</title>
+        <section>SUPERSEDED Status</section>
+        <snippet>SUPERSEDED status added to Session model - cleanup target. find_sessions() can filter by status to find cleanup candidates.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>rustybt/validation/session.py</path>
+        <kind>manager</kind>
+        <symbol>SessionManager</symbol>
+        <lines>14-177</lines>
+        <reason>Core SessionManager class where delete() and archive() methods will be added.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/session.py</path>
+        <kind>attribute</kind>
+        <symbol>sessions_dir</symbol>
+        <lines>17-20</lines>
+        <reason>Base directory path for sessions. Archive directory will be sessions_dir/archive/.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/cli.py</path>
+        <kind>cli</kind>
+        <symbol>session commands</symbol>
+        <lines>23-94</lines>
+        <reason>Session subgroup where delete, archive, cleanup commands will be added.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>data-model</kind>
+        <symbol>Session</symbol>
+        <lines>37-66</lines>
+        <reason>Session model with status field. SUPERSEDED and FAILED statuses used for cleanup targeting.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="shutil" version="stdlib">Directory removal (rmtree)</package>
+        <package name="tarfile" version="stdlib">Archive compression</package>
+        <package name="click" version=">=8.0">CLI with confirmation prompts</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>DEPENDS ON Story 3.4 - Uses SUPERSEDED status for cleanup targeting</constraint>
+    <constraint>Use shutil.rmtree for recursive directory deletion</constraint>
+    <constraint>Use tarfile module for compression - no external dependencies</constraint>
+    <constraint>Require confirmation for destructive operations (delete, cleanup)</constraint>
+    <constraint>Archive preserves session for future reference</constraint>
+    <constraint>--dry-run shows what would happen without modifying files</constraint>
+    <constraint>Duration parsing supports d (days), w (weeks), h (hours)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>SessionManager.delete</name>
+      <kind>method</kind>
+      <signature>def delete(self, session_id: str) -> bool</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+    <interface>
+      <name>SessionManager.archive</name>
+      <kind>method</kind>
+      <signature>def archive(self, session_id: str) -> Path</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+    <interface>
+      <name>SessionManager.get_cleanup_candidates</name>
+      <kind>method</kind>
+      <signature>def get_cleanup_candidates(self) -> list[Session]</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+    <interface>
+      <name>parse_duration</name>
+      <kind>utility function</kind>
+      <signature>def parse_duration(duration_str: str) -> timedelta</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+    <interface>
+      <name>CLI delete command</name>
+      <kind>Click command</kind>
+      <signature>@session.command("delete") @click.argument("session_id") @click.option("--force", is_flag=True) @click.option("--dry-run", is_flag=True)</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+    <interface>
+      <name>CLI archive command</name>
+      <kind>Click command</kind>
+      <signature>@session.command("archive") @click.argument("session_id", required=False) @click.option("--older-than") @click.option("--dry-run", is_flag=True)</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+    <interface>
+      <name>CLI cleanup command</name>
+      <kind>Click command</kind>
+      <signature>@session.command("cleanup") @click.option("--dry-run", is_flag=True)</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use tmp_path fixture for isolated test directories. Create real session directories and files for file operation tests. Verify file system state after operations.</standards>
+    <locations>
+      <location>tests/validation/test_session_lifecycle.py (NEW)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">test_delete_removes_session_directory - Verify directory and contents removed</idea>
+      <idea ac="1">test_delete_returns_false_for_nonexistent - Verify delete returns False for missing session</idea>
+      <idea ac="2">test_archive_creates_tarball - Verify .tar.gz created in archive/</idea>
+      <idea ac="2">test_archive_removes_original - Verify original directory removed after archive</idea>
+      <idea ac="2">test_archive_preserves_contents - Verify tarball contains all session files</idea>
+      <idea ac="3">test_archive_older_than_filters_correctly - Verify age filter works</idea>
+      <idea ac="3">test_parse_duration_days - Verify "30d" parses correctly</idea>
+      <idea ac="3">test_parse_duration_weeks - Verify "2w" parses correctly</idea>
+      <idea ac="4">test_cleanup_finds_failed_empty - Verify FAILED sessions with no findings found</idea>
+      <idea ac="4">test_cleanup_finds_superseded - Verify SUPERSEDED sessions found</idea>
+      <idea ac="5">test_dry_run_does_not_modify - Verify --dry-run doesn't delete/archive</idea>
+      <idea ac="5">test_dry_run_shows_would_delete - Verify messaging shows "Would delete:"</idea>
+    </ideas>
+  </tests>
+</story-context>

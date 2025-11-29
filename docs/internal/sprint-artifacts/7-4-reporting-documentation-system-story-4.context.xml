@@ -1,0 +1,148 @@
+<story-context id="7-4" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>4</storyId>
+    <title>Implement Overall Status Dashboard</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/7-4-reporting-documentation-system-story-4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>an overall validation status dashboard</iWant>
+    <soThat>I can see the complete validation picture at a glance</soThat>
+    <tasks>
+      <task id="1">Implement StatusDashboard class (AC: #1)
+        <subtask>Create class in rustybt/validation/reporting.py</subtask>
+        <subtask>Load all sessions from SessionManager</subtask>
+        <subtask>Calculate aggregate validation statistics</subtask>
+        <subtask>Generate formatted console output with tables</subtask>
+        <subtask>Test: Unit tests for dashboard generation</subtask>
+      </task>
+      <task id="2">Implement strategies validated table (AC: #1)
+        <subtask>Count validated vs total strategies</subtask>
+        <subtask>Generate table with Status, Findings, Last Run columns</subtask>
+        <subtask>Use ASCII box-drawing characters for table borders</subtask>
+        <subtask>Color-code status (green for VALID, yellow for pending)</subtask>
+        <subtask>Test: Verify table formatting</subtask>
+      </task>
+      <task id="3">Implement layer coverage table (AC: #1)
+        <subtask>Calculate layer coverage percentage</subtask>
+        <subtask>Show status per layer across all strategies</subtask>
+        <subtask>Include notes column for DESIGN differences</subtask>
+        <subtask>Count layers with findings vs passed</subtask>
+        <subtask>Test: Verify coverage calculations</subtask>
+      </task>
+      <task id="4">Implement findings summary and confidence (AC: #1)
+        <subtask>Calculate total findings by classification</subtask>
+        <subtask>Count BUG fixed vs open, DESIGN documented</subtask>
+        <subtask>Count regression tests created</subtask>
+        <subtask>Calculate overall confidence percentage with progress bar</subtask>
+        <subtask>Test: Verify confidence calculation formula</subtask>
+      </task>
+      <task id="5">Add CLI status command with JSON output (AC: #2)
+        <subtask>Add status command to CLI main group</subtask>
+        <subtask>Implement console formatted output (default)</subtask>
+        <subtask>Implement --format json option for CI integration</subtask>
+        <subtask>Test: CLI integration tests for both formats</subtask>
+      </task>
+      <task id="6">Implement CI exit codes (AC: #3)
+        <subtask>Exit 0 if all strategies validated, no open bugs</subtask>
+        <subtask>Exit 1 if any strategy failed or bugs open</subtask>
+        <subtask>Document exit codes in help text</subtask>
+        <subtask>Test: Verify exit codes in various states</subtask>
+      </task>
+      <task id="7">Write comprehensive tests (AC: #1-3)
+        <subtask>Test with zero sessions</subtask>
+        <subtask>Test with partial validation</subtask>
+        <subtask>Test with complete validation</subtask>
+        <subtask>Test exit codes in CI mode</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Given all validation sessions When status command is invoked Then dashboard displays Strategies Validated table, Layer Coverage table, Findings Summary, and Overall Confidence percentage with visual progress bar</criterion>
+    <criterion id="AC2">CLI command rustybt-validate status --format json outputs machine-parseable JSON with strategies_validated, layers_covered, bugs_open fields</criterion>
+    <criterion id="AC3">Exit code 0 if all strategies validated and no open bugs, Exit code 1 if any strategy failed or bugs open for CI integration</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Reporting &amp; Documentation (FR60-FR67)" snippet="FR63: System can generate overall validation status report (how much validation is completed)."/>
+      <doc path="docs/architecture.md" title="Architecture Document" section="FR Category to Architecture Mapping" snippet="Reporting &amp; Documentation (FR60-FR67) maps to rustybt/validation/reporting.py."/>
+      <doc path="docs/epics/epic-7-reporting-documentation-system.md" title="Epic 7 Specification" section="Story 7.4" snippet="Dashboard displays strategies validated, layer coverage, findings summary with progress bars, and overall confidence score."/>
+    </docs>
+    <code>
+      <artifact path="rustybt/validation/reporting.py" kind="module" symbol="ReportGenerator" lines="1-7" reason="Base reporting module - add StatusDashboard class"/>
+      <artifact path="rustybt/validation/cli.py" kind="module" symbol="main" lines="13-21" reason="CLI main group - add status command"/>
+      <artifact path="rustybt/validation/session.py" kind="module" symbol="SessionManager.find_sessions" lines="N/A" reason="Session queries for loading all sessions"/>
+      <artifact path="rustybt/validation/models.py" kind="module" symbol="Session, Finding" lines="118-364" reason="Session and Finding models for data extraction"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0" purpose="CLI framework"/>
+        <package name="rich" version=">=14.1.0" purpose="Console formatting and tables"/>
+      </python>
+      <internal>
+        <dependency story="7-1" path="rustybt/validation/reporting.py" symbol="ReportGenerator" reason="Session report infrastructure"/>
+        <dependency story="7-2" path="rustybt/validation/reporting.py" symbol="LayerReportGenerator" reason="Layer aggregation logic"/>
+        <dependency story="7-3" path="rustybt/validation/reporting.py" symbol="StrategyReportGenerator" reason="Strategy summary logic"/>
+      </internal>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="prerequisite">Stories 7.1-7.3 (all report types) must be completed first</constraint>
+    <constraint type="architecture">Use box-drawing characters for ASCII tables in console output</constraint>
+    <constraint type="coding">Calculate confidence based on coverage and findings resolution</constraint>
+    <constraint type="coding">Exit codes enable CI integration (0=pass, 1=fail)</constraint>
+    <constraint type="coding">Refresh data from all sessions before displaying</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="StatusDashboard" kind="class">
+      <signature>class StatusDashboard(session_manager: SessionManager)</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="render_console" kind="method">
+      <signature>def render_console(self) -> None</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="to_json" kind="method">
+      <signature>def to_json(self) -> dict</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="calculate_confidence" kind="method">
+      <signature>def calculate_confidence(self) -> float</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="get_exit_code" kind="method">
+      <signature>def get_exit_code(self) -> int</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="CLI status command" kind="CLI endpoint">
+      <signature>rustybt-validate status [--format table|json]</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework with custom markers. Zero mock enforcement. Test fixtures in tests/validation/fixtures/.</standards>
+    <locations>
+      <location>tests/validation/test_reporting.py</location>
+      <location>tests/validation/test_cli.py</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1">test_dashboard_strategies_table - verify table with status, findings, last run</idea>
+      <idea acRef="AC1">test_dashboard_layer_coverage - verify coverage percentage calculation</idea>
+      <idea acRef="AC1">test_dashboard_confidence_score - verify weighted confidence formula</idea>
+      <idea acRef="AC2">test_cli_status_json_output - verify JSON format for CI</idea>
+      <idea acRef="AC3">test_exit_code_zero_all_valid - verify exit 0 when all validated</idea>
+      <idea acRef="AC3">test_exit_code_one_bugs_open - verify exit 1 when bugs open</idea>
+      <idea acRef="AC3">test_exit_code_one_strategy_failed - verify exit 1 when strategy failed</idea>
+    </ideas>
+  </tests>
+</story-context>

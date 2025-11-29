@@ -1,0 +1,143 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>8</storyId>
+    <title>Create Examples &amp; Recipes Cookbook</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/8-8-examples-recipes-cookbook.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>validation framework user</asA>
+    <iWant>an examples and recipes cookbook</iWant>
+    <soThat>I can learn from real-world usage patterns</soThat>
+    <tasks>
+      <task id="1" title="Create 'Validating a new strategy' recipe">
+        <subtask>Document complete workflow from strategy creation to validation</subtask>
+        <subtask>Include both rustybt and Backtrader implementation code</subtask>
+        <subtask>Include session creation, execution, and results</subtask>
+        <subtask>Explain what each step demonstrates</subtask>
+      </task>
+      <task id="2" title="Create 'Resuming interrupted session' recipe">
+        <subtask>Document how to find interrupted sessions</subtask>
+        <subtask>Document session resume command usage</subtask>
+        <subtask>Explain what state is preserved</subtask>
+        <subtask>Show expected output</subtask>
+      </task>
+      <task id="3" title="Create 'Investigating layer discrepancies' recipe">
+        <subtask>Document how to filter by layer</subtask>
+        <subtask>Show investigation CLI workflow</subtask>
+        <subtask>Demonstrate classification process</subtask>
+        <subtask>Show how to drill into specific discrepancies</subtask>
+      </task>
+      <task id="4" title="Create 'Adding tolerance configuration' recipe">
+        <subtask>Document tolerance YAML file format</subtask>
+        <subtask>Show how to create custom tolerance config</subtask>
+        <subtask>Demonstrate applying custom tolerances</subtask>
+        <subtask>Explain when and why to adjust tolerances</subtask>
+      </task>
+      <task id="5" title="Create 'Generating stakeholder report' recipe">
+        <subtask>Document report generation command</subtask>
+        <subtask>Show different format options (md, json)</subtask>
+        <subtask>Demonstrate summary vs detailed reports</subtask>
+        <subtask>Show how to share reports</subtask>
+      </task>
+      <task id="6" title="Create 'CI/CD integration' recipe">
+        <subtask>Document GitHub Actions example</subtask>
+        <subtask>Show pytest integration</subtask>
+        <subtask>Document exit codes for CI</subtask>
+        <subtask>Show artifact collection</subtask>
+      </task>
+      <task id="7" title="Create 'Version comparison' recipe">
+        <subtask>Document how to run validation on different versions</subtask>
+        <subtask>Show how to compare session results</subtask>
+        <subtask>Demonstrate detecting regressions</subtask>
+        <subtask>Explain version tracking metadata</subtask>
+      </task>
+      <task id="8" title="Ensure recipe quality">
+        <subtask>Verify all examples are independently useful</subtask>
+        <subtask>Test all examples before publishing</subtask>
+        <subtask>Use consistent formatting (problem → solution → explanation)</subtask>
+        <subtask>Include expected output for validation</subtask>
+      </task>
+      <task id="9" title="Testing">
+        <subtask>Execute every recipe in fresh environment</subtask>
+        <subtask>Verify copy-paste commands work</subtask>
+        <subtask>Verify expected outputs match actual</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Cookbook contains complete, runnable examples for common use cases</criterion>
+    <criterion id="AC2">Cookbook contains copy-paste ready code and commands</criterion>
+    <criterion id="AC3">Cookbook contains explanation of what each example demonstrates</criterion>
+    <criterion id="AC4">Recipe: Validating a new strategy from scratch</criterion>
+    <criterion id="AC5">Recipe: Resuming an interrupted validation session</criterion>
+    <criterion id="AC6">Recipe: Investigating a specific layer's discrepancies</criterion>
+    <criterion id="AC7">Recipe: Adding a new validation tolerance configuration</criterion>
+    <criterion id="AC8">Recipe: Generating a validation report for stakeholders</criterion>
+    <criterion id="AC9">Recipe: Running validation in CI/CD pipeline</criterion>
+    <criterion id="AC10">Recipe: Comparing results across rustybt versions</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/architecture.md" title="Architecture Document" section="CLI Interface" snippet="Complete CLI reference for session management, execution, investigation, and reporting commands." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="Python API" snippet="Python API for programmatic validation: SessionManager, run_validation, generate_report." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="Pattern 2: Tolerance-Based Comparison" snippet="Each layer has YAML tolerance configuration with timestamp_window_seconds, price_decimals, volume_tolerance_pct." />
+      <doc path="docs/prd.md" title="PRD" section="Non-Functional Requirements" snippet="NFR5: Test results deterministic. NFR24: All test executions reproducible. NFR33: Reports compatible with CI/CD." />
+    </docs>
+    <code>
+      <file path="rustybt/validation/cli.py" kind="module" symbol="CLI commands" reason="All CLI commands for cookbook recipes" />
+      <file path="rustybt/validation/session.py" kind="module" symbol="SessionManager" reason="Session management for recipes" />
+      <file path="tests/validation/config/" kind="directory" symbol="tolerance configs" reason="Tolerance configuration examples" />
+      <file path="tests/validation/strategies/" kind="directory" symbol="strategy examples" reason="Dual-implementation strategy examples" />
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0" purpose="CLI" />
+        <package name="pytest" version=">=7.2.0" purpose="CI/CD integration" />
+        <package name="pyyaml" version=">=6.0" purpose="Tolerance configuration" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">Recipes should demonstrate both CLI and Python API approaches</constraint>
+    <constraint source="architecture">Recipes should use subprocess isolation pattern for framework execution</constraint>
+    <constraint source="architecture">Recipes should reference actual validation session structure</constraint>
+    <constraint source="prd">Test results must be deterministic (same inputs always produce same results) (NFR5)</constraint>
+    <constraint source="prd">All test executions must be reproducible (NFR24)</constraint>
+    <constraint source="prd">System must generate reports compatible with CI/CD systems (NFR33)</constraint>
+    <constraint source="epic">Guide location: docs/validation/cookbook.md</constraint>
+    <constraint source="epic">Each recipe should be independently useful</constraint>
+    <constraint source="epic">Use consistent formatting: problem → solution → explanation</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="Recipe Template" kind="markdown format" signature="## Recipe: [Name]\n**Problem:**\n**Solution:**\n**Code Example:**\n**CLI Example:**\n**Expected Output:**\n**Explanation:**" path="docs/validation/cookbook.md" />
+    <interface name="Tolerance Config" kind="YAML" signature="layer_{N}_tolerances.yaml with timestamp_window_seconds, price_decimals, volume_tolerance_pct" path="tests/validation/config/" />
+    <interface name="GitHub Actions" kind="CI/CD" signature="workflow yaml with pytest validation runner" path=".github/workflows/" />
+  </interfaces>
+
+  <tests>
+    <standards>Each recipe independently useful. All examples tested before publishing. Consistent formatting: problem → solution → explanation. Include expected output.</standards>
+    <locations>
+      <location>docs/validation/cookbook.md</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1,AC2">Execute every recipe in fresh environment and verify it works</idea>
+      <idea acRef="AC3">Review each explanation for clarity and accuracy</idea>
+      <idea acRef="AC4">Test new strategy validation recipe end-to-end</idea>
+      <idea acRef="AC5">Test session resume with interrupted session</idea>
+      <idea acRef="AC6">Test layer investigation workflow</idea>
+      <idea acRef="AC7">Test custom tolerance configuration</idea>
+      <idea acRef="AC8">Test report generation in multiple formats</idea>
+      <idea acRef="AC9">Test GitHub Actions workflow example</idea>
+      <idea acRef="AC10">Test version comparison workflow</idea>
+    </ideas>
+  </tests>
+</story-context>

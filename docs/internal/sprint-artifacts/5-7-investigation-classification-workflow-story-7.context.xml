@@ -1,0 +1,239 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>7</storyId>
+    <title>Implement Regression Detection</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-27</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/5-7-investigation-classification-workflow-story-7.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>automatic detection when fixed bugs reappear</iWant>
+    <soThat>regressions are caught immediately</soThat>
+    <tasks>
+      <task id="1" ac="2">
+        <description>Implement Regression model</description>
+        <subtasks>
+          <subtask>Create Regression dataclass</subtask>
+          <subtask>Include original_finding, current_discrepancy, timestamps</subtask>
+          <subtask>Add to_dict() and from_dict() for serialization</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="1">
+        <description>Implement detect_regressions() function</description>
+        <subtasks>
+          <subtask>Load all resolved BUG findings from database/files</subtask>
+          <subtask>Compare each discrepancy against resolved bugs</subtask>
+          <subtask>Match by layer + event type</subtask>
+          <subtask>Return list of Regression objects</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="3">
+        <description>Implement regression reporting</description>
+        <subtasks>
+          <subtask>Create format_regression_warning() helper</subtask>
+          <subtask>Display prominent ASCII warning box</subtask>
+          <subtask>Show original fix details and current discrepancy</subtask>
+          <subtask>Suggest causes and actions</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="4">
+        <description>Implement session completion blocking</description>
+        <subtasks>
+          <subtask>Add regressions check to session.complete() method</subtask>
+          <subtask>Raise error if unresolved regressions exist</subtask>
+          <subtask>Provide clear error message with resolution path</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="5">
+        <description>Integrate with comparison workflow</description>
+        <subtasks>
+          <subtask>Call detect_regressions() after compare_layer()</subtask>
+          <subtask>Display regressions before other findings</subtask>
+          <subtask>Add to `rustybt-validate compare` output</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="6">
+        <description>Write unit tests</description>
+        <subtasks>
+          <subtask>Test matching logic</subtask>
+          <subtask>Test non-matching cases</subtask>
+          <subtask>Test CLI warning format</subtask>
+          <subtask>Test session blocking</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" title="Regression detection function implemented">
+      <requirement>`detect_regressions()` compares current discrepancies against resolved bugs</requirement>
+      <requirement>Returns list of `Regression` objects when matches found</requirement>
+      <requirement>Matching criteria: same layer + same event + similar value ranges</requirement>
+    </criterion>
+    <criterion id="2" title="Regression model">
+      <requirement>`original_finding`: reference to the resolved bug finding</requirement>
+      <requirement>`current_discrepancy`: the new discrepancy that matches</requirement>
+      <requirement>`fixed_at`: when the original bug was fixed</requirement>
+      <requirement>`regression_detected_at`: current timestamp</requirement>
+    </criterion>
+    <criterion id="3" title="Regression reporting in CLI">
+      <requirement>Display prominent warning when regressions detected</requirement>
+      <requirement>Show original finding ID, fix date, and description</requirement>
+      <requirement>Explain what might have caused regression</requirement>
+      <requirement>Require action before proceeding</requirement>
+    </criterion>
+    <criterion id="4" title="Regressions block session completion">
+      <requirement>Session cannot be marked complete with unresolved regressions</requirement>
+      <requirement>Regressions must be either re-fixed or re-classified</requirement>
+      <requirement>Clear path to resolution provided in CLI</requirement>
+    </criterion>
+    <criterion id="5" title="Regression detection in comparison workflow">
+      <requirement>Automatically run `detect_regressions()` after layer comparison</requirement>
+      <requirement>Integrate with `rustybt-validate compare` command</requirement>
+      <requirement>Report regressions before other findings</requirement>
+    </criterion>
+    <criterion id="6" title="Unit tests verify">
+      <requirement>Regression matching logic</requirement>
+      <requirement>CLI warning display</requirement>
+      <requirement>Session completion blocking</requirement>
+      <requirement>Integration with comparison workflow</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>rustybt - Product Requirements Document</title>
+        <section>Investigation &amp; Classification Workflow (FR53-FR54)</section>
+        <snippet>FR53: System detects when fixed bugs reappear. FR54: Session cannot complete with unresolved regressions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Regression Detection</section>
+        <snippet>detect_regressions() compares discrepancies against resolved BUG findings. Match by layer + event. Block session completion if regressions detected.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-investigation-classification-workflow.md</path>
+        <title>Epic 5: Investigation &amp; Classification Workflow</title>
+        <section>Story 5.7</section>
+        <snippet>Prerequisites: Stories 5.5, 5.6 (verification, regression tests). Regression detection with matching logic, CLI warnings, session blocking.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/regression_detection.py</path>
+        <kind>Regression detection module</kind>
+        <symbol>detect_regressions, matches_finding, load_resolved_bugs, format_regression_warning, report_regressions</symbol>
+        <lines>NEW</lines>
+        <reason>CREATE - new module for regression detection logic.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>Data models</kind>
+        <symbol>Regression</symbol>
+        <lines>NEW addition</lines>
+        <reason>MODIFY - add Regression dataclass with serialization methods.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/session.py</path>
+        <kind>Session manager</kind>
+        <symbol>Session.complete, RegressionError</symbol>
+        <lines>-</lines>
+        <reason>MODIFY - add regression check to complete() method.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/cli.py</path>
+        <kind>CLI module</kind>
+        <symbol>compare</symbol>
+        <lines>540-625</lines>
+        <reason>MODIFY - integrate regression detection after layer comparison.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/comparators.py</path>
+        <kind>Comparators</kind>
+        <symbol>Discrepancy</symbol>
+        <lines>28-56</lines>
+        <reason>Discrepancy model used for matching against resolved bugs.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0">CLI framework with styling</package>
+        <package name="pyyaml" version=">=6.0">YAML storage for findings</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture">Matching criteria: same layer + same event type</constraint>
+    <constraint source="Architecture">Load resolved BUG findings from all session directories</constraint>
+    <constraint source="Architecture">Regression warning must be prominent (ASCII box)</constraint>
+    <constraint source="Architecture">Session completion blocked by unresolved regressions</constraint>
+    <constraint source="Story 5-5">Uses resolved findings from verification workflow</constraint>
+    <constraint source="PRD">Regressions must be either re-fixed or re-classified</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Regression dataclass</name>
+      <kind>Data model</kind>
+      <signature>@dataclass Regression(original_finding_id: str, current_discrepancy: Discrepancy, fixed_at: datetime, regression_detected_at: datetime, original_fix_description: str | None)</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+    <interface>
+      <name>detect_regressions function</name>
+      <kind>Python function</kind>
+      <signature>def detect_regressions(discrepancies: list[Discrepancy], sessions_dir: Path) -&gt; list[Regression]</signature>
+      <path>rustybt/validation/regression_detection.py</path>
+    </interface>
+    <interface>
+      <name>matches_finding function</name>
+      <kind>Python function</kind>
+      <signature>def matches_finding(discrepancy: Discrepancy, finding: Finding) -&gt; bool</signature>
+      <path>rustybt/validation/regression_detection.py</path>
+    </interface>
+    <interface>
+      <name>format_regression_warning function</name>
+      <kind>Python function</kind>
+      <signature>def format_regression_warning(regression: Regression) -&gt; str</signature>
+      <path>rustybt/validation/regression_detection.py</path>
+    </interface>
+    <interface>
+      <name>RegressionError exception</name>
+      <kind>Python exception</kind>
+      <signature>class RegressionError(Exception)</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing. Use tmp_path for sessions directory. Use @pytest.mark.regression_detection marker. Mock session.get_discrepancies() for completion tests.
+    </standards>
+    <locations>
+      <location>tests/validation/test_regression_detection.py (NEW - create)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">test_detect_regressions_finds_match - verify matching detection</idea>
+      <idea ac="1">test_detect_regressions_no_match_different_layer - verify non-matching</idea>
+      <idea ac="1">test_detect_regressions_no_match_different_event - verify non-matching</idea>
+      <idea ac="2">test_regression_model_fields - verify all fields present</idea>
+      <idea ac="2">test_regression_to_dict - verify serialization</idea>
+      <idea ac="2">test_regression_from_dict - verify deserialization</idea>
+      <idea ac="3">test_format_warning_contains_finding_id - verify ID shown</idea>
+      <idea ac="3">test_format_warning_contains_fix_date - verify date shown</idea>
+      <idea ac="3">test_format_warning_contains_cause_suggestions - verify suggestions</idea>
+      <idea ac="4">test_session_complete_blocked_by_regression - verify blocking</idea>
+      <idea ac="4">test_session_complete_succeeds_without_regression - verify success</idea>
+      <idea ac="5">test_compare_integrates_regression_detection - verify integration</idea>
+      <idea ac="5">test_compare_reports_regressions_first - verify ordering</idea>
+    </ideas>
+  </tests>
+</story-context>

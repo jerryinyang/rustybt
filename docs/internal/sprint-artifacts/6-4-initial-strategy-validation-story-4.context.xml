@@ -1,0 +1,151 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>4</storyId>
+    <title>Implement Multi-Factor Strategy (Dual)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-28</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/6-4-initial-strategy-validation-story-4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Multi-Factor strategy combining EMA + RSI + MACD implemented</iWant>
+    <soThat>complex multi-indicator strategies can be validated</soThat>
+    <tasks>
+      <task id="1" ac="1">Create rustybt Multi-Factor strategy
+        <subtask>Create tests/validation/strategies/rustybt/multi_factor.py</subtask>
+        <subtask>Implement MultiFactorStrategy class</subtask>
+        <subtask>Add EMA indicator calculation</subtask>
+        <subtask>Add RSI indicator calculation</subtask>
+        <subtask>Add MACD indicator calculation (MACD line and signal line)</subtask>
+        <subtask>Implement factor-based entry/exit logic</subtask>
+      </task>
+      <task id="2" ac="2">Create Backtrader Multi-Factor strategy
+        <subtask>Create tests/validation/strategies/backtrader/multi_factor.py</subtask>
+        <subtask>Use Backtrader's built-in indicators (bt.indicators.EMA, RSI, MACD)</subtask>
+        <subtask>Implement equivalent factor logic</subtask>
+        <subtask>Ensure log output matches rustybt format</subtask>
+      </task>
+      <task id="3" ac="3">Implement factor scoring system
+        <subtask>Create compute_factors() method</subtask>
+        <subtask>Return dict with factor name and score (0/1)</subtask>
+        <subtask>Implement entry logic (all factors = 1)</subtask>
+        <subtask>Implement exit logic (any factor = 0 or RSI greater than 80)</subtask>
+      </task>
+      <task id="4" ac="4">Verify strategy equivalence
+        <subtask>Complete strategy audit checklist</subtask>
+        <subtask>Document MACD calculation differences (DESIGN candidate)</subtask>
+        <subtask>Document RSI calculation differences (DESIGN candidate)</subtask>
+        <subtask>Verify factor combination logic matches</subtask>
+      </task>
+      <task id="5" ac="5">Validate log output
+        <subtask>Log all indicator values</subtask>
+        <subtask>Log individual factor scores</subtask>
+        <subtask>Log combined signal with breakdown</subtask>
+        <subtask>Verify log format consistency</subtask>
+      </task>
+      <task id="6" ac="6">Write unit tests
+        <subtask>Create tests/validation/test_multi_factor_strategy.py</subtask>
+        <subtask>Test EMA calculation</subtask>
+        <subtask>Test RSI calculation</subtask>
+        <subtask>Test MACD calculation (MACD line and signal)</subtask>
+        <subtask>Test factor scoring</subtask>
+        <subtask>Test entry/exit conditions</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">rustybt Multi-Factor implementation exists at tests/validation/strategies/rustybt/multi_factor.py with RustyBTValidatedStrategy base, three indicators EMA(50), RSI(14), MACD(12,26,9), default params ema_period=50, rsi_period=14, macd_fast=12, macd_slow=26, macd_signal=9, buy when ALL conditions met (Price greater than EMA, 50 less than RSI less than 70, MACD greater than Signal), sell when ANY condition fails or RSI greater than 80</criterion>
+    <criterion id="2">Backtrader Multi-Factor implementation exists at tests/validation/strategies/backtrader/multi_factor.py with BacktraderValidatedStrategy base, bt.indicators.EMA, bt.indicators.RSI, bt.indicators.MACD, logically equivalent to rustybt, same default parameters</criterion>
+    <criterion id="3">Factor scoring system implemented: each factor returns 1 (bullish) or 0 (not bullish), entry requires all factors = 1 (score = 3), exit when any factor = 0 or RSI greater than 80, log individual factor values for debugging</criterion>
+    <criterion id="4">Strategy audit checklist passed: same EMA calculation, same RSI calculation (may be DESIGN), same MACD calculation (may be DESIGN), same factor combination logic, same entry/exit conditions</criterion>
+    <criterion id="5">Log individual factor values for debugging: log each indicator value on every bar, log factor scores (0 or 1) for each factor, log combined signal with factor breakdown</criterion>
+    <criterion id="6">Unit tests verify: EMA calculation accuracy, RSI calculation accuracy, MACD calculation accuracy, factor scoring logic, entry/exit conditions</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Strategy Validation (FR55-FR59)" snippet="System can validate Multi-Factor (EMA + RSI + MACD) strategy across all 5 layers (FR58)." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="Novel Pattern: Log-Based Validation Architecture" snippet="Log schema includes all indicator values for comparison. DESIGN classification for intentional calculation differences." />
+      <doc path="docs/epics/epic-6-initial-strategy-validation-4-strategies.md" title="Epic 6" section="Story 6.4" snippet="Multi-Factor Strategy (EMA + RSI + MACD) - Log individual factor values for debugging. MACD calculation may differ (DESIGN candidate)." />
+      <doc path="docs/sprint-artifacts/6-3-initial-strategy-validation-story-3.md" title="Story 6-3" section="Dev Notes" snippet="RSI calculation differences: rustybt may use simple average, Backtrader uses Wilder's smoothing. Known DESIGN candidates." />
+    </docs>
+    <code>
+      <artifact path="rustybt/validation/base_strategy.py" kind="module" symbol="RustyBTValidatedStrategy" lines="327-400" reason="Base class for rustybt validated strategies" />
+      <artifact path="rustybt/validation/decorators.py" kind="module" symbol="log_signal" lines="46-110" reason="Decorator for factor computation logging" />
+      <artifact path="tests/validation/strategies/bt_strategies/base_validated.py" kind="module" symbol="BacktraderValidatedStrategy" lines="57-295" reason="Base class for Backtrader validated strategies" />
+      <artifact path="tests/validation/strategies/rustybt/momentum.py" kind="module" reason="Reference RSI implementation from Story 6-3" />
+      <artifact path="tests/validation/strategies/rustybt/sma_crossover.py" kind="module" reason="Reference moving average pattern from Story 6-1" />
+    </code>
+    <dependencies>
+      <python version="3.12+">
+        <package name="backtrader" version=">=1.9.78" purpose="Reference framework with bt.indicators.EMA, RSI, MACD" />
+        <package name="polars" version=">=1.0" purpose="Log parsing and comparison" />
+        <package name="pytest" version=">=7.2.0" purpose="Test framework" />
+        <package name="numpy" version=">=1.26.0" purpose="Numerical operations for EMA/MACD calculations" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Strategies must extend ValidatedStrategy base classes</constraint>
+    <constraint type="pattern">Log ALL indicator values (EMA, RSI, MACD, MACD_signal) on every bar</constraint>
+    <constraint type="pattern">Log factor scores as dict with 0/1 values</constraint>
+    <constraint type="parameters">Default parameters: ema_period=50, rsi_period=14, macd_fast=12, macd_slow=26, macd_signal=9</constraint>
+    <constraint type="logic">Entry requires ALL 3 factors = 1 (total score = 3)</constraint>
+    <constraint type="logic">Exit when ANY factor = 0 OR RSI greater than 80 (emergency exit)</constraint>
+    <constraint type="design">MACD and RSI calculations may differ between frameworks - document as DESIGN findings</constraint>
+    <constraint type="location">rustybt strategy: tests/validation/strategies/rustybt/multi_factor.py</constraint>
+    <constraint type="location">Backtrader strategy: tests/validation/strategies/backtrader/multi_factor.py</constraint>
+    <constraint type="location">Unit tests: tests/validation/test_multi_factor_strategy.py</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="MultiFactorStrategy" kind="class">
+      <signature>class MultiFactorStrategy(RustyBTValidatedStrategy)</signature>
+      <path>tests/validation/strategies/rustybt/multi_factor.py</path>
+      <methods>
+        <method>__init__(self, log_path: Path, ema_period: int = 50, rsi_period: int = 14, macd_fast: int = 12, macd_slow: int = 26, macd_signal: int = 9)</method>
+        <method>compute_ema(self, prices: list[float], period: int) -> float</method>
+        <method>compute_rsi(self, prices: list[float], period: int) -> float</method>
+        <method>compute_macd(self, prices: list[float]) -> tuple[float, float]</method>
+        <method>compute_factors(self, data) -> dict[str, int]</method>
+        <method>compute_signal(self, context, data) -> str</method>
+        <method>handle_data(self, context, data) -> None</method>
+      </methods>
+    </interface>
+    <interface name="factor_scoring" kind="algorithm">
+      <signature>factors = {"trend": 0|1, "momentum_rsi": 0|1, "momentum_macd": 0|1}</signature>
+      <description>Factor scoring: trend=1 if price greater than EMA, momentum_rsi=1 if 50 less than RSI less than 70, momentum_macd=1 if MACD greater than signal</description>
+    </interface>
+    <interface name="MACD calculation" kind="algorithm">
+      <signature>MACD_line = Fast_EMA - Slow_EMA; Signal_line = EMA(MACD_line)</signature>
+      <description>MACD indicator with signal line for momentum confirmation</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use pytest with @pytest.mark.layer_2_signals marker. Follow Zero Mock Enforcement. Test each indicator separately before testing combined factor logic. Document any DESIGN differences found.</standards>
+    <locations>
+      <location>tests/validation/test_multi_factor_strategy.py</location>
+      <location>tests/validation/strategies/</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Test EMA(50) calculation accuracy against known values</idea>
+      <idea ac="1">Test RSI(14) calculation accuracy</idea>
+      <idea ac="1">Test MACD line = Fast EMA - Slow EMA</idea>
+      <idea ac="1">Test MACD signal line = EMA of MACD line</idea>
+      <idea ac="3">Test factor scoring returns all 1s when conditions met</idea>
+      <idea ac="3">Test factor scoring returns partial scores when some conditions fail</idea>
+      <idea ac="3">Test entry requires total_score = 3</idea>
+      <idea ac="3">Test exit triggers on any factor = 0</idea>
+      <idea ac="3">Test emergency exit when RSI greater than 80</idea>
+      <idea ac="5">Test log contains all indicator values (ema, rsi, macd, macd_signal)</idea>
+      <idea ac="5">Test log contains factors dict with individual scores</idea>
+      <idea ac="6">Test both frameworks produce logically equivalent signals</idea>
+    </ideas>
+  </tests>
+</story-context>

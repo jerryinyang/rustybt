@@ -1,0 +1,135 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>9</storyId>
+    <title>Create Documentation Index and Navigation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/8-9-documentation-index-navigation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>validation framework user</asA>
+    <iWant>a well-organized documentation index</iWant>
+    <soThat>I can find the right documentation quickly</soThat>
+    <tasks>
+      <task id="1" title="Create main documentation index">
+        <subtask>Create docs/validation/index.md</subtask>
+        <subtask>Add navigation to all validation docs</subtask>
+        <subtask>Structure for search-friendliness</subtask>
+        <subtask>Add keyword-rich descriptions</subtask>
+      </task>
+      <task id="2" title="Create quick links section">
+        <subtask>Add "Getting Started" quick link</subtask>
+        <subtask>Add "Add New Strategy" quick link</subtask>
+        <subtask>Add "Investigate Findings" quick link</subtask>
+        <subtask>Add "View Reports" quick link</subtask>
+        <subtask>Add "CLI Reference" quick link</subtask>
+      </task>
+      <task id="3" title="Create user journey paths">
+        <subtask>Define "New User" journey path</subtask>
+        <subtask>Define "Experienced User" journey path</subtask>
+        <subtask>Define "Contributor" journey path</subtask>
+        <subtask>Add visual journey indicators</subtask>
+      </task>
+      <task id="4" title="Add table of contents to each doc">
+        <subtask>Verify TOC in getting-started.md</subtask>
+        <subtask>Verify TOC in strategy-implementation-guide.md</subtask>
+        <subtask>Verify TOC in investigation-guide.md</subtask>
+        <subtask>Verify TOC in cli-reference.md</subtask>
+        <subtask>Verify TOC in api-reference.md</subtask>
+        <subtask>Verify TOC in troubleshooting.md</subtask>
+        <subtask>Verify TOC in cookbook.md</subtask>
+      </task>
+      <task id="5" title="Add cross-references">
+        <subtask>Add "Related" sections to each doc</subtask>
+        <subtask>Link between CLI and API references</subtask>
+        <subtask>Link troubleshooting from all docs</subtask>
+        <subtask>Link cookbook examples from guides</subtask>
+      </task>
+      <task id="6" title="Link to main rustybt documentation">
+        <subtask>Add links to rustybt user guides</subtask>
+        <subtask>Add links to rustybt API reference</subtask>
+        <subtask>Add links to rustybt contributing guide</subtask>
+        <subtask>Clarify validation vs main framework docs</subtask>
+      </task>
+      <task id="7" title="Ensure consistent navigation">
+        <subtask>Add breadcrumbs or hierarchy indicators</subtask>
+        <subtask>Add prev/next navigation links</subtask>
+        <subtask>Add footer with related links</subtask>
+        <subtask>Verify navigation consistency across all docs</subtask>
+      </task>
+      <task id="8" title="Testing">
+        <subtask>Test all internal links</subtask>
+        <subtask>Test all external links</subtask>
+        <subtask>Verify search works with documentation</subtask>
+        <subtask>Test different entry points (GitHub, package, website)</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Clear navigation to all documentation sections</criterion>
+    <criterion id="AC2">Appropriate starting points based on user type/goal</criterion>
+    <criterion id="AC3">Cross-references between related documents</criterion>
+    <criterion id="AC4">Search-friendly structure</criterion>
+    <criterion id="AC5">Quick links for common tasks (getting started, add strategy, investigate findings)</criterion>
+    <criterion id="AC6">User journey paths (new user → experienced user → contributor)</criterion>
+    <criterion id="AC7">Table of contents for each major section</criterion>
+    <criterion id="AC8">Links to related rustybt documentation (main framework docs)</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/architecture.md" title="Architecture Document" section="Project Structure" snippet="docs/ contains architecture.md, prd.md, and validation/ subdirectory for validation framework docs including getting-started.md, layer-specifications.md, investigation-guide.md." />
+      <doc path="docs/prd.md" title="PRD" section="Non-Functional Requirements" snippet="NFR16: Test reports must be clear and actionable. NFR18: Session management CLI must be intuitive." />
+      <doc path="docs/epics/epic-8-user-facing-documentation-usage-guide.md" title="Epic 8" section="Story 8.9" snippet="Documentation structure: index.md, getting-started.md, strategy-implementation-guide.md, investigation-guide.md, cli-reference.md, api-reference.md, troubleshooting.md, cookbook.md." />
+    </docs>
+    <code>
+      <file path="mkdocs.yml" kind="config" symbol="MkDocs configuration" reason="Documentation site navigation configuration" />
+      <file path="pyproject.toml" kind="config" symbol="docs dependencies" lines="192-207" reason="Documentation dependencies (mkdocs, mkdocs-material, etc.)" />
+    </code>
+    <dependencies>
+      <python>
+        <package name="mkdocs" version=">=1.5.0" purpose="Documentation generation" />
+        <package name="mkdocs-material" version=">=9.5.0" purpose="Theme with navigation features" />
+        <package name="mkdocs-autorefs" version=">=0.5.0" purpose="Cross-references" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">Documentation index should reflect dual-location architecture</constraint>
+    <constraint source="architecture">Navigation should help users find both library and test documentation</constraint>
+    <constraint source="architecture">Links must work from multiple entry points (GitHub, installed package, website)</constraint>
+    <constraint source="prd">All links must be functional (use link checker)</constraint>
+    <constraint source="prd">Navigation must be intuitive (NFR18)</constraint>
+    <constraint source="prd">Documentation must be clear and actionable (NFR16)</constraint>
+    <constraint source="epic">Main index location: docs/validation/index.md</constraint>
+    <constraint source="epic">Ensure consistent navigation across all validation docs</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="Validation Index" kind="markdown" signature="docs/validation/index.md with quick links, user journeys, TOC" path="docs/validation/index.md" />
+    <interface name="MkDocs Navigation" kind="config" signature="nav: section in mkdocs.yml" path="mkdocs.yml" />
+  </interfaces>
+
+  <tests>
+    <standards>All links functional. Navigation intuitive. Documentation clear and actionable. Works from GitHub, package, and website entry points.</standards>
+    <locations>
+      <location>docs/validation/</location>
+      <location>mkdocs.yml</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1">Verify all validation docs are reachable from index</idea>
+      <idea acRef="AC2">Test user journeys for new user, experienced user, contributor</idea>
+      <idea acRef="AC3">Verify cross-references are bidirectional and functional</idea>
+      <idea acRef="AC4">Test search functionality with documentation</idea>
+      <idea acRef="AC5">Verify quick links work and go to correct pages</idea>
+      <idea acRef="AC6">Walk through each user journey path</idea>
+      <idea acRef="AC7">Verify each doc has functional TOC</idea>
+      <idea acRef="AC8">Test links to main rustybt documentation</idea>
+    </ideas>
+  </tests>
+</story-context>

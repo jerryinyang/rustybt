@@ -1,0 +1,199 @@
+<story-context id="3-1-implement-session-progress-tracking" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>1</storyId>
+    <title>Implement Session Progress Tracking</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-1-implement-session-progress-tracking.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>session progress tracked at each stage</iWant>
+    <soThat>I can see where each validation session stands</soThat>
+    <tasks>
+      <task id="1">Create SessionStage enum (AC: #1)
+        <subtask>Add SessionStage enum to rustybt/validation/models.py</subtask>
+        <subtask>Define all 8 stage values with string representations</subtask>
+        <subtask>Add docstring explaining stage lifecycle</subtask>
+      </task>
+      <task id="2">Extend Session model with progress fields (AC: #2)
+        <subtask>Add stage field with SessionStage type and default</subtask>
+        <subtask>Add stage_started_at Optional[datetime] field</subtask>
+        <subtask>Add execution_completed_at Optional[datetime] field</subtask>
+        <subtask>Add comparison_completed_at Optional[datetime] field</subtask>
+        <subtask>Add layers_completed list[str] field with default_factory</subtask>
+        <subtask>Update Session serialization/deserialization for YAML</subtask>
+      </task>
+      <task id="3">Implement update_stage() method (AC: #3)
+        <subtask>Add update_stage() to SessionManager</subtask>
+        <subtask>Set stage and stage_started_at timestamp</subtask>
+        <subtask>Define valid stage transition rules</subtask>
+        <subtask>Raise ValueError for invalid transitions</subtask>
+        <subtask>Call self.save() after update</subtask>
+      </task>
+      <task id="4">Update CLI session list to show stage (AC: #4)
+        <subtask>Modify session list command output format</subtask>
+        <subtask>Add Stage column to table output</subtask>
+        <subtask>Include stage in JSON output format</subtask>
+      </task>
+      <task id="5">Write unit tests for stage tracking (AC: #5)
+        <subtask>Test SessionStage enum values</subtask>
+        <subtask>Test valid stage transitions</subtask>
+        <subtask>Test invalid stage transitions raise ValueError</subtask>
+        <subtask>Test timestamps are recorded correctly</subtask>
+        <subtask>Test layers_completed tracking</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">SessionStage enum implemented - Define all session lifecycle stages: CREATED, EXECUTING, EXECUTED, COMPARING, COMPARED, INVESTIGATING, COMPLETED, FAILED</criterion>
+    <criterion id="2">Session model includes progress fields: stage, stage_started_at, execution_completed_at, comparison_completed_at, layers_completed</criterion>
+    <criterion id="3">SessionManager.update_stage() method implemented - Updates session stage with timestamp, saves session after stage change, raises ValueError for invalid stage transitions</criterion>
+    <criterion id="4">CLI shows stage in session list - rustybt-validate session list displays stage column with format: Session ID | Strategy | Stage | Created</criterion>
+    <criterion id="5">Unit tests verify stage transitions - Valid transitions succeed, invalid transitions raise ValueError, timestamps recorded correctly</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Validation Session Management (FR31-FR40)</section>
+        <snippet>FR34: System can track session progress (setup, execution, analysis, investigation, resolution). Sessions must be resumable with progress tracking for ongoing validation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Data Models (Session Model)</section>
+        <snippet>Session dataclass tracks validation metadata including id, created_at, strategy_name, status, and findings. Status uses Literal type for type-safe state management.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>ADR-003: YAML for Session Storage</section>
+        <snippet>Sessions stored in YAML files for human-readability and version control. Session directory structure: validation-sessions/{session_id}/ with session.yaml, findings.yaml, logs/, analysis/.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-3-session-management-system.md</path>
+        <title>Epic 3: Session Management System</title>
+        <section>Story 3.1 Specification</section>
+        <snippet>Defines SessionStage enum with 8 values (CREATED through FAILED), progress fields on Session model, update_stage() method, and CLI display requirements.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/2-7-strategy-comparison-infrastructure-story-7.md</path>
+        <title>Story 2.7 - Coordinator Implementation</title>
+        <section>Dev Agent Record</section>
+        <snippet>ExecutionResult created in coordinator.py. Session update pattern established with update_execution_result() showing how to modify and save session state.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>data-model</kind>
+        <symbol>Session</symbol>
+        <lines>37-66</lines>
+        <reason>Existing Session dataclass to extend with stage tracking fields. Currently has status Literal but no SessionStage enum.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>data-model</kind>
+        <symbol>Finding</symbol>
+        <lines>69-101</lines>
+        <reason>Reference for dataclass patterns and YAML serialization approach used in the codebase.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/session.py</path>
+        <kind>manager</kind>
+        <symbol>SessionManager</symbol>
+        <lines>14-177</lines>
+        <reason>Core SessionManager class where update_stage() method will be added. Contains create_session, load_session, update_session, list_sessions methods.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/session.py</path>
+        <kind>method</kind>
+        <symbol>_save_session</symbol>
+        <lines>140-176</lines>
+        <reason>Existing serialization logic showing how Session fields are converted to YAML. Must be updated to include new stage fields.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/coordinator.py</path>
+        <kind>coordinator</kind>
+        <symbol>ExecutionResult</symbol>
+        <lines>26-71</lines>
+        <reason>Pattern for success property and stage validation. ExecutionResult.success checks multiple conditions - similar pattern for stage transitions.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/cli.py</path>
+        <kind>cli</kind>
+        <symbol>session_list</symbol>
+        <lines>55-71</lines>
+        <reason>Current session list command that needs stage column added to table output format.</reason>
+      </artifact>
+      <artifact>
+        <path>tests/validation/test_models.py</path>
+        <kind>test</kind>
+        <symbol>test file</symbol>
+        <reason>Existing test patterns for validation models. New stage tests should follow same structure.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="pyyaml" version=">=6.0">Session YAML persistence</package>
+        <package name="click" version=">=8.0">CLI framework</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use Python Enum for SessionStage (not string literals) for type safety</constraint>
+    <constraint>Stage transitions must be atomic - always save session after stage change</constraint>
+    <constraint>Invalid stage transitions must raise ValueError with clear message</constraint>
+    <constraint>YAML serialization must handle Enum types (serialize to string value)</constraint>
+    <constraint>Follow existing SessionManager patterns for consistency</constraint>
+    <constraint>Stage field default must be SessionStage.CREATED</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>SessionStage</name>
+      <kind>Enum class</kind>
+      <signature>class SessionStage(Enum): CREATED = "created", EXECUTING = "executing", EXECUTED = "executed", COMPARING = "comparing", COMPARED = "compared", INVESTIGATING = "investigating", COMPLETED = "completed", FAILED = "failed"</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+    <interface>
+      <name>SessionManager.update_stage</name>
+      <kind>method</kind>
+      <signature>def update_stage(self, session: Session, stage: SessionStage) -> None</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+    <interface>
+      <name>Session model fields</name>
+      <kind>dataclass fields</kind>
+      <signature>stage: SessionStage = SessionStage.CREATED, stage_started_at: Optional[datetime] = None, execution_completed_at: Optional[datetime] = None, comparison_completed_at: Optional[datetime] = None, layers_completed: list[str] = field(default_factory=list)</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use pytest with descriptive test names following test_{what}_{condition} pattern. Tests should verify both happy path and error conditions. Use fixtures from conftest.py for session setup.</standards>
+    <locations>
+      <location>tests/validation/test_session_stages.py (NEW)</location>
+      <location>tests/validation/test_models.py (extend existing)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">test_session_stage_enum_values - Verify all 8 stage values exist with correct string representations</idea>
+      <idea ac="2">test_session_model_stage_fields - Verify Session has stage, stage_started_at, execution_completed_at, comparison_completed_at, layers_completed fields with defaults</idea>
+      <idea ac="3">test_valid_stage_transition_created_to_executing - Verify CREATED -> EXECUTING succeeds</idea>
+      <idea ac="3">test_invalid_stage_transition_created_to_completed - Verify CREATED -> COMPLETED raises ValueError</idea>
+      <idea ac="3">test_update_stage_sets_timestamp - Verify stage_started_at is set on stage change</idea>
+      <idea ac="3">test_update_stage_saves_session - Verify session is persisted after stage change</idea>
+      <idea ac="4">test_cli_session_list_shows_stage - Verify CLI output includes Stage column</idea>
+      <idea ac="5">test_layers_completed_tracking - Verify layers_completed list updated correctly</idea>
+    </ideas>
+  </tests>
+</story-context>

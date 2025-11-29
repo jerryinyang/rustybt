@@ -1,0 +1,201 @@
+<story-context id="4-3-implement-layer1-data-handling-comparator" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>3</storyId>
+    <title>Implement Layer 1 Data Handling Comparator</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/4-3-implement-layer1-data-handling-comparator.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Layer 1 comparison for data handling</iWant>
+    <soThat>lookahead bias and bar alignment issues are detected</soThat>
+    <tasks>
+      <task id="1" status="pending">Implement Layer1DataComparator class
+        <subtask>Add class to rustybt/validation/comparators.py</subtask>
+        <subtask>Define __init__(self, tolerances: dict)</subtask>
+        <subtask>Define compare(rustybt_logs, backtrader_logs) method</subtask>
+        <subtask>Return list[Discrepancy]</subtask>
+      </task>
+      <task id="2" status="pending">Implement lookahead bias detection
+        <subtask>Filter logs by layer="data"</subtask>
+        <subtask>Extract data_accessed_timestamp from each event</subtask>
+        <subtask>Compare against current_bar_timestamp</subtask>
+        <subtask>Create Discrepancy for any future access</subtask>
+        <subtask>Mark as CRITICAL - zero tolerance</subtask>
+      </task>
+      <task id="3" status="pending">Implement bar alignment comparison
+        <subtask>Filter for event="bar_received" events</subtask>
+        <subtask>Compare bar counts between frameworks</subtask>
+        <subtask>Compare timestamps with window tolerance</subtask>
+        <subtask>Compare OHLCV values with decimal tolerance</subtask>
+        <subtask>Report misaligned bars as Discrepancy</subtask>
+      </task>
+      <task id="4" status="pending">Implement values_match() helper
+        <subtask>Accept two values and decimal_places</subtask>
+        <subtask>Round both values to decimal places</subtask>
+        <subtask>Return boolean for equality check</subtask>
+      </task>
+      <task id="5" status="pending">Create pytest test file
+        <subtask>Create tests/validation/test_layer_1_data.py</subtask>
+        <subtask>Add @pytest.mark.layer_1_data marker</subtask>
+        <subtask>Register marker in pytest.ini</subtask>
+      </task>
+      <task id="6" status="pending">Write comprehensive unit tests
+        <subtask>Test lookahead bias detection</subtask>
+        <subtask>Test bar count mismatch detection</subtask>
+        <subtask>Test bar alignment with tolerance</subtask>
+        <subtask>Test OHLCV value comparison</subtask>
+        <subtask>Test no discrepancies for matching data</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Layer1DataComparator class implemented in rustybt/validation/comparators.py</criterion>
+    <criterion id="AC2">Constructor accepts tolerances dict</criterion>
+    <criterion id="AC3">compare(rustybt_logs, backtrader_logs) returns list[Discrepancy]</criterion>
+    <criterion id="AC4">Lookahead bias detected when data_accessed_timestamp > current_bar_timestamp</criterion>
+    <criterion id="AC5">Bar alignment comparison using timestamp_window_ms tolerance</criterion>
+    <criterion id="AC6">OHLCV value comparison using price_decimal_places tolerance</criterion>
+    <criterion id="AC7">Bar count comparison exact match required (bar_count_tolerance=0)</criterion>
+    <criterion id="AC8">pytest test file exists with @pytest.mark.layer_1_data marker</criterion>
+    <criterion id="AC9">Unit tests verify lookahead bias, bar alignment, and OHLCV comparison</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Validation Layers</title>
+        <section>Log-Based Validation Architecture (lines 149-216)</section>
+        <snippet>Layer 1 Data Handling: lookahead bias detection, bar alignment, data integrity. Events: bar_received. CRITICAL layer for temporal correctness.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Comparison Engine</title>
+        <section>Comparison Engine (lines 195-204)</section>
+        <snippet>compare_layer function filters logs by layer, applies layer-specific comparator, returns discrepancies. LAYER_COMPARATORS registry maps layer name to comparator class.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Data Handling Validation</title>
+        <section>FR4-FR5 (Lookahead and Bar Alignment)</section>
+        <snippet>System can compare data handling logs to detect lookahead bias violations. System can compare data handling logs to detect bar alignment discrepancies.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Temporal Integrity</title>
+        <section>Domain-Specific Requirements - Temporal Integrity</section>
+        <snippet>No Lookahead Bias: Test must prove strategies cannot access future data. Bar Alignment: OHLCV bars must align correctly across timestamps.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-4-5-layer-comparison-test-suite.md</path>
+        <title>Epic 4 - Story 4.3 Specification</title>
+        <section>Story 4.3: Implement Layer 1 Data Handling Comparator</section>
+        <snippet>Lookahead bias is CRITICAL - zero tolerance. Bar alignment uses timestamp_window_ms. OHLCV comparison uses price_decimal_places.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/comparators.py</path>
+        <kind>module</kind>
+        <symbol>Layer1DataComparator</symbol>
+        <lines>all</lines>
+        <reason>Target module to implement Layer1DataComparator class</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>module</kind>
+        <symbol>Discrepancy</symbol>
+        <lines>231-258</lines>
+        <reason>Discrepancy dataclass returned by comparator</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/log_parser.py</path>
+        <kind>module</kind>
+        <symbol>parse_log</symbol>
+        <lines>all</lines>
+        <reason>Prerequisite: log parser used to load logs for comparison</reason>
+      </file>
+      <file>
+        <path>tests/validation/config/layer_1_tolerances.yaml</path>
+        <kind>config</kind>
+        <symbol>tolerance config</symbol>
+        <lines>all</lines>
+        <reason>Tolerance configuration loaded by comparator</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">DataFrame filtering and comparison</package>
+      </python>
+      <internal>
+        <module name="rustybt.validation.models">Discrepancy dataclass</module>
+        <module name="rustybt.validation.log_parser">parse_log function</module>
+      </internal>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">Lookahead bias has ZERO tolerance - any future data access is an error</constraint>
+    <constraint source="architecture">Log schema requires timestamp, layer, event fields</constraint>
+    <constraint source="prd">Temporal integrity is CRITICAL for backtesting validity</constraint>
+    <constraint source="epic">Layer 1 must be completed before Layers 2-5 can be implemented</constraint>
+    <constraint source="coding-standards">Python 3.12+, type hints, Google docstrings</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Layer1DataComparator</name>
+      <kind>class</kind>
+      <signature>class Layer1DataComparator</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare</name>
+      <kind>method</kind>
+      <signature>def compare(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>detect_lookahead_bias</name>
+      <kind>method</kind>
+      <signature>def detect_lookahead_bias(self, logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_bar_alignment</name>
+      <kind>method</kind>
+      <signature>def compare_bar_alignment(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame, tolerances: dict) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>values_match</name>
+      <kind>function</kind>
+      <signature>def values_match(val1: float, val2: float, decimal_places: int) -> bool</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework, @pytest.mark.layer_1_data marker, use Polars DataFrames for test data creation. Tests in tests/validation/test_layer_1_data.py.</standards>
+    <locations>
+      <location>tests/validation/test_layer_1_data.py</location>
+    </locations>
+    <ideas>
+      <idea ac="AC4">test_detect_lookahead_bias_violation - verify discrepancy when future data accessed</idea>
+      <idea ac="AC4">test_detect_lookahead_bias_no_violation - verify no discrepancy for past data</idea>
+      <idea ac="AC5">test_bar_alignment_within_tolerance - verify no discrepancy within window</idea>
+      <idea ac="AC5">test_bar_alignment_exceeds_tolerance - verify discrepancy when exceeds window</idea>
+      <idea ac="AC6">test_ohlcv_values_match - verify OHLCV comparison with decimal places</idea>
+      <idea ac="AC6">test_ohlcv_values_mismatch - verify discrepancy for mismatched OHLCV</idea>
+      <idea ac="AC7">test_bar_count_mismatch - verify discrepancy when bar counts differ</idea>
+      <idea ac="AC7">test_bar_count_exact_match - verify no discrepancy for same count</idea>
+      <idea ac="AC9">test_layer_1_full_comparison - end-to-end test with rustybt and backtrader logs</idea>
+    </ideas>
+  </tests>
+</story-context>

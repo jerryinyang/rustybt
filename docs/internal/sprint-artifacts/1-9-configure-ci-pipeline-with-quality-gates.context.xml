@@ -1,0 +1,140 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>9</storyId>
+    <title>Configure CI Pipeline with Quality Gates</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-9-configure-ci-pipeline-with-quality-gates.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>CI pipeline configured with automated quality gates</iWant>
+    <soThat>code quality is enforced on every commit and pull request</soThat>
+    <tasks>
+- [ ] Task 1: Create GitHub Actions workflow file (AC: #1-5)
+  - [ ] Create `.github/workflows/ci.yml`
+  - [ ] Configure triggers (push/PR to main)
+  - [ ] Add steps: checkout, setup python, install deps
+  - [ ] Add quality checks: pytest, mypy, ruff, pip-audit
+
+- [ ] Task 2: Configure pytest in pyproject.toml (AC: #6)
+  - [ ] Add markers for validation layers
+  - [ ] Configure test discovery
+
+- [ ] Task 3: Configure coverage in pyproject.toml (AC: #6)
+  - [ ] Set source paths and omit patterns
+  - [ ] Configure report settings
+
+- [ ] Task 4: Configure mypy in pyproject.toml (AC: #6)
+  - [ ] Enable strict mode
+  - [ ] Configure warnings
+
+- [ ] Task 5: Configure ruff in pyproject.toml (AC: #6)
+  - [ ] Select all rules (ALL)
+  - [ ] Configure ignores (ANN101, ANN102)
+
+- [ ] Task 6: Add CI badge to README (AC: #7)
+  - [ ] Update README.md if exists
+
+- [ ] Task 7: Test CI pipeline locally
+  - [ ] Run all checks manually
+
+- [ ] Task 8: Commit and verify CI runs
+  - [ ] Push changes and check GitHub Actions
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **GitHub Actions workflow created** - Automates quality checks on push/PR.
+
+2. **Test coverage enforced** - Fail if coverage < 80%.
+
+3. **Type safety enforced** - Mypy strict mode, no errors allowed.
+
+4. **Code quality enforced** - Ruff linter with comprehensive rules.
+
+5. **Security enforced** - Pip-audit for vulnerabilities.
+
+6. **Local development tools configured** - pyproject.toml updated.
+
+7. **CI badge added** - README shows build status.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Testing Strategy</title>
+        <section>Testing Strategy</section>
+        <snippet>
+Quality Gates:
+- Coverage: 80% minimum
+- Typing: Strict mode
+- Linting: Comprehensive (Ruff)
+- Security: Dependency auditing
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <item>
+        <path>.github/workflows/ci.yml</path>
+        <kind>config</kind>
+        <symbol>CI Workflow</symbol>
+        <lines>new file</lines>
+        <reason>CI pipeline configuration.</reason>
+      </item>
+      <item>
+        <path>pyproject.toml</path>
+        <kind>config</kind>
+        <symbol>tool.pytest.ini_options</symbol>
+        <lines>update</lines>
+        <reason>Tool configuration updates.</reason>
+      </item>
+    </code>
+    <dependencies>
+      <ecosystem name="python">
+        <package name="pytest-cov" version=">=3.0.0" />
+        <package name="mypy" version=">=1.0.0" />
+        <package name="ruff" version=">=0.1.0" />
+        <package name="pip-audit" version=">=2.0.0" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Quality</type>
+      <description>Coverage: Minimum 80% required.</description>
+    </constraint>
+    <constraint>
+      <type>Quality</type>
+      <description>Typing: Strict mode required.</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>CI Pipeline</name>
+      <kind>Workflow</kind>
+      <signature>GitHub Actions</signature>
+      <path>.github/workflows/ci.yml</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Verify all checks pass locally.
+      Verify workflow syntax is valid.
+    </standards>
+    <locations>
+      <location>Local execution</location>
+      <location>GitHub Actions</location>
+    </locations>
+    <ideas>
+      <idea>Run `act` to simulate GitHub Actions locally.</idea>
+    </ideas>
+  </tests>
+</story-context>

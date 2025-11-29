@@ -1,0 +1,136 @@
+<story-context id="7-1" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>1</storyId>
+    <title>Implement Session Report Generator</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/7-1-reporting-documentation-system-story-1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>detailed reports per session</iWant>
+    <soThat>validation results are clearly documented</soThat>
+    <tasks>
+      <task id="1">Implement ReportGenerator class (AC: #1)
+        <subtask>Create rustybt/validation/reporting.py module</subtask>
+        <subtask>Define ReportGenerator class with session dependency injection</subtask>
+        <subtask>Implement generate_markdown() method for markdown output</subtask>
+        <subtask>Implement generate_json() method for JSON output</subtask>
+        <subtask>Test: Unit tests for report generation with mock session data</subtask>
+      </task>
+      <task id="2">Implement report template structure (AC: #1)
+        <subtask>Create markdown template with session header section</subtask>
+        <subtask>Implement summary table generation with findings counts</subtask>
+        <subtask>Implement per-layer results section generation</subtask>
+        <subtask>Implement findings detail section with classification info</subtask>
+        <subtask>Test: Verify output matches expected markdown structure</subtask>
+      </task>
+      <task id="3">Add CLI report command (AC: #2, #3)
+        <subtask>Add report command to rustybt/validation/cli.py</subtask>
+        <subtask>Implement --format option (markdown default, json optional)</subtask>
+        <subtask>Load session from session_id, validate exists</subtask>
+        <subtask>Call ReportGenerator with appropriate format</subtask>
+        <subtask>Test: CLI integration tests for both formats</subtask>
+      </task>
+      <task id="4">Implement report file saving (AC: #4)
+        <subtask>Save report to session directory path</subtask>
+        <subtask>Handle both markdown and JSON file extensions</subtask>
+        <subtask>Ensure directory exists before saving</subtask>
+        <subtask>Report saved path in console output</subtask>
+        <subtask>Test: Verify files saved to correct locations</subtask>
+      </task>
+      <task id="5">Implement auto-generation on completion (AC: #5)
+        <subtask>Hook into SessionManager status change</subtask>
+        <subtask>Trigger report generation when status → COMPLETED</subtask>
+        <subtask>Add timestamp to report metadata</subtask>
+        <subtask>Test: Integration test for auto-generation</subtask>
+      </task>
+      <task id="6">Write comprehensive tests (AC: #1-5)
+        <subtask>Unit tests for ReportGenerator class</subtask>
+        <subtask>Integration tests for CLI commands</subtask>
+        <subtask>Test with various session states</subtask>
+        <subtask>Test with BUG, DESIGN, and mixed findings</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Given a completed or in-progress session When report generation is invoked Then a markdown report is generated with session header, summary table, layer results sections, and findings detail section</criterion>
+    <criterion id="AC2">CLI command rustybt-validate report session_id produces markdown report saved to validation-sessions/{session_id}/report.md</criterion>
+    <criterion id="AC3">CLI command rustybt-validate report session_id --format json produces JSON output suitable for programmatic use</criterion>
+    <criterion id="AC4">Reports are automatically saved to session directory (report.md and report.json)</criterion>
+    <criterion id="AC5">Report auto-generation on session completion when status changes to COMPLETED</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Reporting &amp; Documentation (FR60-FR67)" snippet="FR60: System can generate validation reports per session (summary of findings). FR64: System can export discrepancy classifications (BUG vs DESIGN) with rationale."/>
+      <doc path="docs/architecture.md" title="Architecture Document" section="FR Category to Architecture Mapping" snippet="Reporting &amp; Documentation (FR60-FR67) maps to rustybt/validation/reporting.py with auto-generated reports per session."/>
+      <doc path="docs/epics/epic-7-reporting-documentation-system.md" title="Epic 7 Specification" section="Story 7.1" snippet="Report structure includes session header, summary table, layer results sections, and findings detail. CLI commands for markdown and JSON output."/>
+    </docs>
+    <code>
+      <artifact path="rustybt/validation/reporting.py" kind="module" symbol="ReportGenerator" lines="1-7" reason="Empty module stub - needs full implementation of ReportGenerator class"/>
+      <artifact path="rustybt/validation/cli.py" kind="module" symbol="main, session, run" lines="1-100" reason="Existing CLI infrastructure with session commands - extend with report command"/>
+      <artifact path="rustybt/validation/models.py" kind="module" symbol="Session, Finding" lines="118-364" reason="Core data models for sessions and findings - used for report data extraction"/>
+      <artifact path="rustybt/validation/session.py" kind="module" symbol="SessionManager" lines="N/A" reason="Session management - hook for auto-generation on completion"/>
+      <artifact path="tests/validation/test_cli.py" kind="test" symbol="TestCLI" lines="N/A" reason="Existing CLI tests - add report command tests"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0" purpose="CLI framework"/>
+        <package name="pyyaml" version=">=6.0" purpose="Session storage"/>
+        <package name="jinja2" version=">=3.0.0" purpose="Report template rendering"/>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Reports must be saved to validation-sessions/{session_id}/ directory</constraint>
+    <constraint type="architecture">ReportGenerator class follows dependency injection pattern with Session as input</constraint>
+    <constraint type="coding">Use markdown tables for readability in markdown format</constraint>
+    <constraint type="coding">JSON format must be machine-parseable for CI integration</constraint>
+    <constraint type="testing">Tests must cover both markdown and JSON output formats</constraint>
+    <constraint type="testing">Zero mock enforcement - use real session data from fixtures</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="ReportGenerator" kind="class">
+      <signature>class ReportGenerator(session: Session)</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="generate_markdown" kind="method">
+      <signature>def generate_markdown(self) -> str</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="generate_json" kind="method">
+      <signature>def generate_json(self) -> dict</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="save_markdown" kind="method">
+      <signature>def save_markdown(self) -> Path</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="CLI report command" kind="CLI endpoint">
+      <signature>rustybt-validate report &lt;session_id&gt; [--format markdown|json]</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework with custom markers (@pytest.mark.layer_* for validation layers). Zero mock enforcement - all tests use real rustybt and Backtrader executions. Test fixtures in tests/validation/fixtures/.</standards>
+    <locations>
+      <location>tests/validation/test_reporting.py</location>
+      <location>tests/validation/test_cli.py</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1">test_generate_markdown_with_findings - verify markdown includes all required sections</idea>
+      <idea acRef="AC2">test_cli_report_command_markdown - verify CLI generates and saves markdown report</idea>
+      <idea acRef="AC3">test_generate_json_format - verify JSON structure is machine-parseable</idea>
+      <idea acRef="AC4">test_report_saved_to_session_directory - verify file paths</idea>
+      <idea acRef="AC5">test_auto_generation_on_completion - verify hook triggers report generation</idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,264 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>1</storyId>
+    <title>Implement Discrepancy Presentation Interface</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-27</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/5-1-investigation-classification-workflow-story-1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>discrepancies presented clearly for investigation</iWant>
+    <soThat>I can efficiently analyze and classify each finding</soThat>
+    <tasks>
+      <task id="1" ac="1">
+        <description>Implement investigate CLI command</description>
+        <subtasks>
+          <subtask>Add `investigate` command to cli.py with session_id argument</subtask>
+          <subtask>Load session and findings from session.yaml/findings.yaml</subtask>
+          <subtask>Format finding details with layer, event, values display</subtask>
+          <subtask>Implement action menu with keyboard shortcuts</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="2">
+        <description>Implement finding navigation</description>
+        <subtasks>
+          <subtask>Add `--finding` option for direct jump to specific finding</subtask>
+          <subtask>Implement next/previous finding cycling</subtask>
+          <subtask>Add progress indicator showing position in findings list</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="3">
+        <description>Implement layer filtering</description>
+        <subtasks>
+          <subtask>Add `--layer` option with validation for valid layer names</subtask>
+          <subtask>Filter findings list by layer before presentation</subtask>
+          <subtask>Update progress indicator to reflect filtered count</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="4">
+        <description>Implement status filtering</description>
+        <subtasks>
+          <subtask>Add `--unclassified`, `--bugs`, `--design` flags</subtask>
+          <subtask>Combine filters (e.g., --layer orders --unclassified)</subtask>
+          <subtask>Handle empty filter results gracefully</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="5">
+        <description>Implement context display</description>
+        <subtasks>
+          <subtask>Extract temporal context from session logs</subtask>
+          <subtask>Display previous/next bar information</subtask>
+          <subtask>Show related events and tolerance configuration</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="6">
+        <description>Write unit tests</description>
+        <subtasks>
+          <subtask>Test CLI argument parsing</subtask>
+          <subtask>Test finding presentation formatting</subtask>
+          <subtask>Test filter combinations</subtask>
+          <subtask>Test navigation logic</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" title="Investigate CLI command implemented">
+      <requirement>`rustybt-validate investigate &lt;session_id&gt;` launches investigation interface</requirement>
+      <requirement>Displays finding details: layer, event, timestamp, asset, values, tolerance</requirement>
+      <requirement>Shows difference/exceeded amount and context (previous bar, signal, order type)</requirement>
+      <requirement>Provides action menu: [b]ug, [d]esign, [s]kip, [v]iew source, [c]ontext, [q]uit</requirement>
+    </criterion>
+    <criterion id="2" title="Finding navigation">
+      <requirement>`rustybt-validate investigate &lt;session_id&gt; --finding FIND-XXX` jumps to specific finding</requirement>
+      <requirement>Cycle through findings with next/previous commands</requirement>
+      <requirement>Show progress indicator (e.g., "1/5 unclassified")</requirement>
+    </criterion>
+    <criterion id="3" title="Layer filtering">
+      <requirement>`--layer &lt;layer_name&gt;` option filters findings to specific layer</requirement>
+      <requirement>Valid layers: data, signals, orders, broker, portfolio</requirement>
+    </criterion>
+    <criterion id="4" title="Status filtering">
+      <requirement>`--unclassified` flag shows only unclassified findings</requirement>
+      <requirement>`--bugs` flag shows only BUG-classified findings</requirement>
+      <requirement>`--design` flag shows only DESIGN-classified findings</requirement>
+    </criterion>
+    <criterion id="5" title="Context display">
+      <requirement>Show previous/next bar timestamps for temporal context</requirement>
+      <requirement>Display related signal and order events</requirement>
+      <requirement>Include tolerance configuration for reference</requirement>
+    </criterion>
+    <criterion id="6" title="Unit tests verify">
+      <requirement>CLI command registration and argument parsing</requirement>
+      <requirement>Finding presentation formatting</requirement>
+      <requirement>Filter options functionality</requirement>
+      <requirement>Navigation between findings</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>rustybt - Product Requirements Document</title>
+        <section>Investigation &amp; Classification Workflow (FR41-FR54)</section>
+        <snippet>FR41: System can present discovered discrepancies for investigation. FR42-43: Link discrepancies to source code. FR44: Track investigation notes. FR45-48: Classify as BUG or DESIGN with rationale.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>CLI Interface</section>
+        <snippet>rustybt-validate investigate &lt;session_id&gt; [--layer data] - Investigation mode CLI for classifying findings. Click-based with prompt for interactive input.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Finding Classification Workflow (Pattern 4)</section>
+        <snippet>All findings must be classified as BUG or DESIGN. findings.yaml stores classification with rationale, investigated_by, investigated_at. Unclassified findings block validation completion.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Data Models - Finding</section>
+        <snippet>Finding dataclass with id, layer, description, classification (BUG/DESIGN/None), rationale, investigated_by, investigated_at, resolved, rustybt_value, backtrader_value.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-investigation-classification-workflow.md</path>
+        <title>Epic 5: Investigation &amp; Classification Workflow</title>
+        <section>Story 5.1</section>
+        <snippet>Goal: Enable systematic investigation and classification of discrepancies. Covers FR41-FR54. Value: Every discrepancy is investigated, classified, and either fixed or documented.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/cli.py</path>
+        <kind>CLI module</kind>
+        <symbol>main, session, session_create, session_list, session_show, session_findings</symbol>
+        <lines>1-812</lines>
+        <reason>Primary file to MODIFY - add investigate command. Existing Click-based CLI with session management commands. Pattern for adding new commands established.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>Data models</kind>
+        <symbol>Session, Finding, Discrepancy, SessionStage, Activity</symbol>
+        <lines>1-291</lines>
+        <reason>Contains Finding dataclass used for investigation. Session has findings list. Finding has classification, rationale, layer, description fields.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/session.py</path>
+        <kind>Session manager</kind>
+        <symbol>SessionManager</symbol>
+        <lines>17+</lines>
+        <reason>SessionManager.load_session() loads session with findings. Existing pattern for loading and persisting sessions.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/comparators.py</path>
+        <kind>Comparators</kind>
+        <symbol>Discrepancy, Layer1DataComparator, Layer2SignalComparator, Layer3OrdersComparator, Layer4BrokerComparator, Layer5PortfolioComparator</symbol>
+        <lines>28-56</lines>
+        <reason>Discrepancy dataclass defines fields for investigation display: layer, event, timestamp, asset, field, rustybt_value, backtrader_value, tolerance, exceeded_by.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/tolerance.py</path>
+        <kind>Tolerance config</kind>
+        <symbol>ToleranceConfig, Layer1Tolerances, Layer2Tolerances, Layer3Tolerances, Layer4Tolerances, Layer5Tolerances</symbol>
+        <lines>-</lines>
+        <reason>Tolerance configuration used for context display - show what tolerance was exceeded.</reason>
+      </file>
+      <file>
+        <path>tests/validation/conftest.py</path>
+        <kind>Test fixtures</kind>
+        <symbol>tolerance_config, layer_1_tolerances, layer_2_tolerances, etc.</symbol>
+        <lines>1-66</lines>
+        <reason>Test fixtures pattern to follow. Provides tolerance fixtures for tests.</reason>
+      </file>
+      <file>
+        <path>tests/validation/test_cli.py</path>
+        <kind>CLI tests</kind>
+        <symbol>-</symbol>
+        <lines>-</lines>
+        <reason>Existing CLI tests to use as pattern. Use Click.testing.CliRunner for testing.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0">CLI framework for commands, options, arguments, prompts</package>
+        <package name="pyyaml" version=">=6.0">Session and findings YAML storage</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+        <package name="polars" version=">=1.0">Log data processing</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture">Follow Click-based CLI pattern established in cli.py</constraint>
+    <constraint source="Architecture">Use existing SessionManager for loading sessions</constraint>
+    <constraint source="Architecture">Finding classification must be one of: BUG, DESIGN, or None (unclassified)</constraint>
+    <constraint source="Architecture">Valid layers: data, signals, orders, broker, portfolio</constraint>
+    <constraint source="Dev Notes">Use Click.prompt for interactive input in investigation loop</constraint>
+    <constraint source="Architecture">Store findings in session's findings.yaml</constraint>
+    <constraint source="Architecture">All actions must be logged to session's activity log</constraint>
+    <constraint source="PRD">NFR16: Test reports must be clear and actionable</constraint>
+    <constraint source="PRD">NFR17: Show expected and actual values side-by-side</constraint>
+    <constraint source="PRD">NFR19: Investigation workflow must guide user through classification</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>investigate command</name>
+      <kind>CLI command</kind>
+      <signature>rustybt-validate investigate &lt;session_id&gt; [--finding FIND-XXX] [--layer data|signals|orders|broker|portfolio] [--unclassified] [--bugs] [--design]</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+    <interface>
+      <name>SessionManager.load_session</name>
+      <kind>Python method</kind>
+      <signature>def load_session(self, session_id: str) -&gt; Session</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+    <interface>
+      <name>Finding dataclass</name>
+      <kind>Data model</kind>
+      <signature>@dataclass Finding(id, layer, description, classification, rationale, investigated_by, investigated_at, resolved, rustybt_value, backtrader_value)</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+    <interface>
+      <name>Session.log_activity</name>
+      <kind>Python method</kind>
+      <signature>def log_activity(self, action: str, message: str | None = None, actor: str = "system") -&gt; None</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing with Click.testing.CliRunner for CLI commands. Tests should use fixtures from conftest.py. Use @pytest.mark markers for categorization (e.g., @pytest.mark.investigation). Follow existing test patterns in tests/validation/test_cli.py.
+    </standards>
+    <locations>
+      <location>tests/validation/test_investigation.py (NEW - create)</location>
+      <location>tests/validation/test_cli.py (existing - may add tests)</location>
+      <location>tests/validation/conftest.py (fixtures)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">test_investigate_command_exists - verify CLI command registration</idea>
+      <idea ac="1">test_investigate_displays_finding_details - verify all required fields shown</idea>
+      <idea ac="1">test_investigate_action_menu_shortcuts - verify action menu options</idea>
+      <idea ac="2">test_investigate_finding_option_jumps_to_finding - verify --finding navigation</idea>
+      <idea ac="2">test_investigate_next_previous_cycling - verify n/p navigation</idea>
+      <idea ac="2">test_investigate_progress_indicator - verify progress display format</idea>
+      <idea ac="3">test_investigate_layer_filter - verify --layer filtering</idea>
+      <idea ac="3">test_investigate_invalid_layer_rejected - verify error on invalid layer</idea>
+      <idea ac="4">test_investigate_unclassified_filter - verify --unclassified flag</idea>
+      <idea ac="4">test_investigate_bugs_filter - verify --bugs flag</idea>
+      <idea ac="4">test_investigate_design_filter - verify --design flag</idea>
+      <idea ac="4">test_investigate_combined_filters - verify multiple filters together</idea>
+      <idea ac="5">test_investigate_context_shows_temporal_info - verify context display</idea>
+      <idea ac="5">test_investigate_context_shows_tolerance - verify tolerance shown</idea>
+    </ideas>
+  </tests>
+</story-context>

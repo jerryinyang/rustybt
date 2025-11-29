@@ -1,0 +1,247 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5</storyId>
+    <title>Implement Bug Fix Verification</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-27</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/5-5-investigation-classification-workflow-story-5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>to verify that bug fixes resolve discrepancies</iWant>
+    <soThat>fixes are validated before marking findings as resolved</soThat>
+    <tasks>
+      <task id="1" ac="1">
+        <description>Implement verify CLI command</description>
+        <subtasks>
+          <subtask>Add `verify` command with finding_id argument</subtask>
+          <subtask>Load finding and associated session</subtask>
+          <subtask>Display original discrepancy details</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="2">
+        <description>Implement strategy re-execution</description>
+        <subtasks>
+          <subtask>Load session configuration (strategy, data fixture, parameters)</subtask>
+          <subtask>Execute rustybt strategy to temp log file</subtask>
+          <subtask>Execute Backtrader strategy to temp log file</subtask>
+          <subtask>Handle execution errors gracefully</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="3">
+        <description>Implement layer re-comparison</description>
+        <subtasks>
+          <subtask>Load appropriate layer comparator</subtask>
+          <subtask>Load tolerance configuration for layer</subtask>
+          <subtask>Run comparison on new logs</subtask>
+          <subtask>Check if original discrepancy event found</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="4">
+        <description>Implement pass handling</description>
+        <subtasks>
+          <subtask>Update finding.resolved = True</subtask>
+          <subtask>Update finding.resolved_at</subtask>
+          <subtask>Set finding.regression_test path</subtask>
+          <subtask>Save finding to YAML</subtask>
+          <subtask>Display success message</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="5">
+        <description>Implement fail handling</description>
+        <subtasks>
+          <subtask>Display current discrepancy values</subtask>
+          <subtask>Show expected values</subtask>
+          <subtask>Keep finding status as classified but unresolved</subtask>
+          <subtask>Suggest next debugging steps</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="6">
+        <description>Write unit tests</description>
+        <subtasks>
+          <subtask>Test CLI command</subtask>
+          <subtask>Test re-execution with mock strategies</subtask>
+          <subtask>Test pass/fail handling</subtask>
+          <subtask>Test finding persistence</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" title="Verify CLI command implemented">
+      <requirement>`rustybt-validate verify &lt;finding_id&gt;` invokes verification</requirement>
+      <requirement>Displays original discrepancy details</requirement>
+      <requirement>Re-runs strategy execution for both frameworks</requirement>
+      <requirement>Re-runs layer comparison for affected layer</requirement>
+      <requirement>Reports verification result (pass/fail)</requirement>
+    </criterion>
+    <criterion id="2" title="Strategy re-execution">
+      <requirement>Locate original session with same parameters</requirement>
+      <requirement>Re-execute rustybt strategy with identical config</requirement>
+      <requirement>Re-execute Backtrader strategy with identical config</requirement>
+      <requirement>Capture new logs to temporary location</requirement>
+    </criterion>
+    <criterion id="3" title="Layer re-comparison">
+      <requirement>Run comparison only for the finding's layer</requirement>
+      <requirement>Use same tolerance configuration</requirement>
+      <requirement>Check if original discrepancy still present</requirement>
+    </criterion>
+    <criterion id="4" title="Verification pass handling">
+      <requirement>If discrepancy no longer present → verification passes</requirement>
+      <requirement>Update finding: `resolved = True`, `resolved_at = datetime.now()`</requirement>
+      <requirement>Store path to regression test (created in Story 5.6)</requirement>
+      <requirement>Display success message with next steps</requirement>
+    </criterion>
+    <criterion id="5" title="Verification fail handling">
+      <requirement>If discrepancy still present → verification fails</requirement>
+      <requirement>Display current values vs expected</requirement>
+      <requirement>Keep finding status unchanged</requirement>
+      <requirement>Suggest debugging steps</requirement>
+    </criterion>
+    <criterion id="6" title="Unit tests verify">
+      <requirement>CLI command parsing</requirement>
+      <requirement>Strategy re-execution logic</requirement>
+      <requirement>Comparison result handling</requirement>
+      <requirement>Finding update on pass/fail</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>rustybt - Product Requirements Document</title>
+        <section>Investigation &amp; Classification Workflow (FR53-FR54)</section>
+        <snippet>FR53: System can verify bug fixes by re-running comparison. FR54: System marks finding as resolved when fix verified.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Bug Fix Verification</section>
+        <snippet>verify command re-executes strategies, re-runs layer comparison, checks if discrepancy resolved. Updates finding.resolved and finding.resolved_at on success.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-investigation-classification-workflow.md</path>
+        <title>Epic 5: Investigation &amp; Classification Workflow</title>
+        <section>Story 5.5</section>
+        <snippet>Prerequisites: Story 5.3 (BUG classification). Bug fix verification workflow with strategy re-execution, layer comparison, pass/fail handling.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/cli.py</path>
+        <kind>CLI module</kind>
+        <symbol>main, run</symbol>
+        <lines>640-704</lines>
+        <reason>MODIFY - add verify command. Use run command as pattern for execution logic.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/verification.py</path>
+        <kind>Verification module</kind>
+        <symbol>verify_fix, re_execute_strategies, compare_layer_for_finding</symbol>
+        <lines>NEW</lines>
+        <reason>CREATE - new module for verification logic.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/coordinator.py</path>
+        <kind>Execution coordinator</kind>
+        <symbol>execute_dual</symbol>
+        <lines>-</lines>
+        <reason>Existing dual execution logic to reuse for re-execution.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/comparators.py</path>
+        <kind>Comparators</kind>
+        <symbol>Layer1DataComparator, Layer2SignalComparator, etc.</symbol>
+        <lines>120-1769</lines>
+        <reason>Existing layer comparators to use for re-comparison.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/classification.py</path>
+        <kind>Classification module</kind>
+        <symbol>save_finding</symbol>
+        <lines>From Story 5-3</lines>
+        <reason>Reuse save_finding for persisting resolved status.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>Data models</kind>
+        <symbol>Finding</symbol>
+        <lines>196-228</lines>
+        <reason>Finding model has resolved, resolved_at fields. May need to add regression_test field.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0">CLI framework</package>
+        <package name="polars" version=">=1.0">Log data processing</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture">Only BUG-classified findings can be verified</constraint>
+    <constraint source="Architecture">Re-execution uses same session parameters (strategy, data, config)</constraint>
+    <constraint source="Architecture">Comparison uses same tolerance configuration</constraint>
+    <constraint source="Story 5-3">Reuse save_finding() for persistence</constraint>
+    <constraint source="Architecture">Verification failure keeps finding unresolved</constraint>
+    <constraint source="PRD">FR54: Finding marked resolved only after verification passes</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>verify command</name>
+      <kind>CLI command</kind>
+      <signature>rustybt-validate verify &lt;finding_id&gt;</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+    <interface>
+      <name>re_execute_strategies function</name>
+      <kind>Python function</kind>
+      <signature>def re_execute_strategies(session: Session) -&gt; tuple[pl.DataFrame, pl.DataFrame]</signature>
+      <path>rustybt/validation/verification.py</path>
+    </interface>
+    <interface>
+      <name>compare_layer_for_finding function</name>
+      <kind>Python function</kind>
+      <signature>def compare_layer_for_finding(finding: Finding, rb_logs: pl.DataFrame, bt_logs: pl.DataFrame) -&gt; list[Discrepancy]</signature>
+      <path>rustybt/validation/verification.py</path>
+    </interface>
+    <interface>
+      <name>Extended Finding model</name>
+      <kind>Data model</kind>
+      <signature>Finding with fields: resolved, resolved_at, regression_test</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing. Use Click.testing.CliRunner for CLI tests. Use unittest.mock for strategy execution mocking. Use @pytest.mark.verification marker.
+    </standards>
+    <locations>
+      <location>tests/validation/test_verification.py (NEW - create)</location>
+      <location>tests/validation/test_cli.py (existing - add verify tests)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">test_verify_command_exists - verify CLI command registration</idea>
+      <idea ac="1">test_verify_displays_original_discrepancy - verify output format</idea>
+      <idea ac="1">test_verify_requires_bug_classification - verify DESIGN rejected</idea>
+      <idea ac="2">test_re_execute_strategies_runs_both - verify both frameworks executed</idea>
+      <idea ac="2">test_re_execute_strategies_uses_session_config - verify config preserved</idea>
+      <idea ac="3">test_compare_layer_uses_correct_comparator - verify layer matching</idea>
+      <idea ac="3">test_compare_layer_uses_same_tolerances - verify tolerance config</idea>
+      <idea ac="4">test_verify_pass_updates_resolved - verify resolved=True</idea>
+      <idea ac="4">test_verify_pass_sets_resolved_at - verify timestamp set</idea>
+      <idea ac="4">test_verify_pass_sets_regression_test - verify path set</idea>
+      <idea ac="5">test_verify_fail_keeps_unresolved - verify resolved=False</idea>
+      <idea ac="5">test_verify_fail_shows_current_values - verify output format</idea>
+      <idea ac="5">test_verify_fail_suggests_debugging - verify suggestions shown</idea>
+    </ideas>
+  </tests>
+</story-context>

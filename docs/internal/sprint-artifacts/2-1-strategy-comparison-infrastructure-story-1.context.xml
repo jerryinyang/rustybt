@@ -1,0 +1,172 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>1</storyId>
+    <title>Implement ValidatedStrategy Base Class for rustybt</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-1-strategy-comparison-infrastructure-story-1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>a base strategy class that auto-logs lifecycle events</iWant>
+    <soThat>rustybt strategies automatically produce structured logs for comparison</soThat>
+    <tasks>
+      <task id="1">Create base_strategy.py module structure (AC: #1)</task>
+      <task id="2">Implement RustyBTValidatedStrategy class (AC: #1, #2)</task>
+      <task id="3">Implement lifecycle method overrides (AC: #3)</task>
+      <task id="4">Implement resource cleanup (AC: #4)</task>
+      <task id="5">Write unit tests (AC: #5)</task>
+      <task id="6">Verify integration with existing code</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">RustyBTValidatedStrategy base class implemented in rustybt/validation/base_strategy.py</criterion>
+    <criterion id="AC2">_log_event() method implemented with structured event logging</criterion>
+    <criterion id="AC3">Lifecycle methods auto-log (initialize, handle_data, signals, orders)</criterion>
+    <criterion id="AC4">Log file cleanup with proper resource management</criterion>
+    <criterion id="AC5">Unit tests verify logging behavior</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>Strategy Comparison Infrastructure</section>
+        <snippet>FR23-FR30 define requirements for dual strategy implementations, log generation, and comparison infrastructure.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Log-Based Validation Architecture (pg 149-248)</section>
+        <snippet>ValidatedStrategy base classes auto-log lifecycle events to JSONL. Schema: timestamp, layer, event, asset, data fields.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Log Schema (pg 183-189)</section>
+        <snippet>JSON schema: {"timestamp": ISO8601, "layer": "data|signals|orders|broker|portfolio", "event": string, "asset": string|null, "data": object}</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Definitions</title>
+        <section>Epic 2: Strategy Comparison Infrastructure</section>
+        <snippet>Story 2.1 defines ValidatedStrategy base class with auto-logging of lifecycle events for rustybt framework.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>rustybt/validation/__init__.py</path>
+        <kind>module</kind>
+        <symbol>__all__</symbol>
+        <lines>1-10</lines>
+        <reason>Main validation package exports - will need to export RustyBTValidatedStrategy</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>models</kind>
+        <symbol>Session, Finding, Discrepancy</symbol>
+        <lines>1-165</lines>
+        <reason>Data models including ValidationLayer enum pattern and log schema types</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/base_strategy.py</path>
+        <kind>module</kind>
+        <symbol>RustyBTValidatedStrategy</symbol>
+        <lines>N/A</lines>
+        <reason>Target file for implementation - may already exist with stub</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/algorithm.py</path>
+        <kind>base class</kind>
+        <symbol>TradingAlgorithm</symbol>
+        <lines>N/A</lines>
+        <reason>rustybt's base algorithm class that RustyBTValidatedStrategy must extend</reason>
+      </artifact>
+      <artifact>
+        <path>tests/validation/conftest.py</path>
+        <kind>fixtures</kind>
+        <symbol>pytest fixtures</symbol>
+        <lines>1-50</lines>
+        <reason>Validation test fixtures including tmp_path and data fixtures</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">Data processing and log parsing</package>
+        <package name="pyyaml" version=">=6.0">Configuration and session storage</package>
+        <package name="click" version=">=8.0">CLI interface</package>
+        <package name="pytest" version=">=7.2.0">Testing framework</package>
+      </python>
+      <stdlib>
+        <module>pathlib</module>
+        <module>datetime</module>
+        <module>json</module>
+        <module>typing</module>
+      </stdlib>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Class must extend rustybt.algorithm.TradingAlgorithm</constraint>
+    <constraint type="pattern">Log format must be JSONL (one JSON object per line)</constraint>
+    <constraint type="pattern">Flush after each write to prevent data loss on crash</constraint>
+    <constraint type="pattern">Use ISO8601 timestamp format</constraint>
+    <constraint type="testing">Unit tests must achieve ≥80% coverage</constraint>
+    <constraint type="typing">Type hints required (mypy strict mode)</constraint>
+    <constraint type="linting">No ruff violations allowed</constraint>
+    <constraint type="layer">Valid layer values: data, signals, orders, broker, portfolio</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>_log_event</name>
+      <kind>method signature</kind>
+      <signature>def _log_event(self, layer: str, event: str, data: dict) -> None</signature>
+      <path>rustybt/validation/base_strategy.py</path>
+    </interface>
+    <interface>
+      <name>LogEntry Schema</name>
+      <kind>data structure</kind>
+      <signature>{"timestamp": str, "layer": str, "event": str, "asset": str|None, "data": dict}</signature>
+      <path>docs/architecture.md</path>
+    </interface>
+    <interface>
+      <name>TradingAlgorithm.initialize</name>
+      <kind>method override</kind>
+      <signature>def initialize(self, context: Any) -> None</signature>
+      <path>rustybt/algorithm.py</path>
+    </interface>
+    <interface>
+      <name>TradingAlgorithm.handle_data</name>
+      <kind>method override</kind>
+      <signature>def handle_data(self, context: Any, data: Any) -> None</signature>
+      <path>rustybt/algorithm.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing with coverage ≥80%. Use pytest markers for validation layers.
+      Property-based testing with Hypothesis for financial calculations.
+      Type checking with mypy strict mode. Linting with ruff.
+    </standards>
+    <locations>
+      <location>tests/validation/test_base_strategy.py</location>
+      <location>tests/validation/</location>
+    </locations>
+    <ideas>
+      <idea acId="AC1">Test that RustyBTValidatedStrategy creates log file at specified path</idea>
+      <idea acId="AC2">Test that _log_event writes valid JSONL with all required fields</idea>
+      <idea acId="AC3">Test that initialize() logs to layer "data", event "initialize"</idea>
+      <idea acId="AC3">Test that handle_data() logs to layer "data", event "bar_received"</idea>
+      <idea acId="AC4">Test that __del__ closes log file properly</idea>
+      <idea acId="AC4">Test context manager support for file handling</idea>
+      <idea acId="AC5">Test multiple events append correctly to file</idea>
+    </ideas>
+  </tests>
+</story-context>

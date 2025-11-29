@@ -1,0 +1,130 @@
+<story-context id="7-3" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>3</storyId>
+    <title>Implement Strategy Report Generator</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/7-3-reporting-documentation-system-story-3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>reports per strategy across all layers</iWant>
+    <soThat>strategy-specific validation can be reviewed</soThat>
+    <tasks>
+      <task id="1">Implement StrategyReportGenerator class (AC: #1)
+        <subtask>Create class in rustybt/validation/reporting.py</subtask>
+        <subtask>Accept strategy name as constructor parameter</subtask>
+        <subtask>Load most recent session for strategy from SessionManager</subtask>
+        <subtask>Collect findings organized by layer</subtask>
+        <subtask>Test: Unit tests with mock strategy data</subtask>
+      </task>
+      <task id="2">Implement strategy overview section (AC: #1)
+        <subtask>Generate Strategy Overview with description</subtask>
+        <subtask>Include strategy parameters if available</subtask>
+        <subtask>Show validation results table across all 5 layers</subtask>
+        <subtask>Calculate overall status (VALIDATED, PARTIAL, FAILED)</subtask>
+        <subtask>Test: Verify overview section format</subtask>
+      </task>
+      <task id="3">Implement findings summary and recommendations (AC: #2)
+        <subtask>Generate findings summary section grouped by layer</subtask>
+        <subtask>Add recommendations section based on findings</subtask>
+        <subtask>Include actionable guidance for users</subtask>
+        <subtask>Reference detailed findings from session report</subtask>
+        <subtask>Test: Verify recommendations match findings</subtask>
+      </task>
+      <task id="4">Add CLI strategy report command (AC: #3)
+        <subtask>Add report --strategy option to CLI</subtask>
+        <subtask>Accept strategy name as argument</subtask>
+        <subtask>Call StrategyReportGenerator for specified strategy</subtask>
+        <subtask>Save to docs/validation/strategy-{name}-report.md</subtask>
+        <subtask>Test: CLI integration tests</subtask>
+      </task>
+      <task id="5">Write comprehensive tests (AC: #1-3)
+        <subtask>Test with fully validated strategy (all layers pass)</subtask>
+        <subtask>Test with partial validation (some layers incomplete)</subtask>
+        <subtask>Test with findings in multiple layers</subtask>
+        <subtask>Test recommendation generation logic</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Given a fully validated strategy When strategy report is generated Then comprehensive strategy summary is produced with Strategy Overview, Parameters, Validation Results table, and Overall Status</criterion>
+    <criterion id="AC2">Findings Summary section includes detailed findings and Recommendations section with actionable user guidance</criterion>
+    <criterion id="AC3">CLI command rustybt-validate report --strategy sma_crossover saves report to docs/validation/strategy-sma-crossover-report.md</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Reporting &amp; Documentation (FR60-FR67)" snippet="FR62: System can generate per-strategy validation report (how a single strategy performed across all layers)."/>
+      <doc path="docs/architecture.md" title="Architecture Document" section="FR Category to Architecture Mapping" snippet="Reporting &amp; Documentation (FR60-FR67) maps to rustybt/validation/reporting.py."/>
+      <doc path="docs/epics/epic-7-reporting-documentation-system.md" title="Epic 7 Specification" section="Story 7.3" snippet="Strategy report includes Strategy Overview with parameters, Validation Results table per layer, Findings Summary, and Recommendations."/>
+    </docs>
+    <code>
+      <artifact path="rustybt/validation/reporting.py" kind="module" symbol="ReportGenerator, LayerReportGenerator" lines="1-7" reason="Base reporting module - add StrategyReportGenerator class"/>
+      <artifact path="rustybt/validation/cli.py" kind="module" symbol="main, config" lines="706-809" reason="CLI infrastructure - add --strategy option to report command"/>
+      <artifact path="rustybt/validation/session.py" kind="module" symbol="SessionManager" lines="N/A" reason="Session management - query sessions by strategy"/>
+      <artifact path="rustybt/validation/models.py" kind="module" symbol="Session, Finding" lines="118-364" reason="Session and Finding models for data extraction"/>
+      <artifact path="tests/validation/strategies/" kind="directory" symbol="N/A" lines="N/A" reason="Strategy implementations for test data"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0" purpose="CLI framework"/>
+        <package name="jinja2" version=">=3.0.0" purpose="Report template rendering"/>
+      </python>
+      <internal>
+        <dependency story="7-1" path="rustybt/validation/reporting.py" symbol="ReportGenerator" reason="Base report generation infrastructure"/>
+      </internal>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="prerequisite">Story 7.1 (session reports) must be completed first</constraint>
+    <constraint type="architecture">Strategy reports saved to docs/validation/ directory</constraint>
+    <constraint type="architecture">Focus on single strategy across all layers</constraint>
+    <constraint type="coding">Include recommendations for users based on findings</constraint>
+    <constraint type="coding">Reference detailed findings from session report</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="StrategyReportGenerator" kind="class">
+      <signature>class StrategyReportGenerator(strategy_name: str, session_manager: SessionManager)</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="generate" kind="method">
+      <signature>def generate(self) -> str</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="generate_recommendations" kind="method">
+      <signature>def generate_recommendations(self, findings: list[Finding]) -> list[str]</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="calculate_overall_status" kind="method">
+      <signature>def calculate_overall_status(self, session: Session) -> str</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="CLI report --strategy command" kind="CLI endpoint">
+      <signature>rustybt-validate report --strategy &lt;strategy_name&gt;</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework with custom markers. Zero mock enforcement. Test fixtures in tests/validation/fixtures/.</standards>
+    <locations>
+      <location>tests/validation/test_reporting.py</location>
+      <location>tests/validation/test_cli.py</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1">test_strategy_report_overview_section - verify overview with parameters</idea>
+      <idea acRef="AC1">test_strategy_report_validation_results_table - verify layer-by-layer results</idea>
+      <idea acRef="AC1">test_strategy_report_overall_status_calculation - verify VALIDATED/PARTIAL/FAILED logic</idea>
+      <idea acRef="AC2">test_strategy_report_findings_summary - verify findings grouped by layer</idea>
+      <idea acRef="AC2">test_strategy_report_recommendations - verify actionable guidance generated</idea>
+      <idea acRef="AC3">test_cli_strategy_report_command - verify CLI saves to correct path</idea>
+    </ideas>
+  </tests>
+</story-context>

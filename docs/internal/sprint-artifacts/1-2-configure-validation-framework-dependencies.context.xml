@@ -1,0 +1,148 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>2</storyId>
+    <title>Configure Validation Framework Dependencies</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-2-configure-validation-framework-dependencies.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>validation-specific dependencies installed</iWant>
+    <soThat>the validation framework has all required libraries available</soThat>
+    <tasks>
+- [ ] Task 1: Add optional dependencies group (AC: #1)
+  - [ ] Open `pyproject.toml` for editing
+  - [ ] Add `[project.optional-dependencies]` section if not exists
+  - [ ] Add `validation` group with three dependencies: backtrader>=1.9.78, click>=8.0, pyyaml>=6.0
+  - [ ] Ensure proper TOML formatting
+
+- [ ] Task 2: Verify existing dev dependencies (AC: #2)
+  - [ ] Check `[project.optional-dependencies.dev]` or `[tool.uv.dev-dependencies]` contains pytest>=7.2.0
+  - [ ] Verify polars>=1.0 is present in core or dev dependencies
+  - [ ] Verify hypothesis>=6.0 is present in dev dependencies
+  - [ ] Add any missing dependencies if not present
+
+- [ ] Task 3: Register CLI entry point (AC: #3)
+  - [ ] Locate or create `[project.scripts]` section in `pyproject.toml`
+  - [ ] Add entry: `rustybt-validate = "rustybt.validation.cli:main"`
+  - [ ] Ensure entry point follows format: `command = "module.path:function"`
+
+- [ ] Task 4: Implement minimal CLI stub (AC: #4)
+  - [ ] Create `rustybt/validation/cli.py` with Click main function
+  - [ ] Implement `--version` flag using Click decorators
+  - [ ] Read version from `importlib.metadata.version("rustybt")`
+  - [ ] Return version string when `rustybt-validate --version` is called
+
+- [ ] Task 5: Test installation and CLI access (AC: #4)
+  - [ ] Run `pip install -e ".[validation]"` in development environment
+  - [ ] Verify installation completes without errors
+  - [ ] Run `rustybt-validate --version` and verify output
+  - [ ] Run `rustybt-validate --help` and verify help text displays
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Optional dependencies configured** - `pyproject.toml` contains `[project.optional-dependencies]` section with validation group
+   - `backtrader>=1.9.78` (reference framework for comparison)
+   - `click>=8.0` (CLI interface)
+   - `pyyaml>=6.0` (session and configuration storage)
+
+2. **Development dependencies verified** - Existing dev dependencies include required testing tools
+   - `pytest>=7.2.0` (test framework)
+   - `polars>=1.0` (data processing, log comparison)
+   - `hypothesis>=6.0` (property-based testing)
+
+3. **CLI entry point registered** - `[project.scripts]` section includes validation CLI
+   - Entry point: `rustybt-validate = "rustybt.validation.cli:main"`
+
+4. **Installation succeeds** - Validation dependencies install without errors
+   - `pip install -e ".[validation]"` completes successfully
+   - CLI is accessible: `rustybt-validate --version` returns version number
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Technology Stack</title>
+        <section>Technology Stack Details</section>
+        <snippet>
+New Dependencies for Validation Framework:
+- PyYAML >=6.0 (Session and tolerance configs)
+- Click >=8.0 (Command-line interface)
+- Backtrader >=1.9.78 (Comparison baseline)
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - CLI Interface</title>
+        <section>CLI Interface</section>
+        <snippet>
+rustybt-validate --version          # Show version
+rustybt-validate --help             # Show all commands
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <item>
+        <path>pyproject.toml</path>
+        <kind>config</kind>
+        <symbol>project.optional-dependencies</symbol>
+        <lines>116-138</lines>
+        <reason>Target file for dependency configuration.</reason>
+      </item>
+      <item>
+        <path>rustybt/validation/cli.py</path>
+        <kind>file</kind>
+        <symbol>main</symbol>
+        <lines>new file</lines>
+        <reason>New CLI entry point implementation.</reason>
+      </item>
+    </code>
+    <dependencies>
+      <ecosystem name="python">
+        <package name="backtrader" version=">=1.9.78" />
+        <package name="click" version=">=8.0" />
+        <package name="pyyaml" version=">=6.0" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Architecture</type>
+      <description>Optional Dependencies: Validation framework must be opt-in via `[validation]` extra.</description>
+    </constraint>
+    <constraint>
+      <type>Architecture</type>
+      <description>CLI Framework: Must use Click (not argparse).</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>CLI Entry Point</name>
+      <kind>Command Line</kind>
+      <signature>rustybt-validate</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Verify installation via pip.
+      Verify CLI version output matches package version.
+    </standards>
+    <locations>
+      <location>Manual verification in dev environment</location>
+    </locations>
+    <ideas>
+      <idea>Test `pip install -e ".[validation]"`</idea>
+      <idea>Test `rustybt-validate --version`</idea>
+    </ideas>
+  </tests>
+</story-context>

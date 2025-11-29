@@ -1,0 +1,230 @@
+<story-context id="4-7-implement-layer5-portfolio-returns-comparator" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>7</storyId>
+    <title>Implement Layer 5 Portfolio Returns Comparator</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/4-7-implement-layer5-portfolio-returns-comparator.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Layer 5 comparison for portfolio returns</iWant>
+    <soThat>return calculations, portfolio valuations, and performance metrics differences between rustybt and Backtrader are detected</soThat>
+    <tasks>
+      <task id="1" status="pending">Implement Layer5PortfolioComparator class
+        <subtask>Add class to rustybt/validation/comparators.py</subtask>
+        <subtask>Define compare() method signature</subtask>
+        <subtask>Filter logs by layer="portfolio"</subtask>
+      </task>
+      <task id="2" status="pending">Implement return calculation comparison
+        <subtask>Create compare_returns() method</subtask>
+        <subtask>Extract daily return events</subtask>
+        <subtask>Compare cumulative returns</subtask>
+        <subtask>Handle annualized returns if calculated</subtask>
+        <subtask>Use return_decimal_places tolerance</subtask>
+      </task>
+      <task id="3" status="pending">Implement portfolio valuation comparison
+        <subtask>Create compare_portfolio_value() method</subtask>
+        <subtask>Extract portfolio value at each bar</subtask>
+        <subtask>Compare starting/final values</subtask>
+        <subtask>Compare time series with tolerance</subtask>
+        <subtask>Use portfolio_value_decimal_places tolerance</subtask>
+      </task>
+      <task id="4" status="pending">Implement performance metrics comparison
+        <subtask>Create compare_metrics() method</subtask>
+        <subtask>Compare Sharpe ratio</subtask>
+        <subtask>Compare max drawdown</subtask>
+        <subtask>Compare volatility</subtask>
+        <subtask>Use metric_decimal_places tolerance</subtask>
+        <subtask>Note DESIGN differences in calculation methods</subtask>
+      </task>
+      <task id="5" status="pending">Create test file with marker
+        <subtask>Create tests/validation/test_layer_5_portfolio.py</subtask>
+        <subtask>Register @pytest.mark.layer_5_portfolio marker</subtask>
+        <subtask>Add test fixtures for portfolio logs</subtask>
+      </task>
+      <task id="6" status="pending">Write comprehensive tests
+        <subtask>Test return calculations comparison</subtask>
+        <subtask>Test portfolio value comparison</subtask>
+        <subtask>Test performance metric comparison</subtask>
+        <subtask>Test DESIGN differences handling</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Layer5PortfolioComparator class implemented in rustybt/validation/comparators.py</criterion>
+    <criterion id="AC2">Constructor accepts tolerances dict</criterion>
+    <criterion id="AC3">compare(rustybt_logs, backtrader_logs) returns list[Discrepancy]</criterion>
+    <criterion id="AC4">Return calculation comparison: daily, cumulative, annualized with return_decimal_places tolerance</criterion>
+    <criterion id="AC5">Portfolio valuation comparison: value at each bar, starting/final with portfolio_value_decimal_places tolerance</criterion>
+    <criterion id="AC6">Performance metrics comparison: Sharpe, max drawdown, volatility with metric_decimal_places tolerance</criterion>
+    <criterion id="AC7">pytest test file exists with @pytest.mark.layer_5_portfolio marker</criterion>
+    <criterion id="AC8">Unit tests verify return, portfolio value, and metrics comparisons</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Validation Layers</title>
+        <section>Log-Based Validation Architecture (lines 149-216)</section>
+        <snippet>Layer 5 Portfolio Returns: return calculations, portfolio value, performance metrics. Events: portfolio_updated, metrics_calculated.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Portfolio Returns Validation</title>
+        <section>FR16-FR18 (Portfolio Returns)</section>
+        <snippet>System can compare portfolio return logs to validate return calculations, portfolio valuations, and performance metrics.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Performance Metrics Accuracy</title>
+        <section>Domain-Specific Requirements - Performance Metrics Accuracy</section>
+        <snippet>Returns: daily, cumulative, annualized calculated correctly. Risk metrics: Sharpe ratio, max drawdown, volatility computed accurately.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-4-5-layer-comparison-test-suite.md</path>
+        <title>Epic 4 - Story 4.7 Specification</title>
+        <section>Story 4.7: Implement Layer 5 Portfolio Returns Comparator</section>
+        <snippet>Return calculations may use different conventions (DESIGN). Portfolio value is most important metric. Performance metrics may differ due to calculation methods.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/comparators.py</path>
+        <kind>module</kind>
+        <symbol>Layer1-4 Comparators, Layer5PortfolioComparator</symbol>
+        <lines>all</lines>
+        <reason>Target module - add Layer5PortfolioComparator as final layer</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>module</kind>
+        <symbol>Discrepancy</symbol>
+        <lines>231-258</lines>
+        <reason>Discrepancy dataclass returned by comparator</reason>
+      </file>
+      <file>
+        <path>tests/validation/config/layer_5_tolerances.yaml</path>
+        <kind>config</kind>
+        <symbol>tolerance config</symbol>
+        <lines>all</lines>
+        <reason>Layer 5 tolerance configuration with return, portfolio, and metric tolerances</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">DataFrame filtering and time series operations</package>
+      </python>
+      <internal>
+        <module name="rustybt.validation.models">Discrepancy dataclass</module>
+        <module name="rustybt.validation.comparators">values_match helper, Layer1-4 patterns</module>
+      </internal>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">Return calculations may use different conventions (DESIGN)</constraint>
+    <constraint source="architecture">Portfolio value is most important metric for validation</constraint>
+    <constraint source="architecture">Performance metrics may differ due to calculation methods</constraint>
+    <constraint source="prd">Decimal precision for all financial calculations</constraint>
+    <constraint source="epic">Prerequisite: Story 4.6 (Layer 4 comparator pattern)</constraint>
+    <constraint source="epic">Final layer comparator - completes the 5-layer validation suite</constraint>
+    <constraint source="coding-standards">Python 3.12+, type hints, Google docstrings</constraint>
+  </constraints>
+
+  <knownDesignDifferences>
+    <difference id="SHARPE_RATIO">
+      <description>Sharpe ratio calculation may differ</description>
+      <rustybt>Uses annualized returns with configurable risk-free rate</rustybt>
+      <backtrader>Uses built-in calculation with default risk-free rate</backtrader>
+      <rationale>Different risk-free rate assumptions or annualization methods</rationale>
+    </difference>
+    <difference id="MAX_DRAWDOWN">
+      <description>Max drawdown calculation may differ</description>
+      <rustybt>Peak tracking from start of backtest</rustybt>
+      <backtrader>Peak tracking implementation may vary</backtrader>
+      <rationale>Different peak tracking or time period handling</rationale>
+    </difference>
+    <difference id="RETURN_CONVENTION">
+      <description>Return calculation conventions may differ</description>
+      <rustybt>Uses log returns by default</rustybt>
+      <backtrader>Uses simple returns</backtrader>
+      <rationale>Both are valid; configure same convention for comparison</rationale>
+    </difference>
+  </knownDesignDifferences>
+
+  <interfaces>
+    <interface>
+      <name>Layer5PortfolioComparator</name>
+      <kind>class</kind>
+      <signature>class Layer5PortfolioComparator</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare</name>
+      <kind>method</kind>
+      <signature>def compare(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_returns</name>
+      <kind>method</kind>
+      <signature>def compare_returns(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_portfolio_value</name>
+      <kind>method</kind>
+      <signature>def compare_portfolio_value(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_metrics</name>
+      <kind>method</kind>
+      <signature>def compare_metrics(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework, @pytest.mark.layer_5_portfolio marker. Tests in tests/validation/test_layer_5_portfolio.py.</standards>
+    <locations>
+      <location>tests/validation/test_layer_5_portfolio.py</location>
+    </locations>
+    <ideas>
+      <idea ac="AC4">test_daily_return_match - verify daily return comparison</idea>
+      <idea ac="AC4">test_daily_return_mismatch - verify discrepancy for different daily returns</idea>
+      <idea ac="AC4">test_cumulative_return_comparison - verify cumulative return at end</idea>
+      <idea ac="AC5">test_portfolio_value_at_bar - verify value comparison at each bar</idea>
+      <idea ac="AC5">test_starting_value_match - verify starting portfolio value</idea>
+      <idea ac="AC5">test_final_value_mismatch - verify discrepancy for different final values</idea>
+      <idea ac="AC6">test_sharpe_ratio_comparison - verify Sharpe ratio comparison</idea>
+      <idea ac="AC6">test_max_drawdown_comparison - verify max drawdown comparison</idea>
+      <idea ac="AC6">test_volatility_comparison - verify volatility comparison</idea>
+      <idea ac="AC8">test_design_difference_filtering - verify DESIGN differences are filterable</idea>
+    </ideas>
+  </tests>
+
+  <portfolioLogSchema>
+    <description>Portfolio log event schema for Layer 5 comparison</description>
+    <example>
+{
+  "timestamp": "2020-01-15T16:00:00",
+  "layer": "portfolio",
+  "event": "portfolio_updated",
+  "data": {
+    "portfolio_value": 101500.00,
+    "daily_return": 0.015,
+    "cumulative_return": 0.015,
+    "cash": 50000.00,
+    "positions_value": 51500.00
+  }
+}
+    </example>
+  </portfolioLogSchema>
+</story-context>

@@ -1,0 +1,181 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1</storyId>
+    <title>Initialize Validation Framework Directory Structure</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-1-initialize-validation-framework-directory-structure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>the dual-location validation architecture created</iWant>
+    <soThat>validation code is properly organized between library and test locations</soThat>
+    <tasks>
+- [ ] Task 1: Create library directory structure (AC: #1)
+  - [ ] Create `rustybt/validation/` directory
+  - [ ] Create `rustybt/validation/__init__.py` with module docstring
+  - [ ] Create empty placeholder files: `base_strategy.py`, `session.py`, `log_parser.py`, `comparators.py`, `models.py`, `reporting.py`, `cli.py`
+  - [ ] Add module-level docstrings to each placeholder file
+
+- [ ] Task 2: Create test directory structure (AC: #2)
+  - [ ] Create `tests/validation/` directory
+  - [ ] Create `tests/validation/__init__.py`
+  - [ ] Create `tests/validation/conftest.py` with pytest imports
+  - [ ] Create `tests/validation/strategies/` with `rustybt/` and `backtrader/` subdirectories
+  - [ ] Create `tests/validation/fixtures/` directory
+  - [ ] Create `tests/validation/config/` directory
+  - [ ] Add `__init__.py` to all strategy subdirectories
+
+- [ ] Task 3: Create session storage directory (AC: #3)
+  - [ ] Create `validation-sessions/` at project root
+  - [ ] Add `validation-sessions/` to `.gitignore`
+  - [ ] Create `.gitkeep` file inside to preserve directory structure in git
+
+- [ ] Task 4: Create documentation structure (AC: #4)
+  - [ ] Create `docs/validation/` directory
+  - [ ] Create `docs/validation/README.md` placeholder
+
+- [ ] Task 5: Verify structure integrity
+  - [ ] Run `python -c "import rustybt.validation"` to verify importability
+  - [ ] Verify all directories exist via automated check
+  - [ ] Verify `.gitignore` contains `validation-sessions/`
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Library location created** - `rustybt/validation/` directory exists with module structure
+   - `__init__.py` (module initialization)
+   - Empty placeholder files: `base_strategy.py`, `session.py`, `log_parser.py`, `comparators.py`, `models.py`, `reporting.py`, `cli.py`
+
+2. **Test location created** - `tests/validation/` directory exists with test infrastructure
+   - `__init__.py` (test module initialization)
+   - `conftest.py` (pytest fixtures placeholder)
+   - `strategies/` subdirectory with dual framework structure:
+     - `rustybt/` (rustybt strategy implementations)
+     - `backtrader/` (backtrader strategy implementations)
+   - `fixtures/` (test data directory)
+   - `config/` (tolerance configuration directory)
+
+3. **Session storage created** - `validation-sessions/` directory exists at project root
+   - Directory is gitignored (added to `.gitignore`)
+   - Used for runtime session execution and persistence
+
+4. **Documentation structure created** - `docs/validation/` directory exists
+   - Placeholder for validation framework documentation
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Project Structure</title>
+        <section>Project Structure</section>
+        <snippet>
+rustybt/
+├── rustybt/                          # Core library
+│   ├── validation/                   # Validation framework library (NEW)
+├── tests/
+│   ├── validation/                   # Validation test infrastructure (ENHANCED)
+├── validation-sessions/              # Session storage (NEW, gitignored)
+└── docs/
+    └── validation/                  # Validation framework docs (NEW)
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Technology Stack</title>
+        <section>Technology Stack Details</section>
+        <snippet>
+New Dependencies for Validation Framework:
+- PyYAML >=6.0 (Session and tolerance configs)
+- Click >=8.0 (Command-line interface)
+- Backtrader >=1.9.78 (Comparison baseline)
+        </snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 1: Foundation</title>
+        <section>Story 1.1: Initialize Validation Framework Directory Structure</section>
+        <snippet>
+Goal: Establish the dual-location validation architecture (`rustybt/validation/` + `tests/validation/`) with core infrastructure.
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <item>
+        <path>tests/validation/test_backtest_paper_correlation.py</path>
+        <kind>test</kind>
+        <symbol>N/A</symbol>
+        <lines>1-end</lines>
+        <reason>Existing validation test file. Note: This story creates a new structure that may coexist or supersede this.</reason>
+      </item>
+      <item>
+        <path>pyproject.toml</path>
+        <kind>config</kind>
+        <symbol>project.optional-dependencies</symbol>
+        <lines>116-138</lines>
+        <reason>Defines existing dependencies and where to add new validation dependencies.</reason>
+      </item>
+    </code>
+    <dependencies>
+      <ecosystem name="python">
+        <package name="pytest" version=">=7.2.0" />
+        <package name="polars" version=">=1.0" />
+        <package name="hypothesis" version=">=6.0" />
+        <package name="click" version=">=8.0" />
+        <package name="pyyaml" version=">=6.0" />
+        <package name="backtrader" version=">=1.9.78" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Architecture</type>
+      <description>Dual-Location Pattern: Library code in `rustybt/validation/`, tests in `tests/validation/`.</description>
+    </constraint>
+    <constraint>
+      <type>Architecture</type>
+      <description>Session Storage: `validation-sessions/` must be gitignored.</description>
+    </constraint>
+    <constraint>
+      <type>Technology</type>
+      <description>Python 3.12+ required.</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>SessionManager</name>
+      <kind>Class</kind>
+      <signature>create, save, load, list_sessions</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+    <interface>
+      <name>CLI</name>
+      <kind>Command Line</kind>
+      <signature>rustybt-validate session [create|list|show]</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Use pytest with markers (e.g., @pytest.mark.validation).
+      Property-based testing with Hypothesis is encouraged.
+      Strict typing with mypy and linting with ruff are enforced.
+    </standards>
+    <locations>
+      <location>tests/validation/</location>
+    </locations>
+    <ideas>
+      <idea>Verify `rustybt.validation` is importable.</idea>
+      <idea>Verify all required directories exist.</idea>
+      <idea>Verify `validation-sessions/` is in `.gitignore`.</idea>
+      <idea>Verify `__init__.py` files exist in all new packages.</idea>
+    </ideas>
+  </tests>
+</story-context>

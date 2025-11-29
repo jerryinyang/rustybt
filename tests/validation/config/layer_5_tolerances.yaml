@@ -1,0 +1,6 @@
+# Layer 5: Portfolio Returns Tolerances
+layer_5_portfolio:
+  portfolio_value_decimal_places: 2
+  returns_tolerance_pct: 0.0001
+  sharpe_decimal_places: 4
+  drawdown_tolerance_pct: 0.0001

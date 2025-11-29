@@ -1,0 +1,148 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>5</storyId>
+    <title>Implement Basic Session Manager</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-5-implement-basic-session-manager.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>a SessionManager class to handle session lifecycle</iWant>
+    <soThat>validation sessions can be created, stored, loaded, and queried systematically</soThat>
+    <tasks>
+- [ ] Task 1: Implement create() method (AC: #1)
+  - [ ] Create `rustybt/validation/session.py` module
+  - [ ] Implement ID generation: `{YYYYMMDD}-{HHMMSS}-{strategy_name}`
+  - [ ] Capture versions: rustybt, backtrader, python
+  - [ ] Create session directory structure: `validation-sessions/{id}/` with logs/ and analysis/
+  - [ ] Create Session object and save it
+
+- [ ] Task 2: Implement save() method (AC: #2)
+  - [ ] Convert Session dataclass to dict (handle Path/datetime serialization)
+  - [ ] Write to `validation-sessions/{id}/session.yaml` using PyYAML safe_dump
+
+- [ ] Task 3: Implement load() method (AC: #3)
+  - [ ] Read YAML file and validate schema
+  - [ ] Reconstruct Session object (parse Path/datetime strings)
+  - [ ] Handle FileNotFoundError and YAMLError
+
+- [ ] Task 4: Implement list_sessions() method (AC: #4)
+  - [ ] Scan `validation-sessions/` directory
+  - [ ] Filter by status if provided
+  - [ ] Sort by created_at descending
+
+- [ ] Task 5: Add custom exceptions (AC: #5)
+  - [ ] Create `ValidationError` in models.py
+  - [ ] Use for invalid inputs and schema failures
+
+- [ ] Task 6: Add unit tests
+  - [ ] Create `tests/validation/test_session_manager.py`
+  - [ ] Test create, save, load, list, and error handling
+
+- [ ] Task 7: Add integration test with fixture
+  - [ ] Verify full lifecycle with real data fixture
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **create() method implemented** - Creates new validation session with unique ID, directory structure, and version metadata.
+
+2. **save() method implemented** - Persists session state to human-readable YAML, handling complex types (Path, datetime).
+
+3. **load() method implemented** - Loads session from YAML with type validation and error handling.
+
+4. **list_sessions() method implemented** - Lists all sessions, supports filtering by status, sorted by date.
+
+5. **Error handling robust** - Raises specific exceptions (FileNotFoundError, ValidationError) for failure modes.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Session Storage</title>
+        <section>Session Storage</section>
+        <snippet>
+Session Storage (ADR-003):
+- Format: YAML (human-readable)
+- Location: validation-sessions/{session_id}/session.yaml
+- Structure: Separate directories for logs and analysis artifacts
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <item>
+        <path>rustybt/validation/session.py</path>
+        <kind>file</kind>
+        <symbol>SessionManager</symbol>
+        <lines>new file</lines>
+        <reason>Core session management logic.</reason>
+      </item>
+      <item>
+        <path>rustybt/validation/models.py</path>
+        <kind>file</kind>
+        <symbol>ValidationError</symbol>
+        <lines>update</lines>
+        <reason>Add custom exception class.</reason>
+      </item>
+      <item>
+        <path>tests/validation/test_session_manager.py</path>
+        <kind>test</kind>
+        <symbol>test_session_create</symbol>
+        <lines>new file</lines>
+        <reason>Unit tests for SessionManager.</reason>
+      </item>
+    </code>
+    <dependencies>
+      <ecosystem name="python">
+        <package name="pyyaml" version=">=6.0" />
+        <package name="importlib-metadata" version="stdlib" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Architecture</type>
+      <description>Storage Format: Must use YAML for session metadata.</description>
+    </constraint>
+    <constraint>
+      <type>Architecture</type>
+      <description>Directory Structure: Must create dedicated directory per session.</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>SessionManager</name>
+      <kind>Class</kind>
+      <signature>create(strategy_name, data_fixture) -> Session</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+    <interface>
+      <name>SessionManager</name>
+      <kind>Class</kind>
+      <signature>load(session_id) -> Session</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Verify directory creation and file existence.
+      Verify YAML content matches object state.
+      Verify round-trip serialization (save -> load).
+    </standards>
+    <locations>
+      <location>tests/validation/test_session_manager.py</location>
+    </locations>
+    <ideas>
+      <idea>Test with special characters in strategy name.</idea>
+      <idea>Test loading a manually corrupted YAML file.</idea>
+    </ideas>
+  </tests>
+</story-context>

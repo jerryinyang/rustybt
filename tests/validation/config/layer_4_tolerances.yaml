@@ -1,0 +1,6 @@
+# Layer 4: Broker Transaction Tolerances
+layer_4_broker:
+  transaction_timestamp_window_ms: 1
+  commission_decimal_places: 2
+  slippage_tolerance_pct: 0.001
+  cash_decimal_places: 2

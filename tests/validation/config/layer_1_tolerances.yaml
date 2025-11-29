@@ -1,0 +1,24 @@
+# Layer 1: Data Handling Tolerances
+# Used for lookahead bias detection and bar alignment comparison
+# between rustybt and Backtrader frameworks.
+
+layer_1_data:
+  # Timestamp alignment: milliseconds allowed between framework timestamps
+  # Rationale: Different datetime serialization may cause minor differences
+  # Zero means exact match required
+  timestamp_window_ms: 1
+
+  # Price comparison: decimal places to compare
+  # Rationale: Float vs Decimal differences at 5+ decimals
+  # 4 decimal places = $0.0001 precision
+  price_decimal_places: 4
+
+  # Volume comparison: percentage tolerance
+  # Rationale: Rounding differences in volume calculations
+  # 0.001 = 0.1% tolerance
+  volume_tolerance_pct: 0.001
+
+  # Bar count: allowed difference between framework bar counts
+  # Rationale: Both frameworks must process same bars
+  # Zero means exact match required
+  bar_count_tolerance: 0

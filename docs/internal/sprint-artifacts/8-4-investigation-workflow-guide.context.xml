@@ -1,0 +1,138 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>4</storyId>
+    <title>Create Investigation Workflow User Guide</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/8-4-investigation-workflow-guide.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>validation framework user</asA>
+    <iWant>an investigation workflow user guide</iWant>
+    <soThat>I can properly investigate and classify discrepancies</soThat>
+    <tasks>
+      <task id="1" title="Create discrepancy report reading section">
+        <subtask>Explain report structure and fields</subtask>
+        <subtask>Document expected vs actual value interpretation</subtask>
+        <subtask>Explain layer-specific discrepancy details</subtask>
+        <subtask>Show example report with annotations</subtask>
+      </task>
+      <task id="2" title="Create CLI investigation commands section">
+        <subtask>Document rustybt-validate investigate &lt;session_id&gt; command</subtask>
+        <subtask>Document --layer filtering option</subtask>
+        <subtask>Document rustybt-validate classify &lt;finding_id&gt; command</subtask>
+        <subtask>Show typical investigation workflow sequence</subtask>
+      </task>
+      <task id="3" title="Create BUG vs DESIGN classification guide">
+        <subtask>Define BUG classification criteria (framework error requiring fix)</subtask>
+        <subtask>Define DESIGN classification criteria (intentional difference)</subtask>
+        <subtask>Create decision tree flowchart</subtask>
+        <subtask>Document edge cases and judgment calls</subtask>
+      </task>
+      <task id="4" title="Create documentation requirements section">
+        <subtask>Document rationale requirements for BUG classifications</subtask>
+        <subtask>Document rationale requirements for DESIGN classifications</subtask>
+        <subtask>Provide rationale templates and examples</subtask>
+        <subtask>Explain findings.yaml structure</subtask>
+      </task>
+      <task id="5" title="Create fix verification section">
+        <subtask>Document bug fix workflow (code change → revalidate)</subtask>
+        <subtask>Document how to mark findings as resolved</subtask>
+        <subtask>Document regression test creation</subtask>
+        <subtask>Document DESIGN documentation generation</subtask>
+      </task>
+      <task id="6" title="Create BUG example walkthrough">
+        <subtask>Choose real or realistic bug example</subtask>
+        <subtask>Walk through investigation steps</subtask>
+        <subtask>Show source code linking</subtask>
+        <subtask>Show fix and verification</subtask>
+      </task>
+      <task id="7" title="Create DESIGN example walkthrough">
+        <subtask>Choose real or realistic design difference example</subtask>
+        <subtask>Walk through investigation steps</subtask>
+        <subtask>Show rationale documentation</subtask>
+        <subtask>Show user-facing documentation generation</subtask>
+      </task>
+      <task id="8" title="Create best practices section">
+        <subtask>Reproducibility guidelines</subtask>
+        <subtask>Evidence gathering techniques</subtask>
+        <subtask>Source code navigation tips</subtask>
+        <subtask>Root cause analysis methodology</subtask>
+      </task>
+      <task id="9" title="Testing">
+        <subtask>Verify CLI commands documented correctly</subtask>
+        <subtask>Verify decision tree logic is clear</subtask>
+        <subtask>Review examples for accuracy and completeness</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Users understand how to read discrepancy reports</criterion>
+    <criterion id="AC2">Users understand how to use the investigation CLI commands</criterion>
+    <criterion id="AC3">Users understand when to classify findings as BUG vs DESIGN</criterion>
+    <criterion id="AC4">Users understand how to document investigation rationale</criterion>
+    <criterion id="AC5">Users understand how to verify bug fixes and mark findings as resolved</criterion>
+    <criterion id="AC6">Guide includes decision tree for BUG vs DESIGN classification</criterion>
+    <criterion id="AC7">Guide includes real examples of BUG findings with investigation walkthrough</criterion>
+    <criterion id="AC8">Guide includes real examples of DESIGN findings with documentation approach</criterion>
+    <criterion id="AC9">Guide includes investigation best practices</criterion>
+    <criterion id="AC10">Guide includes tips for source code linking and root cause analysis</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/architecture.md" title="Architecture Document" section="Pattern 4: Finding Classification Workflow" snippet="All findings must be classified as BUG or DESIGN. CLI enforces classification before marking resolved. Unclassified findings block validation completion." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="Data Models" snippet="Finding model: id, layer, description, classification (BUG|DESIGN), rationale, investigated_by, investigated_at, resolved, rustybt_value, backtrader_value." />
+      <doc path="docs/prd.md" title="PRD" section="Investigation &amp; Classification Workflow" snippet="FR41-FR54: Present discrepancies, link to source code, track investigation notes, classify as BUG/DESIGN, record rationale, verify fixes, generate regression tests." />
+      <doc path="docs/prd.md" title="PRD" section="Non-Functional Requirements" snippet="NFR19: Investigation workflow must guide user through classification process. NFR26: All classifications must include timestamps and author." />
+    </docs>
+    <code>
+      <file path="rustybt/validation/cli.py" kind="module" symbol="investigate, classify" reason="CLI commands for investigation and classification" />
+      <file path="rustybt/validation/models.py" kind="module" symbol="Finding, Discrepancy" reason="Data models for findings and discrepancies" />
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0" purpose="CLI interface" />
+        <package name="pyyaml" version=">=6.0" purpose="Session and findings storage" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">All findings must be classified as BUG or DESIGN</constraint>
+    <constraint source="architecture">CLI enforces classification before marking finding as resolved</constraint>
+    <constraint source="architecture">Unclassified findings block validation completion</constraint>
+    <constraint source="architecture">Findings stored in session/findings.yaml with structured format</constraint>
+    <constraint source="prd">Investigation workflow must guide user through classification process (NFR19)</constraint>
+    <constraint source="prd">Zero false positives and false negatives in test suite (NFR2, NFR3)</constraint>
+    <constraint source="prd">All classifications must include timestamps and author (NFR26)</constraint>
+    <constraint source="epic">Guide location: docs/validation/investigation-guide.md</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="CLI Investigate" kind="CLI command" signature="rustybt-validate investigate &lt;session_id&gt; [--layer data]" path="rustybt/validation/cli.py" />
+    <interface name="CLI Classify" kind="CLI command" signature="rustybt-validate classify &lt;finding_id&gt; --type BUG|DESIGN --rationale '...'" path="rustybt/validation/cli.py" />
+    <interface name="Finding Model" kind="dataclass" signature="@dataclass Finding: id, layer, description, classification, rationale, investigated_by, investigated_at, resolved" path="rustybt/validation/models.py" />
+    <interface name="findings.yaml" kind="YAML file" signature="session/findings.yaml" path="validation-sessions/{session_id}/findings.yaml" />
+  </interfaces>
+
+  <tests>
+    <standards>Investigation workflow must guide user through classification process. All classifications must include timestamps and author. Zero false positives and negatives.</standards>
+    <locations>
+      <location>docs/validation/investigation-guide.md</location>
+      <location>rustybt/validation/cli.py</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1">Verify discrepancy report format documentation matches actual output</idea>
+      <idea acRef="AC2">Test CLI investigation commands match documented behavior</idea>
+      <idea acRef="AC3,AC6">Test decision tree with edge cases</idea>
+      <idea acRef="AC4">Verify findings.yaml structure documentation is accurate</idea>
+      <idea acRef="AC5">Test fix verification workflow end-to-end</idea>
+      <idea acRef="AC7,AC8">Verify example walkthroughs are reproducible</idea>
+    </ideas>
+  </tests>
+</story-context>

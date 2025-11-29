@@ -1,0 +1,133 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>6</storyId>
+    <title>Implement Log Schema Validation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-6-strategy-comparison-infrastructure-story-6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>validation that log files follow the expected schema</iWant>
+    <soThat>comparison can detect malformed logs before processing</soThat>
+    <tasks>
+      <task id="1">Create/update log_parser.py module (AC: #1, #2, #3, #4)</task>
+      <task id="2">Implement ValidationResult dataclass (AC: #5)</task>
+      <task id="3">Implement schema validation logic (AC: #2, #3, #4)</task>
+      <task id="4">Add CLI command (AC: #6)</task>
+      <task id="5">Write unit tests (AC: #7)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">validate_log_schema() function validates JSONL against expected schema</criterion>
+    <criterion id="AC2">Schema validation checks required fields (timestamp, layer, event)</criterion>
+    <criterion id="AC3">Schema validation checks valid layer values</criterion>
+    <criterion id="AC4">Schema validation detects JSON errors with line numbers</criterion>
+    <criterion id="AC5">ValidationResult dataclass with valid, line_count, errors</criterion>
+    <criterion id="AC6">CLI command: rustybt-validate log validate path</criterion>
+    <criterion id="AC7">Unit tests cover validation scenarios</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Log Schema (pg 183-189)</section>
+        <snippet>Required fields: timestamp, layer, event. Valid layers: data, signals, orders, broker, portfolio.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/2-5-strategy-comparison-infrastructure-story-5.md</path>
+        <title>Story 2.5</title>
+        <section>Execution produces logs</section>
+        <snippet>Execution scripts output JSONL to --output path. Validation ensures schema correctness before comparison.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>rustybt/validation/log_parser.py</path>
+        <kind>module</kind>
+        <symbol>validate_log_schema</symbol>
+        <lines>all</lines>
+        <reason>Target file for implementation - may have stub</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/cli.py</path>
+        <kind>module</kind>
+        <symbol>main, session commands</symbol>
+        <lines>all</lines>
+        <reason>Add log validate subcommand</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>models</kind>
+        <symbol>ValidationResult pattern</symbol>
+        <lines>all</lines>
+        <reason>Reference for dataclass pattern</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <stdlib>
+        <module>json</module>
+        <module>pathlib</module>
+        <module>dataclasses</module>
+      </stdlib>
+      <python>
+        <package name="click" version=">=8.0">CLI interface</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="schema">Required fields: timestamp, layer, event</constraint>
+    <constraint type="schema">Valid layers: data, signals, orders, broker, portfolio</constraint>
+    <constraint type="performance">Stream file to handle large logs (>100MB)</constraint>
+    <constraint type="error">Collect all errors (don't stop at first)</constraint>
+    <constraint type="error">Include line number in error messages</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>validate_log_schema</name>
+      <kind>function</kind>
+      <signature>def validate_log_schema(log_path: Path) -> ValidationResult</signature>
+      <path>rustybt/validation/log_parser.py</path>
+    </interface>
+    <interface>
+      <name>ValidationResult</name>
+      <kind>dataclass</kind>
+      <signature>@dataclass class ValidationResult: valid: bool; line_count: int; errors: list[str]</signature>
+      <path>rustybt/validation/log_parser.py</path>
+    </interface>
+    <interface>
+      <name>VALID_LAYERS</name>
+      <kind>constant</kind>
+      <signature>VALID_LAYERS = {"data", "signals", "orders", "broker", "portfolio"}</signature>
+      <path>rustybt/validation/log_parser.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing. Test fixtures for valid and invalid log files.
+      Test streaming behavior for large files.
+    </standards>
+    <locations>
+      <location>tests/validation/test_log_parser.py</location>
+    </locations>
+    <ideas>
+      <idea acId="AC1">Test valid log file returns valid=True</idea>
+      <idea acId="AC2">Test missing timestamp field detected</idea>
+      <idea acId="AC2">Test missing layer field detected</idea>
+      <idea acId="AC2">Test missing event field detected</idea>
+      <idea acId="AC3">Test invalid layer value detected with line number</idea>
+      <idea acId="AC4">Test invalid JSON line detected with line number</idea>
+      <idea acId="AC5">Test ValidationResult __str__ output format</idea>
+      <idea acId="AC7">Test multiple errors collected in single pass</idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,162 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>3</storyId>
+    <title>Implement Core Data Models</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-3-implement-core-data-models.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>foundational data models defined</iWant>
+    <soThat>validation code has strongly-typed structures for sessions, findings, and discrepancies</soThat>
+    <tasks>
+- [ ] Task 1: Implement Session model (AC: #1)
+  - [ ] Create `rustybt/validation/models.py` file
+  - [ ] Import required types: dataclass, field, datetime, Path, Literal, Optional, Any
+  - [ ] Define Session dataclass with 9 fields and type hints
+  - [ ] Add field defaults: findings=field(default_factory=list)
+  - [ ] Add docstring explaining session lifecycle and ID format
+  - [ ] Add example docstring showing typical Session instantiation
+
+- [ ] Task 2: Implement Finding model (AC: #2)
+  - [ ] Define Finding dataclass with 10 fields and type hints
+  - [ ] Use Literal["data", "signals", "orders", "broker", "portfolio"] for layer
+  - [ ] Use Optional[Literal["BUG", "DESIGN"]] for classification
+  - [ ] Set default values: classification=None, rationale=None, investigated_by=None, investigated_at=None, resolved=False, rustybt_value=None, backtrader_value=None
+  - [ ] Add docstring explaining BUG vs DESIGN classification
+
+- [ ] Task 3: Implement Discrepancy model (AC: #3)
+  - [ ] Define Discrepancy dataclass with 9 fields and type hints
+  - [ ] Use str for layer (not Literal - allows flexibility)
+  - [ ] Use Optional[str] for asset (some events are portfolio-wide)
+  - [ ] Add docstring explaining tolerance-based comparison
+
+- [ ] Task 4: Add type safety and module docstring (AC: #4)
+  - [ ] Add module-level docstring to models.py explaining purpose
+  - [ ] Verify all imports from typing module
+  - [ ] Use Python 3.12+ syntax (| for Union types)
+  - [ ] Add `from __future__ import annotations` for forward references if needed
+
+- [ ] Task 5: Export models from package (AC: #5)
+  - [ ] Edit `rustybt/validation/__init__.py`
+  - [ ] Add `from .models import Session, Finding, Discrepancy`
+  - [ ] Add `__all__ = ["Session", "Finding", "Discrepancy"]`
+  - [ ] Verify import works: `python -c "from rustybt.validation import Session, Finding, Discrepancy"`
+
+- [ ] Task 6: Add unit tests for models
+  - [ ] Create `tests/validation/test_models.py`
+  - [ ] Test Session instantiation with all required fields
+  - [ ] Test Finding with BUG and DESIGN classifications
+  - [ ] Test Discrepancy creation with tolerance exceeded
+  - [ ] Test default values are applied correctly
+  - [ ] Test type hints are enforced (mypy check)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Session model implemented** - `Session` dataclass captures validation session metadata
+   - Fields: id (str), created_at (datetime), strategy_name (str), rustybt_version (str), backtrader_version (str), python_version (str), status (Literal), data_fixture (Path), findings (list[Finding])
+   - ID format: `{YYYYMMDD}-{HHMMSS}-{strategy_name}`
+   - Status values: "IN_PROGRESS", "COMPLETED", "FAILED"
+
+2. **Finding model implemented** - `Finding` dataclass captures layer discrepancies and classifications
+   - Fields: id (str), layer (Literal), description (str), classification (Optional[Literal]), rationale (Optional[str]), investigated_by (Optional[str]), investigated_at (Optional[datetime]), resolved (bool), rustybt_value (Any), backtrader_value (Any)
+   - Layer values: "data", "signals", "orders", "broker", "portfolio"
+   - Classification values: "BUG", "DESIGN", None
+
+3. **Discrepancy model implemented** - `Discrepancy` dataclass captures specific value mismatches during comparison
+   - Fields: layer (str), event (str), timestamp (datetime), asset (Optional[str]), field (str), rustybt_value (Any), backtrader_value (Any), tolerance (Any), exceeded_by (Any)
+
+4. **Models are type-safe** - All models use Python 3.12+ type hints and are mypy-strict compatible
+
+5. **Models are exported** - Models are importable from `rustybt.validation`
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Data Models</title>
+        <section>Data Models</section>
+        <snippet>
+Session Model:
+- id: Unique session identifier
+- status: IN_PROGRESS, COMPLETED, FAILED
+- findings: List of discrepancies found
+
+Finding Model:
+- classification: BUG (fix required) or DESIGN (intentional difference)
+- rationale: Explanation for DESIGN classification
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <item>
+        <path>rustybt/validation/models.py</path>
+        <kind>file</kind>
+        <symbol>Session</symbol>
+        <lines>new file</lines>
+        <reason>Core data model implementation.</reason>
+      </item>
+      <item>
+        <path>rustybt/validation/__init__.py</path>
+        <kind>file</kind>
+        <symbol>module export</symbol>
+        <lines>existing file</lines>
+        <reason>Export models for public API.</reason>
+      </item>
+    </code>
+    <dependencies>
+      <ecosystem name="python">
+        <package name="dataclasses" version="stdlib" />
+        <package name="typing" version="stdlib" />
+        <package name="datetime" version="stdlib" />
+        <package name="pathlib" version="stdlib" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Technology</type>
+      <description>Python 3.12+ Type Hints: Use `str | None` syntax, `list[T]` generics.</description>
+    </constraint>
+    <constraint>
+      <type>Quality</type>
+      <description>Mypy Strict: No implicit Any, fully typed signatures.</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Session</name>
+      <kind>Class</kind>
+      <signature>Session(id: str, ...)</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+    <interface>
+      <name>Finding</name>
+      <kind>Class</kind>
+      <signature>Finding(id: str, ...)</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests for model instantiation and defaults.
+      Type checking via mypy.
+    </standards>
+    <locations>
+      <location>tests/validation/test_models.py</location>
+    </locations>
+    <ideas>
+      <idea>Test default values for optional fields.</idea>
+      <idea>Test invalid enum values (though static analysis catches this).</idea>
+    </ideas>
+  </tests>
+</story-context>

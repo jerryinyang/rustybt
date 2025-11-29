@@ -1,0 +1,230 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>4</storyId>
+    <title>Implement DESIGN Classification Workflow</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-27</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/5-4-investigation-classification-workflow-story-4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>to classify findings as DESIGN with documentation</iWant>
+    <soThat>intentional differences are properly documented for users</soThat>
+    <tasks>
+      <task id="1" ac="2">
+        <description>Extend Finding model for DESIGN classification</description>
+        <subtasks>
+          <subtask>Add design_choice field with enum</subtask>
+          <subtask>Add user_impact as string</subtask>
+          <subtask>Add documentation_ref as string (path#anchor)</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="1">
+        <description>Implement DESIGN classification workflow</description>
+        <subtasks>
+          <subtask>Handle 'd' action in investigation interface</subtask>
+          <subtask>Prompt for rationale with non-empty validation</subtask>
+          <subtask>Prompt for design choice (which framework correct)</subtask>
+          <subtask>Prompt for user impact description</subtask>
+          <subtask>Prompt for documentation reference</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="3">
+        <description>Implement documentation stub generation</description>
+        <subtasks>
+          <subtask>Check if design-differences.md exists</subtask>
+          <subtask>Create file with header if missing</subtask>
+          <subtask>Add section for finding with anchor</subtask>
+          <subtask>Include finding details in stub</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="4">
+        <description>Implement validation</description>
+        <subtasks>
+          <subtask>Validate rationale non-empty</subtask>
+          <subtask>Validate user impact provided</subtask>
+          <subtask>Validate documentation reference format</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="5">
+        <description>Implement YAML persistence</description>
+        <subtasks>
+          <subtask>Reuse save_finding from Story 5.3</subtask>
+          <subtask>Include DESIGN-specific fields</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="6">
+        <description>Write unit tests</description>
+        <subtasks>
+          <subtask>Test workflow prompts</subtask>
+          <subtask>Test documentation stub creation</subtask>
+          <subtask>Test validation logic</subtask>
+          <subtask>Test YAML persistence</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" title="DESIGN classification workflow in CLI">
+      <requirement>Press 'd' during investigation to classify as DESIGN</requirement>
+      <requirement>Prompt for required rationale explaining why intentional</requirement>
+      <requirement>Prompt for which framework approach is preferred (rustybt/backtrader/either)</requirement>
+      <requirement>Prompt for user impact description</requirement>
+      <requirement>Prompt for documentation reference (auto-create if doesn't exist)</requirement>
+    </criterion>
+    <criterion id="2" title="Finding model updated with DESIGN fields">
+      <requirement>`classification = "DESIGN"`</requirement>
+      <requirement>`rationale` (required, explains intentional difference)</requirement>
+      <requirement>`design_choice` (rustybt_preferred/backtrader_preferred/either_valid)</requirement>
+      <requirement>`user_impact` (describes practical impact on users)</requirement>
+      <requirement>`documentation_ref` (path to docs with anchor)</requirement>
+      <requirement>`investigated_by` and `investigated_at`</requirement>
+    </criterion>
+    <criterion id="3" title="Documentation stub auto-generation">
+      <requirement>If documentation_ref doesn't exist, create stub file</requirement>
+      <requirement>Create docs/validation/design-differences.md if needed</requirement>
+      <requirement>Add anchor for specific finding</requirement>
+      <requirement>Include finding ID, description, rationale in stub</requirement>
+    </criterion>
+    <criterion id="4" title="Validation requirements">
+      <requirement>Rationale cannot be empty or whitespace-only</requirement>
+      <requirement>User impact should describe practical implications</requirement>
+      <requirement>Documentation reference should be valid path format</requirement>
+    </criterion>
+    <criterion id="5" title="Persistence to findings.yaml">
+      <requirement>Classification saved immediately after input</requirement>
+      <requirement>Preserve existing findings in file</requirement>
+      <requirement>YAML format readable and editable</requirement>
+    </criterion>
+    <criterion id="6" title="Unit tests verify">
+      <requirement>Classification workflow prompts</requirement>
+      <requirement>Validation of required fields</requirement>
+      <requirement>Documentation stub generation</requirement>
+      <requirement>Persistence to YAML</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>rustybt - Product Requirements Document</title>
+        <section>Investigation &amp; Classification Workflow (FR50-FR52)</section>
+        <snippet>FR50: System can classify discrepancy as DESIGN (intentional difference). FR51: DESIGN classification requires rationale text. FR52: DESIGN classification documents user impact.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Finding Classification Workflow (Pattern 4)</section>
+        <snippet>DESIGN findings include design_choice (rustybt_preferred/backtrader_preferred/either_valid), user_impact, and documentation_ref. Auto-generate documentation stub if reference doesn't exist.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-investigation-classification-workflow.md</path>
+        <title>Epic 5: Investigation &amp; Classification Workflow</title>
+        <section>Story 5.4</section>
+        <snippet>Prerequisites: Story 5.3 (BUG classification). DESIGN classification workflow with DesignChoice enum, user impact, documentation stub generation.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>Data models</kind>
+        <symbol>Finding</symbol>
+        <lines>196-228</lines>
+        <reason>MODIFY - extend Finding dataclass with design_choice, user_impact, documentation_ref fields.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/classification.py</path>
+        <kind>Classification module</kind>
+        <symbol>classify_as_design, DesignChoice, create_documentation_stub, save_finding</symbol>
+        <lines>From Story 5-3</lines>
+        <reason>MODIFY - add DESIGN classification workflow and documentation stub generation.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/cli.py</path>
+        <kind>CLI module</kind>
+        <symbol>investigate (from Story 5-1)</symbol>
+        <lines>-</lines>
+        <reason>MODIFY - integrate 'd' action handler to call classify_as_design().</reason>
+      </file>
+      <file>
+        <path>docs/validation/design-differences.md</path>
+        <kind>Documentation</kind>
+        <symbol>-</symbol>
+        <lines>NEW - auto-generated</lines>
+        <reason>CREATE - documentation file for DESIGN differences, created by workflow.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0">CLI prompts and choices</package>
+        <package name="pyyaml" version=">=6.0">YAML persistence</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture">DESIGN classification must include rationale, design_choice, user_impact</constraint>
+    <constraint source="Architecture">DesignChoice enum: rustybt_preferred, backtrader_preferred, either_valid</constraint>
+    <constraint source="Architecture">Documentation stub auto-generated at docs/validation/design-differences.md</constraint>
+    <constraint source="Story 5-1">Integrate with investigation interface - handle 'd' action</constraint>
+    <constraint source="Story 5-3">Reuse save_finding() function for YAML persistence</constraint>
+    <constraint source="PRD">FR51: Rationale is required for DESIGN classification</constraint>
+    <constraint source="PRD">FR52: User impact must be documented</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>DesignChoice enum</name>
+      <kind>Python enum</kind>
+      <signature>class DesignChoice(str, Enum): RUSTYBT_PREFERRED = "rustybt_preferred"; BACKTRADER_PREFERRED = "backtrader_preferred"; EITHER_VALID = "either_valid"</signature>
+      <path>rustybt/validation/classification.py</path>
+    </interface>
+    <interface>
+      <name>classify_as_design function</name>
+      <kind>Python function</kind>
+      <signature>def classify_as_design(finding: Finding, session: Session, project_root: Path) -&gt; None</signature>
+      <path>rustybt/validation/classification.py</path>
+    </interface>
+    <interface>
+      <name>create_documentation_stub function</name>
+      <kind>Python function</kind>
+      <signature>def create_documentation_stub(finding: Finding, rationale: str, design_choice: DesignChoice, user_impact: str, doc_ref: str, project_root: Path) -&gt; None</signature>
+      <path>rustybt/validation/classification.py</path>
+    </interface>
+    <interface>
+      <name>Extended Finding model</name>
+      <kind>Data model</kind>
+      <signature>Finding with additional fields: design_choice, user_impact, documentation_ref</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing. Use unittest.mock.patch for Click prompts. Use tmp_path fixture for documentation stub tests. Use @pytest.mark.classification marker.
+    </standards>
+    <locations>
+      <location>tests/validation/test_classification.py (existing from Story 5-3 - add DESIGN tests)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">test_classify_as_design_prompts_for_rationale - verify rationale prompt</idea>
+      <idea ac="1">test_classify_as_design_prompts_for_design_choice - verify choice prompt</idea>
+      <idea ac="1">test_classify_as_design_prompts_for_user_impact - verify impact prompt</idea>
+      <idea ac="2">test_finding_model_has_design_fields - verify new fields exist</idea>
+      <idea ac="2">test_design_choice_enum_values - verify enum values</idea>
+      <idea ac="2">test_design_choice_from_key - verify key to enum conversion</idea>
+      <idea ac="3">test_documentation_stub_created - verify file created</idea>
+      <idea ac="3">test_documentation_stub_has_anchor - verify anchor in content</idea>
+      <idea ac="3">test_documentation_anchor_not_duplicated - verify no duplicates</idea>
+      <idea ac="4">test_rationale_validation_rejects_empty - verify empty rejected</idea>
+      <idea ac="4">test_user_impact_validation - verify impact required</idea>
+      <idea ac="5">test_yaml_persistence_design_fields - verify DESIGN fields saved</idea>
+    </ideas>
+  </tests>
+</story-context>

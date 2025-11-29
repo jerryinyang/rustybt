@@ -1,0 +1,186 @@
+<story-context id="3-2-implement-session-resumability" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>2</storyId>
+    <title>Implement Session Resumability</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-2-implement-session-resumability.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>to resume interrupted sessions</iWant>
+    <soThat>work isn't lost when validation is interrupted</soThat>
+    <tasks>
+      <task id="1">Implement _last_successful_stage() helper (AC: #1)
+        <subtask>Determine last completed stage based on artifacts</subtask>
+        <subtask>Check for logs existence and validity</subtask>
+        <subtask>Check for comparison results existence</subtask>
+        <subtask>Return appropriate stage to resume from</subtask>
+      </task>
+      <task id="2">Implement resume() method in SessionManager (AC: #1, #2)
+        <subtask>Load session by ID</subtask>
+        <subtask>Check if session already COMPLETED (raise ValueError)</subtask>
+        <subtask>Handle FAILED status -> reset to last successful stage</subtask>
+        <subtask>Set status to IN_PROGRESS</subtask>
+        <subtask>Save and return session</subtask>
+      </task>
+      <task id="3">Implement artifact detection logic (AC: #2)
+        <subtask>Check logs directory exists and contains valid logs</subtask>
+        <subtask>Check comparison results exist in analysis/</subtask>
+        <subtask>Check findings.yaml for unclassified findings</subtask>
+        <subtask>Return what work remains to be done</subtask>
+      </task>
+      <task id="4">Add CLI resume command (AC: #3)
+        <subtask>Add session resume command to cli.py</subtask>
+        <subtask>Accept session_id argument</subtask>
+        <subtask>Call SessionManager.resume()</subtask>
+        <subtask>Display resume status and next step</subtask>
+      </task>
+      <task id="5">Write integration tests (AC: #4)
+        <subtask>Test resume after execution interrupt</subtask>
+        <subtask>Test resume after comparison interrupt</subtask>
+        <subtask>Test resume after investigation interrupt</subtask>
+        <subtask>Test resume of completed session raises error</subtask>
+        <subtask>Test resume preserves partial results</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">SessionManager.resume() method implemented - Loads session by ID, validates session is resumable (not COMPLETED), handles FAILED sessions by resetting to last successful stage, returns loaded session ready for continuation</criterion>
+    <criterion id="2">Resume detects completed work - If logs exist and valid skip execution stage, if comparison results exist skip comparison stage, if all findings classified mark complete</criterion>
+    <criterion id="3">CLI session resume command - rustybt-validate session resume session_id outputs "Resuming session X from stage: Y" and shows next step to perform</criterion>
+    <criterion id="4">Integration test verifies resumability scenarios - Interrupt during execution resumes re-execution, interrupt during comparison resumes re-comparison, interrupt during investigation resumes showing pending findings</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR37 - Session Resumability</section>
+        <snippet>FR37: System can maintain session state for resumability. Sessions must be resumable from any stage with detection of completed work.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Session Storage (ADR-003)</section>
+        <snippet>Session directory structure: validation-sessions/{session_id}/ with session.yaml, findings.yaml, logs/ (rustybt.jsonl, backtrader.jsonl), analysis/ (layer_*_report.md). File existence is source of truth for completion.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-3-session-management-system.md</path>
+        <title>Epic 3: Session Management System</title>
+        <section>Story 3.2 Specification</section>
+        <snippet>resume() method loads session, checks if COMPLETED (raise ValueError), resets FAILED to last successful stage, returns session. _last_successful_stage() uses artifact detection.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/3-1-implement-session-progress-tracking.md</path>
+        <title>Story 3.1 - Session Progress Tracking</title>
+        <section>Stage Transition Rules</section>
+        <snippet>SessionStage enum and update_stage() method. Stage transitions guide what work needs to be done. FAILED -> Determine _last_successful_stage() -> Reset to that stage.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>rustybt/validation/session.py</path>
+        <kind>manager</kind>
+        <symbol>SessionManager</symbol>
+        <lines>14-177</lines>
+        <reason>Core SessionManager class where resume() method will be added. Contains load_session pattern to reuse.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/session.py</path>
+        <kind>method</kind>
+        <symbol>load_session</symbol>
+        <lines>47-68</lines>
+        <reason>Existing load pattern with retry decorator. resume() will use this to load session by ID.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/log_parser.py</path>
+        <kind>validator</kind>
+        <symbol>validate_log_schema</symbol>
+        <reason>Used to validate log files exist and are valid. _last_successful_stage() needs this for artifact detection.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/coordinator.py</path>
+        <kind>coordinator</kind>
+        <symbol>execute_dual</symbol>
+        <lines>74-154</lines>
+        <reason>Shows logs_dir structure (session/logs/) and log file paths (rustybt.jsonl, backtrader.jsonl) for artifact detection.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/cli.py</path>
+        <kind>cli</kind>
+        <symbol>session commands</symbol>
+        <lines>23-94</lines>
+        <reason>Existing session subgroup where resume command will be added. Follow same Click patterns.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>data-model</kind>
+        <symbol>Session</symbol>
+        <lines>37-66</lines>
+        <reason>Session model with status field. Will need SessionStage from Story 3.1 for resume logic.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="pyyaml" version=">=6.0">Session YAML persistence</package>
+        <package name="click" version=">=8.0">CLI framework</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>DEPENDS ON Story 3.1 - Requires SessionStage enum and update_stage() method</constraint>
+    <constraint>File existence is source of truth for completion detection</constraint>
+    <constraint>Preserve partial results when resuming - don't delete existing artifacts</constraint>
+    <constraint>Log resume action for audit trail (Activity logging in Story 3.6)</constraint>
+    <constraint>Handle corrupt intermediate files gracefully</constraint>
+    <constraint>resume() of COMPLETED session must raise ValueError</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>SessionManager.resume</name>
+      <kind>method</kind>
+      <signature>def resume(self, session_id: str) -> Session</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+    <interface>
+      <name>SessionManager._last_successful_stage</name>
+      <kind>private method</kind>
+      <signature>def _last_successful_stage(self, session: Session) -> SessionStage</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+    <interface>
+      <name>CLI resume command</name>
+      <kind>Click command</kind>
+      <signature>@session.command("resume") @click.argument("session_id") def session_resume(session_id: str) -> None</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use pytest with @pytest.mark.integration for resumability tests. Create test sessions with partial artifacts to simulate interrupts. Use tmp_path fixture for isolated test directories.</standards>
+    <locations>
+      <location>tests/validation/test_session_resumability.py (NEW)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">test_resume_loads_session_by_id - Verify resume() calls load_session correctly</idea>
+      <idea ac="1">test_resume_completed_session_raises_error - Verify ValueError raised for COMPLETED session</idea>
+      <idea ac="1">test_resume_failed_resets_to_last_stage - Verify FAILED session reset to _last_successful_stage</idea>
+      <idea ac="2">test_last_successful_stage_no_logs_returns_created - Verify no logs -> CREATED</idea>
+      <idea ac="2">test_last_successful_stage_valid_logs_returns_executed - Verify valid logs -> EXECUTED</idea>
+      <idea ac="2">test_last_successful_stage_with_analysis_returns_compared - Verify analysis reports -> COMPARED</idea>
+      <idea ac="3">test_cli_resume_outputs_status - Verify CLI shows "Resuming session X from stage: Y"</idea>
+      <idea ac="4">test_resume_after_execution_interrupt - Integration test simulating execution failure</idea>
+      <idea ac="4">test_resume_after_comparison_interrupt - Integration test simulating comparison failure</idea>
+      <idea ac="4">test_resume_preserves_partial_results - Verify existing artifacts not deleted</idea>
+    </ideas>
+  </tests>
+</story-context>

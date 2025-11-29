@@ -1,0 +1,139 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>2</storyId>
+    <title>Implement Mean Reversion Strategy (Dual)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-28</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/6-2-initial-strategy-validation-story-2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Mean Reversion strategy implemented in both frameworks</iWant>
+    <soThat>z-score based strategies can be validated</soThat>
+    <tasks>
+      <task id="1" ac="1">Create rustybt Mean Reversion strategy
+        <subtask>Create tests/validation/strategies/rustybt/mean_reversion.py</subtask>
+        <subtask>Implement MeanReversionStrategy class</subtask>
+        <subtask>Add rolling mean/std calculation</subtask>
+        <subtask>Add z-score computation with @log_signal() decorator</subtask>
+        <subtask>Implement entry/exit logic based on thresholds</subtask>
+      </task>
+      <task id="2" ac="2">Create Backtrader Mean Reversion strategy
+        <subtask>Create tests/validation/strategies/backtrader/mean_reversion.py</subtask>
+        <subtask>Implement equivalent z-score calculation</subtask>
+        <subtask>Use Backtrader's rolling statistics if available</subtask>
+        <subtask>Ensure log output matches rustybt format</subtask>
+      </task>
+      <task id="3" ac="3">Verify strategy equivalence
+        <subtask>Complete strategy audit checklist</subtask>
+        <subtask>Compare z-score calculations</subtask>
+        <subtask>Verify rolling window alignment</subtask>
+        <subtask>Document any framework differences</subtask>
+      </task>
+      <task id="4" ac="4">Handle edge cases
+        <subtask>Add division by zero protection</subtask>
+        <subtask>Handle insufficient lookback data</subtask>
+        <subtask>Test NaN/Inf scenarios</subtask>
+        <subtask>Document edge case behavior</subtask>
+      </task>
+      <task id="5" ac="5">Write unit tests
+        <subtask>Create tests/validation/test_mean_reversion_strategy.py</subtask>
+        <subtask>Test z-score calculation accuracy</subtask>
+        <subtask>Test rolling window behavior</subtask>
+        <subtask>Test signal generation at thresholds</subtask>
+        <subtask>Test edge case handling</subtask>
+      </task>
+      <task id="6" ac="6">Validate log output
+        <subtask>Verify z-score values logged</subtask>
+        <subtask>Check mean/std_dev logging</subtask>
+        <subtask>Confirm signal context in logs</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">rustybt Mean Reversion implementation exists at tests/validation/strategies/rustybt/mean_reversion.py with RustyBTValidatedStrategy base, z-score calculation (z = (price - mean) / std_dev), rolling window for mean/std, default params lookback_period=20, entry_threshold=2.0, exit_threshold=0.0, buy when z-score less than -2 (oversold), sell when z-score greater than 2 (overbought), exit when z-score returns to 0</criterion>
+    <criterion id="2">Backtrader Mean Reversion implementation exists at tests/validation/strategies/backtrader/mean_reversion.py with BacktraderValidatedStrategy base, equivalent z-score calculation, logically equivalent to rustybt, same default parameters</criterion>
+    <criterion id="3">Strategy audit checklist passed: same z-score calculation formula, same rolling window implementation, same entry/exit thresholds, same position management logic</criterion>
+    <criterion id="4">Z-score edge cases handled: division by zero when std_dev = 0, insufficient data for lookback period, NaN/Inf handling</criterion>
+    <criterion id="5">Unit tests verify z-score calculation logic: z-score formula accuracy, rolling window behavior, entry/exit signal generation, edge case handling</criterion>
+    <criterion id="6">Log z-score values for signal comparison: log mean, std_dev, z-score on each bar, log entry/exit signals with z-score context</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Strategy Validation (FR55-FR59)" snippet="System can validate Mean Reversion (z-score) strategy across all 5 layers (FR56)." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="Novel Pattern: Log-Based Validation Architecture" snippet="ValidatedStrategy base classes auto-log lifecycle events to JSONL. Layer-specific comparison for signal computation validation." />
+      <doc path="docs/epics/epic-6-initial-strategy-validation-4-strategies.md" title="Epic 6" section="Story 6.2" snippet="Mean Reversion Strategy (z-score based) - Buy when z-score less than -2, Sell when z-score greater than 2, Exit when z-score returns to 0." />
+      <doc path="docs/sprint-artifacts/6-1-initial-strategy-validation-story-1.md" title="Story 6-1" section="Dev Notes" snippet="Strategy Pattern: Extend ValidatedStrategy base class, use decorators for logging. Pattern reference for Story 6-2." />
+    </docs>
+    <code>
+      <artifact path="rustybt/validation/base_strategy.py" kind="module" symbol="RustyBTValidatedStrategy" lines="327-400" reason="Base class for rustybt validated strategies - extend this for Mean Reversion strategy" />
+      <artifact path="rustybt/validation/decorators.py" kind="module" symbol="log_signal" lines="46-110" reason="Decorator to automatically log signal computation - use on z-score computation" />
+      <artifact path="tests/validation/strategies/bt_strategies/base_validated.py" kind="module" symbol="BacktraderValidatedStrategy" lines="57-295" reason="Base class for Backtrader validated strategies" />
+      <artifact path="tests/validation/strategies/rustybt/sma_crossover.py" kind="module" reason="Reference implementation pattern from Story 6-1" />
+      <artifact path="tests/validation/conftest.py" kind="test-fixture" reason="Pytest fixtures for validation tests" />
+    </code>
+    <dependencies>
+      <python version="3.12+">
+        <package name="backtrader" version=">=1.9.78" purpose="Reference framework for comparison" />
+        <package name="polars" version=">=1.0" purpose="Log parsing and comparison" />
+        <package name="pytest" version=">=7.2.0" purpose="Test framework" />
+        <package name="numpy" version=">=1.26.0" purpose="Numerical operations for rolling statistics" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Strategies must extend ValidatedStrategy base classes</constraint>
+    <constraint type="pattern">Use @log_signal() decorator on z-score computation methods</constraint>
+    <constraint type="logging">Log schema must include: mean, std_dev, z_score, signal in data field</constraint>
+    <constraint type="parameters">Default parameters: lookback_period=20, entry_threshold=2.0, exit_threshold=0.0</constraint>
+    <constraint type="edge-case">Must return z_score=0 when std_dev=0 (avoid division by zero)</constraint>
+    <constraint type="edge-case">Must return neutral signal when insufficient lookback data</constraint>
+    <constraint type="location">rustybt strategy: tests/validation/strategies/rustybt/mean_reversion.py</constraint>
+    <constraint type="location">Backtrader strategy: tests/validation/strategies/backtrader/mean_reversion.py</constraint>
+    <constraint type="location">Unit tests: tests/validation/test_mean_reversion_strategy.py</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="MeanReversionStrategy" kind="class">
+      <signature>class MeanReversionStrategy(RustyBTValidatedStrategy)</signature>
+      <path>tests/validation/strategies/rustybt/mean_reversion.py</path>
+      <methods>
+        <method>__init__(self, log_path: Path, lookback_period: int = 20, entry_threshold: float = 2.0, exit_threshold: float = 0.0)</method>
+        <method>compute_zscore(self, prices: list[float], lookback: int) -> float</method>
+        <method>compute_signal(self, context, data) -> str</method>
+        <method>handle_data(self, context, data) -> None</method>
+      </methods>
+    </interface>
+    <interface name="z-score formula" kind="algorithm">
+      <signature>z = (price - mean) / std_dev</signature>
+      <description>Rolling window z-score calculation for mean reversion signal</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use pytest with @pytest.mark.layer_2_signals marker. Follow Zero Mock Enforcement. Test edge cases for division by zero and insufficient data. Use Decimal for precision-sensitive tests.</standards>
+    <locations>
+      <location>tests/validation/test_mean_reversion_strategy.py</location>
+      <location>tests/validation/strategies/</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Test MeanReversionStrategy class instantiation with parameters</idea>
+      <idea ac="1">Test z-score calculation formula: (price - mean) / std_dev</idea>
+      <idea ac="1">Test rolling window correctly uses lookback_period</idea>
+      <idea ac="1">Test BUY signal when z-score less than -entry_threshold</idea>
+      <idea ac="1">Test SELL signal when z-score greater than +entry_threshold</idea>
+      <idea ac="1">Test EXIT signal when |z-score| less than exit_threshold</idea>
+      <idea ac="4">Test division by zero returns z_score=0</idea>
+      <idea ac="4">Test insufficient data returns neutral signal</idea>
+      <idea ac="4">Test NaN handling in price data</idea>
+      <idea ac="5">Test z-score calculation accuracy with known values</idea>
+      <idea ac="6">Test JSONL log contains mean, std_dev, z_score fields</idea>
+    </ideas>
+  </tests>
+</story-context>

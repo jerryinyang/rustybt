@@ -1,0 +1,138 @@
+<story-context id="7-5" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>5</storyId>
+    <title>Implement DESIGN Differences Documentation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/7-5-reporting-documentation-system-story-5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>auto-generated documentation for all DESIGN differences</iWant>
+    <soThat>users understand framework behavioral differences</soThat>
+    <tasks>
+      <task id="1">Implement DesignDocsGenerator class (AC: #1)
+        <subtask>Create class in rustybt/validation/reporting.py</subtask>
+        <subtask>Load all DESIGN-classified findings from all sessions</subtask>
+        <subtask>Group findings by layer (signals, orders, broker, etc.)</subtask>
+        <subtask>Group similar findings by description pattern</subtask>
+        <subtask>Test: Unit tests for grouping logic</subtask>
+      </task>
+      <task id="2">Implement documentation structure (AC: #1)
+        <subtask>Generate markdown with layer headings (h1)</subtask>
+        <subtask>Generate finding sections (h2) with Finding IDs</subtask>
+        <subtask>Include Difference, Impact, and Recommendation subsections</subtask>
+        <subtask>Cross-reference multiple findings with same pattern</subtask>
+        <subtask>Test: Verify markdown structure</subtask>
+      </task>
+      <task id="3">Extract user-friendly content (AC: #1)
+        <subtask>Use design_rationale from Finding for Difference section</subtask>
+        <subtask>Use user_impact from Finding for Impact section</subtask>
+        <subtask>Generate recommendations based on design_choice</subtask>
+        <subtask>Write in user-friendly, non-technical language where possible</subtask>
+        <subtask>Test: Verify content extraction from findings</subtask>
+      </task>
+      <task id="4">Implement auto-update mechanism (AC: #2)
+        <subtask>Add hook to SessionManager on finding classification</subtask>
+        <subtask>Regenerate docs when new DESIGN finding added</subtask>
+        <subtask>Timestamp update in document header</subtask>
+        <subtask>Preserve custom additions if any (via markers)</subtask>
+        <subtask>Test: Verify auto-update triggers</subtask>
+      </task>
+      <task id="5">Add CLI docs generate command (AC: #3)
+        <subtask>Add docs subcommand group to CLI</subtask>
+        <subtask>Implement docs generate command</subtask>
+        <subtask>Save to docs/validation/design-differences.md</subtask>
+        <subtask>Also generate bug-fixes.md for resolved BUGs</subtask>
+        <subtask>Test: CLI integration tests</subtask>
+      </task>
+      <task id="6">Write comprehensive tests (AC: #1-3)
+        <subtask>Test with no DESIGN findings</subtask>
+        <subtask>Test with multiple DESIGN findings</subtask>
+        <subtask>Test grouping by layer and pattern</subtask>
+        <subtask>Test auto-update mechanism</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Given DESIGN-classified findings When documentation generation is invoked Then user-facing docs/validation/design-differences.md is generated with sections organized by layer, each finding including Difference, Impact, and Recommendation</criterion>
+    <criterion id="AC2">Documentation auto-updates when new DESIGN findings are added during investigation</criterion>
+    <criterion id="AC3">CLI command rustybt-validate docs generate produces docs/validation/design-differences.md and docs/validation/bug-fixes.md</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Reporting &amp; Documentation (FR60-FR67)" snippet="FR65: System can auto-generate user-facing documentation describing all DESIGN differences with user impact and recommendations."/>
+      <doc path="docs/architecture.md" title="Architecture Document" section="FR Category to Architecture Mapping" snippet="Reporting &amp; Documentation (FR60-FR67) maps to rustybt/validation/reporting.py."/>
+      <doc path="docs/epics/epic-7-reporting-documentation-system.md" title="Epic 7 Specification" section="Story 7.5" snippet="Design differences document organized by layer with Finding IDs, Difference, Impact, and Recommendation sections."/>
+    </docs>
+    <code>
+      <artifact path="rustybt/validation/reporting.py" kind="module" symbol="ReportGenerator" lines="1-7" reason="Base reporting module - add DesignDocsGenerator class"/>
+      <artifact path="rustybt/validation/cli.py" kind="module" symbol="main" lines="13-21" reason="CLI main group - add docs subcommand group"/>
+      <artifact path="rustybt/validation/models.py" kind="module" symbol="Finding" lines="255-364" reason="Finding model with DESIGN-specific fields: design_rationale, acceptance_criteria, design_choice, user_impact"/>
+      <artifact path="rustybt/validation/classification.py" kind="module" symbol="classify_as_design" lines="N/A" reason="DESIGN classification workflow - hook for auto-update"/>
+      <artifact path="rustybt/validation/session.py" kind="module" symbol="SessionManager" lines="N/A" reason="Session management - query all sessions for DESIGN findings"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0" purpose="CLI framework"/>
+        <package name="jinja2" version=">=3.0.0" purpose="Template rendering"/>
+      </python>
+      <internal>
+        <dependency story="5-4" path="rustybt/validation/classification.py" symbol="classify_as_design" reason="DESIGN classification provides findings data"/>
+      </internal>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="prerequisite">Story 5.4 (DESIGN classification) must be completed first</constraint>
+    <constraint type="architecture">Documentation saved to docs/validation/ directory</constraint>
+    <constraint type="coding">Group findings by layer/category</constraint>
+    <constraint type="coding">Write in user-friendly language</constraint>
+    <constraint type="coding">Include practical impact and recommendations</constraint>
+    <constraint type="coding">Auto-regenerate to stay current with new findings</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="DesignDocsGenerator" kind="class">
+      <signature>class DesignDocsGenerator(session_manager: SessionManager)</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="generate_design_differences" kind="method">
+      <signature>def generate_design_differences(self) -> str</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="generate_bug_fixes" kind="method">
+      <signature>def generate_bug_fixes(self) -> str</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="group_by_layer" kind="method">
+      <signature>def group_by_layer(self, findings: list[Finding]) -> dict[str, list[Finding]]</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="CLI docs generate command" kind="CLI endpoint">
+      <signature>rustybt-validate docs generate</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework with custom markers. Zero mock enforcement. Test fixtures in tests/validation/fixtures/.</standards>
+    <locations>
+      <location>tests/validation/test_reporting.py</location>
+      <location>tests/validation/test_cli.py</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1">test_design_docs_layer_grouping - verify findings grouped by layer</idea>
+      <idea acRef="AC1">test_design_docs_content_sections - verify Difference, Impact, Recommendation sections</idea>
+      <idea acRef="AC1">test_design_docs_user_friendly_language - verify readable content</idea>
+      <idea acRef="AC2">test_design_docs_auto_update - verify regeneration on new DESIGN finding</idea>
+      <idea acRef="AC3">test_cli_docs_generate_design_differences - verify design-differences.md created</idea>
+      <idea acRef="AC3">test_cli_docs_generate_bug_fixes - verify bug-fixes.md created</idea>
+    </ideas>
+  </tests>
+</story-context>

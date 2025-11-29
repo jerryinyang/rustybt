@@ -1,0 +1,138 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>7</storyId>
+    <title>Create Troubleshooting Guide</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/8-7-troubleshooting-guide.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>validation framework user encountering issues</asA>
+    <iWant>a troubleshooting guide</iWant>
+    <soThat>I can resolve common problems independently</soThat>
+    <tasks>
+      <task id="1" title="Create installation issues section">
+        <subtask>Document Python version mismatch issues</subtask>
+        <subtask>Document Backtrader installation conflicts</subtask>
+        <subtask>Document dependency version conflicts</subtask>
+        <subtask>Document virtual environment issues</subtask>
+        <subtask>Provide diagnostic commands for each issue</subtask>
+      </task>
+      <task id="2" title="Create strategy execution failures section">
+        <subtask>Document subprocess exit code errors</subtask>
+        <subtask>Document strategy import failures</subtask>
+        <subtask>Document log file not generated issues</subtask>
+        <subtask>Document timeout and memory issues</subtask>
+        <subtask>Provide resolution steps for each</subtask>
+      </task>
+      <task id="3" title="Create log parsing errors section">
+        <subtask>Document JSONL schema validation errors</subtask>
+        <subtask>Document incomplete log file issues</subtask>
+        <subtask>Document encoding/charset issues</subtask>
+        <subtask>Document malformed JSON line errors</subtask>
+        <subtask>Provide log inspection techniques</subtask>
+      </task>
+      <task id="4" title="Create comparison failures section">
+        <subtask>Document tolerance threshold issues</subtask>
+        <subtask>Document missing data field errors</subtask>
+        <subtask>Document timestamp alignment failures</subtask>
+        <subtask>Document unexpected discrepancy patterns</subtask>
+        <subtask>Explain tolerance configuration tuning</subtask>
+      </task>
+      <task id="5" title="Create session management issues section">
+        <subtask>Document corrupted session.yaml issues</subtask>
+        <subtask>Document session resume failures</subtask>
+        <subtask>Document missing session directory issues</subtask>
+        <subtask>Document findings.yaml corruption</subtask>
+        <subtask>Provide session repair techniques</subtask>
+      </task>
+      <task id="6" title="Create error messages reference">
+        <subtask>Compile list of all error messages</subtask>
+        <subtask>Document cause for each error</subtask>
+        <subtask>Document resolution for each error</subtask>
+        <subtask>Include error message text for searchability</subtask>
+      </task>
+      <task id="7" title="Create escalation section">
+        <subtask>Define when to report a bug</subtask>
+        <subtask>Document bug report requirements</subtask>
+        <subtask>Provide GitHub issues link</subtask>
+        <subtask>Explain how to gather debug information</subtask>
+      </task>
+      <task id="8" title="Testing">
+        <subtask>Verify diagnostic commands work</subtask>
+        <subtask>Verify resolutions are accurate</subtask>
+        <subtask>Test error message searchability</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Guide provides description of problems</criterion>
+    <criterion id="AC2">Guide provides likely causes for each problem</criterion>
+    <criterion id="AC3">Guide provides step-by-step resolutions</criterion>
+    <criterion id="AC4">Guide indicates when to escalate or report a bug</criterion>
+    <criterion id="AC5">Guide covers installation issues (dependency conflicts, version mismatches)</criterion>
+    <criterion id="AC6">Guide covers strategy execution failures (subprocess errors, log generation issues)</criterion>
+    <criterion id="AC7">Guide covers log parsing errors (schema violations, incomplete logs)</criterion>
+    <criterion id="AC8">Guide covers comparison failures (tolerance configuration, missing data)</criterion>
+    <criterion id="AC9">Guide covers session management issues (corrupted sessions, resume failures)</criterion>
+    <criterion id="AC10">Guide covers common error messages and their meanings</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/architecture.md" title="Architecture Document" section="Error Handling" snippet="Strategy Execution Errors: Capture all exceptions, log to session/errors.log, mark session as FAILED. Log Parsing Errors: Validate schema, reject malformed logs. Comparison Errors: Handle missing data gracefully." />
+      <doc path="docs/prd.md" title="PRD" section="Non-Functional Requirements" snippet="NFR4: Log parsing robust to minor format variations. NFR7: Recover from test failures without corrupting session. NFR9: Validate all inputs. NFR10: Prevent data loss during investigation workflows." />
+    </docs>
+    <code>
+      <file path="rustybt/validation/session.py" kind="module" symbol="SessionManager" reason="Session state management and error handling" />
+      <file path="rustybt/validation/log_parser.py" kind="module" symbol="LogParser" reason="Log parsing and validation errors" />
+      <file path="rustybt/validation/comparators.py" kind="module" symbol="Comparators" reason="Comparison logic and tolerance handling" />
+    </code>
+    <dependencies>
+      <python>
+        <package name="python" version=">=3.12" purpose="Required Python version" />
+        <package name="backtrader" version=">=1.9.78" purpose="May have installation conflicts" />
+        <package name="polars" version=">=1.0" purpose="Log parsing" />
+        <package name="pyyaml" version=">=6.0" purpose="Session storage" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">Strategy Execution Errors: Capture all exceptions, log to session/errors.log, mark session as FAILED</constraint>
+    <constraint source="architecture">Log Parsing Errors: Validate log schema on parse, reject malformed logs with clear error message</constraint>
+    <constraint source="architecture">Comparison Errors: Handle missing data gracefully, report as findings not exceptions</constraint>
+    <constraint source="prd">Log parsing must be robust to minor format variations (NFR4)</constraint>
+    <constraint source="prd">System must recover from test failures without corrupting session state (NFR7)</constraint>
+    <constraint source="prd">System must validate all inputs before processing (NFR9)</constraint>
+    <constraint source="prd">System must prevent data loss during investigation workflows (NFR10)</constraint>
+    <constraint source="epic">Guide location: docs/validation/troubleshooting.md</constraint>
+    <constraint source="epic">Organize by symptom (what user sees) not by cause</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="Error Log" kind="file" signature="session/errors.log" path="validation-sessions/{session_id}/errors.log" />
+    <interface name="Session Status" kind="enum" signature="IN_PROGRESS | COMPLETED | FAILED" path="rustybt/validation/models.py" />
+  </interfaces>
+
+  <tests>
+    <standards>Organized by symptom. Include error message text for searchability. Provide diagnostic commands. Keep updated as new issues are discovered.</standards>
+    <locations>
+      <location>docs/validation/troubleshooting.md</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1,AC2,AC3">For each documented issue, verify problem description, cause, and resolution are accurate</idea>
+      <idea acRef="AC4">Verify escalation criteria are clear</idea>
+      <idea acRef="AC5">Test installation troubleshooting on fresh environment</idea>
+      <idea acRef="AC6">Simulate strategy execution failures and verify resolutions</idea>
+      <idea acRef="AC7">Create malformed logs and verify parsing error guidance</idea>
+      <idea acRef="AC8">Test tolerance tuning guidance with real discrepancies</idea>
+      <idea acRef="AC9">Create corrupted session and verify repair guidance</idea>
+      <idea acRef="AC10">Search for each documented error message in guide</idea>
+    </ideas>
+  </tests>
+</story-context>

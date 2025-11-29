@@ -1,0 +1,136 @@
+<story-context id="7-6" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>6</storyId>
+    <title>Implement Validation Completion Tracking</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/7-6-reporting-documentation-system-story-6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>validation completion percentage tracked</iWant>
+    <soThat>I know how much validation work remains</soThat>
+    <tasks>
+      <task id="1">Implement ValidationProgress dataclass (AC: #1)
+        <subtask>Create dataclass in rustybt/validation/reporting.py</subtask>
+        <subtask>Define strategy_completion, layer_completion, finding_resolution fields</subtask>
+        <subtask>Define overall field for weighted average</subtask>
+        <subtask>Add percentage formatting methods</subtask>
+        <subtask>Test: Unit tests for dataclass</subtask>
+      </task>
+      <task id="2">Implement calculate_completion function (AC: #1)
+        <subtask>Count validated vs total strategies (defined in PRD as 4)</subtask>
+        <subtask>Count completed layers per strategy (5 layers * 4 strategies = 20)</subtask>
+        <subtask>Count resolved vs total findings</subtask>
+        <subtask>Calculate weighted average for overall score</subtask>
+        <subtask>Test: Verify calculations with various states</subtask>
+      </task>
+      <task id="3">Implement progress display (AC: #2)
+        <subtask>Create ASCII progress bars for each category</subtask>
+        <subtask>Show fraction format (e.g., 3/4, 18/20)</subtask>
+        <subtask>List completed and in-progress strategies</subtask>
+        <subtask>Show missing layers for incomplete strategies</subtask>
+        <subtask>Test: Verify display formatting</subtask>
+      </task>
+      <task id="4">Implement next steps suggestions (AC: #2)
+        <subtask>Identify incomplete strategies and missing layers</subtask>
+        <subtask>Generate numbered action items</subtask>
+        <subtask>Prioritize by impact (complete strategies first)</subtask>
+        <subtask>Include "Generate final report" when all complete</subtask>
+        <subtask>Test: Verify next steps logic</subtask>
+      </task>
+      <task id="5">Add CLI progress command (AC: #2)
+        <subtask>Add progress command to CLI main group</subtask>
+        <subtask>Call calculate_completion for current state</subtask>
+        <subtask>Display formatted progress with bars</subtask>
+        <subtask>Display next steps suggestions</subtask>
+        <subtask>Test: CLI integration tests</subtask>
+      </task>
+      <task id="6">Write comprehensive tests (AC: #1-2)
+        <subtask>Test with 0% completion (no sessions)</subtask>
+        <subtask>Test with partial completion</subtask>
+        <subtask>Test with 100% completion</subtask>
+        <subtask>Test next steps generation</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Given defined validation scope When completion tracking is queried Then ValidationProgress is calculated with strategy_completion, layer_completion, finding_resolution, and weighted overall percentage</criterion>
+    <criterion id="AC2">CLI command rustybt-validate progress displays progress bars for Strategies, Layers, Findings, Overall with percentage and fraction format, plus Next Steps suggestions with numbered actions</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Reporting &amp; Documentation (FR60-FR67)" snippet="FR66: System can report overall validation completion percentage (strategies covered, layers completed, findings resolved)."/>
+      <doc path="docs/architecture.md" title="Architecture Document" section="FR Category to Architecture Mapping" snippet="Reporting &amp; Documentation (FR60-FR67) maps to rustybt/validation/reporting.py."/>
+      <doc path="docs/epics/epic-7-reporting-documentation-system.md" title="Epic 7 Specification" section="Story 7.6" snippet="Progress display with ASCII bars for strategies, layers, findings. Next steps suggestions based on gaps."/>
+    </docs>
+    <code>
+      <artifact path="rustybt/validation/reporting.py" kind="module" symbol="StatusDashboard" lines="1-7" reason="Base reporting module - add ValidationProgress and calculate_completion"/>
+      <artifact path="rustybt/validation/cli.py" kind="module" symbol="main" lines="13-21" reason="CLI main group - add progress command"/>
+      <artifact path="rustybt/validation/session.py" kind="module" symbol="SessionManager" lines="N/A" reason="Session queries for counting validated strategies"/>
+      <artifact path="rustybt/validation/models.py" kind="module" symbol="Session, Finding" lines="118-364" reason="Session and Finding models for completion calculation"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0" purpose="CLI framework"/>
+        <package name="rich" version=">=14.1.0" purpose="Console formatting with progress bars"/>
+      </python>
+      <internal>
+        <dependency story="7-4" path="rustybt/validation/reporting.py" symbol="StatusDashboard" reason="Status dashboard provides foundation for progress tracking"/>
+      </internal>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="prerequisite">Story 7.4 (status dashboard) must be completed first</constraint>
+    <constraint type="architecture">Progress calculation based on PRD-defined scope (4 strategies, 5 layers)</constraint>
+    <constraint type="coding">Weight completion by importance (strategies > layers > findings)</constraint>
+    <constraint type="coding">Track partial layer completion</constraint>
+    <constraint type="coding">Suggest next actions based on gaps</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="ValidationProgress" kind="dataclass">
+      <signature>@dataclass class ValidationProgress: strategy_completion: float, layer_completion: float, finding_resolution: float, overall: float</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="calculate_completion" kind="function">
+      <signature>def calculate_completion(session_manager: SessionManager) -> ValidationProgress</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="get_next_steps" kind="function">
+      <signature>def get_next_steps(progress: ValidationProgress, sessions: list[Session]) -> list[str]</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="render_progress_bar" kind="function">
+      <signature>def render_progress_bar(percentage: float, width: int = 10) -> str</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="CLI progress command" kind="CLI endpoint">
+      <signature>rustybt-validate progress</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework with custom markers. Zero mock enforcement. Test fixtures in tests/validation/fixtures/.</standards>
+    <locations>
+      <location>tests/validation/test_reporting.py</location>
+      <location>tests/validation/test_cli.py</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1">test_calculate_completion_zero - verify 0% with no sessions</idea>
+      <idea acRef="AC1">test_calculate_completion_partial - verify partial percentages</idea>
+      <idea acRef="AC1">test_calculate_completion_full - verify 100% when all complete</idea>
+      <idea acRef="AC1">test_weighted_average_calculation - verify weighting formula</idea>
+      <idea acRef="AC2">test_cli_progress_display - verify progress bars formatting</idea>
+      <idea acRef="AC2">test_next_steps_incomplete_strategy - verify next steps for gaps</idea>
+      <idea acRef="AC2">test_next_steps_final_report - verify final report suggestion when complete</idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,128 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>4</storyId>
+    <title>Implement Subprocess Execution Runner</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-4-strategy-comparison-infrastructure-story-4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>a runner that executes strategies in isolated subprocesses</iWant>
+    <soThat>rustybt and Backtrader don't conflict during execution</soThat>
+    <tasks>
+      <task id="1">Create runner.py module (AC: #1, #2)</task>
+      <task id="2">Implement run_rustybt_strategy() (AC: #1, #3, #4, #5)</task>
+      <task id="3">Implement run_backtrader_strategy() (AC: #2, #3, #4, #5)</task>
+      <task id="4">Write unit tests</task>
+      <task id="5">Write integration test (AC: #6)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">run_rustybt_strategy() executes rustybt strategy in subprocess</criterion>
+    <criterion id="AC2">run_backtrader_strategy() executes Backtrader strategy in subprocess</criterion>
+    <criterion id="AC3">Subprocess execution uses sys.executable for same Python interpreter</criterion>
+    <criterion id="AC4">Runners capture stdout/stderr with text=True, capture_output=True</criterion>
+    <criterion id="AC5">Timeout enforcement (default 300 seconds)</criterion>
+    <criterion id="AC6">Integration test executes simple strategy in both frameworks</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Subprocess Isolation Pattern (pg 249-268)</section>
+        <snippet>Execute rustybt and Backtrader in separate processes. Prevents dependency conflicts. Clean environment isolation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>ADR-004 Subprocess Isolation</section>
+        <snippet>Decision: Run frameworks in separate subprocesses. Rationale: Prevents import conflicts, clean isolation.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>rustybt/validation/base_strategy.py</path>
+        <kind>dependency</kind>
+        <symbol>RustyBTValidatedStrategy</symbol>
+        <lines>all</lines>
+        <reason>Strategies must extend ValidatedStrategy base classes</reason>
+      </artifact>
+      <artifact>
+        <path>tests/validation/strategies/backtrader/base_validated.py</path>
+        <kind>dependency</kind>
+        <symbol>BacktraderValidatedStrategy</symbol>
+        <lines>all</lines>
+        <reason>Backtrader strategies use this base class</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/__init__.py</path>
+        <kind>module</kind>
+        <symbol>exports</symbol>
+        <lines>1-10</lines>
+        <reason>Will need to export runner functions</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <stdlib>
+        <module>subprocess</module>
+        <module>sys</module>
+        <module>json</module>
+        <module>pathlib</module>
+      </stdlib>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Use subprocess.run() for synchronous execution</constraint>
+    <constraint type="pattern">Use sys.executable to ensure same Python interpreter</constraint>
+    <constraint type="pattern">Never import both frameworks in same process</constraint>
+    <constraint type="timeout">Default timeout 300 seconds, configurable per call</constraint>
+    <constraint type="params">JSON serialize params dict for command line</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>run_rustybt_strategy</name>
+      <kind>function</kind>
+      <signature>def run_rustybt_strategy(strategy_module: str, data_path: Path, output_log: Path, params: Optional[dict] = None, timeout: int = 300) -> subprocess.CompletedProcess</signature>
+      <path>rustybt/validation/runner.py</path>
+    </interface>
+    <interface>
+      <name>run_backtrader_strategy</name>
+      <kind>function</kind>
+      <signature>def run_backtrader_strategy(strategy_module: str, data_path: Path, output_log: Path, params: Optional[dict] = None, timeout: int = 300) -> subprocess.CompletedProcess</signature>
+      <path>rustybt/validation/runner.py</path>
+    </interface>
+    <interface>
+      <name>subprocess.CompletedProcess</name>
+      <kind>return type</kind>
+      <signature>CompletedProcess with returncode, stdout, stderr</signature>
+      <path>stdlib subprocess</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing. Mock subprocess.run for unit tests.
+      Integration tests require both frameworks installed.
+    </standards>
+    <locations>
+      <location>tests/validation/test_runner.py</location>
+    </locations>
+    <ideas>
+      <idea acId="AC1">Test command construction includes -m rustybt.validation.execute_rustybt</idea>
+      <idea acId="AC2">Test command construction includes -m rustybt.validation.execute_backtrader</idea>
+      <idea acId="AC3">Test sys.executable used in command</idea>
+      <idea acId="AC4">Test capture_output=True and text=True passed</idea>
+      <idea acId="AC5">Test timeout parameter passed to subprocess.run</idea>
+      <idea acId="AC6">Integration test: execute both frameworks, verify log files created</idea>
+    </ideas>
+  </tests>
+</story-context>

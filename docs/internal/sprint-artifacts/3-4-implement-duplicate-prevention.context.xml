@@ -1,0 +1,189 @@
+<story-context id="3-4-implement-duplicate-prevention" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>4</storyId>
+    <title>Implement Duplicate Prevention</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-4-implement-duplicate-prevention.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>duplicate session/finding prevention</iWant>
+    <soThat>validation work isn't accidentally repeated</soThat>
+    <tasks>
+      <task id="1">Create custom exception classes (AC: #1, #2)
+        <subtask>Create DuplicateSessionError exception</subtask>
+        <subtask>Create DuplicateFindingError exception</subtask>
+        <subtask>Add to rustybt/validation/exceptions.py (or models.py)</subtask>
+      </task>
+      <task id="2">Implement session duplicate detection (AC: #1)
+        <subtask>Modify SessionManager.create() to check for existing IN_PROGRESS sessions</subtask>
+        <subtask>Use find_sessions(strategy=name, status="IN_PROGRESS")</subtask>
+        <subtask>Raise DuplicateSessionError if found</subtask>
+        <subtask>Include existing session ID and suggested commands in message</subtask>
+      </task>
+      <task id="3">Implement finding duplicate detection (AC: #2)
+        <subtask>Modify add_finding() to check for duplicates</subtask>
+        <subtask>Compare layer, event, timestamp for uniqueness</subtask>
+        <subtask>Raise DuplicateFindingError if duplicate found</subtask>
+        <subtask>Include existing finding ID in error message</subtask>
+      </task>
+      <task id="4">Update CLI with clear error handling (AC: #3)
+        <subtask>Catch DuplicateSessionError in session create</subtask>
+        <subtask>Format user-friendly error message</subtask>
+        <subtask>Show suggested commands to resolve</subtask>
+      </task>
+      <task id="5">Implement --force flag (AC: #4)
+        <subtask>Add --force option to session create command</subtask>
+        <subtask>When --force and duplicate exists: mark old as SUPERSEDED</subtask>
+        <subtask>Add SUPERSEDED status to Session model</subtask>
+        <subtask>Create new session and warn about superseded</subtask>
+      </task>
+      <task id="6">Write unit tests (AC: #5)
+        <subtask>Test duplicate session detection</subtask>
+        <subtask>Test duplicate finding detection</subtask>
+        <subtask>Test --force flag creates new session</subtask>
+        <subtask>Test SUPERSEDED status preserved</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Session duplicate detection implemented - Check for existing IN_PROGRESS session with same strategy before create. Raise DuplicateSessionError with clear message. Suggest using session resume or session delete</criterion>
+    <criterion id="2">Finding duplicate detection implemented - Check for existing finding with same layer/event/timestamp. Raise DuplicateFindingError if duplicate found. Include existing finding ID in error message</criterion>
+    <criterion id="3">CLI provides clear error messages - On duplicate session show existing session ID and suggested commands. On duplicate finding show existing finding ID</criterion>
+    <criterion id="4">--force flag allows override - rustybt-validate session create --strategy X --data Y --force marks existing session as SUPERSEDED, creates new session, shows warning message about superseded session</criterion>
+    <criterion id="5">Unit tests verify duplicate detection</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR40 - Duplicate Prevention</section>
+        <snippet>FR40: System can prevent duplicate investigations across sessions. Strategy + IN_PROGRESS status combination defines session uniqueness.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Finding Classification Workflow</section>
+        <snippet>findings.yaml stores findings with id, layer, description, classification. Finding uniqueness based on layer + event + timestamp.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-3-session-management-system.md</path>
+        <title>Epic 3: Session Management System</title>
+        <section>Story 3.4 Specification</section>
+        <snippet>DuplicateSessionError includes existing session ID and suggested commands. --force flag marks existing as SUPERSEDED. Superseded sessions preserved for audit trail.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/3-3-implement-session-query-commands.md</path>
+        <title>Story 3.3 - Session Query Commands</title>
+        <section>find_sessions Method</section>
+        <snippet>find_sessions() with filters enables duplicate detection. Can filter by strategy and status to find conflicts.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>rustybt/validation/session.py</path>
+        <kind>manager</kind>
+        <symbol>SessionManager</symbol>
+        <lines>14-177</lines>
+        <reason>Core SessionManager class where duplicate detection will be added to create_session().</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/session.py</path>
+        <kind>method</kind>
+        <symbol>create_session</symbol>
+        <lines>22-45</lines>
+        <reason>Existing create_session method to modify with duplicate check.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>data-model</kind>
+        <symbol>Session</symbol>
+        <lines>37-66</lines>
+        <reason>Session model where SUPERSEDED status needs to be added to status Literal.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>data-model</kind>
+        <symbol>Finding</symbol>
+        <lines>69-101</lines>
+        <reason>Finding model with layer, event, timestamp fields for uniqueness check.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/cli.py</path>
+        <kind>cli</kind>
+        <symbol>session_create</symbol>
+        <lines>29-52</lines>
+        <reason>CLI create command to add --force flag and error handling.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="pyyaml" version=">=6.0">Session YAML persistence</package>
+        <package name="click" version=">=8.0">CLI framework</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>DEPENDS ON Story 3.3 - Uses find_sessions() for duplicate detection</constraint>
+    <constraint>Session uniqueness: strategy + IN_PROGRESS status combination</constraint>
+    <constraint>Finding uniqueness: layer + event + timestamp combination</constraint>
+    <constraint>Superseded sessions preserved for audit trail (not deleted)</constraint>
+    <constraint>Clear error messages with actionable suggestions</constraint>
+    <constraint>SUPERSEDED status must be added to Session.status Literal type</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>DuplicateSessionError</name>
+      <kind>exception</kind>
+      <signature>class DuplicateSessionError(Exception): def __init__(self, existing_session_id: str, strategy: str)</signature>
+      <path>rustybt/validation/exceptions.py</path>
+    </interface>
+    <interface>
+      <name>DuplicateFindingError</name>
+      <kind>exception</kind>
+      <signature>class DuplicateFindingError(Exception): def __init__(self, existing_finding_id: str)</signature>
+      <path>rustybt/validation/exceptions.py</path>
+    </interface>
+    <interface>
+      <name>SessionManager.create_session (modified)</name>
+      <kind>method</kind>
+      <signature>def create_session(self, strategy_name: str, data_fixture: Path, rustybt_version: str, backtrader_version: str, force: bool = False) -> Session</signature>
+      <path>rustybt/validation/session.py</path>
+    </interface>
+    <interface>
+      <name>CLI --force flag</name>
+      <kind>Click option</kind>
+      <signature>@click.option("--force", is_flag=True, help="Override existing IN_PROGRESS session")</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use pytest fixtures to create test sessions. Test both detection and --force override behavior. Verify error messages contain expected information.</standards>
+    <locations>
+      <location>tests/validation/test_duplicate_prevention.py (NEW)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">test_duplicate_session_raises_error - Verify DuplicateSessionError raised for duplicate strategy</idea>
+      <idea ac="1">test_duplicate_session_error_includes_session_id - Verify error message contains existing session ID</idea>
+      <idea ac="1">test_duplicate_session_error_includes_suggestions - Verify error suggests resume or delete</idea>
+      <idea ac="2">test_duplicate_finding_raises_error - Verify DuplicateFindingError for same layer/event/timestamp</idea>
+      <idea ac="2">test_duplicate_finding_error_includes_id - Verify error message contains existing finding ID</idea>
+      <idea ac="3">test_cli_duplicate_session_shows_error - Verify CLI displays user-friendly error</idea>
+      <idea ac="4">test_force_flag_supersedes_existing - Verify existing session marked SUPERSEDED</idea>
+      <idea ac="4">test_force_flag_creates_new_session - Verify new session created after force</idea>
+      <idea ac="4">test_force_flag_shows_warning - Verify CLI warns about superseded session</idea>
+      <idea ac="5">test_superseded_status_preserved_in_yaml - Verify SUPERSEDED persisted correctly</idea>
+    </ideas>
+  </tests>
+</story-context>

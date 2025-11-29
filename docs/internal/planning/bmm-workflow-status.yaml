@@ -1,0 +1,123 @@
+# Workflow Status Template
+
+# This tracks progress through BMM methodology Analysis, Planning, and Solutioning phases.
+# Implementation phase is tracked separately in sprint-status.yaml
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met (e.g., if_has_ui)
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/product-brief.md")
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2025-11-23"
+project: "rustybt"
+project_type: "framework-validation"
+project_focus: "Validation, testing, and benchmarking rustybt framework against Backtrader"
+selected_track: "method"
+field_type: "brownfield"
+workflow_path: "method-brownfield-validation"
+workflow_status:
+  # Prerequisites
+  - id: "document-project"
+    name: "Document Project"
+    phase: "prerequisite"
+    agent: "analyst"
+    command: "/bmad:bmm:workflows:document-project"
+    status: "docs/bmm-index.md"
+    purpose: "Document rustybt framework architecture and capabilities"
+    note: "✅ Completed 2025-11-23: Generated comprehensive brownfield documentation"
+    completed_at: "2025-11-23T21:00:00Z"
+
+  # Phase 0 - Discovery
+  - id: "research"
+    name: "Research"
+    phase: 0
+    agent: "analyst"
+    command: "/bmad:bmm:workflows:research"
+    status: "optional"
+    purpose: "Research Backtrader framework, benchmarking methodologies, and validation approaches"
+    note: "User selected during workflow-init"
+
+  # Phase 1 - Planning
+  - id: "prd"
+    name: "Validation & Testing Requirements"
+    phase: 1
+    agent: "pm"
+    command: "/bmad:bmm:workflows:prd"
+    status: "docs/prd.md"
+    output: "PRD focused on validation, testing, and benchmarking requirements"
+    note: "✅ Completed 2025-11-23: Defined comprehensive validation framework requirements (73 FRs, 33 NFRs)"
+    completed_at: "2025-11-23T22:30:00Z"
+
+  - id: "validate-prd"
+    name: "Validate PRD"
+    phase: 1
+    agent: "pm"
+    command: "/bmad:bmm:workflows:validate-prd"
+    status: "optional"
+
+  # Phase 2 - Solutioning
+  - id: "architecture"
+    name: "Test & Benchmark Architecture"
+    phase: 2
+    agent: "architect"
+    command: "/bmad:bmm:workflows:architecture"
+    status: "docs/architecture.md"
+    output: "Test architecture and benchmarking framework design"
+    note: "✅ Completed 2025-11-23: Designed log-based validation architecture with dual-location framework, subprocess isolation, and 5-layer comparison infrastructure"
+    completed_at: "2025-11-23T23:55:00Z"
+    next: true
+
+  - id: "create-epics-and-stories"
+    name: "Create Validation Epics and Stories"
+    phase: 2
+    agent: "pm"
+    command: "/bmad:bmm:workflows:create-epics-and-stories"
+    status: "docs/epics.md"
+    output: "Epic breakdown with 7 epics, 51 stories covering all 73 FRs"
+    note: "✅ Completed 2025-11-23: Decomposed PRD into 7 epics (Foundation, Strategy Comparison, Session Management, 5-Layer Test Suite, Investigation Workflow, Strategy Validation, Reporting). Epic 1 fully detailed, Epics 2-7 summarized. All FRs mapped to stories."
+    completed_at: "2025-11-24T00:30:00Z"
+
+  - id: "test-design"
+    name: "Test Design"
+    phase: 2
+    agent: "tea"
+    command: "/bmad:bmm:workflows:test-design"
+    status: "docs/test-design-system.md"
+    output: "System-level testability assessment with ASR risk analysis, test levels strategy, NFR approach, and Sprint 0 recommendations"
+    note: "✅ Completed 2025-11-24: Conducted testability review (controllability ✅, observability ✅ with concerns, reliability ⚠️ concerns). Identified 1 critical blocker (TC-001: decimal tolerance tests), 3 high-priority concerns (resilience, performance SLOs, investigation validation). Recommended 40% unit / 30% integration / 30% E2E test distribution. Gate status: CONCERNS (pending TC-001 resolution)."
+    completed_at: "2025-11-24T01:15:00Z"
+
+  - id: "validate-architecture"
+    name: "Validate Architecture"
+    phase: 2
+    agent: "architect"
+    command: "/bmad:bmm:workflows:validate-architecture"
+    status: "optional"
+
+  - id: "implementation-readiness"
+    name: "Implementation Readiness"
+    phase: 2
+    agent: "architect"
+    command: "/bmad:bmm:workflows:implementation-readiness"
+    status: "docs/implementation-readiness-report-2025-11-24.md"
+    output: "Implementation readiness gate check - comprehensive validation of PRD, Architecture, Epics, and Test Design alignment"
+    note: "✅ Completed 2025-11-24: READY WITH CONDITIONS - All artifacts complete and aligned. 100% FR coverage (73 FRs → 7 epics). TC-001 deferred to Post-MVP. Requires 3 actions: Add resilience stories to Epic 1, document temporal integrity testing, verify performance baseline story. Gate status: PASS WITH CONDITIONS."
+    completed_at: "2025-11-24T02:00:00Z"
+
+  # Phase 4 - Implementation
+  - id: "sprint-planning"
+    name: "Sprint Planning"
+    phase: 4
+    agent: "sm"
+    command: "/bmad:bmm:workflows:sprint-planning"
+    status: "docs/sprint-artifacts/sprint-status.yaml"
+    output: "Sprint status tracking file with all epics and stories"
+    note: "✅ Completed 2025-11-24: Generated sprint status file tracking 7 epics with 49 stories (7 stories per epic). Epic 1 has detailed acceptance criteria ready for implementation. All stories initialized to 'backlog' status."
+    completed_at: "2025-11-24T02:15:00Z"

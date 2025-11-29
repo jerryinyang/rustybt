@@ -1,0 +1,161 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>1</storyId>
+    <title>Implement SMA Crossover Strategy (Dual)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-28</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/6-1-initial-strategy-validation-story-1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>SMA Crossover strategy implemented in both frameworks</iWant>
+    <soThat>this foundational strategy can be validated</soThat>
+    <tasks>
+      <task id="1" ac="1">Create rustybt SMA Crossover strategy
+        <subtask>Create tests/validation/strategies/rustybt/sma_crossover.py</subtask>
+        <subtask>Implement SMACrossoverStrategy class extending RustyBTValidatedStrategy</subtask>
+        <subtask>Add initialize() with SMA indicator setup</subtask>
+        <subtask>Add compute_signal() with crossover logic and @log_signal() decorator</subtask>
+        <subtask>Add handle_data() with order logic and @log_order() decorator</subtask>
+      </task>
+      <task id="2" ac="2">Create Backtrader SMA Crossover strategy
+        <subtask>Create tests/validation/strategies/backtrader/sma_crossover.py</subtask>
+        <subtask>Implement SMACrossoverStrategy class extending BacktraderValidatedStrategy</subtask>
+        <subtask>Use bt.indicators.SMA and bt.indicators.CrossOver</subtask>
+        <subtask>Implement next() with equivalent crossover logic</subtask>
+        <subtask>Ensure log output matches rustybt format</subtask>
+      </task>
+      <task id="3" ac="3">Verify strategy equivalence
+        <subtask>Complete strategy audit checklist</subtask>
+        <subtask>Document any intentional differences</subtask>
+        <subtask>Verify indicator calculations match</subtask>
+        <subtask>Verify signal timing alignment</subtask>
+      </task>
+      <task id="4" ac="4">Write unit tests
+        <subtask>Create tests/validation/test_sma_crossover_strategy.py</subtask>
+        <subtask>Test SMA calculation accuracy</subtask>
+        <subtask>Test crossover detection logic</subtask>
+        <subtask>Test order generation on signals</subtask>
+        <subtask>Test position entry/exit</subtask>
+      </task>
+      <task id="5" ac="5">Validate log output format
+        <subtask>Run both strategies on test data</subtask>
+        <subtask>Verify JSONL log structure</subtask>
+        <subtask>Confirm layer tags are correct</subtask>
+        <subtask>Check timestamp alignment</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">rustybt SMA Crossover implementation exists at tests/validation/strategies/rustybt/sma_crossover.py with RustyBTValidatedStrategy base, initialize(), compute_signal() with @log_signal(), handle_data() with @log_order(), default params fast_period=10, slow_period=30, buy on fast crosses above slow, sell on fast crosses below slow</criterion>
+    <criterion id="2">Backtrader SMA Crossover implementation exists at tests/validation/strategies/backtrader/sma_crossover.py with BacktraderValidatedStrategy base, bt.indicators.SMA, bt.indicators.CrossOver, logically equivalent to rustybt, same default params</criterion>
+    <criterion id="3">Strategy audit checklist passed: same indicator calculations (SMA formula), same signal logic (crossover detection), same order sizing (target_percent), same entry/exit conditions</criterion>
+    <criterion id="4">Unit tests verify isolated logic: SMA calculation correctness, crossover signal generation, order creation on signals, position management</criterion>
+    <criterion id="5">Both strategies generate JSONL logs in expected format with signals layer (indicator values, signal generated), orders layer (order creation, target percent), timestamps aligned for comparison</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Strategy Validation (FR55-FR59)" snippet="System can validate Simple Moving Average Crossover strategy across all 5 layers. System can add new strategies to validation suite without disrupting existing validations." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="Novel Pattern: Log-Based Validation Architecture" snippet="ValidatedStrategy base classes auto-log lifecycle events to JSONL. Log schema includes timestamp, layer, event, asset, data fields. Comparison engine uses Polars-based DataFrame comparison." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="Project Structure" snippet="tests/validation/strategies/rustybt/ and tests/validation/strategies/backtrader/ contain dual-implemented strategies including sma_crossover.py" />
+      <doc path="docs/epics/epic-6-initial-strategy-validation-4-strategies.md" title="Epic 6" section="Story 6.1" snippet="Implement SMA Crossover Strategy (Dual) with fast_period=10, slow_period=30. Buy when fast SMA crosses above slow SMA, sell when fast SMA crosses below slow SMA." />
+    </docs>
+    <code>
+      <artifact path="rustybt/validation/base_strategy.py" kind="module" symbol="RustyBTValidatedStrategy" lines="327-400" reason="Base class for rustybt validated strategies - extend this for SMA strategy" />
+      <artifact path="rustybt/validation/base_strategy.py" kind="module" symbol="ValidatedStrategyMixin" lines="55-325" reason="Provides _log_event(), log_signal(), log_order_created() methods used by strategies" />
+      <artifact path="rustybt/validation/decorators.py" kind="module" symbol="log_signal" lines="46-110" reason="Decorator to automatically log signal computation - use on compute_signal()" />
+      <artifact path="rustybt/validation/decorators.py" kind="module" symbol="log_order" lines="113-195" reason="Decorator to automatically log order creation - use on handle_data()" />
+      <artifact path="tests/validation/strategies/bt_strategies/base_validated.py" kind="module" symbol="BacktraderValidatedStrategy" lines="57-295" reason="Base class for Backtrader validated strategies - extend this for SMA strategy" />
+      <artifact path="tests/validation/strategies/rustybt/simple_strategy.py" kind="module" symbol="SimpleStrategy" reason="Example rustybt validated strategy - reference for implementation pattern" />
+      <artifact path="tests/validation/strategies/bt_strategies/simple_strategy.py" kind="module" symbol="SimpleStrategy" reason="Example Backtrader validated strategy - reference for implementation pattern" />
+      <artifact path="tests/validation/conftest.py" kind="test-fixture" reason="Pytest fixtures for validation tests - use for test setup" />
+    </code>
+    <dependencies>
+      <python version="3.12+">
+        <package name="backtrader" version=">=1.9.78" purpose="Reference framework for comparison" />
+        <package name="polars" version=">=1.0" purpose="Log parsing and comparison" />
+        <package name="pytest" version=">=7.2.0" purpose="Test framework" />
+        <package name="pyyaml" version=">=6.0" purpose="Tolerance configuration" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Strategies must extend ValidatedStrategy base classes (RustyBTValidatedStrategy or BacktraderValidatedStrategy)</constraint>
+    <constraint type="pattern">Use @log_signal() decorator on signal computation methods</constraint>
+    <constraint type="pattern">Use @log_order() decorator on order creation methods</constraint>
+    <constraint type="logging">Log schema must match: timestamp, layer, event, asset, data</constraint>
+    <constraint type="parameters">Default parameters: fast_period=10, slow_period=30</constraint>
+    <constraint type="logic">Buy only when no position exists, sell only when position exists</constraint>
+    <constraint type="testing">All tests must use real framework execution (Zero Mock Enforcement)</constraint>
+    <constraint type="location">rustybt strategy: tests/validation/strategies/rustybt/sma_crossover.py</constraint>
+    <constraint type="location">Backtrader strategy: tests/validation/strategies/backtrader/sma_crossover.py</constraint>
+    <constraint type="location">Unit tests: tests/validation/test_sma_crossover_strategy.py</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="RustyBTValidatedStrategy" kind="class">
+      <signature>class RustyBTValidatedStrategy(ValidatedStrategyMixin)</signature>
+      <path>rustybt/validation/base_strategy.py</path>
+      <methods>
+        <method>__init__(self, log_path: Path)</method>
+        <method>initialize(self, context: Any) -> None</method>
+        <method>handle_data(self, context: Any, data: Any) -> None</method>
+        <method>_log_event(self, layer: str, event: str, data: dict, *, asset: str | None = None) -> None</method>
+        <method>log_signal(self, signal_name: str, signal_value: Any, asset: str | None = None, **extra_data) -> None</method>
+        <method>log_order_created(self, order_type: str, asset: str, quantity: float, limit_price: float | None = None, **extra_data) -> None</method>
+      </methods>
+    </interface>
+    <interface name="BacktraderValidatedStrategy" kind="class">
+      <signature>class BacktraderValidatedStrategy(bt.Strategy)</signature>
+      <path>tests/validation/strategies/bt_strategies/base_validated.py</path>
+      <params>params = (("log_path", None),)</params>
+      <methods>
+        <method>__init__(self) -> None</method>
+        <method>next(self) -> None</method>
+        <method>stop(self) -> None</method>
+        <method>_log_event(self, layer: str, event: str, data: dict, *, asset: str | None = None) -> None</method>
+        <method>log_signal(self, signal_name: str, signal_value: Any, asset: str | None = None, **extra_data) -> None</method>
+        <method>log_order_created(self, order_type: str, asset: str, quantity: float, limit_price: float | None = None, **extra_data) -> None</method>
+      </methods>
+    </interface>
+    <interface name="log_signal" kind="decorator">
+      <signature>@log_signal(layer: str = "signals")</signature>
+      <path>rustybt/validation/decorators.py</path>
+      <description>Logs method name, return value, and arguments to signals layer</description>
+    </interface>
+    <interface name="log_order" kind="decorator">
+      <signature>@log_order(layer: str = "orders")</signature>
+      <path>rustybt/validation/decorators.py</path>
+      <description>Logs order type, asset, quantity, limit price to orders layer</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use pytest with custom markers (@pytest.mark.layer_2_signals for signal tests). Follow Zero Mock Enforcement - all tests use real framework execution. Tests should be deterministic and reproducible. Use fixtures from tests/validation/conftest.py for test data and setup.</standards>
+    <locations>
+      <location>tests/validation/test_sma_crossover_strategy.py</location>
+      <location>tests/validation/strategies/</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Test SMACrossoverStrategy class can be instantiated with log_path</idea>
+      <idea ac="1">Test initialize() sets up fast and slow SMA indicators correctly</idea>
+      <idea ac="1">Test compute_signal() returns "BUY" on upward crossover</idea>
+      <idea ac="1">Test compute_signal() returns "SELL" on downward crossover</idea>
+      <idea ac="1">Test compute_signal() returns "HOLD" when no crossover</idea>
+      <idea ac="2">Test Backtrader strategy uses bt.indicators.SMA correctly</idea>
+      <idea ac="2">Test Backtrader strategy uses bt.indicators.CrossOver correctly</idea>
+      <idea ac="3">Test both strategies produce same signals on identical data</idea>
+      <idea ac="3">Test indicator values match between frameworks</idea>
+      <idea ac="4">Test SMA calculation matches manual calculation</idea>
+      <idea ac="4">Test crossover detection handles edge cases (equal values)</idea>
+      <idea ac="5">Test JSONL log contains required fields (timestamp, layer, event, asset, data)</idea>
+      <idea ac="5">Test log entries have correct layer tags (signals, orders)</idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,235 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>2</storyId>
+    <title>Implement Source Code Linking</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-27</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/5-2-investigation-classification-workflow-story-2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>findings linked to relevant source code</iWant>
+    <soThat>I can investigate the root cause efficiently</soThat>
+    <tasks>
+      <task id="1" ac="1">
+        <description>Implement SourceLocation model</description>
+        <subtasks>
+          <subtask>Create SourceLocation dataclass with file, line, description fields</subtask>
+          <subtask>Add framework field to distinguish rustybt vs backtrader</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="2">
+        <description>Implement layer-to-module mapping</description>
+        <subtasks>
+          <subtask>Create LAYER_MODULES constant with layer→paths mapping</subtask>
+          <subtask>Support both rustybt and Backtrader module patterns</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="1">
+        <description>Implement locate_source() function</description>
+        <subtasks>
+          <subtask>Search modules using grep/ripgrep for event-related code</subtask>
+          <subtask>Parse file:line from search results</subtask>
+          <subtask>Return sorted list of SourceLocation objects</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="3">
+        <description>Add view source to investigation interface</description>
+        <subtasks>
+          <subtask>Handle 'v' action in investigate command</subtask>
+          <subtask>Display numbered source locations</subtask>
+          <subtask>Prompt for selection and open in editor</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="4">
+        <description>Implement editor configuration</description>
+        <subtasks>
+          <subtask>Add `config set editor` command to CLI</subtask>
+          <subtask>Store editor command in user config</subtask>
+          <subtask>Format command with {file}, {line} placeholders</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="5">
+        <description>Implement source location caching</description>
+        <subtasks>
+          <subtask>Cache grep results keyed by layer+event</subtask>
+          <subtask>Store cache in session directory</subtask>
+          <subtask>Add cache invalidation on file modification</subtask>
+        </subtasks>
+      </task>
+      <task id="7" ac="6">
+        <description>Write unit tests</description>
+        <subtasks>
+          <subtask>Test layer mapping</subtask>
+          <subtask>Test locate_source() with mock filesystem</subtask>
+          <subtask>Test editor command formatting</subtask>
+          <subtask>Test cache storage/retrieval</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" title="locate_source() function implemented">
+      <requirement>Maps finding layer to relevant source modules</requirement>
+      <requirement>Searches for event-related functions in rustybt codebase</requirement>
+      <requirement>Searches for equivalent functions in Backtrader codebase</requirement>
+      <requirement>Returns list of SourceLocation objects with file, line, description</requirement>
+    </criterion>
+    <criterion id="2" title="Layer-to-module mapping">
+      <requirement>data layer → `rustybt/data/`, `zipline/data/`</requirement>
+      <requirement>signals layer → `rustybt/algorithm.py`, `rustybt/signals/`</requirement>
+      <requirement>orders layer → `rustybt/finance/order.py`, `rustybt/finance/blotter.py`</requirement>
+      <requirement>broker layer → `rustybt/finance/broker.py`, `rustybt/finance/commission.py`</requirement>
+      <requirement>portfolio layer → `rustybt/finance/portfolio.py`, `rustybt/finance/returns.py`</requirement>
+    </criterion>
+    <criterion id="3" title="View source command in investigation">
+      <requirement>Press 'v' during investigation to view source locations</requirement>
+      <requirement>Display numbered list of locations for both frameworks</requirement>
+      <requirement>Allow selection to open file in configured editor</requirement>
+    </criterion>
+    <criterion id="4" title="Editor configuration">
+      <requirement>`rustybt-validate config set editor "&lt;command&gt;"` configures editor</requirement>
+      <requirement>Support placeholders: {file}, {line}</requirement>
+      <requirement>Default to `code -g {file}:{line}` for VS Code</requirement>
+      <requirement>Support common editors: vim, emacs, sublime, etc.</requirement>
+    </criterion>
+    <criterion id="5" title="Source location caching">
+      <requirement>Cache grep results for repeated queries</requirement>
+      <requirement>Invalidate cache when source files change</requirement>
+      <requirement>Store cache in session directory</requirement>
+    </criterion>
+    <criterion id="6" title="Unit tests verify">
+      <requirement>Layer-to-module mapping correctness</requirement>
+      <requirement>locate_source() returns valid paths</requirement>
+      <requirement>Editor command formatting</requirement>
+      <requirement>Cache behavior</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>rustybt - Product Requirements Document</title>
+        <section>Investigation &amp; Classification Workflow (FR42-FR43)</section>
+        <snippet>FR42: System can link discrepancies to relevant source code locations in rustybt. FR43: System can link discrepancies to relevant source code locations in Backtrader.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>CLI Interface</section>
+        <snippet>rustybt-validate config set editor "code -g {file}:{line}" - Opens file in VS Code at specific line. Support configurable editor command.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-investigation-classification-workflow.md</path>
+        <title>Epic 5: Investigation &amp; Classification Workflow</title>
+        <section>Story 5.2</section>
+        <snippet>Prerequisites: Story 5.1 (investigation interface). Technical Notes: Use grep/ripgrep for code search. Support configurable editor command. Cache source locations for repeated queries.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/cli.py</path>
+        <kind>CLI module</kind>
+        <symbol>main, config</symbol>
+        <lines>723-808</lines>
+        <reason>MODIFY - add `config set editor` command and integrate 'v' action handler in investigate command (from Story 5-1).</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>Data models</kind>
+        <symbol>Finding</symbol>
+        <lines>196-228</lines>
+        <reason>MODIFY - add SourceLocation dataclass. Finding model has layer and event fields needed for source lookup.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/source_linking.py</path>
+        <kind>Source linking module</kind>
+        <symbol>locate_source, LAYER_MODULES, SourceLocation, grep_for_event</symbol>
+        <lines>NEW</lines>
+        <reason>CREATE - new module for source code linking logic.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/session.py</path>
+        <kind>Session manager</kind>
+        <symbol>SessionManager</symbol>
+        <lines>17+</lines>
+        <reason>Session directory used for caching source locations.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0">CLI framework</package>
+        <package name="pyyaml" version=">=6.0">Config file storage</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+      <system>
+        <tool name="ripgrep" version="optional">Fast code search (rg). Falls back to grep if not available.</tool>
+      </system>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture">Layer mapping must cover all 5 layers: data, signals, orders, broker, portfolio</constraint>
+    <constraint source="Architecture">Source locations should include both rustybt and Backtrader paths for comparison</constraint>
+    <constraint source="Story 5-1">Integrate with investigation interface - handle 'v' action</constraint>
+    <constraint source="Dev Notes">Use ripgrep (rg) if available, fall back to grep</constraint>
+    <constraint source="Dev Notes">Cache grep results in session directory</constraint>
+    <constraint source="Architecture">Config stored in ~/.config/rustybt-validate/config.yaml</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>SourceLocation dataclass</name>
+      <kind>Data model</kind>
+      <signature>@dataclass SourceLocation(file: Path, line: int, description: str, framework: Literal["rustybt", "backtrader"])</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+    <interface>
+      <name>locate_source function</name>
+      <kind>Python function</kind>
+      <signature>def locate_source(finding: Finding, project_root: Path) -&gt; list[SourceLocation]</signature>
+      <path>rustybt/validation/source_linking.py</path>
+    </interface>
+    <interface>
+      <name>LAYER_MODULES constant</name>
+      <kind>Python dict</kind>
+      <signature>LAYER_MODULES: dict[str, dict[str, list[str]]] = {"data": {"rustybt": [...], "backtrader": [...]}, ...}</signature>
+      <path>rustybt/validation/source_linking.py</path>
+    </interface>
+    <interface>
+      <name>config set editor command</name>
+      <kind>CLI command</kind>
+      <signature>rustybt-validate config set editor "&lt;command&gt;"</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing. Use tmp_path fixture for mock filesystem tests. Use @pytest.mark.source_linking marker. Follow existing test patterns in tests/validation/.
+    </standards>
+    <locations>
+      <location>tests/validation/test_source_linking.py (NEW - create)</location>
+      <location>tests/validation/test_cli.py (existing - add config tests)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">test_source_location_dataclass_fields - verify all fields present</idea>
+      <idea ac="1">test_source_location_str_format - verify string representation</idea>
+      <idea ac="1">test_locate_source_returns_list - verify return type</idea>
+      <idea ac="2">test_layer_modules_complete - verify all layers mapped</idea>
+      <idea ac="2">test_layer_modules_has_both_frameworks - verify rustybt and backtrader</idea>
+      <idea ac="3">test_view_source_in_investigation - verify 'v' action works</idea>
+      <idea ac="4">test_config_set_editor_command - verify CLI command</idea>
+      <idea ac="4">test_editor_command_default - verify default is VS Code</idea>
+      <idea ac="4">test_editor_command_placeholder_formatting - verify {file}, {line}</idea>
+      <idea ac="5">test_source_cache_storage - verify cache created</idea>
+      <idea ac="5">test_source_cache_retrieval - verify cache hit</idea>
+      <idea ac="5">test_source_cache_invalidation - verify cache cleared on change</idea>
+    </ideas>
+  </tests>
+</story-context>

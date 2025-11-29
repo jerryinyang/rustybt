@@ -1,0 +1,233 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>6</storyId>
+    <title>Implement Regression Test Generation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-27</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/5-6-investigation-classification-workflow-story-6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>regression tests auto-generated for fixed bugs</iWant>
+    <soThat>bugs don't reappear in future development</soThat>
+    <tasks>
+      <task id="1" ac="4">
+        <description>Create regression test directory structure</description>
+        <subtasks>
+          <subtask>Create tests/validation/regression/ directory</subtask>
+          <subtask>Add __init__.py</subtask>
+          <subtask>Add conftest.py with shared fixtures</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="1,2">
+        <description>Implement test file generation</description>
+        <subtasks>
+          <subtask>Create generate_regression_test() function</subtask>
+          <subtask>Generate test file path from finding ID</subtask>
+          <subtask>Generate docstring with finding details</subtask>
+          <subtask>Generate test function with markers</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="3">
+        <description>Implement test content generation</description>
+        <subtasks>
+          <subtask>Generate imports</subtask>
+          <subtask>Generate test function with comparison logic</subtask>
+          <subtask>Generate assertion with clear error message</subtask>
+          <subtask>Include fix metadata in docstring</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="1">
+        <description>Integrate with verify command</description>
+        <subtasks>
+          <subtask>Call generate_regression_test() on verification pass</subtask>
+          <subtask>Display path to generated test</subtask>
+          <subtask>Store path in finding.regression_test</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="5">
+        <description>Ensure CI integration</description>
+        <subtasks>
+          <subtask>Verify pytest.ini includes regression marker</subtask>
+          <subtask>Add CI step for regression tests (if not covered)</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="6">
+        <description>Write unit tests</description>
+        <subtasks>
+          <subtask>Test file generation creates valid path</subtask>
+          <subtask>Test generated code is syntactically valid</subtask>
+          <subtask>Test generated test can be imported</subtask>
+          <subtask>Test assertions work correctly</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" title="Regression test generation on verification pass">
+      <requirement>When `rustybt-validate verify` passes, auto-generate regression test</requirement>
+      <requirement>Test file created at `tests/validation/regression/test_&lt;finding_id&gt;.py`</requirement>
+      <requirement>Test is immediately runnable with pytest</requirement>
+    </criterion>
+    <criterion id="2" title="Generated test structure">
+      <requirement>Docstring includes original finding details (ID, layer, event, values)</requirement>
+      <requirement>Docstring includes fix date and fix description</requirement>
+      <requirement>Test uses appropriate pytest markers (`@pytest.mark.regression`, `@pytest.mark.layer_X_*`)</requirement>
+      <requirement>Test loads strategy logs and runs layer comparison</requirement>
+      <requirement>Assertion checks specific event type from finding</requirement>
+    </criterion>
+    <criterion id="3" title="Test content requirements">
+      <requirement>Reference to original finding ID</requirement>
+      <requirement>Original discrepancy details (rustybt_value, backtrader_value)</requirement>
+      <requirement>Fix date and affected_components</requirement>
+      <requirement>Meaningful test name from finding ID</requirement>
+      <requirement>Clear assertion message referencing original bug</requirement>
+    </criterion>
+    <criterion id="4" title="Regression test directory">
+      <requirement>Create `tests/validation/regression/` if not exists</requirement>
+      <requirement>Add `__init__.py` for package</requirement>
+      <requirement>Add `conftest.py` with shared fixtures if needed</requirement>
+    </criterion>
+    <criterion id="5" title="CI integration">
+      <requirement>Regression tests run in CI with `pytest tests/validation/regression/`</requirement>
+      <requirement>Regression test failures block CI</requirement>
+      <requirement>Separate from main layer tests for clarity</requirement>
+    </criterion>
+    <criterion id="6" title="Unit tests verify">
+      <requirement>Test file generation</requirement>
+      <requirement>Generated test syntax is valid Python</requirement>
+      <requirement>Generated test runs without errors</requirement>
+      <requirement>Test assertions are correct</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>rustybt - Product Requirements Document</title>
+        <section>Investigation &amp; Classification Workflow (FR53-FR54)</section>
+        <snippet>FR53: System can verify bug fixes by re-running comparison. FR54: System generates regression tests for fixed bugs.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Regression Test Generation</section>
+        <snippet>On verification pass, generate tests/validation/regression/test_&lt;finding_id&gt;.py. Test includes markers, docstring with finding details, and assertion checking specific event.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-investigation-classification-workflow.md</path>
+        <title>Epic 5: Investigation &amp; Classification Workflow</title>
+        <section>Story 5.6</section>
+        <snippet>Prerequisites: Story 5.5 (verification). Regression test generation with valid Python, pytest markers, CI integration.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/regression.py</path>
+        <kind>Regression module</kind>
+        <symbol>generate_regression_test, generate_test_content, REGRESSION_DIR, LAYER_TO_MARKER</symbol>
+        <lines>NEW</lines>
+        <reason>CREATE - new module for regression test generation logic.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/verification.py</path>
+        <kind>Verification module</kind>
+        <symbol>verify_fix</symbol>
+        <lines>From Story 5-5</lines>
+        <reason>MODIFY - integrate generate_regression_test() call on pass.</reason>
+      </file>
+      <file>
+        <path>tests/validation/regression/__init__.py</path>
+        <kind>Package init</kind>
+        <symbol>-</symbol>
+        <lines>NEW</lines>
+        <reason>CREATE - regression test package.</reason>
+      </file>
+      <file>
+        <path>tests/validation/regression/conftest.py</path>
+        <kind>Test fixtures</kind>
+        <symbol>regression_test_logs</symbol>
+        <lines>NEW</lines>
+        <reason>CREATE - shared fixtures for regression tests.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>Data models</kind>
+        <symbol>Finding</symbol>
+        <lines>196-228</lines>
+        <reason>Finding model has regression_test field set by generation.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+        <package name="ast" version="builtin">Python AST for syntax validation</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture">Regression tests go to tests/validation/regression/</constraint>
+    <constraint source="Architecture">Test file named test_&lt;finding_id&gt;.py</constraint>
+    <constraint source="Architecture">Must include @pytest.mark.regression marker</constraint>
+    <constraint source="Architecture">Must include layer-specific marker (layer_X_*)</constraint>
+    <constraint source="Story 5-5">Called on verify command pass</constraint>
+    <constraint source="Architecture">Generated test must be valid Python (parseable by ast)</constraint>
+    <constraint source="CI">Regression tests must run in CI pipeline</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>generate_regression_test function</name>
+      <kind>Python function</kind>
+      <signature>def generate_regression_test(finding: Finding, project_root: Path) -&gt; Path</signature>
+      <path>rustybt/validation/regression.py</path>
+    </interface>
+    <interface>
+      <name>generate_test_content function</name>
+      <kind>Python function</kind>
+      <signature>def generate_test_content(finding: Finding) -&gt; str</signature>
+      <path>rustybt/validation/regression.py</path>
+    </interface>
+    <interface>
+      <name>LAYER_TO_MARKER constant</name>
+      <kind>Python dict</kind>
+      <signature>LAYER_TO_MARKER: dict[str, str] = {"data": "layer_1_data", ...}</signature>
+      <path>rustybt/validation/regression.py</path>
+    </interface>
+    <interface>
+      <name>REGRESSION_DIR constant</name>
+      <kind>Python Path</kind>
+      <signature>REGRESSION_DIR = Path("tests/validation/regression")</signature>
+      <path>rustybt/validation/regression.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing. Use tmp_path fixture for file generation tests. Use ast.parse() to validate generated code syntax. Use @pytest.mark.regression_generation marker.
+    </standards>
+    <locations>
+      <location>tests/validation/test_regression.py (NEW - create)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">test_generate_creates_test_file - verify file created</idea>
+      <idea ac="1">test_generate_file_path_from_finding_id - verify naming</idea>
+      <idea ac="2">test_generated_test_has_docstring - verify docstring present</idea>
+      <idea ac="2">test_generated_test_has_markers - verify pytest markers</idea>
+      <idea ac="2">test_generated_test_has_comparison_logic - verify comparison call</idea>
+      <idea ac="3">test_generated_test_references_finding_id - verify ID in content</idea>
+      <idea ac="3">test_generated_test_has_clear_assertion - verify assertion message</idea>
+      <idea ac="4">test_regression_dir_created - verify directory created</idea>
+      <idea ac="4">test_init_file_created - verify __init__.py created</idea>
+      <idea ac="4">test_init_file_not_overwritten - verify existing preserved</idea>
+      <idea ac="6">test_generated_code_is_valid_python - verify ast.parse succeeds</idea>
+      <idea ac="6">test_generated_test_can_be_imported - verify importable</idea>
+    </ideas>
+  </tests>
+</story-context>

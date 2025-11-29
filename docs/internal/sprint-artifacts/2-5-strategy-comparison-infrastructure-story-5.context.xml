@@ -1,0 +1,128 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>5</storyId>
+    <title>Create Strategy Execution Wrapper Scripts</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-5-strategy-comparison-infrastructure-story-5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>CLI wrapper scripts for each framework</iWant>
+    <soThat>subprocess runners can execute strategies with consistent interfaces</soThat>
+    <tasks>
+      <task id="1">Create execute_rustybt.py script (AC: #1, #3, #4, #5)</task>
+      <task id="2">Create execute_backtrader.py script (AC: #2, #3, #4, #5)</task>
+      <task id="3">Implement shared utilities (import_strategy)</task>
+      <task id="4">Implement input validation (AC: #3)</task>
+      <task id="5">Write unit tests (AC: #6)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">execute_rustybt.py CLI wrapper with --strategy, --data, --output, --params</criterion>
+    <criterion id="AC2">execute_backtrader.py CLI wrapper with same arguments</criterion>
+    <criterion id="AC3">Both scripts validate inputs (module exists, data file exists, output dir)</criterion>
+    <criterion id="AC4">Both scripts use identical parameter names</criterion>
+    <criterion id="AC5">Error handling provides clear messages</criterion>
+    <criterion id="AC6">Unit tests verify CLI argument parsing</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Subprocess Isolation Pattern (pg 249-268)</section>
+        <snippet>Separate execution scripts for isolation. Same Python interpreter via sys.executable. Consistent argument interface.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/2-4-strategy-comparison-infrastructure-story-4.md</path>
+        <title>Story 2.4</title>
+        <section>Runner functions</section>
+        <snippet>Runners call these wrapper scripts via subprocess with --strategy, --data, --output, --params arguments.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>rustybt/validation/runner.py</path>
+        <kind>dependency</kind>
+        <symbol>run_rustybt_strategy, run_backtrader_strategy</symbol>
+        <lines>all</lines>
+        <reason>Runner functions call these wrapper scripts</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/base_strategy.py</path>
+        <kind>dependency</kind>
+        <symbol>RustyBTValidatedStrategy</symbol>
+        <lines>all</lines>
+        <reason>Wrapper instantiates strategy with log_path parameter</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">Data loading from Parquet</package>
+        <package name="backtrader" version=">=1.9.78">Backtrader execution wrapper</package>
+      </python>
+      <stdlib>
+        <module>argparse</module>
+        <module>importlib</module>
+        <module>json</module>
+        <module>sys</module>
+        <module>pathlib</module>
+      </stdlib>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="cli">--strategy: Python module path to strategy class</constraint>
+    <constraint type="cli">--data: Path to data fixture (Parquet)</constraint>
+    <constraint type="cli">--output: Path for JSONL log output</constraint>
+    <constraint type="cli">--params: Optional JSON parameters</constraint>
+    <constraint type="exit">Exit code 0 on success, 1 on failure</constraint>
+    <constraint type="error">Clear error messages with context</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>execute_rustybt CLI</name>
+      <kind>CLI interface</kind>
+      <signature>python -m rustybt.validation.execute_rustybt --strategy MODULE --data PATH --output PATH [--params JSON]</signature>
+      <path>rustybt/validation/execute_rustybt.py</path>
+    </interface>
+    <interface>
+      <name>execute_backtrader CLI</name>
+      <kind>CLI interface</kind>
+      <signature>python -m rustybt.validation.execute_backtrader --strategy MODULE --data PATH --output PATH [--params JSON]</signature>
+      <path>rustybt/validation/execute_backtrader.py</path>
+    </interface>
+    <interface>
+      <name>import_strategy</name>
+      <kind>helper function</kind>
+      <signature>def import_strategy(module_path: str) -> type</signature>
+      <path>rustybt/validation/execute_rustybt.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing. Test argument parsing with subprocess calls.
+      Verify error handling for invalid inputs.
+    </standards>
+    <locations>
+      <location>tests/validation/test_execute_scripts.py</location>
+    </locations>
+    <ideas>
+      <idea acId="AC1">Test rustybt wrapper accepts all required arguments</idea>
+      <idea acId="AC2">Test backtrader wrapper accepts identical arguments</idea>
+      <idea acId="AC3">Test missing --strategy returns non-zero exit code</idea>
+      <idea acId="AC3">Test invalid data path returns error message</idea>
+      <idea acId="AC4">Test both scripts use same argument names</idea>
+      <idea acId="AC5">Test import error message includes module path</idea>
+      <idea acId="AC6">Test invalid JSON params rejected with clear error</idea>
+    </ideas>
+  </tests>
+</story-context>

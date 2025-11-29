@@ -1,0 +1,192 @@
+<story-context id="4-4-implement-layer2-signal-computation-comparator" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>4</storyId>
+    <title>Implement Layer 2 Signal Computation Comparator</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/4-4-implement-layer2-signal-computation-comparator.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Layer 2 comparison for signal computation</iWant>
+    <soThat>indicator calculation and signal timing differences are detected</soThat>
+    <tasks>
+      <task id="1" status="pending">Implement Layer2SignalsComparator class
+        <subtask>Add class to comparators.py</subtask>
+        <subtask>Define compare() method signature</subtask>
+        <subtask>Filter logs by layer="signals"</subtask>
+      </task>
+      <task id="2" status="pending">Implement indicator value comparison
+        <subtask>Create compare_indicators() method</subtask>
+        <subtask>Join logs on timestamp and signal_name</subtask>
+        <subtask>Use values_match() with indicator_decimal_places</subtask>
+        <subtask>Create Discrepancy for mismatches</subtask>
+      </task>
+      <task id="3" status="pending">Implement signal timing comparison
+        <subtask>Create compare_signal_timing() method</subtask>
+        <subtask>Extract buy/sell signal events</subtask>
+        <subtask>Compare bar numbers for signal timing</subtask>
+        <subtask>Use signal_timing_tolerance_bars</subtask>
+      </task>
+      <task id="4" status="pending">Implement signal count comparison
+        <subtask>Create compare_signal_counts() method</subtask>
+        <subtask>Group signals by type (buy, sell, etc.)</subtask>
+        <subtask>Compare counts with signal_count_tolerance</subtask>
+        <subtask>Report any count differences</subtask>
+      </task>
+      <task id="5" status="pending">Create test file with marker
+        <subtask>Create tests/validation/test_layer_2_signals.py</subtask>
+        <subtask>Register @pytest.mark.layer_2_signals marker</subtask>
+        <subtask>Add test fixtures for signal logs</subtask>
+      </task>
+      <task id="6" status="pending">Write comprehensive tests
+        <subtask>Test indicator value comparison</subtask>
+        <subtask>Test signal timing comparison</subtask>
+        <subtask>Test signal count comparison</subtask>
+        <subtask>Test known DESIGN differences filtering</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Layer2SignalsComparator class implemented in rustybt/validation/comparators.py</criterion>
+    <criterion id="AC2">Constructor accepts tolerances dict</criterion>
+    <criterion id="AC3">compare(rustybt_logs, backtrader_logs) returns list[Discrepancy]</criterion>
+    <criterion id="AC4">Indicator values compared using indicator_decimal_places tolerance (default: 6)</criterion>
+    <criterion id="AC5">Signal timing compared using bar index with signal_timing_tolerance_bars (default: 0)</criterion>
+    <criterion id="AC6">Signal counts compared per signal type with signal_count_tolerance (default: 0)</criterion>
+    <criterion id="AC7">pytest test file exists with @pytest.mark.layer_2_signals marker</criterion>
+    <criterion id="AC8">Unit tests verify indicator, timing, and count comparisons</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Validation Layers</title>
+        <section>Log-Based Validation Architecture (lines 149-216)</section>
+        <snippet>Layer 2 Signal Computation: indicator calculations, signal timing, signal counts. Events: signal_generated, indicator_calculated.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Signal Computation Validation</title>
+        <section>FR6-FR8 (Signals)</section>
+        <snippet>System can compare signal computation logs to validate indicator calculation accuracy. System can compare signal timing alignment. System can compare signal count matching.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-4-5-layer-comparison-test-suite.md</path>
+        <title>Epic 4 - Story 4.4 Specification</title>
+        <section>Story 4.4: Implement Layer 2 Signal Computation Comparator</section>
+        <snippet>Some indicator differences are DESIGN (e.g., RSI smoothing method). Document known DESIGN differences in config. Signal timing uses bar index, not timestamp.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/comparators.py</path>
+        <kind>module</kind>
+        <symbol>Layer1DataComparator, Layer2SignalsComparator</symbol>
+        <lines>all</lines>
+        <reason>Target module - add Layer2SignalsComparator following Layer1 pattern</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>module</kind>
+        <symbol>Discrepancy</symbol>
+        <lines>231-258</lines>
+        <reason>Discrepancy dataclass returned by comparator</reason>
+      </file>
+      <file>
+        <path>tests/validation/config/layer_2_tolerances.yaml</path>
+        <kind>config</kind>
+        <symbol>tolerance config</symbol>
+        <lines>all</lines>
+        <reason>Layer 2 tolerance configuration</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">DataFrame filtering and join operations</package>
+      </python>
+      <internal>
+        <module name="rustybt.validation.models">Discrepancy dataclass</module>
+        <module name="rustybt.validation.comparators">values_match helper from Story 4.3</module>
+      </internal>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">Some indicator differences are DESIGN (RSI smoothing, etc.) - must be documented</constraint>
+    <constraint source="architecture">Signal timing uses bar index, not timestamp</constraint>
+    <constraint source="prd">Zero false positives - must not flag correct behavior as incorrect</constraint>
+    <constraint source="epic">Prerequisite: Story 4.3 (Layer 1 comparator pattern)</constraint>
+    <constraint source="coding-standards">Python 3.12+, type hints, Google docstrings</constraint>
+  </constraints>
+
+  <knownDesignDifferences>
+    <difference id="RSI_SMOOTHING">
+      <description>RSI calculation may use different smoothing methods</description>
+      <rustybt>Wilder's smoothing</rustybt>
+      <backtrader>EMA-based smoothing</backtrader>
+      <rationale>Both are valid RSI implementations; rustybt follows Wilder's original</rationale>
+    </difference>
+    <difference id="MACD_INIT">
+      <description>MACD initial values may differ during warmup period</description>
+      <rustybt>Uses SMA for initial values</rustybt>
+      <backtrader>Uses EMA from start</backtrader>
+      <rationale>Different initialization approaches; both converge after warmup</rationale>
+    </difference>
+  </knownDesignDifferences>
+
+  <interfaces>
+    <interface>
+      <name>Layer2SignalsComparator</name>
+      <kind>class</kind>
+      <signature>class Layer2SignalsComparator</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare</name>
+      <kind>method</kind>
+      <signature>def compare(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_indicators</name>
+      <kind>method</kind>
+      <signature>def compare_indicators(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_signal_timing</name>
+      <kind>method</kind>
+      <signature>def compare_signal_timing(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_signal_counts</name>
+      <kind>method</kind>
+      <signature>def compare_signal_counts(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework, @pytest.mark.layer_2_signals marker. Tests in tests/validation/test_layer_2_signals.py.</standards>
+    <locations>
+      <location>tests/validation/test_layer_2_signals.py</location>
+    </locations>
+    <ideas>
+      <idea ac="AC4">test_indicator_values_match - verify no discrepancy for matching values</idea>
+      <idea ac="AC4">test_indicator_values_mismatch - verify discrepancy for different values</idea>
+      <idea ac="AC4">test_indicator_tolerance_boundary - verify tolerance boundary behavior</idea>
+      <idea ac="AC5">test_signal_timing_same_bar - verify no discrepancy for same bar</idea>
+      <idea ac="AC5">test_signal_timing_different_bar - verify discrepancy for different bar</idea>
+      <idea ac="AC6">test_signal_count_match - verify no discrepancy for same counts</idea>
+      <idea ac="AC6">test_signal_count_mismatch - verify discrepancy for different counts</idea>
+      <idea ac="AC8">test_known_design_difference_filtered - verify RSI difference marked as DESIGN</idea>
+    </ideas>
+  </tests>
+</story-context>

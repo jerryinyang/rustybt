@@ -1,0 +1,123 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>7</storyId>
+    <title>Add Development Setup Documentation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-7-add-development-setup-documentation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>clear setup instructions for the validation framework</iWant>
+    <soThat>I can quickly configure my environment and start contributing</soThat>
+    <tasks>
+- [ ] Task 1: Create documentation file and prerequisites section (AC: #1, #2)
+  - [ ] Create `docs/validation/getting-started.md`
+  - [ ] Add prerequisites (Python 3.12+, rustybt dev env)
+
+- [ ] Task 2: Add installation instructions (AC: #3)
+  - [ ] Document `pip install -e ".[validation]"`
+  - [ ] Add verification steps (CLI version, pytest)
+
+- [ ] Task 3: Add test data setup section (AC: #4)
+  - [ ] Document fixture generator usage
+  - [ ] Explain parameters and deterministic seed
+
+- [ ] Task 4: Add quick start example (AC: #5)
+  - [ ] Document full workflow: create, list, show session
+  - [ ] Show expected output
+
+- [ ] Task 5: Add troubleshooting section (AC: #6)
+  - [ ] Cover common issues: missing modules, permissions, file not found
+
+- [ ] Task 6: Add architecture references and next steps (AC: #7)
+  - [ ] Link to Architecture doc and future Epics
+
+- [ ] Task 7: Review and polish documentation
+  - [ ] Verify commands are copy-pasteable
+  - [ ] Check file paths
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Getting started guide created** - `docs/validation/getting-started.md` exists.
+
+2. **Prerequisites documented** - Python 3.12+, rustybt dev env.
+
+3. **Installation steps** - `pip install` and verification commands.
+
+4. **Setup instructions** - Fixture generation documented.
+
+5. **Quick start example** - Complete session workflow example.
+
+6. **Troubleshooting guide** - Common issues and solutions.
+
+7. **Documentation quality** - Clear, actionable, copy-pasteable.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Development Environment</title>
+        <section>Development Environment</section>
+        <snippet>
+Development Setup:
+- Python 3.12+
+- Validation framework is optional extension
+- Dual-location architecture
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <item>
+        <path>docs/validation/getting-started.md</path>
+        <kind>file</kind>
+        <symbol>Documentation</symbol>
+        <lines>new file</lines>
+        <reason>New getting started guide.</reason>
+      </item>
+    </code>
+    <dependencies>
+      <ecosystem name="python">
+        <package name="mkdocs" version=">=1.5.0" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Documentation</type>
+      <description>Format: Markdown with syntax highlighting.</description>
+    </constraint>
+    <constraint>
+      <type>Documentation</type>
+      <description>Quality: Commands must be copy-pasteable and verified.</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Documentation</name>
+      <kind>File</kind>
+      <signature>docs/validation/getting-started.md</signature>
+      <path>docs/validation/getting-started.md</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Manual verification of documentation steps.
+      Verify all commands run as documented.
+    </standards>
+    <locations>
+      <location>Manual verification</location>
+    </locations>
+    <ideas>
+      <idea>Follow guide from scratch in clean env.</idea>
+    </ideas>
+  </tests>
+</story-context>

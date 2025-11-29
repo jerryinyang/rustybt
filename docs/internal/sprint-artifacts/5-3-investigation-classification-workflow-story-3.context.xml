@@ -1,0 +1,235 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>3</storyId>
+    <title>Implement BUG Classification Workflow</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-27</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/5-3-investigation-classification-workflow-story-3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>to classify findings as BUG with required rationale</iWant>
+    <soThat>bugs are properly documented and tracked for fixing</soThat>
+    <tasks>
+      <task id="1" ac="2">
+        <description>Extend Finding model for BUG classification</description>
+        <subtasks>
+          <subtask>Add severity field with enum (Critical/Major/Minor)</subtask>
+          <subtask>Add affected_components as list[str]</subtask>
+          <subtask>Add suggested_fix as optional string</subtask>
+          <subtask>Add investigated_by and investigated_at fields</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="1">
+        <description>Implement BUG classification workflow</description>
+        <subtasks>
+          <subtask>Handle 'b' action in investigation interface</subtask>
+          <subtask>Prompt for rationale with non-empty validation</subtask>
+          <subtask>Prompt for affected components</subtask>
+          <subtask>Prompt for severity selection</subtask>
+          <subtask>Optional prompt for suggested fix</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="3">
+        <description>Implement validation</description>
+        <subtasks>
+          <subtask>Validate rationale is non-empty and non-whitespace</subtask>
+          <subtask>Validate at least one component provided</subtask>
+          <subtask>Validate severity is valid enum</subtask>
+          <subtask>Show clear error messages and retry</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="4">
+        <description>Implement YAML persistence</description>
+        <subtasks>
+          <subtask>Load existing findings.yaml</subtask>
+          <subtask>Update classified finding</subtask>
+          <subtask>Save with preserved formatting</subtask>
+          <subtask>Handle file locking for concurrent access</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="5">
+        <description>Implement confirmation and next steps</description>
+        <subtasks>
+          <subtask>Show classification summary</subtask>
+          <subtask>Display next steps message</subtask>
+          <subtask>Update unclassified count</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="6">
+        <description>Write unit tests</description>
+        <subtasks>
+          <subtask>Test workflow prompts with mock input</subtask>
+          <subtask>Test validation logic</subtask>
+          <subtask>Test YAML persistence</subtask>
+          <subtask>Test model updates</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" title="BUG classification workflow in CLI">
+      <requirement>Press 'b' during investigation to classify as BUG</requirement>
+      <requirement>Prompt for required rationale (non-empty)</requirement>
+      <requirement>Prompt for affected component(s) (at least one)</requirement>
+      <requirement>Prompt for severity level (Critical/Major/Minor)</requirement>
+      <requirement>Optional: prompt for suggested fix</requirement>
+    </criterion>
+    <criterion id="2" title="Finding model updated with BUG fields">
+      <requirement>`classification = "BUG"`</requirement>
+      <requirement>`rationale` (required, non-empty string)</requirement>
+      <requirement>`severity` (Critical/Major/Minor)</requirement>
+      <requirement>`affected_components` (list of file paths)</requirement>
+      <requirement>`suggested_fix` (optional string)</requirement>
+      <requirement>`investigated_by` (user identifier)</requirement>
+      <requirement>`investigated_at` (timestamp)</requirement>
+    </criterion>
+    <criterion id="3" title="Validation requirements">
+      <requirement>Rationale cannot be empty or whitespace-only</requirement>
+      <requirement>At least one affected component required</requirement>
+      <requirement>Severity must be valid enum value</requirement>
+      <requirement>Validation errors shown clearly with retry prompt</requirement>
+    </criterion>
+    <criterion id="4" title="Persistence to findings.yaml">
+      <requirement>Classification saved immediately after input</requirement>
+      <requirement>Preserve existing findings in file</requirement>
+      <requirement>YAML format readable and editable</requirement>
+    </criterion>
+    <criterion id="5" title="Classification confirmation">
+      <requirement>Show summary of classification before saving</requirement>
+      <requirement>Display next steps for bug fixing</requirement>
+      <requirement>Update progress indicator (unclassified count)</requirement>
+    </criterion>
+    <criterion id="6" title="Unit tests verify">
+      <requirement>Classification workflow prompts</requirement>
+      <requirement>Validation of required fields</requirement>
+      <requirement>Persistence to YAML</requirement>
+      <requirement>Model field updates</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>rustybt - Product Requirements Document</title>
+        <section>Investigation &amp; Classification Workflow (FR47-FR49)</section>
+        <snippet>FR47: System can classify discrepancy as BUG requiring fix. FR48: BUG classification requires rationale text. FR49: BUG classification tracks affected components.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Finding Classification Workflow (Pattern 4)</section>
+        <snippet>All findings must be classified as BUG or DESIGN. BUG findings include severity (Critical/Major/Minor), affected_components, and optional suggested_fix. Stored in findings.yaml with full audit trail.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-investigation-classification-workflow.md</path>
+        <title>Epic 5: Investigation &amp; Classification Workflow</title>
+        <section>Story 5.3</section>
+        <snippet>Prerequisites: Story 5.1 (investigation interface). BUG classification workflow with severity enum, affected components, YAML persistence, and validation.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>Data models</kind>
+        <symbol>Finding</symbol>
+        <lines>196-228</lines>
+        <reason>MODIFY - extend Finding dataclass with severity, affected_components, suggested_fix fields. Already has classification, rationale, investigated_by, investigated_at.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/classification.py</path>
+        <kind>Classification module</kind>
+        <symbol>classify_as_bug, BugSeverity, save_finding</symbol>
+        <lines>NEW</lines>
+        <reason>CREATE - new module for BUG classification workflow logic.</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/cli.py</path>
+        <kind>CLI module</kind>
+        <symbol>investigate (from Story 5-1)</symbol>
+        <lines>-</lines>
+        <reason>MODIFY - integrate 'b' action handler to call classify_as_bug().</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/session.py</path>
+        <kind>Session manager</kind>
+        <symbol>SessionManager</symbol>
+        <lines>17+</lines>
+        <reason>Session.directory used for findings.yaml path.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0">CLI prompts and choices</package>
+        <package name="pyyaml" version=">=6.0">YAML persistence</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture">BUG classification must include rationale, severity, affected_components</constraint>
+    <constraint source="Architecture">Severity enum: Critical, Major, Minor</constraint>
+    <constraint source="Architecture">findings.yaml stored in session directory</constraint>
+    <constraint source="Story 5-1">Integrate with investigation interface - handle 'b' action</constraint>
+    <constraint source="PRD">FR48: Rationale is required for BUG classification</constraint>
+    <constraint source="PRD">FR49: Affected components must be tracked</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>BugSeverity enum</name>
+      <kind>Python enum</kind>
+      <signature>class BugSeverity(str, Enum): CRITICAL = "Critical"; MAJOR = "Major"; MINOR = "Minor"</signature>
+      <path>rustybt/validation/classification.py</path>
+    </interface>
+    <interface>
+      <name>classify_as_bug function</name>
+      <kind>Python function</kind>
+      <signature>def classify_as_bug(finding: Finding, session: Session) -&gt; None</signature>
+      <path>rustybt/validation/classification.py</path>
+    </interface>
+    <interface>
+      <name>save_finding function</name>
+      <kind>Python function</kind>
+      <signature>def save_finding(finding: Finding, session: Session) -&gt; None</signature>
+      <path>rustybt/validation/classification.py</path>
+    </interface>
+    <interface>
+      <name>Extended Finding model</name>
+      <kind>Data model</kind>
+      <signature>Finding with additional fields: severity, affected_components, suggested_fix</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing. Use unittest.mock.patch for Click prompts. Use tmp_path fixture for YAML persistence tests. Use @pytest.mark.classification marker.
+    </standards>
+    <locations>
+      <location>tests/validation/test_classification.py (NEW - create)</location>
+      <location>tests/validation/test_models.py (existing - add severity tests)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">test_classify_as_bug_prompts_for_rationale - verify rationale prompt</idea>
+      <idea ac="1">test_classify_as_bug_prompts_for_components - verify components prompt</idea>
+      <idea ac="1">test_classify_as_bug_prompts_for_severity - verify severity selection</idea>
+      <idea ac="2">test_finding_model_has_bug_fields - verify new fields exist</idea>
+      <idea ac="2">test_bug_severity_enum_values - verify enum has Critical/Major/Minor</idea>
+      <idea ac="2">test_bug_severity_from_number - verify number to enum conversion</idea>
+      <idea ac="3">test_rationale_validation_rejects_empty - verify empty rejected</idea>
+      <idea ac="3">test_rationale_validation_rejects_whitespace - verify whitespace rejected</idea>
+      <idea ac="3">test_components_validation_rejects_empty - verify empty rejected</idea>
+      <idea ac="4">test_yaml_persistence_saves_finding - verify file created</idea>
+      <idea ac="4">test_yaml_persistence_preserves_existing - verify existing not overwritten</idea>
+      <idea ac="5">test_classification_shows_confirmation - verify summary shown</idea>
+      <idea ac="5">test_classification_shows_next_steps - verify next steps message</idea>
+    </ideas>
+  </tests>
+</story-context>

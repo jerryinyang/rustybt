@@ -1,0 +1,196 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>5</storyId>
+    <title>Execute Full Validation for All 4 Strategies</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-28</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/6-5-initial-strategy-validation-story-5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>all 4 strategies validated across all 5 layers</iWant>
+    <soThat>framework correctness is proven comprehensively</soThat>
+    <tasks>
+      <task id="1" ac="1">Execute SMA Crossover validation
+        <subtask>Run strategy in both frameworks</subtask>
+        <subtask>Execute Layer 1 (Data Handling) comparison</subtask>
+        <subtask>Execute Layer 2 (Signal Computation) comparison</subtask>
+        <subtask>Execute Layer 3 (Order Lifecycle) comparison</subtask>
+        <subtask>Execute Layer 4 (Broker Transaction) comparison</subtask>
+        <subtask>Execute Layer 5 (Portfolio Returns) comparison</subtask>
+        <subtask>Record all findings</subtask>
+      </task>
+      <task id="2" ac="1">Execute Mean Reversion validation
+        <subtask>Run strategy in both frameworks</subtask>
+        <subtask>Execute all 5 layer comparisons</subtask>
+        <subtask>Record all findings</subtask>
+      </task>
+      <task id="3" ac="1">Execute Momentum validation
+        <subtask>Run strategy in both frameworks</subtask>
+        <subtask>Execute all 5 layer comparisons</subtask>
+        <subtask>Expect DESIGN findings for RSI calculation</subtask>
+        <subtask>Record all findings</subtask>
+      </task>
+      <task id="4" ac="1">Execute Multi-Factor validation
+        <subtask>Run strategy in both frameworks</subtask>
+        <subtask>Execute all 5 layer comparisons</subtask>
+        <subtask>Expect DESIGN findings for MACD calculation</subtask>
+        <subtask>Record all findings</subtask>
+      </task>
+      <task id="5" ac="2,3">Investigate and classify all findings
+        <subtask>For each finding, determine BUG or DESIGN</subtask>
+        <subtask>BUG: Investigate root cause, implement fix</subtask>
+        <subtask>DESIGN: Document rationale and expected behavior</subtask>
+        <subtask>Use investigation workflow from Epic 5</subtask>
+      </task>
+      <task id="6" ac="2">Fix all BUG-classified issues
+        <subtask>Implement fixes in rustybt codebase</subtask>
+        <subtask>Re-run validation to confirm fix</subtask>
+        <subtask>Create regression test for each fix</subtask>
+      </task>
+      <task id="7" ac="3">Document all DESIGN differences
+        <subtask>Create docs/validation/design-differences.md</subtask>
+        <subtask>Document each DESIGN finding with rationale</subtask>
+        <subtask>Include framework versions and code references</subtask>
+      </task>
+      <task id="8" ac="4">Generate validation report
+        <subtask>Run rustybt-validate report --all</subtask>
+        <subtask>Verify all 20 layer tests pass</subtask>
+        <subtask>Confirm all findings resolved</subtask>
+        <subtask>Calculate confidence level</subtask>
+      </task>
+      <task id="9" ac="5">Create regression test suite
+        <subtask>Create tests/validation/regression/ directory</subtask>
+        <subtask>Add regression test for each fixed bug</subtask>
+        <subtask>Reference original finding IDs</subtask>
+        <subtask>Integrate with CI pipeline</subtask>
+      </task>
+      <task id="10" ac="6">Produce final documentation
+        <subtask>Create docs/validation/bug-fixes.md</subtask>
+        <subtask>Create docs/validation/validation-summary.md</subtask>
+        <subtask>Update docs/validation/design-differences.md</subtask>
+        <subtask>Review all documentation for completeness</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">All 4 strategies pass all 5 validation layers: SMA Crossover (L1-L5 all pass), Mean Reversion (L1-L5 all pass), Momentum (L1-L5 all pass, may have DESIGN findings in L2), Multi-Factor (L1-L5 all pass, may have DESIGN findings in L2)</criterion>
+    <criterion id="2">All BUG-classified findings are fixed and verified: each BUG investigated with root cause identified, fix implemented in rustybt codebase, regression test exists for each fixed bug, re-validation confirms fix resolves discrepancy</criterion>
+    <criterion id="3">All DESIGN-classified findings are documented: each DESIGN difference documented in docs/validation/design-differences.md, documentation explains WHY the difference exists, documentation guides users on expected behavior differences, design decisions tagged with framework versions</criterion>
+    <criterion id="4">Validation report generated showing: Strategies Validated = 4, Layers Tested = 20 (5 per strategy), Passed = 20, Failed = 0, all BUGs fixed and verified, all DESIGNs documented, Confidence Level = HIGH</criterion>
+    <criterion id="5">Regression tests exist for all fixed bugs: tests in tests/validation/regression/ directory, each test references original finding ID, tests run as part of CI pipeline</criterion>
+    <criterion id="6">Comprehensive documentation produced: docs/validation/design-differences.md, docs/validation/bug-fixes.md, docs/validation/validation-summary.md</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Success Criteria" snippet="All 5 Validation Layers Passing, Zero BUG-Classified Issues Remaining, Complete DESIGN Documentation, Minimum 3-4 Strategies Validated." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="API Contracts - CLI Interface" snippet="rustybt-validate session create, run, investigate, report commands for validation workflow." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="Pattern 4: Finding Classification Workflow" snippet="All findings must be classified as BUG or DESIGN. Unclassified findings block validation completion." />
+      <doc path="docs/epics/epic-6-initial-strategy-validation-4-strategies.md" title="Epic 6" section="Story 6.5" snippet="Culminating validation story - execute all 4 strategies across all 5 layers, generate comprehensive validation report." />
+      <doc path="docs/sprint-artifacts/6-1-initial-strategy-validation-story-1.md" title="Story 6-1" section="Dev Notes" snippet="SMA Crossover strategy implementation pattern." />
+      <doc path="docs/sprint-artifacts/6-2-initial-strategy-validation-story-2.md" title="Story 6-2" section="Dev Notes" snippet="Mean Reversion strategy with z-score calculation." />
+      <doc path="docs/sprint-artifacts/6-3-initial-strategy-validation-story-3.md" title="Story 6-3" section="Dev Notes" snippet="Momentum strategy - RSI calculation differences (DESIGN candidate)." />
+      <doc path="docs/sprint-artifacts/6-4-initial-strategy-validation-story-4.md" title="Story 6-4" section="Dev Notes" snippet="Multi-Factor strategy - MACD/RSI calculation differences (DESIGN candidates)." />
+    </docs>
+    <code>
+      <artifact path="rustybt/validation/cli.py" kind="module" reason="CLI commands for rustybt-validate session, run, investigate, report" />
+      <artifact path="rustybt/validation/session.py" kind="module" symbol="SessionManager" reason="Session management for validation sessions" />
+      <artifact path="rustybt/validation/comparators.py" kind="module" reason="Layer-specific comparison logic for all 5 layers" />
+      <artifact path="rustybt/validation/models.py" kind="module" symbol="Finding, Session, Discrepancy" reason="Data models for findings and classification" />
+      <artifact path="rustybt/validation/reporting.py" kind="module" reason="Report generation for validation summary" />
+      <artifact path="rustybt/validation/investigation.py" kind="module" reason="Investigation workflow support" />
+      <artifact path="rustybt/validation/classification.py" kind="module" reason="BUG/DESIGN classification logic" />
+      <artifact path="rustybt/validation/regression.py" kind="module" reason="Regression test generation" />
+      <artifact path="rustybt/validation/regression_detection.py" kind="module" reason="Automatic regression detection from Story 5-7" />
+      <artifact path="tests/validation/test_layer_1_data.py" kind="test" reason="Layer 1 Data Handling validation tests" />
+      <artifact path="tests/validation/test_layer_2_signals.py" kind="test" reason="Layer 2 Signal Computation validation tests" />
+      <artifact path="tests/validation/test_layer_3_orders.py" kind="test" reason="Layer 3 Order Lifecycle validation tests" />
+      <artifact path="tests/validation/test_layer_4_broker.py" kind="test" reason="Layer 4 Broker Transaction validation tests" />
+      <artifact path="tests/validation/test_layer_5_portfolio.py" kind="test" reason="Layer 5 Portfolio Returns validation tests" />
+      <artifact path="tests/validation/strategies/rustybt/sma_crossover.py" kind="strategy" reason="SMA Crossover rustybt implementation" />
+      <artifact path="tests/validation/strategies/rustybt/mean_reversion.py" kind="strategy" reason="Mean Reversion rustybt implementation" />
+      <artifact path="tests/validation/strategies/rustybt/momentum.py" kind="strategy" reason="Momentum rustybt implementation" />
+      <artifact path="tests/validation/strategies/rustybt/multi_factor.py" kind="strategy" reason="Multi-Factor rustybt implementation" />
+      <artifact path="tests/validation/strategies/backtrader/" kind="directory" reason="Backtrader strategy implementations for comparison" />
+      <artifact path="tests/validation/regression/" kind="directory" reason="Regression test suite (to be created)" />
+    </code>
+    <dependencies>
+      <python version="3.12+">
+        <package name="backtrader" version=">=1.9.78" purpose="Reference framework for comparison" />
+        <package name="polars" version=">=1.0" purpose="Log parsing and comparison" />
+        <package name="pytest" version=">=7.2.0" purpose="Test framework" />
+        <package name="pyyaml" version=">=6.0" purpose="Session and findings storage" />
+        <package name="click" version=">=8.0" purpose="CLI interface" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="prerequisite">Stories 6-1 through 6-4 must be completed (all 4 strategies implemented)</constraint>
+    <constraint type="prerequisite">Epic 4 (5-Layer Comparison Test Suite) must be completed</constraint>
+    <constraint type="prerequisite">Epic 5 (Investigation and Classification Workflow) must be completed</constraint>
+    <constraint type="validation">All 20 layer tests must pass (4 strategies x 5 layers)</constraint>
+    <constraint type="classification">Every finding must be classified as BUG or DESIGN</constraint>
+    <constraint type="bug">All BUG findings must be fixed and verified with regression tests</constraint>
+    <constraint type="design">All DESIGN findings must be documented with rationale</constraint>
+    <constraint type="documentation">Final documentation must include design-differences.md, bug-fixes.md, validation-summary.md</constraint>
+    <constraint type="regression">Regression tests must reference original finding IDs</constraint>
+    <constraint type="ci">Regression tests must be integrated with CI pipeline</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="rustybt-validate CLI" kind="command-line">
+      <path>rustybt/validation/cli.py</path>
+      <commands>
+        <command>rustybt-validate session create --strategy [name] --data [path]</command>
+        <command>rustybt-validate session list [--status STATUS]</command>
+        <command>rustybt-validate session show [session_id]</command>
+        <command>rustybt-validate run [session_id]</command>
+        <command>rustybt-validate investigate [session_id] [--layer LAYER]</command>
+        <command>rustybt-validate classify [finding_id] --type BUG|DESIGN --rationale "..."</command>
+        <command>rustybt-validate report [session_id] [--layer LAYER] [--format md|json]</command>
+        <command>rustybt-validate report --all</command>
+      </commands>
+    </interface>
+    <interface name="ValidationReport" kind="data-structure">
+      <fields>
+        <field>strategies_validated: int</field>
+        <field>layers_tested: int</field>
+        <field>layers_passed: int</field>
+        <field>layers_failed: int</field>
+        <field>total_findings: int</field>
+        <field>bug_findings: int</field>
+        <field>design_findings: int</field>
+        <field>unresolved_bugs: int</field>
+        <field>confidence_level: str</field>
+      </fields>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use pytest with @pytest.mark.validation and @pytest.mark.integration markers. This is an integration test story - tests verify end-to-end validation workflow. Follow Zero Mock Enforcement.</standards>
+    <locations>
+      <location>tests/validation/test_full_validation.py (NEW)</location>
+      <location>tests/validation/regression/ (NEW directory)</location>
+      <location>tests/validation/test_layer_*.py</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Test each strategy passes all 5 validation layers (parametrized test)</idea>
+      <idea ac="1">Test validation matrix shows 4 strategies x 5 layers = 20 passed</idea>
+      <idea ac="2">Test all BUG findings have corresponding fixes in codebase</idea>
+      <idea ac="2">Test re-validation after fix shows discrepancy resolved</idea>
+      <idea ac="3">Test all DESIGN findings documented in design-differences.md</idea>
+      <idea ac="3">Test documentation includes rationale and framework versions</idea>
+      <idea ac="4">Test validation report shows correct totals (4 strategies, 20 layers, 0 failed)</idea>
+      <idea ac="4">Test confidence level = HIGH when all criteria met</idea>
+      <idea ac="5">Test each fixed bug has regression test in tests/validation/regression/</idea>
+      <idea ac="5">Test regression tests reference original finding IDs</idea>
+      <idea ac="6">Test all required documentation files exist and are non-empty</idea>
+    </ideas>
+  </tests>
+</story-context>

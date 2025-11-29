@@ -1,0 +1,142 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>5</storyId>
+    <title>Create CLI Reference Documentation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/8-5-cli-reference.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>validation framework user</asA>
+    <iWant>complete CLI reference documentation</iWant>
+    <soThat>I can use all available commands effectively</soThat>
+    <tasks>
+      <task id="1" title="Document session management commands">
+        <subtask>Document rustybt-validate session create with all options</subtask>
+        <subtask>Document rustybt-validate session list with filtering options</subtask>
+        <subtask>Document rustybt-validate session show &lt;session_id&gt;</subtask>
+        <subtask>Document rustybt-validate session resume &lt;session_id&gt;</subtask>
+        <subtask>Document rustybt-validate session delete &lt;session_id&gt;</subtask>
+        <subtask>Add examples for each session command</subtask>
+      </task>
+      <task id="2" title="Document execution commands">
+        <subtask>Document rustybt-validate run &lt;session_id&gt; with options</subtask>
+        <subtask>Document layer selection options</subtask>
+        <subtask>Document execution output format</subtask>
+        <subtask>Add examples of common run patterns</subtask>
+      </task>
+      <task id="3" title="Document investigation commands">
+        <subtask>Document rustybt-validate investigate &lt;session_id&gt;</subtask>
+        <subtask>Document --layer filtering option</subtask>
+        <subtask>Document rustybt-validate classify &lt;finding_id&gt;</subtask>
+        <subtask>Document classification type and rationale options</subtask>
+        <subtask>Add examples of investigation workflows</subtask>
+      </task>
+      <task id="4" title="Document reporting commands">
+        <subtask>Document rustybt-validate report &lt;session_id&gt;</subtask>
+        <subtask>Document --layer option for layer-specific reports</subtask>
+        <subtask>Document --format option (md, json)</subtask>
+        <subtask>Describe report output structure</subtask>
+        <subtask>Add examples of report generation</subtask>
+      </task>
+      <task id="5" title="Document status command">
+        <subtask>Document rustybt-validate status</subtask>
+        <subtask>Describe overall validation status output</subtask>
+        <subtask>Add example status output</subtask>
+      </task>
+      <task id="6" title="Document global options and environment variables">
+        <subtask>Document --version option</subtask>
+        <subtask>Document --help option</subtask>
+        <subtask>Document --verbose / -v option</subtask>
+        <subtask>Document environment variables (data paths, config paths)</subtask>
+      </task>
+      <task id="7" title="Document exit codes and error messages">
+        <subtask>List all exit codes with meanings</subtask>
+        <subtask>Document common error messages</subtask>
+        <subtask>Provide resolution hints for errors</subtask>
+      </task>
+      <task id="8" title="Create command sequence examples">
+        <subtask>Full validation workflow example</subtask>
+        <subtask>Investigation-only workflow example</subtask>
+        <subtask>Reporting workflow example</subtask>
+        <subtask>CI/CD integration example</subtask>
+      </task>
+      <task id="9" title="Testing">
+        <subtask>Verify all commands match actual CLI implementation</subtask>
+        <subtask>Verify all examples execute successfully</subtask>
+        <subtask>Keep in sync with Click command decorators</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Complete list of all commands and subcommands documented</criterion>
+    <criterion id="AC2">Syntax and options for each command documented</criterion>
+    <criterion id="AC3">Examples of common usage patterns included</criterion>
+    <criterion id="AC4">Output format descriptions included</criterion>
+    <criterion id="AC5">Documentation covers rustybt-validate session commands (create, list, show, resume, delete)</criterion>
+    <criterion id="AC6">Documentation covers rustybt-validate run commands</criterion>
+    <criterion id="AC7">Documentation covers rustybt-validate investigate commands</criterion>
+    <criterion id="AC8">Documentation covers rustybt-validate report commands</criterion>
+    <criterion id="AC9">Documentation covers rustybt-validate status command</criterion>
+    <criterion id="AC10">Documentation covers global options and environment variables</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/architecture.md" title="Architecture Document" section="CLI Interface" snippet="Click-based CLI: rustybt-validate session create/list/show/resume, rustybt-validate run, rustybt-validate investigate/classify, rustybt-validate report/status." />
+      <doc path="docs/prd.md" title="PRD" section="Validation Session Management" snippet="FR31-FR40: Create sessions, assign unique IDs, timestamp activities, track progress, record results, store findings, maintain state for resumability." />
+    </docs>
+    <code>
+      <file path="rustybt/validation/cli.py" kind="module" symbol="CLI commands" reason="Click command definitions for all CLI operations" />
+      <file path="pyproject.toml" kind="config" symbol="project.scripts" lines="224" reason="Defines rustybt-validate CLI entry point: rustybt.validation.cli:main" />
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0" purpose="CLI framework" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">CLI built with Click &gt;=8.0</constraint>
+    <constraint source="architecture">Commands follow pattern: rustybt-validate &lt;resource&gt; &lt;action&gt; [options]</constraint>
+    <constraint source="architecture">CLI defined in rustybt/validation/cli.py</constraint>
+    <constraint source="architecture">Session management is core workflow</constraint>
+    <constraint source="prd">Session management CLI must be intuitive (NFR18)</constraint>
+    <constraint source="prd">Documentation generation must be automated where possible (NFR20)</constraint>
+    <constraint source="story">Commands must match actual implementation (no fabricated APIs)</constraint>
+    <constraint source="epic">Guide location: docs/validation/cli-reference.md</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="Session Create" kind="CLI" signature="rustybt-validate session create --strategy &lt;name&gt; --data &lt;path&gt;" path="rustybt/validation/cli.py" />
+    <interface name="Session List" kind="CLI" signature="rustybt-validate session list [--status COMPLETED]" path="rustybt/validation/cli.py" />
+    <interface name="Session Show" kind="CLI" signature="rustybt-validate session show &lt;session_id&gt;" path="rustybt/validation/cli.py" />
+    <interface name="Session Resume" kind="CLI" signature="rustybt-validate session resume &lt;session_id&gt;" path="rustybt/validation/cli.py" />
+    <interface name="Run" kind="CLI" signature="rustybt-validate run &lt;session_id&gt;" path="rustybt/validation/cli.py" />
+    <interface name="Investigate" kind="CLI" signature="rustybt-validate investigate &lt;session_id&gt; [--layer data]" path="rustybt/validation/cli.py" />
+    <interface name="Classify" kind="CLI" signature="rustybt-validate classify &lt;finding_id&gt; --type BUG|DESIGN --rationale '...'" path="rustybt/validation/cli.py" />
+    <interface name="Report" kind="CLI" signature="rustybt-validate report &lt;session_id&gt; [--layer data] [--format md|json]" path="rustybt/validation/cli.py" />
+    <interface name="Status" kind="CLI" signature="rustybt-validate status" path="rustybt/validation/cli.py" />
+  </interfaces>
+
+  <tests>
+    <standards>Session management CLI must be intuitive (NFR18). Commands must match actual implementation. Generated from Click decorators where possible.</standards>
+    <locations>
+      <location>docs/validation/cli-reference.md</location>
+      <location>rustybt/validation/cli.py</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1,AC2">Auto-generate command docs from Click decorators and compare</idea>
+      <idea acRef="AC3">Execute all example commands and verify output</idea>
+      <idea acRef="AC4">Verify output format documentation matches actual output</idea>
+      <idea acRef="AC5">Test session create/list/show/resume/delete workflow</idea>
+      <idea acRef="AC6,AC7,AC8">Test run/investigate/report workflow end-to-end</idea>
+      <idea acRef="AC10">Verify environment variables work as documented</idea>
+    </ideas>
+  </tests>
+</story-context>

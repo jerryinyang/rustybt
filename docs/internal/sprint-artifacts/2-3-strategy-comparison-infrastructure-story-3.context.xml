@@ -1,0 +1,134 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>3</storyId>
+    <title>Create Log Event Decorators for Custom Logic</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-3-strategy-comparison-infrastructure-story-3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>decorators to log custom strategy logic</iWant>
+    <soThat>strategies can log signals, orders, and portfolio events without boilerplate</soThat>
+    <tasks>
+      <task id="1">Create decorators.py module (AC: #1, #2, #3)</task>
+      <task id="2">Implement @log_signal decorator (AC: #1, #4, #5)</task>
+      <task id="3">Implement @log_order decorator (AC: #2, #4, #5)</task>
+      <task id="4">Implement @log_portfolio decorator (AC: #3, #4, #5)</task>
+      <task id="5">Write unit tests (AC: #6)</task>
+      <task id="6">Create example usage in documentation</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">@log_signal decorator logs signal computation results to "signals" layer</criterion>
+    <criterion id="AC2">@log_order decorator logs order creation to "orders" layer</criterion>
+    <criterion id="AC3">@log_portfolio decorator logs portfolio state to "portfolio" layer</criterion>
+    <criterion id="AC4">Decorators preserve method metadata with functools.wraps</criterion>
+    <criterion id="AC5">Decorators handle exceptions gracefully (log failure, re-raise)</criterion>
+    <criterion id="AC6">Unit tests demonstrate decorator usage</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Decorator Pattern (pg 163-179)</section>
+        <snippet>@log_event decorator for custom logic. Balance of automation and flexibility. Optional - strategies can use direct _log_event() calls.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/2-1-strategy-comparison-infrastructure-story-1.md</path>
+        <title>Story 2.1</title>
+        <section>_log_event() interface</section>
+        <snippet>Both base classes implement _log_event(layer, event, data) that decorators will call internally.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/2-2-strategy-comparison-infrastructure-story-2.md</path>
+        <title>Story 2.2</title>
+        <section>_log_event() interface</section>
+        <snippet>Backtrader class has identical _log_event() interface for decorator compatibility.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>rustybt/validation/base_strategy.py</path>
+        <kind>dependency</kind>
+        <symbol>RustyBTValidatedStrategy._log_event</symbol>
+        <lines>all</lines>
+        <reason>Decorators call self._log_event() internally</reason>
+      </artifact>
+      <artifact>
+        <path>tests/validation/strategies/backtrader/base_validated.py</path>
+        <kind>dependency</kind>
+        <symbol>BacktraderValidatedStrategy._log_event</symbol>
+        <lines>all</lines>
+        <reason>Decorators must work with both framework base classes</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/__init__.py</path>
+        <kind>module</kind>
+        <symbol>exports</symbol>
+        <lines>1-10</lines>
+        <reason>Will need to export decorator functions</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <stdlib>
+        <module>functools</module>
+        <module>typing</module>
+      </stdlib>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Use functools.wraps to preserve method metadata</constraint>
+    <constraint type="pattern">Decorators must be framework-agnostic (work with both base classes)</constraint>
+    <constraint type="pattern">Convert Decimal/float values consistently in logs</constraint>
+    <constraint type="pattern">Handle None returns gracefully</constraint>
+    <constraint type="error">Log failure event before re-raising exceptions</constraint>
+    <constraint type="layer">Layer values: signals, orders, portfolio</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>log_signal</name>
+      <kind>decorator factory</kind>
+      <signature>def log_signal(layer: str = "signals") -> Callable[[F], F]</signature>
+      <path>rustybt/validation/decorators.py</path>
+    </interface>
+    <interface>
+      <name>log_order</name>
+      <kind>decorator factory</kind>
+      <signature>def log_order(layer: str = "orders") -> Callable[[F], F]</signature>
+      <path>rustybt/validation/decorators.py</path>
+    </interface>
+    <interface>
+      <name>log_portfolio</name>
+      <kind>decorator factory</kind>
+      <signature>def log_portfolio(layer: str = "portfolio") -> Callable[[F], F]</signature>
+      <path>rustybt/validation/decorators.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing. Mock strategy with _log_event for isolated testing.
+      Test decorator chaining and exception handling.
+    </standards>
+    <locations>
+      <location>tests/validation/test_decorators.py</location>
+    </locations>
+    <ideas>
+      <idea acId="AC1">Test @log_signal logs signal_name, signal_value, args</idea>
+      <idea acId="AC2">Test @log_order handles None returns (no order created)</idea>
+      <idea acId="AC3">Test @log_portfolio captures portfolio_value, cash, positions</idea>
+      <idea acId="AC4">Test __name__ and __doc__ preserved with functools.wraps</idea>
+      <idea acId="AC5">Test exception logging before re-raise</idea>
+      <idea acId="AC6">Test decorator chaining (multiple decorators on one method)</idea>
+    </ideas>
+  </tests>
+</story-context>

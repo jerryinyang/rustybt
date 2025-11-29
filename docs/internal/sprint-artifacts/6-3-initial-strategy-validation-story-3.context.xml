@@ -1,0 +1,146 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>3</storyId>
+    <title>Implement Momentum Strategy (Dual)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-28</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/6-3-initial-strategy-validation-story-3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Momentum strategy with RSI and trailing stops implemented</iWant>
+    <soThat>more complex order management can be validated</soThat>
+    <tasks>
+      <task id="1" ac="1">Create rustybt Momentum strategy
+        <subtask>Create tests/validation/strategies/rustybt/momentum.py</subtask>
+        <subtask>Implement MomentumStrategy class</subtask>
+        <subtask>Add RSI indicator calculation</subtask>
+        <subtask>Implement trailing stop logic with stop price tracking</subtask>
+        <subtask>Add entry/exit logic based on RSI and stops</subtask>
+      </task>
+      <task id="2" ac="2">Create Backtrader Momentum strategy
+        <subtask>Create tests/validation/strategies/backtrader/momentum.py</subtask>
+        <subtask>Use bt.indicators.RSI for RSI calculation</subtask>
+        <subtask>Implement equivalent trailing stop logic</subtask>
+        <subtask>Ensure log output matches rustybt format</subtask>
+      </task>
+      <task id="3" ac="3">Implement trailing stop logic
+        <subtask>Create update_trailing_stop() method</subtask>
+        <subtask>Handle LONG position stop updates</subtask>
+        <subtask>Handle SHORT position stop updates</subtask>
+        <subtask>Implement stop trigger detection</subtask>
+      </task>
+      <task id="4" ac="4">Verify strategy equivalence
+        <subtask>Complete strategy audit checklist</subtask>
+        <subtask>Document RSI calculation differences (DESIGN candidate)</subtask>
+        <subtask>Verify trailing stop behavior matches</subtask>
+        <subtask>Document any other differences</subtask>
+      </task>
+      <task id="5" ac="5">Validate log output
+        <subtask>Log RSI values with @log_signal() decorator</subtask>
+        <subtask>Log stop price updates</subtask>
+        <subtask>Log exit trigger reasons</subtask>
+        <subtask>Verify log format consistency</subtask>
+      </task>
+      <task id="6" ac="6">Write unit tests
+        <subtask>Create tests/validation/test_momentum_strategy.py</subtask>
+        <subtask>Test RSI calculation accuracy</subtask>
+        <subtask>Test trailing stop ratcheting</subtask>
+        <subtask>Test entry signals at RSI thresholds</subtask>
+        <subtask>Test exit via trailing stop</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">rustybt Momentum implementation exists at tests/validation/strategies/rustybt/momentum.py with RustyBTValidatedStrategy base, RSI indicator calculation, trailing stop logic, default params rsi_period=14, oversold=30, overbought=70, trailing_stop_pct=0.05, buy when RSI less than 30 (oversold), sell when RSI greater than 70 (overbought), exit via trailing stop at 5%</criterion>
+    <criterion id="2">Backtrader Momentum implementation exists at tests/validation/strategies/backtrader/momentum.py with BacktraderValidatedStrategy base, bt.indicators.RSI or equivalent, equivalent trailing stop logic, logically equivalent to rustybt</criterion>
+    <criterion id="3">Trailing stop logic correctly implemented: LONG positions stop_price = max(stop_price, current_price * (1 - trailing_pct)), SHORT positions stop_price = min(stop_price, current_price * (1 + trailing_pct)), stop price only ratchets in favorable direction, exit triggered when price crosses stop</criterion>
+    <criterion id="4">Strategy audit checklist passed: same RSI calculation (note: may be DESIGN difference due to Wilder's smoothing), same trailing stop logic, same entry conditions (RSI thresholds), same exit conditions (RSI + trailing stop)</criterion>
+    <criterion id="5">Log stop price updates for comparison: log RSI value on each bar, log stop price updates when position exists, log exit trigger reason (RSI exit vs trailing stop)</criterion>
+    <criterion id="6">Unit tests verify: RSI calculation logic, trailing stop ratcheting behavior, entry/exit signal generation, position management with stops</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Strategy Validation (FR55-FR59)" snippet="System can validate Momentum (RSI + trailing stops) strategy across all 5 layers (FR57)." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="Novel Pattern: Log-Based Validation Architecture" snippet="Log schema includes timestamp, layer, event, asset, data fields. Order lifecycle validation covers order creation, execution, state transitions." />
+      <doc path="docs/epics/epic-6-initial-strategy-validation-4-strategies.md" title="Epic 6" section="Story 6.3" snippet="Momentum Strategy (RSI + Trailing Stops) - RSI calculation may differ between frameworks (DESIGN candidate). Trailing stop implementation is key validation point." />
+      <doc path="docs/sprint-artifacts/6-1-initial-strategy-validation-story-1.md" title="Story 6-1" section="Dev Notes" snippet="Strategy Pattern: Extend ValidatedStrategy, use decorators for consistent logging." />
+      <doc path="docs/sprint-artifacts/6-2-initial-strategy-validation-story-2.md" title="Story 6-2" section="Dev Notes" snippet="Edge Cases: Handle insufficient data, division by zero scenarios. Testing Coverage: Test calculation accuracy, signal generation, edge cases." />
+    </docs>
+    <code>
+      <artifact path="rustybt/validation/base_strategy.py" kind="module" symbol="RustyBTValidatedStrategy" lines="327-400" reason="Base class for rustybt validated strategies - extend for Momentum strategy" />
+      <artifact path="rustybt/validation/decorators.py" kind="module" symbol="log_signal" lines="46-110" reason="Decorator for RSI computation logging" />
+      <artifact path="rustybt/validation/decorators.py" kind="module" symbol="log_order" lines="113-195" reason="Decorator for trailing stop and order logging" />
+      <artifact path="tests/validation/strategies/bt_strategies/base_validated.py" kind="module" symbol="BacktraderValidatedStrategy" lines="57-295" reason="Base class for Backtrader validated strategies" />
+      <artifact path="tests/validation/strategies/rustybt/sma_crossover.py" kind="module" reason="Reference pattern from Story 6-1" />
+      <artifact path="tests/validation/strategies/rustybt/mean_reversion.py" kind="module" reason="Reference pattern from Story 6-2" />
+    </code>
+    <dependencies>
+      <python version="3.12+">
+        <package name="backtrader" version=">=1.9.78" purpose="Reference framework with bt.indicators.RSI" />
+        <package name="polars" version=">=1.0" purpose="Log parsing and comparison" />
+        <package name="pytest" version=">=7.2.0" purpose="Test framework" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Strategies must extend ValidatedStrategy base classes</constraint>
+    <constraint type="pattern">Use @log_signal() decorator on RSI computation</constraint>
+    <constraint type="pattern">Log stop price updates explicitly for comparison</constraint>
+    <constraint type="parameters">Default parameters: rsi_period=14, oversold_threshold=30, overbought_threshold=70, trailing_stop_pct=0.05</constraint>
+    <constraint type="design">RSI calculation may differ between frameworks (Wilder's smoothing vs simple average) - document as DESIGN finding if detected</constraint>
+    <constraint type="logic">Trailing stop only ratchets in favorable direction (never moves against position)</constraint>
+    <constraint type="logging">Exit trigger reason must be explicit in logs: "trailing_stop" or "rsi_exit"</constraint>
+    <constraint type="location">rustybt strategy: tests/validation/strategies/rustybt/momentum.py</constraint>
+    <constraint type="location">Backtrader strategy: tests/validation/strategies/backtrader/momentum.py</constraint>
+    <constraint type="location">Unit tests: tests/validation/test_momentum_strategy.py</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="MomentumStrategy" kind="class">
+      <signature>class MomentumStrategy(RustyBTValidatedStrategy)</signature>
+      <path>tests/validation/strategies/rustybt/momentum.py</path>
+      <methods>
+        <method>__init__(self, log_path: Path, rsi_period: int = 14, oversold: int = 30, overbought: int = 70, trailing_stop_pct: float = 0.05)</method>
+        <method>compute_rsi(self, prices: list[float], period: int) -> float</method>
+        <method>update_trailing_stop(self, current_price: float) -> None</method>
+        <method>check_stop_triggered(self, current_price: float) -> bool</method>
+        <method>compute_signal(self, context, data) -> str</method>
+        <method>handle_data(self, context, data) -> None</method>
+      </methods>
+    </interface>
+    <interface name="trailing_stop_logic" kind="algorithm">
+      <signature>LONG: stop_price = max(stop_price, price * (1 - pct)); SHORT: stop_price = min(stop_price, price * (1 + pct))</signature>
+      <description>Trailing stop ratcheting logic - stop only moves in favorable direction</description>
+    </interface>
+    <interface name="RSI formula" kind="algorithm">
+      <signature>RSI = 100 - (100 / (1 + RS)); RS = avg_gain / avg_loss</signature>
+      <description>Relative Strength Index calculation (may use Wilder's smoothing or simple average)</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use pytest with @pytest.mark.layer_2_signals and @pytest.mark.layer_3_orders markers. Follow Zero Mock Enforcement. Test trailing stop ratcheting behavior explicitly.</standards>
+    <locations>
+      <location>tests/validation/test_momentum_strategy.py</location>
+      <location>tests/validation/strategies/</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Test RSI calculation correctly identifies oversold (RSI less than 30)</idea>
+      <idea ac="1">Test RSI calculation correctly identifies overbought (RSI greater than 70)</idea>
+      <idea ac="3">Test trailing stop ratchets up for LONG positions on rising prices</idea>
+      <idea ac="3">Test trailing stop does NOT ratchet down for LONG on falling prices</idea>
+      <idea ac="3">Test trailing stop triggers exit when price crosses stop</idea>
+      <idea ac="4">Test RSI values from both frameworks (expect potential DESIGN difference)</idea>
+      <idea ac="5">Test log contains RSI value, stop_price, exit_reason fields</idea>
+      <idea ac="6">Test entry signal generation at RSI thresholds</idea>
+      <idea ac="6">Test exit via trailing stop correctly logged</idea>
+    </ideas>
+  </tests>
+</story-context>

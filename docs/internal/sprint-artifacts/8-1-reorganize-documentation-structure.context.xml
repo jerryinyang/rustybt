@@ -1,0 +1,115 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>1</storyId>
+    <title>Reorganize Documentation Structure (Internal vs User-Facing)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/8-1-reorganize-documentation-structure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>project maintainer</asA>
+    <iWant>a clear separation between internal development documentation and user-facing documentation</iWant>
+    <soThat>I can protect confidential information, maintain documentation quality, and provide users with a clean experience</soThat>
+    <tasks>
+      <task id="1" title="Audit current documentation structure">
+        <subtask>List all files in docs/ directory</subtask>
+        <subtask>Categorize each file as INTERNAL or USER-FACING</subtask>
+        <subtask>Document classification decisions with rationale</subtask>
+      </task>
+      <task id="2" title="Create new directory structure">
+        <subtask>Create docs/internal/ directory</subtask>
+        <subtask>Create subdirectories: planning/, sprint-artifacts/, reports/, design/</subtask>
+        <subtask>Create user-facing subdirectories: validation/, guides/, examples/</subtask>
+      </task>
+      <task id="3" title="Move internal documents">
+        <subtask>Move PRD and architecture docs to docs/internal/planning/</subtask>
+        <subtask>Move epics and stories to docs/internal/planning/epics/</subtask>
+        <subtask>Move sprint artifacts to docs/internal/sprint-artifacts/</subtask>
+        <subtask>Use git mv to preserve history</subtask>
+      </task>
+      <task id="4" title="Update cross-references">
+        <subtask>Update all internal document links</subtask>
+        <subtask>Update all user-facing document links</subtask>
+        <subtask>Run link checker to verify no broken links</subtask>
+      </task>
+      <task id="5" title="Update documentation generation configs">
+        <subtask>Update MkDocs/pdoc configuration</subtask>
+        <subtask>Update .gitignore if needed</subtask>
+        <subtask>Update CI/CD documentation pipelines</subtask>
+        <subtask>Update README entry point links</subtask>
+      </task>
+      <task id="6" title="Verify no confidential content exposed">
+        <subtask>Review all user-facing docs for internal references</subtask>
+        <subtask>Remove or redact any business strategy/timeline content</subtask>
+        <subtask>Confirm user docs are standalone and useful</subtask>
+      </task>
+      <task id="7" title="Testing">
+        <subtask>Build documentation locally and verify structure</subtask>
+        <subtask>Verify internal docs are properly protected</subtask>
+        <subtask>Run documentation generation and verify output</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Internal documents are in a dedicated docs/internal/ directory</criterion>
+    <criterion id="AC2">User-facing documents are in the main docs/ directory with clear structure</criterion>
+    <criterion id="AC3">Documentation generation configs (YAML files) are updated to reflect the new structure</criterion>
+    <criterion id="AC4">No internal/confidential content is exposed in user-facing docs</criterion>
+    <criterion id="AC5">All internal cross-references are updated and functional</criterion>
+    <criterion id="AC6">All user-facing cross-references are updated and functional</criterion>
+    <criterion id="AC7">INTERNAL classification applied to: PRD, architecture, epics, sprint-artifacts, BMM files</criterion>
+    <criterion id="AC8">USER-FACING classification applied to: guides, API reference, tutorials, examples, contributing</criterion>
+    <criterion id="AC9">MkDocs/pdoc config, .gitignore, CI/CD pipelines, README links updated</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/architecture.md" title="Architecture Document" section="Project Structure" snippet="Defines dual-location architecture: rustybt/validation/ (library) + tests/validation/ (tests). Documentation lives in docs/ with validation/ subdirectory for validation framework docs." />
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Reporting &amp; Documentation" snippet="FR65 requires user-facing documentation of DESIGN differences. NFR16 requires clear and actionable test reports." />
+      <doc path="docs/epics/epic-8-user-facing-documentation-usage-guide.md" title="Epic 8 Definition" section="Story 8.1" snippet="Defines proposed structure: docs/internal/ for protected content, docs/validation/ for user-facing validation docs." />
+    </docs>
+    <code>
+      <file path="pyproject.toml" kind="config" symbol="docs" lines="192-207" reason="MkDocs and Sphinx documentation dependencies configuration" />
+    </code>
+    <dependencies>
+      <python>
+        <package name="mkdocs" version=">=1.5.0" purpose="Modern documentation generation" />
+        <package name="mkdocs-material" version=">=9.5.0" purpose="Documentation theme" />
+        <package name="mkdocstrings" version=">=0.24.0" purpose="API reference generation" />
+        <package name="mkdocs-jupyter" version=">=0.24.0" purpose="Jupyter notebook integration" />
+        <package name="sphinx" version=">=1.3.2" purpose="Legacy documentation (backward compatibility)" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">Dual-location architecture: validation framework library in rustybt/validation/, tests in tests/validation/</constraint>
+    <constraint source="architecture">Validation session storage at validation-sessions/ should remain gitignored</constraint>
+    <constraint source="prd">Documentation must be clear and actionable (NFR16)</constraint>
+    <constraint source="epic">Internal docs include: PRD, architecture, epics, sprint-artifacts, BMM files, project scan reports</constraint>
+    <constraint source="epic">User-facing docs include: getting started guides, API reference, tutorials, examples, contributing guidelines</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="MkDocs Configuration" kind="config file" signature="mkdocs.yml" path="mkdocs.yml" />
+    <interface name="pdoc Configuration" kind="config file" signature="pdoc config" path="pyproject.toml" />
+  </interfaces>
+
+  <tests>
+    <standards>Use link-checking tools to validate all internal and external links after reorganization. Documentation builds must succeed with new structure. No false positives or false negatives in content classification.</standards>
+    <locations>
+      <location>docs/</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1,AC2">Test that docs/internal/ exists and contains expected internal documents</idea>
+      <idea acRef="AC3">Verify MkDocs/pdoc builds successfully with new config</idea>
+      <idea acRef="AC4">Audit user-facing docs for any internal references</idea>
+      <idea acRef="AC5,AC6">Run link checker to verify all cross-references are functional</idea>
+      <idea acRef="AC9">Verify CI/CD documentation pipeline works with new structure</idea>
+    </ideas>
+  </tests>
+</story-context>

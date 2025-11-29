@@ -1,0 +1,124 @@
+<story-context id="7-2" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>2</storyId>
+    <title>Implement Layer Report Generator</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/7-2-reporting-documentation-system-story-2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>reports per validation layer across all strategies</iWant>
+    <soThat>layer-specific validation can be reviewed</soThat>
+    <tasks>
+      <task id="1">Implement LayerReportGenerator class (AC: #1)
+        <subtask>Create class in rustybt/validation/reporting.py</subtask>
+        <subtask>Accept layer name as constructor parameter</subtask>
+        <subtask>Load all sessions from SessionManager</subtask>
+        <subtask>Filter sessions by those with findings in target layer</subtask>
+        <subtask>Test: Unit tests with mock session data</subtask>
+      </task>
+      <task id="2">Implement cross-strategy aggregation (AC: #1)
+        <subtask>Collect findings from all sessions for target layer</subtask>
+        <subtask>Group findings by strategy</subtask>
+        <subtask>Generate strategy results table</subtask>
+        <subtask>Count findings by classification type</subtask>
+        <subtask>Test: Verify aggregation logic with multiple sessions</subtask>
+      </task>
+      <task id="3">Implement common patterns detection (AC: #2)
+        <subtask>Identify repeated DESIGN differences across strategies</subtask>
+        <subtask>Group similar findings by description similarity</subtask>
+        <subtask>Count strategies affected by each pattern</subtask>
+        <subtask>Generate "Common DESIGN Differences" section</subtask>
+        <subtask>Test: Pattern detection with various findings</subtask>
+      </task>
+      <task id="4">Add CLI layer report command (AC: #3)
+        <subtask>Add report --layer option to CLI</subtask>
+        <subtask>Validate layer name (data, signals, orders, broker, portfolio)</subtask>
+        <subtask>Call LayerReportGenerator for specified layer</subtask>
+        <subtask>Save to docs/validation/layer-{n}-{name}-report.md</subtask>
+        <subtask>Test: CLI integration tests</subtask>
+      </task>
+      <task id="5">Write comprehensive tests (AC: #1-3)
+        <subtask>Test with empty sessions (no findings)</subtask>
+        <subtask>Test with single strategy</subtask>
+        <subtask>Test with multiple strategies</subtask>
+        <subtask>Test common pattern detection</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Given multiple validated strategies When layer report is generated Then cross-strategy layer summary is produced with strategy results table showing status, findings count, and notes</criterion>
+    <criterion id="AC2">Common DESIGN Differences section identifies patterns affecting multiple strategies with user impact and workaround info</criterion>
+    <criterion id="AC3">CLI command rustybt-validate report --layer signals saves report to docs/validation/layer-2-signals-report.md</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Reporting &amp; Documentation (FR60-FR67)" snippet="FR61: System can generate per-layer validation report (aggregating all strategies validated for that layer)."/>
+      <doc path="docs/architecture.md" title="Architecture Document" section="FR Category to Architecture Mapping" snippet="Reporting &amp; Documentation (FR60-FR67) maps to rustybt/validation/reporting.py."/>
+      <doc path="docs/epics/epic-7-reporting-documentation-system.md" title="Epic 7 Specification" section="Story 7.2" snippet="Layer report structure includes Overview, Strategy Results table, Common DESIGN Differences section with user impact."/>
+    </docs>
+    <code>
+      <artifact path="rustybt/validation/reporting.py" kind="module" symbol="ReportGenerator" lines="1-7" reason="Base reporting module - add LayerReportGenerator class"/>
+      <artifact path="rustybt/validation/cli.py" kind="module" symbol="main, config" lines="706-809" reason="CLI infrastructure - add --layer option to report command"/>
+      <artifact path="rustybt/validation/session.py" kind="module" symbol="SessionManager.find_sessions" lines="N/A" reason="Session query functionality for loading all sessions"/>
+      <artifact path="rustybt/validation/models.py" kind="module" symbol="Finding" lines="255-364" reason="Finding model with layer and classification attributes"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0" purpose="CLI framework"/>
+        <package name="jinja2" version=">=3.0.0" purpose="Report template rendering"/>
+      </python>
+      <internal>
+        <dependency story="7-1" path="rustybt/validation/reporting.py" symbol="ReportGenerator" reason="Base report generation infrastructure"/>
+      </internal>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="prerequisite">Story 7.1 (session reports) must be completed first</constraint>
+    <constraint type="architecture">Layer reports saved to docs/validation/ directory</constraint>
+    <constraint type="architecture">Report aggregates findings across ALL strategies</constraint>
+    <constraint type="coding">Identify and highlight common patterns across strategies</constraint>
+    <constraint type="coding">Help users understand layer-specific behaviors</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="LayerReportGenerator" kind="class">
+      <signature>class LayerReportGenerator(layer: str, session_manager: SessionManager)</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="generate" kind="method">
+      <signature>def generate(self) -> str</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="identify_common_patterns" kind="method">
+      <signature>def identify_common_patterns(self, findings: list[Finding]) -> list[CommonPattern]</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="CLI report --layer command" kind="CLI endpoint">
+      <signature>rustybt-validate report --layer signals|data|orders|broker|portfolio</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework with custom markers. Zero mock enforcement. Test fixtures in tests/validation/fixtures/.</standards>
+    <locations>
+      <location>tests/validation/test_reporting.py</location>
+      <location>tests/validation/test_cli.py</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1">test_layer_report_cross_strategy_aggregation - verify findings aggregated from multiple sessions</idea>
+      <idea acRef="AC1">test_layer_report_strategy_results_table - verify table format and content</idea>
+      <idea acRef="AC2">test_common_pattern_detection - verify similar findings grouped</idea>
+      <idea acRef="AC2">test_common_pattern_strategy_count - verify affected strategies counted</idea>
+      <idea acRef="AC3">test_cli_layer_report_command - verify CLI saves to correct path</idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,24 @@
+# Layer 2: Signal Computation Tolerances
+# Used for comparing indicator values and signal outputs
+# between rustybt and Backtrader frameworks.
+
+layer_2_signals:
+  # Indicator value comparison: decimal places to compare
+  # Rationale: SMA, EMA calculations differ slightly due to float precision
+  # 4 decimal places = $0.0001 precision for price-based indicators
+  indicator_decimal_places: 4
+
+  # Signal value comparison: allowed percentage difference
+  # Rationale: Signal strength calculations may have float rounding
+  # 0.0001 = 0.01% tolerance for signal values
+  signal_tolerance_pct: 0.0001
+
+  # Boolean signal match: whether signals must match exactly
+  # Rationale: Buy/Sell signals must be identical
+  # true = exact match required
+  signal_exact_match: true
+
+  # Signal timing: milliseconds allowed between framework signal timestamps
+  # Rationale: Signal computation may happen at slightly different times
+  # Zero means exact timestamp match required
+  signal_timestamp_window_ms: 1

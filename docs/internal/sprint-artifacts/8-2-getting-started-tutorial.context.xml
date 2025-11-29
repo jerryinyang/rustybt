@@ -1,0 +1,122 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>2</storyId>
+    <title>Create Getting Started Tutorial</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/8-2-getting-started-tutorial.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>new user</asA>
+    <iWant>a step-by-step getting started tutorial</iWant>
+    <soThat>I can run my first validation session within 15 minutes</soThat>
+    <tasks>
+      <task id="1" title="Create prerequisites section">
+        <subtask>Document Python 3.12+ requirement with version check command</subtask>
+        <subtask>Document git requirement</subtask>
+        <subtask>Document pip/uv requirement</subtask>
+        <subtask>Add rustybt clone/checkout instructions</subtask>
+      </task>
+      <task id="2" title="Create installation section">
+        <subtask>Document validation framework installation command</subtask>
+        <subtask>Document Backtrader installation (separate venv or same environment)</subtask>
+        <subtask>Document optional dependency installation</subtask>
+      </task>
+      <task id="3" title="Create verification section">
+        <subtask>Add rustybt-validate --version verification</subtask>
+        <subtask>Add pytest test collection verification</subtask>
+        <subtask>Add import verification commands</subtask>
+      </task>
+      <task id="4" title="Create quick start example">
+        <subtask>Document session creation command for SMA Crossover</subtask>
+        <subtask>Document validation execution command</subtask>
+        <subtask>Document results viewing command</subtask>
+        <subtask>Include expected terminal output for each step</subtask>
+      </task>
+      <task id="5" title="Create next steps section">
+        <subtask>Link to strategy implementation guide (Story 8.3)</subtask>
+        <subtask>Link to investigation workflow guide (Story 8.4)</subtask>
+        <subtask>Link to CLI reference (Story 8.5)</subtask>
+      </task>
+      <task id="6" title="Create troubleshooting section">
+        <subtask>Document common installation errors</subtask>
+        <subtask>Document dependency conflict resolutions</subtask>
+        <subtask>Document version mismatch solutions</subtask>
+      </task>
+      <task id="7" title="Testing">
+        <subtask>Test guide on fresh Python 3.12 environment</subtask>
+        <subtask>Verify all commands execute successfully</subtask>
+        <subtask>Verify expected output matches actual output</subtask>
+        <subtask>Time the complete guide (target: &lt;15 minutes)</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Developer with Python 3.12+ and no prior experience can follow the guide</criterion>
+    <criterion id="AC2">Guide enables users to install the validation framework and dependencies</criterion>
+    <criterion id="AC3">Guide enables users to create their first validation session</criterion>
+    <criterion id="AC4">Guide enables users to execute a simple validation (SMA Crossover strategy)</criterion>
+    <criterion id="AC5">Guide enables users to view validation results</criterion>
+    <criterion id="AC6">Guide explains next steps after initial validation</criterion>
+    <criterion id="AC7">Guide includes prerequisites checklist (Python version, git, pip/uv)</criterion>
+    <criterion id="AC8">Guide includes installation commands (including Backtrader setup)</criterion>
+    <criterion id="AC9">Guide includes verification commands to confirm successful installation</criterion>
+    <criterion id="AC10">Guide includes quick start example with expected output</criterion>
+    <criterion id="AC11">Guide includes common installation troubleshooting</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/architecture.md" title="Architecture Document" section="Development Environment" snippet="Prerequisites: Python 3.12+, rustybt development environment. Setup includes pip install with validation extras and Backtrader installation." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="CLI Interface" snippet="CLI commands: rustybt-validate session create, rustybt-validate run, rustybt-validate report. Click-based command-line tool." />
+      <doc path="docs/prd.md" title="PRD" section="Success Criteria" snippet="Minimum 3-4 strategies validated, including Simple Moving Average Crossover as first strategy." />
+    </docs>
+    <code>
+      <file path="pyproject.toml" kind="config" symbol="project.scripts" lines="219-224" reason="Defines rustybt-validate CLI entry point" />
+      <file path="pyproject.toml" kind="config" symbol="project.optional-dependencies.validation" lines="117-121" reason="Validation framework dependencies including Backtrader" />
+    </code>
+    <dependencies>
+      <python>
+        <package name="python" version=">=3.12" purpose="Required Python version" />
+        <package name="backtrader" version=">=1.9.78" purpose="Reference framework for comparison" />
+        <package name="click" version=">=8.0" purpose="CLI interface" />
+        <package name="pytest" version=">=7.2.0" purpose="Test framework" />
+        <package name="polars" version=">=1.0" purpose="Log parsing and comparison" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">Installation must include both rustybt and Backtrader in compatible environment</constraint>
+    <constraint source="architecture">Subprocess isolation pattern: frameworks can be in same env but executable separately</constraint>
+    <constraint source="architecture">CLI interface: rustybt-validate session create, rustybt-validate run, rustybt-validate report</constraint>
+    <constraint source="epic">Guide location: docs/validation/getting-started.md</constraint>
+    <constraint source="epic">Target time: complete guide executable in &lt;15 minutes</constraint>
+    <constraint source="story">All commands must be copy-pasteable and work on first try</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="CLI Session Create" kind="CLI command" signature="rustybt-validate session create --strategy sma_crossover --data validation_data.parquet" path="rustybt/validation/cli.py" />
+    <interface name="CLI Run" kind="CLI command" signature="rustybt-validate run &lt;session_id&gt;" path="rustybt/validation/cli.py" />
+    <interface name="CLI Report" kind="CLI command" signature="rustybt-validate report &lt;session_id&gt;" path="rustybt/validation/cli.py" />
+    <interface name="CLI Version" kind="CLI command" signature="rustybt-validate --version" path="rustybt/validation/cli.py" />
+  </interfaces>
+
+  <tests>
+    <standards>All commands must be copy-pasteable and work on first try. Expected output must exactly match actual output. Time requirement: complete guide executable in &lt;15 minutes.</standards>
+    <locations>
+      <location>docs/validation/getting-started.md</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1,AC7">Test prerequisites section on fresh environment</idea>
+      <idea acRef="AC2,AC8">Verify installation commands succeed without errors</idea>
+      <idea acRef="AC9">Verify rustybt-validate --version outputs correct version</idea>
+      <idea acRef="AC3,AC4,AC10">Test quick start example produces expected output</idea>
+      <idea acRef="AC11">Test troubleshooting solutions resolve documented issues</idea>
+    </ideas>
+  </tests>
+</story-context>

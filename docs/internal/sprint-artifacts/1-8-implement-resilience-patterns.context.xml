@@ -1,0 +1,152 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>8</storyId>
+    <title>Implement Resilience Patterns</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-8-implement-resilience-patterns.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>resilience patterns implemented for error recovery</iWant>
+    <soThat>the validation framework handles transient failures, corrupted data, and hanging operations gracefully</soThat>
+    <tasks>
+- [ ] Task 1: Implement retry decorator (AC: #1)
+  - [ ] Create `rustybt/validation/resilience.py`
+  - [ ] Implement exponential backoff retry logic
+
+- [ ] Task 2: Implement HealthCheckResult model (AC: #2)
+  - [ ] Add dataclass to `rustybt/validation/models.py`
+
+- [ ] Task 3: Implement health check module (AC: #2)
+  - [ ] Create `rustybt/validation/health_checks.py`
+  - [ ] Implement validate_log_integrity()
+
+- [ ] Task 4: Implement timeout decorator (AC: #3)
+  - [ ] Create `rustybt/validation/timeouts.py`
+  - [ ] Use signal.alarm for POSIX timeouts
+
+- [ ] Task 5: Apply retry to file I/O operations (AC: #4)
+  - [ ] Decorate session loading
+
+- [ ] Task 6: Apply health checks to log operations (AC: #4)
+  - [ ] Add usage comments/placeholders
+
+- [ ] Task 7: Document timeout usage patterns (AC: #4)
+  - [ ] Add usage comments
+
+- [ ] Task 8: Add unit tests for resilience patterns (AC: #5)
+  - [ ] Create `tests/validation/test_resilience.py`
+  - [ ] Test retry, health check, and timeout logic
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **Retry logic decorator implemented** - Exponential backoff, configurable attempts/exceptions.
+
+2. **Health check module implemented** - Validates file integrity, JSONL schema, row counts.
+
+3. **Timeout decorator implemented** - Enforces execution limits via signal.alarm.
+
+4. **Resilience applied to critical operations** - I/O retries, log health checks, execution timeouts.
+
+5. **Unit tests verify resilience** - Confirm recovery from transient errors and detection of corruption.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Error Handling</title>
+        <section>Error Handling</section>
+        <snippet>
+Resilience Patterns:
+- Retry with exponential backoff for I/O
+- Health checks for data integrity
+- Timeouts for hanging operations
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <item>
+        <path>rustybt/validation/resilience.py</path>
+        <kind>file</kind>
+        <symbol>retry</symbol>
+        <lines>new file</lines>
+        <reason>Retry decorator implementation.</reason>
+      </item>
+      <item>
+        <path>rustybt/validation/health_checks.py</path>
+        <kind>file</kind>
+        <symbol>validate_log_integrity</symbol>
+        <lines>new file</lines>
+        <reason>Health check logic.</reason>
+      </item>
+      <item>
+        <path>rustybt/validation/timeouts.py</path>
+        <kind>file</kind>
+        <symbol>timeout</symbol>
+        <lines>new file</lines>
+        <reason>Timeout decorator implementation.</reason>
+      </item>
+      <item>
+        <path>tests/validation/test_resilience.py</path>
+        <kind>test</kind>
+        <symbol>test_retry_transient_failure</symbol>
+        <lines>new file</lines>
+        <reason>Resilience unit tests.</reason>
+      </item>
+    </code>
+    <dependencies>
+      <ecosystem name="python">
+        <package name="functools" version="stdlib" />
+        <package name="signal" version="stdlib" />
+        <package name="time" version="stdlib" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Platform</type>
+      <description>Timeouts: POSIX-only implementation (Linux/macOS) using signal.alarm.</description>
+    </constraint>
+    <constraint>
+      <type>Architecture</type>
+      <description>Pattern: Decorators for non-invasive application.</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Retry Decorator</name>
+      <kind>Function</kind>
+      <signature>@retry(max_attempts=3, backoff_factor=2)</signature>
+      <path>rustybt/validation/resilience.py</path>
+    </interface>
+    <interface>
+      <name>Health Check</name>
+      <kind>Function</kind>
+      <signature>validate_log_integrity(path) -> HealthCheckResult</signature>
+      <path>rustybt/validation/health_checks.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Verify retry logic handles transient failures.
+      Verify timeout raises TimeoutError.
+      Verify health checks detect corruption.
+    </standards>
+    <locations>
+      <location>tests/validation/test_resilience.py</location>
+    </locations>
+    <ideas>
+      <idea>Mock a function that fails N times then succeeds.</idea>
+      <idea>Test timeout with time.sleep().</idea>
+    </ideas>
+  </tests>
+</story-context>

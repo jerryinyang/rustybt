@@ -1,0 +1,216 @@
+<story-context id="3-6-implement-timestamped-activity-log" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>6</storyId>
+    <title>Implement Timestamped Activity Log</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/3-6-implement-timestamped-activity-log.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>all session activities timestamped</iWant>
+    <soThat>I have a complete audit trail of validation work</soThat>
+    <tasks>
+      <task id="1">Create Activity dataclass (AC: #1)
+        <subtask>Add Activity to rustybt/validation/models.py</subtask>
+        <subtask>Define timestamp, action, actor, details fields</subtask>
+        <subtask>Add YAML serialization support (to_dict, from_dict)</subtask>
+      </task>
+      <task id="2">Add activities field to Session (AC: #2)
+        <subtask>Add activities: list[Activity] field</subtask>
+        <subtask>Default to empty list</subtask>
+        <subtask>Update Session YAML serialization/deserialization</subtask>
+      </task>
+      <task id="3">Implement log_activity() method (AC: #4)
+        <subtask>Add log_activity() to Session class</subtask>
+        <subtask>Accept action, message/details, actor (default "system")</subtask>
+        <subtask>Create Activity with current timestamp</subtask>
+        <subtask>Append to activities list</subtask>
+      </task>
+      <task id="4">Add auto-logging to SessionManager operations (AC: #3)
+        <subtask>Log "created" in create_session()</subtask>
+        <subtask>Log "execution_started" and "execution_completed" in coordinator</subtask>
+        <subtask>Log "comparison_started" and "comparison_completed" in comparator</subtask>
+        <subtask>Log "finding_added" in add_finding()</subtask>
+        <subtask>Log "finding_classified" when classification set</subtask>
+        <subtask>Log "session_resumed" in resume()</subtask>
+        <subtask>Log "session_completed" when status set to COMPLETED</subtask>
+      </task>
+      <task id="5">Add CLI activities command (AC: #5)
+        <subtask>Add session activities command</subtask>
+        <subtask>Load session and display activities</subtask>
+        <subtask>Format as chronological table</subtask>
+        <subtask>Show message in details column if present</subtask>
+      </task>
+      <task id="6">Write unit tests (AC: #6)
+        <subtask>Test Activity dataclass serialization</subtask>
+        <subtask>Test auto-logging on session create</subtask>
+        <subtask>Test manual log_activity()</subtask>
+        <subtask>Test activities persisted in YAML</subtask>
+        <subtask>Test CLI activities command output</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Activity dataclass implemented - Fields: timestamp (datetime), action (str), actor (str - "system" or username), details (Optional[dict])</criterion>
+    <criterion id="2">Session model includes activities list - activities: list[Activity] field, activities persisted in session.yaml</criterion>
+    <criterion id="3">Auto-logged activities for session events - Session created, execution started/completed, comparison started/completed, finding added, finding classified, session resumed, session completed</criterion>
+    <criterion id="4">Manual activity logging supported - session.log_activity(action, message, actor) supports adding notes and custom events</criterion>
+    <criterion id="5">CLI command to view activities - rustybt-validate session activities session_id shows activities in chronological order with format: timestamp | actor | action [details]</criterion>
+    <criterion id="6">Unit tests verify activity logging</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR25-NFR26 - Traceability</section>
+        <snippet>NFR25: All discrepancies must be traceable to specific log entries and source code lines. NFR26: All classifications must include timestamps and author. Activities provide audit trail.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Session Storage (ADR-003)</section>
+        <snippet>Session metadata in session.yaml. Activities provide audit trail for debugging and compliance. Actor field tracks who/what made changes.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-3-session-management-system.md</path>
+        <title>Epic 3: Session Management System</title>
+        <section>Story 3.6 Specification</section>
+        <snippet>Activity dataclass with timestamp, action, actor, details. Auto-logged for all lifecycle events. Manual logging via log_activity(). Activities append-only (never delete).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/3-1-implement-session-progress-tracking.md</path>
+        <title>Story 3.1 - Session Progress Tracking</title>
+        <section>Stage Transitions</section>
+        <snippet>update_stage() can trigger activity logging. Stage transitions provide natural logging points.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/3-2-implement-session-resumability.md</path>
+        <title>Story 3.2 - Session Resumability</title>
+        <section>resume() Method</section>
+        <snippet>resume() should log activity. "session_resumed" logged when session resumed from interrupted state.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>data-model</kind>
+        <symbol>Session</symbol>
+        <lines>37-66</lines>
+        <reason>Session model where activities field will be added. Add Activity dataclass nearby.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>data-model</kind>
+        <symbol>Finding</symbol>
+        <lines>69-101</lines>
+        <reason>Reference for dataclass patterns with to_dict/from_dict serialization methods.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/session.py</path>
+        <kind>manager</kind>
+        <symbol>SessionManager</symbol>
+        <lines>14-177</lines>
+        <reason>SessionManager methods that need auto-logging: create_session, update_session, resume.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/session.py</path>
+        <kind>method</kind>
+        <symbol>_save_session</symbol>
+        <lines>140-176</lines>
+        <reason>YAML serialization to update for activities list persistence.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/coordinator.py</path>
+        <kind>coordinator</kind>
+        <symbol>execute_dual</symbol>
+        <lines>74-154</lines>
+        <reason>Coordinator that needs "execution_started" and "execution_completed" logging hooks.</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/cli.py</path>
+        <kind>cli</kind>
+        <symbol>session commands</symbol>
+        <lines>23-94</lines>
+        <reason>Session subgroup where activities command will be added.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="pyyaml" version=">=6.0">Session YAML persistence with activities</package>
+        <package name="click" version=">=8.0">CLI framework</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>DEPENDS ON Stories 3.1-3.5 - Integrates with all previous session management stories</constraint>
+    <constraint>Activities are append-only - never delete activities</constraint>
+    <constraint>Actor defaults to "system" for automated actions</constraint>
+    <constraint>Use ISO 8601 timestamps for consistency</constraint>
+    <constraint>Store activities in session.yaml (same file as session metadata)</constraint>
+    <constraint>Activity details is Optional[dict] for flexibility</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Activity</name>
+      <kind>dataclass</kind>
+      <signature>@dataclass class Activity: timestamp: datetime, action: str, actor: str = "system", details: Optional[dict] = None</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+    <interface>
+      <name>Activity.to_dict</name>
+      <kind>method</kind>
+      <signature>def to_dict(self) -> dict</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+    <interface>
+      <name>Activity.from_dict</name>
+      <kind>classmethod</kind>
+      <signature>@classmethod def from_dict(cls, data: dict) -> "Activity"</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+    <interface>
+      <name>Session.log_activity</name>
+      <kind>method</kind>
+      <signature>def log_activity(self, action: str, message: Optional[str] = None, actor: str = "system") -> None</signature>
+      <path>rustybt/validation/models.py</path>
+    </interface>
+    <interface>
+      <name>CLI activities command</name>
+      <kind>Click command</kind>
+      <signature>@session.command("activities") @click.argument("session_id") def session_activities(session_id: str) -> None</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use pytest fixtures for session setup. Test serialization roundtrip (to_dict -> from_dict). Verify auto-logging by checking activities list after operations.</standards>
+    <locations>
+      <location>tests/validation/test_activity_log.py (NEW)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">test_activity_dataclass_fields - Verify Activity has timestamp, action, actor, details</idea>
+      <idea ac="1">test_activity_to_dict_serialization - Verify to_dict produces correct format</idea>
+      <idea ac="1">test_activity_from_dict_deserialization - Verify from_dict restores Activity correctly</idea>
+      <idea ac="1">test_activity_roundtrip - Verify to_dict -> from_dict preserves all data</idea>
+      <idea ac="2">test_session_activities_field_default - Verify activities defaults to empty list</idea>
+      <idea ac="2">test_session_activities_persisted_in_yaml - Verify activities saved to session.yaml</idea>
+      <idea ac="3">test_session_auto_logs_on_create - Verify "created" logged on create_session()</idea>
+      <idea ac="3">test_session_auto_logs_on_resume - Verify "session_resumed" logged on resume()</idea>
+      <idea ac="4">test_manual_log_activity - Verify custom activity logged with actor</idea>
+      <idea ac="4">test_log_activity_with_details - Verify details dict persisted correctly</idea>
+      <idea ac="5">test_cli_activities_displays_chronological - Verify activities shown in order</idea>
+      <idea ac="5">test_cli_activities_format - Verify timestamp | actor | action format</idea>
+      <idea ac="6">test_activities_append_only - Verify activities list grows, never shrinks</idea>
+    </ideas>
+  </tests>
+</story-context>

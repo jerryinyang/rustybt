@@ -1,0 +1,151 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>6</storyId>
+    <title>Create Python API Reference</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/8-6-python-api-reference.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer integrating validation programmatically</asA>
+    <iWant>complete Python API reference documentation</iWant>
+    <soThat>I can use the validation framework in scripts and CI/CD pipelines</soThat>
+    <tasks>
+      <task id="1" title="Document SessionManager API">
+        <subtask>Document SessionManager.create() method</subtask>
+        <subtask>Document SessionManager.load() method</subtask>
+        <subtask>Document SessionManager.list() method</subtask>
+        <subtask>Document SessionManager.resume() method</subtask>
+        <subtask>Add type signatures and parameter descriptions</subtask>
+        <subtask>Add usage examples</subtask>
+      </task>
+      <task id="2" title="Document execution APIs">
+        <subtask>Document run_validation() function</subtask>
+        <subtask>Document execution options and parameters</subtask>
+        <subtask>Document return types (validation results)</subtask>
+        <subtask>Add execution examples</subtask>
+      </task>
+      <task id="3" title="Document Comparator classes">
+        <subtask>Document Layer1DataComparator class</subtask>
+        <subtask>Document Layer2SignalsComparator class</subtask>
+        <subtask>Document Layer3OrdersComparator class</subtask>
+        <subtask>Document Layer4BrokerComparator class</subtask>
+        <subtask>Document Layer5PortfolioComparator class</subtask>
+        <subtask>Document common compare() interface</subtask>
+        <subtask>Add comparison examples</subtask>
+      </task>
+      <task id="4" title="Document data models">
+        <subtask>Document Session dataclass</subtask>
+        <subtask>Document Finding dataclass</subtask>
+        <subtask>Document Discrepancy dataclass</subtask>
+        <subtask>Document field types and meanings</subtask>
+        <subtask>Add model usage examples</subtask>
+      </task>
+      <task id="5" title="Document ReportGenerator API">
+        <subtask>Document ReportGenerator class</subtask>
+        <subtask>Document generate_report() method</subtask>
+        <subtask>Document report format options</subtask>
+        <subtask>Add report generation examples</subtask>
+      </task>
+      <task id="6" title="Document configuration APIs">
+        <subtask>Document tolerance configuration loading</subtask>
+        <subtask>Document load_tolerances() function</subtask>
+        <subtask>Document configuration file format</subtask>
+        <subtask>Add configuration examples</subtask>
+      </task>
+      <task id="7" title="Create integration examples">
+        <subtask>pytest fixture integration example</subtask>
+        <subtask>CI/CD pipeline integration example</subtask>
+        <subtask>Custom script integration example</subtask>
+        <subtask>Cross-reference with CLI for equivalent operations</subtask>
+      </task>
+      <task id="8" title="Ensure docstring completeness">
+        <subtask>Audit all public classes for docstrings</subtask>
+        <subtask>Audit all public functions for docstrings</subtask>
+        <subtask>Add missing docstrings with type annotations</subtask>
+        <subtask>Verify docstrings match actual behavior</subtask>
+      </task>
+      <task id="9" title="Testing">
+        <subtask>Verify all code examples execute</subtask>
+        <subtask>Verify type signatures match implementation</subtask>
+        <subtask>Run documentation generation (pdoc/sphinx)</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">All public classes and functions documented</criterion>
+    <criterion id="AC2">Type signatures and parameter descriptions included</criterion>
+    <criterion id="AC3">Return value descriptions included</criterion>
+    <criterion id="AC4">Usage examples for common patterns included</criterion>
+    <criterion id="AC5">Documentation covers SessionManager API (create, load, query sessions)</criterion>
+    <criterion id="AC6">Documentation covers run_validation() and execution APIs</criterion>
+    <criterion id="AC7">Documentation covers Comparator classes (per-layer comparison)</criterion>
+    <criterion id="AC8">Documentation covers Finding and Discrepancy data models</criterion>
+    <criterion id="AC9">Documentation covers ReportGenerator API</criterion>
+    <criterion id="AC10">Documentation covers configuration loading and tolerance APIs</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/architecture.md" title="Architecture Document" section="Python API" snippet="Python API mirrors CLI: SessionManager.create(), run_validation(), session.findings, session.generate_report(). Import from rustybt.validation." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="Data Models" snippet="Session, Finding, Discrepancy dataclasses with full field definitions including types and purposes." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="Code Organization" snippet="rustybt/validation/: session.py (SessionManager), log_parser.py, comparators.py, models.py, reporting.py." />
+    </docs>
+    <code>
+      <file path="rustybt/validation/session.py" kind="module" symbol="SessionManager, Session" reason="Core session management API" />
+      <file path="rustybt/validation/comparators.py" kind="module" symbol="Layer1DataComparator, Layer2SignalsComparator, Layer3OrdersComparator, Layer4BrokerComparator, Layer5PortfolioComparator" reason="Per-layer comparison classes" />
+      <file path="rustybt/validation/models.py" kind="module" symbol="Session, Finding, Discrepancy" reason="Core data models" />
+      <file path="rustybt/validation/reporting.py" kind="module" symbol="ReportGenerator" reason="Report generation API" />
+      <file path="rustybt/validation/log_parser.py" kind="module" symbol="LogParser" reason="Log parsing utilities" />
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0" purpose="Log processing and comparison" />
+        <package name="pyyaml" version=">=6.0" purpose="Configuration and session storage" />
+        <package name="pydantic" version=">=2.0" purpose="Data validation" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">Python API mirrors CLI functionality</constraint>
+    <constraint source="architecture">Core modules in rustybt/validation/: session.py, log_parser.py, comparators.py, models.py, reporting.py</constraint>
+    <constraint source="prd">Use docstrings as source of truth (NFR14)</constraint>
+    <constraint source="prd">Include type annotations in documentation</constraint>
+    <constraint source="prd">Code must follow rustybt coding standards: Python 3.12+, type hints, docstrings (NFR15)</constraint>
+    <constraint source="epic">Guide location: docs/validation/api-reference.md</constraint>
+    <constraint source="epic">Cross-reference with CLI for equivalent operations</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="SessionManager.create" kind="method" signature="def create(strategy_name: str, data_fixture: str) -> Session" path="rustybt/validation/session.py" />
+    <interface name="SessionManager.load" kind="method" signature="def load(session_id: str) -> Session" path="rustybt/validation/session.py" />
+    <interface name="SessionManager.list" kind="method" signature="def list(status: Optional[str] = None) -> list[Session]" path="rustybt/validation/session.py" />
+    <interface name="run_validation" kind="function" signature="def run_validation(session: Session) -> ValidationResults" path="rustybt/validation/__init__.py" />
+    <interface name="Session" kind="dataclass" signature="@dataclass Session: id, created_at, strategy_name, rustybt_version, backtrader_version, python_version, status, data_fixture, findings" path="rustybt/validation/models.py" />
+    <interface name="Finding" kind="dataclass" signature="@dataclass Finding: id, layer, description, classification, rationale, investigated_by, investigated_at, resolved, rustybt_value, backtrader_value" path="rustybt/validation/models.py" />
+    <interface name="Discrepancy" kind="dataclass" signature="@dataclass Discrepancy: layer, event, timestamp, asset, field, rustybt_value, backtrader_value, tolerance, exceeded_by" path="rustybt/validation/models.py" />
+  </interfaces>
+
+  <tests>
+    <standards>Use docstrings as source of truth. Include type annotations. Code must follow rustybt coding standards: Python 3.12+, type hints, docstrings.</standards>
+    <locations>
+      <location>docs/validation/api-reference.md</location>
+      <location>rustybt/validation/</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1,AC2,AC3">Verify all public APIs have complete docstrings with types</idea>
+      <idea acRef="AC4">Execute all code examples and verify they work</idea>
+      <idea acRef="AC5">Test SessionManager create/load/list/resume methods</idea>
+      <idea acRef="AC6">Test run_validation() with different configurations</idea>
+      <idea acRef="AC7">Test each Comparator class compare() method</idea>
+      <idea acRef="AC8">Verify data model serialization/deserialization</idea>
+      <idea acRef="AC9">Test ReportGenerator with different formats</idea>
+      <idea acRef="AC10">Test tolerance configuration loading</idea>
+    </ideas>
+  </tests>
+</story-context>

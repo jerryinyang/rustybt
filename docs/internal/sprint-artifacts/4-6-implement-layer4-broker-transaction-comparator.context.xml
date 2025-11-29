@@ -1,0 +1,215 @@
+<story-context id="4-6-implement-layer4-broker-transaction-comparator" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>6</storyId>
+    <title>Implement Layer 4 Broker Transaction Comparator</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/4-6-implement-layer4-broker-transaction-comparator.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Layer 4 comparison for broker transactions</iWant>
+    <soThat>commission, slippage, position, and cash differences are detected</soThat>
+    <tasks>
+      <task id="1" status="pending">Implement Layer4BrokerComparator class
+        <subtask>Add class to comparators.py</subtask>
+        <subtask>Define compare() method signature</subtask>
+        <subtask>Filter logs by layer="broker"</subtask>
+      </task>
+      <task id="2" status="pending">Implement commission comparison
+        <subtask>Create compare_commissions() method</subtask>
+        <subtask>Filter for transaction events with commissions</subtask>
+        <subtask>Compare commission per trade</subtask>
+        <subtask>Compare total commissions</subtask>
+        <subtask>Use commission_decimal_places tolerance</subtask>
+      </task>
+      <task id="3" status="pending">Implement slippage comparison
+        <subtask>Create compare_slippage() method</subtask>
+        <subtask>Extract expected price vs fill price</subtask>
+        <subtask>Calculate slippage amounts</subtask>
+        <subtask>Compare slippage with tolerance</subtask>
+      </task>
+      <task id="4" status="pending">Implement position tracking comparison
+        <subtask>Create compare_positions() method</subtask>
+        <subtask>Extract position sizes at each bar</subtask>
+        <subtask>Compare long/short positions</subtask>
+        <subtask>Compare position values</subtask>
+      </task>
+      <task id="5" status="pending">Implement cash ledger comparison
+        <subtask>Create compare_cash() method</subtask>
+        <subtask>Extract cash balance at each bar</subtask>
+        <subtask>Compare debits/credits per transaction</subtask>
+        <subtask>Use cash_decimal_places tolerance</subtask>
+      </task>
+      <task id="6" status="pending">Create test file with marker
+        <subtask>Create tests/validation/test_layer_4_broker.py</subtask>
+        <subtask>Register @pytest.mark.layer_4_broker marker</subtask>
+        <subtask>Add test fixtures for broker logs</subtask>
+      </task>
+      <task id="7" status="pending">Write comprehensive tests
+        <subtask>Test commission comparison</subtask>
+        <subtask>Test slippage comparison</subtask>
+        <subtask>Test position tracking</subtask>
+        <subtask>Test cash ledger comparison</subtask>
+        <subtask>Test DESIGN differences filtering</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Layer4BrokerComparator class implemented in rustybt/validation/comparators.py</criterion>
+    <criterion id="AC2">Constructor accepts tolerances dict</criterion>
+    <criterion id="AC3">compare(rustybt_logs, backtrader_logs) returns list[Discrepancy]</criterion>
+    <criterion id="AC4">Commission comparison: per-trade and total with commission_decimal_places tolerance</criterion>
+    <criterion id="AC5">Slippage comparison: expected vs fill price difference</criterion>
+    <criterion id="AC6">Position tracking: sizes, long/short, values at each bar</criterion>
+    <criterion id="AC7">Cash ledger: balance at each bar, debits/credits per transaction</criterion>
+    <criterion id="AC8">pytest test file exists with @pytest.mark.layer_4_broker marker</criterion>
+    <criterion id="AC9">Unit tests verify commission, slippage, position, and cash comparisons</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Validation Layers</title>
+        <section>Log-Based Validation Architecture (lines 149-216)</section>
+        <snippet>Layer 4 Broker Transactions: commissions, slippage, position tracking, cash ledger. Events: transaction_complete, position_updated, cash_updated.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Broker Transaction Validation</title>
+        <section>FR12-FR15 (Broker Transactions)</section>
+        <snippet>System can compare broker transaction logs to validate commission calculations, slippage modeling, position tracking, and cash ledger accuracy.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Broker Transaction Simulation</title>
+        <section>Domain-Specific Requirements - Broker Transaction Simulation</section>
+        <snippet>Commission models: tiered, percentage, fixed, combined. Position tracking accurate. Cash ledger: all debits/credits recorded correctly.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-4-5-layer-comparison-test-suite.md</path>
+        <title>Epic 4 - Story 4.6 Specification</title>
+        <section>Story 4.6: Implement Layer 4 Broker Transaction Comparator</section>
+        <snippet>Commission models may differ (DESIGN). Slippage models may differ (DESIGN). Cash and position tracking should match closely.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/comparators.py</path>
+        <kind>module</kind>
+        <symbol>Layer1-3 Comparators, Layer4BrokerComparator</symbol>
+        <lines>all</lines>
+        <reason>Target module - add Layer4BrokerComparator following established pattern</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>module</kind>
+        <symbol>Discrepancy</symbol>
+        <lines>231-258</lines>
+        <reason>Discrepancy dataclass returned by comparator</reason>
+      </file>
+      <file>
+        <path>tests/validation/config/layer_4_tolerances.yaml</path>
+        <kind>config</kind>
+        <symbol>tolerance config</symbol>
+        <lines>all</lines>
+        <reason>Layer 4 tolerance configuration</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">DataFrame filtering and aggregation</package>
+      </python>
+      <internal>
+        <module name="rustybt.validation.models">Discrepancy dataclass</module>
+        <module name="rustybt.validation.comparators">values_match helper, Layer1-3 patterns</module>
+      </internal>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">Commission models may differ (DESIGN) - document differences</constraint>
+    <constraint source="architecture">Slippage models may differ (DESIGN) - document differences</constraint>
+    <constraint source="architecture">Cash and position tracking should match closely</constraint>
+    <constraint source="prd">Decimal precision for financial calculations</constraint>
+    <constraint source="epic">Prerequisite: Story 4.5 (Layer 3 comparator pattern)</constraint>
+    <constraint source="coding-standards">Python 3.12+, type hints, Google docstrings</constraint>
+  </constraints>
+
+  <knownDesignDifferences>
+    <difference id="COMMISSION_MODEL">
+      <description>Commission calculation methods may differ</description>
+      <rustybt>Supports multiple commission models (tiered, percentage, fixed)</rustybt>
+      <backtrader>Uses percentage-based commission model</backtrader>
+      <rationale>Ensure same commission model is configured for fair comparison</rationale>
+    </difference>
+    <difference id="SLIPPAGE_CALC">
+      <description>Slippage calculation implementation may differ</description>
+      <rustybt>Configurable slippage with volume-aware modeling</rustybt>
+      <backtrader>Fixed percentage slippage</backtrader>
+      <rationale>Document slippage model used in each framework</rationale>
+    </difference>
+  </knownDesignDifferences>
+
+  <interfaces>
+    <interface>
+      <name>Layer4BrokerComparator</name>
+      <kind>class</kind>
+      <signature>class Layer4BrokerComparator</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare</name>
+      <kind>method</kind>
+      <signature>def compare(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_commissions</name>
+      <kind>method</kind>
+      <signature>def compare_commissions(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_slippage</name>
+      <kind>method</kind>
+      <signature>def compare_slippage(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_positions</name>
+      <kind>method</kind>
+      <signature>def compare_positions(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+    <interface>
+      <name>compare_cash</name>
+      <kind>method</kind>
+      <signature>def compare_cash(self, rustybt_logs: pl.DataFrame, backtrader_logs: pl.DataFrame) -> list[Discrepancy]</signature>
+      <path>rustybt/validation/comparators.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework, @pytest.mark.layer_4_broker marker. Tests in tests/validation/test_layer_4_broker.py.</standards>
+    <locations>
+      <location>tests/validation/test_layer_4_broker.py</location>
+    </locations>
+    <ideas>
+      <idea ac="AC4">test_commission_per_trade_match - verify commission per trade comparison</idea>
+      <idea ac="AC4">test_total_commission_match - verify total commissions comparison</idea>
+      <idea ac="AC4">test_commission_mismatch_detection - verify discrepancy for different commissions</idea>
+      <idea ac="AC5">test_slippage_within_tolerance - verify no discrepancy within tolerance</idea>
+      <idea ac="AC5">test_slippage_exceeds_tolerance - verify discrepancy outside tolerance</idea>
+      <idea ac="AC6">test_position_size_match - verify position size comparison</idea>
+      <idea ac="AC6">test_position_long_short - verify long/short tracking</idea>
+      <idea ac="AC7">test_cash_balance_at_bar - verify cash balance comparison</idea>
+      <idea ac="AC7">test_cash_debit_credit - verify transaction cash flows</idea>
+    </ideas>
+  </tests>
+</story-context>

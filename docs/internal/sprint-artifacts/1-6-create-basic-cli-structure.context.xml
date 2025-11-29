@@ -1,0 +1,134 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>6</storyId>
+    <title>Create Basic CLI Structure</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-6-create-basic-cli-structure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>a Click-based CLI with foundational commands</iWant>
+    <soThat>developers can interact with the validation framework through a clean command-line interface</soThat>
+    <tasks>
+- [ ] Task 1: Create CLI main group (AC: #1)
+  - [ ] Replace `rustybt/validation/cli.py` stub
+  - [ ] Implement `rustybt-validate` main group with version option
+
+- [ ] Task 2: Create session command group (AC: #2)
+  - [ ] Add `session` subgroup to main
+
+- [ ] Task 3: Implement session create command (AC: #3)
+  - [ ] `create --strategy <name> --data <path>`
+  - [ ] Call SessionManager.create()
+  - [ ] Handle errors and success messages
+
+- [ ] Task 4: Implement session list command (AC: #4)
+  - [ ] `list [--status <status>]`
+  - [ ] Call SessionManager.list_sessions()
+  - [ ] Display as table
+
+- [ ] Task 5: Implement session show command (AC: #5)
+  - [ ] `show <session_id>`
+  - [ ] Call SessionManager.load()
+  - [ ] Display full details
+
+- [ ] Task 6: Add colored output and formatting (AC: #6)
+  - [ ] Use click.secho for green/red messages
+
+- [ ] Task 7: Add CLI unit tests
+  - [ ] Create `tests/validation/test_cli.py`
+  - [ ] Test all commands using CliRunner
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. **CLI entry point functional** - `rustybt-validate` accessible, version/help working.
+
+2. **Session command group implemented** - `session` subcommands: create, list, show.
+
+3. **session create command** - Creates session via SessionManager, validates inputs.
+
+4. **session list command** - Lists sessions in table format, supports filtering.
+
+5. **session show command** - Displays full session details, handles missing sessions.
+
+6. **Error handling and UX** - Colored output, clear error messages, proper exit codes.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - CLI Interface</title>
+        <section>CLI Interface</section>
+        <snippet>
+CLI Structure:
+- rustybt-validate session create
+- rustybt-validate session list
+- rustybt-validate session show
+- Built with Click for composability
+        </snippet>
+      </doc>
+    </docs>
+    <code>
+      <item>
+        <path>rustybt/validation/cli.py</path>
+        <kind>file</kind>
+        <symbol>main</symbol>
+        <lines>update</lines>
+        <reason>Full CLI implementation.</reason>
+      </item>
+      <item>
+        <path>tests/validation/test_cli.py</path>
+        <kind>test</kind>
+        <symbol>test_session_create</symbol>
+        <lines>new file</lines>
+        <reason>CLI unit tests.</reason>
+      </item>
+    </code>
+    <dependencies>
+      <ecosystem name="python">
+        <package name="click" version=">=8.0" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>
+      <type>Architecture</type>
+      <description>Framework: Must use Click (not argparse).</description>
+    </constraint>
+    <constraint>
+      <type>UX</type>
+      <description>Output: Must use color coding (green=success, red=error).</description>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>CLI</name>
+      <kind>Command Line</kind>
+      <signature>rustybt-validate session [create|list|show]</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Use Click's CliRunner for testing.
+      Verify exit codes (0 for success, non-zero for error).
+      Verify output contains expected strings.
+    </standards>
+    <locations>
+      <location>tests/validation/test_cli.py</location>
+    </locations>
+    <ideas>
+      <idea>Test command invocation with missing required arguments.</idea>
+      <idea>Test valid session creation flow.</idea>
+    </ideas>
+  </tests>
+</story-context>

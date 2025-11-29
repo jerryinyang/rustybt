@@ -1,0 +1,146 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2</storyId>
+    <title>Implement ValidatedStrategy Base Class for Backtrader</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-2-strategy-comparison-infrastructure-story-2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>a Backtrader base strategy class with identical logging behavior</iWant>
+    <soThat>Backtrader strategies produce logs in the same format as rustybt</soThat>
+    <tasks>
+      <task id="1">Create Backtrader strategy directory structure (AC: #1)</task>
+      <task id="2">Implement BacktraderValidatedStrategy class (AC: #1, #2)</task>
+      <task id="3">Implement lifecycle method overrides (AC: #4)</task>
+      <task id="4">Implement cleanup in stop() (AC: #5)</task>
+      <task id="5">Write unit tests (AC: #6)</task>
+      <task id="6">Cross-framework schema comparison test</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">BacktraderValidatedStrategy base class in tests/validation/strategies/backtrader/base_validated.py</criterion>
+    <criterion id="AC2">_log_event() method identical schema to rustybt</criterion>
+    <criterion id="AC3">Logging matches rustybt schema exactly (same fields, layers, events)</criterion>
+    <criterion id="AC4">Backtrader lifecycle methods auto-log (__init__, next)</criterion>
+    <criterion id="AC5">File cleanup in stop() method</criterion>
+    <criterion id="AC6">Unit tests verify log format matches rustybt</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Backtrader Integration (pg 163-179)</section>
+        <snippet>Backtrader uses next() instead of handle_data(), stop() for cleanup instead of destructor, params tuple for configuration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Log Schema (pg 183-189)</section>
+        <snippet>Both frameworks must produce identical log schema for comparison.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/2-1-strategy-comparison-infrastructure-story-1.md</path>
+        <title>Story 2.1 - rustybt Base Class</title>
+        <section>Implementation Pattern</section>
+        <snippet>Defines the _log_event() interface and log schema that Backtrader class must match exactly.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>rustybt/validation/base_strategy.py</path>
+        <kind>reference</kind>
+        <symbol>RustyBTValidatedStrategy</symbol>
+        <lines>all</lines>
+        <reason>Reference implementation - Backtrader class must match log schema exactly</reason>
+      </artifact>
+      <artifact>
+        <path>tests/validation/strategies/backtrader/__init__.py</path>
+        <kind>module</kind>
+        <symbol>package init</symbol>
+        <lines>N/A</lines>
+        <reason>Target directory for Backtrader strategy implementations</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>models</kind>
+        <symbol>ValidationLayer types</symbol>
+        <lines>1-165</lines>
+        <reason>Layer enumeration and log schema reference</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="backtrader" version=">=1.9.78">Reference backtesting framework</package>
+        <package name="pytest" version=">=7.2.0">Testing framework</package>
+      </python>
+      <stdlib>
+        <module>pathlib</module>
+        <module>datetime</module>
+        <module>json</module>
+      </stdlib>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Class must extend bt.Strategy (Backtrader convention)</constraint>
+    <constraint type="pattern">Use params tuple for configuration (Backtrader convention)</constraint>
+    <constraint type="pattern">Use next() for bar processing (not handle_data)</constraint>
+    <constraint type="pattern">Use stop() for cleanup (not __del__)</constraint>
+    <constraint type="schema">Log schema must match rustybt exactly</constraint>
+    <constraint type="layer">Valid layer values: data, signals, orders, broker, portfolio</constraint>
+    <constraint type="testing">Cross-framework schema comparison test required</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>_log_event</name>
+      <kind>method signature</kind>
+      <signature>def _log_event(self, layer: str, event: str, data: dict) -> None</signature>
+      <path>tests/validation/strategies/backtrader/base_validated.py</path>
+    </interface>
+    <interface>
+      <name>bt.Strategy.next</name>
+      <kind>method override</kind>
+      <signature>def next(self) -> None</signature>
+      <path>backtrader</path>
+    </interface>
+    <interface>
+      <name>bt.Strategy.stop</name>
+      <kind>method override</kind>
+      <signature>def stop(self) -> None</signature>
+      <path>backtrader</path>
+    </interface>
+    <interface>
+      <name>Backtrader data access</name>
+      <kind>data pattern</kind>
+      <signature>self.data.close[0], self.data.volume[0], self.data.datetime.datetime()</signature>
+      <path>backtrader</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing. Schema matching tests are critical.
+      Both frameworks must produce identical log structure.
+    </standards>
+    <locations>
+      <location>tests/validation/strategies/backtrader/test_base_validated.py</location>
+    </locations>
+    <ideas>
+      <idea acId="AC1">Test strategy instantiation creates log file</idea>
+      <idea acId="AC2">Test _log_event writes valid JSONL matching rustybt schema</idea>
+      <idea acId="AC3">Test field names match exactly between frameworks</idea>
+      <idea acId="AC4">Test next() produces bar_received events</idea>
+      <idea acId="AC5">Test stop() closes file properly</idea>
+      <idea acId="AC6">Cross-framework schema comparison test</idea>
+    </ideas>
+  </tests>
+</story-context>

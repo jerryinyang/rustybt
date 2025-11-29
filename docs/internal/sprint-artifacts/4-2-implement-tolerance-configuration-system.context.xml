@@ -1,0 +1,180 @@
+<story-context id="4-2-implement-tolerance-configuration-system" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>2</storyId>
+    <title>Implement Tolerance Configuration System</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/4-2-implement-tolerance-configuration-system.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>configurable tolerances per validation layer</iWant>
+    <soThat>comparison accounts for acceptable differences between frameworks</soThat>
+    <tasks>
+      <task id="1" status="pending">Create config directory and YAML files
+        <subtask>Create tests/validation/config/ directory</subtask>
+        <subtask>Create layer_1_tolerances.yaml with comments</subtask>
+        <subtask>Create layer_2_tolerances.yaml with comments</subtask>
+        <subtask>Create layer_3_tolerances.yaml with comments</subtask>
+        <subtask>Create layer_4_tolerances.yaml with comments</subtask>
+        <subtask>Create layer_5_tolerances.yaml with comments</subtask>
+      </task>
+      <task id="2" status="pending">Define Layer 1-2 tolerances
+        <subtask>Define data handling tolerances with rationale</subtask>
+        <subtask>Define signal computation tolerances with rationale</subtask>
+        <subtask>Document each tolerance meaning in YAML comments</subtask>
+      </task>
+      <task id="3" status="pending">Define Layer 3-5 tolerances
+        <subtask>Define order lifecycle tolerances</subtask>
+        <subtask>Define broker transaction tolerances</subtask>
+        <subtask>Define portfolio returns tolerances</subtask>
+      </task>
+      <task id="4" status="pending">Implement load_tolerances()
+        <subtask>Create rustybt/validation/tolerance.py</subtask>
+        <subtask>Implement load_tolerances(layer: str) -> dict</subtask>
+        <subtask>Add default values fallback</subtask>
+        <subtask>Handle missing/invalid config files gracefully</subtask>
+      </task>
+      <task id="5" status="pending">Create pytest fixtures
+        <subtask>Add tolerance fixtures to conftest.py</subtask>
+        <subtask>Support per-layer tolerance injection</subtask>
+        <subtask>Support test-level overrides</subtask>
+      </task>
+      <task id="6" status="pending">Add CLI config command
+        <subtask>Add config show layer command</subtask>
+        <subtask>Display tolerances in readable format</subtask>
+        <subtask>Handle invalid layer names</subtask>
+      </task>
+      <task id="7" status="pending">Write unit tests
+        <subtask>Test load_tolerances() basic loading</subtask>
+        <subtask>Test default fallback behavior</subtask>
+        <subtask>Test tolerance override in fixtures</subtask>
+        <subtask>Test CLI config show command</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">YAML configuration files exist for all 5 layers in tests/validation/config/</criterion>
+    <criterion id="AC2">Layer 1 (Data) tolerances defined: timestamp_window_ms, price_decimal_places, volume_tolerance_pct, bar_count_tolerance</criterion>
+    <criterion id="AC3">Layer 2 (Signals) tolerances defined: indicator_decimal_places, signal_timing_tolerance_bars, signal_count_tolerance</criterion>
+    <criterion id="AC4">Layers 3-5 tolerances defined with appropriate defaults for orders, broker, and portfolio</criterion>
+    <criterion id="AC5">load_tolerances() function accepts layer name, returns dict, falls back to defaults if file missing</criterion>
+    <criterion id="AC6">Tolerance override in tests via pytest fixtures without affecting other tests</criterion>
+    <criterion id="AC7">CLI command rustybt-validate config show layer displays tolerances</criterion>
+    <criterion id="AC8">Unit tests verify tolerance loading and override</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Tolerance Configuration</title>
+        <section>Pattern 2: Tolerance-Based Comparison (lines 236-244)</section>
+        <snippet>Each layer has YAML tolerance configuration. Load tolerances in conftest.py, pass to comparators. Document all tolerances in layer specifications.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Consistency Rules</title>
+        <section>Code Organization - Test Organization (lines 315-322)</section>
+        <snippet>Tolerance configs in tests/validation/config/. Layer-specific YAML files (layer_1_tolerances.yaml, etc.).</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Data and Configuration Management</title>
+        <section>FR68 (Configure test tolerances)</section>
+        <snippet>System can configure test tolerances for numerical comparisons (e.g., decimal precision).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-4-5-layer-comparison-test-suite.md</path>
+        <title>Epic 4 - Story 4.2 Specification</title>
+        <section>Story 4.2: Implement Tolerance Configuration System</section>
+        <snippet>YAML configuration per layer, tolerance loading function, pytest fixture injection, CLI display command.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/cli.py</path>
+        <kind>module</kind>
+        <symbol>cli commands</symbol>
+        <lines>all</lines>
+        <reason>CLI module to extend with config show command</reason>
+      </file>
+      <file>
+        <path>tests/validation/conftest.py</path>
+        <kind>fixture</kind>
+        <symbol>pytest fixtures</symbol>
+        <lines>all</lines>
+        <reason>Add tolerance fixtures for layer injection</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>module</kind>
+        <symbol>Discrepancy</symbol>
+        <lines>231-258</lines>
+        <reason>Discrepancy uses tolerance field - ensure compatibility</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="pyyaml" version=">=6.0">YAML configuration loading</package>
+        <package name="click" version=">=8.0">CLI interface</package>
+        <package name="pytest" version=">=7.2.0">Test framework with fixtures</package>
+      </python>
+      <stdlib>
+        <module name="pathlib">Path operations for config files</module>
+      </stdlib>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">Default tolerances should be conservative (strict)</constraint>
+    <constraint source="architecture">Document each tolerance meaning in config file comments</constraint>
+    <constraint source="architecture">Use pytest fixtures to inject tolerances</constraint>
+    <constraint source="prd">NFR1: Numerical comparisons must account for float vs Decimal precision (configurable thresholds)</constraint>
+    <constraint source="coding-standards">Python 3.12+, type hints, Google docstrings</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>load_tolerances</name>
+      <kind>function</kind>
+      <signature>def load_tolerances(layer: str) -> dict</signature>
+      <path>rustybt/validation/tolerance.py</path>
+    </interface>
+    <interface>
+      <name>layer_1_tolerances</name>
+      <kind>pytest fixture</kind>
+      <signature>@pytest.fixture def layer_1_tolerances() -> ToleranceOverride</signature>
+      <path>tests/validation/conftest.py</path>
+    </interface>
+    <interface>
+      <name>config show</name>
+      <kind>CLI command</kind>
+      <signature>rustybt-validate config show [layer]</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework with fixtures. Tests in tests/validation/. Use Click testing with CliRunner for CLI tests.</standards>
+    <locations>
+      <location>tests/validation/test_tolerance.py</location>
+      <location>tests/validation/config/*.yaml</location>
+    </locations>
+    <ideas>
+      <idea ac="AC1">test_tolerance_files_exist - verify all 5 layer YAML files exist</idea>
+      <idea ac="AC2">test_layer_1_tolerances_content - verify Layer 1 has required keys</idea>
+      <idea ac="AC3">test_layer_2_tolerances_content - verify Layer 2 has required keys</idea>
+      <idea ac="AC5">test_load_tolerances_basic - verify loading from YAML</idea>
+      <idea ac="AC5">test_load_tolerances_defaults - verify fallback to defaults for missing file</idea>
+      <idea ac="AC6">test_tolerance_override_in_test - verify fixture override works</idea>
+      <idea ac="AC6">test_tolerance_isolation - verify override doesn't affect other tests</idea>
+      <idea ac="AC7">test_cli_config_show - verify CLI displays tolerances</idea>
+      <idea ac="AC7">test_cli_config_show_invalid_layer - verify error handling</idea>
+    </ideas>
+  </tests>
+</story-context>

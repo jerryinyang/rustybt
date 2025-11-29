@@ -1,0 +1,133 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>3</storyId>
+    <title>Create Strategy Implementation Guide</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/8-3-strategy-implementation-guide.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>validation framework user</asA>
+    <iWant>a comprehensive strategy implementation guide</iWant>
+    <soThat>I can add my own strategies to the validation suite</soThat>
+    <tasks>
+      <task id="1" title="Create dual-implementation overview">
+        <subtask>Explain why both frameworks need identical strategy implementations</subtask>
+        <subtask>Document the log-based validation architecture</subtask>
+        <subtask>Explain event logging requirements</subtask>
+      </task>
+      <task id="2" title="Create ValidatedStrategy base class documentation">
+        <subtask>Document RustyBTValidatedStrategy class and methods</subtask>
+        <subtask>Document BacktraderValidatedStrategy class and methods</subtask>
+        <subtask>Document @log_event decorator usage</subtask>
+        <subtask>Document auto-logged lifecycle methods</subtask>
+      </task>
+      <task id="3" title="Create strategy template files">
+        <subtask>Create rustybt strategy template with comments</subtask>
+        <subtask>Create Backtrader strategy template with comments</subtask>
+        <subtask>Document template file locations</subtask>
+      </task>
+      <task id="4" title="Create step-by-step implementation walkthrough">
+        <subtask>Choose concrete example strategy (e.g., Bollinger Bands)</subtask>
+        <subtask>Walk through rustybt implementation step-by-step</subtask>
+        <subtask>Walk through Backtrader implementation step-by-step</subtask>
+        <subtask>Show complete working code for both versions</subtask>
+      </task>
+      <task id="5" title="Create strategy audit checklist">
+        <subtask>Define logical equivalence criteria</subtask>
+        <subtask>Create checklist for signal generation parity</subtask>
+        <subtask>Create checklist for order generation parity</subtask>
+        <subtask>Define pass/fail criteria with examples</subtask>
+      </task>
+      <task id="6" title="Document common pitfalls">
+        <subtask>Timing differences between frameworks</subtask>
+        <subtask>Indicator library differences (TA-Lib vs built-in)</subtask>
+        <subtask>Bar alignment and lookahead bias risks</subtask>
+        <subtask>Order execution timing differences</subtask>
+      </task>
+      <task id="7" title="Create testing guide">
+        <subtask>Document how to run single-strategy validation</subtask>
+        <subtask>Document how to interpret validation results</subtask>
+        <subtask>Document how to add strategy to test suite</subtask>
+        <subtask>Document regression test creation</subtask>
+      </task>
+      <task id="8" title="Testing">
+        <subtask>Verify templates compile and run</subtask>
+        <subtask>Verify walkthrough produces working strategy</subtask>
+        <subtask>Test audit checklist against known-good strategies</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Users understand the dual-implementation requirement (rustybt + Backtrader)</criterion>
+    <criterion id="AC2">Users can create a new strategy using ValidatedStrategy base classes</criterion>
+    <criterion id="AC3">Users can implement identical logic in both frameworks</criterion>
+    <criterion id="AC4">Users can audit their implementations for logical equivalence</criterion>
+    <criterion id="AC5">Users can run validation and interpret results</criterion>
+    <criterion id="AC6">Guide includes template files for both rustybt and Backtrader strategies</criterion>
+    <criterion id="AC7">Guide includes step-by-step walkthrough with concrete example</criterion>
+    <criterion id="AC8">Guide includes strategy audit checklist with pass/fail criteria</criterion>
+    <criterion id="AC9">Guide includes common pitfalls and how to avoid them</criterion>
+    <criterion id="AC10">Guide includes testing strategy before adding to validation suite</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/architecture.md" title="Architecture Document" section="Novel Pattern: Log-Based Validation Architecture" snippet="ValidatedStrategy base classes auto-log lifecycle events to JSONL. Log schema: timestamp, layer, event, asset, data. Enables layer-by-layer comparison." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="Pattern 1: Consistent Event Logging" snippet="All log events follow standard schema with timestamp, layer, event, asset, data fields. ValidatedStrategy base classes enforce schema." />
+      <doc path="docs/architecture.md" title="Architecture Document" section="Pattern 3: Subprocess Isolation" snippet="Execute rustybt and Backtrader in separate subprocesses to avoid conflicts. Never import both frameworks in same process." />
+      <doc path="docs/prd.md" title="PRD" section="Strategy Comparison Infrastructure" snippet="FR23-FR30: Maintain identical implementations, audit for logical equivalence, execute with identical data/parameters, validate log completeness." />
+    </docs>
+    <code>
+      <file path="tests/validation/strategies/rustybt/" kind="directory" symbol="rustybt strategies" reason="Location for rustybt strategy implementations (sma_crossover.py, mean_reversion.py, momentum.py, multi_factor.py)" />
+      <file path="tests/validation/strategies/backtrader/" kind="directory" symbol="backtrader strategies" reason="Location for Backtrader strategy implementations (parallel to rustybt)" />
+      <file path="rustybt/validation/base_strategy.py" kind="module" symbol="ValidatedStrategy" reason="Base classes for both frameworks with auto-logging" />
+      <file path="tests/benchmarks/strategies/simple_sma_crossover.py" kind="module" symbol="SimpleSMACrossover" lines="1-100" reason="Example strategy implementation for reference" />
+    </code>
+    <dependencies>
+      <python>
+        <package name="backtrader" version=">=1.9.78" purpose="Reference framework for parallel implementation" />
+        <package name="polars" version=">=1.0" purpose="Log processing and comparison" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">ValidatedStrategy base classes auto-log core lifecycle methods (initialize, handle_data)</constraint>
+    <constraint source="architecture">Log schema must match: timestamp, layer, event, asset, data</constraint>
+    <constraint source="architecture">Subprocess isolation: strategies execute in separate processes</constraint>
+    <constraint source="architecture">Strategy implementations live in tests/validation/strategies/rustybt/ and tests/validation/strategies/backtrader/</constraint>
+    <constraint source="prd">Strategy implementations must generate logs in expected JSONL format</constraint>
+    <constraint source="prd">Audit checklist must have zero false negatives (catch all discrepancies)</constraint>
+    <constraint source="epic">Guide location: docs/validation/strategy-implementation-guide.md</constraint>
+    <constraint source="epic">Complete working examples required, not just snippets</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="RustyBTValidatedStrategy" kind="class" signature="class RustyBTValidatedStrategy(TradingAlgorithm)" path="rustybt/validation/base_strategy.py" />
+    <interface name="BacktraderValidatedStrategy" kind="class" signature="class BacktraderValidatedStrategy(bt.Strategy)" path="rustybt/validation/base_strategy.py" />
+    <interface name="Log Event Schema" kind="JSON schema" signature="{timestamp, layer, event, asset, data}" path="docs/architecture.md" />
+    <interface name="@log_event" kind="decorator" signature="@log_event(layer, event)" path="rustybt/validation/base_strategy.py" />
+  </interfaces>
+
+  <tests>
+    <standards>Strategy implementations must generate logs in expected JSONL format. Audit checklist must have zero false negatives. Complete working examples required.</standards>
+    <locations>
+      <location>tests/validation/strategies/rustybt/</location>
+      <location>tests/validation/strategies/backtrader/</location>
+      <location>docs/validation/strategy-implementation-guide.md</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1,AC2">Verify ValidatedStrategy base class documentation is accurate</idea>
+      <idea acRef="AC3,AC6">Test that template files compile and produce valid logs</idea>
+      <idea acRef="AC4,AC8">Test audit checklist against known-good and known-bad strategies</idea>
+      <idea acRef="AC7">Verify walkthrough example produces identical behavior in both frameworks</idea>
+      <idea acRef="AC9">Test common pitfalls section with real examples</idea>
+      <idea acRef="AC5,AC10">Verify single-strategy validation workflow works end-to-end</idea>
+    </ideas>
+  </tests>
+</story-context>

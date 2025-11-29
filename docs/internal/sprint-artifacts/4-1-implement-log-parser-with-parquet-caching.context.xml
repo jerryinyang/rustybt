@@ -1,0 +1,200 @@
+<story-context id="4-1-implement-log-parser-with-parquet-caching" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>1</storyId>
+    <title>Implement Log Parser with Parquet Caching</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/4-1-implement-log-parser-with-parquet-caching.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>efficient log parsing with caching</iWant>
+    <soThat>comparison operations run quickly on large log files</soThat>
+    <tasks>
+      <task id="1" status="pending">Create log_parser.py module
+        <subtask>Create rustybt/validation/log_parser.py</subtask>
+        <subtask>Define parse_log() function signature</subtask>
+        <subtask>Implement JSONL line-by-line parsing</subtask>
+        <subtask>Convert to Polars DataFrame</subtask>
+      </task>
+      <task id="2" status="pending">Implement Parquet caching
+        <subtask>Check for existing cache file</subtask>
+        <subtask>Compare mtime of JSONL vs Parquet</subtask>
+        <subtask>Read from cache if valid</subtask>
+        <subtask>Write to cache after parsing</subtask>
+        <subtask>Support use_cache=False bypass</subtask>
+      </task>
+      <task id="3" status="pending">Implement flatten_data_column()
+        <subtask>Detect nested "data" dict column</subtask>
+        <subtask>Extract keys and create prefixed columns</subtask>
+        <subtask>Handle missing keys with nulls</subtask>
+        <subtask>Preserve non-nested columns</subtask>
+      </task>
+      <task id="4" status="pending">Add schema validation
+        <subtask>Define required fields list</subtask>
+        <subtask>Validate each record on parse</subtask>
+        <subtask>Collect and report errors with line numbers</subtask>
+        <subtask>Raise clear exception for invalid logs</subtask>
+      </task>
+      <task id="5" status="pending">Optimize for performance
+        <subtask>Use streaming read for large files</subtask>
+        <subtask>Benchmark with 100MB test file</subtask>
+        <subtask>Profile and optimize bottlenecks if needed</subtask>
+      </task>
+      <task id="6" status="pending">Write unit tests
+        <subtask>Test basic JSONL parsing</subtask>
+        <subtask>Test Parquet cache creation</subtask>
+        <subtask>Test cache invalidation on source change</subtask>
+        <subtask>Test flatten_data_column()</subtask>
+        <subtask>Test schema validation errors</subtask>
+        <subtask>Test use_cache=False</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">parse_log() function implemented in rustybt/validation/log_parser.py - accepts log_path: Path, use_cache: bool = True, returns pl.DataFrame</criterion>
+    <criterion id="AC2">Parquet caching works correctly - cache regenerated if JSONL newer, skipped if use_cache=False</criterion>
+    <criterion id="AC3">flatten_data_column() expands nested JSON with "data_" prefix</criterion>
+    <criterion id="AC4">Performance meets target - parse 100MB JSONL in less than 5 seconds</criterion>
+    <criterion id="AC5">Log schema validation - required fields timestamp, layer, event; clear error messages</criterion>
+    <criterion id="AC6">Unit tests verify all functionality</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Log-Based Validation</title>
+        <section>Novel Pattern: Log-Based Validation Architecture (lines 149-216)</section>
+        <snippet>JSONL primary format for human readability, Parquet caching for performance, Polars DataFrame for analysis. Log schema defines timestamp, layer, event, asset, data fields.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Performance Considerations</title>
+        <section>Performance Considerations (lines 509-529)</section>
+        <snippet>Log parsing target: less than 5 seconds per 100MB JSONL. Parquet caching provides 10-100x faster queries. Stream large files to manage memory.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>PRD - Test Suite Development</title>
+        <section>FR2-FR3 (Log ingestion and parsing)</section>
+        <snippet>System can ingest structured logs from both rustybt and Backtrader. System can parse logs into standardized data structures for comparison.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-4-5-layer-comparison-test-suite.md</path>
+        <title>Epic 4 - Story 4.1 Specification</title>
+        <section>Story 4.1: Implement Log Parser with Parquet Caching</section>
+        <snippet>Parse JSONL log file to Polars DataFrame with optional Parquet caching. Cache invalidation based on mtime comparison. Flatten nested data column.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>rustybt/validation/log_parser.py</path>
+        <kind>module</kind>
+        <symbol>log_parser</symbol>
+        <lines>all</lines>
+        <reason>Target module to implement - currently minimal stub</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/models.py</path>
+        <kind>module</kind>
+        <symbol>Discrepancy, Session, Finding</symbol>
+        <lines>all</lines>
+        <reason>Data models used by log parser and comparators - defines Discrepancy dataclass</reason>
+      </file>
+      <file>
+        <path>rustybt/validation/__init__.py</path>
+        <kind>module</kind>
+        <symbol>validation package</symbol>
+        <lines>all</lines>
+        <reason>Package exports - may need to add parse_log export</reason>
+      </file>
+      <file>
+        <path>tests/validation/conftest.py</path>
+        <kind>fixture</kind>
+        <symbol>pytest fixtures</symbol>
+        <lines>all</lines>
+        <reason>Test fixtures - may need to add log parsing fixtures</reason>
+      </file>
+      <file>
+        <path>tests/validation/test_log_parser.py</path>
+        <kind>test</kind>
+        <symbol>test_log_parser</symbol>
+        <lines>all</lines>
+        <reason>Existing test file for log parser - extend with new tests</reason>
+      </file>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">Data processing and DataFrame operations</package>
+        <package name="pyarrow" version=">=18.0">Parquet file support</package>
+        <package name="pyyaml" version=">=6.0">YAML configuration</package>
+      </python>
+      <stdlib>
+        <module name="json">JSONL parsing</module>
+        <module name="pathlib">Path operations</module>
+        <module name="os">File stat operations for mtime</module>
+      </stdlib>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">Log schema: timestamp (required), layer (required), event (required), asset (optional), data (optional dict)</constraint>
+    <constraint source="architecture">JSONL format for human readability, Parquet for performance caching</constraint>
+    <constraint source="architecture">Stream large files - don't load entirely into memory</constraint>
+    <constraint source="architecture">Prefix flattened columns with "data_" for clarity</constraint>
+    <constraint source="prd">NFR22: Log parsing must handle large log files efficiently (>100MB logs)</constraint>
+    <constraint source="prd">NFR5: Test results must be deterministic (same inputs always produce same results)</constraint>
+    <constraint source="coding-standards">Python 3.12+, type hints, Google docstrings</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>parse_log</name>
+      <kind>function</kind>
+      <signature>def parse_log(log_path: Path, use_cache: bool = True) -> pl.DataFrame</signature>
+      <path>rustybt/validation/log_parser.py</path>
+    </interface>
+    <interface>
+      <name>flatten_data_column</name>
+      <kind>function</kind>
+      <signature>def flatten_data_column(df: pl.DataFrame) -> pl.DataFrame</signature>
+      <path>rustybt/validation/log_parser.py</path>
+    </interface>
+    <interface>
+      <name>validate_schema</name>
+      <kind>function</kind>
+      <signature>def validate_schema(record: dict, line_num: int) -> None</signature>
+      <path>rustybt/validation/log_parser.py</path>
+    </interface>
+    <interface>
+      <name>LogParseError</name>
+      <kind>exception</kind>
+      <signature>class LogParseError(Exception)</signature>
+      <path>rustybt/validation/exceptions.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework with fixtures, @pytest.mark markers for categorization. Tests in tests/validation/. Use tmp_path fixture for temporary files. Hypothesis for property-based testing where applicable.</standards>
+    <locations>
+      <location>tests/validation/test_log_parser.py</location>
+      <location>tests/validation/fixtures/*.jsonl</location>
+    </locations>
+    <ideas>
+      <idea ac="AC1">test_parse_log_basic - verify DataFrame returned with correct columns</idea>
+      <idea ac="AC2">test_cache_creation - verify .parquet created next to .jsonl</idea>
+      <idea ac="AC2">test_cache_invalidation - verify cache regenerated when source newer</idea>
+      <idea ac="AC2">test_use_cache_false - verify cache bypassed when disabled</idea>
+      <idea ac="AC3">test_flatten_data_column - verify nested dict expanded to data_* columns</idea>
+      <idea ac="AC3">test_flatten_missing_keys - verify null values for missing keys</idea>
+      <idea ac="AC4">test_large_file_performance - benchmark 100MB file parsing time</idea>
+      <idea ac="AC5">test_schema_validation_required_fields - verify error for missing timestamp/layer/event</idea>
+      <idea ac="AC5">test_schema_validation_error_message - verify line number in error</idea>
+    </ideas>
+  </tests>
+</story-context>

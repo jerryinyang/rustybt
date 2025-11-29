@@ -1,0 +1,6 @@
+# Layer 3: Order Lifecycle Tolerances
+layer_3_orders:
+  order_timestamp_window_ms: 1
+  fill_price_decimal_places: 4
+  quantity_tolerance_pct: 0.0001
+  order_id_exact_match: false

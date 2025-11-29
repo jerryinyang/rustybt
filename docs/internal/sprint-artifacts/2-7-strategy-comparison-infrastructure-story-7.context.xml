@@ -1,0 +1,151 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>7</storyId>
+    <title>Implement Dual Framework Execution Coordinator</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/2-7-strategy-comparison-infrastructure-story-7.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>a coordinator that executes both frameworks and collects logs</iWant>
+    <soThat>validation can be performed with a single command</soThat>
+    <tasks>
+      <task id="1">Create coordinator.py module (AC: #1)</task>
+      <task id="2">Implement ExecutionResult dataclass (AC: #3)</task>
+      <task id="3">Implement execute_dual() function (AC: #1, #2)</task>
+      <task id="4">Add CLI run command (AC: #4)</task>
+      <task id="5">Update session after execution (AC: #5)</task>
+      <task id="6">Write integration test (AC: #6)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">execute_dual() executes strategy in both frameworks</criterion>
+    <criterion id="AC2">Execution workflow: creates logs dir, calls runners, validates logs</criterion>
+    <criterion id="AC3">ExecutionResult dataclass with success status and log paths</criterion>
+    <criterion id="AC4">CLI command: rustybt-validate run session_id</criterion>
+    <criterion id="AC5">Session status updated after execution</criterion>
+    <criterion id="AC6">Integration test validates full flow</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Execution Coordinator (pg 249-268)</section>
+        <snippet>Orchestrates dual framework execution. Sequential execution for determinism. Validates logs before comparison.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Session Integration (pg 359-402)</section>
+        <snippet>Stores logs under session directory. Updates session.yaml with results. Tracks execution timestamps.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/2-6-strategy-comparison-infrastructure-story-6.md</path>
+        <title>Story 2.6</title>
+        <section>Log Validation</section>
+        <snippet>validate_log_schema() validates logs after execution, before returning result.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>rustybt/validation/runner.py</path>
+        <kind>dependency</kind>
+        <symbol>run_rustybt_strategy, run_backtrader_strategy</symbol>
+        <lines>all</lines>
+        <reason>Coordinator calls these runner functions</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/log_parser.py</path>
+        <kind>dependency</kind>
+        <symbol>validate_log_schema, ValidationResult</symbol>
+        <lines>all</lines>
+        <reason>Coordinator validates logs after execution</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/session.py</path>
+        <kind>dependency</kind>
+        <symbol>SessionManager, Session</symbol>
+        <lines>all</lines>
+        <reason>Update session with execution results</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/cli.py</path>
+        <kind>module</kind>
+        <symbol>main CLI group</symbol>
+        <lines>all</lines>
+        <reason>Add run command</reason>
+      </artifact>
+      <artifact>
+        <path>rustybt/validation/models.py</path>
+        <kind>models</kind>
+        <symbol>Session, Finding</symbol>
+        <lines>all</lines>
+        <reason>Session model for status updates</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <stdlib>
+        <module>dataclasses</module>
+        <module>pathlib</module>
+        <module>datetime</module>
+      </stdlib>
+      <python>
+        <package name="click" version=">=8.0">CLI interface</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="execution">Execute sequentially (not parallel) for determinism</constraint>
+    <constraint type="directory">Logs stored under validation-sessions/{session_id}/logs/</constraint>
+    <constraint type="validation">Validate both logs after execution</constraint>
+    <constraint type="session">Update session.yaml with execution results</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>execute_dual</name>
+      <kind>function</kind>
+      <signature>def execute_dual(session: Session, strategy_name: str, rustybt_module: str, backtrader_module: str, params: Optional[dict] = None) -> ExecutionResult</signature>
+      <path>rustybt/validation/coordinator.py</path>
+    </interface>
+    <interface>
+      <name>ExecutionResult</name>
+      <kind>dataclass</kind>
+      <signature>@dataclass class ExecutionResult: rustybt_success: bool; backtrader_success: bool; rustybt_log: Path; backtrader_log: Path; rustybt_log_valid: bool; backtrader_log_valid: bool; errors: list[str]; @property success: bool</signature>
+      <path>rustybt/validation/coordinator.py</path>
+    </interface>
+    <interface>
+      <name>CLI run command</name>
+      <kind>CLI interface</kind>
+      <signature>rustybt-validate run session_id</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based testing. Integration tests require both frameworks.
+      Test session updates and log validation.
+    </standards>
+    <locations>
+      <location>tests/validation/test_coordinator.py</location>
+    </locations>
+    <ideas>
+      <idea acId="AC1">Test execute_dual calls both runner functions</idea>
+      <idea acId="AC2">Test logs directory created under session folder</idea>
+      <idea acId="AC2">Test both log files validated after execution</idea>
+      <idea acId="AC3">Test ExecutionResult.success property logic</idea>
+      <idea acId="AC4">Test CLI run command loads session and executes</idea>
+      <idea acId="AC5">Test session status updated after execution</idea>
+      <idea acId="AC6">Integration: create session, execute dual, verify logs valid</idea>
+    </ideas>
+  </tests>
+</story-context>

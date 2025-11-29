@@ -1,0 +1,143 @@
+<story-context id="7-7" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>7</storyId>
+    <title>Implement Next Actions Recommender</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/7-7-reporting-documentation-system-story-7.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>recommended next actions for validation</iWant>
+    <soThat>I know what to work on next</soThat>
+    <tasks>
+      <task id="1">Implement Recommendation dataclass (AC: #1)
+        <subtask>Create dataclass in rustybt/validation/reporting.py</subtask>
+        <subtask>Define priority, action, details, command fields</subtask>
+        <subtask>Add severity labels (HIGH, MEDIUM, LOW)</subtask>
+        <subtask>Add formatting method for CLI output</subtask>
+        <subtask>Test: Unit tests for dataclass</subtask>
+      </task>
+      <task id="2">Implement recommend_next_actions function (AC: #1)
+        <subtask>Query open bug findings (Priority 1)</subtask>
+        <subtask>Query unclassified findings (Priority 2)</subtask>
+        <subtask>Query incomplete strategies (Priority 3)</subtask>
+        <subtask>Check documentation update needs (Priority 4)</subtask>
+        <subtask>Sort actions by priority</subtask>
+        <subtask>Test: Verify priority logic</subtask>
+      </task>
+      <task id="3">Generate copy-pasteable commands (AC: #2)
+        <subtask>Generate rustybt-validate investigate --bugs for open bugs</subtask>
+        <subtask>Generate rustybt-validate investigate --unclassified for unclassified</subtask>
+        <subtask>Generate rustybt-validate run {session_id} for incomplete strategies</subtask>
+        <subtask>Generate rustybt-validate docs generate for documentation</subtask>
+        <subtask>Test: Verify command generation</subtask>
+      </task>
+      <task id="4">Add CLI next command (AC: #2)
+        <subtask>Add next command to CLI main group</subtask>
+        <subtask>Call recommend_next_actions for current state</subtask>
+        <subtask>Display formatted recommendations with priorities</subtask>
+        <subtask>Show copy-pasteable commands</subtask>
+        <subtask>Test: CLI integration tests</subtask>
+      </task>
+      <task id="5">Handle edge cases (AC: #1-2)
+        <subtask>Handle empty state (no sessions at all)</subtask>
+        <subtask>Handle complete state (nothing to do)</subtask>
+        <subtask>Handle multiple issues at same priority</subtask>
+        <subtask>Test: Edge case tests</subtask>
+      </task>
+      <task id="6">Write comprehensive tests (AC: #1-2)
+        <subtask>Test with open bugs</subtask>
+        <subtask>Test with unclassified findings</subtask>
+        <subtask>Test with incomplete strategies</subtask>
+        <subtask>Test with mixed priorities</subtask>
+        <subtask>Test with all complete</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Given current validation state When next actions are queried Then prioritized Recommendation list is returned with: Priority 1 (HIGH) for open bugs, Priority 2 (MEDIUM) for unclassified findings, Priority 3 for incomplete strategies, Priority 4 (LOW) for documentation updates</criterion>
+    <criterion id="AC2">CLI command rustybt-validate next displays Recommended Next Actions with priority labels [HIGH/MEDIUM/LOW], action descriptions, and copy-pasteable rustybt-validate commands</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Product Requirements Document" section="Reporting &amp; Documentation (FR60-FR67)" snippet="FR67: System can recommend next actions for validation based on current state (what bugs to fix, what to classify, what layers to run)."/>
+      <doc path="docs/architecture.md" title="Architecture Document" section="FR Category to Architecture Mapping" snippet="Reporting &amp; Documentation (FR60-FR67) maps to rustybt/validation/reporting.py."/>
+      <doc path="docs/epics/epic-7-reporting-documentation-system.md" title="Epic 7 Specification" section="Story 7.7" snippet="Next actions recommender with prioritized actions (bugs > unclassified > incomplete > docs) and copy-pasteable commands."/>
+    </docs>
+    <code>
+      <artifact path="rustybt/validation/reporting.py" kind="module" symbol="ValidationProgress, calculate_completion" lines="1-7" reason="Base reporting module - add Recommendation and recommend_next_actions"/>
+      <artifact path="rustybt/validation/cli.py" kind="module" symbol="main" lines="13-21" reason="CLI main group - add next command"/>
+      <artifact path="rustybt/validation/session.py" kind="module" symbol="SessionManager.find_sessions" lines="N/A" reason="Session queries for finding open bugs, unclassified, incomplete"/>
+      <artifact path="rustybt/validation/models.py" kind="module" symbol="Session, Finding" lines="118-364" reason="Session and Finding models for state analysis"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="click" version=">=8.0" purpose="CLI framework"/>
+        <package name="rich" version=">=14.1.0" purpose="Console formatting"/>
+      </python>
+      <internal>
+        <dependency story="7-6" path="rustybt/validation/reporting.py" symbol="ValidationProgress" reason="Completion tracking provides state analysis"/>
+      </internal>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="prerequisite">Story 7.6 (completion tracking) must be completed first</constraint>
+    <constraint type="architecture">Prioritize by impact (bugs > unclassified > incomplete > docs)</constraint>
+    <constraint type="coding">Provide copy-pasteable commands for each action</constraint>
+    <constraint type="coding">Update dynamically based on current state</constraint>
+    <constraint type="coding">Handle edge cases (empty state, complete state)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="Recommendation" kind="dataclass">
+      <signature>@dataclass class Recommendation: priority: int, action: str, details: str, command: str</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="recommend_next_actions" kind="function">
+      <signature>def recommend_next_actions(session_manager: SessionManager) -> list[Recommendation]</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="get_open_bug_findings" kind="function">
+      <signature>def get_open_bug_findings(sessions: list[Session]) -> list[Finding]</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="get_unclassified_findings" kind="function">
+      <signature>def get_unclassified_findings(sessions: list[Session]) -> list[Finding]</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="get_incomplete_strategies" kind="function">
+      <signature>def get_incomplete_strategies(sessions: list[Session]) -> list[Session]</signature>
+      <path>rustybt/validation/reporting.py</path>
+    </interface>
+    <interface name="CLI next command" kind="CLI endpoint">
+      <signature>rustybt-validate next</signature>
+      <path>rustybt/validation/cli.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>pytest framework with custom markers. Zero mock enforcement. Test fixtures in tests/validation/fixtures/.</standards>
+    <locations>
+      <location>tests/validation/test_reporting.py</location>
+      <location>tests/validation/test_cli.py</location>
+    </locations>
+    <ideas>
+      <idea acRef="AC1">test_recommend_open_bugs_priority - verify bugs are Priority 1</idea>
+      <idea acRef="AC1">test_recommend_unclassified_priority - verify unclassified are Priority 2</idea>
+      <idea acRef="AC1">test_recommend_incomplete_priority - verify incomplete are Priority 3</idea>
+      <idea acRef="AC1">test_recommend_docs_priority - verify docs are Priority 4</idea>
+      <idea acRef="AC1">test_recommend_sorted_by_priority - verify sorted order</idea>
+      <idea acRef="AC2">test_cli_next_command_display - verify CLI output format</idea>
+      <idea acRef="AC2">test_cli_next_command_copy_pasteable - verify command strings</idea>
+      <idea acRef="AC2">test_cli_next_empty_state - verify handling of no sessions</idea>
+      <idea acRef="AC2">test_cli_next_complete_state - verify handling of all complete</idea>
+    </ideas>
+  </tests>
+</story-context>

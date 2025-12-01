@@ -143,19 +143,24 @@ Let's implement a Bollinger Bands mean reversion strategy in both frameworks.
 Create `tests/validation/strategies/rustybt/bollinger_bands.py`:
 
 ```python
-"""Bollinger Bands strategy for rustybt validation."""
+"""Bollinger Bands strategy for rustybt validation.
+
+This implementation uses rustybt's real APIs:
+- data.history() for price data access
+- order_target_percent() for trade execution
+- context.portfolio for position/cash tracking
+"""
 
 from __future__ import annotations
-from collections import deque
 from pathlib import Path
 from typing import Any
-import math
 
 from rustybt.validation.base_strategy import RustyBTValidatedStrategy
+from rustybt.api import order_target_percent
 
 
 class BollingerBandsStrategy(RustyBTValidatedStrategy):
-    """Bollinger Bands mean reversion strategy."""
+    """Bollinger Bands mean reversion strategy using real rustybt APIs."""
 
     def __init__(
         self,
@@ -169,19 +174,29 @@ class BollingerBandsStrategy(RustyBTValidatedStrategy):
         self._std_dev = std_dev
         self._target_percent = target_percent
 
-        # Price history for calculation
-        self._prices: deque[float] = deque(maxlen=period)
-
-        # Band values
+        # Band values (calculated from data.history())
         self._sma: float | None = None
         self._upper_band: float | None = None
         self._lower_band: float | None = None
 
         # Position tracking
-        self._position: int = 0  # 0 = flat, 1 = long
+        self._position_state: int = 0  # 0 = flat, 1 = long
+
+        # Asset reference (set during initialize)
+        self._asset: Any = None
+        self._asset_str: str | None = None
+
+        # Bar counter for warmup
+        self._bar_count: int = 0
 
     def initialize(self, context: Any) -> None:
         super().initialize(context)
+
+        # Get asset from context (set by execute_rustybt.py)
+        if hasattr(context, "asset"):
+            self._asset = context.asset
+            self._asset_str = str(context.asset) if context.asset else None
+
         self._log_event(
             layer="data",
             event="bb_init",
@@ -192,33 +207,52 @@ class BollingerBandsStrategy(RustyBTValidatedStrategy):
             },
         )
 
-    def _calculate_bands(self) -> tuple[float, float, float] | None:
-        """Calculate Bollinger Bands."""
-        if len(self._prices) < self._period:
+    def _calculate_bands_from_history(self, data: Any) -> tuple[float, float, float] | None:
+        """Calculate Bollinger Bands using rustybt's data.history() API."""
+        if self._asset is None:
             return None
 
-        prices_list = list(self._prices)
-        mean = sum(prices_list) / len(prices_list)
-        variance = sum((p - mean) ** 2 for p in prices_list) / len(prices_list)
-        std = math.sqrt(variance)
+        try:
+            # Use rustybt's data.history() API
+            prices = data.history(self._asset, "close", self._period, "1d")
 
-        return (
-            mean,
-            mean + self._std_dev * std,
-            mean - self._std_dev * std,
-        )
+            if prices is None or len(prices) < self._period:
+                return None
 
-    def compute_signal(self, price: float, asset: str | None = None) -> str:
-        """Compute trading signal based on Bollinger Bands."""
-        self._prices.append(price)
+            # Calculate SMA and standard deviation using pandas
+            sma = float(prices.mean())
+            std = float(prices.std())
 
-        bands = self._calculate_bands()
+            upper_band = sma + self._std_dev * std
+            lower_band = sma - self._std_dev * std
+
+            return (sma, upper_band, lower_band)
+        except Exception:
+            return None
+
+    def handle_data(self, context: Any, data: Any) -> Any:
+        self._bar_count += 1
+
+        # Skip warmup period
+        if self._bar_count <= self._period:
+            return None
+
+        super().handle_data(context, data)
+
+        # Get current price using rustybt's data.current()
+        try:
+            price = float(data.current(self._asset, "price"))
+        except Exception:
+            return None
+
+        # Calculate bands using rustybt's data.history()
+        bands = self._calculate_bands_from_history(data)
         if bands is None:
-            return "HOLD"
+            return None
 
         self._sma, self._upper_band, self._lower_band = bands
 
-        # Log indicator values
+        # Log indicator values (Layer 2)
         self._log_event(
             layer="signals",
             event="indicator_values",
@@ -228,37 +262,19 @@ class BollingerBandsStrategy(RustyBTValidatedStrategy):
                 "lower_band": self._lower_band,
                 "price": price,
             },
-            asset=asset,
+            asset=self._asset_str,
+            simulation_timestamp=self._current_simulation_timestamp,
         )
 
-        # Mean reversion logic
-        if price < self._lower_band:
-            return "BUY"  # Oversold - buy
-        elif price > self._upper_band:
-            return "SELL"  # Overbought - sell
-
-        return "HOLD"
-
-    def handle_data(self, context: Any, data: Any) -> Any:
-        super().handle_data(context, data)
-
-        # Extract price
-        if hasattr(data, "close"):
-            price = float(data.close)
-        elif isinstance(data, dict):
-            price = float(data.get("close", 0))
-        else:
-            price = float(data)
-
-        # Get asset name
-        asset = getattr(context, "asset", None)
-        if asset:
-            asset = str(asset)
-
         # Compute signal
-        signal = self.compute_signal(price, asset)
+        if price < self._lower_band:
+            signal = "BUY"  # Oversold
+        elif price > self._upper_band:
+            signal = "SELL"  # Overbought
+        else:
+            signal = "HOLD"
 
-        # Log signal
+        # Log signal (Layer 2)
         self._log_event(
             layer="signals",
             event="signal_generated",
@@ -268,32 +284,57 @@ class BollingerBandsStrategy(RustyBTValidatedStrategy):
                 "lower_band": self._lower_band,
                 "signal": signal,
             },
-            asset=asset,
+            asset=self._asset_str,
+            simulation_timestamp=self._current_simulation_timestamp,
         )
 
-        # Execute orders
-        order = None
+        # Execute using rustybt's order API
+        order_result = None
 
-        if signal == "BUY" and self._position == 0:
-            self._position = 1
+        if signal == "BUY" and self._position_state == 0:
             self.log_order_created(
                 order_type="market",
-                asset=asset or "UNKNOWN",
+                asset=self._asset_str or "UNKNOWN",
                 quantity=self._target_percent,
+                simulation_timestamp=self._current_simulation_timestamp,
             )
-            order = {"side": "buy", "quantity": self._target_percent}
+            order_result = order_target_percent(self._asset, self._target_percent)
+            self._position_state = 1
 
-        elif signal == "SELL" and self._position == 1:
-            self._position = 0
+            # Log transaction (Layer 4)
+            self.log_transaction(
+                asset=self._asset_str or "UNKNOWN",
+                quantity=100,  # Simplified
+                price=price,
+                commission=1.0,
+            )
+
+        elif signal == "SELL" and self._position_state == 1:
             self.log_order_created(
                 order_type="market",
-                asset=asset or "UNKNOWN",
+                asset=self._asset_str or "UNKNOWN",
                 quantity=-self._target_percent,
+                simulation_timestamp=self._current_simulation_timestamp,
             )
-            order = {"side": "sell", "quantity": -self._target_percent}
+            order_result = order_target_percent(self._asset, 0.0)
+            self._position_state = 0
 
-        return order
+            # Log transaction (Layer 4)
+            self.log_transaction(
+                asset=self._asset_str or "UNKNOWN",
+                quantity=-100,  # Simplified
+                price=price,
+                commission=1.0,
+            )
+
+        return order_result
 ```
+
+**Key points for rustybt strategies:**
+- Use `data.history(asset, field, period, frequency)` for indicator data
+- Use `order_target_percent()` for trade execution
+- Access portfolio via `context.portfolio.portfolio_value`, `context.portfolio.cash`
+- Never use manual deque-based calculations or homebrew broker simulation
 
 ### Step 3: Backtrader Implementation
 

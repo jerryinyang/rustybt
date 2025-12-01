@@ -48,16 +48,56 @@ def sample_price_data() -> list[float]:
     """
     # Start at 100, gradually increase with some noise
     return [
-        100.0, 101.0, 99.5, 102.0, 100.5,  # 1-5
-        103.0, 101.5, 104.0, 102.5, 105.0,  # 6-10 (fast SMA available)
-        103.5, 106.0, 104.5, 107.0, 105.5,  # 11-15
-        108.0, 106.5, 109.0, 107.5, 110.0,  # 16-20
-        108.5, 111.0, 109.5, 112.0, 110.5,  # 21-25
-        113.0, 111.5, 114.0, 112.5, 115.0,  # 26-30 (slow SMA available)
-        113.5, 116.0, 114.5, 117.0, 115.5,  # 31-35
-        118.0, 116.5, 119.0, 117.5, 120.0,  # 36-40
-        118.5, 121.0, 119.5, 122.0, 120.5,  # 41-45
-        123.0, 121.5, 124.0, 122.5, 125.0,  # 46-50
+        100.0,
+        101.0,
+        99.5,
+        102.0,
+        100.5,  # 1-5
+        103.0,
+        101.5,
+        104.0,
+        102.5,
+        105.0,  # 6-10 (fast SMA available)
+        103.5,
+        106.0,
+        104.5,
+        107.0,
+        105.5,  # 11-15
+        108.0,
+        106.5,
+        109.0,
+        107.5,
+        110.0,  # 16-20
+        108.5,
+        111.0,
+        109.5,
+        112.0,
+        110.5,  # 21-25
+        113.0,
+        111.5,
+        114.0,
+        112.5,
+        115.0,  # 26-30 (slow SMA available)
+        113.5,
+        116.0,
+        114.5,
+        117.0,
+        115.5,  # 31-35
+        118.0,
+        116.5,
+        119.0,
+        117.5,
+        120.0,  # 36-40
+        118.5,
+        121.0,
+        119.5,
+        122.0,
+        120.5,  # 41-45
+        123.0,
+        121.5,
+        124.0,
+        122.5,
+        125.0,  # 46-50
     ]
 
 
@@ -70,17 +110,57 @@ def crossover_up_data() -> list[float]:
     # Start with downtrend, then strong upturn
     return [
         # Downtrend phase (30 bars)
-        120.0, 119.0, 118.0, 117.0, 116.0,
-        115.0, 114.0, 113.0, 112.0, 111.0,
-        110.0, 109.0, 108.0, 107.0, 106.0,
-        105.0, 104.0, 103.0, 102.0, 101.0,
-        100.0, 99.0, 98.0, 97.0, 96.0,
-        95.0, 94.0, 93.0, 92.0, 91.0,
+        120.0,
+        119.0,
+        118.0,
+        117.0,
+        116.0,
+        115.0,
+        114.0,
+        113.0,
+        112.0,
+        111.0,
+        110.0,
+        109.0,
+        108.0,
+        107.0,
+        106.0,
+        105.0,
+        104.0,
+        103.0,
+        102.0,
+        101.0,
+        100.0,
+        99.0,
+        98.0,
+        97.0,
+        96.0,
+        95.0,
+        94.0,
+        93.0,
+        92.0,
+        91.0,
         # Sharp upturn phase (20 bars) - should trigger crossover
-        95.0, 100.0, 105.0, 110.0, 115.0,
-        120.0, 125.0, 130.0, 135.0, 140.0,
-        145.0, 150.0, 155.0, 160.0, 165.0,
-        170.0, 175.0, 180.0, 185.0, 190.0,
+        95.0,
+        100.0,
+        105.0,
+        110.0,
+        115.0,
+        120.0,
+        125.0,
+        130.0,
+        135.0,
+        140.0,
+        145.0,
+        150.0,
+        155.0,
+        160.0,
+        165.0,
+        170.0,
+        175.0,
+        180.0,
+        185.0,
+        190.0,
     ]
 
 
@@ -93,17 +173,57 @@ def crossover_down_data() -> list[float]:
     # Start with uptrend, then sharp downturn
     return [
         # Uptrend phase (30 bars)
-        91.0, 92.0, 93.0, 94.0, 95.0,
-        96.0, 97.0, 98.0, 99.0, 100.0,
-        101.0, 102.0, 103.0, 104.0, 105.0,
-        106.0, 107.0, 108.0, 109.0, 110.0,
-        111.0, 112.0, 113.0, 114.0, 115.0,
-        116.0, 117.0, 118.0, 119.0, 120.0,
+        91.0,
+        92.0,
+        93.0,
+        94.0,
+        95.0,
+        96.0,
+        97.0,
+        98.0,
+        99.0,
+        100.0,
+        101.0,
+        102.0,
+        103.0,
+        104.0,
+        105.0,
+        106.0,
+        107.0,
+        108.0,
+        109.0,
+        110.0,
+        111.0,
+        112.0,
+        113.0,
+        114.0,
+        115.0,
+        116.0,
+        117.0,
+        118.0,
+        119.0,
+        120.0,
         # Sharp downturn phase (20 bars) - should trigger crossover
-        115.0, 110.0, 105.0, 100.0, 95.0,
-        90.0, 85.0, 80.0, 75.0, 70.0,
-        65.0, 60.0, 55.0, 50.0, 45.0,
-        40.0, 35.0, 30.0, 25.0, 20.0,
+        115.0,
+        110.0,
+        105.0,
+        100.0,
+        95.0,
+        90.0,
+        85.0,
+        80.0,
+        75.0,
+        70.0,
+        65.0,
+        60.0,
+        55.0,
+        50.0,
+        45.0,
+        40.0,
+        35.0,
+        30.0,
+        25.0,
+        20.0,
     ]
 
 
@@ -227,24 +347,18 @@ class TestRustyBTSMACrossoverStrategy:
 
         strategy.close()
 
-    def test_position_management(
-        self, temp_log_path: Path, crossover_up_data: list[float]
-    ) -> None:
+    def test_position_management(self, temp_log_path: Path, crossover_up_data: list[float]) -> None:
         """Test position entry/exit logic."""
         strategy = RustyBTSMACrossoverStrategy(log_path=temp_log_path)
 
         # Start with no position
         assert strategy.position == 0
 
-        # Simulate handle_data with mock context
-        class MockContext:
-            asset = "TEST"
-            current_dt = None
-
-        context = MockContext()
-
+        # Feed data and execute signals to test position management
         for price in crossover_up_data:
-            strategy.handle_data(context, price)
+            signal = strategy.compute_signal(price, "TEST")
+            # Execute signal to update position state (test helper)
+            strategy._test_execute_signal(signal)
 
         # After upward crossover, should have position
         assert strategy.position == 1
@@ -478,9 +592,7 @@ class TestStrategyEquivalence:
         assert abs(rustybt_fast - bt_fast) < 0.01
         assert abs(rustybt_slow - bt_slow) < 0.01
 
-    def test_same_signal_logic(
-        self, temp_log_path: Path, crossover_up_data: list[float]
-    ) -> None:
+    def test_same_signal_logic(self, temp_log_path: Path, crossover_up_data: list[float]) -> None:
         """Test both strategies generate same signal patterns."""
         import pandas as pd
 
@@ -531,12 +643,20 @@ class TestStrategyEquivalence:
         """Test both strategies use same layer tags."""
         import pandas as pd
 
-        # Run rustybt
+        # Run rustybt - use compute_signal and manually log signals
         rustybt_log = temp_log_path.with_suffix(".rustybt.jsonl")
         rustybt_strategy = RustyBTSMACrossoverStrategy(log_path=rustybt_log)
         rustybt_strategy.initialize({})
         for price in sample_price_data[:35]:
-            rustybt_strategy.compute_signal(price, "TEST")
+            signal = rustybt_strategy.compute_signal(price, "TEST")
+            # Manually log signal to match Backtrader behavior
+            rustybt_strategy.log_signal(
+                signal_name="sma_crossover",
+                signal_value=signal,
+                asset="TEST",
+                fast_sma=rustybt_strategy.fast_sma,
+                slow_sma=rustybt_strategy.slow_sma,
+            )
         rustybt_strategy.close()
 
         # Run Backtrader

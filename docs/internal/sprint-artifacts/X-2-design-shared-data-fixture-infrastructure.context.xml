@@ -1,0 +1,140 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>X</epicId>
+    <storyId>2</storyId>
+    <title>Design Shared Data Fixture Infrastructure</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/internal/sprint-artifacts/X-2-design-shared-data-fixture-infrastructure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>validation framework developer</asA>
+    <iWant>to design and implement data fixture infrastructure that ensures both rustybt and Backtrader consume identical synthetic data through their native data loading mechanisms</iWant>
+    <soThat>validation comparisons are deterministic and any differences detected are truly behavioral rather than data-related</soThat>
+    <tasks>
+      <task id="1" title="Review Existing Fixture Generator" ac="1,2">
+        <subtask id="1.1">Read rustybt/validation/generate_fixture.py current implementation</subtask>
+        <subtask id="1.2">Verify schema matches required format (timestamp, asset, OHLCV)</subtask>
+        <subtask id="1.3">Confirm deterministic seeding is implemented</subtask>
+        <subtask id="1.4">Identify any enhancements needed for rustybt DataBundle compatibility</subtask>
+      </task>
+      <task id="2" title="Analyze rustybt Data Loading" ac="3,4">
+        <subtask id="2.1">Based on X.1 findings, understand DataBundle/DataPortal requirements</subtask>
+        <subtask id="2.2">Determine if Parquet can be loaded directly or needs conversion</subtask>
+        <subtask id="2.3">Document any adapter/wrapper needed for rustybt consumption</subtask>
+        <subtask id="2.4">Create helper function to register fixture as rustybt bundle</subtask>
+      </task>
+      <task id="3" title="Verify Backtrader Data Loading" ac="3,4">
+        <subtask id="3.1">Confirm existing PandasData feed works with fixture</subtask>
+        <subtask id="3.2">Verify timestamp/timezone handling matches rustybt approach</subtask>
+        <subtask id="3.3">Document any normalization needed for consistency</subtask>
+      </task>
+      <task id="4" title="Implement Data Loading Helpers in conftest.py" ac="3,4">
+        <subtask id="4.1">Create load_fixture_for_rustybt() helper</subtask>
+        <subtask id="4.2">Create load_fixture_for_backtrader() helper</subtask>
+        <subtask id="4.3">Ensure both return data in format their respective frameworks expect</subtask>
+        <subtask id="4.4">Add pytest fixtures for validation tests</subtask>
+      </task>
+      <task id="5" title="Create Data Alignment Tests" ac="4">
+        <subtask id="5.1">Test first bar matches (timestamp + OHLCV)</subtask>
+        <subtask id="5.2">Test last bar matches (timestamp + OHLCV)</subtask>
+        <subtask id="5.3">Test bar count matches</subtask>
+        <subtask id="5.4">Test intermediate samples match (random sampling)</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-X2.1" title="Produce canonical Parquet file with OHLCV + asset + timestamp">
+      <requirement>Schema: timestamp (datetime64[ns, UTC]), asset (string), open/high/low/close (float64), volume (int64)</requirement>
+      <requirement>Consistent with existing validation fixture format</requirement>
+      <requirement>Stored in standard location for both frameworks to access</requirement>
+    </criterion>
+    <criterion id="AC-X2.2" title="Deterministic data generation (seeded random)">
+      <requirement>Same seed produces identical data across runs</requirement>
+      <requirement>Configurable parameters: date range, asset count, data characteristics</requirement>
+      <requirement>No external data dependencies</requirement>
+    </criterion>
+    <criterion id="AC-X2.3" title="rustybt receives identical bars as Backtrader">
+      <requirement>Both frameworks see same OHLCV values for each timestamp</requirement>
+      <requirement>No floating-point conversion differences</requirement>
+      <requirement>Timezone handling consistent</requirement>
+    </criterion>
+    <criterion id="AC-X2.4" title="First bar, last bar, bar count match exactly">
+      <requirement>Timestamp comparison verifies alignment</requirement>
+      <requirement>OHLCV values match at boundaries</requirement>
+      <requirement>Total bar count identical</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/internal/sprint-artifacts/tech-spec-epic-X.md" title="Epic X Tech Spec" section="Data Models and Contracts">
+        Defines data fixture schema: timestamp (datetime64[ns, UTC]), asset (string), OHLCV columns.
+      </doc>
+      <doc path="docs/internal/planning/architecture.md" title="Architecture" section="Data Flow">
+        Describes subprocess isolation pattern with shared Parquet data fixtures.
+      </doc>
+      <doc path="docs/internal/planning/epics/epic-X-real-rustybt-engine-integration.md" title="Epic X" section="Story X.2">
+        Story requirements and acceptance criteria.
+      </doc>
+    </docs>
+    <code>
+      <file path="rustybt/validation/generate_fixture.py" kind="utility" symbol="generate_fixture" reason="Current fixture generator - review and potentially enhance"/>
+      <file path="tests/validation/conftest.py" kind="test" symbol="fixtures" reason="Add data loading helpers for both frameworks"/>
+      <file path="rustybt/data/bundles/core.py" kind="data" symbol="register" reason="Bundle registration for rustybt"/>
+      <file path="rustybt/data/data_portal.py" kind="data" symbol="DataPortal" reason="Data access during backtest"/>
+      <file path="rustybt/data/polars/parquet_daily_bars.py" kind="data" symbol="ParquetDailyBars" reason="Parquet-based bar reader"/>
+      <file path="rustybt/validation/execute_backtrader.py" kind="validation" symbol="load_data" reason="Reference for Backtrader data loading"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">Parquet reading and data processing</package>
+        <package name="pyarrow" version=">=18.0">Parquet file format support</package>
+        <package name="pandas" version=">=1.3.0,<3.0">Backtrader compatibility</package>
+        <package name="backtrader" version=">=1.9.78">Reference framework PandasData feed</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="schema">Parquet schema must match: timestamp (datetime64[ns, UTC]), asset (string), OHLCV</constraint>
+    <constraint type="determinism">Same seed must produce identical fixture data</constraint>
+    <constraint type="compatibility">Both frameworks must consume identical binary data</constraint>
+    <constraint type="timezone">Use UTC throughout to avoid timezone ambiguity</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="generate_fixture" kind="function" path="rustybt/validation/generate_fixture.py">
+      <signature>generate_fixture(output_path, assets, start, end, seed) -> Path</signature>
+      <note>Generates deterministic Parquet fixture</note>
+    </interface>
+    <interface name="load_fixture_for_rustybt" kind="function" path="tests/validation/conftest.py">
+      <signature>load_fixture_for_rustybt(path) -> DataBundle</signature>
+      <note>To be implemented - loads fixture for rustybt consumption</note>
+    </interface>
+    <interface name="load_fixture_for_backtrader" kind="function" path="tests/validation/conftest.py">
+      <signature>load_fixture_for_backtrader(path) -> PandasData</signature>
+      <note>Existing or to be implemented - loads fixture for Backtrader</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest-based unit and integration tests. Verify fixture generates correctly and both frameworks load identical data.
+    </standards>
+    <locations>
+      <location>tests/validation/test_fixture.py</location>
+      <location>tests/validation/conftest.py</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-X2.1">Test fixture generates valid Parquet with expected schema</idea>
+      <idea ac="AC-X2.2">Test determinism: generate twice with same seed, verify identical</idea>
+      <idea ac="AC-X2.3">Test rustybt loads fixture via DataBundle</idea>
+      <idea ac="AC-X2.3">Test Backtrader loads fixture via PandasData</idea>
+      <idea ac="AC-X2.4">Test first bar, last bar, bar count match between frameworks</idea>
+    </ideas>
+  </tests>
+</story-context>

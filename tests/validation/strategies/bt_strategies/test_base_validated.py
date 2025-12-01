@@ -352,7 +352,8 @@ class TestCrossFrameworkSchemaComparison:
 
         # Same keys
         assert set(bt_entry.keys()) == set(rb_entry.keys())
-        assert set(bt_entry.keys()) == {"timestamp", "layer", "event", "asset", "data"}
+        # Core fields plus optional logged_at for debugging
+        assert set(bt_entry.keys()) == {"timestamp", "logged_at", "layer", "event", "asset", "data"}
 
     def test_valid_layers_match_rustybt(self) -> None:
         """Verify VALID_LAYERS constant matches rustybt."""

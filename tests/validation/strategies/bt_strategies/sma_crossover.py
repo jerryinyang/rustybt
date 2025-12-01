@@ -117,6 +117,7 @@ class SMACrossoverStrategy(BacktraderValidatedStrategy):
                 "price": current_price,
             },
             asset=asset,
+            simulation_timestamp=self._current_simulation_timestamp,
         )
 
         # Determine signal based on crossover
@@ -148,35 +149,44 @@ class SMACrossoverStrategy(BacktraderValidatedStrategy):
                 "signal": signal,
             },
             asset=asset,
+            simulation_timestamp=self._current_simulation_timestamp,
         )
 
         # Execute based on signal
         # BUY only if no position (matches rustybt logic)
         if signal == "BUY" and self._position_state == 0:
-            # Calculate order size based on target_percent
+            # Calculate actual share count that will be bought
+            # This matches rustybt's calculation for parity
+            portfolio_value = self.broker.getvalue()
+            target_value = portfolio_value * self.p.target_percent
+            shares_to_buy = int(target_value / current_price)
+
             # In Backtrader, use order_target_percent for percentage orders
             order = self.order_target_percent(target=self.p.target_percent)
             self._position_state = 1
 
-            # Log order creation (matches rustybt structure)
+            # Log order creation with actual share count (matches rustybt)
             self.log_order_created(
                 order_type="market",
                 asset=asset or "UNKNOWN",
-                quantity=self.p.target_percent,
+                quantity=shares_to_buy,
                 target_percent=self.p.target_percent,
             )
 
         # SELL only if has position (matches rustybt logic)
         elif signal == "SELL" and self._position_state == 1:
+            # Get actual shares held to sell
+            shares_to_sell = abs(self.position.size)
+
             # Exit position completely
             order = self.order_target_percent(target=0.0)
             self._position_state = 0
 
-            # Log order creation (matches rustybt structure)
+            # Log order creation with actual share count (matches rustybt)
             self.log_order_created(
                 order_type="market",
                 asset=asset or "UNKNOWN",
-                quantity=-self.p.target_percent,
+                quantity=-shares_to_sell,
                 target_percent=0.0,
             )
 

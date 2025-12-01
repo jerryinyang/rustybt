@@ -18,7 +18,6 @@ import pytest
 
 from rustybt.validation.decorators import log_broker, log_order, log_portfolio, log_signal
 
-
 # =============================================================================
 # Mock Objects for Testing
 # =============================================================================
@@ -75,8 +74,9 @@ class MockStrategy:
         """Initialize with empty event log."""
         self.logged_events: list[dict[str, Any]] = []
         self._portfolio = MockPortfolio()
+        self._current_simulation_timestamp = None  # For decorator compatibility
 
-    def _log_event(self, layer: str, event: str, data: dict[str, Any]) -> None:
+    def _log_event(self, layer: str, event: str, data: dict[str, Any], **kwargs: Any) -> None:
         """Record logged event for test assertions."""
         self.logged_events.append({"layer": layer, "event": event, "data": data})
 
@@ -499,7 +499,9 @@ class TestEdgeCases:
             def __init__(self) -> None:
                 self.logged_events: list[dict[str, Any]] = []
 
-            def _log_event(self, layer: str, event: str, data: dict[str, Any]) -> None:
+            def _log_event(
+                self, layer: str, event: str, data: dict[str, Any], **kwargs: Any
+            ) -> None:
                 self.logged_events.append({"layer": layer, "event": event, "data": data})
 
             @log_portfolio()

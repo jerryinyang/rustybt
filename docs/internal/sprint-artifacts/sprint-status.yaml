@@ -124,3 +124,15 @@ development_status:
   8-8-examples-recipes-cookbook: done
   8-9-documentation-index-navigation: done
   epic-8-retrospective: optional
+
+  # Epic X: Real rustybt Engine Integration
+  epic-X: contexted
+  X-1-analyze-rustybt-engine-integration-points: done
+  X-2-design-shared-data-fixture-infrastructure: done
+  X-3-reimplement-validatedstrategy-base-class: done
+  X-4-reimplement-rustybt-execution-wrapper: done
+  X-5-reimplement-sma-crossover-strategy: done
+  X-6-reimplement-remaining-3-strategies: done
+  X-7-verify-5-layer-comparison-compatibility: done
+  X-8-update-documentation: done
+  epic-X-retrospective: optional

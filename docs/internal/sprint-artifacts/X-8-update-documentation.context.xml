@@ -1,0 +1,115 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>X</epicId>
+    <storyId>8</storyId>
+    <title>Update Documentation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/internal/sprint-artifacts/X-8-update-documentation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>validation framework developer</asA>
+    <iWant>to update architecture documentation and strategy implementation guides to reflect the corrected implementation that uses rustybt's real engine</iWant>
+    <soThat>future developers understand the actual implementation and can implement new validated strategies correctly</soThat>
+    <tasks>
+      <task id="1" title="Audit Existing Documentation" ac="all">
+        <subtask>Review docs/internal/planning/architecture.md</subtask>
+        <subtask>Review docs/validation/ directory contents</subtask>
+        <subtask>Identify all references to homebrew implementation</subtask>
+        <subtask>List documentation files requiring updates</subtask>
+      </task>
+      <task id="2" title="Update Architecture Documentation" ac="1">
+        <subtask>Update ValidatedStrategy class description</subtask>
+        <subtask>Update data flow diagrams</subtask>
+        <subtask>Document TradingAlgorithm integration pattern</subtask>
+        <subtask>Add ADR for "Real rustybt Integration" decision</subtask>
+      </task>
+      <task id="3-4" title="Update Strategy Implementation Guide" ac="2">
+        <subtask>Show correct indicator import and usage</subtask>
+        <subtask>Show correct order API usage</subtask>
+        <subtask>Provide complete working example</subtask>
+        <subtask>Update quick start examples</subtask>
+      </task>
+      <task id="5-6" title="Remove Outdated Content" ac="3">
+        <subtask>Remove SimulatedPosition references</subtask>
+        <subtask>Remove _execute_order references</subtask>
+        <subtask>Remove deque-based indicator examples</subtask>
+        <subtask>Remove manual broker simulation references</subtask>
+      </task>
+      <task id="7" title="Add ADR for Epic X Decision" ac="1">
+        <subtask>Create ADR-00X: Real rustybt Engine Integration</subtask>
+        <subtask>Document decision rationale</subtask>
+        <subtask>Mark as Accepted</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-X8.1" title="Architecture docs updated to reflect real integration">
+      <requirement>Remove references to homebrew simulation</requirement>
+      <requirement>Document actual TradingAlgorithm integration pattern</requirement>
+      <requirement>Update data flow diagrams</requirement>
+      <requirement>Note any ADR amendments</requirement>
+    </criterion>
+    <criterion id="AC-X8.2" title="Strategy implementation guides show correct rustybt API usage">
+      <requirement>Show actual indicator library usage</requirement>
+      <requirement>Show real order submission patterns</requirement>
+      <requirement>Remove outdated examples</requirement>
+      <requirement>Provide working code samples</requirement>
+    </criterion>
+    <criterion id="AC-X8.3" title="Outdated examples removed">
+      <requirement>No references to SimulatedPosition, _execute_order</requirement>
+      <requirement>No deque-based manual indicator calculations</requirement>
+      <requirement>No homebrew broker simulation code</requirement>
+      <requirement>All examples use real rustybt APIs</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/internal/planning/architecture.md" title="Architecture" section="Full Document">
+        Primary documentation to update - remove homebrew references, add real integration pattern.
+      </doc>
+      <doc path="docs/internal/planning/epics/index.md" title="Epic Index">
+        Update with Epic X completion status.
+      </doc>
+    </docs>
+    <code>
+      <file path="rustybt/validation/base_strategy.py" kind="validation" reason="Reference for correct API usage in documentation"/>
+      <file path="tests/validation/strategies/rustybt/sma_crossover.py" kind="strategy" reason="Reference for correct strategy implementation"/>
+    </code>
+    <dependencies>
+      <python>
+        <!-- No code dependencies - documentation only -->
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="removal">Remove all: SimulatedPosition, _cash, _positions, _execute_order, deque-based indicators</constraint>
+    <constraint type="accuracy">All examples must use real rustybt APIs</constraint>
+    <constraint type="completeness">ADR must document decision rationale</constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- No code interfaces - documentation only -->
+  </interfaces>
+
+  <tests>
+    <standards>
+      Manual documentation review. Verify no homebrew references remain and examples are accurate.
+    </standards>
+    <locations>
+      <location>docs/internal/planning/architecture.md</location>
+      <location>docs/validation/</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-X8.1">Search docs for "SimulatedPosition" - should find none</idea>
+      <idea ac="AC-X8.2">Verify example code compiles and runs</idea>
+      <idea ac="AC-X8.3">Search for "_execute_order" - should find none</idea>
+      <idea ac="AC-X8.3">Search for "deque(maxlen=" - should find none</idea>
+    </ideas>
+  </tests>
+</story-context>

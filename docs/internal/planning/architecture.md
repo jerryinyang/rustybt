@@ -160,23 +160,57 @@ Traditional unit test comparison requires matching APIs. rustybt and Backtrader 
 ### Components
 
 **1. ValidatedStrategy Base Classes**
+
+The rustybt validation strategy uses a mixin pattern that integrates with rustybt's actual TradingAlgorithm engine:
+
 ```python
-class RustyBTValidatedStrategy(TradingAlgorithm):
-    """Auto-logs lifecycle events to JSONL."""
+from rustybt.validation.base_strategy import RustyBTValidatedStrategy
+from rustybt.api import order_target_percent
+
+class MySMAStrategy(RustyBTValidatedStrategy):
+    """Example validated strategy using real rustybt APIs."""
+
+    def __init__(self, log_path: Path, fast_period: int = 10, slow_period: int = 30):
+        super().__init__(log_path)
+        self._fast_period = fast_period
+        self._slow_period = slow_period
+        self._asset = None
+
     def initialize(self, context):
-        self._log_event("initialize", {"context": context.serialize()})
-        super().initialize(context)
+        super().initialize(context)  # Logs "initialize" event
+        # Get asset reference from context (set by execution wrapper)
+        if hasattr(context, "asset"):
+            self._asset = context.asset
 
     def handle_data(self, context, data):
-        self._log_event("handle_data", {"bar": data.serialize()})
-        super().handle_data(context, data)
+        super().handle_data(context, data)  # Logs "bar_received" event
+
+        # Use rustybt's data.history() API for indicator calculation
+        prices = data.history(self._asset, "close", self._slow_period, "1d")
+        fast_sma = prices[-self._fast_period:].mean()
+        slow_sma = prices.mean()
+
+        # Log indicator values (Layer 2)
+        self.log_signal("fast_sma", fast_sma, asset=str(self._asset),
+                       simulation_timestamp=self._current_simulation_timestamp)
+
+        # Execute using rustybt's order API
+        if fast_sma > slow_sma:
+            order_target_percent(self._asset, 1.0)
+            self.log_order_created("market", str(self._asset), 100,
+                                  simulation_timestamp=self._current_simulation_timestamp)
 
 class BacktraderValidatedStrategy(bt.Strategy):
-    """Parallel logging for Backtrader."""
+    """Parallel logging for Backtrader reference implementation."""
     def __init__(self):
         self._log_event("initialize", {"params": self.params._getkwargs()})
         super().__init__()
 ```
+
+**Note:** The rustybt validated strategies use rustybt's real APIs:
+- `data.history()` for price data and indicator calculation
+- `order_target_percent()` for trade execution via rustybt's broker
+- `context.portfolio` for position and cash tracking
 
 **2. Log Schema**
 ```json
@@ -404,29 +438,38 @@ class Discrepancy:
 ### Data Flow
 
 ```
-1. Strategy Execution
-   ├→ rustybt subprocess → rustybt.jsonl
-   └→ Backtrader subprocess → backtrader.jsonl
+1. Data Preparation
+   └→ Generate shared Parquet fixture (validation_data.parquet)
+      - Same data consumed by both frameworks
+      - Deterministic via seeded random generation
 
-2. Log Parsing
+2. Strategy Execution
+   ├→ rustybt subprocess:
+   │   └→ DataBundle → TradingAlgorithm → real Broker → JSONL
+   └→ Backtrader subprocess:
+       └→ PandasData → Cerebro → Broker → JSONL
+
+3. Log Parsing
    ├→ Parse JSONL → Validate schema
    └→ Convert to Parquet → Cache for fast queries
 
-3. Comparison
+4. Comparison
    ├→ Load Parquet logs → Filter by layer
    ├→ Apply layer comparator → Generate discrepancies
    └→ Write findings to findings.yaml
 
-4. Investigation
+5. Investigation
    ├→ Load findings → Present to user
    ├→ User classifies → BUG or DESIGN
    └→ Update findings.yaml → Mark resolved
 
-5. Reporting
+6. Reporting
    ├→ Load session + findings
    ├→ Generate per-layer reports → Markdown
    └→ Generate summary report → Validation status
 ```
+
+**Key Integration Point (Epic X):** rustybt validated strategies execute through the real TradingAlgorithm engine, not a homebrew simulation. This ensures validation compares actual rustybt behavior against Backtrader.
 
 ## API Contracts
 
@@ -661,6 +704,39 @@ pytest tests/validation/test_layer_1_data.py -v
 
 ---
 
+### ADR-005: Real rustybt Engine Integration (Epic X)
+**Decision:** Replace homebrew broker simulation with actual rustybt TradingAlgorithm integration
+
+**Context:**
+The initial validation framework implementation included a homebrew broker simulation (`SimulatedPosition`, `_cash`, `_execute_order()`) that was intended as a placeholder. This implementation meant we were comparing a custom mock against Backtrader, rather than validating rustybt's actual behavior.
+
+**Rationale:**
+- Validation framework's core purpose is to prove rustybt's correctness
+- Homebrew simulation defeats this purpose entirely (validates mock, not rustybt)
+- Real integration validates actual rustybt behavior:
+  - `data.history()` for indicator data access
+  - `order_target_percent()` for trade execution
+  - `context.portfolio` for position/cash tracking
+  - Real broker simulation for fills/commissions
+
+**Implementation (Epic X):**
+- Removed `SimulatedPosition` class and all homebrew simulation code
+- `RustyBTValidatedStrategy` now uses mixin pattern with logging hooks
+- `execute_rustybt.py` uses rustybt's `run_algorithm()` entry point
+- All 4 strategies reimplemented using real rustybt APIs
+- JSONL log schema preserved for comparison compatibility
+
+**Alternatives Considered:**
+1. Continue with homebrew - Rejected (invalidates all validation results)
+2. Partial integration (data only) - Rejected (incomplete coverage)
+3. Full integration - Accepted (meets validation goals)
+
+**Status:** Accepted
+
+**Date:** 2025-11-29
+
+---
+
 _Generated by BMAD Decision Architecture Workflow v1.0_
-_Date: 2025-11-23_
+_Date: 2025-11-23 (Updated: 2025-11-29)_
 _For: .smirk_

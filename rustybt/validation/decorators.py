@@ -33,8 +33,9 @@ Note:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 if TYPE_CHECKING:
     pass
@@ -54,12 +55,12 @@ def log_signal(layer: str = "signals") -> Callable[[F], F]:
     layer : str, optional
         The validation layer to log to, by default "signals".
 
-    Returns
+    Returns:
     -------
     Callable
         Decorated method that logs signal computation.
 
-    Examples
+    Examples:
     --------
     >>> class MyStrategy(RustyBTValidatedStrategy):
     ...     @log_signal()
@@ -70,7 +71,7 @@ def log_signal(layer: str = "signals") -> Callable[[F], F]:
     ...     def compute_custom_indicator(self) -> float:
     ...         return 42.0
 
-    Notes
+    Notes:
     -----
     - The decorated method must be a bound method of a class with `_log_event()`
     - Signal value is captured from the method's return value
@@ -82,6 +83,8 @@ def log_signal(layer: str = "signals") -> Callable[[F], F]:
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
             try:
                 result = method(self, *args, **kwargs)
+                # Get simulation timestamp if available
+                sim_ts = getattr(self, "_current_simulation_timestamp", None)
                 self._log_event(
                     layer,
                     "signal_computed",
@@ -91,9 +94,11 @@ def log_signal(layer: str = "signals") -> Callable[[F], F]:
                         "args": _serialize_args(args),
                         "kwargs": _serialize_kwargs(kwargs),
                     },
+                    simulation_timestamp=sim_ts,
                 )
                 return result
             except Exception as e:
+                sim_ts = getattr(self, "_current_simulation_timestamp", None)
                 self._log_event(
                     layer,
                     "signal_failed",
@@ -102,6 +107,7 @@ def log_signal(layer: str = "signals") -> Callable[[F], F]:
                         "error_type": type(e).__name__,
                         "error_message": str(e),
                     },
+                    simulation_timestamp=sim_ts,
                 )
                 raise
 
@@ -121,12 +127,12 @@ def log_order(layer: str = "orders") -> Callable[[F], F]:
     layer : str, optional
         The validation layer to log to, by default "orders".
 
-    Returns
+    Returns:
     -------
     Callable
         Decorated method that logs order creation.
 
-    Examples
+    Examples:
     --------
     >>> class MyStrategy(RustyBTValidatedStrategy):
     ...     @log_order()
@@ -139,7 +145,7 @@ def log_order(layer: str = "orders") -> Callable[[F], F]:
     ...             return self.order(asset, quantity)
     ...         return None  # No order created - not logged
 
-    Notes
+    Notes:
     -----
     - If the method returns None, no order event is logged
     - Order attributes are extracted via getattr with fallbacks
@@ -207,12 +213,12 @@ def log_portfolio(layer: str = "portfolio") -> Callable[[F], F]:
     layer : str, optional
         The validation layer to log to, by default "portfolio".
 
-    Returns
+    Returns:
     -------
     Callable
         Decorated method that logs portfolio state.
 
-    Examples
+    Examples:
     --------
     >>> class MyStrategy(RustyBTValidatedStrategy):
     ...     @log_portfolio()
@@ -225,7 +231,7 @@ def log_portfolio(layer: str = "portfolio") -> Callable[[F], F]:
     ...         super().handle_data(context, data)
     ...         # Custom logic
 
-    Notes
+    Notes:
     -----
     - Portfolio state is logged AFTER method execution
     - Requires `self` to have a `portfolio` attribute with:
@@ -262,8 +268,7 @@ def log_portfolio(layer: str = "portfolio") -> Callable[[F], F]:
                         positions = portfolio.positions
                         if hasattr(positions, "items"):
                             portfolio_data["positions"] = {
-                                str(k): _extract_position_value(v)
-                                for k, v in positions.items()
+                                str(k): _extract_position_value(v) for k, v in positions.items()
                             }
                         else:
                             portfolio_data["positions"] = str(positions)
@@ -386,7 +391,7 @@ def _serialize_args(args: tuple[Any, ...]) -> list[str]:
     args : tuple
         Positional arguments to serialize.
 
-    Returns
+    Returns:
     -------
     list[str]
         List of string representations of arguments.
@@ -402,7 +407,7 @@ def _serialize_kwargs(kwargs: dict[str, Any]) -> dict[str, str]:
     kwargs : dict
         Keyword arguments to serialize.
 
-    Returns
+    Returns:
     -------
     dict[str, str]
         Dictionary with string values.
@@ -418,7 +423,7 @@ def _safe_str(value: Any) -> str:  # noqa: ANN401
     value : Any
         Value to convert.
 
-    Returns
+    Returns:
     -------
     str
         String representation of the value.
@@ -441,7 +446,7 @@ def _extract_position_value(position: Any) -> float:  # noqa: ANN401
     position : Any
         Position object (may have .amount, .size, or be numeric).
 
-    Returns
+    Returns:
     -------
     float
         Numeric position value.

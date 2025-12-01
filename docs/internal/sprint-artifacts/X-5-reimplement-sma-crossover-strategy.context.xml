@@ -1,0 +1,124 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>X</epicId>
+    <storyId>5</storyId>
+    <title>Reimplement SMA Crossover Strategy</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/internal/sprint-artifacts/X-5-reimplement-sma-crossover-strategy.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>validation framework developer</asA>
+    <iWant>to reimplement the SMA Crossover strategy for rustybt using rustybt's actual indicator library and order API</iWant>
+    <soThat>the strategy executes through rustybt's real engine and serves as the reference pattern for reimplementing the remaining strategies</soThat>
+    <tasks>
+      <task id="1" title="Analyze Current Implementation" ac="all">
+        <subtask id="1.1">Read current tests/validation/strategies/rustybt/sma_crossover.py</subtask>
+        <subtask id="1.2">Identify deque-based manual SMA calculation to replace</subtask>
+        <subtask id="1.3">Identify _execute_order() calls to replace</subtask>
+        <subtask id="1.4">Document current parameter names (fast, slow, target)</subtask>
+      </task>
+      <task id="2" title="Analyze Backtrader Reference" ac="3,4">
+        <subtask id="2.1">Read tests/validation/strategies/bt_strategies/sma_crossover.py</subtask>
+        <subtask id="2.2">Document Backtrader's SMA calculation approach</subtask>
+        <subtask id="2.3">Document crossover detection logic</subtask>
+      </task>
+      <task id="3" title="Locate rustybt SMA Indicator" ac="1">
+        <subtask id="3.1">Find SMA in rustybt's indicator library</subtask>
+        <subtask id="3.2">Document SMA API (initialization, access pattern)</subtask>
+        <subtask id="3.3">Understand warmup period behavior</subtask>
+      </task>
+      <task id="4" title="Implement New SMA Crossover Strategy" ac="1,2">
+        <subtask id="4.1">Extend new RustyBTValidatedStrategy from X.3</subtask>
+        <subtask id="4.2">Initialize rustybt SMA indicators (fast=10, slow=30)</subtask>
+        <subtask id="4.3">Implement crossover detection using rustybt indicators</subtask>
+        <subtask id="4.4">Use rustybt's order API for trade execution</subtask>
+      </task>
+      <task id="5" title="Implement Logging" ac="all">
+        <subtask id="5.1">Log Layer 1 events (bar_received) via base class</subtask>
+        <subtask id="5.2">Log Layer 2 events (SMA values) via log_signal()</subtask>
+        <subtask id="5.3">Log Layer 3 events (order_created) via order wrappers</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-X5.1" title="Use rustybt's SMA indicator (not deque-based manual calculation)">
+      <requirement>Import SMA from rustybt's indicator library</requirement>
+      <requirement>Use rustybt's native SMA computation</requirement>
+      <requirement>No manual moving average calculations with deque/collections</requirement>
+    </criterion>
+    <criterion id="AC-X5.2" title="Use rustybt's order API (not _execute_order)">
+      <requirement>Use order(), order_target(), or order_percent() from rustybt</requirement>
+      <requirement>No calls to homebrew _execute_order() method</requirement>
+      <requirement>Orders flow through rustybt's broker simulation</requirement>
+    </criterion>
+    <criterion id="AC-X5.3" title="Same number of trades as Backtrader">
+      <requirement>Trade count should match between frameworks</requirement>
+      <requirement>Trade timestamps should align (within tolerance)</requirement>
+      <requirement>Entry/exit logic produces equivalent behavior</requirement>
+    </criterion>
+    <criterion id="AC-X5.4" title="SMA values match (Layer 2 comparison)">
+      <requirement>Fast SMA (10-period) values match Backtrader</requirement>
+      <requirement>Slow SMA (30-period) values match Backtrader</requirement>
+      <requirement>Allow for warmup period differences (document as DESIGN if needed)</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/internal/sprint-artifacts/tech-spec-epic-X.md" title="Epic X Tech Spec" section="Story-Level Acceptance Criteria">
+        AC-X5.1 through AC-X5.4 requirements.
+      </doc>
+      <doc path="docs/internal/planning/architecture.md" title="Architecture" section="Novel Pattern">
+        ValidatedStrategy pattern for logging.
+      </doc>
+    </docs>
+    <code>
+      <file path="tests/validation/strategies/rustybt/sma_crossover.py" kind="strategy" symbol="SMACrossover" reason="Current implementation to REWRITE"/>
+      <file path="tests/validation/strategies/bt_strategies/sma_crossover.py" kind="strategy" symbol="SMACrossover" reason="Backtrader reference - UNCHANGED"/>
+      <file path="rustybt/validation/base_strategy.py" kind="validation" symbol="RustyBTValidatedStrategy" reason="New base class from X.3"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">Data processing</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="indicator">Must use rustybt's native SMA indicator, not manual deque calculation</constraint>
+    <constraint type="order">Must use rustybt's order API, not _execute_order</constraint>
+    <constraint type="logging">Must log Layer 1-5 events for comparison</constraint>
+    <constraint type="pattern">Establishes reference pattern for X.6 strategies</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="SMACrossover" kind="class" path="tests/validation/strategies/rustybt/sma_crossover.py">
+      <signature>class SMACrossover(RustyBTValidatedStrategy): initialize(context), handle_data(context, data)</signature>
+      <note>Reimplement using rustybt APIs</note>
+    </interface>
+    <interface name="SMA" kind="indicator" path="rustybt (TBD from X.1)">
+      <signature>SMA(data.close, window_length=N)</signature>
+      <note>rustybt's native SMA indicator</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest validation tests. Compare against Backtrader implementation.
+    </standards>
+    <locations>
+      <location>tests/validation/test_layer_2_signals.py</location>
+      <location>tests/validation/test_layer_3_orders.py</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-X5.1">Verify no deque imports in strategy code</idea>
+      <idea ac="AC-X5.2">Verify no _execute_order calls in strategy code</idea>
+      <idea ac="AC-X5.3">Compare trade count with Backtrader</idea>
+      <idea ac="AC-X5.4">Compare SMA values via Layer 2 test</idea>
+    </ideas>
+  </tests>
+</story-context>

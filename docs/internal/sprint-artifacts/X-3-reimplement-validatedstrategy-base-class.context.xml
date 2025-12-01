@@ -1,0 +1,134 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>X</epicId>
+    <storyId>3</storyId>
+    <title>Reimplement ValidatedStrategy Base Class</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/internal/sprint-artifacts/X-3-reimplement-validatedstrategy-base-class.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>validation framework developer</asA>
+    <iWant>to rewrite RustyBTValidatedStrategy to properly integrate with rustybt's actual TradingAlgorithm</iWant>
+    <soThat>strategies execute through rustybt's real engine and log events from actual execution rather than homebrew simulation</soThat>
+    <tasks>
+      <task id="1" title="Audit Current Implementation" ac="1">
+        <subtask id="1.1">Read current rustybt/validation/base_strategy.py completely</subtask>
+        <subtask id="1.2">Identify all homebrew simulation code to remove</subtask>
+        <subtask id="1.3">Identify logging infrastructure to preserve</subtask>
+        <subtask id="1.4">Document current JSONL schema for compatibility reference</subtask>
+      </task>
+      <task id="2" title="Design New Base Class Structure" ac="2">
+        <subtask id="2.1">Based on X.1 integration design, determine class hierarchy</subtask>
+        <subtask id="2.2">Define how to hook into TradingAlgorithm lifecycle</subtask>
+        <subtask id="2.3">Plan access patterns for context.portfolio, data object</subtask>
+        <subtask id="2.4">Design mixin vs inheritance vs composition approach</subtask>
+      </task>
+      <task id="3" title="Implement Core Base Class" ac="2,3">
+        <subtask id="3.1">Create new RustyBTValidatedStrategy class structure</subtask>
+        <subtask id="3.2">Implement initialize() with logging hooks</subtask>
+        <subtask id="3.3">Implement handle_data() with logging hooks</subtask>
+        <subtask id="3.4">Implement order logging wrappers (order, order_target, etc.)</subtask>
+      </task>
+      <task id="4-8" title="Implement Layer 1-5 Logging" ac="3,4">
+        <subtask>Layer 1 (data): initialize, bar_received events</subtask>
+        <subtask>Layer 2 (signals): signal_computed from rustybt indicators</subtask>
+        <subtask>Layer 3 (orders): order_created from rustybt order API</subtask>
+        <subtask>Layer 4 (broker): transaction_executed, commission_charged from rustybt broker</subtask>
+        <subtask>Layer 5 (portfolio): portfolio_value_updated from context.portfolio</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-X3.1" title="Remove SimulatedPosition, _cash, _execute_order from base class">
+      <requirement>Delete all homebrew broker simulation code</requirement>
+      <requirement>Remove SimulatedPosition class entirely</requirement>
+      <requirement>Remove _cash, _positions tracking</requirement>
+      <requirement>Remove _execute_order(), _update_portfolio_value(), _calculate_sharpe_ratio()</requirement>
+    </criterion>
+    <criterion id="AC-X3.2" title="Inherit from or wrap TradingAlgorithm">
+      <requirement>Use integration pattern determined in Story X.1</requirement>
+      <requirement>Properly hook into TradingAlgorithm lifecycle</requirement>
+      <requirement>Maintain access to rustybt's context, data, portfolio objects</requirement>
+    </criterion>
+    <criterion id="AC-X3.3" title="Log Layer 1-5 events from actual rustybt execution">
+      <requirement>Layer 1 (data): bar_received from actual DataPortal</requirement>
+      <requirement>Layer 2 (signals): indicator values from rustybt indicators</requirement>
+      <requirement>Layer 3 (orders): order_created from rustybt order API</requirement>
+      <requirement>Layer 4 (broker): fills, commissions from rustybt broker</requirement>
+      <requirement>Layer 5 (portfolio): portfolio value from rustybt portfolio</requirement>
+    </criterion>
+    <criterion id="AC-X3.4" title="Preserve JSONL schema compatibility">
+      <requirement>Same event structure as current implementation</requirement>
+      <requirement>Same field names and types</requirement>
+      <requirement>Comparators work unchanged against new logs</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/internal/sprint-artifacts/tech-spec-epic-X.md" title="Epic X Tech Spec" section="Services and Modules">
+        Module responsibilities and target API for ValidatedStrategy.
+      </doc>
+      <doc path="docs/internal/sprint-artifacts/tech-spec-epic-X.md" title="Epic X Tech Spec" section="Data Models and Contracts">
+        JSONL log schema that must be preserved.
+      </doc>
+      <doc path="docs/internal/planning/architecture.md" title="Architecture" section="Novel Pattern">
+        Log-Based Validation Architecture pattern.
+      </doc>
+    </docs>
+    <code>
+      <file path="rustybt/validation/base_strategy.py" kind="validation" symbol="RustyBTValidatedStrategy" lines="399-757" reason="Current homebrew implementation to rewrite"/>
+      <file path="rustybt/validation/base_strategy.py" kind="validation" symbol="ValidatedStrategyMixin" lines="96-397" reason="Logging infrastructure to PRESERVE"/>
+      <file path="rustybt/validation/base_strategy.py" kind="validation" symbol="SimulatedPosition" lines="49-86" reason="Homebrew simulation class to REMOVE"/>
+      <file path="rustybt/algorithm.py" kind="core" symbol="TradingAlgorithm" reason="Real backtest engine to integrate with"/>
+      <file path="rustybt/api.py" kind="api" symbol="order,order_target" reason="Real order API to use"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">Data processing</package>
+        <package name="pyarrow" version=">=18.0">Parquet handling</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="compatibility">JSONL schema must be preserved exactly for comparator compatibility</constraint>
+    <constraint type="architectural">Must not modify rustybt core modules</constraint>
+    <constraint type="pattern">Keep ValidatedStrategyMixin logging infrastructure</constraint>
+    <constraint type="removal">Remove all: SimulatedPosition, _cash, _positions, _execute_order, _update_portfolio_value, _calculate_sharpe_ratio</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="ValidatedStrategyMixin" kind="class" path="rustybt/validation/base_strategy.py">
+      <signature>class ValidatedStrategyMixin: _log_event(layer, event, data), log_signal(), log_order_created()</signature>
+      <note>PRESERVE - core logging infrastructure</note>
+    </interface>
+    <interface name="RustyBTValidatedStrategy" kind="class" path="rustybt/validation/base_strategy.py">
+      <signature>class RustyBTValidatedStrategy: initialize(context), handle_data(context, data)</signature>
+      <note>REWRITE - integrate with TradingAlgorithm</note>
+    </interface>
+    <interface name="TradingAlgorithm" kind="class" path="rustybt/algorithm.py">
+      <signature>class TradingAlgorithm: initialize(context), handle_data(context, data)</signature>
+      <note>Target integration point</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest unit tests. Verify no homebrew code present and JSONL output is schema-compatible.
+    </standards>
+    <locations>
+      <location>tests/validation/test_base_strategy.py</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-X3.1">Code inspection test: verify SimulatedPosition class removed</idea>
+      <idea ac="AC-X3.1">Code inspection test: verify _execute_order method removed</idea>
+      <idea ac="AC-X3.3">Test that logging produces valid JSONL with all 5 layers</idea>
+      <idea ac="AC-X3.4">Test log schema matches expected format (comparator compatible)</idea>
+    </ideas>
+  </tests>
+</story-context>

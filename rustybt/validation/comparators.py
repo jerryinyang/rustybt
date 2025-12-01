@@ -1,5 +1,4 @@
-"""
-Layer-Specific Comparators.
+"""Layer-Specific Comparators for rustybt validation framework.
 
 This module contains the logic for comparing rustybt and Backtrader logs
 across the 5 validation layers (data, signals, orders, broker, portfolio).
@@ -9,8 +8,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 import polars as pl
@@ -137,6 +135,7 @@ class Layer1DataComparator(BaseComparator):
 
     @property
     def layer_name(self) -> str:
+        """Return the layer name this comparator handles."""
         return "data"
 
     def compare(
@@ -159,17 +158,11 @@ class Layer1DataComparator(BaseComparator):
         discrepancies.extend(self.detect_lookahead_bias(rustybt_logs))
 
         # Compare bar alignment between frameworks
-        discrepancies.extend(
-            self.compare_bar_alignment(rustybt_logs, backtrader_logs)
-        )
+        discrepancies.extend(self.compare_bar_alignment(rustybt_logs, backtrader_logs))
 
         # Validate data integrity in both logs
-        discrepancies.extend(
-            self.validate_data_integrity(rustybt_logs, "rustybt")
-        )
-        discrepancies.extend(
-            self.validate_data_integrity(backtrader_logs, "backtrader")
-        )
+        discrepancies.extend(self.validate_data_integrity(rustybt_logs, "rustybt"))
+        discrepancies.extend(self.validate_data_integrity(backtrader_logs, "backtrader"))
 
         # Determine pass/fail - fail if any critical discrepancies
         passed = not any(d.severity == "critical" for d in discrepancies)
@@ -179,9 +172,7 @@ class Layer1DataComparator(BaseComparator):
             passed=passed,
             discrepancies=discrepancies,
             stats={
-                "rustybt_bar_count": len(
-                    rustybt_logs.filter(pl.col("event") == "bar_received")
-                ),
+                "rustybt_bar_count": len(rustybt_logs.filter(pl.col("event") == "bar_received")),
                 "backtrader_bar_count": len(
                     backtrader_logs.filter(pl.col("event") == "bar_received")
                 ),
@@ -447,7 +438,7 @@ class Layer1DataComparator(BaseComparator):
                                 description=f"OHLCV anomaly in {source}: high ({high}) < low ({low})",
                             )
                         )
-                except (ValueError, TypeError):
+                except (ValueError, TypeError, InvalidOperation):
                     pass
 
             # Check open/close within high/low bounds
@@ -464,7 +455,7 @@ class Layer1DataComparator(BaseComparator):
                                 rustybt_value=f"open={o}",
                                 backtrader_value=f"expected between {l} and {h}",
                                 tolerance="none",
-                                exceeded_by=f"open out of bounds",
+                                exceeded_by="open out of bounds",
                                 asset=row.get("asset"),
                                 severity="warning",
                                 description=f"OHLCV anomaly in {source}: open ({o}) outside high/low bounds",
@@ -480,13 +471,13 @@ class Layer1DataComparator(BaseComparator):
                                 rustybt_value=f"close={c}",
                                 backtrader_value=f"expected between {l} and {h}",
                                 tolerance="none",
-                                exceeded_by=f"close out of bounds",
+                                exceeded_by="close out of bounds",
                                 asset=row.get("asset"),
                                 severity="warning",
                                 description=f"OHLCV anomaly in {source}: close ({c}) outside high/low bounds",
                             )
                         )
-                except (ValueError, TypeError):
+                except (ValueError, TypeError, InvalidOperation):
                     pass
 
         return discrepancies
@@ -512,6 +503,7 @@ class Layer2SignalComparator(BaseComparator):
 
     @property
     def layer_name(self) -> str:
+        """Return the layer name this comparator handles."""
         return "signals"
 
     def compare(
@@ -531,19 +523,13 @@ class Layer2SignalComparator(BaseComparator):
         discrepancies: list[Discrepancy] = []
 
         # Compare signal counts
-        discrepancies.extend(
-            self.compare_signal_counts(rustybt_logs, backtrader_logs)
-        )
+        discrepancies.extend(self.compare_signal_counts(rustybt_logs, backtrader_logs))
 
         # Compare indicator values
-        discrepancies.extend(
-            self.compare_indicator_values(rustybt_logs, backtrader_logs)
-        )
+        discrepancies.extend(self.compare_indicator_values(rustybt_logs, backtrader_logs))
 
         # Compare signal timing
-        discrepancies.extend(
-            self.compare_signal_timing(rustybt_logs, backtrader_logs)
-        )
+        discrepancies.extend(self.compare_signal_timing(rustybt_logs, backtrader_logs))
 
         # Determine pass/fail
         passed = not any(d.severity == "critical" for d in discrepancies)
@@ -553,18 +539,26 @@ class Layer2SignalComparator(BaseComparator):
             passed=passed,
             discrepancies=discrepancies,
             stats={
-                "rustybt_signal_count": len(
-                    rustybt_logs.filter(
-                        (pl.col("layer") == "signals") &
-                        (pl.col("event").str.contains("signal"))
+                "rustybt_signal_count": (
+                    len(
+                        rustybt_logs.filter(
+                            (pl.col("layer") == "signals")
+                            & (pl.col("event").str.contains("signal"))
+                        )
                     )
-                ) if "layer" in rustybt_logs.columns and "event" in rustybt_logs.columns else 0,
-                "backtrader_signal_count": len(
-                    backtrader_logs.filter(
-                        (pl.col("layer") == "signals") &
-                        (pl.col("event").str.contains("signal"))
+                    if "layer" in rustybt_logs.columns and "event" in rustybt_logs.columns
+                    else 0
+                ),
+                "backtrader_signal_count": (
+                    len(
+                        backtrader_logs.filter(
+                            (pl.col("layer") == "signals")
+                            & (pl.col("event").str.contains("signal"))
+                        )
                     )
-                ) if "layer" in backtrader_logs.columns and "event" in backtrader_logs.columns else 0,
+                    if "layer" in backtrader_logs.columns and "event" in backtrader_logs.columns
+                    else 0
+                ),
                 "total_discrepancies": len(discrepancies),
             },
         )
@@ -595,12 +589,8 @@ class Layer2SignalComparator(BaseComparator):
         # Count buy/sell signals separately if event column exists
         if "event" in rb_signals.columns and "event" in bt_signals.columns:
             for signal_type in ["buy", "sell"]:
-                rb_count = len(rb_signals.filter(
-                    pl.col("event").str.contains(signal_type)
-                ))
-                bt_count = len(bt_signals.filter(
-                    pl.col("event").str.contains(signal_type)
-                ))
+                rb_count = len(rb_signals.filter(pl.col("event").str.contains(signal_type)))
+                bt_count = len(bt_signals.filter(pl.col("event").str.contains(signal_type)))
 
                 if rb_count != bt_count:
                     discrepancies.append(
@@ -613,7 +603,9 @@ class Layer2SignalComparator(BaseComparator):
                             backtrader_value=bt_count,
                             tolerance=0,
                             exceeded_by=abs(rb_count - bt_count),
-                            severity="critical" if self.tolerances.signal_exact_match else "warning",
+                            severity=(
+                                "critical" if self.tolerances.signal_exact_match else "warning"
+                            ),
                             description=f"{signal_type.upper()} signal count mismatch: rustybt={rb_count}, backtrader={bt_count}",
                         )
                     )
@@ -693,7 +685,7 @@ class Layer2SignalComparator(BaseComparator):
                                 severity="warning",
                             )
                         )
-                except (ValueError, TypeError):
+                except (ValueError, TypeError, InvalidOperation):
                     pass
 
         return discrepancies
@@ -722,28 +714,30 @@ class Layer2SignalComparator(BaseComparator):
 
         # Get signal events
         rb_signals = rustybt_logs.filter(
-            (pl.col("layer") == "signals") &
-            (pl.col("event").str.contains("signal"))
+            (pl.col("layer") == "signals") & (pl.col("event").str.contains("signal"))
         )
         bt_signals = backtrader_logs.filter(
-            (pl.col("layer") == "signals") &
-            (pl.col("event").str.contains("signal"))
+            (pl.col("layer") == "signals") & (pl.col("event").str.contains("signal"))
         )
 
         if rb_signals.is_empty() or bt_signals.is_empty():
             return discrepancies
 
         # Get sorted timestamps
-        rb_timestamps = sorted([
-            str(row.get("timestamp", ""))
-            for row in rb_signals.iter_rows(named=True)
-            if row.get("timestamp")
-        ])
-        bt_timestamps = sorted([
-            str(row.get("timestamp", ""))
-            for row in bt_signals.iter_rows(named=True)
-            if row.get("timestamp")
-        ])
+        rb_timestamps = sorted(
+            [
+                str(row.get("timestamp", ""))
+                for row in rb_signals.iter_rows(named=True)
+                if row.get("timestamp")
+            ]
+        )
+        bt_timestamps = sorted(
+            [
+                str(row.get("timestamp", ""))
+                for row in bt_signals.iter_rows(named=True)
+                if row.get("timestamp")
+            ]
+        )
 
         # Compare signal sequence - timestamps should match within tolerance
         # For simplicity, we compare by position (this is a basic implementation)
@@ -792,6 +786,7 @@ class Layer3OrdersComparator(BaseComparator):
 
     @property
     def layer_name(self) -> str:
+        """Return the layer name this comparator handles."""
         return "orders"
 
     def compare(
@@ -810,15 +805,9 @@ class Layer3OrdersComparator(BaseComparator):
         """
         discrepancies: list[Discrepancy] = []
 
-        discrepancies.extend(
-            self.compare_order_creation(rustybt_logs, backtrader_logs)
-        )
-        discrepancies.extend(
-            self.compare_order_execution(rustybt_logs, backtrader_logs)
-        )
-        discrepancies.extend(
-            self.compare_order_states(rustybt_logs, backtrader_logs)
-        )
+        discrepancies.extend(self.compare_order_creation(rustybt_logs, backtrader_logs))
+        discrepancies.extend(self.compare_order_execution(rustybt_logs, backtrader_logs))
+        discrepancies.extend(self.compare_order_states(rustybt_logs, backtrader_logs))
 
         passed = not any(d.severity == "critical" for d in discrepancies)
 
@@ -827,15 +816,13 @@ class Layer3OrdersComparator(BaseComparator):
         if "layer" in rustybt_logs.columns and "event" in rustybt_logs.columns:
             rb_order_count = len(
                 rustybt_logs.filter(
-                    (pl.col("layer") == "orders") &
-                    (pl.col("event") == "order_created")
+                    (pl.col("layer") == "orders") & (pl.col("event") == "order_created")
                 )
             )
         if "layer" in backtrader_logs.columns and "event" in backtrader_logs.columns:
             bt_order_count = len(
                 backtrader_logs.filter(
-                    (pl.col("layer") == "orders") &
-                    (pl.col("event") == "order_created")
+                    (pl.col("layer") == "orders") & (pl.col("event") == "order_created")
                 )
             )
 
@@ -1032,7 +1019,7 @@ class Layer3OrdersComparator(BaseComparator):
                                 severity="warning",
                             )
                         )
-                except (ValueError, TypeError):
+                except (ValueError, TypeError, InvalidOperation):
                     pass
 
             rb_qty = rb_row.get("data_fill_quantity")
@@ -1058,7 +1045,7 @@ class Layer3OrdersComparator(BaseComparator):
                                     severity="warning",
                                 )
                             )
-                except (ValueError, TypeError):
+                except (ValueError, TypeError, InvalidOperation):
                     pass
 
         return discrepancies
@@ -1163,6 +1150,7 @@ class Layer4BrokerComparator(BaseComparator):
 
     @property
     def layer_name(self) -> str:
+        """Return the layer name this comparator handles."""
         return "broker"
 
     def compare(
@@ -1185,15 +1173,13 @@ class Layer4BrokerComparator(BaseComparator):
         if "layer" in rustybt_logs.columns and "event" in rustybt_logs.columns:
             rb_txn_count = len(
                 rustybt_logs.filter(
-                    (pl.col("layer") == "broker") &
-                    (pl.col("event") == "transaction_executed")
+                    (pl.col("layer") == "broker") & (pl.col("event") == "transaction_executed")
                 )
             )
         if "layer" in backtrader_logs.columns and "event" in backtrader_logs.columns:
             bt_txn_count = len(
                 backtrader_logs.filter(
-                    (pl.col("layer") == "broker") &
-                    (pl.col("event") == "transaction_executed")
+                    (pl.col("layer") == "broker") & (pl.col("event") == "transaction_executed")
                 )
             )
 
@@ -1330,7 +1316,7 @@ class Layer4BrokerComparator(BaseComparator):
                                 severity="warning",
                             )
                         )
-                except (ValueError, TypeError):
+                except (ValueError, TypeError, InvalidOperation):
                     pass
 
         return discrepancies
@@ -1396,7 +1382,7 @@ class Layer4BrokerComparator(BaseComparator):
                                 severity="warning",
                             )
                         )
-                except (ValueError, TypeError):
+                except (ValueError, TypeError, InvalidOperation):
                     pass
 
         return discrepancies
@@ -1463,7 +1449,7 @@ class Layer4BrokerComparator(BaseComparator):
                                     severity="warning",
                                 )
                             )
-                except (ValueError, TypeError):
+                except (ValueError, TypeError, InvalidOperation):
                     pass
 
         return discrepancies
@@ -1489,6 +1475,7 @@ class Layer5PortfolioComparator(BaseComparator):
 
     @property
     def layer_name(self) -> str:
+        """Return the layer name this comparator handles."""
         return "portfolio"
 
     def compare(
@@ -1569,7 +1556,7 @@ class Layer5PortfolioComparator(BaseComparator):
                                 severity="warning",
                             )
                         )
-                except (ValueError, TypeError):
+                except (ValueError, TypeError, InvalidOperation):
                     pass
 
         return discrepancies
@@ -1647,7 +1634,7 @@ class Layer5PortfolioComparator(BaseComparator):
                                 severity="warning",
                             )
                         )
-                except (ValueError, TypeError):
+                except (ValueError, TypeError, InvalidOperation):
                     pass
 
         return discrepancies
@@ -1762,7 +1749,7 @@ class Layer5PortfolioComparator(BaseComparator):
                                 severity="warning",
                             )
                         )
-                except (ValueError, TypeError):
+                except (ValueError, TypeError, InvalidOperation):
                     pass
 
         return discrepancies

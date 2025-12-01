@@ -1,0 +1,176 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>X</epicId>
+    <storyId>1</storyId>
+    <title>Analyze rustybt Engine Integration Points</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/internal/sprint-artifacts/X-1-analyze-rustybt-engine-integration-points.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>validation framework developer</asA>
+    <iWant>to thoroughly analyze rustybt's actual engine architecture (TradingAlgorithm, DataPortal, Broker, Indicators)</iWant>
+    <soThat>I can design proper integration points for the validation framework that use rustybt's real execution instead of homebrew simulation</soThat>
+    <tasks>
+      <task id="1" title="Analyze TradingAlgorithm Architecture" ac="1,2">
+        <subtask id="1.1">Locate and read rustybt/algorithm/ source files</subtask>
+        <subtask id="1.2">Document TradingAlgorithm class hierarchy and lifecycle methods</subtask>
+        <subtask id="1.3">Identify extensibility points (inheritance, hooks, events)</subtask>
+        <subtask id="1.4">Document context object structure and available attributes</subtask>
+      </task>
+      <task id="2" title="Analyze Data Infrastructure" ac="3">
+        <subtask id="2.1">Locate and read rustybt/data/ source files (DataBundle, DataPortal)</subtask>
+        <subtask id="2.2">Document how data is loaded and served during backtest</subtask>
+        <subtask id="2.3">Understand bundle registration and custom data loading</subtask>
+        <subtask id="2.4">Document data.history() and data.current() APIs</subtask>
+      </task>
+      <task id="3" title="Analyze Broker Infrastructure" ac="4">
+        <subtask id="3.1">Locate and read rustybt/broker/ or equivalent broker simulation</subtask>
+        <subtask id="3.2">Document order submission API (order(), order_target())</subtask>
+        <subtask id="3.3">Understand fill, commission, slippage event lifecycle</subtask>
+        <subtask id="3.4">Identify how to capture transaction events for logging</subtask>
+      </task>
+      <task id="4" title="Analyze Indicator Infrastructure" ac="2">
+        <subtask id="4.1">Locate and read rustybt/indicators/ source files</subtask>
+        <subtask id="4.2">Verify availability of required indicators (SMA, RSI, EMA, MACD, std dev)</subtask>
+        <subtask id="4.3">Document indicator computation patterns and warmup handling</subtask>
+        <subtask id="4.4">Note any missing indicators that need alternatives</subtask>
+      </task>
+      <task id="5" title="Analyze run_algorithm Entry Point" ac="1,2">
+        <subtask id="5.1">Locate run_algorithm() or equivalent backtest runner</subtask>
+        <subtask id="5.2">Document configuration options (sim_params, capital, dates)</subtask>
+        <subtask id="5.3">Understand result object structure</subtask>
+        <subtask id="5.4">Identify how to integrate ValidatedStrategy with runner</subtask>
+      </task>
+      <task id="6" title="Create Integration Design Document" ac="5">
+        <subtask id="6.1">Determine best integration pattern (answer Q1 from tech spec)</subtask>
+        <subtask id="6.2">Design data bundle registration approach (answer Q2)</subtask>
+        <subtask id="6.3">Confirm indicator availability (answer Q3)</subtask>
+        <subtask id="6.4">Design broker event capture strategy (answer Q4)</subtask>
+        <subtask id="6.5">Document trailing stop support (answer Q5)</subtask>
+        <subtask id="6.6">Write docs/internal/planning/epic-X-integration-design.md</subtask>
+      </task>
+      <task id="7" title="Testing/Verification">
+        <subtask id="7.1">Create minimal proof-of-concept to verify TradingAlgorithm extension works</subtask>
+        <subtask id="7.2">Verify custom data loading approach</subtask>
+        <subtask id="7.3">Confirm indicator APIs are accessible</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-X1.1" title="Document TradingAlgorithm lifecycle methods and their signatures">
+      <requirement>Map initialize(), handle_data(), and other lifecycle hooks</requirement>
+      <requirement>Identify which methods can be overridden vs wrapped</requirement>
+      <requirement>Document context and data parameter structures</requirement>
+    </criterion>
+    <criterion id="AC-X1.2" title="Identify event hooks available for logging injection">
+      <requirement>Determine how to inject Layer 1-5 logging without modifying rustybt core</requirement>
+      <requirement>Identify if rustybt has an event system that can be tapped</requirement>
+      <requirement>Document fallback approaches (method wrapping, post-execution extraction)</requirement>
+    </criterion>
+    <criterion id="AC-X1.3" title="Document DataPortal API for data access during backtest">
+      <requirement>Understand how data.history(), data.current() work</requirement>
+      <requirement>Document how to register custom data bundles</requirement>
+      <requirement>Identify timestamp/timezone handling requirements</requirement>
+    </criterion>
+    <criterion id="AC-X1.4" title="Document Broker API for order submission and position tracking">
+      <requirement>Map order(), order_target(), order_percent() signatures</requirement>
+      <requirement>Understand how fills, commissions, slippage are applied</requirement>
+      <requirement>Identify how to capture transaction events for Layer 4 logging</requirement>
+    </criterion>
+    <criterion id="AC-X1.5" title="Create integration design document specifying approach">
+      <requirement>Document recommended integration pattern (inheritance vs composition vs function-based)</requirement>
+      <requirement>Specify where logging calls will be inserted for each layer</requirement>
+      <requirement>Address open questions from tech spec (Q1-Q5)</requirement>
+      <requirement>Output: docs/internal/planning/epic-X-integration-design.md</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/internal/planning/prd.md" title="PRD" section="Product Scope">
+        Defines validation framework requirements. MVP includes all 5 validation layers, complete infrastructure, and 3-4 validated strategies.
+      </doc>
+      <doc path="docs/internal/sprint-artifacts/tech-spec-epic-X.md" title="Epic X Tech Spec" section="Full Document">
+        Critical technical specification for this epic. Contains open questions Q1-Q5 that must be answered: integration pattern, data bundle registration, indicator availability, broker event capture, trailing stop support.
+      </doc>
+      <doc path="docs/internal/planning/architecture.md" title="Architecture" section="Novel Pattern: Log-Based Validation">
+        Defines ValidatedStrategy base classes, log schema, and comparison engine. Key pattern for framework-agnostic validation.
+      </doc>
+      <doc path="docs/internal/planning/epics/epic-X-real-rustybt-engine-integration.md" title="Epic X Breakdown" section="Story X.1">
+        Contains detailed acceptance criteria and technical notes for this analysis story.
+      </doc>
+    </docs>
+    <code>
+      <file path="rustybt/algorithm.py" kind="core" symbol="TradingAlgorithm" reason="Primary class to analyze - the real backtest engine base class"/>
+      <file path="rustybt/utils/run_algo.py" kind="utility" symbol="run_algorithm" reason="Backtest runner entry point - must understand configuration options"/>
+      <file path="rustybt/data/data_portal.py" kind="data" symbol="DataPortal" reason="Data access API during backtest - needed for AC-X1.3"/>
+      <file path="rustybt/data/bundles/core.py" kind="data" symbol="register" reason="Bundle registration mechanism - needed for Q2"/>
+      <file path="rustybt/api.py" kind="api" symbol="order,order_target,order_percent" reason="Trading API - needed for AC-X1.4"/>
+      <file path="rustybt/finance/execution.py" kind="broker" symbol="Broker" reason="Order execution and fill simulation"/>
+      <file path="rustybt/live/brokers/base.py" kind="broker" symbol="BaseBroker" reason="Broker interface definition"/>
+      <file path="rustybt/validation/base_strategy.py" kind="validation" symbol="RustyBTValidatedStrategy" lines="399-863" reason="Current homebrew implementation to replace"/>
+      <file path="rustybt/validation/execute_rustybt.py" kind="validation" symbol="main" reason="Current execution wrapper with manual row iteration to replace"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">Data loading and processing</package>
+        <package name="pyarrow" version=">=18.0">Parquet file handling</package>
+        <package name="pandas" version=">=1.3.0,<3.0">DataFrame compatibility for rustybt API</package>
+        <package name="exchange-calendars" version=">=4.2.4">Trading calendar handling</package>
+        <package name="backtrader" version=">=1.9.78">Reference framework (validation optional dep)</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architectural">Zero Core Modification: Must not modify rustybt core modules</constraint>
+    <constraint type="compatibility">Log Schema Compatibility: Integration must support same JSONL schema (Layer 1-5 events)</constraint>
+    <constraint type="determinism">Deterministic Execution: Results must be reproducible</constraint>
+    <constraint type="interface">CLI Interface Preservation: execute_rustybt.py must maintain same CLI contract (--strategy, --data, --output, --params)</constraint>
+    <constraint type="pattern">Validation Pattern: Use ValidatedStrategyMixin logging infrastructure</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="TradingAlgorithm" kind="class" path="rustybt/algorithm.py">
+      <signature>class TradingAlgorithm: initialize(context), handle_data(context, data), before_trading_start(context, data)</signature>
+      <note>Core backtest engine - analyze for inheritance/composition options</note>
+    </interface>
+    <interface name="run_algorithm" kind="function" path="rustybt/utils/run_algo.py">
+      <signature>run_algorithm(initialize, handle_data, bundle, start, end, capital_base, ...)</signature>
+      <note>Entry point for backtest execution</note>
+    </interface>
+    <interface name="order" kind="function" path="rustybt/api.py">
+      <signature>order(asset, amount, limit_price=None, stop_price=None, style=None)</signature>
+      <note>Core order submission API</note>
+    </interface>
+    <interface name="order_target" kind="function" path="rustybt/api.py">
+      <signature>order_target(asset, target, limit_price=None, stop_price=None, style=None)</signature>
+      <note>Order to target position size</note>
+    </interface>
+    <interface name="DataPortal" kind="class" path="rustybt/data/data_portal.py">
+      <signature>class DataPortal: get_spot_value(asset, field, dt), get_history_window(assets, end_dt, bar_count, frequency, field)</signature>
+      <note>Data access during backtest</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      This is a research/analysis story - primary deliverable is a design document, not code. No automated tests required. Manual verification through proof-of-concept exploration.
+    </standards>
+    <locations>
+      <location>docs/internal/planning/epic-X-integration-design.md (output)</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-X1.1">Create minimal POC extending TradingAlgorithm to verify lifecycle methods can be hooked</idea>
+      <idea ac="AC-X1.2">Test logging injection via method override vs decorator approach</idea>
+      <idea ac="AC-X1.3">Verify DataBundle can be created from Parquet fixture</idea>
+      <idea ac="AC-X1.4">Trace order flow to identify all broker events</idea>
+      <idea ac="AC-X1.5">Document findings in structured design document</idea>
+    </ideas>
+  </tests>
+</story-context>

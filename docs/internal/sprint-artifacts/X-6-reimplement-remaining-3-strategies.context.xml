@@ -1,0 +1,131 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>X</epicId>
+    <storyId>6</storyId>
+    <title>Reimplement Remaining 3 Strategies</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/internal/sprint-artifacts/X-6-reimplement-remaining-3-strategies.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>validation framework developer</asA>
+    <iWant>to reimplement the remaining 3 strategies (Mean Reversion, Momentum, Multi-Factor) using rustybt's actual API</iWant>
+    <soThat>all 4 validation strategies execute through rustybt's real engine following the pattern established in Story X.5</soThat>
+    <tasks>
+      <task id="1-2" title="Mean Reversion Strategy" ac="1">
+        <subtask>Read current tests/validation/strategies/rustybt/mean_reversion.py</subtask>
+        <subtask>Use rustybt SMA indicator for mean</subtask>
+        <subtask>Use rustybt standard deviation indicator</subtask>
+        <subtask>Calculate z-score using rustybt computations</subtask>
+        <subtask>Add Layer 1-5 logging</subtask>
+      </task>
+      <task id="3-4" title="Momentum Strategy" ac="2">
+        <subtask>Read current tests/validation/strategies/rustybt/momentum.py</subtask>
+        <subtask>Use rustybt RSI indicator</subtask>
+        <subtask>Implement trailing stop (native if available, else simulated)</subtask>
+        <subtask>Add Layer 1-5 logging</subtask>
+      </task>
+      <task id="5-6" title="Multi-Factor Strategy" ac="3">
+        <subtask>Read current tests/validation/strategies/rustybt/multi_factor.py</subtask>
+        <subtask>Use rustybt EMA, RSI, MACD indicators</subtask>
+        <subtask>Implement signal combination logic</subtask>
+        <subtask>Add Layer 1-5 logging</subtask>
+      </task>
+      <task id="7-8" title="Cross-Cutting Verification" ac="4">
+        <subtask>All extend RustyBTValidatedStrategy</subtask>
+        <subtask>All use rustybt order API</subtask>
+        <subtask>All produce consistent log format</subtask>
+        <subtask>No homebrew simulation code</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-X6.1" title="Mean Reversion uses rustybt indicators for z-score">
+      <requirement>Use rustybt's SMA and standard deviation indicators</requirement>
+      <requirement>Calculate z-score using rustybt's native computations</requirement>
+      <requirement>No manual statistical calculations</requirement>
+    </criterion>
+    <criterion id="AC-X6.2" title="Momentum uses rustybt RSI indicator">
+      <requirement>Use rustybt's RSI indicator</requirement>
+      <requirement>Implement trailing stop logic (if supported natively, else document)</requirement>
+      <requirement>No manual RSI calculation</requirement>
+    </criterion>
+    <criterion id="AC-X6.3" title="Multi-Factor uses rustybt EMA, RSI, MACD indicators">
+      <requirement>Use rustybt's EMA indicator</requirement>
+      <requirement>Use rustybt's RSI indicator</requirement>
+      <requirement>Use rustybt's MACD indicator</requirement>
+      <requirement>Combine signals correctly</requirement>
+    </criterion>
+    <criterion id="AC-X6.4" title="All strategies produce Layer 1-5 log events">
+      <requirement>Layer 1: bar_received for each bar</requirement>
+      <requirement>Layer 2: signal_computed for each indicator</requirement>
+      <requirement>Layer 3: order_created for each trade</requirement>
+      <requirement>Layer 4: transaction_executed for each fill</requirement>
+      <requirement>Layer 5: portfolio_value_updated</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/internal/sprint-artifacts/tech-spec-epic-X.md" title="Epic X Tech Spec" section="Story-Level Acceptance Criteria">
+        AC-X6.1 through AC-X6.4 requirements.
+      </doc>
+      <doc path="docs/internal/sprint-artifacts/X-5-reimplement-sma-crossover-strategy.md" title="Story X.5" section="Full Document">
+        Reference pattern from SMA Crossover implementation.
+      </doc>
+    </docs>
+    <code>
+      <file path="tests/validation/strategies/rustybt/mean_reversion.py" kind="strategy" symbol="MeanReversion" reason="REWRITE using rustybt APIs"/>
+      <file path="tests/validation/strategies/rustybt/momentum.py" kind="strategy" symbol="Momentum" reason="REWRITE using rustybt APIs"/>
+      <file path="tests/validation/strategies/rustybt/multi_factor.py" kind="strategy" symbol="MultiFactor" reason="REWRITE using rustybt APIs"/>
+      <file path="tests/validation/strategies/bt_strategies/mean_reversion.py" kind="strategy" symbol="MeanReversion" reason="Backtrader reference - UNCHANGED"/>
+      <file path="tests/validation/strategies/bt_strategies/momentum.py" kind="strategy" symbol="Momentum" reason="Backtrader reference - UNCHANGED"/>
+      <file path="tests/validation/strategies/bt_strategies/multi_factor.py" kind="strategy" symbol="MultiFactor" reason="Backtrader reference - UNCHANGED"/>
+      <file path="rustybt/validation/base_strategy.py" kind="validation" symbol="RustyBTValidatedStrategy" reason="Base class from X.3"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">Data processing</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="indicator">Must use rustybt's native indicators (SMA, RSI, EMA, MACD, StdDev)</constraint>
+    <constraint type="order">Must use rustybt's order API</constraint>
+    <constraint type="logging">All strategies must log Layer 1-5 events</constraint>
+    <constraint type="pattern">Follow pattern established in X.5</constraint>
+    <constraint type="trailing_stop">Document trailing stop approach (native or simulated per Q5 from tech spec)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="MeanReversion" kind="class" path="tests/validation/strategies/rustybt/mean_reversion.py">
+      <signature>class MeanReversion(RustyBTValidatedStrategy): uses SMA, StdDev for z-score</signature>
+    </interface>
+    <interface name="Momentum" kind="class" path="tests/validation/strategies/rustybt/momentum.py">
+      <signature>class Momentum(RustyBTValidatedStrategy): uses RSI, trailing stops</signature>
+    </interface>
+    <interface name="MultiFactor" kind="class" path="tests/validation/strategies/rustybt/multi_factor.py">
+      <signature>class MultiFactor(RustyBTValidatedStrategy): uses EMA, RSI, MACD</signature>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      pytest validation tests. Each strategy produces Layer 1-5 events and can be compared.
+    </standards>
+    <locations>
+      <location>tests/validation/test_layer_2_signals.py</location>
+      <location>tests/validation/test_layer_3_orders.py</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-X6.1">Compare z-score values with Backtrader</idea>
+      <idea ac="AC-X6.2">Compare RSI values with Backtrader</idea>
+      <idea ac="AC-X6.3">Compare EMA, RSI, MACD values with Backtrader</idea>
+      <idea ac="AC-X6.4">Verify all 5 layers logged for each strategy</idea>
+    </ideas>
+  </tests>
+</story-context>

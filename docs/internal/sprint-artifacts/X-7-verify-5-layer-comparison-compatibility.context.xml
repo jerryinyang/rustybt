@@ -1,0 +1,132 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>X</epicId>
+    <storyId>7</storyId>
+    <title>Verify 5-Layer Comparison Compatibility</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/internal/sprint-artifacts/X-7-verify-5-layer-comparison-compatibility.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>validation framework developer</asA>
+    <iWant>to run the full 5-layer validation test suite with the reimplemented rustybt strategies and verify comparators work correctly with real rustybt logs</iWant>
+    <soThat>we can confirm the validation framework produces accurate comparisons and all discrepancies are properly investigated and classified</soThat>
+    <tasks>
+      <task id="1" title="Prepare Test Environment">
+        <subtask>Ensure validation fixture is generated and accessible</subtask>
+        <subtask>Verify all 4 rustybt strategies are reimplemented (X.5, X.6)</subtask>
+        <subtask>Verify Backtrader strategies are unchanged and working</subtask>
+        <subtask>Review tolerance configurations</subtask>
+      </task>
+      <task id="2-6" title="Run Layer 1-5 Tests" ac="1,2,3">
+        <subtask>Execute pytest tests/validation/test_layer_1_data.py</subtask>
+        <subtask>Execute pytest tests/validation/test_layer_2_signals.py</subtask>
+        <subtask>Execute pytest tests/validation/test_layer_3_orders.py</subtask>
+        <subtask>Execute pytest tests/validation/test_layer_4_broker.py</subtask>
+        <subtask>Execute pytest tests/validation/test_layer_5_portfolio.py</subtask>
+      </task>
+      <task id="7-8" title="Investigate and Classify Findings" ac="4">
+        <subtask>For each discrepancy, determine root cause</subtask>
+        <subtask>Classify as BUG or DESIGN</subtask>
+        <subtask>Document rationale for each classification</subtask>
+      </task>
+      <task id="9" title="Verify No False Positives" ac="5">
+        <subtask>Review tolerance configurations</subtask>
+        <subtask>Adjust tolerances if legitimate differences are being flagged</subtask>
+        <subtask>Re-run tests after adjustments</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-X7.1" title="Layer 1 tests execute without errors">
+      <requirement>test_layer_1_data.py runs successfully</requirement>
+      <requirement>Bar counts match between frameworks</requirement>
+      <requirement>Timestamps align (within tolerance)</requirement>
+    </criterion>
+    <criterion id="AC-X7.2" title="Layer 2 indicator values compared correctly">
+      <requirement>test_layer_2_signals.py runs successfully</requirement>
+      <requirement>SMA, RSI, EMA, MACD values compared</requirement>
+      <requirement>Known DESIGN differences documented</requirement>
+    </criterion>
+    <criterion id="AC-X7.3" title="Layers 3-5 tests execute and compare correctly">
+      <requirement>test_layer_3_orders.py runs successfully</requirement>
+      <requirement>test_layer_4_broker.py runs successfully</requirement>
+      <requirement>test_layer_5_portfolio.py runs successfully</requirement>
+    </criterion>
+    <criterion id="AC-X7.4" title="All findings classified as BUG or DESIGN">
+      <requirement>Every discrepancy has a classification</requirement>
+      <requirement>Rationale documented for each classification</requirement>
+      <requirement>No unclassified findings remain</requirement>
+    </criterion>
+    <criterion id="AC-X7.5" title="Zero false positives">
+      <requirement>Tolerance configurations appropriate</requirement>
+      <requirement>Known differences documented, not flagged as errors</requirement>
+      <requirement>Test assertions accurate</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/internal/sprint-artifacts/tech-spec-epic-X.md" title="Epic X Tech Spec" section="Test Strategy Summary">
+        Test coverage requirements per layer.
+      </doc>
+      <doc path="docs/internal/sprint-artifacts/tech-spec-epic-X.md" title="Epic X Tech Spec" section="Edge Cases and Known Differences">
+        Expected differences: warmup, RSI smoothing, fill timing, precision.
+      </doc>
+      <doc path="docs/internal/planning/architecture.md" title="Architecture" section="Pattern 4">
+        Finding classification workflow.
+      </doc>
+    </docs>
+    <code>
+      <file path="tests/validation/test_layer_1_data.py" kind="test" reason="Layer 1 data handling tests"/>
+      <file path="tests/validation/test_layer_2_signals.py" kind="test" reason="Layer 2 signal computation tests"/>
+      <file path="tests/validation/test_layer_3_orders.py" kind="test" reason="Layer 3 order lifecycle tests"/>
+      <file path="tests/validation/test_layer_4_broker.py" kind="test" reason="Layer 4 broker transaction tests"/>
+      <file path="tests/validation/test_layer_5_portfolio.py" kind="test" reason="Layer 5 portfolio returns tests"/>
+      <file path="rustybt/validation/comparators.py" kind="validation" symbol="Layer*Comparator" reason="Comparison logic - should work unchanged"/>
+      <file path="tests/validation/config/" kind="config" reason="Tolerance configuration files"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+        <package name="polars" version=">=1.0">Log parsing and comparison</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="classification">Every discrepancy must be classified as BUG or DESIGN</constraint>
+    <constraint type="tolerance">Tolerance configs must prevent false positives</constraint>
+    <constraint type="comparator">Comparators should work unchanged with new logs</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="pytest test suite" kind="cli">
+      <signature>pytest tests/validation/test_layer_*.py -v</signature>
+      <note>Run all 5 layer tests</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Full validation test suite execution. All tests should pass or discrepancies should be classified.
+    </standards>
+    <locations>
+      <location>tests/validation/test_layer_1_data.py</location>
+      <location>tests/validation/test_layer_2_signals.py</location>
+      <location>tests/validation/test_layer_3_orders.py</location>
+      <location>tests/validation/test_layer_4_broker.py</location>
+      <location>tests/validation/test_layer_5_portfolio.py</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-X7.1">Verify bar count matches exactly</idea>
+      <idea ac="AC-X7.2">Verify indicator values within tolerance</idea>
+      <idea ac="AC-X7.3">Verify order counts match</idea>
+      <idea ac="AC-X7.4">All findings have BUG or DESIGN classification</idea>
+      <idea ac="AC-X7.5">No valid behavior flagged as error</idea>
+    </ideas>
+  </tests>
+</story-context>

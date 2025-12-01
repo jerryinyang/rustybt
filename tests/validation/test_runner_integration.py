@@ -44,9 +44,7 @@ def validation_data_fixture() -> Path:
 class TestRunRustybtStrategyIntegration:
     """Integration tests for run_rustybt_strategy()."""
 
-    def test_executes_simple_strategy(
-        self, tmp_path: Path, validation_data_fixture: Path
-    ) -> None:
+    def test_executes_simple_strategy(self, tmp_path: Path, validation_data_fixture: Path) -> None:
         """Test executing a simple rustybt strategy."""
         output_log = tmp_path / "rustybt_output.jsonl"
 
@@ -74,9 +72,7 @@ class TestRunRustybtStrategyIntegration:
                 assert "layer" in entry
                 assert "event" in entry
 
-    def test_captures_stdout_stderr(
-        self, tmp_path: Path, validation_data_fixture: Path
-    ) -> None:
+    def test_captures_stdout_stderr(self, tmp_path: Path, validation_data_fixture: Path) -> None:
         """Test that stdout and stderr are captured."""
         output_log = tmp_path / "output.jsonl"
 
@@ -91,9 +87,7 @@ class TestRunRustybtStrategyIntegration:
         assert isinstance(result.stdout, str)
         assert isinstance(result.stderr, str)
 
-    def test_passes_params_to_strategy(
-        self, tmp_path: Path, validation_data_fixture: Path
-    ) -> None:
+    def test_passes_params_to_strategy(self, tmp_path: Path, validation_data_fixture: Path) -> None:
         """Test that params are passed to the strategy."""
         output_log = tmp_path / "output.jsonl"
         params = {"test_param": "test_value"}
@@ -111,19 +105,22 @@ class TestRunRustybtStrategyIntegration:
     def test_timeout_enforcement(self, tmp_path: Path) -> None:
         """Test that timeout is enforced (this test uses a very short timeout)."""
         # Create a minimal data file
-        import polars as pl
         from datetime import datetime, timedelta
+
+        import polars as pl
 
         # Create minimal test data
         dates = [datetime(2020, 1, 1) + timedelta(days=i) for i in range(5)]
-        data = pl.DataFrame({
-            "datetime": dates,
-            "open": [100.0] * 5,
-            "high": [101.0] * 5,
-            "low": [99.0] * 5,
-            "close": [100.5] * 5,
-            "volume": [1000] * 5,
-        })
+        data = pl.DataFrame(
+            {
+                "datetime": dates,
+                "open": [100.0] * 5,
+                "high": [101.0] * 5,
+                "low": [99.0] * 5,
+                "close": [100.5] * 5,
+                "volume": [1000] * 5,
+            }
+        )
         data_path = tmp_path / "test_data.parquet"
         data.write_parquet(data_path)
 
@@ -145,9 +142,7 @@ class TestRunRustybtStrategyIntegration:
 class TestRunBacktraderStrategyIntegration:
     """Integration tests for run_backtrader_strategy()."""
 
-    def test_executes_simple_strategy(
-        self, tmp_path: Path, validation_data_fixture: Path
-    ) -> None:
+    def test_executes_simple_strategy(self, tmp_path: Path, validation_data_fixture: Path) -> None:
         """Test executing a simple Backtrader strategy."""
         output_log = tmp_path / "backtrader_output.jsonl"
 
@@ -159,7 +154,9 @@ class TestRunBacktraderStrategyIntegration:
         )
 
         # Verify execution succeeded
-        assert result.returncode == 0, f"Strategy failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
+        assert (
+            result.returncode == 0
+        ), f"Strategy failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
 
         # Verify log file was created
         assert output_log.exists(), "Log file was not created"
@@ -175,9 +172,7 @@ class TestRunBacktraderStrategyIntegration:
                 assert "layer" in entry
                 assert "event" in entry
 
-    def test_captures_stdout_stderr(
-        self, tmp_path: Path, validation_data_fixture: Path
-    ) -> None:
+    def test_captures_stdout_stderr(self, tmp_path: Path, validation_data_fixture: Path) -> None:
         """Test that stdout and stderr are captured."""
         output_log = tmp_path / "output.jsonl"
 
@@ -271,13 +266,16 @@ class TestDualFrameworkExecution:
         assert len(bt_entries) > 0, "Backtrader produced no log entries"
 
         # Check schema compatibility - all entries should have same top-level keys
-        expected_keys = {"timestamp", "layer", "event", "asset", "data"}
+        # Core fields plus logged_at for debugging
+        expected_keys = {"timestamp", "logged_at", "layer", "event", "asset", "data"}
 
         for entry in rb_entries:
             assert set(entry.keys()) == expected_keys, f"rustybt entry missing keys: {entry.keys()}"
 
         for entry in bt_entries:
-            assert set(entry.keys()) == expected_keys, f"Backtrader entry missing keys: {entry.keys()}"
+            assert (
+                set(entry.keys()) == expected_keys
+            ), f"Backtrader entry missing keys: {entry.keys()}"
 
 
 class TestErrorHandling:

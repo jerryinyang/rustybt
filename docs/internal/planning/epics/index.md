@@ -73,5 +73,42 @@
     - [Story 8.7: Create Troubleshooting Guide](./epic-8-user-facing-documentation-usage-guide.md#story-87-create-troubleshooting-guide)
     - [Story 8.8: Create Examples & Recipes Cookbook](./epic-8-user-facing-documentation-usage-guide.md#story-88-create-examples--recipes-cookbook)
     - [Story 8.9: Create Documentation Index and Navigation](./epic-8-user-facing-documentation-usage-guide.md#story-89-create-documentation-index-and-navigation)
+  - [Epic X: Real rustybt Engine Integration (CRITICAL)](./epic-X-real-rustybt-engine-integration.md)
+    - [Story X.1: Analyze rustybt Engine Integration Points](./epic-X-real-rustybt-engine-integration.md#story-x1-analyze-rustybt-engine-integration-points)
+    - [Story X.2: Design Shared Data Fixture Infrastructure](./epic-X-real-rustybt-engine-integration.md#story-x2-design-shared-data-fixture-infrastructure)
+    - [Story X.3: Reimplement ValidatedStrategy Base Class](./epic-X-real-rustybt-engine-integration.md#story-x3-reimplement-validatedstrategy-base-class)
+    - [Story X.4: Reimplement rustybt Execution Wrapper](./epic-X-real-rustybt-engine-integration.md#story-x4-reimplement-rustybt-execution-wrapper)
+    - [Story X.5: Reimplement SMA Crossover Strategy](./epic-X-real-rustybt-engine-integration.md#story-x5-reimplement-sma-crossover-strategy)
+    - [Story X.6: Reimplement Remaining 3 Strategies](./epic-X-real-rustybt-engine-integration.md#story-x6-reimplement-remaining-3-strategies)
+    - [Story X.7: Verify 5-Layer Comparison Compatibility](./epic-X-real-rustybt-engine-integration.md#story-x7-verify-5-layer-comparison-compatibility)
+    - [Story X.8: Update Documentation](./epic-X-real-rustybt-engine-integration.md#story-x8-update-documentation)
   - [FR Coverage Matrix](./fr-coverage-matrix.md)
   - [Summary](./summary.md)
+
+## Epic Status
+
+| Epic | Status | Completion Date | Notes |
+|------|--------|-----------------|-------|
+| Epic 1 | Complete | 2025-11-24 | Foundation infrastructure |
+| Epic 2 | Complete | 2025-11-24 | Strategy comparison infrastructure |
+| Epic 3 | Complete | 2025-11-25 | Session management system |
+| Epic 4 | Complete | 2025-11-25 | 5-layer comparison test suite |
+| Epic 5 | Complete | 2025-11-26 | Investigation & classification workflow |
+| Epic 6 | Complete | 2025-11-27 | Initial strategy validation |
+| Epic 7 | Complete | 2025-11-28 | Reporting & documentation system |
+| Epic 8 | Complete | 2025-11-28 | User-facing documentation |
+| Epic X | In Review | 2025-12-01 | Real rustybt engine integration - critical fix |
+
+### Epic X: Real rustybt Engine Integration
+
+**Status:** Stories X-6 and X-7 in review, X-8 (this story) in progress
+
+**Purpose:** Replaced homebrew broker simulation with actual rustybt TradingAlgorithm integration. This was a critical fix - the original implementation was comparing a custom mock against Backtrader, not validating rustybt's actual behavior.
+
+**Key Changes:**
+- Removed `SimulatedPosition`, `_cash`, `_execute_order()` homebrew code
+- `RustyBTValidatedStrategy` now uses mixin pattern with rustybt's real APIs
+- Strategies use `data.history()`, `order_target_percent()`, `context.portfolio`
+- Added ADR-005 documenting this decision
+
+See [Epic X Technical Specification](../sprint-artifacts/tech-spec-epic-X.md) for details.

@@ -1,14 +1,14 @@
-"""CLI wrapper for Backtrader strategy execution.
+r"""CLI wrapper for Backtrader strategy execution.
 
 This script provides a command-line interface for executing Backtrader strategies
 in isolation. It is called by the subprocess runner (runner.py) to ensure
 clean separation between Backtrader and rustybt executions.
 
 Usage:
-    python -m rustybt.validation.execute_backtrader \\
-        --strategy module.path.ClassName \\
-        --data /path/to/data.parquet \\
-        --output /path/to/output.jsonl \\
+    python -m rustybt.validation.execute_backtrader \
+        --strategy module.path.ClassName \
+        --data /path/to/data.parquet \
+        --output /path/to/output.jsonl \
         [--params '{"key": "value"}']
 
 Exit Codes:
@@ -51,17 +51,17 @@ def import_strategy(module_path: str) -> type:
         Dotted module path to the strategy class.
         Example: "tests.validation.strategies.bt_strategies.sma.SMAStrategy"
 
-    Returns
+    Returns:
     -------
     type
         The strategy class.
 
-    Raises
+    Raises:
     ------
     SystemExit
         If the module or class cannot be imported (exit code 1).
 
-    Examples
+    Examples:
     --------
     >>> StrategyClass = import_strategy("my_module.MyStrategy")
     """
@@ -86,7 +86,7 @@ def import_strategy(module_path: str) -> type:
         sys.exit(1)
 
 
-def load_backtrader_data(data_path: Path, asset: str | None = None) -> Any:  # noqa: ANN401
+def load_backtrader_data(data_path: Path, asset: str | None = None) -> tuple[Any, str | None]:
     """Load Parquet data into a Backtrader-compatible feed.
 
     Converts Parquet data to Pandas DataFrame and creates a
@@ -100,12 +100,12 @@ def load_backtrader_data(data_path: Path, asset: str | None = None) -> Any:  # n
         Asset symbol to filter for (if data has multiple assets).
         If None and data has multiple assets, uses the first asset.
 
-    Returns
+    Returns:
     -------
-    bt.feeds.PandasData
-        Backtrader data feed.
+    tuple[bt.feeds.PandasData, str | None]
+        Tuple of (Backtrader data feed, asset name).
 
-    Raises
+    Raises:
     ------
     SystemExit
         If the data file doesn't exist or cannot be loaded (exit code 1).
@@ -124,14 +124,24 @@ def load_backtrader_data(data_path: Path, asset: str | None = None) -> Any:  # n
         # Normalize column names to lowercase
         df_pl = df_pl.rename({col: col.lower() for col in df_pl.columns})
 
+        # Track asset name for data feed naming
+        asset_name: str | None = asset
+
         # If multi-asset data, filter to single asset
         if "asset" in df_pl.columns:
-            unique_assets = df_pl["asset"].unique().to_list()
+            unique_assets = sorted(
+                df_pl["asset"].unique().to_list()
+            )  # Sort for deterministic selection
             if len(unique_assets) > 1:
-                if asset is None:
-                    asset = unique_assets[0]  # Use first asset
-                    print(f"Multi-asset data detected. Using first asset: {asset}", file=sys.stderr)
-                df_pl = df_pl.filter(pl.col("asset") == asset)
+                if asset_name is None:
+                    asset_name = unique_assets[0]  # Use first asset alphabetically
+                    print(
+                        f"Multi-asset data detected. Using first asset: {asset_name}",
+                        file=sys.stderr,
+                    )
+                df_pl = df_pl.filter(pl.col("asset") == asset_name)
+            elif len(unique_assets) == 1:
+                asset_name = unique_assets[0]
             # Drop asset column for Backtrader
             df_pl = df_pl.drop("asset")
 
@@ -143,7 +153,10 @@ def load_backtrader_data(data_path: Path, asset: str | None = None) -> Any:  # n
                 break
 
         if datetime_col is None:
-            print("No datetime column found in data (expected: timestamp, datetime, or date)", file=sys.stderr)
+            print(
+                "No datetime column found in data (expected: timestamp, datetime, or date)",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         # Sort by datetime
@@ -154,8 +167,14 @@ def load_backtrader_data(data_path: Path, asset: str | None = None) -> Any:  # n
 
         # Set datetime as index
         df[datetime_col] = df[datetime_col].apply(
-            lambda x: x if isinstance(x, datetime) else (
-                x.to_pydatetime() if hasattr(x, "to_pydatetime") else datetime.fromisoformat(str(x))
+            lambda x: (
+                x
+                if isinstance(x, datetime)
+                else (
+                    x.to_pydatetime()
+                    if hasattr(x, "to_pydatetime")
+                    else datetime.fromisoformat(str(x))
+                )
             )
         )
         df.set_index(datetime_col, inplace=True)
@@ -177,7 +196,7 @@ def load_backtrader_data(data_path: Path, asset: str | None = None) -> Any:  # n
                     df[new_name] = df[old_name]
 
         # Create Backtrader data feed
-        return bt.feeds.PandasData(dataname=df)
+        return bt.feeds.PandasData(dataname=df), asset_name
 
     except ImportError as e:
         print(f"Failed to import required library: {e}", file=sys.stderr)
@@ -197,12 +216,12 @@ def validate_params(params_json: str | None) -> dict[str, Any]:
     params_json : str | None
         JSON string of parameters, or None.
 
-    Returns
+    Returns:
     -------
     dict[str, Any]
         Parsed parameters dictionary.
 
-    Raises
+    Raises:
     ------
     SystemExit
         If params_json is not valid JSON (exit code 1).
@@ -217,7 +236,10 @@ def validate_params(params_json: str | None) -> dict[str, Any]:
     try:
         result = json.loads(params_json)
         if not isinstance(result, dict):
-            print(f"Invalid params: expected JSON object, got {type(result).__name__}", file=sys.stderr)
+            print(
+                f"Invalid params: expected JSON object, got {type(result).__name__}",
+                file=sys.stderr,
+            )
             sys.exit(1)
         return result
     except json.JSONDecodeError as e:
@@ -272,15 +294,36 @@ def main() -> None:
     # Import strategy class
     strategy_class = import_strategy(args.strategy)
 
-    # Load data
-    data_feed = load_backtrader_data(args.data)
+    # Load data (returns tuple of data feed and asset name)
+    data_feed, asset_name = load_backtrader_data(args.data)
+
+    # Custom commission class for fixed per-trade commission
+    class FixedTradeCommission(bt.CommInfoBase):
+        """Fixed commission per trade (not per share)."""
+
+        params = (
+            ("commission", 1.0),  # $1 per trade
+            ("stocklike", True),
+            ("commtype", bt.CommInfoBase.COMM_FIXED),
+        )
+
+        def _getcommission(self, size, price, pseudoexec):
+            """Return fixed commission per trade."""
+            return self.p.commission  # Always $1 regardless of size
 
     try:
         # Create Cerebro engine
         cerebro = bt.Cerebro()
 
-        # Add data feed
-        cerebro.adddata(data_feed)
+        # Configure broker with starting cash and commission
+        # Starting cash: $100,000
+        cerebro.broker.setcash(100000.0)
+
+        # Commission: $1 fixed per trade (using custom commission class)
+        cerebro.broker.addcommissioninfo(FixedTradeCommission())
+
+        # Add data feed with asset name for identification
+        cerebro.adddata(data_feed, name=asset_name or "data")
 
         # Add strategy with log_path and any additional params
         # BacktraderValidatedStrategy expects log_path as a param

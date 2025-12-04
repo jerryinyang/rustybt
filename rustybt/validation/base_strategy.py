@@ -745,6 +745,56 @@ class RustyBTValidatedStrategy(ValidatedStrategyMixin):
         """
         pass
 
+    def notify_transaction(self, context: Any, transaction: Any) -> None:  # noqa: ANN401, ARG002
+        """Called when an order is filled and a transaction occurs.
+
+        This callback is invoked by the rustybt simulation loop for each
+        transaction (order fill) that occurs during the backtest. It automatically
+        logs Layer 4 broker events (transaction_executed, commission_charged,
+        slippage_applied) to match Backtrader's notify_order() behavior.
+
+        Parameters
+        ----------
+        context : Any
+            The strategy context object (TradingAlgorithm instance).
+        transaction : Transaction
+            The transaction object containing fill details:
+            - asset: The asset that was traded
+            - amount: Number of shares/contracts (positive=buy, negative=sell)
+            - price: Fill price
+            - dt: Transaction datetime
+            - order_id: ID of the order that generated this transaction
+
+        Notes:
+        -----
+        - Called BEFORE handle_data() on each bar where fills occur
+        - Multiple transactions may occur on the same bar
+        - Logs transaction_executed, commission_charged, slippage_applied events
+        - Similar to Backtrader's notify_order() callback
+        """
+        # Extract transaction details
+        asset_str = str(transaction.asset) if transaction.asset else None
+        amount = float(transaction.amount)
+        price = float(transaction.price)
+
+        # Get commission from transaction if available (rustybt may not include it directly)
+        commission = getattr(transaction, "commission", 0.0)
+        if commission is None:
+            commission = 0.0
+
+        # Update simulation timestamp from transaction datetime
+        if transaction.dt is not None:
+            self._current_simulation_timestamp = transaction.dt.isoformat()
+
+        # Log the transaction using the existing log_transaction method
+        self.log_transaction(
+            asset=asset_str or "UNKNOWN",
+            quantity=amount,
+            price=price,
+            commission=commission,
+            slippage=0.0,  # Slippage is built into the fill price
+        )
+
     # =========================================================================
     # Test Helper Interface
     # =========================================================================

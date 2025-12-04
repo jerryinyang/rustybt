@@ -35,6 +35,7 @@ import importlib
 import json
 import sys
 import traceback
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -83,13 +84,13 @@ def import_strategy(module_path: str) -> type:
         module = importlib.import_module(module_name)
         return getattr(module, class_name)
     except ImportError as e:
-        print(f"Could not import strategy: {module_path}", file=sys.stderr)
-        print(f"Import error: {e}", file=sys.stderr)
+        sys.stderr.write(f"Could not import strategy: {module_path}\n")
+        sys.stderr.write(f"Import error: {e}\n")
         sys.exit(1)
     except AttributeError as e:
-        print(f"Could not import strategy: {module_path}", file=sys.stderr)
-        print(f"Class '{class_name}' not found in module '{module_name}'", file=sys.stderr)
-        print(f"Error: {e}", file=sys.stderr)
+        sys.stderr.write(f"Could not import strategy: {module_path}\n")
+        sys.stderr.write(f"Class '{class_name}' not found in module '{module_name}'\n")
+        sys.stderr.write(f"Error: {e}\n")
         sys.exit(1)
 
 
@@ -121,14 +122,11 @@ def validate_params(params_json: str | None) -> dict[str, Any]:
     try:
         result = json.loads(params_json)
         if not isinstance(result, dict):
-            print(
-                f"Invalid params: expected JSON object, got {type(result).__name__}",
-                file=sys.stderr,
-            )
+            sys.stderr.write(f"Invalid params: expected JSON object, got {type(result).__name__}\n")
             sys.exit(1)
         return result
     except json.JSONDecodeError as e:
-        print(f"Invalid params JSON: {e}", file=sys.stderr)
+        sys.stderr.write(f"Invalid params JSON: {e}\n")
         sys.exit(1)
 
 
@@ -167,15 +165,15 @@ def register_validation_bundle(
     from rustybt.data.bundles import register
 
     if not parquet_path.exists():
-        print(f"Data file not found: {parquet_path}", file=sys.stderr)
+        sys.stderr.write(f"Data file not found: {parquet_path}\n")
         sys.exit(1)
 
     # Load fixture to extract metadata
     try:
         df = pl.read_parquet(parquet_path)
         df = df.rename({col: col.lower() for col in df.columns})
-    except Exception as e:
-        print(f"Failed to load data from {parquet_path}: {e}", file=sys.stderr)
+    except (OSError, pl.exceptions.ComputeError) as e:
+        sys.stderr.write(f"Failed to load data from {parquet_path}: {e}\n")
         sys.exit(1)
 
     # Extract date range
@@ -186,7 +184,7 @@ def register_validation_bundle(
             break
 
     if datetime_col is None:
-        print(f"No datetime column found in {parquet_path}", file=sys.stderr)
+        sys.stderr.write(f"No datetime column found in {parquet_path}\n")
         sys.exit(1)
 
     # Get date range
@@ -224,18 +222,18 @@ def register_validation_bundle(
     }
 
     def ingest_validation_fixture(
-        environ,
-        asset_db_writer,
-        minute_bar_writer,
-        daily_bar_writer,
-        adjustment_writer,
-        calendar,
-        start_session,
-        end_session,
-        cache,
-        show_progress,
-        output_dir,
-    ):
+        _environ: Any,  # noqa: ANN401
+        asset_db_writer: Any,  # noqa: ANN401
+        _minute_bar_writer: Any,  # noqa: ANN401
+        daily_bar_writer: Any,  # noqa: ANN401
+        adjustment_writer: Any,  # noqa: ANN401
+        _calendar: Any,  # noqa: ANN401
+        start_session: Any,  # noqa: ANN401
+        end_session: Any,  # noqa: ANN401
+        _cache: Any,  # noqa: ANN401
+        show_progress: Any,  # noqa: ANN401
+        _output_dir: Any,  # noqa: ANN401
+    ) -> None:
         """Ingest validation fixture data into rustybt bundle format."""
         import numpy as np
 
@@ -277,7 +275,7 @@ def register_validation_bundle(
         # Group by asset and write daily bars
         # daily_bar_writer.write() expects iterable of (sid, DataFrame) pairs
         # where DataFrame has all bars for that asset at once
-        def generate_daily_bars():
+        def generate_daily_bars() -> Iterator[tuple[int, pd.DataFrame]]:
             for asset_idx, asset_name in enumerate(assets):
                 if "asset" in pdf.columns:
                     asset_df = pdf[pdf["asset"] == asset_name].copy()
@@ -323,8 +321,8 @@ def register_validation_bundle(
         # Write daily bar data
         try:
             daily_bar_writer.write(generate_daily_bars(), show_progress=show_progress)
-        except Exception as e:
-            print(f"Warning: Could not write daily bars: {e}", file=sys.stderr)
+        except Exception as e:  # noqa: BLE001
+            sys.stderr.write(f"Warning: Could not write daily bars: {e}\n")
 
         # Write empty adjustments (required for data portal to work)
         try:
@@ -335,8 +333,8 @@ def register_validation_bundle(
                 ),
                 mergers=pd.DataFrame(columns=["sid", "effective_date", "ratio"]),
             )
-        except Exception as e:
-            print(f"Warning: Could not write adjustments: {e}", file=sys.stderr)
+        except Exception as e:  # noqa: BLE001
+            sys.stderr.write(f"Warning: Could not write adjustments: {e}\n")
 
     # Register the bundle
     try:
@@ -348,9 +346,9 @@ def register_validation_bundle(
             end_session=end_date,
             create_writers=True,
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # Bundle may already be registered, which is fine
-        print(f"Note: Bundle registration: {e}", file=sys.stderr)
+        sys.stderr.write(f"Note: Bundle registration: {e}\n")
 
     return start_date, end_date, assets
 
@@ -397,8 +395,8 @@ def run_validation_backtest(
     try:
         df = pl.read_parquet(data_path)
         df = df.rename({col: col.lower() for col in df.columns})
-    except Exception as e:
-        print(f"Failed to load data: {e}", file=sys.stderr)
+    except (OSError, pl.exceptions.ComputeError) as e:
+        sys.stderr.write(f"Failed to load data: {e}\n")
         return 1
 
     # Find datetime column
@@ -409,7 +407,7 @@ def run_validation_backtest(
             break
 
     if datetime_col is None:
-        print("No datetime column found in data", file=sys.stderr)
+        sys.stderr.write("No datetime column found in data\n")
         return 1
 
     # Get date range
@@ -438,9 +436,7 @@ def run_validation_backtest(
         if unique_assets:
             asset_name = unique_assets[0]
             if len(unique_assets) > 1:
-                print(
-                    f"Multi-asset data detected. Using first asset: {asset_name}", file=sys.stderr
-                )
+                sys.stderr.write(f"Multi-asset data detected. Using first asset: {asset_name}\n")
             df = df.filter(pl.col("asset") == asset_name)
 
     # Bundle configuration
@@ -471,7 +467,7 @@ def run_validation_backtest(
         "commission_per_trade": commission_per_trade,
     }
 
-    def initialize(context):
+    def initialize(context: Any) -> None:  # noqa: ANN401
         """Initialize callback for run_algorithm."""
         strategy = _execution_context["strategy"]
         asset_name = _execution_context["asset_name"]
@@ -481,8 +477,8 @@ def run_validation_backtest(
         try:
             asset = context.symbol(asset_name)
             context.asset = asset  # Store on context for strategy access
-        except Exception as e:
-            print(f"Warning: Could not resolve symbol '{asset_name}': {e}", file=sys.stderr)
+        except Exception as e:  # noqa: BLE001
+            sys.stderr.write(f"Warning: Could not resolve symbol '{asset_name}': {e}\n")
             context.asset = None
 
         # Store context reference for later access
@@ -491,7 +487,7 @@ def run_validation_backtest(
         # Call strategy's initialize
         strategy.initialize(context)
 
-    def handle_data(context, data):
+    def handle_data(context: Any, data: Any) -> None:  # noqa: ANN401
         """Handle data callback for run_algorithm - processes one bar.
 
         Passes the real rustybt BarData object to the strategy, enabling
@@ -501,12 +497,23 @@ def run_validation_backtest(
         # Pass the real rustybt data object to strategy
         strategy.handle_data(context, data)
 
-    def analyze(context, perf):
+    def analyze(context: Any, perf: Any) -> None:  # noqa: ANN401, ARG001
         """Analyze callback for run_algorithm - called at end of backtest."""
         strategy = _execution_context["strategy"]
         # Finalize strategy to log final metrics
         strategy.finalize()
         strategy.close()
+
+    def notify_transaction(context: Any, transaction: Any) -> None:  # noqa: ANN401
+        """Transaction callback - called when orders are filled.
+
+        This callback is invoked by rustybt's simulation loop for each
+        transaction (order fill). It forwards to the strategy's notify_transaction
+        method to log Layer 4 broker events (transaction_executed, commission_charged,
+        slippage_applied).
+        """
+        strategy = _execution_context["strategy"]
+        strategy.notify_transaction(context, transaction)
 
     # Run the backtest using rustybt's REAL engine
     try:
@@ -516,9 +523,9 @@ def run_validation_backtest(
         # Ingest the bundle (writes data to rustybt's data directory)
         try:
             ingest(bundle_name, show_progress=False)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # Bundle may already be ingested
-            print(f"Note: Bundle ingest: {e}", file=sys.stderr)
+            sys.stderr.write(f"Note: Bundle ingest: {e}\n")
 
         # Run backtest using rustybt's real execution engine
         run_algorithm(
@@ -527,6 +534,7 @@ def run_validation_backtest(
             initialize=initialize,
             handle_data=handle_data,
             analyze=analyze,
+            notify_transaction=notify_transaction,
             capital_base=capital_base,
             bundle=bundle_name,
             data_frequency="daily",
@@ -536,8 +544,8 @@ def run_validation_backtest(
 
         return 0
 
-    except Exception as e:
-        print(f"Backtest execution failed: {e}", file=sys.stderr)
+    except Exception as e:  # noqa: BLE001
+        sys.stderr.write(f"Backtest execution failed: {e}\n")
         traceback.print_exc()
         return 1
 
@@ -580,7 +588,7 @@ def main() -> None:
 
     # Validate data file exists
     if not args.data.exists():
-        print(f"Data file not found: {args.data}", file=sys.stderr)
+        sys.stderr.write(f"Data file not found: {args.data}\n")
         sys.exit(1)
 
     # Import strategy class

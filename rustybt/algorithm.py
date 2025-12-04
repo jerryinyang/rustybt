@@ -412,6 +412,7 @@ class TradingAlgorithm:
         handle_data=None,
         before_trading_start=None,
         analyze=None,
+        notify_transaction=None,
         #
         trading_calendar=None,
         metrics_set=None,
@@ -581,6 +582,7 @@ class TradingAlgorithm:
         self._initialize = None
         self._before_trading_start = None
         self._analyze = None
+        self._notify_transaction = None
 
         self._in_before_trading_start = False
 
@@ -711,6 +713,8 @@ class TradingAlgorithm:
                 )
                 # Optional analyze function, gets called after run
                 self._analyze = self.namespace.get("analyze")
+                # Optional notify_transaction function, called for each fill
+                self._notify_transaction = self.namespace.get("notify_transaction")
 
                 # Warn if neither format was detected
                 if self._initialize is noop and self._handle_data is noop:
@@ -727,6 +731,7 @@ class TradingAlgorithm:
             self._handle_data = handle_data
             self._before_trading_start = before_trading_start
             self._analyze = analyze
+            self._notify_transaction = notify_transaction
 
         self.event_manager.add_event(
             rustybt.utils.events.Event(
@@ -879,6 +884,65 @@ class TradingAlgorithm:
             except (ValueError, TypeError):
                 # Fallback
                 self._analyze(self, perf)
+
+    def notify_transaction(self, transaction):
+        """Called when an order is filled and a transaction occurs.
+
+        This callback is invoked by the simulation loop for each transaction
+        that occurs during the backtest. Override this method to receive
+        notifications when orders are filled.
+
+        Parameters
+        ----------
+        transaction : Transaction
+            The transaction object containing fill details:
+            - asset: The asset that was traded
+            - amount: Number of shares/contracts (positive=buy, negative=sell)
+            - price: Fill price
+            - dt: Transaction datetime
+            - order_id: ID of the order that generated this transaction
+            - commission: Commission charged (if available)
+
+        Examples
+        --------
+        Class-based strategy:
+
+        >>> class MyAlgorithm(TradingAlgorithm):
+        ...     def notify_transaction(self, transaction):
+        ...         print(f"Filled: {transaction.amount} @ {transaction.price}")
+
+        Function-based strategy (via context):
+
+        >>> def notify_transaction(context, transaction):
+        ...     print(f"Filled: {transaction.amount} @ {transaction.price}")
+
+        Notes
+        -----
+        - Called BEFORE handle_data() on each bar where fills occur
+        - Multiple transactions may occur on the same bar
+        - Similar to Backtrader's notify_order() callback
+        """
+        # Check if user provided a notify_transaction function
+        if self._notify_transaction is not None:
+            with ZiplineAPI(self):
+                try:
+                    sig = inspect.signature(self._notify_transaction)
+                    param_count = len(sig.parameters)
+
+                    if inspect.ismethod(self._notify_transaction):
+                        if param_count == 1:
+                            # Method: def notify_transaction(self, transaction)
+                            # After binding, only 1 param remains
+                            self._notify_transaction(transaction)
+                        else:
+                            # Method: def notify_transaction(self, context, transaction)
+                            self._notify_transaction(self, transaction)
+                    else:
+                        # Function: def notify_transaction(context, transaction)
+                        self._notify_transaction(self, transaction)
+                except (ValueError, TypeError):
+                    # Fallback
+                    self._notify_transaction(self, transaction)
 
     def __repr__(self):
         """N.B. this does not yet represent a string that can be used

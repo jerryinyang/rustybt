@@ -66,6 +66,7 @@ def _run(
     initialize,
     before_trading_start,
     analyze,
+    notify_transaction,
     algofile,
     algotext,
     defines,
@@ -326,6 +327,7 @@ def _run(
                     "handle_data": handle_data,
                     "before_trading_start": before_trading_start,
                     "analyze": analyze,
+                    "notify_transaction": notify_transaction,
                 }
                 if algotext is None
                 else {
@@ -436,6 +438,7 @@ def run_algorithm(
     handle_data=None,
     before_trading_start=None,
     analyze=None,
+    notify_transaction=None,
     data_frequency="daily",
     bundle="quantopian-quandl",
     bundle_timestamp=None,
@@ -476,6 +479,12 @@ def run_algorithm(
         The analyze function to use for the algorithm. This function is called
         once at the end of the backtest and is passed the context and the
         performance data.
+    notify_transaction : callable[(context, Transaction) -> None], optional
+        The notify_transaction callback for the algorithm. This is called
+        for each transaction (order fill) that occurs during the backtest.
+        The callback receives the context and a Transaction object with
+        fill details (asset, amount, price, dt, order_id, commission).
+        Similar to Backtrader's notify_order() callback.
     data_frequency : {'daily', 'minute'}, optional
         The data frequency to run the algorithm at.
     bundle : str, optional
@@ -538,6 +547,7 @@ def run_algorithm(
         initialize=initialize,
         before_trading_start=before_trading_start,
         analyze=analyze,
+        notify_transaction=notify_transaction,
         algofile=None,
         algotext=None,
         defines=(),

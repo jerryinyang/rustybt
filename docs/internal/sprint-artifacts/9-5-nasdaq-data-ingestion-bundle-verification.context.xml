@@ -1,0 +1,125 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>5</storyId>
+    <title>NASDAQ Data Ingestion &amp; Bundle Verification</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-02</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/internal/sprint-artifacts/9-5-nasdaq-data-ingestion-bundle-verification.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer needing NASDAQ equity data locally</asA>
+    <iWant>to ingest NASDAQ OHLCV data with optional Definition enrichment into a local bundle</iWant>
+    <soThat>I have correctly represented NASDAQ data available for analysis</soThat>
+    <tasks>
+      <task id="1" title="Integrate NASDAQ Definition into Ingestion Flow" ac="2">
+        <subtask id="1.1">Load NASDAQ Definition data during ingestion if configured</subtask>
+        <subtask id="1.2">Merge NASDAQ Definition metadata with OHLCV data</subtask>
+        <subtask id="1.3">Populate equity-specific metadata fields</subtask>
+      </task>
+      <task id="2" title="Handle Equity vs Derivatives Fields" ac="2">
+        <subtask id="2.1">Populate equity-relevant fields (exchange, currency, lot_size)</subtask>
+        <subtask id="2.2">Set derivative-specific fields to null/absent</subtask>
+        <subtask id="2.3">Document field availability differences</subtask>
+      </task>
+      <task id="3" title="Ensure Backward Compatibility" ac="1,3">
+        <subtask id="3.1">Verify existing NASDAQ ingestion unchanged without Definition</subtask>
+        <subtask id="3.2">Regression test current behavior</subtask>
+      </task>
+      <task id="4" title="Bundle Verification" ac="4">
+        <subtask id="4.1">Verify bundle contains expected NASDAQ instruments</subtask>
+        <subtask id="4.2">Spot check OHLCV values against source</subtask>
+        <subtask id="4.3">Verify no collision with CME instrument_ids</subtask>
+        <subtask id="4.4">Test equity metadata population with Definition</subtask>
+        <subtask id="4.5">Test backward compatibility without Definition</subtask>
+      </task>
+      <task id="5" title="Testing">
+        <subtask id="5.1">Integration tests for NASDAQ Definition-enabled ingestion</subtask>
+        <subtask id="5.2">Regression tests for backward compatibility</subtask>
+        <subtask id="5.3">Cross-exchange collision tests</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-9.5.1" title="OHLCV ingestion works without Definition (backward compatible)">
+      <requirement>OHLCV data is ingested into a local bundle (works without Definition)</requirement>
+      <requirement>Existing adapter behavior preserved when Definition not provided</requirement>
+    </criterion>
+    <criterion id="AC-9.5.2" title="Definition package enables metadata enrichment when provided">
+      <requirement>Definition metadata available for enrichment when provided</requirement>
+      <requirement>Equity-appropriate fields populated (exchange, currency, lot_size)</requirement>
+      <requirement>Derivative-specific fields are null/absent for equities</requirement>
+    </criterion>
+    <criterion id="AC-9.5.3" title="Graceful degradation when Definition absent">
+      <requirement>Adapter works exactly as before (current behavior preserved)</requirement>
+    </criterion>
+    <criterion id="AC-9.5.4" title="Bundle verification passes">
+      <requirement>Bundle contains expected NASDAQ instruments for date range</requirement>
+      <requirement>OHLCV values match source data (spot check)</requirement>
+      <requirement>No instrument_id collision with CME data (if both ingested)</requirement>
+      <requirement>With Definition: Equity metadata columns populated</requirement>
+      <requirement>Without Definition: Existing behavior unchanged</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="databento/docs/exploration-existing-infrastructure.md" title="Story 9.1 Exploration Document" section="Full Document" critical="true">
+        CRITICAL REFERENCE: Section 1.5 (bundle output format), Section 2.2 (NASDAQ package structure with symbol-split, 21,800+ files), Section 3 (integration plan with config changes), Section 4 (risk assessment including cross-exchange collision prevention).
+      </doc>
+      <doc path="docs/internal/planning/epics/epic-9-databento-adapter-definition-integration.md" title="Epic 9 Definition" section="Story 9.5">
+        Story requirements for NASDAQ ingestion with optional Definition enrichment.
+      </doc>
+    </docs>
+    <code>
+      <file path="rustybt/data/adapters/databento_adapter.py" kind="adapter" symbol="ingest_to_bundle" reason="Main ingestion method already modified in Story 9.3 - extend for NASDAQ"/>
+      <file path="rustybt/data/adapters/databento_adapter.py" kind="adapter" symbol="_enrich_ohlcv_with_definition" reason="Enrichment method from Story 9.3 - extend for equity fields"/>
+      <file path="rustybt/data/adapters/databento_adapter.py" kind="adapter" symbol="_detect_definition_schema" reason="Schema detection from Story 9.4 - use for NASDAQ detection"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">DataFrame operations for NASDAQ enrichment</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="backward-compatibility">Existing NASDAQ ingestion must work without Definition</constraint>
+    <constraint type="equity-focus">No UDS filtering for NASDAQ (equities don't have user-defined spreads)</constraint>
+    <constraint type="no-derivatives">No parent resolution for NASDAQ (no derivatives hierarchy)</constraint>
+    <constraint type="cross-exchange-safety">Must not collide with CME instrument_ids</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="NASDAQ Enrichment" kind="method" path="rustybt/data/adapters/databento_adapter.py">
+      <signature>def _enrich_ohlcv_with_definition(self, ohlcv_df: pl.DataFrame, definition_df: pl.DataFrame) -> pl.DataFrame</signature>
+      <note>For NASDAQ: adds exchange, currency, lot_size. Derivative fields (expiration, strike_price, underlying_id) are null.</note>
+    </interface>
+    <interface name="Usage Pattern" kind="example" path="rustybt/data/adapters/databento_adapter.py">
+      <signature>config = DatabentoConfig(ohlcv_package_path=Path("NASDAQ-1D.zip"), definition_package_path=Path("NASDAQ-DEFINITION.zip"))</signature>
+      <note>Example configuration for NASDAQ ingestion with optional Definition enrichment</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Use pytest for all tests. Backward compatibility tests are critical. Cross-exchange collision tests must verify CME and NASDAQ can coexist in same session.
+    </standards>
+    <locations>
+      <location>tests/data/adapters/test_databento_definition.py</location>
+      <location>tests/data/adapters/test_databento_adapter.py (regression tests)</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-9.5.1">Regression test: ingest NASDAQ without Definition matches existing behavior</idea>
+      <idea ac="AC-9.5.2">Verify equity fields (exchange, currency, lot_size) are populated</idea>
+      <idea ac="AC-9.5.2">Verify derivative fields are null for NASDAQ instruments</idea>
+      <idea ac="AC-9.5.3">Test graceful degradation matches CME behavior</idea>
+      <idea ac="AC-9.5.4">Verify no collision when both CME and NASDAQ ingested</idea>
+      <idea ac="AC-9.5.4">Spot check OHLCV values against source file</idea>
+    </ideas>
+  </tests>
+</story-context>

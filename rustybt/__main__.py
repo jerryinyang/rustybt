@@ -500,7 +500,13 @@ def rustybt_magic(line, cell=None):
             raise ValueError("main returned non-zero status code: %d" % exc.code) from exc
 
 
-@main.command()
+@main.group()
+def ingest():
+    """Data ingestion commands."""
+    pass
+
+
+@ingest.command(name="legacy")
 @click.option(
     "-b",
     "--bundle",
@@ -520,8 +526,12 @@ def rustybt_magic(line, cell=None):
     default=True,
     help="Print progress information to the terminal.",
 )
-def ingest(bundle, assets_version, show_progress):
-    """Ingest the data for the given bundle."""
+def ingest_legacy(bundle, assets_version, show_progress):
+    """Ingest data using legacy bundle system. [Deprecated: use 'ingest-unified']"""
+    click.echo(
+        click.style("Warning: ", fg="yellow")
+        + "'ingest legacy' is deprecated. Use 'ingest-unified' instead.\n"
+    )
     bundles_module.ingest(
         bundle,
         os.environ,
@@ -529,6 +539,125 @@ def ingest(bundle, assets_version, show_progress):
         assets_version,
         show_progress,
     )
+
+
+@ingest.command(name="clean")
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Preview what would be cleaned without deleting.",
+)
+@click.option(
+    "-y",
+    "--yes",
+    is_flag=True,
+    help="Skip confirmation prompt.",
+)
+def ingest_clean(dry_run, yes):
+    """Clean up temporary files from failed/interrupted ingestion sessions.
+
+    This command removes temporary directories created during Databento data
+    ingestion that may have been left behind due to crashes or out-of-memory
+    errors.
+
+    Searches for:
+    - databento_* directories (OHLCV data extraction)
+    - databento_def_* directories (Definition data extraction)
+
+    SAFE: This does NOT delete your source .zip files or ingested bundles
+    (~/.zipline/data/bundles). It only cleans the system temp directory.
+
+    Examples:
+        rustybt ingest clean              # Clean with confirmation
+        rustybt ingest clean --dry-run    # Preview what would be cleaned
+        rustybt ingest clean -y           # Clean without confirmation
+    """
+    import shutil
+    import tempfile
+    from pathlib import Path
+
+    console = Console()
+
+    # Get system temp directory
+    temp_dir = Path(tempfile.gettempdir())
+
+    console.print(f"\n[bold]Searching for Databento temp directories...[/bold]")
+    console.print(f"Temp directory: {temp_dir}\n")
+
+    # Find databento temp directories (both OHLCV and Definition)
+    patterns = ["databento_*", "databento_def_*"]
+
+    found_dirs = []
+    seen_paths = set()
+    total_size = 0
+
+    for pattern in patterns:
+        for path in temp_dir.glob(pattern):
+            if path.is_dir() and path not in seen_paths:
+                seen_paths.add(path)
+                # Calculate directory size
+                dir_size = sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
+                found_dirs.append((path, dir_size))
+                total_size += dir_size
+
+    if not found_dirs:
+        console.print("[green]No Databento temp directories found. Nothing to clean.[/green]\n")
+        return
+
+    # Display found directories
+    table = Table(title="Found Temp Directories")
+    table.add_column("Path", style="cyan")
+    table.add_column("Size", justify="right", style="magenta")
+    table.add_column("Modified", style="green")
+
+    for path, size in found_dirs:
+        size_str = _format_size(size)
+        try:
+            mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
+            modified_str = mtime.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception:
+            modified_str = "Unknown"
+        table.add_row(str(path), size_str, modified_str)
+
+    console.print(table)
+    console.print(
+        f"\n[bold]Total:[/bold] {len(found_dirs)} directories, {_format_size(total_size)}"
+    )
+
+    if dry_run:
+        console.print("\n[yellow]Dry run - no files deleted.[/yellow]")
+        console.print("Run without --dry-run to delete these directories.\n")
+        return
+
+    # Confirm deletion
+    if not yes and not click.confirm(
+        f"\nDelete {len(found_dirs)} directories ({_format_size(total_size)})?"
+    ):
+        console.print("[yellow]Cancelled.[/yellow]\n")
+        return
+
+    # Delete directories
+    deleted_count = 0
+    deleted_size = 0
+    errors = []
+
+    for path, size in found_dirs:
+        try:
+            shutil.rmtree(path)
+            deleted_count += 1
+            deleted_size += size
+            console.print(f"[green]Deleted:[/green] {path}")
+        except Exception as e:
+            errors.append((path, str(e)))
+            console.print(f"[red]Failed:[/red] {path} - {e}")
+
+    # Summary
+    console.print(f"\n[bold]Summary:[/bold]")
+    console.print(f"  Deleted: {deleted_count} directories ({_format_size(deleted_size)})")
+    if errors:
+        console.print(f"  [red]Errors: {len(errors)}[/red]")
+
+    console.print()
 
 
 @main.command(name="ingest-unified")
@@ -838,34 +967,17 @@ def ingest_unified(
     " This may not be passed with -e / --before or -a / --after",
 )
 def clean(bundle, before, after, keep_last):
-    """Clean up data downloaded with the ingest command."""
+    """Clean up data downloaded with the ingest command. [Deprecated]"""
+    click.echo(
+        click.style("Warning: ", fg="yellow")
+        + "'clean' is deprecated. It only works with legacy 'ingest' data.\n"
+    )
     bundles_module.clean(
         bundle,
         before,
         after,
         keep_last,
     )
-
-
-@main.command()
-def bundles():
-    """List all of the available data bundles."""
-    for bundle in sorted(bundles_module.bundles.keys()):
-        if bundle.startswith("."):
-            # hide the test data
-            continue
-        try:
-            ingestions = list(map(str, bundles_module.ingestions_for_bundle(bundle)))
-        except OSError as e:
-            if e.errno != errno.ENOENT:
-                raise
-            ingestions = []
-
-        # If we got no ingestions, either because the directory didn't exist or
-        # because there were no entries, print a single message indicating that
-        # no ingestions have yet been made.
-        for timestamp in ingestions or ["<no ingestions>"]:
-            click.echo("%s %s" % (bundle, timestamp))
 
 
 # ============================================================================
@@ -1030,7 +1142,7 @@ def bundle_validate(bundle_name: str):
 
     duplicates = (
         scan.group_by(["sid", date_col])
-        .agg(pl.count().alias("count"))
+        .agg(pl.len().alias("count"))
         .filter(pl.col("count") > 1)
         .select(pl.len())
         .collect()
@@ -1092,6 +1204,53 @@ def bundle_validate(bundle_name: str):
         console.print("\n[yellow]Overall: PASSED (with warnings)[/yellow]")
     else:
         console.print("\n[green]Overall: PASSED[/green]")
+
+
+@bundle.command(name="delete")
+@click.argument("bundle_name", type=str)
+@click.option("--force", "-f", is_flag=True, help="Skip confirmation prompt")
+def bundle_delete(bundle_name: str, force: bool):
+    """Delete a bundle and all associated data."""
+    import shutil
+
+    console = Console()
+
+    # Check if bundle exists
+    metadata = BundleMetadata.get(bundle_name)
+    if metadata is None:
+        console.print(f"[red]Bundle '{bundle_name}' not found.[/red]")
+        raise click.exceptions.Exit(1)
+
+    # Get bundle directory
+    bundle_dir = Path(zipline_root()) / "data" / "bundles" / bundle_name
+
+    # Show what will be deleted
+    console.print(f"Bundle: [bold]{bundle_name}[/bold]")
+    if bundle_dir.exists():
+        console.print(f"Directory: {bundle_dir}")
+    console.print(f"Rows: {metadata.get('row_count', 0):,}")
+    console.print(f"Symbols: {len(BundleMetadata.get_symbols(bundle_name))}")
+
+    if not force:
+        if not click.confirm("\nAre you sure you want to delete this bundle?"):
+            console.print("[yellow]Cancelled.[/yellow]")
+            raise click.exceptions.Exit(0)
+
+    # Delete metadata from database
+    deleted = BundleMetadata.delete(bundle_name)
+    if deleted:
+        console.print("[green]✓ Metadata deleted[/green]")
+    else:
+        console.print("[yellow]⚠ No metadata found[/yellow]")
+
+    # Delete bundle directory
+    if bundle_dir.exists():
+        shutil.rmtree(bundle_dir)
+        console.print("[green]✓ Bundle directory deleted[/green]")
+    else:
+        console.print("[yellow]⚠ Bundle directory not found[/yellow]")
+
+    console.print(f"\n[green]Bundle '{bundle_name}' deleted successfully.[/green]")
 
 
 @bundle.command(name="migrate")

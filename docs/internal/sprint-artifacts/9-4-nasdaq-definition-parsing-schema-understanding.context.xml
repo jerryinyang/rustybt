@@ -1,0 +1,132 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>4</storyId>
+    <title>NASDAQ Definition Parsing &amp; Schema Understanding</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-02</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/internal/sprint-artifacts/9-4-nasdaq-definition-parsing-schema-understanding.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer working with NASDAQ equity data</asA>
+    <iWant>to parse and understand the NASDAQ Definition dataset structure</iWant>
+    <soThat>I can extract equity instrument metadata and extend parsing infrastructure</soThat>
+    <tasks>
+      <task id="1" title="Implement NASDAQ Definition Parsing" ac="1">
+        <subtask id="1.1">Extend _parse_definition_file() for NASDAQ schema</subtask>
+        <subtask id="1.2">Handle NASDAQ symbol-split file pattern: xnas-itch-{start}-{end}.definition.{SYMBOL}.csv.zst</subtask>
+        <subtask id="1.3">Implement _find_definition_by_symbol() (contrast with CME's _find_definition_by_date())</subtask>
+        <subtask id="1.4">Parse NASDAQ-specific columns</subtask>
+      </task>
+      <task id="2" title="Document Schema Differences" ac="2">
+        <subtask id="2.1">Document equity-relevant fields (exchange, currency, lot_size)</subtask>
+        <subtask id="2.2">Document non-applicable derivatives fields</subtask>
+        <subtask id="2.3">Update databento/docs/definition_dataset_structure.md with NASDAQ schema</subtask>
+      </task>
+      <task id="3" title="Implement Schema Detection" ac="3">
+        <subtask id="3.1">Add _detect_definition_schema() method</subtask>
+        <subtask id="3.2">Auto-detect CME vs NASDAQ based on columns/values</subtask>
+        <subtask id="3.3">Apply appropriate parsing logic based on schema</subtask>
+      </task>
+      <task id="4" title="Prevent Instrument ID Collision" ac="4">
+        <subtask id="4.1">Design composite ID format: {exchange}_{instrument_id}</subtask>
+        <subtask id="4.2">Implement collision prevention in parsing</subtask>
+        <subtask id="4.3">Ensure CME and NASDAQ instruments are distinguishable</subtask>
+      </task>
+      <task id="5" title="Testing">
+        <subtask id="5.1">Unit tests for NASDAQ Definition parsing</subtask>
+        <subtask id="5.2">Unit tests for schema detection</subtask>
+        <subtask id="5.3">Integration tests with sample NASDAQ Definition data</subtask>
+        <subtask id="5.4">Tests for cross-exchange ID uniqueness</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-9.4.1" title="Parse NASDAQ Definition files successfully">
+      <requirement>CRITICAL: NASDAQ uses symbol-split (NOT day-split like CME)</requirement>
+      <requirement>Can parse symbol-based Definition files (xnas-itch-{start}-{end}.definition.{SYMBOL}.csv.zst)</requirement>
+      <requirement>Parsing handles NASDAQ-specific schema (65 columns, but simpler usage)</requirement>
+    </criterion>
+    <criterion id="AC-9.4.2" title="Document NASDAQ-specific schema differences from CME">
+      <requirement>Equity-relevant fields: exchange, currency, lot_size</requirement>
+      <requirement>Fields NOT applicable: instrument_class (no derivatives), underlying_id, strike_price, expiration</requirement>
+    </criterion>
+    <criterion id="AC-9.4.3" title="Handle both CME and NASDAQ schemas">
+      <requirement>Parsing code auto-detects schema type (CME vs NASDAQ)</requirement>
+      <requirement>Unified API for loading Definition regardless of exchange</requirement>
+    </criterion>
+    <criterion id="AC-9.4.4" title="Prevent instrument_id collision between exchanges">
+      <requirement>Exchange identifier included in composite key</requirement>
+      <requirement>CME and NASDAQ instruments distinguishable</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="databento/docs/exploration-existing-infrastructure.md" title="Story 9.1 Exploration Document" section="Full Document" critical="true">
+        CRITICAL REFERENCE: Section 2.2 (NASDAQ package structure with symbol-split strategy, 21,800+ files, instrument_class='K'), Section 2.3 (CME vs NASDAQ schema comparison), Section 3.1 (extension points including _find_definition_by_symbol()). KEY DISCOVERY: NASDAQ uses split_symbols=true (files per symbol) vs CME split_duration="day" (files per day).
+      </doc>
+      <doc path="docs/internal/planning/epics/epic-9-databento-adapter-definition-integration.md" title="Epic 9 Definition" section="Story 9.4">
+        Story requirements for NASDAQ Definition parsing and schema detection.
+      </doc>
+      <doc path="databento/docs/definition_dataset_structure.md" title="Definition Dataset Structure" section="CME Schema">
+        Current CME schema documentation to extend with NASDAQ comparison.
+      </doc>
+    </docs>
+    <code>
+      <file path="rustybt/data/adapters/databento_adapter.py" kind="adapter" symbol="_parse_definition_file" reason="CME parsing method from Story 9.2 to extend for NASDAQ"/>
+      <file path="rustybt/data/adapters/databento_adapter.py" kind="adapter" symbol="_load_definition_for_date" reason="Date-based loading to support both exchanges"/>
+      <file path="rustybt/data/adapters/databento_adapter.py" kind="adapter" symbol="DatabentoConfig" reason="Config may need exchange-specific options"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">DataFrame operations for NASDAQ parsing</package>
+        <package name="zstandard" version=">=0.23.0">Decompression of NASDAQ .zst files</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="schema-compatibility">NASDAQ parsing must work alongside CME parsing (unified API)</constraint>
+    <constraint type="collision-prevention">Composite IDs must prevent cross-exchange collisions</constraint>
+    <constraint type="equity-focus">NASDAQ Definition focuses on equity-relevant fields, not derivatives</constraint>
+    <constraint type="auto-detection">Schema detection must be automatic based on data contents</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="_detect_definition_schema" kind="method" path="rustybt/data/adapters/databento_adapter.py">
+      <signature>def _detect_definition_schema(self, df: pl.DataFrame) -> str</signature>
+      <note>Detect whether Definition is CME or NASDAQ based on columns/values. Returns "CME" or "NASDAQ".</note>
+    </interface>
+    <interface name="NASDAQ File Pattern" kind="file-naming" path="NASDAQ-DEFINITION.zip">
+      <signature>xnas-{YYYYMMDD}.definition.csv.zst</signature>
+      <note>NASDAQ Definition files are named with this pattern inside the ZIP package</note>
+    </interface>
+    <interface name="Composite ID Format" kind="convention" path="rustybt/data/adapters/databento_adapter.py">
+      <signature>composite_id = f"{exchange}_{instrument_id}"</signature>
+      <note>Prefix instrument_id with exchange for cross-exchange uniqueness (e.g., "XCME_19100", "XNAS_42")</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Use pytest for all tests. Must verify both CME and NASDAQ parsing work with unified API. Cross-exchange collision tests are critical.
+    </standards>
+    <locations>
+      <location>tests/data/adapters/test_databento_definition.py</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-9.4.1">Test parsing with sample NASDAQ Definition file</idea>
+      <idea ac="AC-9.4.2">Verify NASDAQ-specific fields (exchange, currency, lot_size) extracted</idea>
+      <idea ac="AC-9.4.2">Verify derivatives fields are null/absent for NASDAQ</idea>
+      <idea ac="AC-9.4.3">Test schema detection correctly identifies CME vs NASDAQ</idea>
+      <idea ac="AC-9.4.3">Test unified API works for both exchanges</idea>
+      <idea ac="AC-9.4.4">Test composite ID format prevents collisions</idea>
+      <idea ac="AC-9.4.4">Test CME and NASDAQ can be loaded in same session</idea>
+    </ideas>
+  </tests>
+</story-context>

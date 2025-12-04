@@ -1,0 +1,140 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>2</storyId>
+    <title>CME Definition Parsing &amp; Schema Understanding</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-02</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/internal/sprint-artifacts/9-2-cme-definition-parsing-schema-understanding.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer working with CME futures data</asA>
+    <iWant>to implement CME Definition dataset parsing based on exploration findings</iWant>
+    <soThat>I can extract instrument metadata and build reusable parsing infrastructure</soThat>
+    <tasks>
+      <task id="1" title="Implement Definition File Parsing" ac="1">
+        <subtask id="1.1">Add _parse_definition_file() method to adapter</subtask>
+        <subtask id="1.2">Implement zstd decompression for Definition CSV</subtask>
+        <subtask id="1.3">Handle CME Definition file pattern: glbx-mdp3-{YYYYMMDD}.definition.csv.zst</subtask>
+        <subtask id="1.4">Parse CSV with correct column types (Polars schema)</subtask>
+      </task>
+      <task id="2" title="Extract Key Metadata Fields" ac="2">
+        <subtask id="2.1">Extract core identification fields (instrument_id, raw_symbol, symbol, asset)</subtask>
+        <subtask id="2.2">Extract instrument classification (instrument_class, user_defined_instrument)</subtask>
+        <subtask id="2.3">Extract relationship fields (underlying_id)</subtask>
+        <subtask id="2.4">Extract contract metadata (expiration, activation, strike_price, min_price_increment, contract_multiplier)</subtask>
+      </task>
+      <task id="3" title="Implement Date-Based Loading" ac="1,4">
+        <subtask id="3.1">Add _load_definition_for_date() method</subtask>
+        <subtask id="3.2">Handle Definition package path configuration</subtask>
+        <subtask id="3.3">Return None gracefully if Definition not configured</subtask>
+      </task>
+      <task id="4" title="Document Schema Findings" ac="3">
+        <subtask id="4.1">Update databento/docs/definition_dataset_structure.md with parsing findings</subtask>
+        <subtask id="4.2">Document column types and valid values</subtask>
+        <subtask id="4.3">Document instrument class distribution</subtask>
+        <subtask id="4.4">Document UDS identification patterns</subtask>
+        <subtask id="4.5">Document parent/child relationships via underlying_id</subtask>
+      </task>
+      <task id="5" title="Testing">
+        <subtask id="5.1">Create unit tests for _parse_definition_file()</subtask>
+        <subtask id="5.2">Create unit tests for _load_definition_for_date()</subtask>
+        <subtask id="5.3">Add integration test with sample CME Definition data</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-9.2.1" title="Parse CME Definition files successfully">
+      <requirement>Can parse daily Definition files (glbx-mdp3-{YYYYMMDD}.definition.csv.zst)</requirement>
+      <requirement>Can decompress zstd-compressed CSV files</requirement>
+      <requirement>Parsing handles all 65 columns documented in schema</requirement>
+    </criterion>
+    <criterion id="AC-9.2.2" title="Extract key metadata fields">
+      <requirement>instrument_id, raw_symbol, symbol, asset</requirement>
+      <requirement>instrument_class (F/C/P/S/T)</requirement>
+      <requirement>user_defined_instrument (Y/N)</requirement>
+      <requirement>underlying_id for parent relationships</requirement>
+      <requirement>expiration, activation, strike_price</requirement>
+      <requirement>min_price_increment, contract_multiplier</requirement>
+    </criterion>
+    <criterion id="AC-9.2.3" title="Document schema findings">
+      <requirement>Column types and valid values</requirement>
+      <requirement>Instrument class distribution</requirement>
+      <requirement>User-Defined Spread identification patterns</requirement>
+      <requirement>Parent/child relationship structure via underlying_id</requirement>
+    </criterion>
+    <criterion id="AC-9.2.4" title="Structure parsing code for reuse">
+      <requirement>Parsing methods added to databento_adapter.py</requirement>
+      <requirement>Code structured for extension in Story 9.4 (NASDAQ)</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/internal/planning/epics/epic-9-databento-adapter-definition-integration.md" title="Epic 9 Definition" section="Story 9.2">
+        Story requirements and acceptance criteria for CME Definition parsing.
+      </doc>
+      <doc path="databento/docs/definition_dataset_structure.md" title="Definition Dataset Structure" section="Full Document">
+        Existing schema documentation with 65 columns. Must be updated with parsing findings and type information.
+      </doc>
+      <doc path="databento/docs/exploration-existing-infrastructure.md" title="Exploration Document" section="Integration Plan">
+        Output from Story 9.1 providing integration touchpoints and design decisions. (Prerequisite)
+      </doc>
+    </docs>
+    <code>
+      <file path="rustybt/data/adapters/databento_adapter.py" kind="adapter" symbol="DatabentoAdapter" lines="416-446" reason="Existing _decompress_zst method to reuse for Definition decompression"/>
+      <file path="rustybt/data/adapters/databento_adapter.py" kind="adapter" symbol="_parse_ohlcv_csv" lines="543-741" reason="Reference pattern for CSV parsing with Polars - Definition parsing should follow similar structure"/>
+      <file path="rustybt/data/adapters/databento_adapter.py" kind="adapter" symbol="_get_ohlcv_csv_paths" lines="507-541" reason="Reference pattern for finding and decompressing multiple files"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">DataFrame operations for parsing Definition CSV</package>
+        <package name="zstandard" version=">=0.23.0">Decompression of .zst Definition files</package>
+        <package name="pytest" version=">=7.2.0">Test framework for unit tests</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="reusability">Parsing code must be structured for NASDAQ extension in Story 9.4</constraint>
+    <constraint type="performance">Handle large Definition files efficiently (~2000-3000 rows per day)</constraint>
+    <constraint type="graceful-degradation">Return None if Definition package not configured (no errors)</constraint>
+    <constraint type="schema-preservation">Parse all 65 columns even if only subset used initially</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="_parse_definition_file" kind="method" path="rustybt/data/adapters/databento_adapter.py">
+      <signature>def _parse_definition_file(self, file_path: Path) -> pl.DataFrame</signature>
+      <note>Parse a single Definition CSV file. Returns DataFrame with instrument metadata indexed by instrument_id.</note>
+    </interface>
+    <interface name="_load_definition_for_date" kind="method" path="rustybt/data/adapters/databento_adapter.py">
+      <signature>def _load_definition_for_date(self, date: pd.Timestamp) -> Optional[pl.DataFrame]</signature>
+      <note>Load Definition data for a specific date. Returns None if Definition package not configured.</note>
+    </interface>
+    <interface name="CME File Pattern" kind="file-naming" path="GLBX-CME-DEFINITION.zip">
+      <signature>glbx-mdp3-{YYYYMMDD}.definition.csv.zst</signature>
+      <note>CME Definition files are named with this pattern inside the ZIP package</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Use pytest for unit and integration tests. Follow existing test patterns in tests/data/adapters/. Tests should cover both success paths and error handling (missing files, malformed data).
+    </standards>
+    <locations>
+      <location>tests/data/adapters/test_databento_definition.py (new)</location>
+      <location>tests/data/adapters/conftest.py (fixture updates)</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-9.2.1">Test parsing with sample Definition file extracted from package</idea>
+      <idea ac="AC-9.2.1">Test zstd decompression reuses existing _decompress_zst correctly</idea>
+      <idea ac="AC-9.2.2">Verify all key fields are extracted with correct types</idea>
+      <idea ac="AC-9.2.2">Test instrument_class values (F, C, P, S, T) are preserved</idea>
+      <idea ac="AC-9.2.3">Validate schema documentation matches actual data</idea>
+      <idea ac="AC-9.2.4">Verify method signatures support NASDAQ extension</idea>
+    </ideas>
+  </tests>
+</story-context>

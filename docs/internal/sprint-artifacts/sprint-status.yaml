@@ -136,3 +136,12 @@ development_status:
   X-7-verify-5-layer-comparison-compatibility: done
   X-8-update-documentation: done
   epic-X-retrospective: optional
+
+  # Epic 9: Databento Adapter Definition Integration
+  epic-9: contexted
+  9-1-exploration-documentation-existing-infrastructure: done
+  9-2-cme-definition-parsing-schema-understanding: done
+  9-3-cme-data-ingestion-bundle-verification: done
+  9-4-nasdaq-definition-parsing-schema-understanding: done
+  9-5-nasdaq-data-ingestion-bundle-verification: done
+  epic-9-retrospective: optional

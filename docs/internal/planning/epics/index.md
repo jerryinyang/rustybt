@@ -82,6 +82,12 @@
     - [Story X.6: Reimplement Remaining 3 Strategies](./epic-X-real-rustybt-engine-integration.md#story-x6-reimplement-remaining-3-strategies)
     - [Story X.7: Verify 5-Layer Comparison Compatibility](./epic-X-real-rustybt-engine-integration.md#story-x7-verify-5-layer-comparison-compatibility)
     - [Story X.8: Update Documentation](./epic-X-real-rustybt-engine-integration.md#story-x8-update-documentation)
+  - [Epic 9: Databento Adapter Definition Integration](./epic-9-databento-adapter-definition-integration.md)
+    - [Story 9.1: Exploration & Documentation of Existing Infrastructure](./epic-9-databento-adapter-definition-integration.md#story-91-exploration--documentation-of-existing-infrastructure)
+    - [Story 9.2: CME Definition Parsing & Schema Understanding](./epic-9-databento-adapter-definition-integration.md#story-92-cme-definition-parsing--schema-understanding)
+    - [Story 9.3: CME Data Ingestion & Bundle Verification](./epic-9-databento-adapter-definition-integration.md#story-93-cme-data-ingestion--bundle-verification)
+    - [Story 9.4: NASDAQ Definition Parsing & Schema Understanding](./epic-9-databento-adapter-definition-integration.md#story-94-nasdaq-definition-parsing--schema-understanding)
+    - [Story 9.5: NASDAQ Data Ingestion & Bundle Verification](./epic-9-databento-adapter-definition-integration.md#story-95-nasdaq-data-ingestion--bundle-verification)
   - [FR Coverage Matrix](./fr-coverage-matrix.md)
   - [Summary](./summary.md)
 
@@ -98,6 +104,7 @@
 | Epic 7 | Complete | 2025-11-28 | Reporting & documentation system |
 | Epic 8 | Complete | 2025-11-28 | User-facing documentation |
 | Epic X | In Review | 2025-12-01 | Real rustybt engine integration - critical fix |
+| Epic 9 | Draft | - | Databento adapter Definition integration (5 stories) |
 
 ### Epic X: Real rustybt Engine Integration
 

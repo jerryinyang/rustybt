@@ -51,7 +51,8 @@ class SMACrossoverStrategy(BacktraderValidatedStrategy):
     slow_period : int
         Period for slow SMA, by default 30.
     target_percent : float
-        Target allocation percentage (0-1), by default 1.0 (100%).
+        Target allocation percentage (0-1), by default 0.98 (98%).
+        Using 98% provides consistency with rustybt's buffer for price movements.
     """
 
     # Backtrader params - log_path inherited, plus strategy-specific params
@@ -59,7 +60,7 @@ class SMACrossoverStrategy(BacktraderValidatedStrategy):
         ("log_path", None),
         ("fast_period", 10),
         ("slow_period", 30),
-        ("target_percent", 1.0),
+        ("target_percent", 0.98),
     )
 
     def __init__(self) -> None:

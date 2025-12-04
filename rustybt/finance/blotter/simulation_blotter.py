@@ -910,14 +910,18 @@ class SimulationBlotter(Blotter):
                                     },
                                 )
                             elif self.cash_validation_mode == "reject":
-                                # Reject mode: Skip transaction, log warning
+                                # Reject mode: Cancel order immediately, log warning
+                                # Orders rejected due to insufficient funds should not
+                                # auto-retry - strategy must resubmit if desired
                                 warning_logger.warning(
-                                    f"Order {order.id} fill rejected at execution - "
+                                    f"Order {order.id} rejected at execution - "
                                     f"insufficient cash: need ${transaction_cost:,.2f}, "
                                     f"have ${self.portfolio.cash:,.2f}. "
                                     f"Asset: {order.asset.symbol}, Amount: {txn.amount}. "
-                                    "Order remains open."
+                                    "Order cancelled."
                                 )
+                                order.reject()  # Set status to REJECTED
+                                closed_orders.append(order)  # Remove from open_orders
                                 continue  # Skip this transaction
                             # else: "warn" mode - log warning but allow execution
                             else:

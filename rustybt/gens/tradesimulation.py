@@ -248,6 +248,9 @@ class AlgorithmSimulator:
                 order = blotter.orders[transaction.order_id]
                 metrics_tracker.process_order(order)
 
+                # Notify algorithm of the transaction (like Backtrader's notify_order)
+                algo.notify_transaction(transaction)
+
             for commission in new_commissions:
                 metrics_tracker.process_commission(commission)
 

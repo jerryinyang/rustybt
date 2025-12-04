@@ -1,0 +1,144 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>3</storyId>
+    <title>CME Data Ingestion &amp; Bundle Verification</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-02</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/internal/sprint-artifacts/9-3-cme-data-ingestion-bundle-verification.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer needing CME futures data locally</asA>
+    <iWant>to ingest CME OHLCV data with optional Definition enrichment into a local bundle</iWant>
+    <soThat>I have correctly represented CME data available for backtesting</soThat>
+    <tasks>
+      <task id="1" title="Extend DatabentoConfig" ac="2">
+        <subtask id="1.1">Add definition_package_path: Optional[Path] = None</subtask>
+        <subtask id="1.2">Add include_user_defined_spreads: bool = True</subtask>
+        <subtask id="1.3">Document new config options</subtask>
+      </task>
+      <task id="2" title="Integrate Definition Loading into Ingestion Flow" ac="2,3">
+        <subtask id="2.1">Load Definition data during ingestion if configured</subtask>
+        <subtask id="2.2">Merge Definition metadata with OHLCV data</subtask>
+        <subtask id="2.3">Implement UDS filtering based on Definition metadata</subtask>
+      </task>
+      <task id="3" title="Implement Graceful Degradation" ac="1,3">
+        <subtask id="3.1">Detect when Definition not configured</subtask>
+        <subtask id="3.2">Log warning when filter requested but Definition unavailable</subtask>
+        <subtask id="3.3">Ensure existing behavior unchanged without Definition</subtask>
+      </task>
+      <task id="4" title="Enrich Bundle with Metadata" ac="2">
+        <subtask id="4.1">Add Definition metadata columns to bundle when available</subtask>
+        <subtask id="4.2">Handle missing metadata gracefully</subtask>
+      </task>
+      <task id="5" title="Bundle Verification" ac="4">
+        <subtask id="5.1">Verify bundle contains expected instruments</subtask>
+        <subtask id="5.2">Spot check OHLCV values against source</subtask>
+        <subtask id="5.3">Verify instrument_id uniqueness</subtask>
+        <subtask id="5.4">Test UDS filtering with Definition</subtask>
+        <subtask id="5.5">Test metadata population with Definition</subtask>
+        <subtask id="5.6">Test backward compatibility without Definition</subtask>
+      </task>
+      <task id="6" title="Testing">
+        <subtask id="6.1">Unit tests for config changes</subtask>
+        <subtask id="6.2">Integration tests for Definition-enabled ingestion</subtask>
+        <subtask id="6.3">Regression tests for backward compatibility</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC-9.3.1" title="OHLCV ingestion works without Definition (backward compatible)">
+      <requirement>OHLCV data is ingested into a local bundle (works without Definition)</requirement>
+      <requirement>Existing adapter behavior preserved when Definition not provided</requirement>
+      <requirement>No breaking changes to current API</requirement>
+    </criterion>
+    <criterion id="AC-9.3.2" title="Definition package enables metadata filtering when provided">
+      <requirement>definition_package_path config option added to DatabentoConfig</requirement>
+      <requirement>When Definition provided, metadata-driven features enabled</requirement>
+      <requirement>include_user_defined_spreads=False excludes instruments where user_defined_instrument='Y' or instrument_class='T'</requirement>
+      <requirement>include_user_defined_spreads=True (default) includes all instruments</requirement>
+    </criterion>
+    <criterion id="AC-9.3.3" title="Graceful degradation when Definition absent">
+      <requirement>Filtering options that require Definition are ignored with warning</requirement>
+      <requirement>Clear warning logged when filter requested but Definition unavailable</requirement>
+    </criterion>
+    <criterion id="AC-9.3.4" title="Bundle verification passes">
+      <requirement>Bundle contains expected instruments for date range</requirement>
+      <requirement>OHLCV values match source data (spot check)</requirement>
+      <requirement>instrument_id uniqueness preserved</requirement>
+      <requirement>With Definition: UDS filtering works correctly</requirement>
+      <requirement>With Definition: Metadata columns populated</requirement>
+      <requirement>Without Definition: Existing behavior unchanged</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="databento/docs/exploration-existing-infrastructure.md" title="Story 9.1 Exploration Document" section="Full Document" critical="true">
+        CRITICAL REFERENCE: Comprehensive exploration of adapter architecture, Definition package analysis, integration plan, and risk assessment. Sections 1.5 (bundle output), 3.1 (extension points), 3.3 (config additions), and 4 (risk assessment) are directly applicable.
+      </doc>
+      <doc path="docs/internal/planning/epics/epic-9-databento-adapter-definition-integration.md" title="Epic 9 Definition" section="Story 9.3">
+        Story requirements for CME ingestion with optional Definition enrichment.
+      </doc>
+      <doc path="databento/docs/implementation_flaws_and_recommendations.md" title="Implementation Recommendations" section="Recommendation 3">
+        UDS filtering recommendation with config option design and implementation example.
+      </doc>
+    </docs>
+    <code>
+      <file path="rustybt/data/adapters/databento_adapter.py" kind="adapter" symbol="DatabentoConfig" lines="97-121" reason="Config dataclass to extend with definition_package_path and include_user_defined_spreads"/>
+      <file path="rustybt/data/adapters/databento_adapter.py" kind="adapter" symbol="ingest_to_bundle" lines="1049-1188" reason="Main ingestion method to modify for Definition integration"/>
+      <file path="rustybt/data/adapters/databento_adapter.py" kind="adapter" symbol="_parse_ohlcv_csv" lines="543-741" reason="OHLCV parsing that needs Definition merge hook"/>
+      <file path="rustybt/data/polars/parquet_writer.py" kind="writer" symbol="ParquetWriter" reason="Bundle writer for enriched metadata output"/>
+    </code>
+    <dependencies>
+      <python>
+        <package name="polars" version=">=1.0">DataFrame join operations for OHLCV/Definition merge</package>
+        <package name="pytest" version=">=7.2.0">Test framework</package>
+        <package name="structlog" version="*">Warning logging for graceful degradation</package>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="backward-compatibility">Existing ingestion must work without Definition package</constraint>
+    <constraint type="optional-enhancement">Definition enrichment is optional, never required</constraint>
+    <constraint type="graceful-degradation">Filters requiring Definition log warnings and are ignored when Definition absent</constraint>
+    <constraint type="default-behavior">include_user_defined_spreads=True (include all) is the default</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="DatabentoConfig (extended)" kind="dataclass" path="rustybt/data/adapters/databento_adapter.py">
+      <signature>@dataclass DatabentoConfig: ..., definition_package_path: Optional[Path] = None, include_user_defined_spreads: bool = True</signature>
+      <note>Extended config with Definition support options</note>
+    </interface>
+    <interface name="_enrich_ohlcv_with_definition" kind="method" path="rustybt/data/adapters/databento_adapter.py">
+      <signature>def _enrich_ohlcv_with_definition(self, ohlcv_df: pl.DataFrame, definition_df: pl.DataFrame) -> pl.DataFrame</signature>
+      <note>Join Definition metadata to OHLCV data on instrument_id</note>
+    </interface>
+    <interface name="Graceful Degradation Pattern" kind="pattern" path="rustybt/data/adapters/databento_adapter.py">
+      <signature>if self.config.definition_package_path is None and not self.config.include_user_defined_spreads: logger.warning("...")</signature>
+      <note>Log warning when filter requested but Definition unavailable</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Use pytest for all tests. Backward compatibility tests are critical - must verify existing behavior unchanged. Integration tests should use sample CME data extracts.
+    </standards>
+    <locations>
+      <location>tests/data/adapters/test_databento_definition.py</location>
+      <location>tests/data/adapters/test_databento_adapter.py (regression tests)</location>
+    </locations>
+    <ideas>
+      <idea ac="AC-9.3.1">Regression test: ingest without Definition matches existing behavior exactly</idea>
+      <idea ac="AC-9.3.2">Test UDS filtering excludes instruments with user_defined_instrument='Y'</idea>
+      <idea ac="AC-9.3.2">Test UDS filtering excludes instruments with instrument_class='T'</idea>
+      <idea ac="AC-9.3.3">Test warning logged when include_user_defined_spreads=False but no Definition</idea>
+      <idea ac="AC-9.3.4">Verify enriched bundle has Definition metadata columns</idea>
+      <idea ac="AC-9.3.4">Spot check OHLCV values against source file</idea>
+    </ideas>
+  </tests>
+</story-context>

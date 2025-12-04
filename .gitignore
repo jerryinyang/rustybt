@@ -213,3 +213,6 @@ docs/api-reference/
 
 # Validation Framework
 validation-sessions/
+
+databento/
+databento/*

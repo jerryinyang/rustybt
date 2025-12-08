@@ -1,0 +1,31 @@
+# Long Running Stability Test (24 hours)
+# Tests system stability over extended operation period
+
+name: stability_24h
+description: |
+  Validates long-running operational stability:
+  - Continuous operation for 24 hours
+  - Memory usage remains stable
+  - State integrity maintained
+  - No crashes or restarts needed
+
+type: long_running
+duration: 86400  # 24 hours
+
+parameters:
+  signal_interval_seconds: 300  # Signal every 5 minutes
+  memory_sample_interval_seconds: 3600  # Hourly memory samples
+  checkpoint_interval_seconds: 3600  # Hourly checkpoints
+  state_persistence_interval_seconds: 300  # Save state every 5 minutes
+
+success_criteria:
+  no_crashes: true
+  memory_growth_percent_max: 10
+  state_integrity: true
+
+tags:
+  - stability
+  - long-running
+  - memory
+
+requires_testnet: false

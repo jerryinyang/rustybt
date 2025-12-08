@@ -1,0 +1,31 @@
+# Network Disconnect Recovery Test
+# Tests WebSocket reconnection and state recovery after network failures
+
+name: network_disconnect_recovery
+description: |
+  Validates system behavior during network disconnections:
+  - Detects disconnection within timeout
+  - Reconnects within allowed time
+  - Recovers subscriptions and state
+  - No data loss during recovery
+
+type: network
+duration: 300  # 5 minutes
+
+parameters:
+  disconnect_count: 5
+  disconnect_interval_seconds: 60
+  max_reconnect_time_seconds: 30
+  stale_connection_timeout_seconds: 60
+
+success_criteria:
+  all_reconnections_successful: true
+  max_reconnection_time_seconds: 30
+  no_data_loss: true
+
+tags:
+  - network
+  - resilience
+  - websocket
+
+requires_testnet: false

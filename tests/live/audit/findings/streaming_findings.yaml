@@ -1,0 +1,124 @@
+# Streaming Adapter Findings
+# Generated from ruff and mypy static analysis
+# Date: 2025-12-06
+
+findings:
+  # Base streaming adapter findings
+  - id: AUDIT-S001
+    module: rustybt/live/streaming/base.py
+    line: 14
+    severity: MEDIUM
+    category: type_error
+    description: "Module 'websockets.client' has no attribute 'WebSocketClientProtocol' - API may have changed"
+    recommendation: "Update import to use 'ClientProtocol' instead of 'WebSocketClientProtocol'"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-S002
+    module: rustybt/live/streaming/base.py
+    line: 79
+    severity: LOW
+    category: type_error
+    description: "Type of variable becomes 'Any | None' due to unfollowed import"
+    recommendation: "Add explicit type annotation or ensure import is followed"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-S003
+    module: rustybt/live/streaming/base.py
+    line: 84
+    severity: LOW
+    category: type_error
+    description: "Missing type parameters for generic type 'Task'"
+    recommendation: "Add type parameters: Task[None]"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-S004
+    module: rustybt/live/streaming/base.py
+    line: 85
+    severity: LOW
+    category: type_error
+    description: "Missing type parameters for generic type 'Task'"
+    recommendation: "Add type parameters: Task[None]"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-S005
+    module: rustybt/live/streaming/base.py
+    line: 86
+    severity: LOW
+    category: type_error
+    description: "Missing type parameters for generic type 'Task'"
+    recommendation: "Add type parameters: Task[None]"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  # Bar buffer findings
+  - id: AUDIT-S006
+    module: rustybt/live/streaming/bar_buffer.py
+    line: 79
+    severity: HIGH
+    category: type_error
+    description: "Function 'builtins.any' is not valid as a type - should use 'typing.Any' instead"
+    recommendation: "Replace 'any' with 'Any' from typing module"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-S007
+    module: rustybt/live/streaming/bar_buffer.py
+    line: 202
+    severity: HIGH
+    category: type_error
+    description: "Function 'builtins.any' is not valid as a type - should use 'typing.Any' instead"
+    recommendation: "Replace 'any' with 'Any' from typing module"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-S008
+    module: rustybt/live/streaming/bar_buffer.py
+    line: 219
+    severity: HIGH
+    category: type_error
+    description: "Function 'builtins.any' is not valid as a type - should use 'typing.Any' instead"
+    recommendation: "Replace 'any' with 'Any' from typing module"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  # CCXT stream findings
+  - id: AUDIT-S009
+    module: rustybt/live/streaming/ccxt_stream.py
+    line: 59
+    severity: LOW
+    category: style
+    description: "Unused 'type: ignore' comment"
+    recommendation: "Remove unused type ignore comment"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null

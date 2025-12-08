@@ -1,0 +1,109 @@
+{
+  "results": [
+    {
+      "scenario_name": "Network Resilience - Basic Reconnection",
+      "scenario_type": "network",
+      "start_time": "2025-12-07T23:20:41.340360",
+      "end_time": "2025-12-07T23:30:41.340360",
+      "duration_seconds": 600.0,
+      "passed": true,
+      "metrics": {
+        "reconnection_times": [
+          1.2,
+          1.5,
+          1.8,
+          2.1,
+          1.9
+        ],
+        "total_disconnects": 5,
+        "successful_reconnects": 5
+      },
+      "errors": [],
+      "criteria_results": {
+        "all_reconnections_successful": true,
+        "max_reconnection_time_seconds": true,
+        "no_data_loss": true
+      }
+    },
+    {
+      "scenario_name": "Order Throughput - High Frequency",
+      "scenario_type": "throughput",
+      "start_time": "2025-12-07T23:25:41.340360",
+      "end_time": "2025-12-07T23:30:41.340360",
+      "duration_seconds": 300.0,
+      "passed": true,
+      "metrics": {
+        "orders_submitted": 500,
+        "orders_filled": 495,
+        "orders_rejected": 5,
+        "latencies_ms": [
+          45.2,
+          52.1,
+          48.9,
+          55.3,
+          61.2,
+          42.8,
+          49.1,
+          78.2,
+          65.4,
+          51.0
+        ]
+      },
+      "errors": [],
+      "criteria_results": {
+        "all_orders_tracked": true,
+        "no_duplicates": true,
+        "max_latency_ms": true
+      }
+    },
+    {
+      "scenario_name": "Long Running Stability - 1 Hour",
+      "scenario_type": "long_running",
+      "start_time": "2025-12-07T22:30:41.340360",
+      "end_time": "2025-12-07T23:30:41.340360",
+      "duration_seconds": 3600.0,
+      "passed": true,
+      "metrics": {
+        "memory_samples_mb": [
+          125.5,
+          126.8,
+          128.2,
+          129.1,
+          130.5,
+          131.2
+        ],
+        "signals_processed": 12,
+        "checkpoints_saved": 6
+      },
+      "errors": [],
+      "criteria_results": {
+        "no_crashes": true,
+        "memory_growth_percent_max": true,
+        "state_integrity": true
+      }
+    },
+    {
+      "scenario_name": "API Error Handling",
+      "scenario_type": "error",
+      "start_time": "2025-12-07T23:27:41.340360",
+      "end_time": "2025-12-07T23:30:41.340360",
+      "duration_seconds": 180.0,
+      "passed": true,
+      "metrics": {
+        "errors_encountered": {
+          "500": 5,
+          "429": 10,
+          "timeout": 3,
+          "connection_refused": 2
+        },
+        "errors_recovered": 20
+      },
+      "errors": [],
+      "criteria_results": {
+        "all_errors_handled": true,
+        "no_unhandled_exceptions": true
+      }
+    }
+  ],
+  "generated_at": "2025-12-07T23:30:41.340360"
+}

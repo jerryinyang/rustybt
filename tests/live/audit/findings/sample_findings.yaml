@@ -1,0 +1,57 @@
+# Sample Audit Findings File
+# Demonstrates the YAML schema with example findings of different severities
+# This file is used for testing and documentation purposes
+
+findings:
+  - id: AUDIT-E001
+    module: rustybt/live/engine.py
+    line: 150
+    severity: CRITICAL
+    category: error_handling
+    description: "Sample CRITICAL finding - Exception in main loop could crash engine without graceful shutdown"
+    recommendation: "Wrap main loop in try/except with graceful shutdown and state persistence"
+    status: OPEN
+    found_by: code_audit
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-O002
+    module: rustybt/live/order_manager.py
+    line: 234
+    severity: HIGH
+    category: state_management
+    description: "Sample HIGH finding - Order state transition can occur without proper validation"
+    recommendation: "Add state transition validation before updating order status"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-M003
+    module: rustybt/live/state_manager.py
+    line: 89
+    severity: MEDIUM
+    category: logging
+    description: "Sample MEDIUM finding - State save operation not logged at INFO level"
+    recommendation: "Add INFO-level logging for state persistence operations"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-B004
+    module: rustybt/live/brokers/base.py
+    line: 45
+    severity: LOW
+    category: style
+    description: "Sample LOW finding - Method docstring missing parameter documentation"
+    recommendation: "Add parameter descriptions to docstring"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "All"

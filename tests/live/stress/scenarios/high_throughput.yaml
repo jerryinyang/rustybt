@@ -1,0 +1,33 @@
+# High Throughput Order Test
+# Tests system capacity for high-frequency order submission
+
+name: order_burst_test
+description: |
+  Validates order submission under high load:
+  - Submits orders at specified rate
+  - Tracks all orders without loss
+  - Measures submission latency
+  - No duplicate orders created
+
+type: throughput
+duration: 60  # 1 minute
+
+parameters:
+  orders_per_second: 10
+  order_type: market
+  asset: BTC-PERP
+  burst_count: 0
+  burst_orders: 0
+  burst_interval_seconds: 0
+
+success_criteria:
+  all_orders_tracked: true
+  no_duplicates: true
+  max_latency_ms: 100
+
+tags:
+  - throughput
+  - orders
+  - performance
+
+requires_testnet: false

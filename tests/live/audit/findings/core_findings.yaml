@@ -1,0 +1,268 @@
+# Core Live Trading Module Findings
+# Generated from ruff and mypy static analysis
+# Date: 2025-12-06
+
+findings:
+  # Engine findings
+  - id: AUDIT-E001
+    module: rustybt/live/engine.py
+    line: 218
+    severity: MEDIUM
+    category: type_error
+    description: "Attribute _reconciliation_strategy not defined in class - mypy reports attr-defined error"
+    recommendation: "Add _reconciliation_strategy attribute to __init__ or verify attribute name"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E002
+    module: rustybt/live/engine.py
+    line: 377
+    severity: HIGH
+    category: type_error
+    description: "MarketDataEvent has no attribute 'data' - potential runtime AttributeError when handling market data events"
+    recommendation: "Verify MarketDataEvent model has 'data' attribute or access correct attribute name"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E003
+    module: rustybt/live/engine.py
+    line: 412
+    severity: HIGH
+    category: type_error
+    description: "Passing string literal to update_order_status instead of OrderStatus enum - type mismatch"
+    recommendation: "Use OrderStatus enum values instead of string literals for status parameter"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E004
+    module: rustybt/live/engine.py
+    line: 437
+    severity: HIGH
+    category: type_error
+    description: "Passing string literal to update_order_status instead of OrderStatus enum - type mismatch (duplicate location)"
+    recommendation: "Use OrderStatus enum values instead of string literals for status parameter"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E005
+    module: rustybt/live/engine.py
+    line: 517
+    severity: LOW
+    category: type_error
+    description: "Missing type annotation for local_positions variable"
+    recommendation: "Add type annotation: local_positions: list[PositionSnapshot] = ..."
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E006
+    module: rustybt/live/engine.py
+    line: 526
+    severity: HIGH
+    category: type_error
+    description: "OrderManager has no attribute 'get_pending_orders' - method does not exist"
+    recommendation: "Implement get_pending_orders method in OrderManager or use existing method"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E007
+    module: rustybt/live/engine.py
+    line: 606
+    severity: LOW
+    category: type_error
+    description: "Missing type annotation for positions variable"
+    recommendation: "Add type annotation: positions: list[PositionSnapshot] = ..."
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E008
+    module: rustybt/live/engine.py
+    line: 613
+    severity: HIGH
+    category: type_error
+    description: "OrderManager has no attribute 'get_pending_orders' - duplicate call to missing method"
+    recommendation: "Implement get_pending_orders method in OrderManager or use existing method"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E009
+    module: rustybt/live/engine.py
+    line: 637
+    severity: HIGH
+    category: type_error
+    description: "Missing named argument 'alignment_metrics' for StateCheckpoint constructor"
+    recommendation: "Provide alignment_metrics parameter when creating StateCheckpoint"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E010
+    module: rustybt/live/engine.py
+    line: 698
+    severity: HIGH
+    category: type_error
+    description: "PositionReconciler has no attribute 'reconcile_positions', maybe '_reconcile_positions' (private method)"
+    recommendation: "Use _reconcile_positions or expose reconcile_positions as public API"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E011
+    module: rustybt/live/engine.py
+    line: 790
+    severity: LOW
+    category: type_error
+    description: "Missing type parameters for generic type 'dict'"
+    recommendation: "Add type parameters: dict[str, Any]"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E012
+    module: rustybt/live/engine.py
+    line: 803
+    severity: HIGH
+    category: type_error
+    description: "Incompatible type assignment - assigning dict to bool variable"
+    recommendation: "Fix variable type or assignment logic"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  # StateManager findings
+  - id: AUDIT-M001
+    module: rustybt/live/state_manager.py
+    line: 251
+    severity: LOW
+    category: type_error
+    description: "Missing type parameters for generic type 'dict'"
+    recommendation: "Add type parameters: dict[str, Any]"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-M002
+    module: rustybt/live/state_manager.py
+    line: 295
+    severity: LOW
+    category: type_error
+    description: "Missing type parameters for generic type 'list'"
+    recommendation: "Add type parameters: list[PositionSnapshot]"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  # Reconciler findings
+  - id: AUDIT-R001
+    module: rustybt/live/reconciler.py
+    line: 213
+    severity: MEDIUM
+    category: static_analysis
+    description: "Statement is unreachable - code will never execute"
+    recommendation: "Remove unreachable code or fix control flow logic"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-R002
+    module: rustybt/live/reconciler.py
+    line: 261
+    severity: HIGH
+    category: type_error
+    description: "Type mismatch in assignment - assigning OrderSnapshot to dict[Any, Any] variable"
+    recommendation: "Use correct type annotation for local_orders_dict or fix assignment logic"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-R003
+    module: rustybt/live/reconciler.py
+    line: 315
+    severity: LOW
+    category: type_error
+    description: "Missing type parameters for generic type 'dict'"
+    recommendation: "Add type parameters: dict[str, Decimal]"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-R004
+    module: rustybt/live/reconciler.py
+    line: 340
+    severity: MEDIUM
+    category: type_error
+    description: "Incompatible return value type - returning dict[Any | None, Decimal] instead of dict[str, Decimal]"
+    recommendation: "Ensure all keys are non-None strings before returning"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  # StrategyExecutor findings
+  - id: AUDIT-X001
+    module: rustybt/live/strategy_executor.py
+    line: 84
+    severity: HIGH
+    category: type_error
+    description: "Too many arguments for 'initialize' of TradingAlgorithm"
+    recommendation: "Check TradingAlgorithm.initialize signature and remove extra arguments"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-X002
+    module: rustybt/live/strategy_executor.py
+    line: 121
+    severity: HIGH
+    category: type_error
+    description: "Missing positional argument 'data' in call to handle_data of TradingAlgorithm"
+    recommendation: "Provide required 'data' argument to handle_data call"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null

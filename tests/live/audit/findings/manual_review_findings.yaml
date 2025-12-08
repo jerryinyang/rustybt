@@ -1,0 +1,206 @@
+# Manual Code Review Findings
+# Generated from manual control flow analysis
+# Date: 2025-12-06
+
+findings:
+  # Order State Machine Issues
+  - id: AUDIT-O001
+    module: rustybt/live/order_manager.py
+    line: null
+    severity: MEDIUM
+    category: state_management
+    description: "Order state machine missing explicit state transition validation - no guard preventing invalid transitions like FILLED->PENDING"
+    recommendation: "Add state transition matrix validation in update_order_status to reject invalid state transitions"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-O002
+    module: rustybt/live/order_manager.py
+    line: 256
+    severity: LOW
+    category: state_management
+    description: "cancel_order stores reason in reject_reason field - semantic mismatch but functional"
+    recommendation: "Consider adding a separate cancel_reason field or renaming reject_reason to termination_reason"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  # State Persistence Issues
+  - id: AUDIT-M003
+    module: rustybt/live/state_manager.py
+    line: 108
+    severity: LOW
+    category: state_management
+    description: "Atomic write uses os.rename which is atomic on POSIX but may not be on Windows with different drives"
+    recommendation: "Document platform requirements or use shutil.move for cross-platform atomicity"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-M004
+    module: rustybt/live/state_manager.py
+    line: 173
+    severity: MEDIUM
+    category: state_management
+    description: "Staleness check uses datetime.now() without timezone, checkpoint.timestamp may be TZ-aware causing comparison issues"
+    recommendation: "Use UTC consistently: datetime.now(tz=timezone.utc) and ensure checkpoint.timestamp has same tz handling"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  # Reconnection Logic Issues
+  - id: AUDIT-S010
+    module: rustybt/live/streaming/base.py
+    line: 162
+    severity: MEDIUM
+    category: reconnection_logic
+    description: "Reconnection logic has correct exponential backoff but no jitter - can cause thundering herd on multi-client reconnect"
+    recommendation: "Add random jitter to backoff delay: delay * (1 + random.uniform(-0.1, 0.1))"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-S011
+    module: rustybt/live/streaming/base.py
+    line: 200
+    severity: LOW
+    category: reconnection_logic
+    description: "Subscription restoration on reconnect iterates in undefined order - should preserve original subscription order"
+    recommendation: "Use OrderedDict or sorted iteration for deterministic subscription order"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-S012
+    module: rustybt/live/streaming/base.py
+    line: 323
+    severity: HIGH
+    category: error_handling
+    description: "ConnectionClosed exception handler always triggers reconnect without checking if disconnect was intentional"
+    recommendation: "Add flag to distinguish intentional disconnect from unexpected closure, skip reconnect if intentional"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  # Circuit Breaker Issues
+  - id: AUDIT-C001
+    module: rustybt/live/circuit_breakers.py
+    line: 119
+    severity: MEDIUM
+    category: concurrency
+    description: "reset() method has no locking - could race with check() in concurrent access"
+    recommendation: "Add asyncio.Lock to protect state mutations in reset()"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-C002
+    module: rustybt/live/circuit_breakers.py
+    line: null
+    severity: LOW
+    category: logging
+    description: "Circuit breaker events use logger.critical but no alert mechanism is triggered"
+    recommendation: "Integrate with alerts.py to send notifications when circuit breaker trips"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  # Concurrency Issues
+  - id: AUDIT-E013
+    module: rustybt/live/engine.py
+    line: 505
+    severity: MEDIUM
+    category: concurrency
+    description: "_run_reconciliation accesses _portfolio without lock protection - potential race with event handlers"
+    recommendation: "Use asyncio.Lock when accessing shared state like _portfolio during reconciliation"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E014
+    module: rustybt/live/engine.py
+    line: 517
+    severity: MEDIUM
+    category: state_management
+    description: "local_positions and local_cash are hardcoded placeholders - reconciliation using fake data"
+    recommendation: "Complete TODO to extract actual positions from DecimalLedger before production use"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E015
+    module: rustybt/live/engine.py
+    line: 412
+    severity: HIGH
+    category: error_handling
+    description: "Order fill handler uses string 'filled' instead of OrderStatus.FILLED enum - will fail type checking"
+    recommendation: "Use OrderStatus.FILLED instead of string literal 'filled'"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  - id: AUDIT-E016
+    module: rustybt/live/engine.py
+    line: 437
+    severity: HIGH
+    category: error_handling
+    description: "Order reject handler uses string 'rejected' instead of OrderStatus.REJECTED enum - will fail type checking"
+    recommendation: "Use OrderStatus.REJECTED instead of string literal 'rejected'"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  # Control Flow Issues
+  - id: AUDIT-E017
+    module: rustybt/live/engine.py
+    line: 418
+    severity: LOW
+    category: logging
+    description: "TODO comment indicates Story 6.3 work incomplete - portfolio not updated on fills"
+    recommendation: "Implement portfolio update logic as noted in TODO comment"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+
+  # Additional Streaming Issues
+  - id: AUDIT-S013
+    module: rustybt/live/streaming/base.py
+    line: 370
+    severity: MEDIUM
+    category: error_handling
+    description: "Circuit breaker reconnect creates new task but doesn't track it - could have multiple concurrent reconnect attempts"
+    recommendation: "Check if _reconnect_task is already running before creating new one"
+    status: OPEN
+    found_by: manual_review
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null

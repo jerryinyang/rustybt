@@ -1,0 +1,37 @@
+# API Error Simulation Test
+# Tests graceful handling of various API errors
+
+name: api_error_handling
+description: |
+  Validates error handling under adverse conditions:
+  - Gracefully handles HTTP 500 errors
+  - Respects rate limits (429)
+  - Handles connection timeouts
+  - Recovers from connection refused
+  - Circuit breaker triggers appropriately
+
+type: error
+duration: 300  # 5 minutes
+
+parameters:
+  error_types:
+    - "500"
+    - "429"
+    - "timeout"
+    - "connection_refused"
+  error_probability: 0.1  # 10% of requests fail
+  recovery_timeout_seconds: 30
+  consecutive_error_threshold: 3
+
+success_criteria:
+  all_errors_handled: true
+  no_unhandled_exceptions: true
+  circuit_breaker_triggered: true
+  recovery_successful: true
+
+tags:
+  - error-handling
+  - resilience
+  - circuit-breaker
+
+requires_testnet: false

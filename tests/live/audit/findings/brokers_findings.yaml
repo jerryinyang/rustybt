@@ -1,0 +1,304 @@
+# Broker Adapter Findings
+# Generated from ruff and mypy static analysis
+# Date: 2025-12-06
+
+findings:
+  # Base adapter findings
+  - id: AUDIT-B001
+    module: rustybt/live/brokers/base.py
+    line: 80
+    severity: LOW
+    category: type_error
+    description: "Missing type parameters for generic type 'dict'"
+    recommendation: "Add type parameters: dict[str, Any]"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "All"
+
+  - id: AUDIT-B002
+    module: rustybt/live/brokers/base.py
+    line: 92
+    severity: LOW
+    category: type_error
+    description: "Missing type parameters for generic type 'dict'"
+    recommendation: "Add type parameters: dict[str, Any]"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "All"
+
+  - id: AUDIT-B003
+    module: rustybt/live/brokers/base.py
+    line: 128
+    severity: LOW
+    category: type_error
+    description: "Missing type parameters for generic type 'dict'"
+    recommendation: "Add type parameters: dict[str, Any]"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "All"
+
+  # CCXT adapter findings
+  - id: AUDIT-B004
+    module: rustybt/live/brokers/ccxt_adapter.py
+    line: 241
+    severity: HIGH
+    category: type_error
+    description: "Argument 'config' has incompatible type dict[str, object] instead of StreamConfig | None"
+    recommendation: "Create proper StreamConfig object or fix type annotation"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "CCXT"
+
+  - id: AUDIT-B005
+    module: rustybt/live/brokers/ccxt_adapter.py
+    line: 280
+    severity: HIGH
+    category: error_handling
+    description: "Incompatible exception type assignment - assigning BrokerConnectionError to BrokerAuthenticationError variable"
+    recommendation: "Fix variable type or exception handling logic"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "CCXT"
+
+  - id: AUDIT-B006
+    module: rustybt/live/brokers/ccxt_adapter.py
+    line: 289
+    severity: HIGH
+    category: error_handling
+    description: "Incompatible exception type assignment - assigning BrokerResponseError to BrokerAuthenticationError variable"
+    recommendation: "Fix variable type or exception handling logic"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "CCXT"
+
+  - id: AUDIT-B007
+    module: rustybt/live/brokers/ccxt_adapter.py
+    line: 298
+    severity: HIGH
+    category: error_handling
+    description: "Incompatible exception type assignment - assigning BrokerError to BrokerAuthenticationError variable"
+    recommendation: "Fix variable type or exception handling logic"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "CCXT"
+
+  - id: AUDIT-B008
+    module: rustybt/live/brokers/ccxt_adapter.py
+    line: 438
+    severity: HIGH
+    category: error_handling
+    description: "Incompatible exception type - assigning InsufficientFundsError to BrokerRateLimitError variable"
+    recommendation: "Use correct exception type or fix variable declaration"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "CCXT"
+
+  - id: AUDIT-B009
+    module: rustybt/live/brokers/ccxt_adapter.py
+    line: 447
+    severity: HIGH
+    category: error_handling
+    description: "Incompatible exception type - assigning InvalidOrderError to BrokerRateLimitError variable"
+    recommendation: "Use correct exception type or fix variable declaration"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "CCXT"
+
+  - id: AUDIT-B010
+    module: rustybt/live/brokers/ccxt_adapter.py
+    line: 456
+    severity: HIGH
+    category: error_handling
+    description: "Incompatible exception type - assigning OrderRejectedError to BrokerRateLimitError variable"
+    recommendation: "Use correct exception type or fix variable declaration"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "CCXT"
+
+  - id: AUDIT-B011
+    module: rustybt/live/brokers/ccxt_adapter.py
+    line: 465
+    severity: HIGH
+    category: error_handling
+    description: "Incompatible exception type - assigning BrokerResponseError to BrokerRateLimitError variable"
+    recommendation: "Use correct exception type or fix variable declaration"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "CCXT"
+
+  # Bybit adapter findings
+  - id: AUDIT-B012
+    module: rustybt/live/brokers/bybit_adapter.py
+    line: 289
+    severity: HIGH
+    category: type_error
+    description: "Incompatible types - assigning bool to str variable"
+    recommendation: "Fix type mismatch - convert bool to str or fix variable type"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "Bybit"
+
+  # Binance adapter findings
+  - id: AUDIT-B013
+    module: rustybt/live/brokers/binance_adapter.py
+    line: 431
+    severity: HIGH
+    category: type_error
+    description: "Invalid index type 'str' for 'str' - likely trying to index dict but variable is typed as str"
+    recommendation: "Fix type annotation or variable usage"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "Binance"
+
+  - id: AUDIT-B014
+    module: rustybt/live/brokers/binance_adapter.py
+    line: 437
+    severity: HIGH
+    category: type_error
+    description: "Invalid index type 'str' for 'str' - multiple locations in get_positions"
+    recommendation: "Fix type annotation for positions variable - should be dict not str"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "Binance"
+
+  - id: AUDIT-B015
+    module: rustybt/live/brokers/binance_adapter.py
+    line: 482
+    severity: HIGH
+    category: type_error
+    description: "Invalid index type 'str' for 'str' in get_open_orders - 7 occurrences"
+    recommendation: "Fix type annotation for orders variable - should be dict not str"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "Binance"
+
+  # Paper broker findings
+  - id: AUDIT-B016
+    module: rustybt/live/brokers/paper_broker.py
+    line: 235
+    severity: MEDIUM
+    category: type_error
+    description: "Returning Any from function declared to return str"
+    recommendation: "Ensure return value is explicitly str type"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "Paper"
+
+  - id: AUDIT-B017
+    module: rustybt/live/brokers/paper_broker.py
+    line: 264
+    severity: MEDIUM
+    category: type_error
+    description: "Returning Any from function declared to return Decimal"
+    recommendation: "Ensure return value is explicitly Decimal type"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "Paper"
+
+  - id: AUDIT-B018
+    module: rustybt/live/brokers/paper_broker.py
+    line: 605
+    severity: HIGH
+    category: type_error
+    description: "Argument 'last_sale_date' has incompatible type datetime instead of Timestamp | None"
+    recommendation: "Convert datetime to pd.Timestamp before passing"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "Paper"
+
+  - id: AUDIT-B019
+    module: rustybt/live/brokers/paper_broker.py
+    line: 610
+    severity: HIGH
+    category: type_error
+    description: "Argument to 'update' method has incompatible type datetime instead of Timestamp"
+    recommendation: "Convert datetime to pd.Timestamp before passing"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "Paper"
+
+  - id: AUDIT-B020
+    module: rustybt/live/brokers/paper_broker.py
+    line: 737
+    severity: MEDIUM
+    category: type_error
+    description: "Returning Any from function declared to return Decimal"
+    recommendation: "Ensure return value is explicitly Decimal type"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "Paper"
+
+  # IB adapter findings
+  - id: AUDIT-B021
+    module: rustybt/live/brokers/ib_adapter.py
+    line: 411
+    severity: MEDIUM
+    category: type_error
+    description: "Returning Any from function declared to return dict | None"
+    recommendation: "Ensure return value is properly typed"
+    status: OPEN
+    found_by: static_analysis
+    found_at: "2025-12-06"
+    resolved_at: null
+    regression_test: null
+    exchange: "IB"

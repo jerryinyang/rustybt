@@ -145,3 +145,45 @@ development_status:
   9-4-nasdaq-definition-parsing-schema-understanding: done
   9-5-nasdaq-data-ingestion-bundle-verification: done
   epic-9-retrospective: optional
+
+  # Epic 10: Live Trading Production Readiness & Lighter.xyz Integration
+  epic-10: contexted
+  # Sub-Epic 10.1: Code Audit - COMPLETED (reviewed 2025-12-07)
+  10-1-1-create-audit-infrastructure-findings-schema: done
+  10-1-2-static-analysis-audit-live-trading-core: done
+  10-1-3-static-analysis-audit-broker-streaming-adapters: done
+  10-1-4-manual-code-review-control-flow-analysis: done
+  10-1-5-critical-high-issue-resolution-regression-tests: done
+  # Sub-Epic 10.2: Paper/Testnet Testing - COMPLETED (reviewed 2025-12-08)
+  10-2-1-paper-trading-execution-test-harness: done
+  10-2-2-paper-trading-state-persistence-long-running-stability: done
+  10-2-3-paper-vs-live-parity-verification: done
+  10-2-4-testnet-connection-basic-order-flow: done
+  10-2-5-testnet-reconnection-state-recovery: done
+  10-2-6-end-to-end-order-flow-validation: done
+  # Sub-Epic 10.3: Stress Testing - COMPLETED (reviewed 2025-12-07)
+  10-3-1-stress-testing-infrastructure-scenario-configuration: done
+  10-3-2-network-failure-reconnection-tests: done
+  10-3-3-high-frequency-order-throughput-tests: done
+  10-3-4-long-running-stability-memory-monitoring: done
+  10-3-5-api-error-simulation-stress-test-reporting: done
+  # Sub-Epic 10.4: Lighter Broker Adapter - COMPLETED (reviewed 2025-12-08, 67 tests)
+  10-4-1-lighter-broker-adapter-skeleton-authentication: done
+  10-4-2-order-submission-market-limit: done
+  10-4-3-order-cancellation-query-operations: done
+  10-4-4-position-account-queries: done
+  10-4-5-fill-notifications-paper-trading-mode: done
+  10-4-6-error-handling-configuration-integration-tests: done
+  # Sub-Epic 10.5: Lighter Data Adapter - COMPLETED (reviewed 2025-12-08, 58 tests)
+  10-5-1-lighter-data-adapter-skeleton-asset-discovery: done
+  10-5-2-ohlcv-data-fetching-multi-timeframe: done
+  10-5-3-data-standardization-bundle-integration: done
+  10-5-4-lighter-websocket-adapter-connection: done
+  10-5-5-multi-channel-subscription-bar-aggregation: done
+  10-5-6-streaming-reconnection-buffering-integration-tests: done
+  # Sub-Epic 10.6: Documentation - COMPLETED (reviewed 2025-12-08)
+  10-6-1-live-trading-setup-guide: done
+  10-6-2-lighter-xyz-integration-documentation: done
+  10-6-3-testnet-setup-instructions: done
+  10-6-4-audit-stress-test-reports: done
+  epic-10-retrospective: optional

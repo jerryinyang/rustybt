@@ -88,6 +88,39 @@
     - [Story 9.3: CME Data Ingestion & Bundle Verification](./epic-9-databento-adapter-definition-integration.md#story-93-cme-data-ingestion--bundle-verification)
     - [Story 9.4: NASDAQ Definition Parsing & Schema Understanding](./epic-9-databento-adapter-definition-integration.md#story-94-nasdaq-definition-parsing--schema-understanding)
     - [Story 9.5: NASDAQ Data Ingestion & Bundle Verification](./epic-9-databento-adapter-definition-integration.md#story-95-nasdaq-data-ingestion--bundle-verification)
+  - [Epic 10: Live Trading Production Readiness & Lighter.xyz Integration](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md)
+    - [Story 10.1.1: Create Audit Infrastructure & Findings Schema](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1011-create-audit-infrastructure--findings-schema)
+    - [Story 10.1.2: Static Analysis Audit of Live Trading Core](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1012-static-analysis-audit-of-live-trading-core)
+    - [Story 10.1.3: Static Analysis Audit of Broker & Streaming Adapters](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1013-static-analysis-audit-of-broker--streaming-adapters)
+    - [Story 10.1.4: Manual Code Review & Control Flow Analysis](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1014-manual-code-review--control-flow-analysis)
+    - [Story 10.1.5: Critical/High Issue Resolution & Regression Tests](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1015-criticalhigh-issue-resolution--regression-tests)
+    - [Story 10.2.1: Paper Trading Execution Test Harness](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1021-paper-trading-execution-test-harness)
+    - [Story 10.2.2: Paper Trading State Persistence & Long-Running Stability](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1022-paper-trading-state-persistence--long-running-stability)
+    - [Story 10.2.3: Paper vs Live Parity Verification](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1023-paper-vs-live-parity-verification)
+    - [Story 10.2.4: Testnet Connection & Basic Order Flow](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1024-testnet-connection--basic-order-flow)
+    - [Story 10.2.5: Testnet Reconnection & State Recovery](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1025-testnet-reconnection--state-recovery)
+    - [Story 10.2.6: End-to-End Order Flow Validation](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1026-end-to-end-order-flow-validation)
+    - [Story 10.3.1: Stress Testing Infrastructure & Scenario Configuration](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1031-stress-testing-infrastructure--scenario-configuration)
+    - [Story 10.3.2: Network Failure & Reconnection Tests](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1032-network-failure--reconnection-tests)
+    - [Story 10.3.3: High-Frequency Order Throughput Tests](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1033-high-frequency-order-throughput-tests)
+    - [Story 10.3.4: Long-Running Stability & Memory Monitoring](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1034-long-running-stability--memory-monitoring)
+    - [Story 10.3.5: API Error Simulation & Stress Test Reporting](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1035-api-error-simulation--stress-test-reporting)
+    - [Story 10.4.1: Lighter.xyz Broker Adapter Skeleton & Authentication](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1041-lighterxyz-broker-adapter-skeleton--authentication)
+    - [Story 10.4.2: Order Submission (Market & Limit)](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1042-order-submission-market--limit)
+    - [Story 10.4.3: Order Cancellation & Query Operations](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1043-order-cancellation--query-operations)
+    - [Story 10.4.4: Position & Account Queries](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1044-position--account-queries)
+    - [Story 10.4.5: Fill Notifications & Paper Trading Mode](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1045-fill-notifications--paper-trading-mode)
+    - [Story 10.4.6: Error Handling, Configuration & Integration Tests](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1046-error-handling-configuration--integration-tests)
+    - [Story 10.5.1: Lighter.xyz Data Adapter Skeleton & Asset Discovery](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1051-lighterxyz-data-adapter-skeleton--asset-discovery)
+    - [Story 10.5.2: OHLCV Data Fetching & Timeframe Support](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1052-ohlcv-data-fetching--timeframe-support)
+    - [Story 10.5.3: Data Standardization & Bundle Integration](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1053-data-standardization--bundle-integration)
+    - [Story 10.5.4: Lighter.xyz WebSocket Streaming Adapter](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1054-lighterxyz-websocket-streaming-adapter)
+    - [Story 10.5.5: Streaming Subscriptions & Bar Aggregation](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1055-streaming-subscriptions--bar-aggregation)
+    - [Story 10.5.6: Streaming Resilience & Integration Tests](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1056-streaming-resilience--integration-tests)
+    - [Story 10.6.1: Live Trading Setup Guide](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1061-live-trading-setup-guide)
+    - [Story 10.6.2: Lighter.xyz Integration Documentation](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1062-lighterxyz-integration-documentation)
+    - [Story 10.6.3: Testnet Setup Instructions](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1063-testnet-setup-instructions)
+    - [Story 10.6.4: Audit & Stress Test Reports](./epic-10-live-trading-production-readiness-lighter-xyz-integration.md#story-1064-audit--stress-test-reports)
   - [FR Coverage Matrix](./fr-coverage-matrix.md)
   - [Summary](./summary.md)
 
@@ -104,7 +137,8 @@
 | Epic 7 | Complete | 2025-11-28 | Reporting & documentation system |
 | Epic 8 | Complete | 2025-11-28 | User-facing documentation |
 | Epic X | In Review | 2025-12-01 | Real rustybt engine integration - critical fix |
-| Epic 9 | Draft | - | Databento adapter Definition integration (5 stories) |
+| Epic 9 | Complete | 2025-12-05 | Databento adapter Definition integration (5 stories) |
+| Epic 10 | Draft | - | Live Trading Production Readiness & Lighter.xyz Integration (32 stories) |
 
 ### Epic X: Real rustybt Engine Integration
 
@@ -119,3 +153,22 @@
 - Added ADR-005 documenting this decision
 
 See [Epic X Technical Specification](../sprint-artifacts/tech-spec-epic-X.md) for details.
+
+### Epic 10: Live Trading Production Readiness & Lighter.xyz Integration
+
+**Status:** Draft - Ready for Sprint Planning
+
+**Purpose:** Production hardening and platform expansion for rustybt's live trading infrastructure. Includes:
+- Code audit of all 38 live trading modules
+- Paper trading and testnet validation
+- Stress testing framework
+- Lighter.xyz broker, data, and streaming adapters
+- Comprehensive documentation
+
+**Key Metrics:**
+- 6 sub-epics
+- 32 stories
+- 63 FRs covered (100%)
+- Architecture: Brownfield extension following HyperliquidBrokerAdapter patterns
+
+See [Epic 10 PRD](../prd-epic-10.md) and [Epic 10 Architecture](../architecture-epic-10.md) for details.

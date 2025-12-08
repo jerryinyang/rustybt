@@ -38,3 +38,10 @@ try:
     __all__.append("HyperliquidBrokerAdapter")
 except ImportError:
     pass
+
+try:
+    from rustybt.live.brokers.lighter_adapter import LighterBrokerAdapter
+
+    __all__.append("LighterBrokerAdapter")
+except ImportError:
+    pass

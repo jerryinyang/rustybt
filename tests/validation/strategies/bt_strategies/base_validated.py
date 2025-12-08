@@ -508,11 +508,17 @@ class BacktraderValidatedStrategy(bt.Strategy):
         # Log final_metrics (Layer 5)
         if self._portfolio_values:
             sharpe = self._calculate_sharpe_ratio()
+            final_value = self._portfolio_values[-1]
+            initial_value = self._portfolio_values[0] if self._portfolio_values else 0.0
+            total_return = ((final_value / initial_value) - 1.0) * 100 if initial_value > 0 else 0.0
             self._log_event(
                 layer="portfolio",
                 event="final_metrics",
                 data={
                     "data_sharpe_ratio": sharpe,
+                    "data_final_portfolio_value": final_value,
+                    "data_initial_portfolio_value": initial_value,
+                    "data_total_return_pct": total_return,
                 },
                 simulation_timestamp=self._current_simulation_timestamp,
             )

@@ -1,6 +1,5 @@
 """Session management for validation framework."""
 
-import json
 import shutil
 import sys
 import tarfile
@@ -65,7 +64,9 @@ class SessionManager:
 
         timestamp = datetime.now()
         # Include microseconds to ensure uniqueness when force-creating in same second
-        session_id = timestamp.strftime(f"%Y%m%d-%H%M%S") + f"-{timestamp.microsecond:06d}-{strategy_name}"
+        session_id = (
+            timestamp.strftime("%Y%m%d-%H%M%S") + f"-{timestamp.microsecond:06d}-{strategy_name}"
+        )
 
         session = Session(
             id=session_id,
@@ -98,12 +99,10 @@ class SessionManager:
         with open(session_file) as f:
             data = yaml.safe_load(f)
 
-        findings = [Finding(**f) for f in data.get("findings", [])]
+        findings = [Finding.from_dict(f) for f in data.get("findings", [])]
 
         # Parse activities from dict format (backwards compatible - default to empty list)
-        activities = [
-            Activity.from_dict(a) for a in data.get("activities", [])
-        ]
+        activities = [Activity.from_dict(a) for a in data.get("activities", [])]
 
         # Parse stage from string (backwards compatible - default to CREATED)
         stage_str = data.get("stage", "created")
@@ -431,8 +430,6 @@ class SessionManager:
             session: Session to update
             result: Execution result from execute_dual()
         """
-        from rustybt.validation.coordinator import ExecutionResult
-
         # Store execution metadata in session
         # The session.yaml will be updated with execution info
         session_dir = self.sessions_dir / session.id
@@ -523,9 +520,7 @@ class SessionManager:
             "data_fixture": str(session.data_fixture),
             "stage": session.stage.value,
             "stage_started_at": (
-                session.stage_started_at.isoformat()
-                if session.stage_started_at
-                else None
+                session.stage_started_at.isoformat() if session.stage_started_at else None
             ),
             "execution_completed_at": (
                 session.execution_completed_at.isoformat()
@@ -635,9 +630,7 @@ class SessionManager:
         session = self.load_session(session_id)
 
         if session.stage == SessionStage.COMPLETED:
-            raise ValueError(
-                f"Cannot resume session {session_id}: session is already COMPLETED"
-            )
+            raise ValueError(f"Cannot resume session {session_id}: session is already COMPLETED")
 
         # Determine resume point
         previous_stage = session.stage

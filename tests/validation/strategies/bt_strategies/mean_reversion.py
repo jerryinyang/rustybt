@@ -145,6 +145,7 @@ class MeanReversionStrategy(BacktraderValidatedStrategy):
                 "z_score": z_score,
             },
             asset=asset,
+            simulation_timestamp=self._current_simulation_timestamp,
         )
 
         # Determine signal
@@ -172,6 +173,7 @@ class MeanReversionStrategy(BacktraderValidatedStrategy):
                 "signal": signal,
             },
             asset=asset,
+            simulation_timestamp=self._current_simulation_timestamp,
         )
 
         # Execute based on signal
@@ -214,9 +216,7 @@ class MeanReversionStrategy(BacktraderValidatedStrategy):
 
         return "HOLD"
 
-    def _execute_signal(
-        self, signal: str, z_score: float | None, asset: str | None
-    ) -> None:
+    def _execute_signal(self, signal: str, z_score: float | None, asset: str | None) -> None:
         """Execute order based on signal.
 
         Parameters
@@ -239,6 +239,13 @@ class MeanReversionStrategy(BacktraderValidatedStrategy):
                 target_percent=self.p.target_percent,
                 z_score=z_score,
             )
+            self._log_event(
+                layer="portfolio",
+                event="position_updated",
+                data={"position_state": "LONG", "target_percent": self.p.target_percent},
+                asset=asset,
+                simulation_timestamp=self._current_simulation_timestamp,
+            )
 
         elif signal == "SELL" and self._position_state == 0:
             # Enter short position
@@ -250,6 +257,13 @@ class MeanReversionStrategy(BacktraderValidatedStrategy):
                 quantity=-self.p.target_percent,
                 target_percent=-self.p.target_percent,
                 z_score=z_score,
+            )
+            self._log_event(
+                layer="portfolio",
+                event="position_updated",
+                data={"position_state": "SHORT", "target_percent": -self.p.target_percent},
+                asset=asset,
+                simulation_timestamp=self._current_simulation_timestamp,
             )
 
         elif signal == "EXIT_LONG" and self._position_state == 1:
@@ -263,6 +277,13 @@ class MeanReversionStrategy(BacktraderValidatedStrategy):
                 target_percent=0.0,
                 z_score=z_score,
             )
+            self._log_event(
+                layer="portfolio",
+                event="position_updated",
+                data={"position_state": "FLAT", "target_percent": 0.0},
+                asset=asset,
+                simulation_timestamp=self._current_simulation_timestamp,
+            )
 
         elif signal == "EXIT_SHORT" and self._position_state == -1:
             # Exit short position
@@ -274,6 +295,13 @@ class MeanReversionStrategy(BacktraderValidatedStrategy):
                 quantity=self.p.target_percent,
                 target_percent=0.0,
                 z_score=z_score,
+            )
+            self._log_event(
+                layer="portfolio",
+                event="position_updated",
+                data={"position_state": "FLAT", "target_percent": 0.0},
+                asset=asset,
+                simulation_timestamp=self._current_simulation_timestamp,
             )
 
     @property

@@ -238,7 +238,7 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
             return None
 
         # During warmup, only accumulate data without trading
-        if self._bar_count <= self._warmup_period:
+        if self._bar_count < self._warmup_period:
             self._current_mean, self._current_std = self._calculate_statistics_from_history(data)
             self._current_zscore = self._calculate_zscore(current_price)
             return None
@@ -377,16 +377,14 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
 
             order_id = order_target_percent(self._asset, self._target_percent)
             self._position_state = 1
-
-            # Log transaction
-            self.log_transaction(
+            # Log position change
+            self._log_event(
+                layer="portfolio",
+                event="position_updated",
+                data={"position_state": "LONG", "target_percent": self._target_percent},
                 asset=asset_name,
-                quantity=self._target_percent,
-                price=current_price,
-                commission=1.0,
-                slippage=0.0,
+                simulation_timestamp=self._current_simulation_timestamp,
             )
-
             return order_id
 
         elif signal == "SELL" and self._position_state == 0:
@@ -402,15 +400,14 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
 
             order_id = order_target_percent(self._asset, -self._target_percent)
             self._position_state = -1
-
-            self.log_transaction(
+            # Log position change
+            self._log_event(
+                layer="portfolio",
+                event="position_updated",
+                data={"position_state": "SHORT", "target_percent": -self._target_percent},
                 asset=asset_name,
-                quantity=-self._target_percent,
-                price=current_price,
-                commission=1.0,
-                slippage=0.0,
+                simulation_timestamp=self._current_simulation_timestamp,
             )
-
             return order_id
 
         elif signal == "EXIT_LONG" and self._position_state == 1:
@@ -426,15 +423,14 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
 
             order_id = order_target_percent(self._asset, 0.0)
             self._position_state = 0
-
-            self.log_transaction(
+            # Log position change
+            self._log_event(
+                layer="portfolio",
+                event="position_updated",
+                data={"position_state": "FLAT", "target_percent": 0.0},
                 asset=asset_name,
-                quantity=-self._target_percent,
-                price=current_price,
-                commission=1.0,
-                slippage=0.0,
+                simulation_timestamp=self._current_simulation_timestamp,
             )
-
             return order_id
 
         elif signal == "EXIT_SHORT" and self._position_state == -1:
@@ -450,15 +446,14 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
 
             order_id = order_target_percent(self._asset, 0.0)
             self._position_state = 0
-
-            self.log_transaction(
+            # Log position change
+            self._log_event(
+                layer="portfolio",
+                event="position_updated",
+                data={"position_state": "FLAT", "target_percent": 0.0},
                 asset=asset_name,
-                quantity=self._target_percent,
-                price=current_price,
-                commission=1.0,
-                slippage=0.0,
+                simulation_timestamp=self._current_simulation_timestamp,
             )
-
             return order_id
 
         return None
@@ -511,7 +506,15 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
         """Finalize strategy and log final portfolio metrics."""
         if self._portfolio_values:
             sharpe = self._calculate_sharpe_ratio()
-            self.log_final_metrics(sharpe_ratio=sharpe)
+            final_value = self._portfolio_values[-1]
+            initial_value = self._portfolio_values[0] if self._portfolio_values else 0.0
+            total_return = ((final_value / initial_value) - 1.0) * 100 if initial_value > 0 else 0.0
+            self.log_final_metrics(
+                sharpe_ratio=sharpe,
+                data_final_portfolio_value=final_value,
+                data_initial_portfolio_value=initial_value,
+                data_total_return_pct=total_return,
+            )
 
     def _calculate_sharpe_ratio(self) -> float:
         """Calculate Sharpe ratio from portfolio value history."""

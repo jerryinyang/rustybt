@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-3-3" generated="2025-12-06">
+  <meta>
+    <title>High-Frequency Order Throughput Tests</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.3 - Stress Testing Infrastructure</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Create stress tests that submit orders at high frequency to validate order processing
+    throughput and rate limit handling.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">High-frequency test passes: 10 orders/second for 60 seconds, all tracked, no lost/duplicated</criterion>
+    <criterion id="AC2">Latency meets NFR1: less than 100ms, with p50/p95/p99 percentiles measured</criterion>
+    <criterion id="AC3">Rate limit warning at 80% capacity, throttling without rejections</criterion>
+    <criterion id="AC4">Rate limit exceeded (429) handled with backoff, retry, no crash</criterion>
+    <criterion id="AC5">Burst patterns tested: 10 orders in 1 second handled without failure</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create throughput test file</task>
+    <task>Implement sustained throughput test (10 orders/sec for 60 sec)</task>
+    <task>Implement latency measurement (percentiles)</task>
+    <task>Implement rate limit warning test</task>
+    <task>Implement rate limit exceeded test (mock 429)</task>
+    <task>Implement burst test (10 simultaneous orders)</task>
+    <task>Generate throughput report</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Rate Limiting Pattern 2">
+      Token bucket algorithm at adapter level
+      Limits: 600 requests/minute REST, 20 orders/second per symbol
+    </pattern>
+    <constraint>Order submission latency less than 100ms (NFR1)</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Throughput Test Pattern">
+      <![CDATA[
+async def test_sustained_order_throughput():
+    target_rate = 10  # orders per second
+    duration = 60  # seconds
+    total_orders = target_rate * duration
+
+    for i in range(total_orders):
+        order_id = await broker.submit_order(...)
+        latencies.append(time.monotonic() - order_start)
+        order_ids.append(order_id)
+        # Rate limit to target
+
+    assert len(order_ids) == total_orders
+    assert len(set(order_ids)) == total_orders  # No duplicates
+    assert max(latencies) < 0.100  # 100ms
+      ]]>
+    </spec>
+    <spec name="Latency Percentiles">
+      <![CDATA[
+import numpy as np
+def calculate_percentiles(latencies: list[float]) -> dict:
+    return {
+        "p50": np.percentile(latencies, 50),
+        "p95": np.percentile(latencies, 95),
+        "p99": np.percentile(latencies, 99),
+        "max": max(latencies),
+    }
+      ]]>
+    </spec>
+    <spec name="Report Format">
+      <![CDATA[
+{
+  "scenario": "order_throughput",
+  "orders_submitted": 600,
+  "orders_tracked": 600,
+  "duplicates": 0,
+  "latency_p50_ms": 12.5,
+  "latency_p95_ms": 45.2,
+  "latency_p99_ms": 78.1,
+  "passed": true
+}
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-3-1">Stress testing infrastructure</dependency>
+    <dependency type="module">Paper broker for deterministic testing</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="tests/live/stress/test_order_throughput.py" action="create">Throughput tests</file>
+    <file path="tests/live/stress/scenarios/high_throughput.yaml" action="reference">Scenario</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR1">Order submission latency less than 100ms</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="stress">Sustained throughput (10 orders/sec)</test>
+    <test type="stress">Burst pattern (10 simultaneous)</test>
+    <test type="performance">Latency percentiles</test>
+    <test type="stress">Rate limit handling</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR24</ref>
+    <ref>docs/internal/planning/architecture-epic-10.md - Pattern 2: Rate Limiting</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.3.3</ref>
+  </documentation-references>
+</story-context>

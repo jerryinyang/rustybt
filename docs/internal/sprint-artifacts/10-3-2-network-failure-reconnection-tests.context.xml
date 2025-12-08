@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-3-2" generated="2025-12-06">
+  <meta>
+    <title>Network Failure & Reconnection Tests</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.3 - Stress Testing Infrastructure</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Create stress tests that simulate network failures and measure reconnection behavior
+    to validate system resilience to network issues.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Network failure simulation works (disconnect detected within 60 seconds)</criterion>
+    <criterion id="AC2">Reconnection behavior validated (exponential backoff, succeeds within 30 seconds)</criterion>
+    <criterion id="AC3">Circuit breaker behavior validated (trips after threshold, safe state, cooldown recovery)</criterion>
+    <criterion id="AC4">Stress test report generated with metrics (disconnections, avg/max reconnection time, circuit breaker trips)</criterion>
+    <criterion id="AC5">Multiple scenarios tested: single disconnect, rapid disconnects, disconnect during active order</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create network resilience test file</task>
+    <task>Implement disconnect simulation utility</task>
+    <task>Implement reconnection measurement utility</task>
+    <task>Implement circuit breaker test</task>
+    <task>Implement report generation</task>
+    <task>Implement scenario tests (single, rapid, during order, with positions)</task>
+    <task>Verify order queuing during disconnect (NFR9)</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Reconnection Pattern 3">
+      delay = min(base * 2^attempts, max_delay)
+    </pattern>
+    <constraint>Reconnection within 30 seconds (NFR2)</constraint>
+    <constraint>Stale connection detection within 60 seconds (NFR8)</constraint>
+    <constraint>Orders queued during brief disconnections less than 30 seconds (NFR9)</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Disconnect Simulation">
+      <![CDATA[
+async def simulate_disconnect(adapter, delay_before_reconnect: float = 0):
+    disconnect_time = time.monotonic()
+    if hasattr(adapter, '_ws') and adapter._ws:
+        await adapter._ws.close()
+    while adapter.is_connected():
+        await asyncio.sleep(0.1)
+        if time.monotonic() - disconnect_time > 60:
+            pytest.fail("Disconnect not detected within 60 seconds")
+    return time.monotonic() - disconnect_time
+      ]]>
+    </spec>
+    <spec name="Report Format">
+      <![CDATA[
+{
+  "scenario": "network_resilience",
+  "disconnections_simulated": 5,
+  "avg_reconnection_time_seconds": 2.5,
+  "max_reconnection_time_seconds": 4.2,
+  "circuit_breaker_trips": 0,
+  "orders_queued_during_disconnect": 2,
+  "passed": true
+}
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-3-1">Stress testing infrastructure</dependency>
+    <dependency type="module">Streaming adapter with reconnection logic</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="tests/live/stress/test_network_resilience.py" action="create">Network tests</file>
+    <file path="tests/live/stress/scenarios/network_disconnect.yaml" action="reference">Scenario</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR2">WebSocket reconnection within 30 seconds</nfr>
+    <nfr id="NFR8">Stale connection detection within 60 seconds</nfr>
+    <nfr id="NFR9">Orders queued during brief disconnections</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="stress">Single disconnect recovery</test>
+    <test type="stress">Rapid disconnects (5 in 60 seconds)</test>
+    <test type="stress">Disconnect during order submission</test>
+    <test type="stress">Circuit breaker behavior</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR22, FR23</ref>
+    <ref>docs/internal/planning/architecture-epic-10.md - Pattern 3</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.3.2</ref>
+  </documentation-references>
+</story-context>

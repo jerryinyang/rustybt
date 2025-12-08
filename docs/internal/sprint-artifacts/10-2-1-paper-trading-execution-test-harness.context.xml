@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-2-1" generated="2025-12-06">
+  <meta>
+    <title>Paper Trading Execution Test Harness</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.2 - Paper Trading Verification</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Create an end-to-end test harness for paper trading execution to validate strategy execution,
+    order fills, and position tracking via the PaperBroker.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Test harness executes trading strategies in paper trading mode via PaperBroker</criterion>
+    <criterion id="AC2">Order fills simulated with configurable fill models (immediate, delayed)</criterion>
+    <criterion id="AC3">Positions tracked accurately (entry price, size, direction)</criterion>
+    <criterion id="AC4">PnL calculations match expected values with Decimal precision</criterion>
+    <criterion id="AC5">Order state transitions follow expected lifecycle (pending → submitted → filled/cancelled)</criterion>
+    <criterion id="AC6">Tests cover both long and short positions with various scenarios</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create tests/live/paper/ directory and infrastructure</task>
+    <task>Implement deterministic TestStrategy class with known signals</task>
+    <task>Implement fill model tests (immediate and delayed)</task>
+    <task>Implement position tracking tests (long/short, entry price, size)</task>
+    <task>Implement PnL calculation tests with Decimal precision</task>
+    <task>Implement order lifecycle tests (state transitions, logging)</task>
+    <task>Create comprehensive test scenarios (profit/loss for long/short)</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Fill Models">
+      Immediate model: Fill at current simulated price within same tick
+      Delayed model: Fill after configurable delay (default 100ms)
+    </pattern>
+    <constraint>Paper trading overhead must be less than 10ms vs live path (NFR3)</constraint>
+    <constraint>Paper trading must produce deterministic results (NFR11)</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Test Strategy">
+      <![CDATA[
+class TestStrategy:
+    def __init__(self, signal_pattern: list[tuple[int, str]]):
+        self.signal_pattern = signal_pattern  # [(bar_index, signal_type), ...]
+
+    def on_bar(self, bar_index: int, bar_data: dict) -> str | None:
+        for idx, signal in self.signal_pattern:
+            if bar_index == idx:
+                return signal
+        return None
+      ]]>
+    </spec>
+    <spec name="PnL Calculation">
+      Long: unrealized_pnl = (current_price - entry_price) * position_size
+      Short: unrealized_pnl = (entry_price - current_price) * abs(position_size)
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="epic" id="10.1">Epic 10.1 must be complete (audit findings resolved)</dependency>
+    <dependency type="module">PaperBroker from rustybt/live/brokers/paper_broker.py</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="tests/live/paper/" action="create">New test directory</file>
+    <file path="tests/live/paper/conftest.py" action="create">Test fixtures</file>
+    <file path="tests/live/paper/test_paper_execution.py" action="create">Main test file</file>
+    <file path="rustybt/live/brokers/paper_broker.py" action="reference">PaperBroker implementation</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR3">Paper trading overhead less than 10ms</nfr>
+    <nfr id="NFR10">All order state transitions logged for audit</nfr>
+    <nfr id="NFR11">Paper trading must produce deterministic results</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="integration">Paper trading execution with TestStrategy</test>
+    <test type="unit">Fill model behavior</test>
+    <test type="unit">Position tracking accuracy</test>
+    <test type="unit">PnL calculation precision</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - Paper Trading Validation</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.2.1</ref>
+  </documentation-references>
+</story-context>

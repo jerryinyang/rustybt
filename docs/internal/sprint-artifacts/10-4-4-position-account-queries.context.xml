@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-4-4" generated="2025-12-06">
+  <meta>
+    <title>Position & Account Queries</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.4 - Lighter.xyz Broker Adapter</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Implement position and account information queries from Lighter.xyz for portfolio tracking.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Position query via GET /account returns: symbol, size (signed), entry_price, mark_price, unrealized_pnl, leverage</criterion>
+    <criterion id="AC2">Account info query returns balance and margin information</criterion>
+    <criterion id="AC3">Position data matches LighterPosition dataclass with sign convention (positive=long, negative=short)</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Implement get_positions() async method</task>
+    <task>Implement get_account_info() async method</task>
+    <task>Create LighterPosition dataclass</task>
+    <task>Write unit tests</task>
+  </key-tasks>
+
+  <architecture-context>
+    <constraint>All financial values MUST use Decimal type</constraint>
+    <constraint>Precision=18, scale=8 for financial values</constraint>
+    <constraint>Sign convention: positive=long, negative=short</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Get Positions">
+      <![CDATA[
+async def get_positions(self) -> list[dict]:
+    response = await self._client.get("/account", params={"account": self._wallet_address})
+    positions = []
+    for pos in data.get("positions", []):
+        size = Decimal(str(pos["size"]))
+        if pos.get("side", "").lower() == "short":
+            size = -abs(size)
+        positions.append({
+            "symbol": pos["symbol"],
+            "size": size,  # Signed: positive=long, negative=short
+            "entry_price": Decimal(str(pos["entry_price"])),
+            "mark_price": Decimal(str(pos["mark_price"])),
+            "unrealized_pnl": Decimal(str(pos["unrealized_pnl"])),
+            "leverage": Decimal(str(pos.get("leverage", "1"))),
+        })
+    return positions
+      ]]>
+    </spec>
+    <spec name="LighterPosition Dataclass">
+      <![CDATA[
+@dataclass
+class LighterPosition:
+    symbol: str
+    size: Decimal  # Signed: positive=long, negative=short
+    entry_price: Decimal
+    mark_price: Decimal
+    unrealized_pnl: Decimal
+    leverage: Decimal
+      ]]>
+    </spec>
+    <spec name="Get Account Info">
+      <![CDATA[
+async def get_account_info(self) -> dict[str, Decimal]:
+    response = await self._client.get("/account", params={"account": self._wallet_address})
+    return {
+        "balance": Decimal(str(data.get("balance", "0"))),
+        "available_margin": Decimal(str(data.get("available_margin", "0"))),
+        "used_margin": Decimal(str(data.get("used_margin", "0"))),
+        "equity": Decimal(str(data.get("equity", "0"))),
+    }
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-4-1">Connection works</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/live/brokers/lighter_adapter.py" action="modify">Add position/account methods</file>
+    <file path="tests/live/lighter/test_lighter_broker.py" action="modify">Add position tests</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR11">Decimal precision for financial calculations</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Get positions with mock</test>
+    <test type="unit">Get account info with mock</test>
+    <test type="unit">Decimal precision preservation</test>
+    <test type="unit">Sign convention</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - Data Models: LighterPosition, AC-10.4.4</ref>
+  </documentation-references>
+</story-context>

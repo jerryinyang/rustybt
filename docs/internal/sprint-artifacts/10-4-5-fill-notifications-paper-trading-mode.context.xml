@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-4-5" generated="2025-12-06">
+  <meta>
+    <title>Fill Notifications & Paper Trading Mode</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.4 - Lighter.xyz Broker Adapter</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Implement fill notifications and paper trading mode for live and simulated trading support.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Fill notifications received in live mode via polling or WebSocket</criterion>
+    <criterion id="AC2">Paper trading mode: orders NOT sent to Lighter.xyz, simulated fills generated locally</criterion>
+    <criterion id="AC3">Paper mode uses real market prices from Lighter.xyz for realistic fills</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Implement fill notification polling (_poll_for_fills)</task>
+    <task>Implement fill processing with callback</task>
+    <task>Implement paper trading mode (paper_mode parameter)</task>
+    <task>Implement simulated fills with real market prices and configurable slippage</task>
+    <task>Implement paper trade logging</task>
+    <task>Write unit tests</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Paper Trading">
+      Paper mode reuses PaperBroker patterns but with Lighter.xyz prices.
+      Simulated fills use real market prices with configurable slippage.
+    </pattern>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Fill Polling">
+      <![CDATA[
+async def _poll_for_fills(self):
+    last_check = {}
+    while self._polling_active:
+        orders = await self.get_order_history()
+        for order in orders:
+            if order["order_id"] not in last_check:
+                if order["status"] == OrderStatus.FILLED:
+                    await self._on_fill(order)
+                last_check[order["order_id"]] = order
+        await asyncio.sleep(1)
+      ]]>
+    </spec>
+    <spec name="Paper Trading Mode">
+      <![CDATA[
+async def _submit_paper_order(self, asset, amount, order_type, limit_price):
+    market_price = await self.get_current_price(asset)
+    self._paper_order_counter += 1
+    order_id = f"PAPER-{self._paper_order_counter:06d}"
+
+    if order_type == "market":
+        slippage = Decimal("0.001")  # 0.1%
+        side = "buy" if amount > 0 else "sell"
+        fill_price = market_price * (1 + slippage) if side == "buy" else market_price * (1 - slippage)
+    else:
+        fill_price = limit_price
+
+    fill_data = {
+        "order_id": order_id,
+        "fill_price": fill_price,
+        "fill_quantity": abs(amount),
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+    logger.info("paper_trade_executed", order_id=order_id, symbol=asset.symbol, ...)
+    await self._on_fill(fill_data)
+    return order_id
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-4-2">Order submission (for paper mode comparison)</dependency>
+    <dependency type="story" id="10-4-3">Order query (for polling)</dependency>
+    <dependency type="story" id="10-4-4">Position query (for market price)</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/live/brokers/lighter_adapter.py" action="modify">Add fill/paper mode</file>
+    <file path="tests/live/lighter/test_lighter_broker.py" action="modify">Add fill/paper tests</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR11">Deterministic paper trading results</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Fill notification polling (mocked)</test>
+    <test type="unit">Paper mode order flow</test>
+    <test type="unit">Simulated fill generation</test>
+    <test type="unit">Paper trade logging</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR37, FR40</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.4.5</ref>
+  </documentation-references>
+</story-context>

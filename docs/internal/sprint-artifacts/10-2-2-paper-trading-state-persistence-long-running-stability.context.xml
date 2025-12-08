@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-2-2" generated="2025-12-06">
+  <meta>
+    <title>Paper Trading State Persistence & Long-Running Stability</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.2 - Paper Trading Verification</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Validate that paper trading state persists across restarts and runs stably for 24+ hours
+    without memory leaks or state corruption.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Paper trading state persists across session restarts (positions, order history)</criterion>
+    <criterion id="AC2">State restoration is accurate (size, entry price, PnL recalculation)</criterion>
+    <criterion id="AC3">Paper trading runs stably for 24+ hours without crashes</criterion>
+    <criterion id="AC4">Memory usage remains stable (growth less than 10% over 24 hours)</criterion>
+    <criterion id="AC5">No state corruption during extended operation</criterion>
+    <criterion id="AC6">All order state transitions logged for audit trail</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Implement state persistence test (save, stop, restore, verify)</task>
+    <task>Test state restoration accuracy with multiple positions</task>
+    <task>Implement long-running stability test (24-hour duration)</task>
+    <task>Implement memory monitoring with tracemalloc</task>
+    <task>Implement state integrity verification (periodic checks)</task>
+    <task>Verify audit logging of all transitions</task>
+    <task>Create CI-friendly short test variant (1 hour)</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="State Persistence">
+      JSON/Pickle state file with positions, order history, session metadata
+    </pattern>
+    <constraint>Memory growth less than 10% over 24 hours (NFR4)</constraint>
+    <constraint>State persistence operations complete within 1 second (NFR5)</constraint>
+    <constraint>State recovery restores exact position state (NFR12)</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="State Structure">
+      <![CDATA[
+{
+    "positions": [{"symbol": "BTC-PERP", "size": Decimal("0.5"), "entry_price": Decimal("45000.00"), "entry_time": "..."}],
+    "order_history": [...],
+    "session_start": "2025-12-05T09:00:00Z",
+    "last_update": "2025-12-05T10:30:00Z"
+}
+      ]]>
+    </spec>
+    <spec name="Memory Monitoring">
+      Use tracemalloc to sample memory every hour.
+      Calculate growth percentage from first to last sample.
+      Assert less than 10% growth.
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-2-1">Paper trading execution test harness</dependency>
+    <dependency type="module">State manager functionality</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="tests/live/paper/test_paper_stability.py" action="create">Stability tests</file>
+    <file path="rustybt/live/state_manager.py" action="reference">State persistence</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR4">Memory stable during 48-hour operation (no leaks)</nfr>
+    <nfr id="NFR5">State persistence within 1 second</nfr>
+    <nfr id="NFR11">Deterministic paper trading results</nfr>
+    <nfr id="NFR12">Exact position state recovery after restart</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="integration">State persistence and restoration</test>
+    <test type="stability">24-hour continuous operation</test>
+    <test type="performance">Memory usage monitoring</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR10, FR11</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.2.2, NFR Performance</ref>
+  </documentation-references>
+</story-context>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-5-5" generated="2025-12-06">
+  <meta>
+    <title>Multi-Channel Subscription & Bar Aggregation</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.5 - Lighter.xyz Data Adapter</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Implement multi-channel subscription and bar aggregation from trade ticks
+    for complete live market data.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Multiple channel subscriptions work: trades, orderbook, candlestick</criterion>
+    <criterion id="AC2">BarBuffer aggregates trades into OHLCV bars, pushes on timeframe boundary</criterion>
+    <criterion id="AC3">Orderbook data parsed correctly with bids and asks</criterion>
+    <criterion id="AC4">Unsubscribe works, no more messages for unsubscribed channels</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Implement multi-channel support with message routing</task>
+    <task>Implement BarBuffer integration (create per symbol/timeframe, feed ticks)</task>
+    <task>Implement orderbook parsing to OrderbookData</task>
+    <task>Implement unsubscribe() async method</task>
+    <task>Write unit tests</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Message Routing">
+      Route messages to appropriate handlers based on type.
+    </pattern>
+    <pattern name="Bar Aggregation">
+      BarBuffer aggregates TickData into OHLCV bars.
+    </pattern>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Message Handler">
+      <![CDATA[
+async def _message_handler(self):
+    while self.is_connected():
+        raw = await self._ws.recv()
+        message = json.loads(raw)
+        msg_type = message.get("type")
+
+        if msg_type == "trade":
+            tick = self.parse_message(message)
+            if tick:
+                await self._on_tick(tick)
+        elif msg_type == "orderbook":
+            orderbook = self._parse_orderbook(message)
+            if orderbook:
+                await self._on_orderbook(orderbook)
+        elif msg_type == "candle":
+            bar = self._parse_candle(message)
+            if bar:
+                await self._on_bar(bar)
+      ]]>
+    </spec>
+    <spec name="BarBuffer Integration">
+      <![CDATA[
+def create_bar_buffer(self, symbol: str, timeframe: str) -> None:
+    key = f"{symbol}_{timeframe}"
+    self._bar_buffers[key] = BarBuffer(
+        timeframe=timeframe,
+        on_bar_complete=self._on_bar_complete
+    )
+
+async def _on_tick(self, tick: TickData) -> None:
+    for key, buffer in self._bar_buffers.items():
+        if key.startswith(tick.symbol):
+            buffer.add_tick(tick)
+      ]]>
+    </spec>
+    <spec name="Orderbook Data">
+      <![CDATA[
+@dataclass
+class OrderbookData:
+    symbol: str
+    bids: list[tuple[Decimal, Decimal]]  # (price, size)
+    asks: list[tuple[Decimal, Decimal]]
+    timestamp: pd.Timestamp
+      ]]>
+    </spec>
+    <spec name="Unsubscribe">
+      <![CDATA[
+async def unsubscribe(self, symbols: list[str], channels: list[str]) -> None:
+    message = {
+        "type": "unsubscribe",
+        "channels": [{"name": ch, "symbols": symbols} for ch in channels]
+    }
+    await self._ws.send(json.dumps(message))
+    for symbol in symbols:
+        if symbol in self._subscriptions:
+            self._subscriptions[symbol] -= set(channels)
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-5-4">Connection works</dependency>
+    <dependency type="module">BarBuffer in streaming infrastructure</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/live/streaming/lighter_stream.py" action="modify">Add multi-channel</file>
+    <file path="tests/live/lighter/test_lighter_stream.py" action="modify">Add channel tests</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR1">Order submission latency less than 100ms</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Multi-channel subscription</test>
+    <test type="unit">Bar aggregation</test>
+    <test type="unit">Orderbook parsing</test>
+    <test type="unit">Unsubscribe</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.5.5</ref>
+  </documentation-references>
+</story-context>

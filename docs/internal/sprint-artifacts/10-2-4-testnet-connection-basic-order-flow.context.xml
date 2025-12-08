@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-2-4" generated="2025-12-06">
+  <meta>
+    <title>Testnet Connection & Basic Order Flow</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.2 - Paper Trading Verification</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Validate testnet connectivity and basic order submission for at least one exchange
+    to prove the system works with real exchange APIs.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Connection to testnet established with valid credentials, account info retrieved</criterion>
+    <criterion id="AC2">Limit order submission works (submit, verify in open orders, cancel)</criterion>
+    <criterion id="AC3">Market order submission and fill works (submit, fill received, position updated)</criterion>
+    <criterion id="AC4">Rate limit handling verified during order submission</criterion>
+    <criterion id="AC5">Tests skip gracefully if credentials are not available</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create tests/live/testnet/ directory and infrastructure</task>
+    <task>Implement Hyperliquid testnet tests (primary)</task>
+    <task>Implement limit order test (submit, verify, cancel)</task>
+    <task>Implement market order test (submit, fill, position)</task>
+    <task>Implement rate limit verification</task>
+    <task>Implement credential skip logic with descriptive messages</task>
+    <task>Create fallback tests for Binance/Bybit (optional)</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Testnet Default">
+      ADR-003: Default to testnet (testnet=True)
+    </pattern>
+    <constraint>All credentials from environment variables (NFR14)</constraint>
+    <constraint>Rate limiting must be active during tests</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Environment Variables">
+      HYPERLIQUID_TESTNET_API_KEY
+      HYPERLIQUID_TESTNET_PRIVATE_KEY
+      BINANCE_TESTNET_API_KEY (fallback)
+      BYBIT_TESTNET_API_KEY (fallback)
+    </spec>
+    <spec name="Skip Pattern">
+      <![CDATA[
+skip_without_hyperliquid_creds = pytest.mark.skipif(
+    not os.environ.get("HYPERLIQUID_TESTNET_API_KEY"),
+    reason="Hyperliquid testnet credentials not available"
+)
+      ]]>
+    </spec>
+    <spec name="Minimal Order Sizes">
+      Use minimum sizes (e.g., 0.001 BTC) to avoid depleting testnet funds.
+      Use unlikely limit prices that won't fill.
+      Close any positions opened during tests.
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-2-1">Paper trading works</dependency>
+    <dependency type="setup">Testnet credentials configured</dependency>
+    <dependency type="module">Exchange adapters functional</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="tests/live/testnet/" action="create">New test directory</file>
+    <file path="tests/live/testnet/conftest.py" action="create">Credential loading</file>
+    <file path="tests/live/testnet/test_hyperliquid_testnet.py" action="create">Primary tests</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR14">Credentials from environment variables</nfr>
+    <nfr id="NFR15">Testnet/mainnet clearly separated</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="integration">Testnet connection</test>
+    <test type="integration">Limit order lifecycle</test>
+    <test type="integration">Market order lifecycle</test>
+    <test type="integration">Rate limit handling</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR14-FR18</ref>
+    <ref>docs/internal/planning/architecture-epic-10.md - ADR-003</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.2.4</ref>
+  </documentation-references>
+</story-context>

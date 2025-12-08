@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-1-1" generated="2025-12-06">
+  <meta>
+    <title>Create Audit Infrastructure & Findings Schema</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.1 - Code Audit & Quality Assessment</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Create the foundational infrastructure for the code audit process, including directory structure,
+    YAML schema for capturing findings, and helper scripts for consistency.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Audit directory structure created: tests/live/audit/ with findings/, reports/, checklists/ subdirectories</criterion>
+    <criterion id="AC2">Finding YAML schema supports: id, severity, module, description, recommendation, status, regression_test fields</criterion>
+    <criterion id="AC3">Pydantic validation for finding entries exists with severity enum (CRITICAL, HIGH, MEDIUM, LOW)</criterion>
+    <criterion id="AC4">Three empty finding YAML files created: core_findings.yaml, brokers_findings.yaml, streaming_findings.yaml</criterion>
+    <criterion id="AC5">Helper script exists to add/update findings maintaining schema compliance</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create audit directory structure (tests/live/audit/)</task>
+    <task>Define Finding YAML schema with Pydantic models</task>
+    <task>Create empty findings YAML files with headers</task>
+    <task>Create helper script for findings management</task>
+    <task>Write schema validation tests</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Audit Finding Classification">
+      Severity levels: CRITICAL (must fix before production), HIGH (must fix before deployment),
+      MEDIUM (should fix, can defer), LOW (nice to have)
+    </pattern>
+    <constraint>All findings must have unique IDs following pattern AUDIT-{MODULE}-{NUMBER}</constraint>
+    <constraint>Status values: OPEN, IN_PROGRESS, RESOLVED, VERIFIED</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Finding Schema">
+      <![CDATA[
+@dataclass
+class Finding:
+    id: str  # AUDIT-E001, AUDIT-B001, etc.
+    severity: Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+    module: str  # rustybt.live.engine, rustybt.live.brokers, etc.
+    description: str
+    recommendation: str
+    status: Literal["OPEN", "IN_PROGRESS", "RESOLVED", "VERIFIED"]
+    regression_test: str | None = None
+    found_at: str | None = None
+    resolved_at: str | None = None
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="none">This is the first story in Epic 10, no dependencies</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="tests/live/audit/" action="create">New audit directory structure</file>
+    <file path="tests/live/audit/findings/" action="create">Findings YAML files</file>
+    <file path="tests/live/audit/models.py" action="create">Pydantic models for validation</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR10">All order state transitions logged for audit</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Test Pydantic schema validation</test>
+    <test type="unit">Test helper script functionality</test>
+    <test type="unit">Test findings YAML parsing</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - Audit Methodology</ref>
+    <ref>docs/internal/planning/architecture-epic-10.md - Pattern 5: Audit Finding Classification</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.1.1</ref>
+  </documentation-references>
+</story-context>

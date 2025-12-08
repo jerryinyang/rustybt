@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-5-3" generated="2025-12-06">
+  <meta>
+    <title>Data Standardization & Bundle Integration</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.5 - Lighter.xyz Data Adapter</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Standardize Lighter.xyz data to rustybt format and integrate with the bundle system
+    for storage and retrieval.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Data standardization: Lighter response → rustybt OHLCV schema, timestamps UTC</criterion>
+    <criterion id="AC2">Data validation: OHLCV relationships (low ≤ open,close ≤ high), no missing fields, Decimal precision</criterion>
+    <criterion id="AC3">Funding rate data fetchable via get_funding_rates(symbol)</criterion>
+    <criterion id="AC4">Bundle integration: save to bundle, update catalog, retrieve from bundle</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Implement standardize() method with column mapping, UTC timestamps, Decimal conversion</task>
+    <task>Implement validate() method with OHLCV relationship checks</task>
+    <task>Implement get_funding_rates() async method</task>
+    <task>Implement bundle integration methods</task>
+    <task>Write unit tests</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="OHLCV Schema">
+      <![CDATA[
+LIGHTER_OHLCV_SCHEMA = {
+    "timestamp": pl.Datetime("us"),
+    "symbol": pl.Utf8,
+    "open": pl.Decimal(precision=18, scale=8),
+    "high": pl.Decimal(precision=18, scale=8),
+    "low": pl.Decimal(precision=18, scale=8),
+    "close": pl.Decimal(precision=18, scale=8),
+    "volume": pl.Decimal(precision=18, scale=8),
+}
+      ]]>
+    </pattern>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Standardize">
+      <![CDATA[
+def standardize(self, df: pl.DataFrame) -> pl.DataFrame:
+    column_map = {"time": "timestamp", "o": "open", "h": "high", "l": "low", "c": "close", "v": "volume"}
+    df = df.rename(column_map)
+    df = df.with_columns([
+        pl.col("timestamp").cast(pl.Datetime("us")).dt.replace_time_zone("UTC"),
+    ])
+    for col in ["open", "high", "low", "close", "volume"]:
+        df = df.with_columns([pl.col(col).cast(pl.Decimal(precision=18, scale=8))])
+    return df
+      ]]>
+    </spec>
+    <spec name="Validate">
+      <![CDATA[
+def validate(self, df: pl.DataFrame) -> bool:
+    # Check required columns
+    required = set(LIGHTER_OHLCV_SCHEMA.keys())
+    if not required.issubset(set(df.columns)):
+        raise ValidationError(f"Missing columns")
+
+    # Check OHLCV relationships
+    invalid = df.filter(
+        (pl.col("low") > pl.col("open")) |
+        (pl.col("low") > pl.col("close")) |
+        (pl.col("high") < pl.col("open")) |
+        (pl.col("high") < pl.col("close"))
+    )
+    if len(invalid) > 0:
+        raise ValidationError("OHLCV relationship violated")
+    return True
+      ]]>
+    </spec>
+    <spec name="Funding Rates">
+      <![CDATA[
+async def get_funding_rates(self, symbol: str) -> pl.DataFrame:
+    response = await self._client.get("/funding-rates", params={"symbol": symbol})
+    return pl.DataFrame([
+        {"timestamp": rate["timestamp"], "symbol": symbol, "funding_rate": Decimal(str(rate["rate"]))}
+        for rate in response.json().get("rates", [])
+    ])
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-5-2">Data fetching works</dependency>
+    <dependency type="module">rustybt bundle system</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/data/adapters/lighter_adapter.py" action="modify">Add standardization</file>
+    <file path="tests/live/lighter/test_lighter_data.py" action="modify">Add validation tests</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR11">Decimal precision for financial calculations</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Standardization</test>
+    <test type="unit">Validation (valid and invalid data)</test>
+    <test type="unit">Funding rates</test>
+    <test type="integration">Bundle round-trip</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - Data Models: OHLCV Schema, AC-10.5.3</ref>
+  </documentation-references>
+</story-context>

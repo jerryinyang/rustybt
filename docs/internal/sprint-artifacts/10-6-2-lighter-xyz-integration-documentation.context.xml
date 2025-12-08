@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-6-2" generated="2025-12-06">
+  <meta>
+    <title>Lighter.xyz Integration Documentation</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.6 - Documentation & Reporting</sub-epic>
+    <status>drafted</status>
+    <priority>medium</priority>
+  </meta>
+
+  <story-summary>
+    Create detailed documentation for Lighter.xyz integration covering broker adapter,
+    data adapter, and streaming adapter usage.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Broker adapter docs: authentication, order submission, position queries, paper trading, error handling</criterion>
+    <criterion id="AC2">Data adapter docs: asset discovery, OHLCV fetching, timeframes, funding rates, bundle integration</criterion>
+    <criterion id="AC3">Streaming adapter docs: WebSocket connection, channels, message parsing, BarBuffer, reconnection</criterion>
+    <criterion id="AC4">API reference with examples for all public methods</criterion>
+    <criterion id="AC5">Code examples for common use cases</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create docs/live-trading/lighter-integration.md</task>
+    <task>Write broker adapter documentation with examples</task>
+    <task>Write data adapter documentation with examples</task>
+    <task>Write streaming adapter documentation with examples</task>
+    <task>Create API reference tables for all public methods</task>
+    <task>Write code examples (first order, historical data, streaming)</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Documentation Style">
+      Follow existing documentation patterns.
+      Include working code examples.
+      Reference API documentation for detailed signatures.
+    </pattern>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Document Structure">
+      <![CDATA[
+# Lighter.xyz Integration Guide
+## Overview
+## Broker Adapter
+### Authentication
+### Order Submission
+### Position Queries
+### Paper Trading Mode
+### Error Handling
+## Data Adapter
+### Asset Discovery
+### OHLCV Fetching
+### Bundle Integration
+## Streaming Adapter
+### WebSocket Connection
+### Channel Subscriptions
+### BarBuffer Integration
+## API Reference
+### LighterBrokerAdapter
+### LighterDataAdapter
+### LighterWebSocketAdapter
+## Examples
+      ]]>
+    </spec>
+    <spec name="Code Example">
+      <![CDATA[
+from rustybt.live.brokers.lighter_adapter import LighterBrokerAdapter
+from rustybt.core import Asset
+from decimal import Decimal
+import asyncio
+
+async def main():
+    adapter = LighterBrokerAdapter(testnet=True)
+    try:
+        await adapter.connect()
+        order_id = await adapter.submit_order(
+            asset=Asset("BTC-PERP"),
+            amount=Decimal("0.001"),
+            order_type="limit",
+            limit_price=Decimal("40000.00")
+        )
+        print(f"Order submitted: {order_id}")
+    finally:
+        await adapter.disconnect()
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="epic" id="10.4">All Lighter.xyz adapter stories complete</dependency>
+    <dependency type="epic" id="10.5">All Lighter.xyz data adapter stories complete</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="docs/live-trading/lighter-integration.md" action="create">Integration guide</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR22">MkDocs documentation structure</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="manual">Code example verification</test>
+    <test type="manual">API reference accuracy</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR59</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.6.2</ref>
+  </documentation-references>
+</story-context>

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-6-4" generated="2025-12-06">
+  <meta>
+    <title>Audit & Stress Test Reports</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.6 - Documentation & Reporting</sub-epic>
+    <status>drafted</status>
+    <priority>medium</priority>
+  </meta>
+
+  <story-summary>
+    Generate reports from audit and stress test results for users and stakeholders
+    to review production readiness of the system.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Audit report from YAML findings: summary by severity, resolution status, regression test coverage</criterion>
+    <criterion id="AC2">Stress test report from JSON results: scenario results, pass/fail, key metrics</criterion>
+    <criterion id="AC3">Reports saved to docs/live-trading/ as markdown files</criterion>
+    <criterion id="AC4">Report generation runnable as command or script</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create scripts/generate_audit_report.py</task>
+    <task>Create scripts/generate_stress_report.py</task>
+    <task>Implement audit report generation from YAML findings</task>
+    <task>Implement stress test report generation from JSON results</task>
+    <task>Create report templates</task>
+    <task>Test report generation with sample data</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Report Generation">
+      Reports generated from actual test data.
+      Can be run manually or as part of CI.
+      Human-readable markdown output.
+    </pattern>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Audit Report Script">
+      <![CDATA[
+def load_findings(findings_dir: Path) -> list[dict]:
+    findings = []
+    for yaml_file in findings_dir.glob("*.yaml"):
+        with open(yaml_file) as f:
+            data = yaml.safe_load(f)
+            findings.extend(data.get("findings", []))
+    return findings
+
+def generate_audit_report(findings: list[dict]) -> str:
+    severity_counts = Counter(f["severity"] for f in findings)
+    status_counts = Counter(f["status"] for f in findings)
+    with_tests = sum(1 for f in findings if f.get("regression_test"))
+    # Generate markdown report
+      ]]>
+    </spec>
+    <spec name="Audit Report Format">
+      <![CDATA[
+# Live Trading Code Audit Report
+**Generated:** 2025-12-XX
+
+## Summary
+| Metric | Value |
+|--------|-------|
+| Total Findings | X |
+| Critical | X |
+| High | X |
+
+## Resolution Status
+| Status | Count |
+
+## Regression Test Coverage
+- Findings with tests: X/Y
+- Coverage: X%
+
+## Detailed Findings
+### CRITICAL Findings
+### HIGH Findings
+      ]]>
+    </spec>
+    <spec name="Stress Report Format">
+      <![CDATA[
+# Stress Test Report
+**Generated:** 2025-12-XX
+
+## Summary
+| Metric | Value |
+|--------|-------|
+| Total Scenarios | X |
+| Passed | X |
+| Overall Status | PASS/FAIL |
+
+## Scenario Results
+### Network Resilience
+- Status: PASS
+- Avg Reconnection Time: 2.5s
+
+### Order Throughput
+- Status: PASS
+- Latency p99: 78.1ms
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="epic" id="10.1">Audit findings exist</dependency>
+    <dependency type="epic" id="10.3">Stress test results exist</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="scripts/generate_audit_report.py" action="create">Audit report generator</file>
+    <file path="scripts/generate_stress_report.py" action="create">Stress report generator</file>
+    <file path="docs/live-trading/audit-report.md" action="create">Generated audit report</file>
+    <file path="docs/live-trading/stress-test-report.md" action="create">Generated stress report</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR22">MkDocs documentation structure</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Report generation with sample data</test>
+    <test type="manual">Markdown rendering verification</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR61, FR62</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.6.4</ref>
+  </documentation-references>
+</story-context>

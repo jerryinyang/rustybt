@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-2-5" generated="2025-12-06">
+  <meta>
+    <title>Testnet Reconnection & State Recovery</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.2 - Paper Trading Verification</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Validate WebSocket reconnection and state recovery after disconnection to ensure
+    the system is resilient to network failures.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">WebSocket reconnection with exponential backoff, succeeds within 30 seconds</criterion>
+    <criterion id="AC2">Position state reconciled with exchange after reconnection</criterion>
+    <criterion id="AC3">Order status synced after reconnection during active order</criterion>
+    <criterion id="AC4">Exponential backoff follows correct formula: delay = min(base * 2^attempts, max_delay)</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create reconnection test infrastructure with disconnect simulation</task>
+    <task>Implement basic reconnection test (disconnect, reconnect, verify subscriptions)</task>
+    <task>Implement position reconciliation test</task>
+    <task>Implement order sync test (disconnect during order, reconnect, verify status)</task>
+    <task>Verify exponential backoff timing</task>
+    <task>Test edge cases (rapid disconnects, disconnect during submission)</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Reconnection Pattern 3">
+      delay = min(base * 2^attempts, max_delay)
+      Example: 1s, 2s, 4s, 8s, ... up to 60s max
+    </pattern>
+    <constraint>Reconnection must complete within 30 seconds (NFR2)</constraint>
+    <constraint>Stale connection detected within 60 seconds (NFR8)</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Disconnect Simulation">
+      <![CDATA[
+async def force_disconnect(adapter):
+    if hasattr(adapter, '_ws') and adapter._ws:
+        await adapter._ws.close()
+    await asyncio.sleep(1)  # Wait for detection
+      ]]>
+    </spec>
+    <spec name="Backoff Verification">
+      <![CDATA[
+def expected_delay(attempt: int, base: float = 1.0, max_delay: float = 60.0) -> float:
+    return min(base * (2 ** (attempt - 1)), max_delay)
+# Attempt 1: 1.0s, Attempt 2: 2.0s, ..., Attempt 7+: 60.0s (capped)
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-2-4">Testnet connection works</dependency>
+    <dependency type="module">WebSocket streaming adapter</dependency>
+    <dependency type="module">Reconciler</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="tests/live/testnet/test_testnet_reconnection.py" action="create">Reconnection tests</file>
+    <file path="rustybt/live/streaming/" action="reference">Streaming adapters</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR2">WebSocket reconnection within 30 seconds</nfr>
+    <nfr id="NFR8">Stale connection detection within 60 seconds</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="integration">Reconnection timing</test>
+    <test type="integration">Subscription restoration</test>
+    <test type="integration">Position reconciliation</test>
+    <test type="integration">Order status sync</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR17, FR19</ref>
+    <ref>docs/internal/planning/architecture-epic-10.md - Pattern 3</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.2.5</ref>
+  </documentation-references>
+</story-context>

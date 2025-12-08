@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-5-1" generated="2025-12-06">
+  <meta>
+    <title>Lighter.xyz Data Adapter Skeleton & Asset Discovery</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.5 - Lighter.xyz Data Adapter</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Create the LighterDataAdapter class that can discover available assets on Lighter.xyz
+    for users to explore and select tradeable pairs.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">LighterDataAdapter class exists extending BaseDataAdapter ABC</criterion>
+    <criterion id="AC2">Asset discovery returns list of all trading pairs with symbol, base, quote, category</criterion>
+    <criterion id="AC3">Asset filtering by category (perp/spot) and pattern matching supported</criterion>
+    <criterion id="AC4">Asset data matches Lighter.xyz API response format</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create rustybt/data/adapters/lighter_adapter.py with class skeleton</task>
+    <task>Implement get_available_assets() async method</task>
+    <task>Implement get_assets_by_category() method</task>
+    <task>Implement filter_assets_by_pattern() method</task>
+    <task>Write unit tests</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Data Adapter Pattern">
+      Follow existing data adapter patterns (CCXTDataAdapter, PolygonAdapter)
+    </pattern>
+    <constraint>Use async/await for all I/O operations</constraint>
+    <constraint>Return Decimal for financial values</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Class Structure">
+      <![CDATA[
+class LighterDataAdapter(BaseDataAdapter):
+    BASE_URL = "https://mainnet.zklighter.elliot.ai/"
+    TESTNET_URL = "https://testnet.zklighter.elliot.ai/"
+
+    def __init__(self, testnet: bool = True):
+        self._base_url = self.TESTNET_URL if testnet else self.BASE_URL
+        self._client = httpx.AsyncClient(base_url=self._base_url)
+      ]]>
+    </spec>
+    <spec name="Asset Discovery">
+      <![CDATA[
+async def get_available_assets(self) -> list[dict]:
+    response = await self._client.get("/markets")
+    return [
+        {
+            "symbol": market["symbol"],
+            "base": market.get("base_asset", market["symbol"].split("-")[0]),
+            "quote": market.get("quote_asset", "USD"),
+            "category": "perpetual" if "PERP" in market["symbol"] else "spot",
+            "min_size": Decimal(str(market.get("min_size", "0.001"))),
+            "tick_size": Decimal(str(market.get("tick_size", "0.01"))),
+        }
+        for market in data.get("markets", [])
+    ]
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="epic" id="10.4">Broker adapter provides reference</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/data/adapters/lighter_adapter.py" action="create">New data adapter</file>
+    <file path="tests/live/lighter/test_lighter_data.py" action="create">Unit tests</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR6">1 year of daily data fetch in less than 30 seconds</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Get available assets with mock</test>
+    <test type="unit">Filtering functions</test>
+    <test type="unit">Asset data structure</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.5.1</ref>
+  </documentation-references>
+</story-context>

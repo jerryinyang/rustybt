@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-3-4" generated="2025-12-06">
+  <meta>
+    <title>Long-Running Stability & Memory Monitoring</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.3 - Stress Testing Infrastructure</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Create stress tests that run for 24-48 hours continuously to validate long-term
+    stability and detect memory leaks.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">24-hour stability test passes: responsive throughout, no crashes</criterion>
+    <criterion id="AC2">Memory growth less than 10% over 24 hours, sampled hourly</criterion>
+    <criterion id="AC3">48-hour test demonstrates linear/flat memory (not exponential)</criterion>
+    <criterion id="AC4">State remains consistent (positions tracked, calculations verified periodically)</criterion>
+    <criterion id="AC5">Stability report generated with runtime, memory snapshots, order count, errors, pass/fail</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create long-running test file with @pytest.mark.slow</task>
+    <task>Implement memory monitoring with tracemalloc</task>
+    <task>Implement 24-hour stability test</task>
+    <task>Implement 48-hour stability test</task>
+    <task>Implement state integrity checks (periodic verification)</task>
+    <task>Implement stability report generation</task>
+    <task>Create CI-friendly 1-hour variant</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Memory Monitoring">
+      Use tracemalloc to sample memory hourly.
+      Calculate growth percentage.
+      Detect exponential vs linear growth.
+    </pattern>
+    <constraint>Memory stable during 48-hour operation (NFR4)</constraint>
+    <constraint>Scenarios configurable without code changes (NFR25)</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Memory Monitor">
+      <![CDATA[
+class MemoryMonitor:
+    def __init__(self, sample_interval_seconds: int = 3600):
+        self.samples = []
+        tracemalloc.start()
+
+    def take_sample(self):
+        current, peak = tracemalloc.get_traced_memory()
+        self.samples.append({
+            "timestamp": datetime.utcnow().isoformat(),
+            "current_mb": current / 1024 / 1024,
+            "peak_mb": peak / 1024 / 1024
+        })
+
+    def calculate_growth(self) -> float:
+        initial = self.samples[0]["current_mb"]
+        final = self.samples[-1]["current_mb"]
+        return ((final - initial) / initial) * 100
+      ]]>
+    </spec>
+    <spec name="Test Pattern">
+      <![CDATA[
+@pytest.mark.slow
+@pytest.mark.timeout(86400)  # 24 hours
+def test_24h_stability():
+    duration_hours = int(os.environ.get("STABILITY_TEST_HOURS", "24"))
+    monitor = MemoryMonitor()
+    # ... run trading with periodic checks
+    assert monitor.calculate_growth() < 10
+      ]]>
+    </spec>
+    <spec name="Report Format">
+      <![CDATA[
+{
+  "scenario": "long_running_stability",
+  "duration_hours": 24,
+  "orders_processed": 288,
+  "errors": 0,
+  "memory_growth_percent": 1.3,
+  "is_exponential": false,
+  "state_integrity_failures": 0,
+  "passed": true
+}
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-3-1">Stress testing infrastructure</dependency>
+    <dependency type="module">Paper broker for long-running tests</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="tests/live/stress/test_long_running.py" action="create">Stability tests</file>
+    <file path="tests/live/stress/scenarios/long_running_24h.yaml" action="reference">Scenario</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR4">Memory stable during 48-hour operation (no leaks)</nfr>
+    <nfr id="NFR25">Scenarios configurable without code changes</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="stability">24-hour continuous operation</test>
+    <test type="stability">48-hour continuous operation</test>
+    <test type="performance">Memory monitoring</test>
+    <test type="integration">State integrity verification</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR25, FR26, FR27</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.3.4, NFR4</ref>
+  </documentation-references>
+</story-context>

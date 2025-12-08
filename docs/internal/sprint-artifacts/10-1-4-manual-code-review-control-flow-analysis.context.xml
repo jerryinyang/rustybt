@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-1-4" generated="2025-12-06">
+  <meta>
+    <title>Manual Code Review & Control Flow Analysis</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.1 - Code Audit & Quality Assessment</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Perform manual code review focusing on control flow, state machines, concurrency patterns,
+    and logic errors not caught by static analysis.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Manual code review completed on order state machine transitions in order_manager.py</criterion>
+    <criterion id="AC2">State persistence and recovery in state_manager.py reviewed</criterion>
+    <criterion id="AC3">Reconnection logic in streaming modules reviewed</criterion>
+    <criterion id="AC4">Circuit breaker trigger conditions reviewed</criterion>
+    <criterion id="AC5">Concurrency patterns (async/await, locks, race conditions) reviewed across all modules</criterion>
+    <criterion id="AC6">All findings added to YAML files with category "manual_review"</criterion>
+    <criterion id="AC7">Critical/High findings include detailed reproduction steps and specific line numbers</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Review order state machine (pending → submitted → filled/cancelled)</task>
+    <task>Review state persistence (atomic saves, recovery from corruption)</task>
+    <task>Review reconnection logic (exponential backoff, subscription restoration)</task>
+    <task>Review circuit breaker (threshold logic, cooldown period)</task>
+    <task>Review concurrency (shared state, locks, deadlock potential)</task>
+    <task>Review error paths (exception handling, cleanup)</task>
+    <task>Security review (credential exposure, error messages)</task>
+    <task>Update findings YAML files with category "manual_review"</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Order State Machine">
+      Valid transitions:
+      - pending → submitted → filled
+      - pending → submitted → cancelled
+      - pending → cancelled (timeout/error before submit)
+      No transitions from filled or cancelled to any other state.
+    </pattern>
+    <pattern name="Reconnection Pattern 3">
+      delay = min(base * 2^attempts, max_delay)
+    </pattern>
+    <pattern name="Rate Limiting Pattern 2">
+      Token bucket at adapter level
+    </pattern>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Concurrency Review Checklist">
+      1. Shared State: Identify all instance variables modified by async operations
+      2. Lock Usage: Verify asyncio.Lock() used for critical sections
+      3. Await Points: Check that long operations don't block event loop
+      4. Task Cancellation: Verify cleanup on task cancel
+    </spec>
+    <spec name="Error Path Analysis">
+      Per NFR7: "System must survive and recover from any single API failure without data loss"
+      - All API calls have proper try/except
+      - State is not corrupted on partial failure
+      - Retry logic doesn't cause duplicate operations
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-1-1">Audit infrastructure</dependency>
+    <dependency type="story" id="10-1-2">Core module findings baseline</dependency>
+    <dependency type="story" id="10-1-3">Broker/streaming findings baseline</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/live/order_manager.py" action="review">Order state machine</file>
+    <file path="rustybt/live/state_manager.py" action="review">State persistence</file>
+    <file path="rustybt/live/streaming/" action="review">Reconnection logic</file>
+    <file path="tests/live/audit/findings/" action="modify">Add manual review findings</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR7">System must survive any single API failure without data loss</nfr>
+    <nfr id="NFR10">All order state transitions logged for audit</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">State machine transition tests</test>
+    <test type="unit">State recovery scenario tests</test>
+    <test type="unit">Reconnection behavior tests</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - Audit Methodology</ref>
+    <ref>docs/internal/planning/architecture-epic-10.md - Pattern 3: Reconnection</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.1.4</ref>
+  </documentation-references>
+</story-context>

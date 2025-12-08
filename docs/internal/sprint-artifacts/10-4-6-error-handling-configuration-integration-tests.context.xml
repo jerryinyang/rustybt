@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-4-6" generated="2025-12-06">
+  <meta>
+    <title>Error Handling, Configuration & Integration Tests</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.4 - Lighter.xyz Broker Adapter</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Implement comprehensive error handling and integration tests for the Lighter.xyz
+    adapter to ensure production readiness.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Error hierarchy: LighterConnectionError, LighterOrderRejectError, LighterRateLimitError, LighterKeyError</criterion>
+    <criterion id="AC2">Errors logged with context (order_id, symbol, operation) but no sensitive data</criterion>
+    <criterion id="AC3">Configuration via YAML works with testnet/mainnet selection and warning on mainnet</criterion>
+    <criterion id="AC4">Integration tests pass on Lighter.xyz testnet, skip if no credentials</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Implement error hierarchy (all inherit from BrokerError)</task>
+    <task>Implement error context logging (no credentials)</task>
+    <task>Implement YAML configuration support</task>
+    <task>Write integration tests (connect, submit_order, cancel, get_positions, get_open_orders)</task>
+    <task>Implement skip logic for missing credentials</task>
+    <task>Write mock tests for error scenarios</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Error Hierarchy">
+      LighterError (base) inherits from BrokerError
+      LighterConnectionError, LighterOrderRejectError, LighterRateLimitError, LighterKeyError
+    </pattern>
+    <constraint>Sensitive data never logged (NFR13)</constraint>
+    <constraint>Integration tests use @pytest.mark.integration marker</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Exception Classes">
+      <![CDATA[
+class LighterError(BrokerError):
+    pass
+
+class LighterConnectionError(LighterError):
+    pass
+
+class LighterOrderRejectError(LighterError):
+    def __init__(self, message: str, order_context: dict | None = None):
+        super().__init__(message)
+        self.order_context = order_context or {}
+
+class LighterRateLimitError(LighterError):
+    def __init__(self, message: str, retry_after: float | None = None):
+        super().__init__(message)
+        self.retry_after = retry_after
+
+class LighterKeyError(LighterError):
+    pass
+      ]]>
+    </spec>
+    <spec name="Integration Test Pattern">
+      <![CDATA[
+skip_without_lighter_creds = pytest.mark.skipif(
+    not os.environ.get("LIGHTER_TESTNET_PRIVATE_KEY"),
+    reason="Lighter.xyz testnet credentials not available"
+)
+
+@pytest.mark.integration
+@skip_without_lighter_creds
+class TestLighterIntegration:
+    async def test_limit_order_lifecycle(self, adapter):
+        order_id = await adapter.submit_order(
+            asset=Asset("BTC-PERP"),
+            amount=Decimal("0.001"),
+            order_type="limit",
+            limit_price=Decimal("1000")
+        )
+        orders = await adapter.get_open_orders()
+        assert any(o["order_id"] == order_id for o in orders)
+        await adapter.cancel_order(order_id)
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-4-1">Adapter skeleton</dependency>
+    <dependency type="story" id="10-4-2">Order submission</dependency>
+    <dependency type="story" id="10-4-3">Order queries</dependency>
+    <dependency type="story" id="10-4-4">Position queries</dependency>
+    <dependency type="story" id="10-4-5">Fill notifications</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/live/brokers/lighter_adapter.py" action="modify">Error handling</file>
+    <file path="tests/live/lighter/test_lighter_integration.py" action="create">Integration tests</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR13">API keys and private keys never logged</nfr>
+    <nfr id="NFR14">Credentials from environment variables</nfr>
+    <nfr id="NFR15">Testnet/mainnet clearly separated</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="integration">Testnet connection</test>
+    <test type="integration">Order lifecycle</test>
+    <test type="unit">Error handling scenarios (mocked)</test>
+    <test type="unit">Log content verification (no credentials)</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/architecture-epic-10.md - Error Handling</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.4.6, Test Strategy</ref>
+  </documentation-references>
+</story-context>

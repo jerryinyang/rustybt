@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-2-6" generated="2025-12-06">
+  <meta>
+    <title>End-to-End Order Flow Validation</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.2 - Paper Trading Verification</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Validate the complete order flow from strategy signal to position update,
+    confirming the entire trading pipeline works correctly.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Complete BUY signal flow validated (signal → executor → order → broker → fill → position)</criterion>
+    <criterion id="AC2">Complete SELL signal flow validated (position closed, PnL calculated)</criterion>
+    <criterion id="AC3">Timing meets NFR1: signal to API call less than 100ms (excluding network)</criterion>
+    <criterion id="AC4">Flow works across session restarts (persist, restart, continue)</criterion>
+    <criterion id="AC5">All components exercised: Engine → StrategyExecutor → OrderManager → Broker → Fill → StateManager</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create end-to-end test infrastructure with timing instrumentation</task>
+    <task>Implement BUY flow test (signal → order → fill → position)</task>
+    <task>Implement SELL flow test (close position, verify PnL)</task>
+    <task>Implement timing measurement (signal to API call latency)</task>
+    <task>Implement restart test (persist, restart, continue trading)</task>
+    <task>Trace component chain (add trace logging, verify sequence)</task>
+    <task>Test multiple BUY/SELL cycles for consistency</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Order Flow Chain">
+      1. LiveTradingEngine.run()
+      2. StrategyExecutor.on_bar(bar_data) → generates signal
+      3. OrderManager.create_order(signal)
+      4. BrokerAdapter.submit_order(order)
+      5. BrokerAdapter receives fill (stream or poll)
+      6. OrderManager.on_fill(fill)
+      7. StateManager.update_position(fill)
+      8. Position updated, PnL recalculated
+    </pattern>
+    <constraint>Signal to API call latency less than 100ms (NFR1)</constraint>
+    <constraint>All state transitions logged for audit (NFR10)</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Timing Instrumentation">
+      <![CDATA[
+class TimingInstrument:
+    def __init__(self):
+        self.timestamps = {}
+
+    def mark(self, event: str):
+        self.timestamps[event] = time.monotonic()
+
+    def latency(self, start: str, end: str) -> float:
+        return self.timestamps[end] - self.timestamps[start]
+
+timing.mark("signal_generated")
+# ... flow ...
+timing.mark("api_call_made")
+assert timing.latency("signal_generated", "api_call_made") < 0.100
+      ]]>
+    </spec>
+    <spec name="E2E Test Strategy">
+      <![CDATA[
+class E2ETestStrategy:
+    def __init__(self):
+        self.pending_signal = None
+
+    def queue_signal(self, signal: str):
+        self.pending_signal = signal
+
+    def on_bar(self, bar_data):
+        if self.pending_signal:
+            signal = self.pending_signal
+            self.pending_signal = None
+            return signal
+        return None
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-2-4">Testnet connection works</dependency>
+    <dependency type="story" id="10-2-5">Reconnection works</dependency>
+    <dependency type="module">Full live trading engine on testnet</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="tests/live/testnet/test_e2e_order_flow.py" action="create">E2E tests</file>
+    <file path="rustybt/live/engine.py" action="reference">Trading engine</file>
+    <file path="rustybt/live/order_manager.py" action="reference">Order management</file>
+    <file path="rustybt/live/state_manager.py" action="reference">State management</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR1">Order submission latency less than 100ms</nfr>
+    <nfr id="NFR10">All order state transitions logged</nfr>
+    <nfr id="NFR12">Exact position state recovery after restart</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="integration">Complete BUY flow</test>
+    <test type="integration">Complete SELL flow</test>
+    <test type="performance">Latency measurement</test>
+    <test type="integration">Restart recovery</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR20</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.2.6, Order Submission Flow</ref>
+  </documentation-references>
+</story-context>

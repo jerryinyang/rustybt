@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-4-3" generated="2025-12-06">
+  <meta>
+    <title>Order Cancellation & Query Operations</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.4 - Lighter.xyz Broker Adapter</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Implement order cancellation and query operations for order management on Lighter.xyz.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Order cancellation works: cancel transaction signed and submitted, order cancelled</criterion>
+    <criterion id="AC2">Open orders queryable via GET /accountActiveOrders</criterion>
+    <criterion id="AC3">Order history queryable via GET /accountInactiveOrders with fill details</criterion>
+    <criterion id="AC4">Order status mapping implemented: Lighter status → rustybt OrderStatus enum</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Implement cancel_order() async method</task>
+    <task>Implement get_open_orders() async method</task>
+    <task>Implement get_order_history() async method with pagination</task>
+    <task>Implement status mapping (pending, open, filled, cancelled, partial)</task>
+    <task>Write unit tests</task>
+  </key-tasks>
+
+  <architecture-context>
+    <constraint>All financial values as Decimal</constraint>
+    <constraint>Rate limiting applied to all API calls</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Cancel Order">
+      <![CDATA[
+async def cancel_order(self, broker_order_id: str) -> None:
+    await self._check_request_rate_limit()
+    cancel_tx = self._create_cancel_order_tx(broker_order_id)
+    signed_tx = self._sign_transaction(cancel_tx)
+    response = await self._client.post("/sendTx", json=signed_tx)
+    response.raise_for_status()
+    logger.info("order_cancelled", order_id=broker_order_id)
+      ]]>
+    </spec>
+    <spec name="Get Open Orders">
+      <![CDATA[
+async def get_open_orders(self) -> list[dict]:
+    response = await self._client.get("/accountActiveOrders", params={"account": self._wallet_address})
+    return [
+        {
+            "order_id": order["id"],
+            "symbol": order["symbol"],
+            "side": order["side"],
+            "type": order["order_type"],
+            "quantity": Decimal(str(order["quantity"])),
+            "price": Decimal(str(order["price"])) if order.get("price") else None,
+            "status": self._map_status(order["status"]),
+        }
+        for order in data.get("orders", [])
+    ]
+      ]]>
+    </spec>
+    <spec name="Status Mapping">
+      <![CDATA[
+LIGHTER_STATUS_MAP = {
+    "pending": OrderStatus.PENDING,
+    "open": OrderStatus.SUBMITTED,
+    "filled": OrderStatus.FILLED,
+    "cancelled": OrderStatus.CANCELLED,
+    "partially_filled": OrderStatus.PARTIAL_FILL,
+}
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-4-2">Order submission works</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/live/brokers/lighter_adapter.py" action="modify">Add query methods</file>
+    <file path="tests/live/lighter/test_lighter_broker.py" action="modify">Add query tests</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR10">All order state transitions logged</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Cancel order with mock</test>
+    <test type="unit">Get open orders with mock</test>
+    <test type="unit">Get order history with mock</test>
+    <test type="unit">Status mapping</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.4.3</ref>
+  </documentation-references>
+</story-context>

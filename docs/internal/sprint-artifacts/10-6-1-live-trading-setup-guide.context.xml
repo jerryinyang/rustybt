@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-6-1" generated="2025-12-06">
+  <meta>
+    <title>Live Trading Setup Guide</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.6 - Documentation & Reporting</sub-epic>
+    <status>drafted</status>
+    <priority>medium</priority>
+  </meta>
+
+  <story-summary>
+    Create a comprehensive live trading setup guide for users to configure rustybt
+    for live trading on all supported platforms.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Setup guide covers all supported platforms: Binance, Bybit, Hyperliquid, Lighter.xyz, Interactive Brokers</criterion>
+    <criterion id="AC2">Step-by-step instructions: account creation, API key generation, environment variables, testnet/mainnet config</criterion>
+    <criterion id="AC3">Security best practices: API key permissions, environment variables, encrypted keystores, IP whitelisting</criterion>
+    <criterion id="AC4">Troubleshooting section: connection errors, authentication failures, rate limits, order rejections</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create docs/live-trading/setup-guide.md with structure</task>
+    <task>Write Binance setup section</task>
+    <task>Write Bybit setup section</task>
+    <task>Write Hyperliquid setup section</task>
+    <task>Write Lighter.xyz setup section</task>
+    <task>Write Interactive Brokers setup section</task>
+    <task>Write security best practices section</task>
+    <task>Write troubleshooting section</task>
+  </key-tasks>
+
+  <architecture-context>
+    <constraint>Never log API keys or private keys (NFR13)</constraint>
+    <constraint>Credentials from environment variables or secure config (NFR14)</constraint>
+    <constraint>Clear testnet/mainnet separation (NFR15)</constraint>
+    <constraint>Follow MkDocs structure (NFR22)</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Document Structure">
+      <![CDATA[
+# Live Trading Setup Guide
+## Overview
+## Prerequisites
+## Platform Setup
+### Binance
+### Bybit
+### Hyperliquid
+### Lighter.xyz
+### Interactive Brokers
+## Security Best Practices
+### API Key Permissions
+### Environment Variables
+### Encrypted Keystores
+### IP Whitelisting
+## Configuration File
+## Troubleshooting
+## Next Steps
+      ]]>
+    </spec>
+    <spec name="Security Documentation">
+      <![CDATA[
+## Security Best Practices
+### Environment Variables (Recommended)
+```bash
+# Testnet (safe for testing)
+export BINANCE_TESTNET_API_KEY="your_testnet_api_key"
+export BINANCE_TESTNET_SECRET="your_testnet_secret"
+```
+### Minimum API Permissions
+- Trading: Enable for order submission
+- Read: Enable for position/balance queries
+- **Withdrawal: NEVER enable**
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="epic" id="10.4">Lighter.xyz adapter complete</dependency>
+    <dependency type="epic" id="10.5">Lighter.xyz data adapter complete</dependency>
+    <dependency type="epic" id="10.2">Testnet validation complete</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="docs/live-trading/setup-guide.md" action="create">Main setup guide</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR13">Never log API keys or private keys</nfr>
+    <nfr id="NFR14">Credentials from environment variables</nfr>
+    <nfr id="NFR15">Clear testnet/mainnet separation</nfr>
+    <nfr id="NFR22">MkDocs documentation structure</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="manual">Documentation accuracy verification</test>
+    <test type="manual">Step-by-step testing of setup instructions</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR58</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.6.1</ref>
+  </documentation-references>
+</story-context>

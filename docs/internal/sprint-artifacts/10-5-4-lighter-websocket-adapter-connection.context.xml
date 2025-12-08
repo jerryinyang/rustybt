@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-5-4" generated="2025-12-06">
+  <meta>
+    <title>Lighter.xyz WebSocket Adapter & Connection</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.5 - Lighter.xyz Data Adapter</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Create the LighterWebSocketAdapter that can connect and subscribe to real-time data
+    for live trading price updates.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">LighterWebSocketAdapter class exists extending BaseWebSocketAdapter ABC</criterion>
+    <criterion id="AC2">WebSocket connection works with state tracking (is_connected())</criterion>
+    <criterion id="AC3">Subscription to trades channel works with confirmation</criterion>
+    <criterion id="AC4">Message parsing returns TickData or None</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create rustybt/live/streaming/lighter_stream.py with class skeleton</task>
+    <task>Implement connect()/disconnect() async methods</task>
+    <task>Implement subscribe() async method</task>
+    <task>Implement parse_message() method</task>
+    <task>Write unit tests</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="WebSocket Adapter Pattern">
+      Implement BaseWebSocketAdapter ABC.
+      Support trades, orderbook, candlestick channels.
+    </pattern>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Class Structure">
+      <![CDATA[
+class LighterWebSocketAdapter(BaseWebSocketAdapter):
+    MAINNET_WS_URL = "wss://mainnet.zklighter.elliot.ai/ws"
+    TESTNET_WS_URL = "wss://testnet.zklighter.elliot.ai/ws"
+
+    def __init__(self, testnet: bool = True):
+        self._ws_url = self.TESTNET_WS_URL if testnet else self.MAINNET_WS_URL
+        self._ws = None
+        self._subscriptions: dict[str, set[str]] = {}
+        self._connected = False
+      ]]>
+    </spec>
+    <spec name="Connect">
+      <![CDATA[
+async def connect(self) -> None:
+    self._ws = await websockets.connect(self._ws_url)
+    self._connected = True
+    logger.info("lighter_ws_connected", url=self._ws_url)
+
+def is_connected(self) -> bool:
+    return self._connected and self._ws is not None and self._ws.open
+      ]]>
+    </spec>
+    <spec name="Subscribe">
+      <![CDATA[
+async def subscribe(self, symbols: list[str], channels: list[str]) -> None:
+    message = {
+        "type": "subscribe",
+        "channels": [{"name": ch, "symbols": symbols} for ch in channels]
+    }
+    await self._ws.send(json.dumps(message))
+    for symbol in symbols:
+        self._subscriptions.setdefault(symbol, set()).update(channels)
+      ]]>
+    </spec>
+    <spec name="Parse Message">
+      <![CDATA[
+def parse_message(self, raw_message: dict) -> TickData | None:
+    if raw_message.get("type") == "trade":
+        return TickData(
+            symbol=raw_message["symbol"],
+            price=Decimal(str(raw_message["price"])),
+            size=Decimal(str(raw_message["size"])),
+            side=raw_message.get("side", "unknown"),
+            timestamp=pd.Timestamp(raw_message["timestamp"], unit='ms'),
+        )
+    return None
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="epic" id="10.4">Broker adapter provides connection patterns</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/live/streaming/lighter_stream.py" action="create">New streaming adapter</file>
+    <file path="tests/live/lighter/test_lighter_stream.py" action="create">Unit tests</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR2">WebSocket reconnection within 30 seconds</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Connection with mock</test>
+    <test type="unit">Subscription</test>
+    <test type="unit">Message parsing</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.5.4</ref>
+  </documentation-references>
+</story-context>

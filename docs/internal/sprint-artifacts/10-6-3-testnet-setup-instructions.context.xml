@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-6-3" generated="2025-12-06">
+  <meta>
+    <title>Testnet Setup Instructions</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.6 - Documentation & Reporting</sub-epic>
+    <status>drafted</status>
+    <priority>medium</priority>
+  </meta>
+
+  <story-summary>
+    Create testnet setup instructions for all supported platforms so users can practice
+    live trading without risking real funds.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Binance testnet: registration, API key, faucet, environment variables</criterion>
+    <criterion id="AC2">Bybit testnet: registration, API key, test funds, configuration</criterion>
+    <criterion id="AC3">Hyperliquid testnet: wallet setup, test funds, configuration</criterion>
+    <criterion id="AC4">Lighter.xyz testnet: wallet requirements, testnet URL, test funds</criterion>
+    <criterion id="AC5">Each platform section includes verification steps to confirm setup</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create docs/live-trading/testnet-guide.md</task>
+    <task>Write Binance testnet section with verification</task>
+    <task>Write Bybit testnet section with verification</task>
+    <task>Write Hyperliquid testnet section with verification</task>
+    <task>Write Lighter.xyz testnet section with verification</task>
+    <task>Write verification code snippets</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Testnet URLs">
+      Binance: https://testnet.binance.vision/
+      Bybit: https://testnet.bybit.com/
+      Hyperliquid: https://testnet.hyperliquid.xyz/
+      Lighter.xyz: https://testnet.zklighter.elliot.ai/
+    </pattern>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Document Structure">
+      <![CDATA[
+# Testnet Setup Guide
+## Why Use Testnets?
+## Binance Testnet
+### 1. Create Testnet Account
+### 2. Generate API Keys
+### 3. Get Test Funds
+### 4. Configure Environment
+### 5. Verify Setup
+## Bybit Testnet
+...
+## Hyperliquid Testnet
+...
+## Lighter.xyz Testnet
+...
+## Troubleshooting
+      ]]>
+    </spec>
+    <spec name="Verification Code">
+      <![CDATA[
+async def verify_testnet():
+    adapter = {Exchange}BrokerAdapter(testnet=True)
+    try:
+        await adapter.connect()
+        print("✓ Connection successful")
+
+        info = await adapter.get_account_info()
+        print(f"✓ Account info retrieved: {info}")
+
+        positions = await adapter.get_positions()
+        print(f"✓ Position query successful: {len(positions)} positions")
+
+        print("\nTestnet setup verified successfully!")
+    except Exception as e:
+        print(f"✗ Setup verification failed: {e}")
+    finally:
+        await adapter.disconnect()
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-6-1">Live trading setup guide complete</dependency>
+    <dependency type="module">All adapters implement testnet mode</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="docs/live-trading/testnet-guide.md" action="create">Testnet guide</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR15">Clear testnet/mainnet separation</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="manual">Testnet setup verification on each platform</test>
+    <test type="manual">Verification code execution</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR60</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.6.3</ref>
+  </documentation-references>
+</story-context>

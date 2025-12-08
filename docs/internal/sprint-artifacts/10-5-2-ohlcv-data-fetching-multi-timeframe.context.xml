@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-5-2" generated="2025-12-06">
+  <meta>
+    <title>OHLCV Data Fetching & Multi-Timeframe Support</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.5 - Lighter.xyz Data Adapter</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Implement OHLCV candlestick data fetching from Lighter.xyz for multiple timeframes
+    to enable historical data ingestion for backtesting.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">OHLCV data fetched via GET /candlesticks, parsed into Polars DataFrame</criterion>
+    <criterion id="AC2">Multiple timeframes supported: 1m, 5m, 15m, 1h, 4h, 1d</criterion>
+    <criterion id="AC3">Date range handling works (start_date, end_date respected)</criterion>
+    <criterion id="AC4">Pagination handled for large date ranges</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Implement fetch() async method with symbols, dates, resolution</task>
+    <task>Implement timeframe mapping (rustybt → Lighter format)</task>
+    <task>Implement date range handling with timezone conversion</task>
+    <task>Implement pagination for large ranges</task>
+    <task>Write unit tests</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Data Fetching">
+      Follow existing data adapter fetch patterns.
+      Return Polars DataFrame.
+    </pattern>
+    <constraint>1 year of daily data in less than 30 seconds (NFR6)</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Fetch Method">
+      <![CDATA[
+async def fetch(
+    self,
+    symbols: list[str],
+    start_date: pd.Timestamp,
+    end_date: pd.Timestamp,
+    resolution: str,
+) -> pl.DataFrame:
+    lighter_resolution = self._map_resolution(resolution)
+    all_data = []
+    for symbol in symbols:
+        symbol_data = await self._fetch_symbol(symbol, start_date, end_date, lighter_resolution)
+        all_data.append(symbol_data)
+    return pl.concat(all_data) if all_data else self._empty_dataframe()
+      ]]>
+    </spec>
+    <spec name="Timeframe Mapping">
+      <![CDATA[
+TIMEFRAME_MAP = {
+    "1m": "1",
+    "5m": "5",
+    "15m": "15",
+    "1h": "60",
+    "4h": "240",
+    "1d": "1440",
+}
+      ]]>
+    </spec>
+    <spec name="Pagination">
+      <![CDATA[
+async def _fetch_symbol(self, symbol, start_date, end_date, resolution):
+    all_candles = []
+    current_start = start_date
+    while current_start < end_date:
+        params = {
+            "symbol": symbol,
+            "resolution": resolution,
+            "from": int(current_start.timestamp()),
+            "to": int(end_date.timestamp()),
+            "limit": 1000,
+        }
+        response = await self._client.get("/candlesticks", params=params)
+        candles = response.json().get("candles", [])
+        if not candles:
+            break
+        all_candles.extend(candles)
+        last_timestamp = candles[-1]["timestamp"]
+        current_start = pd.Timestamp(last_timestamp, unit='s') + pd.Timedelta(seconds=1)
+    return self._parse_candles(all_candles, symbol)
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-5-1">Adapter skeleton exists</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/data/adapters/lighter_adapter.py" action="modify">Add fetch method</file>
+    <file path="tests/live/lighter/test_lighter_data.py" action="modify">Add fetch tests</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR6">1 year daily data in less than 30 seconds</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Fetch with mock response</test>
+    <test type="unit">All timeframes</test>
+    <test type="unit">Pagination handling</test>
+    <test type="unit">Date range filtering</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.5.2, NFR6</ref>
+  </documentation-references>
+</story-context>

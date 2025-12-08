@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-3-1" generated="2025-12-06">
+  <meta>
+    <title>Stress Testing Infrastructure & Scenario Configuration</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.3 - Stress Testing Infrastructure</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Create stress testing infrastructure with configurable YAML scenarios to enable
+    repeatable stress tests with different parameters.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Directory structure created: tests/live/stress/ with scenarios/ and results/</criterion>
+    <criterion id="AC2">Scenario YAML schema supports: name, type (network|throughput|long_running|error), duration, parameters, success_criteria</criterion>
+    <criterion id="AC3">Pytest fixtures for loading and executing scenarios available</criterion>
+    <criterion id="AC4">Sample scenario files demonstrate schema for each test type</criterion>
+    <criterion id="AC5">Stress test results logged in structured JSON format</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create stress testing directory structure</task>
+    <task>Define scenario schema with Pydantic models</task>
+    <task>Create pytest fixtures (load_scenario, execute_scenario, validate_results)</task>
+    <task>Create sample scenarios (network_disconnect, high_throughput, long_running_24h, api_error_simulation)</task>
+    <task>Implement JSON result logging</task>
+    <task>Write infrastructure tests</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Scenario-Driven Testing">
+      YAML configuration files define test parameters without code changes
+    </pattern>
+    <constraint>Scenarios must be parameterizable without code changes (NFR25)</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Scenario Schema">
+      <![CDATA[
+class StressScenario(BaseModel):
+    name: str
+    type: Literal["network", "throughput", "long_running", "error"]
+    duration: int  # seconds
+    parameters: dict[str, Any]
+    success_criteria: SuccessCriteria
+
+class StressTestResult(BaseModel):
+    scenario_name: str
+    start_time: str  # ISO format
+    end_time: str
+    duration_seconds: float
+    passed: bool
+    metrics: dict[str, Any]
+    errors: list[str]
+      ]]>
+    </spec>
+    <spec name="Sample Scenario YAML">
+      <![CDATA[
+name: network_disconnect_recovery
+type: network
+duration: 300
+parameters:
+  disconnect_count: 5
+  disconnect_interval_seconds: 60
+  max_reconnect_time_seconds: 30
+success_criteria:
+  all_reconnections_successful: true
+  max_reconnection_time_seconds: 30
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="epic" id="10.1">Audit findings resolved</dependency>
+    <dependency type="module">Paper broker and testnet infrastructure</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="tests/live/stress/" action="create">New stress test directory</file>
+    <file path="tests/live/stress/models.py" action="create">Pydantic models</file>
+    <file path="tests/live/stress/conftest.py" action="create">Pytest fixtures</file>
+    <file path="tests/live/stress/scenarios/" action="create">YAML scenario files</file>
+    <file path="tests/live/stress/results/" action="create">JSON result output</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR25">Scenarios configurable without code changes</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Scenario loading from YAML</test>
+    <test type="unit">Schema validation</test>
+    <test type="unit">Result serialization</test>
+    <test type="unit">Fixture availability</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - Stress Test Scenarios</ref>
+    <ref>docs/internal/planning/architecture-epic-10.md - ADR-004: pytest-based Stress Testing</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.3.1</ref>
+  </documentation-references>
+</story-context>

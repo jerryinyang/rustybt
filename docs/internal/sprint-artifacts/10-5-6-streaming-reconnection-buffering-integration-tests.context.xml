@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-5-6" generated="2025-12-06">
+  <meta>
+    <title>Streaming Reconnection, Buffering & Integration Tests</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.5 - Lighter.xyz Data Adapter</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Implement robust reconnection and buffering for the streaming adapter with comprehensive
+    tests to ensure live trading survives network failures.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Reconnection with exponential backoff: delay = min(base * 2^attempts, max_delay)</criterion>
+    <criterion id="AC2">Subscriptions restored automatically after reconnection</criterion>
+    <criterion id="AC3">Messages buffered during brief disconnections (less than 30 seconds), processed on reconnect</criterion>
+    <criterion id="AC4">Integration tests pass on Lighter.xyz testnet, skip if no credentials</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Implement reconnect() async method with exponential backoff</task>
+    <task>Implement subscription restoration after reconnect</task>
+    <task>Implement message buffering (bounded queue, discard after 30 seconds)</task>
+    <task>Write integration tests for testnet</task>
+    <task>Write unit tests for reconnection logic</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Reconnection Pattern 3">
+      delay = min(base * 2^attempts, max_delay)
+      Reset counter on successful reconnect.
+    </pattern>
+    <constraint>Reconnection within 30 seconds (NFR2)</constraint>
+    <constraint>Queue orders during brief disconnections (NFR9)</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Reconnection">
+      <![CDATA[
+async def reconnect(self) -> None:
+    self._reconnect_count = 0
+    max_attempts = 10
+
+    while self._reconnect_count < max_attempts:
+        self._reconnect_count += 1
+        delay = min(
+            self.config.reconnect_delay * (2 ** (self._reconnect_count - 1)),
+            self.config.reconnect_max_delay,
+        )
+        await asyncio.sleep(delay)
+
+        try:
+            await self.connect()
+            for symbol, channels in self._subscriptions.items():
+                await self.subscribe([symbol], list(channels))
+            self._reconnect_count = 0
+            return
+        except Exception as e:
+            logger.warning("lighter_reconnect_failed", error=str(e))
+
+    raise LighterConnectionError("Max reconnection attempts reached")
+      ]]>
+    </spec>
+    <spec name="Message Buffering">
+      <![CDATA[
+self._message_buffer: deque = deque(maxlen=1000)
+self._buffering = False
+
+async def _on_disconnect(self):
+    self._buffering = True
+    self._disconnect_time = time.monotonic()
+
+async def _on_reconnect(self):
+    if time.monotonic() - self._disconnect_time > 30:
+        self._message_buffer.clear()
+        logger.warning("buffer_discarded_due_to_long_disconnect")
+    else:
+        while self._message_buffer:
+            message = self._message_buffer.popleft()
+            await self._process_message(message)
+    self._buffering = False
+      ]]>
+    </spec>
+    <spec name="Integration Test">
+      <![CDATA[
+@pytest.mark.integration
+@skip_without_lighter_creds
+class TestLighterStreamIntegration:
+    async def test_connect_and_subscribe(self, adapter):
+        await adapter.subscribe(["BTC-PERP"], ["trades"])
+        assert adapter.is_connected()
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-5-4">Connection works</dependency>
+    <dependency type="story" id="10-5-5">Multi-channel works</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/live/streaming/lighter_stream.py" action="modify">Add reconnection</file>
+    <file path="tests/live/lighter/test_lighter_stream_integration.py" action="create">Integration tests</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR2">Reconnection within 30 seconds</nfr>
+    <nfr id="NFR9">Queue orders during brief disconnections</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Exponential backoff delays</test>
+    <test type="unit">Subscription restoration</test>
+    <test type="unit">Buffering behavior</test>
+    <test type="integration">Testnet connection and subscription</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/architecture-epic-10.md - Pattern 3</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.5.6, Test Strategy</ref>
+  </documentation-references>
+</story-context>

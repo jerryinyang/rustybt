@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-3-5" generated="2025-12-06">
+  <meta>
+    <title>API Error Simulation & Stress Test Reporting</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.3 - Stress Testing Infrastructure</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Create stress tests that simulate API errors and generate comprehensive reports
+    to validate error handling and track stress test results over time.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">API error simulation exists for: 500, 429, 408, connection refused</criterion>
+    <criterion id="AC2">Each error handled gracefully: retry logic, no crash, errors logged with context</criterion>
+    <criterion id="AC3">Comprehensive stress test report generated with all scenarios, metrics, pass/fail</criterion>
+    <criterion id="AC4">Report saved to docs/live-trading/stress-test-report.md</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create API error test file</task>
+    <task>Implement 500 error simulation (mock, verify retry, backoff)</task>
+    <task>Implement 429 error simulation (backoff, Retry-After header)</task>
+    <task>Implement timeout simulation (408, connection timeout)</task>
+    <task>Implement connection refused simulation</task>
+    <task>Implement error context logging (order_id, symbol, no sensitive data)</task>
+    <task>Implement report aggregation from all stress tests</task>
+    <task>Generate markdown report</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Error Handling">
+      Retry with exponential backoff for transient errors.
+      Respect Retry-After header for 429 responses.
+      Log context without sensitive data.
+    </pattern>
+    <constraint>System must survive any single API failure without data loss (NFR7)</constraint>
+    <constraint>All order state transitions logged for audit (NFR10)</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Error Simulation">
+      <![CDATA[
+async def simulate_500_error(broker, operation):
+    mock_response = httpx.Response(status_code=500, json={"error": "Internal Server Error"})
+    with patch.object(broker._client, 'post', return_value=mock_response):
+        with pytest.raises(BrokerError):
+            await operation()
+
+async def simulate_429_error(broker, operation, retry_after=5):
+    mock_response = httpx.Response(
+        status_code=429,
+        headers={"Retry-After": str(retry_after)},
+        json={"error": "Rate limit exceeded"}
+    )
+    # Verify retry happens after delay
+      ]]>
+    </spec>
+    <spec name="Report Template">
+      <![CDATA[
+# Stress Test Report
+**Generated:** 2025-12-XX
+
+## Summary
+| Metric | Value |
+|--------|-------|
+| Total Scenarios | X |
+| Passed | X |
+| Failed | X |
+
+## Scenario Results
+### Network Resilience
+- **Status:** PASS/FAIL
+- **Avg Reconnection Time:** 2.5s
+
+### Order Throughput
+- **Status:** PASS/FAIL
+- **Latency p99:** 78.1ms
+
+### Long-Running Stability
+- **Status:** PASS/FAIL
+- **Memory Growth:** 1.3%
+
+### API Error Handling
+- **Status:** PASS/FAIL
+- All error types handled: Yes
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-3-1">Stress testing infrastructure</dependency>
+    <dependency type="story" id="10-3-2">Network resilience tests (for aggregation)</dependency>
+    <dependency type="story" id="10-3-3">Throughput tests (for aggregation)</dependency>
+    <dependency type="story" id="10-3-4">Stability tests (for aggregation)</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="tests/live/stress/test_api_errors.py" action="create">Error tests</file>
+    <file path="docs/live-trading/stress-test-report.md" action="create">Generated report</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR7">System survives any single API failure without data loss</nfr>
+    <nfr id="NFR10">All order state transitions logged for audit</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">500 error handling</test>
+    <test type="unit">429 error handling with Retry-After</test>
+    <test type="unit">Timeout handling</test>
+    <test type="unit">Connection refused handling</test>
+    <test type="integration">Report generation</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR28, FR29</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.3.5, Observability</ref>
+  </documentation-references>
+</story-context>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-1-2" generated="2025-12-06">
+  <meta>
+    <title>Static Analysis Audit: Live Trading Core</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.1 - Code Audit & Quality Assessment</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Run static analysis tools (ruff, mypy) on core live trading modules and capture
+    all findings in the structured YAML format created in Story 10.1.1.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">ruff check passes on live/engine.py with zero errors (or all findings documented)</criterion>
+    <criterion id="AC2">ruff check passes on live/order_manager.py with zero errors (or all findings documented)</criterion>
+    <criterion id="AC3">ruff check passes on live/state_manager.py with zero errors (or all findings documented)</criterion>
+    <criterion id="AC4">mypy passes on all three modules (or all type errors documented)</criterion>
+    <criterion id="AC5">All findings captured in core_findings.yaml with severity classification</criterion>
+    <criterion id="AC6">Each finding includes specific line numbers and recommendations</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Run ruff check on live/engine.py and document findings</task>
+    <task>Run ruff check on live/order_manager.py and document findings</task>
+    <task>Run ruff check on live/state_manager.py and document findings</task>
+    <task>Run mypy on all three modules and document type errors</task>
+    <task>Classify each finding by severity</task>
+    <task>Add all findings to core_findings.yaml</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Static Analysis Tools">
+      ruff: Python linter for style and potential bugs
+      mypy: Static type checker for Python
+    </pattern>
+    <constraint>All CRITICAL/HIGH findings must be resolved before Epic 10.1 completes</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Target Modules">
+      - rustybt/live/engine.py (LiveTradingEngine)
+      - rustybt/live/order_manager.py (OrderManager)
+      - rustybt/live/state_manager.py (StateManager)
+    </spec>
+    <spec name="Commands">
+      ruff check rustybt/live/engine.py
+      ruff check rustybt/live/order_manager.py
+      ruff check rustybt/live/state_manager.py
+      mypy rustybt/live/engine.py rustybt/live/order_manager.py rustybt/live/state_manager.py
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-1-1">Audit infrastructure and findings schema must exist</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/live/engine.py" action="audit">Core live trading engine</file>
+    <file path="rustybt/live/order_manager.py" action="audit">Order lifecycle management</file>
+    <file path="rustybt/live/state_manager.py" action="audit">State persistence</file>
+    <file path="tests/live/audit/findings/core_findings.yaml" action="modify">Add findings</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR10">All order state transitions logged for audit</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="static">ruff check on all modules</test>
+    <test type="static">mypy on all modules</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - Audit Methodology</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.1.2</ref>
+  </documentation-references>
+</story-context>

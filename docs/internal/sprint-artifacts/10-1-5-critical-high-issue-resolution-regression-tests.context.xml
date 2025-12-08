@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-1-5" generated="2025-12-06">
+  <meta>
+    <title>Critical/High Issue Resolution & Regression Tests</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.1 - Code Audit & Quality Assessment</sub-epic>
+    <status>drafted</status>
+    <priority>critical</priority>
+  </meta>
+
+  <story-summary>
+    Resolve all CRITICAL and HIGH severity findings from Stories 10.1.2-10.1.4 with
+    corresponding regression tests to prevent future regressions.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">All CRITICAL severity findings resolved, code passes ruff/mypy, YAML updated</criterion>
+    <criterion id="AC2">All HIGH severity findings resolved, code passes ruff/mypy, YAML updated</criterion>
+    <criterion id="AC3">Each resolved CRITICAL/HIGH finding has regression test in tests/live/audit/test_{module}_regressions.py</criterion>
+    <criterion id="AC4">All regression tests pass when run with pytest</criterion>
+    <criterion id="AC5">Audit summary report generated showing totals, resolution status, and test coverage</criterion>
+    <criterion id="AC6">Medium/Low findings documented with deferral justification</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Aggregate all findings from previous stories, filter CRITICAL/HIGH</task>
+    <task>Resolve CRITICAL findings with fixes and static analysis verification</task>
+    <task>Resolve HIGH findings with fixes and static analysis verification</task>
+    <task>Create regression tests for each resolved issue</task>
+    <task>Run full regression test suite</task>
+    <task>Generate audit summary report</task>
+    <task>Document deferred Medium/Low findings</task>
+    <task>Final verification (ruff, mypy, all tests pass)</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Resolution Priority">
+      CRITICAL - Must fix before any production use
+      HIGH - Must fix before production deployment
+      MEDIUM - Should fix, can defer with justification
+      LOW - Nice to have, low priority
+    </pattern>
+    <constraint>All CRITICAL/HIGH must have regression tests before marking RESOLVED</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Regression Test Pattern">
+      <![CDATA[
+def test_engine_e001_uncaught_exception():
+    """Regression test for AUDIT-E001: Uncaught exception in main loop.
+
+    Bug: Exception in main loop could crash engine
+    Fix: Wrapped main loop in try/except with graceful shutdown
+    Finding: tests/live/audit/findings/core_findings.yaml::AUDIT-E001
+    """
+    # Setup: Create condition that triggers exception
+    # Action: Run engine with faulty condition
+    # Assert: Engine handles gracefully, doesn't crash
+      ]]>
+    </spec>
+    <spec name="Audit Report Format">
+      Summary (totals by severity), Resolution Details (table with test links),
+      Deferred Items (Medium/Low with justification), Recommendations
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-1-2">Core module findings</dependency>
+    <dependency type="story" id="10-1-3">Broker/streaming findings</dependency>
+    <dependency type="story" id="10-1-4">Manual review findings</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="tests/live/audit/findings/" action="read">All findings YAML files</file>
+    <file path="tests/live/audit/test_engine_regressions.py" action="create">Engine regression tests</file>
+    <file path="tests/live/audit/test_brokers_regressions.py" action="create">Broker regression tests</file>
+    <file path="tests/live/audit/test_streaming_regressions.py" action="create">Streaming regression tests</file>
+    <file path="tests/live/audit/test_order_manager_regressions.py" action="create">Order manager tests</file>
+    <file path="docs/live-trading/audit-report.md" action="create">Audit summary report</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR7">System must survive any single API failure without data loss</nfr>
+    <nfr id="NFR10">All order state transitions logged for audit</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="regression">All resolved CRITICAL/HIGH findings have tests</test>
+    <test type="static">ruff check on all affected modules</test>
+    <test type="static">mypy on all affected modules</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/architecture-epic-10.md - Pattern 5: Audit Finding Classification</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.1.5</ref>
+  </documentation-references>
+</story-context>

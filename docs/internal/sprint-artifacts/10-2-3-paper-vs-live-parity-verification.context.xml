@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-2-3" generated="2025-12-06">
+  <meta>
+    <title>Paper vs Live Parity Verification</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.2 - Paper Trading Verification</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Verify that paper trading behavior matches live trading behavior for order submission,
+    position calculations, PnL, and state transitions.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Order submission calls have identical parameters between paper and live</criterion>
+    <criterion id="AC2">Position calculations use same logic (size, entry price, direction)</criterion>
+    <criterion id="AC3">PnL calculations produce identical results for same fill prices</criterion>
+    <criterion id="AC4">State transitions follow the same state machine</criterion>
+    <criterion id="AC5">Parity report documents any intentional differences</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create parity test infrastructure with mock live broker</task>
+    <task>Implement order call comparison (capture and compare parameters)</task>
+    <task>Implement position calculation comparison</task>
+    <task>Implement PnL calculation comparison with Decimal precision</task>
+    <task>Implement state machine comparison</task>
+    <task>Create parity report documenting expected differences</task>
+    <task>Test edge cases (partial fills, cancellation, reversals)</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="BrokerAdapter Interface">
+      Both paper and live brokers implement same BrokerAdapter ABC,
+      ensuring identical method signatures, return types, exception types.
+    </pattern>
+    <constraint>Paper trading must be a faithful simulation of live trading</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Expected Differences">
+      1. Fill source: Paper simulates locally, live receives from exchange
+      2. Network latency: Paper has no network latency
+      3. Slippage: Paper uses configured model, live has real slippage
+      4. Partial fills: Live may have partial fills, paper depends on config
+    </spec>
+    <spec name="Parity Test Pattern">
+      <![CDATA[
+def test_order_parity():
+    paper_calls, live_calls = [], []
+    paper_broker.submit_order = capture_call(paper_broker.submit_order, paper_calls)
+    live_broker.submit_order = capture_call(live_broker.submit_order, live_calls)
+    # Run same signals through both, compare calls
+    assert paper_calls == live_calls
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-2-1">Paper trading test harness</dependency>
+    <dependency type="module">Mock live broker for testing</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="tests/live/paper/test_paper_parity.py" action="create">Parity tests</file>
+    <file path="rustybt/live/brokers/paper_broker.py" action="reference">Paper broker</file>
+    <file path="rustybt/live/brokers/base.py" action="reference">BrokerAdapter ABC</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR11">Paper trading deterministic results</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Order call parameter comparison</test>
+    <test type="unit">Position calculation comparison</test>
+    <test type="unit">PnL calculation comparison</test>
+    <test type="unit">State machine comparison</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/prd-epic-10.md - FR13</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.2.3</ref>
+  </documentation-references>
+</story-context>

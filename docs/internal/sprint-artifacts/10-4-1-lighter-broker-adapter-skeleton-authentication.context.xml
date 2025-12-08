@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-4-1" generated="2025-12-06">
+  <meta>
+    <title>Lighter.xyz Broker Adapter Skeleton & Authentication</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.4 - Lighter.xyz Broker Adapter</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Create the LighterBrokerAdapter class that authenticates with Lighter.xyz API
+    to establish secure connections for trading.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">LighterBrokerAdapter class exists extending BrokerAdapter ABC</criterion>
+    <criterion id="AC2">Private key loaded securely via priority: env var → encrypted keystore → direct parameter (with warning)</criterion>
+    <criterion id="AC3">Private key validation: 64 hex chars, derives wallet address, logs masked address</criterion>
+    <criterion id="AC4">connect() establishes connection, verifies credentials, selects testnet/mainnet URL</criterion>
+    <criterion id="AC5">Invalid credentials raise LighterKeyError with helpful message, no sensitive data</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Create rustybt/live/brokers/lighter_adapter.py with class skeleton</task>
+    <task>Implement _load_private_key() with priority order</task>
+    <task>Implement _validate_private_key() with format/length check, address derivation</task>
+    <task>Implement encrypted keystore support with Fernet</task>
+    <task>Implement connect() async method with URL selection</task>
+    <task>Implement error handling (LighterKeyError, LighterConnectionError)</task>
+    <task>Write unit tests</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Private Key Security (Pattern 1)">
+      1. Environment variable (RECOMMENDED)
+      2. Encrypted keystore + encryption key
+      3. Direct parameter (NOT RECOMMENDED, logs warning)
+    </pattern>
+    <pattern name="ADR-001">Follow HyperliquidBrokerAdapter pattern exactly</pattern>
+    <pattern name="ADR-003">Default to testnet (testnet=True)</pattern>
+    <constraint>API keys and private keys MUST never be logged (NFR13)</constraint>
+    <constraint>Credentials from environment variables or secure config (NFR14)</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Class Structure">
+      <![CDATA[
+class LighterBrokerAdapter(BrokerAdapter):
+    MAINNET_API_URL = "https://mainnet.zklighter.elliot.ai/"
+    TESTNET_API_URL = "https://testnet.zklighter.elliot.ai/"
+
+    def __init__(
+        self,
+        private_key: str | None = None,
+        encrypted_key_path: str | None = None,
+        encryption_key: str | None = None,
+        testnet: bool = True,  # Default to testnet
+    ) -> None:
+        self._testnet = testnet
+        self._private_key = self._load_private_key(...)
+        self._client = None
+        self._connected = False
+      ]]>
+    </spec>
+    <spec name="Key Loading">
+      <![CDATA[
+def _load_private_key(self, ...):
+    # Method 1: Environment variable (RECOMMENDED)
+    env_key = os.environ.get("LIGHTER_PRIVATE_KEY")
+    if env_key:
+        logger.info("private_key_loaded_from_environment")
+        return self._validate_private_key(env_key)
+
+    # Method 2: Encrypted keystore (RECOMMENDED)
+    if encrypted_key_path and encryption_key:
+        return self._load_encrypted_key(encrypted_key_path, encryption_key)
+
+    # Method 3: Direct parameter (NOT RECOMMENDED)
+    if private_key:
+        logger.warning("private_key_loaded_from_parameter")
+        return self._validate_private_key(private_key)
+
+    raise LighterKeyError("No private key provided")
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="epic" id="10.1">Audit findings resolved</dependency>
+    <dependency type="package">lighter-sdk</dependency>
+    <dependency type="package">cryptography (for Fernet)</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/live/brokers/lighter_adapter.py" action="create">New adapter</file>
+    <file path="rustybt/live/brokers/hyperliquid_adapter.py" action="reference">Pattern reference</file>
+    <file path="tests/live/lighter/test_lighter_broker.py" action="create">Unit tests</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR13">API keys and private keys MUST never be logged</nfr>
+    <nfr id="NFR14">Credentials from environment variables or secure config</nfr>
+    <nfr id="NFR15">Testnet/mainnet clearly separated</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Key loading priority</test>
+    <test type="unit">Key validation</test>
+    <test type="unit">Connect with mock</test>
+    <test type="unit">Error handling</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/architecture-epic-10.md - ADR-001, Pattern 1</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.4.1</ref>
+  </documentation-references>
+</story-context>

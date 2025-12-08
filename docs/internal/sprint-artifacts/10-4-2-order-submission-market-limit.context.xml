@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="10-4-2" generated="2025-12-06">
+  <meta>
+    <title>Order Submission (Market & Limit)</title>
+    <epic>10 - Live Trading Production Readiness & Lighter.xyz Integration</epic>
+    <sub-epic>10.4 - Lighter.xyz Broker Adapter</sub-epic>
+    <status>drafted</status>
+    <priority>high</priority>
+  </meta>
+
+  <story-summary>
+    Implement market and limit order submission to Lighter.xyz so users can execute trades.
+  </story-summary>
+
+  <acceptance-criteria>
+    <criterion id="AC1">Market order submission: transaction signed, POST /sendTx, order ID returned</criterion>
+    <criterion id="AC2">Limit order submission: with specified price, order ID returned</criterion>
+    <criterion id="AC3">Rate limiting enforced before submission (Pattern 2)</criterion>
+    <criterion id="AC4">Order rejection errors handled (LighterOrderRejectError with context)</criterion>
+    <criterion id="AC5">Amount convention: positive = buy, negative = sell</criterion>
+  </acceptance-criteria>
+
+  <key-tasks>
+    <task>Implement submit_order() async method</task>
+    <task>Implement transaction signing with lighter-sdk</task>
+    <task>Implement API submission via POST /sendTx</task>
+    <task>Implement rate limiting (token bucket: 600 req/min, 20 orders/sec/symbol)</task>
+    <task>Implement error handling (LighterOrderRejectError)</task>
+    <task>Write unit tests</task>
+  </key-tasks>
+
+  <architecture-context>
+    <pattern name="Rate Limiting Pattern 2">
+      Token bucket algorithm at adapter level
+      Limits: 600 requests/minute REST, 20 orders/second per symbol
+      Warning logged at 80% capacity
+    </pattern>
+    <constraint>Structured logging with structlog</constraint>
+  </architecture-context>
+
+  <technical-specifications>
+    <spec name="Submit Order">
+      <![CDATA[
+async def submit_order(
+    self,
+    asset: Asset,
+    amount: Decimal,
+    order_type: str,
+    limit_price: Decimal | None = None,
+    stop_price: Decimal | None = None,
+) -> str:
+    await self._check_request_rate_limit()
+    await self._check_order_rate_limit(asset.symbol)
+
+    side = "buy" if amount > 0 else "sell"
+    quantity = abs(amount)
+
+    if order_type == "market":
+        tx = self._create_market_order_tx(asset.symbol, side, quantity)
+    elif order_type == "limit":
+        tx = self._create_limit_order_tx(asset.symbol, side, quantity, limit_price)
+
+    signed_tx = self._sign_transaction(tx)
+
+    response = await self._client.post("/sendTx", json=signed_tx)
+    response.raise_for_status()
+    return response.json().get("order_id")
+      ]]>
+    </spec>
+    <spec name="Token Bucket">
+      <![CDATA[
+class TokenBucket:
+    def __init__(self, rate: float, capacity: float):
+        self.rate = rate
+        self.capacity = capacity
+        self.tokens = capacity
+
+    async def acquire(self, tokens: int = 1):
+        while True:
+            self._refill()
+            if self.tokens >= tokens:
+                self.tokens -= tokens
+                return
+            wait_time = (tokens - self.tokens) / self.rate
+            await asyncio.sleep(wait_time)
+      ]]>
+    </spec>
+  </technical-specifications>
+
+  <dependencies>
+    <dependency type="story" id="10-4-1">Adapter skeleton, authentication</dependency>
+  </dependencies>
+
+  <relevant-files>
+    <file path="rustybt/live/brokers/lighter_adapter.py" action="modify">Add submit_order</file>
+    <file path="tests/live/lighter/test_lighter_broker.py" action="modify">Add order tests</file>
+  </relevant-files>
+
+  <nfr-references>
+    <nfr id="NFR1">Order submission latency less than 100ms</nfr>
+  </nfr-references>
+
+  <testing-requirements>
+    <test type="unit">Market order submission (mocked)</test>
+    <test type="unit">Limit order submission (mocked)</test>
+    <test type="unit">Rate limiting behavior</test>
+    <test type="unit">Error handling</test>
+    <test type="unit">Amount sign convention</test>
+  </testing-requirements>
+
+  <documentation-references>
+    <ref>docs/internal/planning/architecture-epic-10.md - Pattern 2: Rate Limiting</ref>
+    <ref>docs/internal/sprint-artifacts/epic-10-tech-spec.md - AC-10.4.2</ref>
+  </documentation-references>
+</story-context>

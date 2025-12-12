@@ -407,7 +407,7 @@ class TestBacktraderSMACrossoverStrategy:
         param_dict = dict(params_tuple)
         assert param_dict["fast_period"] == 10
         assert param_dict["slow_period"] == 30
-        assert param_dict["target_percent"] == 1.0
+        assert param_dict["target_percent"] == 0.98  # 98% provides cash buffer
 
     def test_strategy_with_cerebro(
         self, temp_log_path: Path, sample_price_data: list[float]

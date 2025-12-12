@@ -55,7 +55,7 @@ class MeanReversionStrategy(BacktraderValidatedStrategy):
     exit_threshold : float
         Z-score threshold for exit signals (absolute value), by default 0.0.
     target_percent : float
-        Target allocation percentage (0-1), by default 1.0 (100%).
+        Target allocation percentage (0-1), by default 0.5 (50%).
     """
 
     # Backtrader params
@@ -64,7 +64,7 @@ class MeanReversionStrategy(BacktraderValidatedStrategy):
         ("lookback_period", 20),
         ("entry_threshold", 2.0),
         ("exit_threshold", 0.0),
-        ("target_percent", 1.0),
+        ("target_percent", 0.5),
     )
 
     def __init__(self) -> None:

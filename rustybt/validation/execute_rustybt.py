@@ -469,8 +469,15 @@ def run_validation_backtest(
 
     def initialize(context: Any) -> None:  # noqa: ANN401
         """Initialize callback for run_algorithm."""
+        from rustybt.finance.commission import PerTrade
+
         strategy = _execution_context["strategy"]
         asset_name = _execution_context["asset_name"]
+        commission_per_trade = _execution_context["commission_per_trade"]
+
+        # Configure commission model to match Backtrader ($1 per trade)
+        # This must be done in initialize() before any orders are placed
+        context.set_commission(us_equities=PerTrade(cost=commission_per_trade))
 
         # Get the asset using rustybt's symbol lookup
         # This creates a proper Asset object that works with data.history(), etc.

@@ -745,7 +745,7 @@ class RustyBTValidatedStrategy(ValidatedStrategyMixin):
         """
         pass
 
-    def notify_transaction(self, context: Any, transaction: Any) -> None:  # noqa: ANN401, ARG002
+    def notify_transaction(self, context: Any, transaction: Any) -> None:  # noqa: ANN401
         """Called when an order is filled and a transaction occurs.
 
         This callback is invoked by the rustybt simulation loop for each
@@ -777,10 +777,21 @@ class RustyBTValidatedStrategy(ValidatedStrategyMixin):
         amount = float(transaction.amount)
         price = float(transaction.price)
 
-        # Get commission from transaction if available (rustybt may not include it directly)
-        commission = getattr(transaction, "commission", 0.0)
-        if commission is None:
-            commission = 0.0
+        # Get commission from the order object in the blotter
+        # The commission is calculated by the blotter and stored on the order
+        # For complete fills (our case), order.commission equals the transaction commission
+        commission = 0.0
+        try:
+            if hasattr(context, "blotter") and context.blotter is not None:
+                order = context.blotter.orders.get(transaction.order_id)
+                if order is not None:
+                    # For PerTrade commission, the full amount is charged on first fill
+                    # Use the order's cumulative commission (which equals transaction commission
+                    # for single-fill orders like our market orders)
+                    commission = float(getattr(order, "commission", 0.0) or 0.0)
+        except Exception:  # noqa: BLE001
+            # Fall back to transaction attribute if blotter lookup fails
+            commission = float(getattr(transaction, "commission", 0.0) or 0.0)
 
         # Update simulation timestamp from transaction datetime
         if transaction.dt is not None:

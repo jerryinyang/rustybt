@@ -1,13 +1,19 @@
-"""Mean Reversion strategy for rustybt validation.
+"""Mean Reversion V2 strategy for rustybt validation.
 
-This module implements a Z-score based Mean Reversion strategy that:
-1. Extends RustyBTValidatedStrategy for validation logging
-2. Uses rustybt's data.history() for mean/std calculation
-3. Uses rustybt's order_target_percent() for trade execution
-4. Generates BUY signal when z-score < -2 (oversold)
-5. Generates SELL signal when z-score > 2 (overbought)
-6. Generates EXIT signal when z-score returns to 0
-7. Logs events to JSONL for comparison with Backtrader
+This module implements a Z-score based Mean Reversion strategy with:
+1. Limit orders for entries (buy low, sell high)
+2. Stop-loss orders for risk management
+3. Take-profit orders for profit targets
+4. Position closing with order_target_percent
+
+Strategy Logic (from 03_strategy_development.ipynb):
+- Calculate z-score to identify overbought/oversold conditions
+- Place limit BUY orders when oversold (z-score < -2)
+- Place limit SELL orders when overbought (z-score > +2)
+- Set stop-loss to limit downside risk (3% default)
+- Set take-profit to lock in gains (6% default)
+- Exit when z-score returns to ±0.5 (mean reversion complete)
+- Close all positions using order_target_percent
 
 The log format follows the validation framework schema:
     {
@@ -17,12 +23,6 @@ The log format follows the validation framework schema:
         "asset": asset symbol or null,
         "data": dictionary of event-specific data
     }
-
-Epic X Implementation:
-    This implementation uses rustybt's real APIs:
-    - data.history() for price data and statistics calculation
-    - order_target_percent() for trade execution
-    - context.portfolio for position/cash tracking
 """
 
 from __future__ import annotations
@@ -34,13 +34,14 @@ from typing import Any
 from rustybt.validation.base_strategy import RustyBTValidatedStrategy
 
 
-class MeanReversionStrategy(RustyBTValidatedStrategy):
-    """Mean Reversion validated strategy for rustybt using z-score.
+class MeanReversionV2Strategy(RustyBTValidatedStrategy):
+    """Mean Reversion V2 strategy with limit entries and stop-loss/take-profit exits.
 
-    This strategy implements a classic mean reversion approach:
-    - BUY when z-score < -entry_threshold (price significantly below mean)
-    - SELL when z-score > +entry_threshold (price significantly above mean)
-    - EXIT when |z-score| < exit_threshold (mean reversion complete)
+    This strategy implements mean reversion with professional risk management:
+    - Limit entries: Enter at favorable prices (0.5% better than current)
+    - Stop-loss: Exit if loss exceeds threshold (3% default)
+    - Take-profit: Lock in gains when target reached (6% default)
+    - Mean reversion exit: Exit when z-score normalizes
 
     Parameters
     ----------
@@ -48,30 +49,32 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
         Path to the JSONL log file.
     lookback_period : int, optional
         Number of periods for rolling mean/std calculation, by default 20.
-    entry_threshold : float, optional
+    z_entry : float, optional
         Z-score threshold for entry signals (absolute value), by default 2.0.
-    exit_threshold : float, optional
-        Z-score threshold for exit signals (absolute value), by default 0.0.
-    target_percent : float, optional
-        Target allocation percentage (0-1), by default 1.0 (100%).
-
-    Note
-    ----
-    This implementation uses rustybt's real APIs:
-    - data.history() for rolling statistics calculation
-    - order_target_percent() for trade execution via rustybt's broker
-    - context.portfolio for position/cash tracking
+    z_exit : float, optional
+        Z-score threshold for exit on mean reversion, by default 0.5.
+    stop_loss_pct : float, optional
+        Stop-loss percentage (0-1), by default 0.03 (3%).
+    take_profit_pct : float, optional
+        Take-profit percentage (0-1), by default 0.06 (6%).
+    limit_offset_pct : float, optional
+        Limit order offset from current price (0-1), by default 0.005 (0.5%).
+    shares_per_trade : int, optional
+        Number of shares per trade, by default 100.
     """
 
     def __init__(
         self,
         log_path: Path,
         lookback_period: int = 20,
-        entry_threshold: float = 2.0,
-        exit_threshold: float = 0.0,
-        target_percent: float = 0.5,
+        z_entry: float = 2.0,
+        z_exit: float = 0.5,
+        stop_loss_pct: float = 0.03,
+        take_profit_pct: float = 0.06,
+        limit_offset_pct: float = 0.005,
+        shares_per_trade: int = 100,
     ) -> None:
-        """Initialize the Mean Reversion strategy.
+        """Initialize the Mean Reversion V2 strategy.
 
         Parameters
         ----------
@@ -79,18 +82,27 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
             Path to the JSONL log file.
         lookback_period : int, optional
             Number of periods for rolling mean/std, by default 20.
-        entry_threshold : float, optional
+        z_entry : float, optional
             Z-score threshold for entries, by default 2.0.
-        exit_threshold : float, optional
-            Z-score threshold for exits, by default 0.0.
-        target_percent : float, optional
-            Target allocation percentage (0-1), by default 0.5.
+        z_exit : float, optional
+            Z-score threshold for mean reversion exit, by default 0.5.
+        stop_loss_pct : float, optional
+            Stop-loss percentage, by default 0.03.
+        take_profit_pct : float, optional
+            Take-profit percentage, by default 0.06.
+        limit_offset_pct : float, optional
+            Limit order offset from current price, by default 0.005.
+        shares_per_trade : int, optional
+            Shares per trade, by default 100.
         """
         super().__init__(log_path)
         self._lookback_period = lookback_period
-        self._entry_threshold = entry_threshold
-        self._exit_threshold = exit_threshold
-        self._target_percent = target_percent
+        self._z_entry = z_entry
+        self._z_exit = z_exit
+        self._stop_loss_pct = stop_loss_pct
+        self._take_profit_pct = take_profit_pct
+        self._limit_offset_pct = limit_offset_pct
+        self._shares_per_trade = shares_per_trade
 
         # Current statistics
         self._current_mean: float | None = None
@@ -99,6 +111,9 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
 
         # Position tracking: -1 = short, 0 = flat, 1 = long
         self._position_state: int = 0
+
+        # Entry price tracking for stop-loss/take-profit
+        self._entry_price: float | None = None
 
         # Asset reference (set during initialize)
         self._asset: Any = None
@@ -133,12 +148,15 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
         # Log initialization with parameters
         self._log_event(
             layer="data",
-            event="mean_reversion_init",
+            event="mean_reversion_v2_init",
             data={
                 "lookback_period": self._lookback_period,
-                "entry_threshold": self._entry_threshold,
-                "exit_threshold": self._exit_threshold,
-                "target_percent": self._target_percent,
+                "z_entry": self._z_entry,
+                "z_exit": self._z_exit,
+                "stop_loss_pct": self._stop_loss_pct,
+                "take_profit_pct": self._take_profit_pct,
+                "limit_offset_pct": self._limit_offset_pct,
+                "shares_per_trade": self._shares_per_trade,
             },
         )
 
@@ -205,13 +223,37 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
 
         return z_score
 
+    def _calculate_pnl_pct(self, current_price: float) -> float | None:
+        """Calculate profit/loss percentage from entry.
+
+        Parameters
+        ----------
+        current_price : float
+            Current market price.
+
+        Returns
+        -------
+        float | None
+            P&L percentage, or None if no entry price.
+        """
+        if self._entry_price is None or self._entry_price == 0:
+            return None
+
+        # For long positions: (current - entry) / entry
+        # For short positions: (entry - current) / entry
+        if self._position_state == 1:  # Long
+            return (current_price - self._entry_price) / self._entry_price
+        elif self._position_state == -1:  # Short
+            return (self._entry_price - current_price) / self._entry_price
+        return None
+
     def handle_data(self, context: Any, data: Any) -> Any:  # noqa: ANN401
         """Process bar data and execute orders based on signals.
 
         Uses rustybt's real APIs:
         - data.history() for statistics calculation
-        - order_target_percent() for trade execution
-        - context.portfolio for position/cash tracking
+        - order() with limit_price for limit entries
+        - order_target_percent() for exits
 
         Parameters
         ----------
@@ -267,7 +309,7 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
         )
 
         # Determine signal
-        signal = self._compute_signal()
+        signal, signal_details = self._compute_signal(current_price)
 
         # Log the signal (Layer 2)
         self.log_signal(
@@ -277,6 +319,7 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
             z_score=self._current_zscore,
             mean=self._current_mean,
             std_dev=self._current_std,
+            **signal_details,
             simulation_timestamp=self._current_simulation_timestamp,
         )
 
@@ -290,59 +333,103 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
                 "std_dev": self._current_std,
                 "z_score": self._current_zscore,
                 "signal": signal,
+                **signal_details,
             },
             asset=self._asset_str,
             simulation_timestamp=self._current_simulation_timestamp,
         )
 
         # Execute based on signal using rustybt's order API
-        order_result = self._execute_signal(context, signal, current_price)
+        order_result = self._execute_signal(context, signal, current_price, signal_details)
 
         # Update portfolio tracking (Layer 4 & 5)
         self._update_portfolio_metrics(context, current_price)
 
         return order_result
 
-    def _compute_signal(self) -> str:
-        """Compute trading signal based on z-score mean reversion.
+    def _compute_signal(self, current_price: float) -> tuple[str, dict[str, Any]]:
+        """Compute trading signal based on z-score with stop-loss/take-profit.
+
+        Parameters
+        ----------
+        current_price : float
+            Current market price.
 
         Returns
         -------
-        str
-            Signal: "BUY", "SELL", "EXIT_LONG", "EXIT_SHORT", or "HOLD".
+        tuple[str, dict[str, Any]]
+            Signal string and additional details dictionary.
         """
+        details: dict[str, Any] = {}
+
         # Can't generate signal without z-score
         if self._current_zscore is None:
-            return "HOLD"
+            return "HOLD", details
 
-        # Check exit conditions first (if in position)
-        if self._position_state == 1:  # Long position
-            # Exit long when z-score returns to mean
-            if abs(self._current_zscore) <= self._exit_threshold:
-                return "EXIT_LONG"
+        # Exit Logic: Check stop-loss, take-profit, or mean reversion exits first
+        if self._position_state != 0:
+            pnl_pct = self._calculate_pnl_pct(current_price)
+            details["pnl_pct"] = pnl_pct
 
-        if self._position_state == -1:  # Short position
-            # Exit short when z-score returns to mean
-            if abs(self._current_zscore) <= self._exit_threshold:
-                return "EXIT_SHORT"
+            if pnl_pct is not None:
+                # LONG position exits
+                if self._position_state == 1:
+                    # Stop-loss: Exit if loss exceeds threshold
+                    if pnl_pct <= -self._stop_loss_pct:
+                        details["exit_reason"] = "stop_loss"
+                        return "STOP_LOSS", details
 
-        # Check entry conditions (if flat)
+                    # Take-profit: Exit if profit target reached
+                    if pnl_pct >= self._take_profit_pct:
+                        details["exit_reason"] = "take_profit"
+                        return "TAKE_PROFIT", details
+
+                    # Mean reversion exit: Exit when z-score normalizes
+                    if self._current_zscore > -self._z_exit:
+                        details["exit_reason"] = "mean_revert"
+                        return "EXIT_LONG", details
+
+                # SHORT position exits
+                elif self._position_state == -1:
+                    # Stop-loss for short: Exit if loss exceeds threshold
+                    if pnl_pct <= -self._stop_loss_pct:
+                        details["exit_reason"] = "stop_loss"
+                        return "STOP_LOSS_SHORT", details
+
+                    # Take-profit for short
+                    if pnl_pct >= self._take_profit_pct:
+                        details["exit_reason"] = "take_profit"
+                        return "TAKE_PROFIT_SHORT", details
+
+                    # Mean reversion exit for short
+                    if self._current_zscore < self._z_exit:
+                        details["exit_reason"] = "mean_revert"
+                        return "EXIT_SHORT", details
+
+            return "HOLD", details
+
+        # Entry Logic: Place limit orders when flat
         if self._position_state == 0:
-            # Oversold: price significantly below mean -> BUY
-            if self._current_zscore < -self._entry_threshold:
-                return "BUY"
+            # Oversold: Place limit BUY order below current price
+            if self._current_zscore < -self._z_entry:
+                limit_price = current_price * (1 - self._limit_offset_pct)
+                details["limit_price"] = limit_price
+                return "BUY_LIMIT", details
 
-            # Overbought: price significantly above mean -> SELL (short)
-            if self._current_zscore > self._entry_threshold:
-                return "SELL"
+            # Overbought: Place limit SELL order above current price (short)
+            if self._current_zscore > self._z_entry:
+                limit_price = current_price * (1 + self._limit_offset_pct)
+                details["limit_price"] = limit_price
+                return "SELL_LIMIT", details
 
-        return "HOLD"
+        return "HOLD", details
 
     def _execute_signal(
         self,
         context: Any,  # noqa: ANN401
         signal: str,
         current_price: float,
+        signal_details: dict[str, Any],
     ) -> Any:  # noqa: ANN401
         """Execute trade based on signal using rustybt's order API.
 
@@ -354,103 +441,132 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
             Trading signal.
         current_price : float
             Current price for logging.
+        signal_details : dict[str, Any]
+            Additional signal details (limit_price, etc.).
 
         Returns
         -------
         Any
             Order object if created, None otherwise.
         """
-        from rustybt.api import order_target_percent
+        from rustybt.api import order, order_target_percent
 
         asset_name = self._asset_str or "UNKNOWN"
 
-        if signal == "BUY" and self._position_state == 0:
-            # Enter long position
+        # Entry signals with limit orders
+        if signal == "BUY_LIMIT" and self._position_state == 0:
+            limit_price = signal_details.get("limit_price", current_price)
             self.log_order_created(
-                order_type="market",
+                order_type="limit",
                 asset=asset_name,
-                quantity=self._target_percent,
+                quantity=self._shares_per_trade,
+                limit_price=limit_price,
                 simulation_timestamp=self._current_simulation_timestamp,
-                target_percent=self._target_percent,
                 z_score=self._current_zscore,
             )
 
-            order_id = order_target_percent(self._asset, self._target_percent)
+            order_id = order(self._asset, self._shares_per_trade, limit_price=limit_price)
             self._position_state = 1
-            # Log position change
+            self._entry_price = limit_price  # Track limit price as entry
             self._log_event(
                 layer="portfolio",
                 event="position_updated",
-                data={"position_state": "LONG", "target_percent": self._target_percent},
+                data={
+                    "position_state": "LONG",
+                    "entry_type": "limit",
+                    "limit_price": limit_price,
+                },
                 asset=asset_name,
                 simulation_timestamp=self._current_simulation_timestamp,
             )
             return order_id
 
-        elif signal == "SELL" and self._position_state == 0:
-            # Enter short position
+        elif signal == "SELL_LIMIT" and self._position_state == 0:
+            limit_price = signal_details.get("limit_price", current_price)
             self.log_order_created(
-                order_type="market",
+                order_type="limit",
                 asset=asset_name,
-                quantity=-self._target_percent,
+                quantity=-self._shares_per_trade,
+                limit_price=limit_price,
                 simulation_timestamp=self._current_simulation_timestamp,
-                target_percent=-self._target_percent,
                 z_score=self._current_zscore,
             )
 
-            order_id = order_target_percent(self._asset, -self._target_percent)
+            order_id = order(self._asset, -self._shares_per_trade, limit_price=limit_price)
             self._position_state = -1
-            # Log position change
+            self._entry_price = limit_price  # Track limit price as entry
             self._log_event(
                 layer="portfolio",
                 event="position_updated",
-                data={"position_state": "SHORT", "target_percent": -self._target_percent},
+                data={
+                    "position_state": "SHORT",
+                    "entry_type": "limit",
+                    "limit_price": limit_price,
+                },
                 asset=asset_name,
                 simulation_timestamp=self._current_simulation_timestamp,
             )
             return order_id
 
-        elif signal == "EXIT_LONG" and self._position_state == 1:
-            # Exit long position
+        # Exit signals (all exit with market order via order_target_percent)
+        elif signal in ("STOP_LOSS", "TAKE_PROFIT", "EXIT_LONG") and self._position_state == 1:
+            pnl_pct = signal_details.get("pnl_pct", 0)
+            exit_reason = signal_details.get("exit_reason", signal.lower())
             self.log_order_created(
                 order_type="market",
                 asset=asset_name,
-                quantity=-self._target_percent,
+                quantity=-self._shares_per_trade,
                 simulation_timestamp=self._current_simulation_timestamp,
                 target_percent=0.0,
                 z_score=self._current_zscore,
+                exit_reason=exit_reason,
+                pnl_pct=pnl_pct,
             )
 
             order_id = order_target_percent(self._asset, 0.0)
             self._position_state = 0
-            # Log position change
+            self._entry_price = None
             self._log_event(
                 layer="portfolio",
                 event="position_updated",
-                data={"position_state": "FLAT", "target_percent": 0.0},
+                data={
+                    "position_state": "FLAT",
+                    "exit_reason": exit_reason,
+                    "pnl_pct": pnl_pct,
+                },
                 asset=asset_name,
                 simulation_timestamp=self._current_simulation_timestamp,
             )
             return order_id
 
-        elif signal == "EXIT_SHORT" and self._position_state == -1:
-            # Exit short position
+        elif (
+            signal in ("STOP_LOSS_SHORT", "TAKE_PROFIT_SHORT", "EXIT_SHORT")
+            and self._position_state == -1
+        ):
+            pnl_pct = signal_details.get("pnl_pct", 0)
+            exit_reason = signal_details.get("exit_reason", signal.lower())
             self.log_order_created(
                 order_type="market",
                 asset=asset_name,
-                quantity=self._target_percent,
+                quantity=self._shares_per_trade,
                 simulation_timestamp=self._current_simulation_timestamp,
                 target_percent=0.0,
                 z_score=self._current_zscore,
+                exit_reason=exit_reason,
+                pnl_pct=pnl_pct,
             )
 
             order_id = order_target_percent(self._asset, 0.0)
             self._position_state = 0
-            # Log position change
+            self._entry_price = None
             self._log_event(
                 layer="portfolio",
                 event="position_updated",
-                data={"position_state": "FLAT", "target_percent": 0.0},
+                data={
+                    "position_state": "FLAT",
+                    "exit_reason": exit_reason,
+                    "pnl_pct": pnl_pct,
+                },
                 asset=asset_name,
                 simulation_timestamp=self._current_simulation_timestamp,
             )
@@ -567,6 +683,11 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
         """Get current position (-1 = short, 0 = flat, 1 = long)."""
         return self._position_state
 
+    @property
+    def entry_price(self) -> float | None:
+        """Get current entry price."""
+        return self._entry_price
+
     # =========================================================================
     # Test Helper Methods
     # =========================================================================
@@ -611,3 +732,46 @@ class MeanReversionStrategy(RustyBTValidatedStrategy):
             self._current_mean = None
             self._current_std = None
             self._current_zscore = None
+
+    def _test_set_entry_price(self, entry_price: float) -> None:
+        """Set entry price for testing stop-loss/take-profit logic.
+
+        Parameters
+        ----------
+        entry_price : float
+            The entry price to set.
+        """
+        self._entry_price = entry_price
+
+    def _test_set_position(self, position: int) -> None:
+        """Set position state for testing.
+
+        Parameters
+        ----------
+        position : int
+            Position state: -1 = short, 0 = flat, 1 = long.
+        """
+        self._position_state = position
+
+    def compute_signal(self, price: float, asset: str = "TEST") -> str:
+        """Compute signal from price (test helper for backward compatibility).
+
+        This method provides a simplified interface for unit testing.
+        It feeds the price to indicators and computes the signal.
+
+        Parameters
+        ----------
+        price : float
+            The current price.
+        asset : str, optional
+            Asset symbol, by default "TEST".
+
+        Returns
+        -------
+        str
+            Signal: "BUY_LIMIT", "SELL_LIMIT", "STOP_LOSS", "TAKE_PROFIT",
+            "EXIT_LONG", "EXIT_SHORT", or "HOLD".
+        """
+        self._test_feed_price(price, asset)
+        signal, _ = self._compute_signal(price)
+        return signal

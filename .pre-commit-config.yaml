@@ -156,5 +156,7 @@ exclude: |
       \.vscode/|
       \.idea/|
       deps/|
-      docs/internal/
+      docs/internal/|
+      temp/|
+      tmp/
   )
